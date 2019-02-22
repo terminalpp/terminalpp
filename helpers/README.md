@@ -34,7 +34,48 @@ If `NDEBUG` is specified, `ASSERT` translates to dead code and will be removed b
 
 ## Events - `events.h`
 
-Provides a simple and easy to use event system. 
+Provides a simple and easy to use event system. Each event can be associated with multiple *event handlers* - functions or object methods that will be called when the event is triggered. Event handlers can be added using `+=` operator and removed using the `-=` operator.
+
+The event handler function takes an instantiation of `EventPayload` class which is parametrized by the type of the *sender*, i.e. the object which triggered the event and a *payload*, which is any type, or `void` which holds the information associated with the event. 
+
+The event payload acts as a smart pointer to the payload itself (unless the payload is `void`) and contains own property `sender` and method `stopDispatch`, which terminates the dispatching of the event in case that multiple handlers are associated with the event and further dispatching is not needed.
+
+An `HANDLER` macro is provided which takes as an argument either a function, or a method and creates the appropriate `EventHandler` from it. It works by calling the function `CreateEventHandler_` which can be redefined in different contexts to create instantiate the handler properly. Notably for use outside objects, creates event handler from a function and when used inside `helpers::Object` or its children, will either create handler from a function, or from method of `this` object.
+
+The `helpers::Object` also provides the `trigger` helper method which triggers any event whose sender is `helpers::Object` from the appropriate payload:
+
+The following is an example of how events can be used:
+
+    struct Mouse {
+	    size_t x;
+		size_t y;
+		unsigned buttons;
+	};
+
+	typedef helpers::EventPayload<void, helpers::Object> VoidEvent;
+	typedef helpers::EventPayload<Mouse, helpers::Object> MouseEvent;
+
+	void functionHandler(VoidEvent & e) {
+		std::cout << "void event triggered from " << e.sender << std::endl;
+	}
+
+    class EventTester : public helpers::Object {
+	public:
+	    helpers::Event<VoidEvent> onChange;
+		helpers::Event<MouseEvent> onMouseChange;
+
+		void methodHandler(MouseEvent & e) {
+			std::cout << "Mouse coordinates " << e->x << ":" << e->y << std::endl;
+		}
+
+		void test() {
+			onChange += HANDLER(functionHandler);
+			onMouseChange += HANDLER(EventTester::methodHandler);
+
+			trigger(onChange);
+			trigger(onMouseChange, Mouse{10,15,0});
+		}
+	}; 
 
 
 

@@ -6,6 +6,7 @@
 
 #include "helpers.h"
 #include "events.h"
+
 namespace helpers {
 
 	/** Base class for upgraded objects.
@@ -20,6 +21,16 @@ namespace helpers {
 		}
 
 	protected:
+
+		/** Creates event handlers from methods of Object descendants. 
+		
+		    This method is not expected to be called directly, but to be used via the HANDLER macro.
+		 */
+		template<typename C, typename PAYLOAD>
+		EventHandler<PAYLOAD> CreateEventHandler_(void (C::*f)(PAYLOAD &)) {
+			static_assert(std::is_base_of<Object, C>::value, "Can only be used on helpers::Object descendants");
+			return EventHandler<PAYLOAD>(static_cast<C*>(this), f);
+		}
 
 		/** Triggers given event with itself as a sender. 
 

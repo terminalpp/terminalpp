@@ -5,6 +5,8 @@
 
 #include "helpers.h"
 
+#define HANDLER(...) CreateEventHandler_(& __VA_ARGS__)
+
 namespace helpers {
 
 	/** Encapsulation around event handler function or method.
@@ -163,5 +165,11 @@ namespace helpers {
 		bool doDispatch_;
 	};
 
-
 } // namespace helpers
+
+/** Creates event handler from given function of appropriate payload. 
+ */
+template<typename PAYLOAD>
+::helpers::EventHandler<PAYLOAD> CreateEventHandler_(void(*f)(PAYLOAD &)) {
+	return ::helpers::EventHandler<PAYLOAD>(f);
+}

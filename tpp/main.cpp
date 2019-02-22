@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 
 #include "vterm/screen_buffer.h"
+#include "vterm/virtual_terminal.h"
 
 #include "settings.h"
 
@@ -34,6 +35,8 @@ Application * application;
     For now creates single terminal window and one virtual terminal. 
  */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+
+
 
 	// create the application
 	application = new Application(hInstance);
