@@ -22,6 +22,7 @@ namespace vterm {
 	/** Virtual terminal class. 
 
 	 */
+	template<Encoding E>
 	class VirtualTerminal : public Object {
 	public:
 		class ScreenCell;
@@ -47,11 +48,31 @@ namespace vterm {
 
 		/** Resizes the virtual terminal. 
 		 */
-		void resize(unsigned cols, unsigned rows);
+		void resize(unsigned cols, unsigned rows) {
+			if (cols == cols_ && rows == rows_)
+				return;
+			ScreenCell * newBuffer = new ScreenCell[cols * rows];
+			// TODO do we want to copy the old buffer parts to the new buffer so that something can be displayed, or is it ok to wait for the connector to deliver new content based on the resize?
+			ScreenCell * oldBuffer = buffer_;
+			{
+				std::lock_guard<std::mutex> g(bufferLock_);
+				buffer_ = newBuffer;
+				cols_ = cols;
+				rows_ = rows;
+			}
+			delete[] oldBuffer;
+			// trigger the onResize event
+			trigger(onResize, TerminalSize{ cols, rows });
+		}
 
 		/** Returns the screen buffer of the terminal so that in can be read or written. 
+		    
+			Locks the virtual terminal's screen buffer access before returning. The destructor of the screen buffer object will release the lock when no longer needed.
 		 */
-		ScreenBuffer screenBuffer();
+		ScreenBuffer screenBuffer() {
+			bufferLock_.lock();
+			return ScreenBuffer(this);
+		}
 
 
 		/** Triggers for an otherwise unspecified change of the terminal. 
@@ -73,7 +94,8 @@ namespace vterm {
 		 
 		Although quite a lot memory is required for each cell, this should be perfectly fine since we need only a very small ammount of cells for any terminal window.
 	 */
-	class VirtualTerminal::ScreenCell {
+	template<Encoding E>
+	class VirtualTerminal<E>::ScreenCell {
 	public:
 		/** Foreground - text color.
 		 */
@@ -85,7 +107,7 @@ namespace vterm {
 
 		/** The character in the cell.
 		 */
-		Char c;
+		Char::Representation<E> c;
 
 		/** The font to be used for displaying the cell.
 		 */
@@ -97,7 +119,8 @@ namespace vterm {
 
 	    The virtual terminal's screen can be read and written to using the screen buffer. Obtaining the screen buffer object locks the screen buffer so it shoul only be held for the minimal necessary time.
 	 */
-	class VirtualTerminal::ScreenBuffer {
+	template<Encoding E>
+	class VirtualTerminal<E>::ScreenBuffer {
 	public:
 
 		/** Returns the screen buffer's width.
@@ -149,30 +172,5 @@ namespace vterm {
 
 	}; // vterm::VirtualTerminal::ScreenBuffer
 
-	/** Locks the virtual terminal's screen buffer access before returning. The destructor of the screen buffer object will release the lock when no longer needed. 
-	 */
-	inline VirtualTerminal::ScreenBuffer VirtualTerminal::screenBuffer() {
-		bufferLock_.lock();
-		return ScreenBuffer(this);
-	}
-
-	/** 
-	 */
-	inline void VirtualTerminal::resize(unsigned cols, unsigned rows) {
-		if (cols == cols_ && rows == rows_)
-			return;
-		ScreenCell * newBuffer = new ScreenCell[cols * rows];
-		// TODO do we want to copy the old buffer parts to the new buffer so that something can be displayed, or is it ok to wait for the connector to deliver new content based on the resize?
-		ScreenCell * oldBuffer = buffer_;
-		{
-			std::lock_guard<std::mutex> g(bufferLock_);
-			buffer_ = newBuffer;
-			cols_ = cols;
-			rows_ = rows;
-		}
-		delete[] oldBuffer;
-		// trigger the onResize event
-		trigger(onResize, TerminalSize{ cols, rows }); 
-	}
 
 } // namespace vterm

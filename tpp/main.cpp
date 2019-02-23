@@ -41,7 +41,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	application = new Application(hInstance);
 
 	// create the screen buffer
-	vterm::VirtualTerminal * vterm1 = new vterm::VirtualTerminal();
+	Terminal * vterm1 = new Terminal();
 
 	// and create the terminal window
 	TerminalWindow * tw = application->createNewTerminalWindow(vterm1);

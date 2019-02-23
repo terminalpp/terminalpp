@@ -22,19 +22,35 @@ namespace tpp {
 		/** Shows the terminal window. 
 		 */
 		void show() {
-			ShowWindow(hwnd_, SW_SHOWNORMAL);
+			ShowWindow(hWnd_, SW_SHOWNORMAL);
 		}
 
 		/** Returns the screen buffer associated with the window.
 
 		    If the terminal window is not associated with a screen buffer, returns nullptr. 
 		 */
-		vterm::VirtualTerminal const * terminal() const {
+		Terminal const * terminal() const {
 			return terminal_;
 		}
 		
-		vterm::VirtualTerminal * terminal() {
+		Terminal * terminal() {
 			return terminal_;
+		}
+
+		size_t width() const {
+			return width_;
+		}
+
+		size_t height() const {
+			return height_;
+		}
+
+		/** Destroys the terminal window. 
+		 */
+		~TerminalWindow() {
+			DeleteObject(buffer_);
+			DeleteDC(memoryBuffer_);
+			// TODO also remove from the list of windows.
 		}
 
 	private:
@@ -42,11 +58,11 @@ namespace tpp {
 
 		/** Creates the terminal window. 
 		 */
-		TerminalWindow(HWND hwnd, vterm::VirtualTerminal * terminal);
+		TerminalWindow(HWND hwnd, Terminal * terminal);
 
 		/** Handles windows GDI events. 
 		 */
-		static LRESULT CALLBACK EventHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+		static LRESULT CALLBACK EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 		HFONT getFont(vterm::Font const & font);
 
@@ -58,13 +74,36 @@ namespace tpp {
 		 */
 		void doPaint();
 
+		void refresh(unsigned left, unsigned top, unsigned cols, unsigned rows);
+
+		/** Sets the width_ and height_ properties to the current width and height of the window. Returns true if there was any change from the stored values, false otherwise. 
+
+		    If there is a change, updates the size of the attached terminal, but does not raise the onResize event. Also updates the bitmap to reflect the new size. 
+		*/
+		bool getWindowSize();
+
 		/** Handle to GDI window object. 
 		 */
-		HWND hwnd_;
+		HWND hWnd_;
+
+		/** Contains the shadow buffer for the window. 
+		 */
+		HBITMAP buffer_;
+
+		/** The memory buffer's device context. */
+		HDC memoryBuffer_;
 
 		/** Associated virtual terminal. 
 		 */
-		vterm::VirtualTerminal * terminal_;
+		Terminal * terminal_;
+
+		/** Width of the terminal window. 
+		 */
+		size_t width_;
+
+		/** Height of the terminal window. 
+		 */
+		size_t height_;
 
 		/** Available fonts. 
 		 */
@@ -73,6 +112,10 @@ namespace tpp {
 		/** Width of the font. 
 		 */
 		unsigned fontWidth_;
+
+		/** Height of the font. 
+		 */
+		unsigned fontHeight_;
 
 		/** List of all terminal windows. 
 

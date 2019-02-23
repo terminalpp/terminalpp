@@ -6,6 +6,8 @@
 
 namespace tpp {
 
+	typedef vterm::VirtualTerminal<vterm::Encoding::UTF16> Terminal;
+
 	class TerminalWindow;
 
 	/** The application encapsulates the renderer and operating system specific details. 
@@ -15,7 +17,7 @@ namespace tpp {
 
 		Application(HINSTANCE hInstance);
 
-		TerminalWindow * createNewTerminalWindow(vterm::VirtualTerminal * terminal);
+		TerminalWindow * createNewTerminalWindow(Terminal * terminal);
 
 		void mainLoop();
 

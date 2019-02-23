@@ -16,7 +16,7 @@ namespace tpp {
 		registerTerminalWindowClass();
 	}
 
-	TerminalWindow * Application::createNewTerminalWindow(VirtualTerminal * terminal) {
+	TerminalWindow * Application::createNewTerminalWindow(Terminal * terminal) {
 		HWND hwnd = CreateWindowEx(
 			WS_EX_LEFT, // the default
 			TerminalWindowClassName, // window class
@@ -59,7 +59,7 @@ namespace tpp {
 		wClass.hIcon = LoadIcon(nullptr, IDI_APPLICATION); // big icon (alt-tab)
 		wClass.hIconSm = LoadIcon(nullptr, IDI_APPLICATION); // small icon (taskbar)
 		wClass.hCursor = LoadCursor(nullptr, IDC_IBEAM); // mouse pointer icon
-		wClass.hbrBackground = (HBRUSH)(COLOR_WINDOWFRAME); // default window color
+		wClass.hbrBackground = nullptr; // do not display background - the terminal window does it itself
 		// register the class
 		ATOM result = RegisterClassEx(&wClass);
 		ASSERT(result != 0) << "Unable to register window class";
