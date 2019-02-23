@@ -4,7 +4,9 @@
 
 #include "helpers/object.h"
 
-#include "screen_buffer.h"
+#include "color.h"
+#include "font.h"
+#include "char.h"
 
 namespace vterm {
 	using namespace helpers;
@@ -22,20 +24,14 @@ namespace vterm {
 	 */
 	class VirtualTerminal : public Object {
 	public:
+		class ScreenCell;
+		class ScreenBuffer;
 
 		VirtualTerminal() :
 			cols_(0),
 			rows_(0),
 			buffer_(nullptr) {
 		}
-
-		/** Holder for rendering information of a single cell. 
-		 */
-		class ScreenCell;
-
-		/** The screen buffer as exported by the terminal.
-		 */
-		class ScreenBuffer;
 
 		/** Returns the current width of the terminal 
 		 */
@@ -73,7 +69,9 @@ namespace vterm {
 		std::mutex bufferLock_;
 	}; // vterm::VirtualTerminal
 
-	/** Although quite a lot memory is required for each cell, this should be perfectly fine since we need only a very small ammount of cells for any terminal window.
+    /** Holder for rendering information of a single cell.
+		 
+		Although quite a lot memory is required for each cell, this should be perfectly fine since we need only a very small ammount of cells for any terminal window.
 	 */
 	class VirtualTerminal::ScreenCell {
 	public:
@@ -95,7 +93,9 @@ namespace vterm {
 	}; // vterm::VirtualTerminal::ScreenCell
 
 
-	/** The virtual terminal's screen can be read and written to using the screen buffer. Obtaining the screen buffer object locks the screen buffer so it shoul only be held for the minimal necessary time.
+    /** The screen buffer as exported by the terminal.
+
+	    The virtual terminal's screen can be read and written to using the screen buffer. Obtaining the screen buffer object locks the screen buffer so it shoul only be held for the minimal necessary time.
 	 */
 	class VirtualTerminal::ScreenBuffer {
 	public:
@@ -114,12 +114,12 @@ namespace vterm {
 
 		ScreenCell const & at(unsigned col, unsigned row) const {
 			ASSERT(col < cols() && row < rows()) << "Indices " << col << ";" << row << " out of bounds " << cols() << ";" << rows();
-			return terminal_->buffer_[row * cols_ + col];
+			return terminal_->buffer_[row * cols() + col];
 		}
 
-		ScreenCell & at(unsigned col, unsigned row) const {
+		ScreenCell & at(unsigned col, unsigned row) {
 			ASSERT(col < cols() && row < rows()) << "Indices " << col << ";" << row << " out of bounds " << cols() << ";" << rows();
-			return terminal_->buffer_[row * cols_ + col];
+			return terminal_->buffer_[row * cols() + col];
 		}
 
 		ScreenBuffer(ScreenBuffer && other) :
@@ -158,18 +158,21 @@ namespace vterm {
 
 	/** 
 	 */
-	void VirtualTerminal::resize(unsigned cols, unsigned rows) {
+	inline void VirtualTerminal::resize(unsigned cols, unsigned rows) {
 		if (cols == cols_ && rows == rows_)
 			return;
 		ScreenCell * newBuffer = new ScreenCell[cols * rows];
 		// TODO do we want to copy the old buffer parts to the new buffer so that something can be displayed, or is it ok to wait for the connector to deliver new content based on the resize?
 		ScreenCell * oldBuffer = buffer_;
 		{
-			std::lock_guard<std::mutex> g(bufferMutex_);
-			buffer_ = newBuffer_;
+			std::lock_guard<std::mutex> g(bufferLock_);
+			buffer_ = newBuffer;
+			cols_ = cols;
+			rows_ = rows;
 		}
-		delete[] buffer_;
-		onResize.trigger(TerminalResize{ cols, rows }); */
+		delete[] oldBuffer;
+		// trigger the onResize event
+		trigger(onResize, TerminalSize{ cols, rows }); 
 	}
 
 } // namespace vterm

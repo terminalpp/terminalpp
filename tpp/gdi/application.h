@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-#include "vterm/screen_buffer.h"
+#include "vterm/virtual_terminal.h"
 
 namespace tpp {
 
@@ -15,7 +15,7 @@ namespace tpp {
 
 		Application(HINSTANCE hInstance);
 
-		TerminalWindow * createNewTerminalWindow(vterm::ScreenBuffer * screenBuffer);
+		TerminalWindow * createNewTerminalWindow(vterm::VirtualTerminal * terminal);
 
 		void mainLoop();
 

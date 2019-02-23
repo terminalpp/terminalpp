@@ -1,6 +1,5 @@
 ﻿#include <iostream>
 
-#include "vterm/screen_buffer.h"
 #include "vterm/virtual_terminal.h"
 
 #include "settings.h"
@@ -42,7 +41,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	application = new Application(hInstance);
 
 	// create the screen buffer
-	vterm::ScreenBuffer * vterm1 = new vterm::ScreenBuffer();
+	vterm::VirtualTerminal * vterm1 = new vterm::VirtualTerminal();
 
 	// and create the terminal window
 	TerminalWindow * tw = application->createNewTerminalWindow(vterm1);

@@ -3,6 +3,8 @@
 
 namespace tpp {
 
+	using namespace vterm;
+
 	namespace {
 		char const * const TerminalWindowClassName = "TerminalWindowClass";
 		char const * const TerminalWindowName = "terminal++";
@@ -14,7 +16,7 @@ namespace tpp {
 		registerTerminalWindowClass();
 	}
 
-	TerminalWindow * Application::createNewTerminalWindow(vterm::ScreenBuffer * screenBuffer) {
+	TerminalWindow * Application::createNewTerminalWindow(VirtualTerminal * terminal) {
 		HWND hwnd = CreateWindowEx(
 			WS_EX_LEFT, // the default
 			TerminalWindowClassName, // window class
@@ -30,7 +32,7 @@ namespace tpp {
 			nullptr
 		);
 		ASSERT(hwnd != 0) << "Cannot create window : " << GetLastError();
-		return new TerminalWindow(hwnd, screenBuffer);
+		return new TerminalWindow(hwnd, terminal);
 	}
 
 	void Application::mainLoop() {

@@ -5,8 +5,7 @@
 #include <windows.h>
 
 
-#include "vterm/screen_buffer.h"
-#include "vterm/char.h"
+#include "vterm/virtual_terminal.h"
 
 #include "settings.h"
 #include "application.h"
@@ -30,12 +29,12 @@ namespace tpp {
 
 		    If the terminal window is not associated with a screen buffer, returns nullptr. 
 		 */
-		vterm::ScreenBuffer const * screenBuffer() const {
-			return screenBuffer_;
+		vterm::VirtualTerminal const * terminal() const {
+			return terminal_;
 		}
 		
-		vterm::ScreenBuffer * screenBuffer() {
-			return screenBuffer_;
+		vterm::VirtualTerminal * terminal() {
+			return terminal_;
 		}
 
 	private:
@@ -43,7 +42,7 @@ namespace tpp {
 
 		/** Creates the terminal window. 
 		 */
-		TerminalWindow(HWND hwnd, vterm::ScreenBuffer * screenBuffer);
+		TerminalWindow(HWND hwnd, vterm::VirtualTerminal * terminal);
 
 		/** Handles windows GDI events. 
 		 */
@@ -63,9 +62,9 @@ namespace tpp {
 		 */
 		HWND hwnd_;
 
-		/** Associated screen buffer. 
+		/** Associated virtual terminal. 
 		 */
-		vterm::ScreenBuffer * screenBuffer_;
+		vterm::VirtualTerminal * terminal_;
 
 		/** Available fonts. 
 		 */

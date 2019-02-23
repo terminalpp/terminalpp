@@ -2,11 +2,13 @@
 
 namespace tpp {
 
+	using namespace vterm;
+
 	std::unordered_map<HWND, TerminalWindow *> TerminalWindow::Windows_;
 
-	TerminalWindow::TerminalWindow(HWND hwnd, vterm::ScreenBuffer * screenBuffer) :
+	TerminalWindow::TerminalWindow(HWND hwnd, VirtualTerminal * terminal) :
 		hwnd_(hwnd),
-		screenBuffer_(screenBuffer) {
+		terminal_(terminal) {
 		ASSERT(hwnd_ != nullptr);
 		Windows_.insert(std::make_pair(hwnd_, this));
 		// create the default font and determine its width
@@ -15,12 +17,13 @@ namespace tpp {
 		HFONT defaultFont = getFont(vterm::Font());
 		fontWidth_ = calculateFontWidth(hdc, defaultFont);
 		EndPaint(hwnd_, &ps);
-		// 
-		screenBuffer_->resize(100, 100);
+		// TODO delete this !!!!!
+		terminal_->resize(100, 100);
 		bool bold = false;
+		VirtualTerminal::ScreenBuffer buffer(terminal_->screenBuffer());
 		for (size_t r = 0; r < 100; ++r) {
 			for (size_t c = 0; c < 100; ++c) {
-				vterm::ScreenBuffer::Cell & cell = screenBuffer_->at(c, r);
+				VirtualTerminal::ScreenCell & cell = buffer.at(c, r);
 				cell.fg = vterm::Color::White;
 				cell.bg = vterm::Color::Black;
 				cell.c = vterm::Char((char)(' ' + c));
@@ -90,39 +93,39 @@ namespace tpp {
 		// initialize the painting
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd_, &ps);
-		vterm::ScreenBuffer & sb = *screenBuffer_;
-		vterm::ScreenBuffer::Cell const & firstCell = sb.at(0, 0);
-		vterm::Color lastFg = firstCell.fg;
-		vterm::Color lastBg = firstCell.bg;
-		vterm::Font lastFont = firstCell.font;
-		SetTextColor(hdc, RGB(lastFg.red, lastFg.green, lastFg.blue));
-		SetBkColor(hdc, RGB(lastBg.red, lastBg.green, lastBg.blue));
-		SelectObject(hdc, getFont(lastFont));
-		for (size_t c = 0, ce = sb.cols(); c != ce; ++c) {
-			for (size_t r = 0, re = sb.rows(); r != re; ++r) {
-				// get the cell info
-				vterm::ScreenBuffer::Cell const & cell = sb.at(c, r);
-				// update rendering properties if necessary
-				if (cell.fg != lastFg) {
-					lastFg = cell.fg;
-					SetTextColor(hdc, RGB(lastFg.red, lastFg.green, lastFg.blue));
+		{
+			VirtualTerminal::ScreenBuffer sb(terminal_->screenBuffer());
+			VirtualTerminal::ScreenCell const & firstCell = sb.at(0, 0);
+			Color lastFg = firstCell.fg;
+			Color lastBg = firstCell.bg;
+			Font lastFont = firstCell.font;
+			SetTextColor(hdc, RGB(lastFg.red, lastFg.green, lastFg.blue));
+			SetBkColor(hdc, RGB(lastBg.red, lastBg.green, lastBg.blue));
+			SelectObject(hdc, getFont(lastFont));
+			for (size_t c = 0, ce = sb.cols(); c != ce; ++c) {
+				for (size_t r = 0, re = sb.rows(); r != re; ++r) {
+					// get the cell info
+					VirtualTerminal::ScreenCell const & cell = sb.at(c, r);
+					// update rendering properties if necessary
+					if (cell.fg != lastFg) {
+						lastFg = cell.fg;
+						SetTextColor(hdc, RGB(lastFg.red, lastFg.green, lastFg.blue));
+					}
+					if (cell.bg != lastBg) {
+						lastBg = cell.bg;
+						SetBkColor(hdc, RGB(lastBg.red, lastBg.green, lastBg.blue));
+					}
+					if (cell.font != lastFont) {
+						lastFont = cell.font;
+						SelectObject(hdc, getFont(lastFont));
+					}
+					// draw the cell contents
+					TextOutW(hdc, c * fontWidth_, r * Settings.fontHeight, L"k", 1);
 				}
-				if (cell.bg != lastBg) {
-					lastBg = cell.bg;
-					SetBkColor(hdc, RGB(lastBg.red, lastBg.green, lastBg.blue));
-				}
-				if (cell.font != lastFont) {
-					lastFont = cell.font;
-					SelectObject(hdc, getFont(lastFont));
-				}
-				// draw the cell contents
-				TextOutW(hdc, c * fontWidth_, r * Settings.fontHeight, L"k", 1);
 			}
 		}
 		// end the painting
 		EndPaint(hwnd_, &ps);
 	}
-
-
 
 } // namespace tpp
