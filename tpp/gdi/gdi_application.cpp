@@ -1,5 +1,7 @@
-#include "application.h"
-#include "terminal_window.h"
+#include <windows.h>
+
+#include "gdi_application.h"
+#include "gdi_terminal_window.h"
 
 namespace tpp {
 
@@ -11,12 +13,12 @@ namespace tpp {
 
 	} // anonymous namespace
 
-	Application::Application(HINSTANCE hInstance) :
+	GDIApplication::GDIApplication(HINSTANCE hInstance) :
 		hInstance_(hInstance) {
 		registerTerminalWindowClass();
 	}
 
-	TerminalWindow * Application::createNewTerminalWindow(Terminal * terminal) {
+	TerminalWindow * GDIApplication::createNewTerminalWindow() {
 		HWND hwnd = CreateWindowEx(
 			WS_EX_LEFT, // the default
 			TerminalWindowClassName, // window class
@@ -32,10 +34,10 @@ namespace tpp {
 			nullptr
 		);
 		ASSERT(hwnd != 0) << "Cannot create window : " << GetLastError();
-		return new TerminalWindow(hwnd, terminal);
+		return new GDITerminalWindow(hwnd);
 	}
 
-	void Application::mainLoop() {
+	void GDIApplication::mainLoop() {
 		MSG msg;
 		while (GetMessage(&msg, nullptr, 0, 0) > 0) {
 			TranslateMessage(&msg);
@@ -46,12 +48,12 @@ namespace tpp {
 		}
 	}
 
-	void Application::registerTerminalWindowClass() {
+	void GDIApplication::registerTerminalWindowClass() {
 		WNDCLASSEX wClass = { 0 };
 		wClass.cbSize = sizeof(WNDCLASSEX); // size of the class info
 		wClass.hInstance = hInstance_;
 		wClass.style = CS_HREDRAW | CS_VREDRAW;
-		wClass.lpfnWndProc = TerminalWindow::EventHandler; // event handler function for the window class
+		wClass.lpfnWndProc = GDITerminalWindow::EventHandler; // event handler function for the window class
 		wClass.cbClsExtra = 0; // extra memory to be allocated for the class
 		wClass.cbWndExtra = 0; // extra memory to be allocated for each window
 		wClass.lpszClassName = TerminalWindowClassName; // class name

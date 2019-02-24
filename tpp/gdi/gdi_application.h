@@ -4,26 +4,24 @@
 
 #include "vterm/virtual_terminal.h"
 
+#include "../application.h"
+
 namespace tpp {
-
-	typedef vterm::VirtualTerminal<vterm::Encoding::UTF16> Terminal;
-
-	class TerminalWindow;
 
 	/** The application encapsulates the renderer and operating system specific details. 
 	 */
-	class Application {
+	class GDIApplication : public Application {
 	public:
 
-		Application(HINSTANCE hInstance);
+		GDIApplication(HINSTANCE hInstance);
 
-		TerminalWindow * createNewTerminalWindow(Terminal * terminal);
+		TerminalWindow * createNewTerminalWindow() override;
 
 		void mainLoop();
 
 	private:
 
-		friend class TerminalWindow;
+		friend class GDITerminalWindow;
 
 		void registerTerminalWindowClass();
 

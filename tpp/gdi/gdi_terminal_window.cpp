@@ -1,14 +1,13 @@
-#include "terminal_window.h"
+#include "gdi_terminal_window.h"
 
 namespace tpp {
 
 	using namespace vterm;
 
-	std::unordered_map<HWND, TerminalWindow *> TerminalWindow::Windows_;
+	std::unordered_map<HWND, GDITerminalWindow *> GDITerminalWindow::Windows_;
 
-	TerminalWindow::TerminalWindow(HWND hWnd, Terminal * terminal) :
+	GDITerminalWindow::GDITerminalWindow(HWND hWnd) :
 		hWnd_(hWnd),
-		terminal_(terminal),
 	    buffer_(nullptr) {
 		ASSERT(hWnd_ != nullptr);
 		Windows_.insert(std::make_pair(hWnd_, this));
@@ -22,31 +21,14 @@ namespace tpp {
 		EndPaint(hWnd_, &ps);
 		// update the window size
 		getWindowSize();
-		// TODO delete this !!!!!
-		bool bold = false;
-		unsigned cp = 0xe000;
-		{
-			Terminal::ScreenBuffer buffer(terminal_->screenBuffer());
-			for (size_t r = 0; r < buffer.rows(); ++r) {
-				for (size_t c = 0; c < buffer.cols(); ++c) {
-					Terminal::ScreenCell & cell = buffer.at(c, r);
-					cell.fg = vterm::Color::White;
-					cell.bg = vterm::Color::Black;
-					cell.c = vterm::Char::UTF16((cp++ % 95) + 0xe000);
-					cell.font.setBold(bold);
-				}
-				bold = !bold;
-			}
-		}
-		refresh(0, 0, terminal_->cols(), terminal_->rows());
 	}
 
-	LRESULT CALLBACK TerminalWindow::EventHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-		auto i = Windows_.find(hwnd);
-		TerminalWindow * tw = (i == Windows_.end()) ? nullptr : i->second;
+	LRESULT CALLBACK GDITerminalWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+		auto i = Windows_.find(hWnd);
+		GDITerminalWindow * tw = (i == Windows_.end()) ? nullptr : i->second;
 		switch (msg) {
 		case WM_CLOSE:
-			DestroyWindow(hwnd);
+			DestroyWindow(hWnd);
 			break;
 		case WM_DESTROY:
 			ASSERT(tw != nullptr) << "Attempt to destroy unknown window";
@@ -59,13 +41,17 @@ namespace tpp {
 			break;
 		case WM_PAINT:
 			ASSERT(tw != nullptr) << "Attempt to paint unknown window";
-			tw->doPaint();
+			// copy the memory buffer to the window area
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hWnd, &ps);
+			BitBlt(hdc, 0, 0, tw->width_, tw->height_, tw->memoryBuffer_, 0, 0, SRCCOPY);
+			EndPaint(hWnd, &ps);
 			break;
 		}
-		return DefWindowProc(hwnd, msg, wParam, lParam);
+		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 
-	HFONT TerminalWindow::getFont(vterm::Font const & font) {
+	HFONT GDITerminalWindow::getFont(vterm::Font const & font) {
 		// see if the font variant has already been created
 		auto i = fonts_.find(font);
 		if (i != fonts_.end())
@@ -93,23 +79,15 @@ namespace tpp {
 		return fonts_.insert(std::make_pair(font, result)).first->second;
 	}
 
-	unsigned TerminalWindow::calculateFontWidth(HDC hdc, HFONT font) {
+	unsigned GDITerminalWindow::calculateFontWidth(HDC hdc, HFONT font) {
 		SelectObject(hdc, font);
 		ABC abc;
 		GetCharABCWidths(hdc, 'm', 'm', &abc);
 		return abc.abcA + abc.abcB + abc.abcC;
 	}
 
-	void TerminalWindow::doPaint() {
-		// initialize the painting
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hWnd_, &ps);
-		BitBlt(hdc, 0, 0, width_, height_, memoryBuffer_, 0, 0, SRCCOPY);
-		// end the painting
-		EndPaint(hWnd_, &ps);
-	}
-
-	void TerminalWindow::refresh(unsigned left, unsigned top, unsigned cols, unsigned rows) {
+	void GDITerminalWindow::repaintTerminal(vterm::RepaintEvent & e) {
+		ASSERT(e.sender == this || e.sender == terminal_) << "Unexpected trigger";
 		Terminal::ScreenBuffer sb(terminal_->screenBuffer());
 		Terminal::ScreenCell const & firstCell = sb.at(0, 0);
 		Color lastFg = firstCell.fg;
@@ -118,8 +96,8 @@ namespace tpp {
 		SetTextColor(memoryBuffer_, RGB(lastFg.red, lastFg.green, lastFg.blue));
 		SetBkColor(memoryBuffer_, RGB(lastBg.red, lastBg.green, lastBg.blue));
 		SelectObject(memoryBuffer_, getFont(lastFont));
-		for (size_t r = top, re = top + rows; r != re; ++r) {
-			for (size_t c = left, ce = left + cols; c != ce; ++c) {
+		for (size_t r = e->top, re = e->top + e->rows; r != re; ++r) {
+			for (size_t c = e->left, ce = e->left + e->cols; c != ce; ++c) {
 				// get the cell info
 				Terminal::ScreenCell const & cell = sb.at(c, r);
 				// update rendering properties if necessary
@@ -141,7 +119,7 @@ namespace tpp {
 		}
 	} 
 
-	bool TerminalWindow::getWindowSize() {
+	bool GDITerminalWindow::getWindowSize() {
 		RECT clientRect;
 		GetClientRect(hWnd_, &clientRect);
 		size_t w = clientRect.right - clientRect.left;

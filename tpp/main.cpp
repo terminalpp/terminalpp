@@ -5,8 +5,8 @@
 #include "settings.h"
 
 // include all renderers, the renderers themselves contain the guards that selects only one
-#include "gdi/application.h"
-#include "gdi/terminal_window.h"
+#include "gdi/gdi_application.h"
+#include "gdi/gdi_terminal_window.h"
 
 #include "helpers/object.h"
 
@@ -35,16 +35,15 @@ Application * application;
  */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 
-
-
 	// create the application
-	application = new Application(hInstance);
+	application = new GDIApplication(hInstance);
 
 	// create the screen buffer
 	Terminal * vterm1 = new Terminal();
 
 	// and create the terminal window
-	TerminalWindow * tw = application->createNewTerminalWindow(vterm1);
+	TerminalWindow * tw = application->createNewTerminalWindow();
+	tw->setTerminal(vterm1);
 	tw->show();
 
 	// Now run the main loop

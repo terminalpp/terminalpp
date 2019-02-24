@@ -8,6 +8,7 @@
 
 > When dealing with fonts, sometimes the bold font is thicker than normal font, which sounds rather bad. Also, nerd fornts do not behave like proper monospace fonts, which is bad too. 
 
+> Refactor terminal window so that the renderer specific details are decoupled from the virtual terminal maintenance.
 
 ## Architecture Overview
 

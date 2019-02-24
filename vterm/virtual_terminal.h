@@ -16,8 +16,16 @@ namespace vterm {
 		unsigned rows;
 	};
 
+	struct TerminalRepaint {
+		unsigned left;
+		unsigned top;
+		unsigned cols;
+		unsigned rows;
+	};
+
 	typedef EventPayload<void, Object> ChangeEvent;
 	typedef EventPayload<TerminalSize, Object> ResizeEvent;
+	typedef EventPayload<TerminalRepaint, Object> RepaintEvent;
 
 	/** Virtual terminal class. 
 
@@ -82,6 +90,10 @@ namespace vterm {
 		/** Triggers when the terminal has been resized. 
 		 */
 		Event<ResizeEvent> onResize;
+
+		/** Triggered when the data in the terminal change. 
+		 */
+		Event<RepaintEvent> onRepaint;
 
 	private:
 		unsigned cols_;
