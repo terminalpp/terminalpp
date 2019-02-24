@@ -29,6 +29,10 @@ Application * application;
 
 // https://docs.microsoft.com/en-us/windows/desktop/api/_gdi/
 
+void haha(vterm::RepaintEvent & e) {
+
+}
+
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
@@ -40,6 +44,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// create the screen buffer
 	Terminal * vterm1 = new Terminal();
+	vterm1->onRepaint += HANDLER(haha);
 
 	// and create the terminal window
 	TerminalWindow * tw = application->createNewTerminalWindow();

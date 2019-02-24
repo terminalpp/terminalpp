@@ -5,9 +5,25 @@
 
 #include "helpers.h"
 
+
+/*
+#define HANDLER_MACRO_OVERLOAD_(_1,_2,NAME,...) NAME
+#define HANDLER(...) HANDLER_MACRO_OVERLOAD_(__VA_ARGS__, HANDLER2_, HANDLER1_)(__VA_ARGS__)
+//FOO(a, b, c, d) // expeands to FOO4(a, b, c, d)
+
+#define HANDLER1_(FUN) ::helpers::CreateEventHandler(FUN)
+#define HANDLER2_(CLASS,FUN) ::helpers::CreateEventHandler(& CLASS::FUN)
+
+//(CreateEventHandler<CLASS, &CLASS::FUN>(this)
+*/
+
+
+
+
 #define HANDLER(...) CreateEventHandler_(& __VA_ARGS__)
 
 namespace helpers {
+
 
 	/** Encapsulation around event handler function or method.
 	 */
@@ -15,13 +31,11 @@ namespace helpers {
 	class EventHandler {
 	public:
 
-		/** Creates event handler for given function.
-		 */
 		EventHandler(void(*f)(PAYLOAD &)) :
 			object_(nullptr),
 			function_(f),
 			f_(f) {
-			ASSERT(f != nullptr) << "Cannot create function handler for nullptr function";
+			ASSERT(f != nullptr) << "Cannot create handler to null function";
 		}
 
 		/** Creates event handler for the specified object and its method.
@@ -29,7 +43,7 @@ namespace helpers {
 		template<typename C>
 		EventHandler(C * object, void (C:: * method)(PAYLOAD &)) :
 			object_(object),
-			function_(reinterpret_cast<void*>(method)) {
+			method_(reinterpret_cast<void (EventHandler::*)(PAYLOAD &)>(method)) {
 			f_ = std::bind(method, object, std::placeholders::_1);
 			ASSERT(object != nullptr) << "Cannot create method handler for nullptr object";
 		}
@@ -53,17 +67,26 @@ namespace helpers {
 		}
 
 	private:
+
+		typedef void(*FunctionPtr)(PAYLOAD &);
+		typedef void(EventHandler:: *MethodPtr)(PAYLOAD &);
+
+		/** The actual function to call. 
+		 */
+		std::function<void(PAYLOAD &)> f_;
+
 		/** If the handler is a method, holds the handler object.
 		 */
 		void * object_;
-		/** Pointer to the handler function, or handler method.
-		 */
-		void * function_;
-		/** The function object to call.
-		 */
-		std::function<void(PAYLOAD &)> f_;
-	};
 
+		union {
+			/** Pointer to the handler function, or handler method.
+			 */
+			FunctionPtr function_;
+			MethodPtr method_;
+		};
+
+	};
 
 	template<typename PAYLOAD>
 	class Event {
@@ -167,8 +190,6 @@ namespace helpers {
 
 } // namespace helpers
 
-/** Creates event handler from given function of appropriate payload. 
- */
 template<typename PAYLOAD>
 ::helpers::EventHandler<PAYLOAD> CreateEventHandler_(void(*f)(PAYLOAD &)) {
 	return ::helpers::EventHandler<PAYLOAD>(f);

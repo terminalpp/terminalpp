@@ -60,6 +60,11 @@ namespace tpp {
 		}
 
 	protected:
+
+		TerminalWindow() :
+			terminal_(nullptr) {
+		}
+
 		/** Triggered when the attached virtual terminal contents should be repainted. 
 		 */
 		virtual void repaintTerminal(vterm::RepaintEvent & e) = 0;

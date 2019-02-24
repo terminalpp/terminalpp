@@ -88,35 +88,38 @@ namespace tpp {
 
 	void GDITerminalWindow::repaintTerminal(vterm::RepaintEvent & e) {
 		ASSERT(e.sender == this || e.sender == terminal_) << "Unexpected trigger";
-		Terminal::ScreenBuffer sb(terminal_->screenBuffer());
-		Terminal::ScreenCell const & firstCell = sb.at(0, 0);
-		Color lastFg = firstCell.fg;
-		Color lastBg = firstCell.bg;
-		Font lastFont = firstCell.font;
-		SetTextColor(memoryBuffer_, RGB(lastFg.red, lastFg.green, lastFg.blue));
-		SetBkColor(memoryBuffer_, RGB(lastBg.red, lastBg.green, lastBg.blue));
-		SelectObject(memoryBuffer_, getFont(lastFont));
-		for (size_t r = e->top, re = e->top + e->rows; r != re; ++r) {
-			for (size_t c = e->left, ce = e->left + e->cols; c != ce; ++c) {
-				// get the cell info
-				Terminal::ScreenCell const & cell = sb.at(c, r);
-				// update rendering properties if necessary
-				if (cell.fg != lastFg) {
-					lastFg = cell.fg;
-					SetTextColor(memoryBuffer_, RGB(lastFg.red, lastFg.green, lastFg.blue));
+		{
+			Terminal::ScreenBuffer sb(terminal_->screenBuffer());
+			Terminal::ScreenCell const & firstCell = sb.at(0, 0);
+			Color lastFg = firstCell.fg;
+			Color lastBg = firstCell.bg;
+			Font lastFont = firstCell.font;
+			SetTextColor(memoryBuffer_, RGB(lastFg.red, lastFg.green, lastFg.blue));
+			SetBkColor(memoryBuffer_, RGB(lastBg.red, lastBg.green, lastBg.blue));
+			SelectObject(memoryBuffer_, getFont(lastFont));
+			for (size_t r = e->top, re = e->top + e->rows; r != re; ++r) {
+				for (size_t c = e->left, ce = e->left + e->cols; c != ce; ++c) {
+					// get the cell info
+					Terminal::ScreenCell const & cell = sb.at(c, r);
+					// update rendering properties if necessary
+					if (cell.fg != lastFg) {
+						lastFg = cell.fg;
+						SetTextColor(memoryBuffer_, RGB(lastFg.red, lastFg.green, lastFg.blue));
+					}
+					if (cell.bg != lastBg) {
+						lastBg = cell.bg;
+						SetBkColor(memoryBuffer_, RGB(lastBg.red, lastBg.green, lastBg.blue));
+					}
+					if (cell.font != lastFont) {
+						lastFont = cell.font;
+						SelectObject(memoryBuffer_, getFont(lastFont));
+					}
+					// draw the cell contents
+					TextOutW(memoryBuffer_, c * fontWidth_, r * Settings.fontHeight, cell.c.w_str(), cell.c.size());
 				}
-				if (cell.bg != lastBg) {
-					lastBg = cell.bg;
-					SetBkColor(memoryBuffer_, RGB(lastBg.red, lastBg.green, lastBg.blue));
-				}
-				if (cell.font != lastFont) {
-					lastFont = cell.font;
-					SelectObject(memoryBuffer_, getFont(lastFont));
-				}
-				// draw the cell contents
-				TextOutW(memoryBuffer_, c * fontWidth_, r * Settings.fontHeight, cell.c.w_str(), cell.c.size());
 			}
 		}
+		PostMessage(hWnd_, WM_PAINT, 0, 0);
 	} 
 
 	bool GDITerminalWindow::getWindowSize() {

@@ -67,10 +67,16 @@ namespace vterm {
 				buffer_ = newBuffer;
 				cols_ = cols;
 				rows_ = rows;
+				for (unsigned r = 0; r < rows; ++r)
+					for (unsigned c = 0; c < cols; ++c) {
+						buffer_[r * cols + c].c = 'k';
+						buffer_[r * cols + c].fg = Color::White;
+					}
 			}
 			delete[] oldBuffer;
 			// trigger the onResize event
 			trigger(onResize, TerminalSize{ cols, rows });
+			trigger(onRepaint, TerminalRepaint{ 0,0,cols, rows });
 		}
 
 		/** Returns the screen buffer of the terminal so that in can be read or written. 
