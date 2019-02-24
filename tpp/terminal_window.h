@@ -69,6 +69,10 @@ namespace tpp {
 		 */
 		virtual void repaintTerminal(vterm::RepaintEvent & e) = 0;
 
+		/** Resizes the window and the attached terminal. 
+		
+		    Triggers the repaint of the terminal if the terminal size does not change (since it is assumed the buffer size did change), if the terminal size changes, then it is assumed the terminal will trigger the repaint event itself when it resizes.
+		 */
 		virtual void resize(unsigned width, unsigned height) {
 			width_ = width;
 			height_ = height;
