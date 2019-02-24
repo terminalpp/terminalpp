@@ -20,7 +20,7 @@ namespace tpp {
 		fontHeight_ = Settings.fontHeight;
 		EndPaint(hWnd_, &ps);
 		// update the window size
-		getWindowSize();
+		updateWindowSize();
 	}
 
 	LRESULT CALLBACK GDITerminalWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -37,7 +37,7 @@ namespace tpp {
 				PostQuitMessage(0);
 			break;
 		case WM_SIZE:
-			tw->getWindowSize();
+			tw->updateWindowSize();
 			break;
 		case WM_PAINT:
 			ASSERT(tw != nullptr) << "Attempt to paint unknown window";
@@ -122,24 +122,23 @@ namespace tpp {
 		PostMessage(hWnd_, WM_PAINT, 0, 0);
 	} 
 
-	bool GDITerminalWindow::getWindowSize() {
+	void GDITerminalWindow::resize(unsigned width, unsigned height) {
+		if (width_ == width && height_ == height)
+			return;
+		// delete the old buffer and create a new buffer image of appropriate size
+		if (buffer_ != nullptr)
+			DeleteObject(buffer_);
+		buffer_ = CreateCompatibleBitmap(memoryBuffer_, width, height);
+		SelectObject(memoryBuffer_, buffer_);
+		TerminalWindow::resize(width, height);
+	}
+
+	void GDITerminalWindow::updateWindowSize() {
 		RECT clientRect;
 		GetClientRect(hWnd_, &clientRect);
 		size_t w = clientRect.right - clientRect.left;
 		size_t h = clientRect.bottom - clientRect.top;
-		if (w != width_ || h != height_) {
-			width_ = w;
-			height_ = h;
-			if (terminal_ != nullptr)
-				terminal_->resize(w / fontWidth_, h / fontHeight_);
-			if (buffer_ != nullptr)
-				DeleteObject(buffer_);
-			buffer_ = CreateCompatibleBitmap(memoryBuffer_, width_, height_);
-			SelectObject(memoryBuffer_, buffer_);
-			return true;
-		} else {
-			return false;
-		}
+		resize(w, h);
 	}
 
 } // namespace tpp

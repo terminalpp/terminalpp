@@ -72,8 +72,14 @@ namespace tpp {
 		virtual void resize(unsigned width, unsigned height) {
 			width_ = width;
 			height_ = height;
-			if (terminal_ != nullptr)
-				terminal_->resize(cols(), rows());
+			if (terminal_ != nullptr) {
+				unsigned c = cols();
+				unsigned r = rows();
+				if (terminal_->cols() != c || terminal_->rows() != r)
+					terminal_->resize(cols(), rows());
+				else
+					repaintTerminal(vterm::RepaintEvent(this, vterm::TerminalRepaint{ 0,0, c, r }));
+			}
 		}
 
 		/** Attaches given terminal to the window. 

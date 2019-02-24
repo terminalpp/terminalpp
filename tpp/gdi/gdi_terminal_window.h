@@ -37,6 +37,13 @@ namespace tpp {
 			DeleteDC(memoryBuffer_);
 		}
 
+	protected:
+		/** Repaints the specified rectangle of the terminal window and then posts the WM_PAINT message to the window.
+		 */
+		void repaintTerminal(vterm::RepaintEvent & e) override;
+
+		void resize(unsigned width, unsigned height) override;
+
 	private:
 		friend class GDIApplication;
 
@@ -48,20 +55,17 @@ namespace tpp {
 		 */
 		GDITerminalWindow(HWND hWnd);
 
-		/** Repaints the specified rectangle of the terminal window and then posts the WM_PAINT message to the window. 
+		/** Gets the size of the window from GDI and updates the size of the window and attached terminal accordingly. 
 		 */
-		void repaintTerminal(vterm::RepaintEvent & e) override;
-
+		void updateWindowSize();
 
 		HFONT getFont(vterm::Font const & font);
 
 		unsigned calculateFontWidth(HDC hdc, HFONT font);
 
-		/** Sets the width_ and height_ properties to the current width and height of the window. Returns true if there was any change from the stored values, false otherwise. 
-
-		    If there is a change, updates the size of the attached terminal, but does not raise the onResize event. Also updates the bitmap to reflect the new size. 
-		*/
-		bool getWindowSize();
+		/** Sets the width_ and height_ properties to the current width and height of the window. 
+		 */
+		void getWindowSize();
 
 		/** Handle to GDI window object. */
 		HWND hWnd_;
