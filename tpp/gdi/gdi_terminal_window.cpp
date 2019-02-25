@@ -6,6 +6,10 @@ namespace tpp {
 
 	std::unordered_map<HWND, GDITerminalWindow *> GDITerminalWindow::Windows_;
 
+	unsigned GDITerminalWindow::BorderWidth_ = 0;
+	unsigned GDITerminalWindow::BorderHeight_ = 0;
+
+
 	GDITerminalWindow::GDITerminalWindow(HWND hWnd) :
 		hWnd_(hWnd),
 	    buffer_(nullptr) {
@@ -20,13 +24,33 @@ namespace tpp {
 		fontHeight_ = Settings.fontHeight;
 		EndPaint(hWnd_, &ps);
 		// update the window size
-		updateWindowSize();
+		getWindowSize();
 	}
 
 	LRESULT CALLBACK GDITerminalWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 		auto i = Windows_.find(hWnd);
 		GDITerminalWindow * tw = (i == Windows_.end()) ? nullptr : i->second;
 		switch (msg) {
+		/* When the window is created, the border width and height of a terminal window is determined and the window's size is updated to adjust for it. */
+		case WM_CREATE: {
+			CREATESTRUCT & cs = * reinterpret_cast<CREATESTRUCT*>(lParam);
+			RECT r;
+			r.left = cs.x;
+			r.right = cs.x + cs.cx;
+			r.top = cs.y;
+			r.bottom = cs.y + cs.cy;
+			AdjustWindowRectEx(&r, cs.style, false, cs.dwExStyle);
+			unsigned bw = r.right - r.left - cs.cx;
+			unsigned bh = r.bottom - r.top - cs.cy;
+			ASSERT(BorderWidth_ == 0 || BorderWidth_ == bw) << "All terminal windows expected to have same border width";
+			ASSERT(BorderHeight_ == 0 || BorderHeight_ == bh) << "All terminal windows expected to have same border height";
+			if (bw != 0 || bh != 0) {
+				BorderWidth_ = bw;
+				BorderHeight_ = bh;
+				SetWindowPos(hWnd, HWND_TOP, cs.x, cs.y, cs.cx + bw, cs.cy + bh, SWP_NOZORDER);
+			}
+			break;
+		}
 		case WM_CLOSE:
 			DestroyWindow(hWnd);
 			break;
@@ -36,9 +60,48 @@ namespace tpp {
 			if (Windows_.empty())
 				PostQuitMessage(0);
 			break;
-		case WM_SIZE:
-			tw->updateWindowSize();
+		/* Called when the window is resized interactively by the user. Makes sure that the window size snaps to discrete terminal sizes. */
+		case WM_SIZING: {
+			RECT * winRect = reinterpret_cast<RECT*>(lParam);
+			switch (wParam) {
+			case WMSZ_BOTTOM:
+			case WMSZ_BOTTOMRIGHT:
+			case WMSZ_BOTTOMLEFT:
+				winRect->bottom -= (winRect->bottom - winRect->top - BorderHeight_) % tw->fontHeight_;
+				break;
+			default:
+				winRect->top += (winRect->bottom - winRect->top - BorderHeight_) % tw->fontHeight_;
+				break;
+			}
+			switch (wParam) {
+			case WMSZ_RIGHT:
+			case WMSZ_TOPRIGHT:
+			case WMSZ_BOTTOMRIGHT:
+				winRect->right -= (winRect->right - winRect->left - BorderWidth_) % tw->fontWidth_;
+				break;
+			default:
+				winRect->left += (winRect->right - winRect->left - BorderWidth_) % tw->fontWidth_;
+				break;
+			}
 			break;
+		}
+		/* Called when the window is resized to given values. 
+
+		   No resize is performed if the window is minimized (we would have terminal size of length 0).
+
+		   It is ok if no terminal window is associated with the handle as the message can be sent from the WM_CREATE when window is resized to account for the window border which has to be calculated. 
+		 */
+		case WM_SIZE: {
+			if (wParam == SIZE_MINIMIZED)
+				break;
+			if (tw != nullptr) {
+				RECT rect;
+				GetClientRect(hWnd, &rect);
+				tw->resize(rect.right, rect.bottom);
+			}
+			break;
+		}
+		/* Repaint of the window is requested. */
 		case WM_PAINT:
 			ASSERT(tw != nullptr) << "Attempt to paint unknown window";
 			// copy the memory buffer to the window area
@@ -69,7 +132,7 @@ namespace tpp {
 			DEFAULT_CHARSET,
 			OUT_OUTLINE_PRECIS,
 			CLIP_DEFAULT_PRECIS,
-			DEFAULT_QUALITY,
+			CLEARTYPE_QUALITY,
 			FIXED_PITCH,
 			Settings.fontName.c_str());
 		// if the font creation failed, return the default font
@@ -133,11 +196,11 @@ namespace tpp {
 		TerminalWindow::resize(width, height);
 	}
 
-	void GDITerminalWindow::updateWindowSize() {
+	void GDITerminalWindow::getWindowSize() {
 		RECT clientRect;
 		GetClientRect(hWnd_, &clientRect);
-		size_t w = clientRect.right - clientRect.left;
-		size_t h = clientRect.bottom - clientRect.top;
+		unsigned w = clientRect.right - clientRect.left;
+		unsigned h = clientRect.bottom - clientRect.top;
 		resize(w, h);
 	}
 

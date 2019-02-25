@@ -25,6 +25,7 @@ namespace helpers {
 
 		So for now the events use the cast of method pointer to method pointer of other object, so that I can store the ptr somehow and I bind the object to the method in a std::function. This is not efficient both in memory (the std::function cannot compare itself, so I need to check & store the object & function) and if internet is to be believed also in time - std::function should be slow. 
 	 */
+
 	template<typename PAYLOAD>
 	class EventHandler {
 	public:

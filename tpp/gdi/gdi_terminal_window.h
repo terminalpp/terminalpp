@@ -57,15 +57,11 @@ namespace tpp {
 
 		/** Gets the size of the window from GDI and updates the size of the window and attached terminal accordingly. 
 		 */
-		void updateWindowSize();
+		void getWindowSize();
 
 		HFONT getFont(vterm::Font const & font);
 
 		unsigned calculateFontWidth(HDC hdc, HFONT font);
-
-		/** Sets the width_ and height_ properties to the current width and height of the window. 
-		 */
-		void getWindowSize();
 
 		/** Handle to GDI window object. */
 		HWND hWnd_;
@@ -80,11 +76,20 @@ namespace tpp {
 		 */
 		std::unordered_map<vterm::Font, HFONT, vterm::Font::BlinkIgnoringHash,	 vterm::Font::BlinkIgnoringComparator> fonts_;
 
-		/** List of all terminal windows. 
+		/** Keeps the extra width and height of the border of the windows.
 
-		    TODO perhaps this should better go to the application - I haven't yet decided on the multi-window usage. 
+		    These are populated when first terminal window is created and their values are kept so that the window dimensions can be aligned to the properties of the terminal font when resizing, etc. 
+		 */
+		static unsigned BorderWidth_;
+		static unsigned BorderHeight_;
+
+
+		/** List of all terminal windows.
+
+			TODO perhaps this should better go to the application - I haven't yet decided on the multi-window usage.
 		 */
 		static std::unordered_map<HWND, GDITerminalWindow *> Windows_;
+
 	};
 
 

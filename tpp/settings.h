@@ -12,8 +12,8 @@ namespace tpp {
 	public:
 		std::string fontName = "Iosevka NF";
 		unsigned fontHeight = 18;
-		unsigned defaultWindowWidth = 640;
-		unsigned defaultWindowHeight = 480;
+		unsigned defaultWindowWidth = 720;
+		unsigned defaultWindowHeight = 450;
 	};
 
 	// defined in main.cpp

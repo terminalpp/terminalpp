@@ -20,7 +20,6 @@ using namespace tpp;
 
 Application * application;
 
-
 //HINSTANCE hInstance;
 //TerminalWindow * tw;
 
