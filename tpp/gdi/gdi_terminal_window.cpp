@@ -153,6 +153,9 @@ namespace tpp {
 		ASSERT(e.sender == this || e.sender == terminal_) << "Unexpected trigger";
 		{
 			Terminal::ScreenBuffer sb(terminal_->screenBuffer());
+			// if the screen buffer is empty, there is nothing to paint, exit
+			if (sb.cols() == 0 || sb.rows() == 0)
+				return;
 			Terminal::ScreenCell const & firstCell = sb.at(0, 0);
 			Color lastFg = firstCell.fg;
 			Color lastBg = firstCell.bg;
