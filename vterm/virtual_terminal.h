@@ -32,6 +32,9 @@ namespace vterm {
 	 */
 	class VirtualTerminal : public Object {
 	public:
+
+		class Connector;
+
 		/** Holder for rendering information of a single cell.
 
 			Although quite a lot memory is required for each cell, this should be perfectly fine since we need only a very small ammount of cells for any terminal window.
@@ -187,6 +190,32 @@ namespace vterm {
 		std::mutex bufferLock_;
 	}; // vterm::VirtualTerminal
 
+
+
+	/** 
+	 */
+	class VirtualTerminal::Connector {
+	public:
+
+		VirtualTerminal const * terminal() const {
+			return terminal_;
+		}
+
+		VirtualTerminal * terminal() {
+			return terminal_;
+		}
+
+		void setTerminal(VirtualTerminal * terminal) {
+			terminal_ = terminal;
+		}
+	protected:
+
+		virtual void resize(unsigned width, unsigned height) = 0;
+
+
+	private:
+		VirtualTerminal * terminal_;
+	};
 
 
 } // namespace vterm
