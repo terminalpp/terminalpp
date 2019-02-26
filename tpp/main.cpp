@@ -42,7 +42,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	application = new GDIApplication(hInstance);
 
 	// create the screen buffer
-	Terminal * vterm1 = new Terminal();
+	vterm::VirtualTerminal * vterm1 = new vterm::VirtualTerminal();
 	vterm1->onRepaint += HANDLER(haha);
 
 	// and create the terminal window

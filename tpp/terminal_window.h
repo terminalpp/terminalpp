@@ -33,13 +33,13 @@ namespace tpp {
 
 		/** Returns the virtual terminal which is being rendered. 
 		 */
-		Terminal const * terminal() const {
+		vterm::VirtualTerminal const * terminal() const {
 			return terminal_;
 		}
 
 		/** Sets the virtual terminal being rendered. 
 		 */
-		void setTerminal(Terminal * terminal) {
+		void setTerminal(vterm::VirtualTerminal * terminal) {
 			if (terminal_ == terminal)
 				return;
 			if (terminal_ != nullptr)
@@ -89,7 +89,7 @@ namespace tpp {
 
 		/** Attaches given terminal to the window. 
 		 */
-		virtual void attachTerminal(Terminal * terminal) {
+		virtual void attachTerminal(vterm::VirtualTerminal * terminal) {
 			if (terminal != nullptr) {
 				terminal->onRepaint += HANDLER(TerminalWindow::repaintTerminal);
 				terminal_ = terminal;
@@ -111,7 +111,7 @@ namespace tpp {
 		unsigned height_;
 		unsigned fontWidth_;
 		unsigned fontHeight_;
-		Terminal * terminal_;
+		vterm::VirtualTerminal * terminal_;
 	};
 
 

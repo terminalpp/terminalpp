@@ -4,8 +4,6 @@
 
 namespace tpp {
 
-	typedef vterm::VirtualTerminal<vterm::Encoding::UTF16> Terminal;
-
 	class TerminalWindow;
 
 	class Application {

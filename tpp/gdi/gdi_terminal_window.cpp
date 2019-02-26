@@ -157,11 +157,11 @@ namespace tpp {
 			return;
 		ASSERT(e.sender == this || e.sender == terminal_) << "Unexpected trigger";
 		{
-			Terminal::ScreenBuffer sb(terminal_->screenBuffer());
+			vterm::VirtualTerminal::ScreenBuffer sb(terminal_->screenBuffer());
 			// if the screen buffer is empty, there is nothing to paint, exit
 			if (sb.cols() == 0 || sb.rows() == 0)
 				return;
-			Terminal::ScreenCell const & firstCell = sb.at(0, 0);
+			vterm::VirtualTerminal::ScreenCell const & firstCell = sb.at(0, 0);
 			Color lastFg = firstCell.fg;
 			Color lastBg = firstCell.bg;
 			Font lastFont = firstCell.font;
@@ -176,7 +176,7 @@ namespace tpp {
 			for (size_t r = e->top, re = e->top + e->rows; r != re; ++r) {
 				for (size_t c = e->left, ce = e->left + e->cols; c != ce; ++c) {
 					// get the cell info
-					Terminal::ScreenCell const & cell = sb.at(c, r);
+					vterm::VirtualTerminal::ScreenCell const & cell = sb.at(c, r);
 					// update rendering properties if necessary
 					if (cell.fg != lastFg) {
 						lastFg = cell.fg;
