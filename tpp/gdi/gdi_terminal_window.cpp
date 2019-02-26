@@ -18,7 +18,7 @@ namespace tpp {
 		// create the default font and determine its width
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd_, &ps);
-		memoryBuffer_ = CreateCompatibleDC(hdc);
+		memoryBuffer_ = CreateCompatibleDC(nullptr);
 		HFONT defaultFont = getFont(vterm::Font());
 		fontWidth_ = calculateFontWidth(hdc, defaultFont) + 2;
 		fontHeight_ = Settings.fontHeight;
@@ -107,6 +107,8 @@ namespace tpp {
 			// copy the memory buffer to the window area
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);
+			if (tw->buffer_ == nullptr)
+				tw->createBufferAndRepaint(hdc);
 			BitBlt(hdc, 0, 0, tw->width_, tw->height_, tw->memoryBuffer_, 0, 0, SRCCOPY);
 			EndPaint(hWnd, &ps);
 			break;
@@ -150,6 +152,9 @@ namespace tpp {
 	}
 
 	void GDITerminalWindow::repaintTerminal(vterm::RepaintEvent & e) {
+		// if the buffer is not valid, don't bother repainting, the WM_PAINT will call it when ready
+		if (buffer_ == nullptr)
+			return;
 		ASSERT(e.sender == this || e.sender == terminal_) << "Unexpected trigger";
 		{
 			Terminal::ScreenBuffer sb(terminal_->screenBuffer());
@@ -160,6 +165,11 @@ namespace tpp {
 			Color lastFg = firstCell.fg;
 			Color lastBg = firstCell.bg;
 			Font lastFont = firstCell.font;
+//			HBRUSH brush = CreateSolidBrush(RGB(0, 0, 255));
+//			RECT stuff;
+//			SetRect(&stuff, 0, 0, 100, 100);
+//			FillRect(memoryBuffer_, &stuff, brush);
+
 			SetTextColor(memoryBuffer_, RGB(lastFg.red, lastFg.green, lastFg.blue));
 			SetBkColor(memoryBuffer_, RGB(lastBg.red, lastBg.green, lastBg.blue));
 			SelectObject(memoryBuffer_, getFont(lastFont));
@@ -171,7 +181,7 @@ namespace tpp {
 					if (cell.fg != lastFg) {
 						lastFg = cell.fg;
 						SetTextColor(memoryBuffer_, RGB(lastFg.red, lastFg.green, lastFg.blue));
-					}
+					} 
 					if (cell.bg != lastBg) {
 						lastBg = cell.bg;
 						SetBkColor(memoryBuffer_, RGB(lastBg.red, lastBg.green, lastBg.blue));
@@ -181,6 +191,7 @@ namespace tpp {
 						SelectObject(memoryBuffer_, getFont(lastFont));
 					}
 					// draw the cell contents
+
 					TextOutW(memoryBuffer_, c * fontWidth_, r * Settings.fontHeight, cell.c.w_str(), cell.c.size());
 				}
 			}
@@ -194,10 +205,19 @@ namespace tpp {
 		// delete the old buffer and create a new buffer image of appropriate size
 		if (buffer_ != nullptr)
 			DeleteObject(buffer_);
-		buffer_ = CreateCompatibleBitmap(memoryBuffer_, width, height);
-		SelectObject(memoryBuffer_, buffer_);
+		buffer_ = nullptr;
 		TerminalWindow::resize(width, height);
 	}
+
+	void GDITerminalWindow::createBufferAndRepaint(HDC hdc) {
+		// create the bitmap so that it copies the window properties properly
+		ASSERT(buffer_ == nullptr) << "Buffer should be empty";
+		buffer_ = CreateCompatibleBitmap(hdc, width_, height_);
+		SelectObject(memoryBuffer_, buffer_);
+		// do the repaint 
+		repaintTerminal(vterm::RepaintEvent(this, vterm::TerminalRepaint{ 0,0, cols(), rows() }));
+	}
+
 
 	void GDITerminalWindow::getWindowSize() {
 		RECT clientRect;

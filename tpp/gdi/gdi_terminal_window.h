@@ -55,6 +55,9 @@ namespace tpp {
 		 */
 		GDITerminalWindow(HWND hWnd);
 
+
+		void createBufferAndRepaint(HDC hdc);
+
 		/** Gets the size of the window from GDI and updates the size of the window and attached terminal accordingly. 
 		 */
 		void getWindowSize();

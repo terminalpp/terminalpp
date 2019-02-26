@@ -81,8 +81,9 @@ namespace tpp {
 				unsigned r = rows();
 				if (terminal_->cols() != c || terminal_->rows() != r)
 					terminal_->resize(cols(), rows());
-				else
+/*				else
 					repaintTerminal(vterm::RepaintEvent(this, vterm::TerminalRepaint{ 0,0, c, r }));
+					*/
 			}
 		}
 

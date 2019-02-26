@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <dwrite.h>
 
 #include "gdi_application.h"
 #include "gdi_terminal_window.h"
@@ -16,6 +17,14 @@ namespace tpp {
 	GDIApplication::GDIApplication(HINSTANCE hInstance) :
 		hInstance_(hInstance) {
 		registerTerminalWindowClass();
+		SystemParametersInfo(SPI_SETFONTSMOOTHING,
+			TRUE,
+			0,
+			SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+		SystemParametersInfo(SPI_SETFONTSMOOTHINGTYPE,
+			0,
+			(PVOID)FE_FONTSMOOTHINGCLEARTYPE,
+			SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
 	}
 
 	TerminalWindow * GDIApplication::createNewTerminalWindow() {

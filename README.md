@@ -4,6 +4,13 @@
 
 > This looks like a good font: http://typeof.net/Iosevka/ 
 
+## Links to study:
+
+https://blogs.msdn.microsoft.com/commandline/2018/07/20/windows-command-line-inside-the-windows-console/
+https://blogs.msdn.microsoft.com/commandline/2018/08/02/windows-command-line-introducing-the-windows-pseudo-console-conpty/
+
+
+
 ## TODOs
 
 > When dealing with fonts, sometimes the bold font is thicker than normal font, which sounds rather bad. Also, nerd fornts do not behave like proper monospace fonts, which is bad too. 
