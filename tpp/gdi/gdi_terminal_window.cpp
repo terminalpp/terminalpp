@@ -173,8 +173,8 @@ namespace tpp {
 			SetTextColor(memoryBuffer_, RGB(lastFg.red, lastFg.green, lastFg.blue));
 			SetBkColor(memoryBuffer_, RGB(lastBg.red, lastBg.green, lastBg.blue));
 			SelectObject(memoryBuffer_, getFont(lastFont));
-			for (size_t r = e->top, re = e->top + e->rows; r != re; ++r) {
-				for (size_t c = e->left, ce = e->left + e->cols; c != ce; ++c) {
+			for (unsigned r = e->top, re = e->top + e->rows; r != re; ++r) {
+				for (unsigned c = e->left, ce = e->left + e->cols; c != ce; ++c) {
 					// get the cell info
 					vterm::VirtualTerminal::ScreenCell const & cell = sb.at(c, r);
 					// update rendering properties if necessary
@@ -191,8 +191,9 @@ namespace tpp {
 						SelectObject(memoryBuffer_, getFont(lastFont));
 					}
 					// draw the cell contents
-
-					TextOutW(memoryBuffer_, c * fontWidth_, r * Settings.fontHeight, cell.c.w_str(), cell.c.size());
+					// ISSUE 4 - make sure we can print full Unicode, not just UCS2
+					wchar_t wc = cell.c.toWChar();
+					TextOutW(memoryBuffer_, c * fontWidth_, r * Settings.fontHeight, & wc, 1);
 				}
 			}
 		}

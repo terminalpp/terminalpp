@@ -6,10 +6,7 @@
 
 ## Links to study:
 
-https://blogs.msdn.microsoft.com/commandline/2018/07/20/windows-command-line-inside-the-windows-console/
-https://blogs.msdn.microsoft.com/commandline/2018/08/02/windows-command-line-introducing-the-windows-pseudo-console-conpty/
-
-
+https://github.com/Microsoft/console/tree/master/samples/ConPTY/EchoCon
 
 ## TODOs
 

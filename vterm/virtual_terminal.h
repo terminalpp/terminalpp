@@ -51,7 +51,7 @@ namespace vterm {
 
 			/** The character in the cell.
 			 */
-			Char::UTF16 c;
+			Char::UTF8 c;
 
 			/** The font to be used for displaying the cell.
 			 */

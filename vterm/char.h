@@ -1,5 +1,7 @@
 #pragma once
 
+#include "helpers/helpers.h"
+
 namespace vterm {
 
 	/** Different character encodings available.
@@ -10,12 +12,13 @@ namespace vterm {
 		UTF8 - full Unicode characters, variable length, UTF8 encoding.
 		UTF16 - full Unicode characters, variable length, UTF16 encoding.
 		UTF32 - full Unicode codewords, fixed length.
+		UCS2 - 16bit fixed length encoding used internally by many systems. Capable of displaying only 65536 characters. 
 	 */
 	enum class Encoding {
 		ASCII,
 		UTF8,
 		UTF16,
-		UTF32
+		UTF32,
 	};
 
 	/** Character representation
@@ -40,10 +43,92 @@ namespace vterm {
 
 	};
 
+	/** UTF8 representation of character. 
+	 */
 	template<>
 	class Char::Representation<Encoding::UTF8> {
 	public:
 		static constexpr Encoding Encoding = Encoding::UTF8;
+
+		/** Creates an UTF8 character from given ASCII char. 
+		 */
+		Representation(char from = 0x20) :
+			bytes_{ static_cast<unsigned char>(from), 0, 0, 0 } {
+		}
+
+		/** Creates an UTF8 character from given unicode codepoint. 
+		 */
+		Representation(unsigned codepoint) {
+			fillFromCodepoint(codepoint);
+		}
+
+		/** Creates the UTF8 representation from given UCS2 16bit character. 
+		 */
+		Representation(wchar_t ucs2) {
+			fillFromCodepoint(ucs2);
+		}
+
+		/** Returns the number of bytes required to encode the stored codepoint. 
+		 */
+		size_t size() const {
+			if (bytes_[0] <= 0x7f) // 0xxxxxxx
+				return 1;
+			else if (bytes_[0] <= 0xbf) // 10xxxxxx
+				return 2;
+			else if (bytes_[0] <= 0xdf) // 110xxxxx
+				return 3;
+			else
+				return 4;
+		}
+
+		/** Returns the UTF codepoint stored in the character. 
+		 */
+		unsigned codepoint() const {
+			if (bytes_[0] <= 0x7f)
+				return bytes_[0]; // 0x0xxx xxxx
+			else if (bytes_[0] <= 0xbf)
+				return ((bytes_[0] & 0x1f) << 6) + (bytes_[1] & 0x3f); // 0x110x xxxx + 0x10xx xxxx
+			else if (bytes_[0] <= 0xdf)
+				return 0;
+			else
+				return 0;
+		}
+
+		/** Returns the codepoint stored encoded as UCS2 character. 
+
+		    Assumes that the stored codepoint is smaller than 65536 since higher glyphs can't be stored in wchar_t. 
+		 */
+		wchar_t toWChar() const {
+			unsigned cp = codepoint();
+			ASSERT(cp < 65536) << "Unicode codepoint " << codepoint() << " cannot be encoded in single wchar_t";
+			return (cp & 0xffff);
+		}
+
+
+	private:
+		/** Takes a UTF codepoint and encodes it in UTF8. 
+		 */
+		void fillFromCodepoint(unsigned cp) {
+			if (cp < 0x80) {
+				bytes_[0] = cp & 0x7f; // 0xxxxxxx
+			} else if (cp < 0x800) {
+				bytes_[0] = (0xc0) | ((cp >> 6) & 0x1f); // 110xxxxx
+				bytes_[1] = (0x80) | (cp & 0x3f); // 10xxxxxx
+			} else if (cp < 0x10000) {
+				bytes_[0] = (0xe0) | ((cp >> 12) & 0x0f); // 1110xxxx
+				bytes_[1] = (0x80) | ((cp >> 6) & 0x3f); // 10xxxxxx
+				bytes_[2] = (0x80) | (cp & 0x3f); // 10xxxxxx
+			} else {
+				bytes_[0] = (0xe0) | ((cp >> 18) & 0x07); // 11110xxx
+				bytes_[1] = (0x80) | ((cp >> 12) & 0x3f); // 10xxxxxx
+				bytes_[2] = (0x80) | ((cp >> 6) & 0x3f); // 10xxxxxx
+				bytes_[3] = (0x80) | (cp & 0x3f); // 10xxxxxx
+			}
+		}
+
+
+
+		unsigned char bytes_[4];
 
 	};
 
