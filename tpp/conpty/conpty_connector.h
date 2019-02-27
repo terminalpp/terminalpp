@@ -32,6 +32,12 @@ namespace tpp {
 			free(startupInfo_.lpAttributeList);
 		}
 
+	protected:
+		void resize(unsigned width, unsigned height) override {
+
+		}
+
+
 	private:
 
 		/** Opens the pipes and creates a new pseudoconsole. 
@@ -42,7 +48,7 @@ namespace tpp {
 		 */
 		void execute();
 
-		static void InputPipeReader(ConPTYConnector & connector);
+		static void InputPipeReader(ConPTYConnector * connector);
 
 		/** The command executed by the connector. 
 

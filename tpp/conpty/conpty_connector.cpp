@@ -12,6 +12,10 @@ namespace tpp {
 		pipeIn_{INVALID_HANDLE_VALUE},
 		pipeOut_{INVALID_HANDLE_VALUE} {
 		startupInfo_.lpAttributeList = nullptr; // just to be sure
+		createPseudoConsole();
+		std::thread t(ConPTYConnector::InputPipeReader, this);
+		t.detach();
+		execute();
 	}
 
 	void ConPTYConnector::createPseudoConsole() {
@@ -74,10 +78,19 @@ namespace tpp {
 			THROW(Win32Error(STR("Unable to start process " << command_)));
 	}
 
-	void ConPTYConnector::InputPipeReader(ConPTYConnector & connector) {
+	void ConPTYConnector::InputPipeReader(ConPTYConnector * connector) {
 		// TODO how to read from the terminal, knowing that it might be VT sequences into some kind of a buffer
 		// that would ideally be one per the whole connector (i.e. the reader and the decoder will use the same buffer
 		// also, start the thread before executing 
 		// and the other maintenance
+		unsigned char buffer[512];
+		unsigned long bytesRead;
+		bool readOk;
+		do {
+			readOk = ReadFile(connector->pipeIn_, &buffer,512, & bytesRead, nullptr);
+			if (readOk) {
+				readOk = true;
+			}
+		} while (readOk); 
 	}
-}
+} // namespace tpp

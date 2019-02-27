@@ -210,6 +210,10 @@ namespace vterm {
 		}
 	protected:
 
+		Connector() :
+			terminal_{ nullptr } {
+		}
+
 		virtual void resize(unsigned width, unsigned height) = 0;
 
 

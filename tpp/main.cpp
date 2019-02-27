@@ -8,6 +8,8 @@
 #include "gdi/gdi_application.h"
 #include "gdi/gdi_terminal_window.h"
 
+#include "conpty/conpty_connector.h"
+
 #include "helpers/object.h"
 
 namespace tpp {
@@ -28,10 +30,6 @@ Application * application;
 
 // https://docs.microsoft.com/en-us/windows/desktop/api/_gdi/
 
-void haha(vterm::RepaintEvent & e) {
-
-}
-
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
@@ -43,12 +41,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// create the screen buffer
 	vterm::VirtualTerminal * vterm1 = new vterm::VirtualTerminal();
-	vterm1->onRepaint += HANDLER(haha);
+
+
 
 	// and create the terminal window
 	TerminalWindow * tw = application->createNewTerminalWindow();
 	tw->setTerminal(vterm1);
 	tw->show();
+
+	ConPTYConnector c("wsl -e ls -la", vterm1);
+
 
 	// Now run the main loop
 	application->mainLoop();
