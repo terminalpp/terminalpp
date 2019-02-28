@@ -6,7 +6,7 @@
 namespace tpp {
 
 	ConPTYConnector::ConPTYConnector(std::string const & command, vterm::VirtualTerminal * terminal) :
-		command_(command),
+		command_{command},
 		startupInfo_{},
 		conPTY_{INVALID_HANDLE_VALUE},
 		pipeIn_{INVALID_HANDLE_VALUE},

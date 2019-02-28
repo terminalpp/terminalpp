@@ -101,5 +101,13 @@ namespace helpers {
 	};
 
 
+	/** Shorthand for determining whether value is in given inclusive interval. 
+	 */
+	template<typename T>
+	bool InRangeInclusive(T const & what, T const & fromValue, T const & toValue) {
+		return (what >= fromValue && what <= toValue);
+	}
+
+
 
 } // namespace helpers

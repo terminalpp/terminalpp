@@ -12,6 +12,9 @@
 
 #include "helpers/object.h"
 
+
+#include "helpers/hash.h"
+
 namespace tpp {
 
 	SettingsSingleton Settings;
@@ -35,6 +38,11 @@ Application * application;
     For now creates single terminal window and one virtual terminal. 
  */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+	helpers::HashMD5 md5("56ab781256ab781256ab781256ab7812");
+	std::cout << md5 << std::endl;
+
+	std::unordered_map<helpers::HashMD5, std::string> x;
+
 
 	// create the application
 	application = new GDIApplication(hInstance);

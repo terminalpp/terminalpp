@@ -32,6 +32,18 @@ Instead of `c` style `assert`, the macro `ASSERT` which uses the exceptions mech
 
 If `NDEBUG` is specified, `ASSERT` translates to dead code and will be removed by the optimizer. 
 
+## Hash - `hash.h`
+
+Provides an implementation of memory efficient version of variable sized hashes. These can be used whenever string with hexadecimal representation will be used and they occupy only half the space required. The hash can be printed the same way as a string would be and impementation for `std::hash` is provided so that the hash can be used as key in various `stl` containers. 
+
+## String Operations - `strings.h`
+
+Contains a few simple functions for string manipulation that I feel are sorely missing from the standard library. 
+
+## BaseObject - `object.h`
+
+Implements the `Object` class which has some functionality useful for objects and their hierarchies, such as a virtual destructor which people often forget and interoperability with events using the `HANDLER` macro (see the section discussing events below).
+
 ## Events - `events.h`
 
 Provides a simple and easy to use event system. Each event can be associated with multiple *event handlers* - functions or object methods that will be called when the event is triggered. Event handlers can be added using `+=` operator and removed using the `-=` operator.
@@ -76,8 +88,6 @@ The following is an example of how events can be used:
 			trigger(onMouseChange, Mouse{10,15,0});
 		}
 	}; 
-
-
 
 
 
