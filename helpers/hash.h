@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+
 #include "helpers.h"
 #include "strings.h"
 
@@ -30,7 +32,7 @@ namespace helpers {
 		/** Copy constructor, simple memcpy's the byte array. 
 		 */
 		Hash(Hash const & from) {
-			memcpy(&buffer_, &from.buffer_, BYTES);
+			memcpy(&bytes_, &from.bytes_, BYTES);
 		}
 
 		/** Size of the hash in bytes. 
@@ -48,7 +50,7 @@ namespace helpers {
 		/** Sets the hash to given hash. 
 		 */
 		Hash & operator = (Hash & from) {
-			memcpy(&buffer_, &from.buffer_, BYTES);
+			memcpy(&bytes_, &from.bytes_, BYTES);
 			return *this;
 		}
 
@@ -126,12 +128,12 @@ namespace std {
 	 */
 	template<unsigned BYTES>
 	struct hash<helpers::Hash<BYTES>> {
-		size_t operator() (helpers::Hash<BYTES> & h) {
-			size_t result;
+		size_t operator() (helpers::Hash<BYTES> const & h) const {
+			size_t result = 0;
 			unsigned i = 0;
 			hash<unsigned> hu{};
 			while (i + sizeof(unsigned) <= BYTES) {
-				result += hu(*reinterpret_cast<unsigned>(h.raw() + i));
+				result += hu(*reinterpret_cast<unsigned const *>(h.raw() + i));
 				i += sizeof(unsigned);
 			}
 			hash<unsigned char> hc{};

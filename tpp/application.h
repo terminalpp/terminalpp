@@ -6,6 +6,8 @@ namespace tpp {
 
 	class TerminalWindow;
 
+	/** Application provides the common functionality for the terminal application across platforms and renderers, such as settings, persistence, etc. 
+	 */
 	class Application {
 	public:
 

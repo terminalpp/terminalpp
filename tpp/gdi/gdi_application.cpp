@@ -27,7 +27,8 @@ namespace tpp {
 			SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
 	}
 
-	TerminalWindow * GDIApplication::createNewTerminalWindow() {
+	GDITerminalWindow * GDIApplication::createNewTerminalWindow() {
+		// now create the handle, its WM_CREATE
 		HWND hwnd = CreateWindowEx(
 			WS_EX_LEFT, // the default
 			TerminalWindowClassName, // window class

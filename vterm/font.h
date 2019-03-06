@@ -39,12 +39,6 @@ namespace vterm {
 			return strikeout_;
 		}
 
-		/** Returns true if the font should blink. 
-		 */
-		bool blink() const {
-			return blink_;
-		}
-
 		void setBold(bool value) {
 			bold_ = value;
 		}
@@ -54,17 +48,15 @@ namespace vterm {
 			bold_(0),
 			italics_(0),
 			underline_(0),
-			strikeout_(0),
-			blink_(0) {
+			strikeout_(0) {
 		}
 
-		Font(unsigned size, bool bold, bool italics, bool underline, bool strikeout, bool blink) :
+		Font(unsigned size, bool bold, bool italics, bool underline, bool strikeout) :
 			size_(size),
 			bold_(bold),
 			italics_(italics),
 			underline_(underline),
-			strikeout_(strikeout),
-			blink_(blink) {
+			strikeout_(strikeout) {
 		}
 
 		bool operator == (Font const & other) const {
@@ -75,6 +67,7 @@ namespace vterm {
 			return raw_ != other.raw_;
 		}
 
+		/*
 		struct BlinkIgnoringHash {
 			size_t operator () (Font const & x) const {
 				return std::hash<unsigned char>()(x.raw_ & 0xfe);
@@ -85,11 +78,14 @@ namespace vterm {
 			bool operator () (Font const & a, Font const & b) const {
 				return (a.raw_ & 0xfe) == (b.raw_ & 0xfe);
 			}
-		};
+		}; */
 
 	private:
+		friend struct ::std::hash<Font>;
+		/*
 		friend struct BlinkIgnoringHash;
 		friend struct BlinkIgnoringComparator;
+		*/
 
 		union {
 			struct {
@@ -98,7 +94,6 @@ namespace vterm {
 				unsigned italics_ : 1;
 				unsigned underline_ : 1;
 				unsigned strikeout_ : 1;
-				unsigned blink_ : 1;
 			};
 			unsigned char raw_;
 		};
@@ -106,4 +101,14 @@ namespace vterm {
 
 
 } // namespace vterm
+
+namespace std {
+	template<>
+	struct hash<::vterm::Font> {
+		size_t operator() (::vterm::Font const & x) const {
+			return std::hash<unsigned char>()(x.raw_);
+		}
+	};
+
+} // namespace std
 

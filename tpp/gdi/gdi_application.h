@@ -6,7 +6,10 @@
 
 #include "../application.h"
 
+#include "gdi_terminal_window.h"
+
 namespace tpp {
+
 
 	/** The application encapsulates the renderer and operating system specific details. 
 	 */
@@ -15,7 +18,7 @@ namespace tpp {
 
 		GDIApplication(HINSTANCE hInstance);
 
-		TerminalWindow * createNewTerminalWindow() override;
+		GDITerminalWindow * createNewTerminalWindow() override;
 
 		void mainLoop();
 
