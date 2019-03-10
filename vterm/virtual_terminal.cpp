@@ -16,7 +16,7 @@ namespace vterm {
 			for (unsigned r = 0; r < rows; ++r) {
 				char i = 0;
 				for (unsigned c = 0; c < cols; ++c) {
-					buffer_[r * cols + c].c = (unsigned)('0' + (i++ % 10));
+					buffer_[r * cols + c].c = ' '; // (unsigned)('0' + (r % 10));
 					buffer_[r * cols + c].fg = Color::White;
 					buffer_[r * cols + c].bg = Color::Black;
 				}
@@ -44,6 +44,11 @@ namespace vterm {
 		renderer_ = renderer;
 		// update the terminal size
 		resize(renderer->cols(), renderer->rows());
+	}
+
+	void VirtualTerminal::repaint(unsigned left, unsigned top, unsigned cols, unsigned rows) {
+		if (renderer_ != nullptr)
+			renderer_->repaint(left, top, cols, rows);
 	}
 
 

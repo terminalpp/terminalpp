@@ -57,9 +57,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	tw->setTerminal(vterm1);
 	tw->show();
 
-	ConPTYConnector c("wsl -e ls -la", vterm1);
-
-
+	ConPTYConnector c("wsl -e echo hello", vterm1);
+	//ConPTYConnector c("wsl -e ls /home/peta/devel -la", vterm1);
+	//ConPTYConnector c("wsl -e ping www.seznam.cz", vterm1);
+	//ConPTYConnector c("wsl -e mc", vterm1);
+	//ConPTYConnector c("wsl -e screenfetch", vterm1);
 	// Now run the main loop
 	application->mainLoop();
 

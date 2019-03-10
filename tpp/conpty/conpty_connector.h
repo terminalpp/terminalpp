@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-#include "vterm/virtual_terminal.h"
+#include "vterm/VT100.h"
 
 namespace tpp {
 
@@ -15,7 +15,7 @@ namespace tpp {
 		TODO add terminal resize function...
 
 	 */
-	class ConPTYConnector : public vterm::VirtualTerminal::Connector {
+	class ConPTYConnector : public vterm::VT100 {
 	public:
 		ConPTYConnector(std::string const & command, vterm::VirtualTerminal * terminal);
 

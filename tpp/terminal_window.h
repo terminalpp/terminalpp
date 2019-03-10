@@ -60,7 +60,7 @@ namespace tpp {
 			width_(0),
 			height_(0),
 			fontWidth_(10),
-			fontHeight_(16) {
+			fontHeight_(18) {
 		}
 
 		/** Called when the renderer's client area resizes so that the contents could be updated. 

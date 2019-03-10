@@ -42,7 +42,8 @@ namespace tpp {
 		if (buffer_ == nullptr)
 			return;
 		paintShadowBuffer(left, top, cols, rows);
-		PostMessage(hWnd_, WM_PAINT, 0, 0);
+		InvalidateRect(hWnd_, nullptr, false);
+		//PostMessage(hWnd_, WM_PAINT, 0, 0);
 	}
 
 	void GDITerminalWindow::paintShadowBuffer(unsigned left, unsigned top, unsigned cols, unsigned rows) {

@@ -4,9 +4,13 @@
 
 namespace helpers {
 
+	inline bool IsDecimalDigit(char what) {
+		return InRangeInclusive(what, '0', '9');
+	}
+
 	/** Converts given character containing a decimal digit to its value. 
 	 */
-	inline unsigned DexCharToNumber(char what) {
+	inline unsigned DecCharToNumber(char what) {
 		ASSERT(InRangeInclusive(what, '0', '9')) << "Not a decimal number: " << what << " (ASCII: " << static_cast<unsigned>(what) << ")";
 		return what - '0';
 	}

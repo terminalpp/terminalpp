@@ -11,6 +11,7 @@ namespace tpp {
 		conPTY_{INVALID_HANDLE_VALUE},
 		pipeIn_{INVALID_HANDLE_VALUE},
 		pipeOut_{INVALID_HANDLE_VALUE} {
+		setTerminal(terminal);
 		startupInfo_.lpAttributeList = nullptr; // just to be sure
 		createPseudoConsole();
 		std::thread t(ConPTYConnector::InputPipeReader, this);
@@ -82,15 +83,14 @@ namespace tpp {
 		// TODO how to read from the terminal, knowing that it might be VT sequences into some kind of a buffer
 		// that would ideally be one per the whole connector (i.e. the reader and the decoder will use the same buffer
 		// also, start the thread before executing 
-		// and the other maintenance
-		unsigned char buffer[512];
 		unsigned long bytesRead;
+		unsigned bufferSize;
+		char * buffer;
 		bool readOk;
 		do {
-			readOk = ReadFile(connector->pipeIn_, &buffer,512, & bytesRead, nullptr);
-			if (readOk) {
-				readOk = true;
-			}
+			buffer = connector->getWriteBuffer(bufferSize);
+			readOk = ReadFile(connector->pipeIn_, buffer, bufferSize, & bytesRead, nullptr);
+			connector->writeBytes(bytesRead);
 		} while (readOk); 
 	}
 } // namespace tpp

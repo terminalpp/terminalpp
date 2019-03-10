@@ -101,6 +101,7 @@ namespace vterm {
 			/** The font to be used for displaying the cell.
 			 */
 			Font font;
+
 		}; // vterm::VirtualTerminal::ScreenCell
 
 
@@ -216,6 +217,7 @@ namespace vterm {
 		 */
 		void attachRenderer(Renderer * renderer);
 
+		void repaint(unsigned left, unsigned top, unsigned cols, unsigned rows);
 
 	private:
 		unsigned cols_;
