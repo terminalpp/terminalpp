@@ -22,6 +22,8 @@ namespace tpp {
 
 		void mainLoop();
 
+		void attachConsole();
+
 	private:
 
 		friend class GDITerminalWindow;
@@ -31,6 +33,5 @@ namespace tpp {
 		HINSTANCE const hInstance_;
 
 		WNDCLASSEX terminalWindowClass_;
-
 	};
 } // namespace tpp

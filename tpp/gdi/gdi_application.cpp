@@ -1,6 +1,10 @@
+#include <iostream>
+
 #include <windows.h>
 #include <dwrite.h>
 
+
+#include "../tpp.h"
 #include "gdi_application.h"
 #include "gdi_terminal_window.h"
 
@@ -25,6 +29,8 @@ namespace tpp {
 			0,
 			(PVOID)FE_FONTSMOOTHINGCLEARTYPE,
 			SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+		// attaches the console to the terminal for debugging purposes
+		attachConsole();
 	}
 
 	GDITerminalWindow * GDIApplication::createNewTerminalWindow() {
@@ -57,6 +63,22 @@ namespace tpp {
 				*/
 		}
 	}
+
+	void GDIApplication::attachConsole() {
+		if (AllocConsole() == 0)
+			THROW(Win32Error("Cannot allocate console"));
+		// this is ok, console cannot be detached, so we are fine with keeping the file handles forewer,
+		// nor do we need to FreeConsole at any point
+		FILE *fpstdin = stdin, *fpstdout = stdout, *fpstderr = stderr;
+		// patch the cin, cout, cerr
+		freopen_s(&fpstdin, "CONIN$", "r", stdin);
+		freopen_s(&fpstdout, "CONOUT$", "w", stdout);
+		freopen_s(&fpstderr, "CONOUT$", "w", stderr);
+		std::cin.clear();
+		std::cout.clear();
+		std::cerr.clear();
+	}
+
 
 	void GDIApplication::registerTerminalWindowClass() {
 		WNDCLASSEX wClass = { 0 };

@@ -88,7 +88,7 @@ namespace vterm {
 		private:
 			friend class Node;
 			void addIntegerArgument(int value, bool specified) {
-				NOT_IMPLEMENTED;
+				//NOT_IMPLEMENTED;
 			}
 
 		};
