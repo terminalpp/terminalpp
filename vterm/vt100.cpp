@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "helpers/strings.h"
 
 #include "vt100.h"
@@ -22,6 +24,7 @@ namespace vterm {
 			while (buffer != end) {
 				if (*buffer == 0x1b) {
 					EscapeSequence seq;
+					// see if the sequence is matched
 					if (root_->match(buffer + 1, end, seq)) {
 						switch (seq.code) {
 						case EscapeCode::EraseCharacter:
@@ -32,9 +35,13 @@ namespace vterm {
 							break;
 						}
 						buffer = seq.next;
-
+					// if the sequence is not matched, try matching it without understanding and report the unmatched sequence. 
 					} else {
-						buffer += 1;
+						char * seqEnd = skipUnknownEscapeSequence(buffer, end);
+						// in case and end of buffer is detected before the end of the sequence, then we wait for the next bytes to be processed
+						if (seqEnd == buffer)
+							return size - (end - buffer);
+						buffer = seqEnd;
 					}
 				} else {
 					print(sb, buffer, 1);
@@ -46,6 +53,41 @@ namespace vterm {
 		return size;
 	}
 
+	char * VT100::skipUnknownEscapeSequence(char * buffer, char * end) {
+		char * seqEnd = buffer;
+		ASSERT(*seqEnd == ESC);
+		++seqEnd;
+		if (seqEnd == end)
+			return buffer;
+		// if the next character is `[` then we match CSI, otherwise we just sklip it as the second byte of the sequence
+		if (*(seqEnd++) == '[') {
+			// the CSI is now followed by arbitrary number parameter bytes (0x30 - 0x3f)
+			while (true) {
+				if (seqEnd == end)
+					return buffer;
+				if (*seqEnd < 0x30 || *seqEnd > 0x3f)
+					break;
+				++seqEnd;
+			}
+			// then by any number of intermediate bytes (0x20 - 0x2f)
+			while (true) {
+				if (seqEnd == end)
+					return buffer;
+				if (*seqEnd < 0x20 || *seqEnd > 0x2f)
+					break;
+				++seqEnd;
+			}
+			// and then by the final byte
+			if (seqEnd == end)
+				return buffer;
+			++seqEnd;
+		}
+		std::cout << "Invalid sequence: ESC";
+		for (++buffer; buffer != seqEnd; ++buffer)
+			std::cout << ' ' << *buffer;
+		std::cout << std::endl;
+		return seqEnd;
+	}
 
 	void VT100::scrollLineUp(VirtualTerminal::ScreenBuffer & sb) {
 		for (unsigned row = 0, re = sb.rows() - 1; row != re; ++row) {

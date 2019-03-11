@@ -43,6 +43,8 @@ namespace vterm {
 		 */
 		unsigned processBytes(char * buffer, unsigned size) override;
 
+		char * skipUnknownEscapeSequence(char * buffer, char * end);
+
 		void scrollLineUp(VirtualTerminal::ScreenBuffer & sb);
 
 		void updateCursorPosition(VirtualTerminal::ScreenBuffer & sb);
@@ -50,6 +52,8 @@ namespace vterm {
 		void print(VirtualTerminal::ScreenBuffer & sb, char const * text, unsigned length);
 
 		void clear(VirtualTerminal::ScreenBuffer & sb, unsigned cols);
+
+
 
 
 		/** Current position of the cursor. 
