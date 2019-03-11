@@ -23,6 +23,9 @@ namespace vterm {
 			CursorBackward,
 
 			EraseCharacter,
+			/** Erase n next characters in the viewport. 
+			 */
+			EraseInDisplay,
 
 			Unknown,
 
@@ -83,17 +86,82 @@ namespace vterm {
 
 		    It contains the kind of the escape code matched and values of any arguments the escape code had.
 
-			TODO refactor so that fields are private
 		 */
 		class EscapeSequence {
 		public:
+			/** The matched escape code if match was successful. 
+
+			    EscapeCode::Unknown if unsuccessful;
+			 */
 			EscapeCode code;
+
+			/** The first character from the buffer after the matched sequence. 
+
+			    nullptr if the match was not successful. 
+			 */
 			char * next;
+
+			/** Return the number of the arguments provided (either by user, or by default values) for the escape sequence. 
+			 */
+			size_t numArgs() const {
+				return args_.size();
+			}
+
+			/** Returns true if given argument was specified by the user, false if the value it contains is the default value for the given escape sequence. 
+			 */
+			bool isArgumentSpecified(size_t index) const {
+				ASSERT(index < args_.size());
+				return args_[index].specified;
+			}
+
+			/** Assuming the index-th argument is integer, returns its value. 
+			 */
+			template<typename T>
+			T const & argument(size_t index) const;
+
 		private:
 			friend class Node;
+
+			/** Record for a given argument. 
+
+			    TODO add string argument.
+			 */
+			struct Argument {
+				/** Kind of the argument. 
+				 */
+				enum class Kind {
+					Integer,
+				};
+				
+				/** Kind of the actual argument. 
+				 */
+				Kind kind;
+
+				/** True if the argument was specified, false if its value is the default value for the matched sequence. 
+				 */
+				bool specified;
+
+				/** The value of the argument, based on the kind. 
+				 */
+				union {
+					int valueInt;
+				};
+
+				/** Creates new integer value. 
+				 */
+				Argument(int value, bool specified) :
+					kind(Kind::Integer),
+					specified(specified),
+					valueInt(value) {
+				}
+
+			};
+
 			void addIntegerArgument(int value, bool specified) {
-				//NOT_IMPLEMENTED;
+				args_.push_back(Argument(value, specified));
 			}
+
+			std::vector<Argument> args_;
 
 		};
 
@@ -127,9 +195,7 @@ namespace vterm {
 			 */
 			bool isNumber_;
 			
-
 		};
-
 
 		/** Adds an escape code definition to the matcher.
 		 */
@@ -141,6 +207,16 @@ namespace vterm {
 		static Node * root_;
 
 	};
+
+	/** Specialization for the integer argument getter of an escape sequence. 
+	 */
+	template<>
+	inline int const & VT100::EscapeSequence::argument<int>(size_t index) const {
+		ASSERT(index < args_.size());
+		ASSERT(args_[index].kind == Argument::Kind::Integer);
+		return args_[index].valueInt;
+	}
+
 
 
 } // namespace vterm

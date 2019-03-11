@@ -21,17 +21,17 @@ namespace vterm {
 		{
 			char * end = buffer + size;
 			VirtualTerminal::ScreenBuffer sb(terminal()->screenBuffer());
-			while (buffer != end) {
+			while (buffer < end) {
 				if (*buffer == 0x1b) {
 					EscapeSequence seq;
 					// see if the sequence is matched
 					if (root_->match(buffer + 1, end, seq)) {
 						switch (seq.code) {
 						case EscapeCode::EraseCharacter:
-							print(sb, "ECH", 3);
+							//print(sb, "ECH", 3);
 							break;
 						case EscapeCode::CursorForward:
-							print(sb, "CUF", 3);
+							//print(sb, "CUF", 3);
 							break;
 						}
 						buffer = seq.next;
@@ -163,6 +163,7 @@ namespace vterm {
 			AddEscapeCode(EscapeCode::CursorBackward, { CSI, NUMBER, 'D' });
 
 			AddEscapeCode(EscapeCode::EraseCharacter, { CSI, NUMBER, 'X' });
+			AddEscapeCode(EscapeCode::EraseInDisplay, { CSI, NUMBER, 'J' });
 		}
 
 	}
