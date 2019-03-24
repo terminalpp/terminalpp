@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vterm/virtual_terminal.h"
+#include "vterm/vterm.h"
 
 namespace tpp {
 
@@ -37,7 +37,7 @@ namespace tpp {
 	
 	    Extends the terminal's Renderer with some GUI specific information. 
 	 */
-	class TerminalWindow : public vterm::VirtualTerminal::Renderer {
+	class TerminalWindow : public vterm::VTerm::Renderer {
 	public:
 		/** Width of the renderer's client area in pixels. 
 		 */

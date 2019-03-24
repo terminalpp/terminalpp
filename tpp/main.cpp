@@ -1,6 +1,6 @@
 ﻿#include <iostream>
 
-#include "vterm/virtual_terminal.h"
+#include "vterm/vt100.h"
 
 #include "settings.h"
 
@@ -8,7 +8,7 @@
 #include "gdi/gdi_application.h"
 #include "gdi/gdi_terminal_window.h"
 
-#include "conpty/conpty_connector.h"
+#include "conpty/conpty_process.h"
 
 #include "helpers/object.h"
 
@@ -25,9 +25,6 @@ using namespace tpp;
 
 Application * application;
 
-//HINSTANCE hInstance;
-//TerminalWindow * tw;
-
 // https://docs.microsoft.com/en-us/windows/desktop/gdi/windows-gdi
 
 
@@ -43,12 +40,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	std::unordered_map<helpers::HashMD5, std::string> x;
 
-
 	// create the application
 	application = new GDIApplication(hInstance);
 
 	// create the screen buffer
-	vterm::VirtualTerminal * vterm1 = new vterm::VirtualTerminal();
+	vterm::VT100 * vterm1 = new vterm::VT100(80,25);
 
 
 
@@ -57,7 +53,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	tw->setTerminal(vterm1);
 	tw->show();
 
-	ConPTYConnector c("wsl -e echo hello", vterm1);
+	ConPTYProcess c("wsl -e echo hello", vterm1);
 	//ConPTYConnector c("wsl -e ls /home/peta/devel -la", vterm1);
 	//ConPTYConnector c("wsl -e ping www.seznam.cz", vterm1);
 	//ConPTYConnector c("wsl -e mc", vterm1);

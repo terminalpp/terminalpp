@@ -1,6 +1,6 @@
 # Virtual Terminal
 
-The virtual terminal (`vterm`) is a class encapsulating the state of a terminal device.
+The virtual terminal (`vterm`) is a class which describes the input and output interfaces of a terminal and implements its state.
 
 # CHANGES
 

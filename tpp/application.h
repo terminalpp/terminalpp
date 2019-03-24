@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vterm/virtual_terminal.h"
+#include "vterm/vterm.h"
 
 namespace tpp {
 

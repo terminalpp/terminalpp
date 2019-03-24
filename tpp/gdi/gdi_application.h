@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-#include "vterm/virtual_terminal.h"
+#include "vterm/vterm.h"
 
 #include "../application.h"
 

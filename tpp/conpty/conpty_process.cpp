@@ -1,25 +1,25 @@
 #include <thread>
 
-#include "conpty_connector.h"
+#include "conpty_process.h"
 #include "../tpp.h"
 
 namespace tpp {
 
-	ConPTYConnector::ConPTYConnector(std::string const & command, vterm::VirtualTerminal * terminal) :
+	ConPTYProcess::ConPTYProcess(std::string const & command, vterm::VTerm * terminal) :
 		command_{command},
 		startupInfo_{},
 		conPTY_{INVALID_HANDLE_VALUE},
 		pipeIn_{INVALID_HANDLE_VALUE},
 		pipeOut_{INVALID_HANDLE_VALUE} {
-		setTerminal(terminal);
+		terminal_ = terminal;
 		startupInfo_.lpAttributeList = nullptr; // just to be sure
 		createPseudoConsole();
-		std::thread t(ConPTYConnector::InputPipeReader, this);
+		std::thread t(ConPTYProcess::InputPipeReader, this);
 		t.detach();
 		execute();
 	}
 
-	void ConPTYConnector::createPseudoConsole() {
+	void ConPTYProcess::createPseudoConsole() {
 		HRESULT result{ E_UNEXPECTED };
 		HANDLE pipePTYIn{ INVALID_HANDLE_VALUE };
 		HANDLE pipePTYOut{ INVALID_HANDLE_VALUE };
@@ -28,7 +28,7 @@ namespace tpp {
 			THROW(Win32Error("Unable to create pipes for the subprocess"));
 		// determine the console size from the terminal we have
 		COORD consoleSize{};
-		consoleSize.X = terminal() != nullptr ? terminal()->cols() : 80;
+ 		consoleSize.X = terminal() != nullptr ? terminal()->cols() : 80;
 		consoleSize.Y = terminal() != nullptr ? terminal()->rows() : 25;
 		// now create the pseudo console
 		result = CreatePseudoConsole(consoleSize, pipePTYIn, pipePTYOut, 0, &conPTY_);
@@ -41,7 +41,7 @@ namespace tpp {
 			THROW(Win32Error("Unable to open pseudo console"));
 	}
 
-	void ConPTYConnector::execute() {
+	void ConPTYProcess::execute() {
 		// first generate the startup info 
 		STARTUPINFOEX startupInfo{};
 		size_t attrListSize = 0;
@@ -79,18 +79,15 @@ namespace tpp {
 			THROW(Win32Error(STR("Unable to start process " << command_)));
 	}
 
-	void ConPTYConnector::InputPipeReader(ConPTYConnector * connector) {
-		// TODO how to read from the terminal, knowing that it might be VT sequences into some kind of a buffer
-		// that would ideally be one per the whole connector (i.e. the reader and the decoder will use the same buffer
-		// also, start the thread before executing 
-		unsigned long bytesRead;
-		unsigned bufferSize;
+	void ConPTYProcess::InputPipeReader(ConPTYProcess * p) {
 		char * buffer;
+		size_t size;
 		bool readOk;
+		size_t bytesRead;
 		do {
-			buffer = connector->getWriteBuffer(bufferSize);
-			readOk = ReadFile(connector->pipeIn_, buffer, bufferSize, & bytesRead, nullptr);
-			connector->writeBytes(bytesRead);
-		} while (readOk); 
+			buffer = p->getInputBuffer(size);
+			readOk = ReadFile(p->pipeIn_, buffer, size, &bytesRead, nullptr);
+			p->commitInputBuffer(buffer, bytesRead);
+		} while (readOk);
 	}
 } // namespace tpp

@@ -2,11 +2,11 @@
 
 #include <windows.h>
 
-#include "vterm/VT100.h"
+#include "vterm/vterm.h"
 
 namespace tpp {
 
-	/** Terminal connector using the Windows Pseudo Console 
+	/** Terminal process using the Windows Pseudo Console 
 
 	    While console emulation was really painful in older versions of Windows, fortunately in Win10 starting Fall/2018, the ConPTY API simplifies things a lot. The following blog describes both the old problems as well as the ConPTY API and how it changes things:
 
@@ -15,14 +15,11 @@ namespace tpp {
 		TODO add terminal resize function...
 
 	 */
-	class ConPTYConnector : public vterm::VT100 {
+	class ConPTYProcess : public vterm::VTerm::Process {
 	public:
-		ConPTYConnector(std::string const & command, vterm::VirtualTerminal * terminal);
+		ConPTYProcess(std::string const & command, vterm::VTerm * terminal);
 
-
-
-
-		~ConPTYConnector() {
+		~ConPTYProcess() {
 			if (conPTY_ != INVALID_HANDLE_VALUE)
 			    ClosePseudoConsole(conPTY_);
 			if (pipeIn_ != INVALID_HANDLE_VALUE)
@@ -37,7 +34,6 @@ namespace tpp {
 
 		}
 
-
 	private:
 
 		/** Opens the pipes and creates a new pseudoconsole. 
@@ -48,7 +44,7 @@ namespace tpp {
 		 */
 		void execute();
 
-		static void InputPipeReader(ConPTYConnector * connector);
+		static void InputPipeReader(ConPTYProcess * p);
 
 		/** The command executed by the connector. 
 
@@ -76,9 +72,5 @@ namespace tpp {
 		 */
 		PROCESS_INFORMATION pInfo_;
 	};
-
-
-
-
 
 } // namespace tpp

@@ -4,14 +4,33 @@
 
 #include "vt100.h"
 
+#define BEL '\x07'
 #define ESC '\033'
-#define CSI '\033','['
-#define NUMBER -1
+
+
+
 
 namespace vterm {
 
-	VT100::Node * VT100::root_ = nullptr;
+	void VT100::processInput(char * buffer, size_t & size) {
+		std::cout << "Received " << size << " bytes" << std::endl;
+		for (size_t i = 0; i < size; ++i) {
+			switch (buffer[i]) {
+			case ESC:
+				std::cout << "[ESC]";
+				break;
+			case BEL:
+				std::cout << "[BEL]";
+				break;
+			default:
+				std::cout << buffer[i];
+				break;
+			}
+		}
+		std::cout << std::endl;
+	}
 
+#ifdef FOOBAR
 
 	unsigned VT100::processBytes(char * buffer, unsigned size) {
 		// if no terminal is attached to the connector, do nothing - these bytes are lost
@@ -23,28 +42,16 @@ namespace vterm {
 			VirtualTerminal::ScreenBuffer sb(terminal()->screenBuffer());
 			while (buffer < end) {
 				if (*buffer == 0x1b) {
-					EscapeSequence seq;
-					// see if the sequence is matched
-					if (root_->match(buffer + 1, end, seq)) {
-						switch (seq.code) {
-						case EscapeCode::EraseCharacter:
-							//print(sb, "ECH", 3);
-							break;
-						case EscapeCode::CursorForward:
-							//print(sb, "CUF", 3);
-							break;
-						}
-						buffer = seq.next;
-					// if the sequence is not matched, try matching it without understanding and report the unmatched sequence. 
-					} else {
-						char * seqEnd = skipUnknownEscapeSequence(buffer, end);
-						// in case and end of buffer is detected before the end of the sequence, then we wait for the next bytes to be processed
-						if (seqEnd == buffer)
-							return size - (end - buffer);
-						buffer = seqEnd;
-					}
+					char * start = buffer;
+					if (!parseEscapeSequence(sb, buffer, end))
+						return size - (end - start);
+				} else if (*buffer >= 0x20 && *buffer < 0x7f) {
+					char * start = buffer;
+					while (*buffer >= 0x20 && *buffer <= 0x7f)
+						++buffer;
+					print(sb, start, buffer - start);
 				} else {
-					print(sb, buffer, 1);
+				    print(sb, buffer, 1);
 					++buffer;
 				}
 			}
@@ -53,41 +60,168 @@ namespace vterm {
 		return size;
 	}
 
-	char * VT100::skipUnknownEscapeSequence(char * buffer, char * end) {
-		char * seqEnd = buffer;
-		ASSERT(*seqEnd == ESC);
-		++seqEnd;
-		if (seqEnd == end)
-			return buffer;
+	bool VT100::skipEscapeSequence(char * & buffer, char * end) {
+		ASSERT(*buffer == ESC);
+		++buffer;
+		if (buffer == end)
+			return false;
 		// if the next character is `[` then we match CSI, otherwise we just sklip it as the second byte of the sequence
-		if (*(seqEnd++) == '[') {
+		switch (*buffer) {
+		case '[': {
+			++buffer;
 			// the CSI is now followed by arbitrary number parameter bytes (0x30 - 0x3f)
 			while (true) {
-				if (seqEnd == end)
-					return buffer;
-				if (*seqEnd < 0x30 || *seqEnd > 0x3f)
+				if (buffer == end)
+					return false;
+				if (*buffer < 0x30 || *buffer > 0x3f)
 					break;
-				++seqEnd;
+				++buffer;
 			}
 			// then by any number of intermediate bytes (0x20 - 0x2f)
 			while (true) {
-				if (seqEnd == end)
-					return buffer;
-				if (*seqEnd < 0x20 || *seqEnd > 0x2f)
+				if (buffer == end)
+					return false;
+				if (*buffer < 0x20 || *buffer > 0x2f)
 					break;
-				++seqEnd;
+				++buffer;
 			}
 			// and then by the final byte
-			if (seqEnd == end)
-				return buffer;
-			++seqEnd;
+			if (buffer == end)
+				return false;
+			++buffer;
+			break;
 		}
-		std::cout << "Invalid sequence: ESC";
-		for (++buffer; buffer != seqEnd; ++buffer)
-			std::cout << ' ' << *buffer;
-		std::cout << std::endl;
-		return seqEnd;
+		case ']': {
+			// TODO for now we only handle BEL
+			while (*buffer != BEL) {
+				if (buffer == end)
+					return false;
+				++buffer;
+			}
+			++buffer;
+			break;
+		}
+		}
+		return true;
 	}
+
+	bool VT100::parseEscapeSequence(VirtualTerminal::ScreenBuffer & sb, char * & buffer, char * end) {
+		ASSERT(* buffer == ESC);
+		char * c = buffer++; // skip the escape char
+		switch (*buffer) {
+		case ']':
+			if (parseSpecial(sb, ++buffer, end))
+				return true;
+			break;
+		case '[':
+			if (parseCSI(sb, ++buffer, end))
+			    return true;
+			break;
+		default:
+			break;
+		}
+		buffer = c; // restore
+		if (!skipEscapeSequence(buffer, end)) {
+			buffer = c;
+			return false;
+		} else {
+			std::cout << "Invalid sequence: ESC";
+			for (++c; c < buffer; ++c)
+				std::cout << ' ' << *c;
+			std::cout << std::endl;
+		}
+		return true;
+	}
+
+	VT100::Argument<int> VT100::parseNumber(char * & buffer, char * end, int defaultValue) {
+		int value = 0;
+		bool specified = false;
+		while (buffer != end && helpers::IsDecimalDigit(*buffer)) {
+			value = value * 10 + helpers::DecCharToNumber(*buffer++);
+			specified = true;
+		}
+		if (!specified)
+			value = defaultValue;
+		return Argument<int>{value, specified};
+	}
+
+	bool VT100::parseSetter(VirtualTerminal::ScreenBuffer & sb, char * & buffer, char * end) {
+		Argument<int> kind = parseNumber(buffer, end);
+		if (!kind.specified)
+			return false;
+		bool value;
+		if (buffer == end)
+			return false;
+		if (*buffer == 'h')
+			value = true;
+		else if (*buffer == 'l')
+			value = false;
+		else
+			return false;
+
+		switch (kind.value) {
+		case 25:
+			return true;
+		}
+
+		return false;
+
+	}
+
+	bool VT100::parseCSI(VirtualTerminal::ScreenBuffer & sb,char * & buffer, char * end) {
+		if (buffer == end)
+			return false;
+		if (*buffer == '?')
+			return parseSetter(sb, ++buffer, end);
+
+		Argument<int> first = parseNumber(buffer, end, 1);
+		switch (*buffer) {
+		// CSI <n> A -- moves cursor n rows up 
+		case 'A':
+			++buffer;
+			return true;
+		// CSI <n> B -- moves cursor n rows down 
+		case 'B':
+			++buffer;
+			return true;
+		// CSI <n> C -- moves cursor n columns forward (right)
+		case 'C':
+			++buffer;
+			setCursor(sb, cursorCol_ + first.value, cursorRow_);
+			return true;
+		// CSI <n> D -- moves cursor n columns back (left)
+		case 'D': // cursor backward
+			++buffer;
+			return true;
+		// CSI <n> X -- erases n characters to the right with space, w/o changing cursor pos
+		case 'X':
+			++buffer;
+			return true;
+
+
+
+		// extra argument
+		case ';': { 
+			Argument<int> second = parseNumber(++buffer, end, 1);
+			switch (*buffer) {
+			// CSI <row> ; <col> H - sets cursor position
+			case 'H': 
+				++buffer;
+				setCursor(sb, second.value, first.value);
+				return true;
+			}
+		}
+		}
+
+		return false;
+	}
+
+	bool VT100::parseSpecial(VirtualTerminal::ScreenBuffer & sb, char * & buffer, char * end) {
+		return false;
+	}
+
+
+
 
 	void VT100::scrollLineUp(VirtualTerminal::ScreenBuffer & sb) {
 		for (unsigned row = 0, re = sb.rows() - 1; row != re; ++row) {
@@ -142,15 +276,26 @@ namespace vterm {
 		}
 	}
 
+	void VT100::setCursor(VirtualTerminal::ScreenBuffer & sb,unsigned col, unsigned row) {
+		cursorCol_ = col;
+		cursorRow_ = row;
+		while (cursorCol_ >= sb.cols()) {
+			cursorCol_ -= sb.cols();
+			++cursorRow_;
+		}
+		if (cursorRow_ >= sb.rows())
+			cursorRow_ = sb.rows() - 1;
+	}
 
 
 
 
 
+	/*
 
 	void VT100::InitializeEscapeSequences() {
 		if (root_ == nullptr) {
-			root_ = new Node();
+			root_ = new MatcherNode();
 
 			AddEscapeCode(EscapeCode::CursorUp, { ESC, 'A' });
 			AddEscapeCode(EscapeCode::CursorDown, { ESC, 'B' });
@@ -164,10 +309,30 @@ namespace vterm {
 
 			AddEscapeCode(EscapeCode::EraseCharacter, { CSI, NUMBER, 'X' });
 			AddEscapeCode(EscapeCode::EraseInDisplay, { CSI, NUMBER, 'J' });
+
+			AddEscapeCode(EscapeCode::ShowCursor, { CSI, '?', NUMBER, 'h', CHECK_ARG(0,25) });
+			AddEscapeCode(EscapeCode::HideCursor, { CSI, '?', NUMBER, 'l', CHECK_ARG(0,25) });
 		}
 
 	}
 
+	VT100::Node * VT100::Node::createNode(VT100::EscapeCode code, VT100::EscapeSequence::Token const * t, VT100::EscapeSequence::Token const * end) {
+		if (t == end)
+			return new TerminalNode(code);
+		switch (t->kind) {
+		case EscapeSequence::Token::Kind::Character:
+		case EscapeSequence::Token::Kind::Number:
+			return new MatcherNode();
+		case EscapeSequence::Token::Kind::DefaultIntegerArg:
+			return new DefaultIntegerArgNode(t->index, t->value);
+		case EscapeSequence::Token::Kind::CheckIntegerArg:
+			return new CheckIntegerArgNode(t->index);
+		default:
+			UNREACHABLE;
+		}
+	}
+
+	/*
 	bool VT100::Node::match(char * buffer, char * end, EscapeSequence & seq) {
 		// if the node is terminal node, return its code
 		if (result_ != EscapeCode::Unknown) {
@@ -181,13 +346,13 @@ namespace vterm {
 		// if the node is optional node, we parse a number first and then continue matching
 		if (isNumber_) {
 			if (!helpers::IsDecimalDigit(*buffer)) {
-				seq.addIntegerArgument(0, false);
+				//seq.addIntegerArgument(0, false);
 			}
 			else {
 				int result = 0;
 				while (buffer != end && helpers::IsDecimalDigit(*buffer))
 					result = result * 10 + helpers::DecCharToNumber(*buffer++);
-				seq.addIntegerArgument(result, true);
+				//seq.addIntegerArgument(result, true);
 			}
 			// if there is no more input after the number, matching fails
 			if (buffer == end)
@@ -216,13 +381,15 @@ namespace vterm {
 				i = transitions_.insert(std::make_pair(*begin, new Node())).first;
 			i->second->addMatch(code, begin + 1, end);
 		}
-	}
-
-	void VT100::AddEscapeCode(EscapeCode code, std::initializer_list<char> match) {
-		ASSERT(*match.begin() == ESC) << "Escape sequences must start with escape character";
+	} */
+	/*
+	void VT100::AddEscapeCode(EscapeCode code, std::initializer_list<EscapeSequence::Token> match) {
+//		ASSERT(*match.begin() == ESC) << "Escape sequences must start with escape character";
 		root_->addMatch(code, match.begin() + 1, match.end());
 
-	}
+	} */
 
+
+#endif FOOBAR
 
 } // namespace vterm

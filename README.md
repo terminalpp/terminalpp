@@ -10,6 +10,9 @@ https://github.com/Microsoft/console/tree/master/samples/ConPTY/EchoCon
 
 ## TODOs
 
+> Determine how the terminal process & terminal work - is it safe to ignore anything a process sends when it is not connected to a terminal, since reconnecting will repaint it anyways? 
+> or can we say that process & terminal are firmly attached? 
+
 > When dealing with fonts, sometimes the bold font is thicker than normal font, which sounds rather bad. Also, nerd fornts do not behave like proper monospace fonts, which is bad too. 
 
 > Refactor terminal window so that the renderer specific details are decoupled from the virtual terminal maintenance.
