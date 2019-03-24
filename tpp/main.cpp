@@ -1,32 +1,34 @@
 ﻿#include <iostream>
 
+
 #include "vterm/vt100.h"
 
-#include "settings.h"
-
-// include all renderers, the renderers themselves contain the guards that selects only one
-#include "gdi/gdi_application.h"
-#include "gdi/gdi_terminal_window.h"
-
+#include "tpp.h"
 #include "conpty/conpty_process.h"
 
-#include "helpers/object.h"
-
-
-#include "helpers/hash.h"
-
-namespace tpp {
-
-	SettingsSingleton Settings;
-
-} // namespace tpp
 
 using namespace tpp;
 
-Application * application;
+
+void AttachConsole() {
+	if (AllocConsole() == 0)
+		THROW(Win32Error("Cannot allocate console"));
+	// this is ok, console cannot be detached, so we are fine with keeping the file handles forewer,
+	// nor do we need to FreeConsole at any point
+	FILE *fpstdin = stdin, *fpstdout = stdout, *fpstderr = stderr;
+	// patch the cin, cout, cerr
+	freopen_s(&fpstdin, "CONIN$", "r", stdin);
+	freopen_s(&fpstdout, "CONOUT$", "w", stdout);
+	freopen_s(&fpstderr, "CONOUT$", "w", stderr);
+	std::cin.clear();
+	std::cout.clear();
+	std::cerr.clear();
+}
+
+
+// https://www.codeguru.com/cpp/misc/misc/graphics/article.php/c16139/Introduction-to-DirectWrite.htm
 
 // https://docs.microsoft.com/en-us/windows/desktop/gdi/windows-gdi
-
 
 // https://docs.microsoft.com/en-us/windows/desktop/api/_gdi/
 
@@ -35,31 +37,34 @@ Application * application;
     For now creates single terminal window and one virtual terminal. 
  */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	helpers::HashMD5 md5("56ab781256ab781256ab781256ab7812");
-	std::cout << md5 << std::endl;
 
-	std::unordered_map<helpers::HashMD5, std::string> x;
+
+	AttachConsole();
+	std::cout << "OH HAI, CAN I HAZ CONSOLE?" << std::endl;
 
 	// create the application
-	application = new GDIApplication(hInstance);
+	//application = new GDIApplication(hInstance);
 
 	// create the screen buffer
-	vterm::VT100 * vterm1 = new vterm::VT100(80,25);
+	//vterm::VT100 * vterm1 = new vterm::VT100(80,25);
 
 
 
 	// and create the terminal window
-	TerminalWindow * tw = application->createNewTerminalWindow();
-	tw->setTerminal(vterm1);
-	tw->show();
+	//TerminalWindow * tw = application->createNewTerminalWindow();
+	//tw->setTerminal(vterm1);
+	//tw->show();
 
-	ConPTYProcess c("wsl -e echo hello", vterm1);
+	//ConPTYProcess c("wsl -e echo hello", vterm1);
 	//ConPTYConnector c("wsl -e ls /home/peta/devel -la", vterm1);
 	//ConPTYConnector c("wsl -e ping www.seznam.cz", vterm1);
 	//ConPTYConnector c("wsl -e mc", vterm1);
 	//ConPTYConnector c("wsl -e screenfetch", vterm1);
 	// Now run the main loop
-	application->mainLoop();
+	//application->mainLoop();
+	while (true) {
+
+	}
 
 	return EXIT_SUCCESS;
 }

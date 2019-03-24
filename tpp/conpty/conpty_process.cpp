@@ -28,8 +28,9 @@ namespace tpp {
 			THROW(Win32Error("Unable to create pipes for the subprocess"));
 		// determine the console size from the terminal we have
 		COORD consoleSize{};
- 		consoleSize.X = terminal() != nullptr ? terminal()->cols() : 80;
-		consoleSize.Y = terminal() != nullptr ? terminal()->rows() : 25;
+		vterm::Dimension size = terminal()->size();
+ 		consoleSize.X = terminal() != nullptr ? size.cols : 80;
+		consoleSize.Y = terminal() != nullptr ? size.rows : 25;
 		// now create the pseudo console
 		result = CreatePseudoConsole(consoleSize, pipePTYIn, pipePTYOut, 0, &conPTY_);
 		// delete the pipes on PTYs end, since they are now in conhost and will be deleted when the conpty is deleted
@@ -83,7 +84,7 @@ namespace tpp {
 		char * buffer;
 		size_t size;
 		bool readOk;
-		size_t bytesRead;
+		unsigned long bytesRead;
 		do {
 			buffer = p->getInputBuffer(size);
 			readOk = ReadFile(p->pipeIn_, buffer, size, &bytesRead, nullptr);
