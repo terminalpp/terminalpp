@@ -1,6 +1,6 @@
 ﻿#include <iostream>
 
-
+#include "vterm/vt100.h"
 #include "vterm/win32/conpty_terminal.h"
 
 #include "application.h"
@@ -15,6 +15,16 @@ using namespace tpp;
 
 // https://docs.microsoft.com/en-us/windows/desktop/api/_gdi/
 
+class Term : public vterm::VT100, public vterm::ConPTYTerminal {
+public:
+	Term(std::string const & cmd, unsigned cols, unsigned rows) :
+		VT100(cols, rows),
+		ConPTYTerminal(cmd, cols, rows),
+		PTYTerminal(cols, rows) {
+	}
+
+};
+
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
@@ -25,7 +35,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Application app(hInstance);
 	std::cout << "OH HAI, CAN I HAZ CONSOLE?" << std::endl;
 
-	vterm::ConPTYTerminal * t(new vterm::ConPTYTerminal("wsl -e echo hello", 80, 25));
+
+	//vterm::ConPTYTerminal * t(new vterm::ConPTYTerminal("wsl -e echo hello", 80, 25));
+	Term * t = new Term("wsl -e echo hello", 80, 25);
 	t->execute();
 
 	// create the application

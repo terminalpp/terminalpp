@@ -8,7 +8,7 @@
 
 namespace vterm {
 
-	class VT100 : public PTYTerminal {
+	class VT100 : public virtual PTYTerminal {
 	public:
 		VT100(unsigned cols, unsigned rows) :
 			PTYTerminal(cols, rows) {

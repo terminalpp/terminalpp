@@ -3,11 +3,10 @@
 #include <windows.h>
 
 #include "../terminal.h"
-#include "../vt100.h"
 
 namespace vterm {
 
-	class ConPTYTerminal : public vterm::VT100 {
+	class ConPTYTerminal : public virtual PTYTerminal {
 	public:
 		ConPTYTerminal(std::string const & command, unsigned cols, unsigned rows);
 

@@ -7,7 +7,7 @@
 namespace vterm {
 
 	ConPTYTerminal::ConPTYTerminal(std::string const & command, unsigned cols, unsigned rows) :
-		VT100{ cols, rows },
+		PTYTerminal{ cols, rows },
 		command_{ command },
 		startupInfo_{},
 		conPTY_{ INVALID_HANDLE_VALUE },
