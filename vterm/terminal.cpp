@@ -1,3 +1,4 @@
+
 #include "terminal.h"
 
 namespace vterm {
@@ -24,53 +25,38 @@ namespace vterm {
 
 	// PTYTerminal -----------------------------------------------------------------------------------
 
-
-	void PTYTerminal::doResize(unsigned cols, unsigned rows) {
-		Terminal::doResize(cols, rows);
-		if (process_)
-			process_->resize(cols, rows);
+	PTYTerminal::~PTYTerminal() {
+		if (inputBuffer_ != nullptr) {
+			inputReader_.join();
+			delete[] inputBuffer_;
+		}
 	}
 
-	void PTYTerminal::attachProcess(Process * process) {
-		ASSERT(process_ == nullptr);
-		process_ = process;
-		process_->terminal_ = this;
-		std::lock_guard<std::mutex> g(m_);
-		process_->resize(cols(), rows());
+	void PTYTerminal::doStart() {
+		inputBuffer_ = new char[inputBufferSize_];
+		inputReader_ = std::thread(PTYTerminal::InputStreamReader, this);
 	}
 
-	// PTYTerminal::Process --------------------------------------------------------------------------
-
-	PTYTerminal::Process::Process(PTYTerminal * terminal, size_t bufferSize) :
-		terminal_(terminal),
-		inputBufferRead_(new char[bufferSize]),
-		inputBufferWrite_(inputBufferRead_),
-		inputBufferEnd_(inputBufferRead_ + bufferSize) {
-		ASSERT(terminal_ != nullptr);
-		terminal_->attachProcess(this);
-	}
-
-	PTYTerminal::Process::~Process() {
-		// detach from the terminal
-		if (terminal_ != nullptr)
-		    terminal_->process_ = nullptr;
-		// delete the buffers
-		delete [] inputBufferRead_;
-	}
-
-	void PTYTerminal::Process::commitInputBuffer(char * buffer, size_t size) {
-		ASSERT(buffer == inputBufferWrite_);
-		// determine the expected end of processed buffer, including any previously unprocessed items
-		size_t processedBytes = size + (buffer - inputBufferRead_);
-		// call the attached terminal with the buffer and size
-		terminal_->processInput(inputBufferRead_, processedBytes);
-		// if fewer bytes were processed, we must copy the unprocessed ones to the beginning of the buffer and adjust the buffer write pointer accordingly
-		if (inputBufferRead_ + processedBytes < buffer + size) {
-			inputBufferWrite_ = inputBufferRead_ + ((buffer + size) - (inputBufferRead_ + processedBytes));
-			memcpy(inputBufferRead_, inputBufferRead_ + processedBytes, inputBufferWrite_ - inputBufferRead_);
-		// otherwise next write may use the full buffer
-		} else {
-			inputBufferWrite_ = inputBufferRead_;
+	void PTYTerminal::InputStreamReader(PTYTerminal * terminal) {
+		char * buffer = terminal->inputBuffer_;
+		size_t bufferSize = terminal->inputBufferSize_;
+		size_t writeOffset = 0;
+		size_t processedSize = 0;
+		size_t size = bufferSize;
+		while (terminal->readInputStream(buffer + writeOffset, size)) {
+			// size now contains the number of bytes written, calculate expected processed size and process
+			processedSize = writeOffset + size;
+			terminal->processInputStream(buffer, processedSize);
+			// if not everything was processed, copy the end of the buffer to the beinning and update the writeOffset accordingly
+			writeOffset = writeOffset + size - processedSize;
+			if (writeOffset > 0) {
+				memcpy(buffer, buffer + processedSize, writeOffset);
+				size = bufferSize - writeOffset;
+				// otherwise writeOffset is 0, size is bufferSize meaning all buffer can be filled
+			}
+			else {
+				size = bufferSize;
+			}
 		}
 	}
 

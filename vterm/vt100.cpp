@@ -12,7 +12,7 @@
 
 namespace vterm {
 
-	void VT100::processInput(char * buffer, size_t & size) {
+	void VT100::processInputStream(char * buffer, size_t & size) {
 		std::cout << "Received " << size << " bytes" << std::endl;
 		for (size_t i = 0; i < size; ++i) {
 			switch (buffer[i]) {
@@ -21,6 +21,15 @@ namespace vterm {
 				break;
 			case BEL:
 				std::cout << "[BEL]";
+				break;
+			case '\n':
+				std::cout << "[\\n]";
+				break;
+			case '\r':
+				std::cout << "[\\r]";
+				break;
+			case '\t':
+				std::cout << "[\\t]";
 				break;
 			default:
 				std::cout << buffer[i];

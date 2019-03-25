@@ -12,7 +12,7 @@ namespace tpp {
 		 */
 		void AttachConsole() {
 			if (AllocConsole() == 0)
-				THROW(Win32Error("Cannot allocate console"));
+				THROW(helpers::Win32Error("Cannot allocate console"));
 			// this is ok, console cannot be detached, so we are fine with keeping the file handles forewer,
 			// nor do we need to FreeConsole at any point
 			FILE *fpstdin = stdin, *fpstdout = stdout, *fpstderr = stderr;

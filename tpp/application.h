@@ -1,22 +1,12 @@
 #pragma once
 #ifdef WIN32
 #include <windows.h>
+#include "helpers/win32.h"
 #endif
 
 #include "helpers/helpers.h"
 
 namespace tpp {
-
-#ifdef WIN32
-	/** Simple error wrapper which automatically obtains the last Win32 error when thrown.
-	 */
-	class Win32Error : public helpers::Exception {
-	public:
-		Win32Error(std::string const & msg) :
-			helpers::Exception(STR(msg << " - ErrorCode: " << GetLastError())) {
-		}
-	};
-#endif
 
 	/** Terminal++ Application object.
 

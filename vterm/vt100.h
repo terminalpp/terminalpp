@@ -16,7 +16,7 @@ namespace vterm {
 
 	protected:
 
-		void processInput(char * buffer, size_t & size) override;
+		void processInputStream(char * buffer, size_t & size) override;
 	};
 
 

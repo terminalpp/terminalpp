@@ -1,3 +1,5 @@
+#ifdef HAHA
+
 #pragma once
 
 #include <windows.h>
@@ -19,15 +21,6 @@ namespace tpp {
 	public:
 		ConPTYProcess(std::string const & command, vterm::PTYTerminal * terminal);
 
-		~ConPTYProcess() {
-			if (conPTY_ != INVALID_HANDLE_VALUE)
-			    ClosePseudoConsole(conPTY_);
-			if (pipeIn_ != INVALID_HANDLE_VALUE)
-				CloseHandle(pipeIn_);
-			if (pipeOut_ != INVALID_HANDLE_VALUE)
-				CloseHandle(pipeOut_);
-			free(startupInfo_.lpAttributeList);
-		}
 
 	protected:
 		void resize(unsigned width, unsigned height) override {
@@ -44,33 +37,8 @@ namespace tpp {
 		 */
 		void execute();
 
-		static void InputPipeReader(ConPTYProcess * p);
-
-		/** The command executed by the connector. 
-
-		    Keeping the command as property also "satisfies" the fact that CreateProcess requires mutable command line as its argument.
-		 */
-		std::string command_;
-
-		/** Startup info for the process. 
-		 */
-		STARTUPINFOEX startupInfo_;
-
-		/** Handle to the ConPTY object created for the command. 
-		 */
-		HPCON conPTY_;
-
-		/** The pipe from which input should be read. 
-		 */
-		HANDLE pipeIn_;
-
-		/** Pipe to which data for the application should be sent. 
-		 */
-		HANDLE pipeOut_;
-
-		/** Information about the process being executed. 
-		 */
-		PROCESS_INFORMATION pInfo_;
 	};
 
 } // namespace tpp
+
+#endif

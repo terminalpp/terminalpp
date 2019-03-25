@@ -1,5 +1,6 @@
 #pragma once
 
+#include <thread>
 #include <atomic>
 #include <mutex>
 #include <string>
@@ -307,80 +308,38 @@ namespace vterm {
 	 */
 	class PTYTerminal : public Terminal {
 	public:
-
-		class Process;
-
-		Process * process() const {
-			return process_;
-		}
+		static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
 
 	protected:
-		PTYTerminal(unsigned cols, unsigned rows) :
-			Terminal(cols, rows) {
+		PTYTerminal(unsigned cols, unsigned rows, size_t bufferSize = DEFAULT_BUFFER_SIZE) :
+			Terminal(cols, rows),
+			inputBuffer_(nullptr),
+		    inputBufferSize_ (bufferSize) {
 		}
 
-		/** Resizes the terminal and propagates the resize event to the attached process, if any.  
+		~PTYTerminal() override;
+
+		virtual void doStart();
+
+		/** Called when new data has been received on the input stream. 
+		    
 		 */
-		void doResize(unsigned cols, unsigned rows) override;
+		virtual void processInputStream(char * buffer, size_t & size) = 0;
 
-		/** Called by the attached process when new data is available. 
+		/** Called by the reader thread when new data from the input stream should be read. 
 
-		    Provides the start of the buffer and the size of data available to process. The size argument can be modified to number of bytes actually processed in cases such as incomplete transmission. The process will make sure that any unprocessed data will be prepended to next invocation of the method. 
 		 */
-		virtual void processInput(char * buffer, size_t & size) = 0;
-
+		virtual bool readInputStream(char * buffer, size_t & size) = 0;
 
 	private:
 
-		friend class Process;
-		void attachProcess(Process * process);
+		static void InputStreamReader(PTYTerminal * terminal);
 
+		std::thread inputReader_;
 
-		Process * process_;
-
-	};
-
-
-	class PTYTerminal::Process {
-	public:
-
-		PTYTerminal * terminal() const {
-			return terminal_;
-		}
-
-	protected:
-
-		static constexpr size_t DEFAULT_BUFFER_SIZE = 512;
-
-		Process(PTYTerminal * terminal, size_t bufferSize = DEFAULT_BUFFER_SIZE);
-
-		virtual ~Process();
-
-		/** Called by the attached terminal when it gets resized so that the client process can be notified of the need to refresh the whole screen. 
-		 */
-		virtual void resize(unsigned cols, unsigned rows) = 0;
-
-		char * reserveInputBuffer(size_t & size) {
-			size = inputBufferEnd_ - inputBufferWrite_;
-			return inputBufferWrite_;
-		}
-
-		void commitInputBuffer(char * buffer, size_t size);
-
-	private:
-		friend class PTYTerminal;
-
-		/** Attached PTYTerminal, if any. 
-		 */
-		PTYTerminal * terminal_;
-
-		char * inputBufferRead_;
-		char * inputBufferEnd_;
-		char * inputBufferWrite_;
-
-
+		char * inputBuffer_;
+		size_t inputBufferSize_;
 
 	};
-
 
 } // namespace vterm

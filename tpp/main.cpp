@@ -1,11 +1,10 @@
 ﻿#include <iostream>
 
 
-#include "vterm/vt100.h"
+#include "vterm/win32/conpty_terminal.h"
 
 #include "application.h"
 #include "terminal_window.h"
-#include "conpty/conpty_process.h"
 
 
 using namespace tpp;
@@ -25,6 +24,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Application app(hInstance);
 	std::cout << "OH HAI, CAN I HAZ CONSOLE?" << std::endl;
+
+	vterm::ConPTYTerminal * t(new vterm::ConPTYTerminal("wsl -e echo hello", 80, 25));
+	t->execute();
 
 	// create the application
 	//application = new GDIApplication(hInstance);
