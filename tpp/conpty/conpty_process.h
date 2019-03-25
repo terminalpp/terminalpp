@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-#include "vterm/vterm.h"
+#include "vterm/terminal.h"
 
 namespace tpp {
 
@@ -15,9 +15,9 @@ namespace tpp {
 		TODO add terminal resize function...
 
 	 */
-	class ConPTYProcess : public vterm::VTerm::Process {
+	class ConPTYProcess : public vterm::PTYTerminal::Process {
 	public:
-		ConPTYProcess(std::string const & command, vterm::VTerm * terminal);
+		ConPTYProcess(std::string const & command, vterm::PTYTerminal * terminal);
 
 		~ConPTYProcess() {
 			if (conPTY_ != INVALID_HANDLE_VALUE)

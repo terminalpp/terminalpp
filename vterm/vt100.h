@@ -4,14 +4,14 @@
 
 #include "helpers/strings.h"
 
-#include "vterm.h"
+#include "terminal.h"
 
 namespace vterm {
 
-	class VT100 : public VTerm {
+	class VT100 : public PTYTerminal {
 	public:
-		VT100(unsigned cols, unsigned rows, Process * process = nullptr) :
-			VTerm(cols, rows, process) {
+		VT100(unsigned cols, unsigned rows) :
+			PTYTerminal(cols, rows) {
 		}
 
 	protected:

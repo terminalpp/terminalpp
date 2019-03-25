@@ -3,28 +3,12 @@
 
 #include "vterm/vt100.h"
 
-#include "tpp.h"
+#include "application.h"
+#include "terminal_window.h"
 #include "conpty/conpty_process.h"
 
 
 using namespace tpp;
-
-
-void AttachConsole() {
-	if (AllocConsole() == 0)
-		THROW(Win32Error("Cannot allocate console"));
-	// this is ok, console cannot be detached, so we are fine with keeping the file handles forewer,
-	// nor do we need to FreeConsole at any point
-	FILE *fpstdin = stdin, *fpstdout = stdout, *fpstderr = stderr;
-	// patch the cin, cout, cerr
-	freopen_s(&fpstdin, "CONIN$", "r", stdin);
-	freopen_s(&fpstdout, "CONOUT$", "w", stdout);
-	freopen_s(&fpstderr, "CONOUT$", "w", stderr);
-	std::cin.clear();
-	std::cout.clear();
-	std::cerr.clear();
-}
-
 
 // https://www.codeguru.com/cpp/misc/misc/graphics/article.php/c16139/Introduction-to-DirectWrite.htm
 
@@ -39,7 +23,7 @@ void AttachConsole() {
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 
 
-	AttachConsole();
+	Application app(hInstance);
 	std::cout << "OH HAI, CAN I HAZ CONSOLE?" << std::endl;
 
 	// create the application
@@ -62,9 +46,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//ConPTYConnector c("wsl -e screenfetch", vterm1);
 	// Now run the main loop
 	//application->mainLoop();
-	while (true) {
-
-	}
+	app.mainLoop();
 
 	return EXIT_SUCCESS;
 }

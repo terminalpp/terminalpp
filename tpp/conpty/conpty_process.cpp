@@ -1,17 +1,17 @@
 #include <thread>
 
 #include "conpty_process.h"
-#include "../tpp.h"
+#include "../application.h"
 
 namespace tpp {
 
-	ConPTYProcess::ConPTYProcess(std::string const & command, vterm::VTerm * terminal) :
+	ConPTYProcess::ConPTYProcess(std::string const & command, vterm::PTYTerminal * terminal) :
+		vterm::PTYTerminal::Process(terminal),
 		command_{command},
 		startupInfo_{},
 		conPTY_{INVALID_HANDLE_VALUE},
 		pipeIn_{INVALID_HANDLE_VALUE},
 		pipeOut_{INVALID_HANDLE_VALUE} {
-		terminal_ = terminal;
 		startupInfo_.lpAttributeList = nullptr; // just to be sure
 		createPseudoConsole();
 		std::thread t(ConPTYProcess::InputPipeReader, this);
@@ -28,7 +28,7 @@ namespace tpp {
 			THROW(Win32Error("Unable to create pipes for the subprocess"));
 		// determine the console size from the terminal we have
 		COORD consoleSize{};
-		vterm::Dimension size = terminal()->size();
+		vterm::Terminal::Size size = terminal()->size();
  		consoleSize.X = terminal() != nullptr ? size.cols : 80;
 		consoleSize.Y = terminal() != nullptr ? size.rows : 25;
 		// now create the pseudo console
@@ -84,10 +84,10 @@ namespace tpp {
 		char * buffer;
 		size_t size;
 		bool readOk;
-		unsigned long bytesRead;
+		DWORD bytesRead;
 		do {
-			buffer = p->getInputBuffer(size);
-			readOk = ReadFile(p->pipeIn_, buffer, size, &bytesRead, nullptr);
+			buffer = p->reserveInputBuffer(size);
+			readOk = ReadFile(p->pipeIn_, buffer, static_cast<DWORD>(size), &bytesRead, nullptr);
 			p->commitInputBuffer(buffer, bytesRead);
 		} while (readOk);
 	}

@@ -1,27 +1,47 @@
 #pragma once
+#ifdef WIN32
+#include <windows.h>
+#endif
 
-#include "vterm/vterm.h"
+#include "helpers/helpers.h"
 
 namespace tpp {
 
-	class TerminalWindow;
+#ifdef WIN32
+	/** Simple error wrapper which automatically obtains the last Win32 error when thrown.
+	 */
+	class Win32Error : public helpers::Exception {
+	public:
+		Win32Error(std::string const & msg) :
+			helpers::Exception(STR(msg << " - ErrorCode: " << GetLastError())) {
+		}
+	};
+#endif
 
-	/** Application provides the common functionality for the terminal application across platforms and renderers, such as settings, persistence, etc. 
+	/** Terminal++ Application object.
+
+		The application is responsible for maintaining the terminal window objects, settings and so on.
+
+		The tpp header file provides the header for the application and implementation of its platform independent functions, while the platform dependent behavior is implemented in the corresponding platform cpp files.
 	 */
 	class Application {
 	public:
 
-		virtual ~Application() {
-		}
+#ifdef WIN32
+		Application(HINSTANCE hInstance);
+#endif
 
-		virtual TerminalWindow * createNewTerminalWindow() = 0;
+		~Application();
 
-		virtual void mainLoop() = 0;
+		void mainLoop();
 
-	protected:
-		Application() {
-		}
+	private:
+#ifdef WIN32
+		HINSTANCE hInstance_;
+#endif
+
 	};
+
 
 
 } // namespace tpp
