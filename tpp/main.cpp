@@ -1,14 +1,12 @@
 ﻿#include <iostream>
 
-#include "vterm/vt100.h"
-#include "vterm/win32/conpty_terminal.h"
-
-#include "application.h"
-#include "terminal_window.h"
-
-
-
-#include "tpp.h"
+#ifdef WIN32
+#include "win32/pty_terminal.h"
+#include "win32/application.h"
+#include "win32/terminal_window.h"
+#else
+#error "Unsupported platform"
+#endif
 
 using namespace tpp;
 

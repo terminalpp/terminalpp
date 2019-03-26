@@ -12,9 +12,6 @@ namespace tpp {
 	public:
 
 	protected:
-		/** Called when the terminal is to be repainted. 
-		 */
-		virtual void repaint(vterm::Terminal::RepaintEvent & e);
 
 	};
 

@@ -3,7 +3,9 @@
 
 #include <windows.h>
 
-#include "../application.h"
+#include "helpers/win32.h"
+
+#include "application.h"
 
 
 namespace tpp {
