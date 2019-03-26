@@ -6,7 +6,7 @@
 
 namespace vterm {
 
-	class ConPTYTerminal : public virtual PTYTerminal {
+	class ConPTYTerminal : public virtual IOTerminal {
 	public:
 		ConPTYTerminal(std::string const & command, unsigned cols, unsigned rows);
 

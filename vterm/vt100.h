@@ -8,10 +8,10 @@
 
 namespace vterm {
 
-	class VT100 : public virtual PTYTerminal {
+	class VT100 : public virtual IOTerminal {
 	public:
 		VT100(unsigned cols, unsigned rows) :
-			PTYTerminal(cols, rows) {
+		    IOTerminal(cols, rows) {
 		}
 
 	protected:

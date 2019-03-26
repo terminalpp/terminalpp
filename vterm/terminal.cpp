@@ -23,21 +23,21 @@ namespace vterm {
 		defaultLayer_->resize(cols, rows);
 	}
 
-	// PTYTerminal -----------------------------------------------------------------------------------
+	// IOTerminal ------------------------------------------------------------------------------------
 
-	PTYTerminal::~PTYTerminal() {
+	IOTerminal::~IOTerminal() {
 		if (inputBuffer_ != nullptr) {
 			inputReader_.join();
 			delete[] inputBuffer_;
 		}
 	}
 
-	void PTYTerminal::doStart() {
+	void IOTerminal::doStart() {
 		inputBuffer_ = new char[inputBufferSize_];
-		inputReader_ = std::thread(PTYTerminal::InputStreamReader, this);
+		inputReader_ = std::thread(IOTerminal::InputStreamReader, this);
 	}
 
-	void PTYTerminal::InputStreamReader(PTYTerminal * terminal) {
+	void IOTerminal::InputStreamReader(IOTerminal * terminal) {
 		char * buffer = terminal->inputBuffer_;
 		size_t bufferSize = terminal->inputBufferSize_;
 		size_t writeOffset = 0;

@@ -7,7 +7,7 @@
 namespace vterm {
 
 	ConPTYTerminal::ConPTYTerminal(std::string const & command, unsigned cols, unsigned rows) :
-		PTYTerminal{ cols, rows },
+		IOTerminal{ cols, rows },
 		command_{ command },
 		startupInfo_{},
 		conPTY_{ INVALID_HANDLE_VALUE },
@@ -76,7 +76,7 @@ namespace vterm {
 		))
 			THROW(helpers::Win32Error(STR("Unable to start process " << command_)));
 		// start the input reader thread from PTYTerminal
-		PTYTerminal::doStart();
+		IOTerminal::doStart();
 	}
 
 	bool ConPTYTerminal::readInputStream(char * buffer, size_t & size) {

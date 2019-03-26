@@ -300,24 +300,20 @@ namespace vterm {
 		Cell * cells_;
 	};
 
-	/** Terminal extension to allow communication over PTY-like channels. 
-
-	    The PTYTerminal extends the basic terminal with notion of a Process, which is connected to the terminal and provides implementation of basic terminal events (such as resize) and input/output buffers that the PTYTerminal uses to communicate with the attached process. 
-
-		The PTYTerminal is a suitable base class for various terminal emulators such as VT100, etc. 
+	/** Terminal extension to allow communication over input output streams. 
 	 */
-	class PTYTerminal : public Terminal {
+	class IOTerminal : public Terminal {
 	public:
 		static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
 
 	protected:
-		PTYTerminal(unsigned cols, unsigned rows, size_t bufferSize = DEFAULT_BUFFER_SIZE) :
+		IOTerminal(unsigned cols, unsigned rows, size_t bufferSize = DEFAULT_BUFFER_SIZE) :
 			Terminal(cols, rows),
 			inputBuffer_(nullptr),
 		    inputBufferSize_ (bufferSize) {
 		}
 
-		~PTYTerminal() override;
+		~IOTerminal() override;
 
 		virtual void doStart();
 
@@ -333,7 +329,7 @@ namespace vterm {
 
 	private:
 
-		static void InputStreamReader(PTYTerminal * terminal);
+		static void InputStreamReader(IOTerminal * terminal);
 
 		std::thread inputReader_;
 

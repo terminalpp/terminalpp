@@ -7,6 +7,9 @@
 #include "terminal_window.h"
 
 
+
+#include "tpp.h"
+
 using namespace tpp;
 
 // https://www.codeguru.com/cpp/misc/misc/graphics/article.php/c16139/Introduction-to-DirectWrite.htm
@@ -15,15 +18,6 @@ using namespace tpp;
 
 // https://docs.microsoft.com/en-us/windows/desktop/api/_gdi/
 
-class Term : public vterm::VT100, public vterm::ConPTYTerminal {
-public:
-	Term(std::string const & cmd, unsigned cols, unsigned rows) :
-		VT100(cols, rows),
-		ConPTYTerminal(cmd, cols, rows),
-		PTYTerminal(cols, rows) {
-	}
-
-};
 
 /** Terminal++ App Entry Point
 
@@ -37,7 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	//vterm::ConPTYTerminal * t(new vterm::ConPTYTerminal("wsl -e echo hello", 80, 25));
-	Term * t = new Term("wsl -e echo hello", 80, 25);
+	Terminal * t = new Terminal("wsl -e echo hello", 80, 25);
 	t->execute();
 
 	// create the application

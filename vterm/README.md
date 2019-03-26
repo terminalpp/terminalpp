@@ -14,16 +14,16 @@ The base class for the virtual terminal, which implements storage of the termina
 
 Renderer provides minimal interface and some common implementation useful for any class whose task is to display the contents of a `Terminal` on various devices, such as screen (the default expected from virtual terminals), or as part of an UI framework, or even encode the terminal's contents using ANSI escape codes and send it to other machine/ terminal. 
 
-## `PTYTerminal`
+## `IOTerminal`
 
-The `PTYTerminal` adds a standardized way of communication between the terminal and its feeder (usually process) using streams. The exact nature of the streams is however not defined in the class since multiple options, such as network streams, OS PTY, etc. can be used. 
+The `IOTerminal` adds a standardized way of communication between the terminal and its feeder (usually process) using streams. The exact nature of the streams is however not defined in the class since multiple options, such as network streams, OS PTY, etc. can be used. 
 
-> `PTYTerminal` defines two interfaces - one for processing the input and displaying it correctly and the other one for implementing buffered reads and writes into the terminal streams. Children of `PTYTerminal` are expected to use virtual inheritance and define either various forms of decoding / encoding the events, or implement the stream accesses. 
+> `IOTerminal` defines two interfaces - one for processing the input and displaying it correctly and the other one for implementing buffered reads and writes into the terminal streams. Children of `PTYTerminal` are expected to use virtual inheritance and define either various forms of decoding / encoding the events, or implement the stream accesses. 
 
 ## `VT100` 
 
-Inherits (virtually) from `PTYTerminal` and provides decoding and encoding functions for the terminal input and events using the VT100 and parts of ANSI terminal sequences. 
+Inherits (virtually) from `IOTerminal` and provides decoding and encoding functions for the terminal input and events using the VT100 and parts of ANSI terminal sequences. 
 
 ## `ConPTYTerminal`
 
-Available only on Windows, virtually inherits from `PTYTerminal` and describes the actual stream communication between the terminal and its attached process using Win32 ConPTY. 
+Available only on Windows, virtually inherits from `IOTerminal` and describes the actual stream communication between the terminal and its attached process using Win32 ConPTY. 
