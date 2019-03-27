@@ -65,6 +65,12 @@ namespace vterm {
 
 	protected:
 
+		Renderer(unsigned cols, unsigned rows) :
+			terminal_(nullptr),
+		    cols_(cols), 
+		    rows_(rows) {
+		}
+
 		/** Triggered when the selected part of the terminal screen has been changed. 
 
 		    This method is to be overriden by the respective renderers. 

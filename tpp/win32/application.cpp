@@ -6,6 +6,7 @@
 #include "helpers/win32.h"
 
 #include "application.h"
+#include "terminal_window.h"
 
 
 namespace tpp {
@@ -27,14 +28,16 @@ namespace tpp {
 			std::cerr.clear();
 		}
 
+
 	} // anonymous namespace
 
+	char const * const Application::TerminalWindowClassName_ = "TerminalWindowClass";
 
 	Application::Application(HINSTANCE hInstance):
 	    hInstance_(hInstance) {
 		// TODO this should be conditional on a debug flag
 		AttachConsole();
-
+		registerTerminalWindowClass();
 	}
 
 	Application::~Application() {
@@ -51,6 +54,27 @@ namespace tpp {
 							*/
 		}
 	}
+
+	void Application::registerTerminalWindowClass() {
+		WNDCLASSEX wClass = { 0 };
+		wClass.cbSize = sizeof(WNDCLASSEX); // size of the class info
+		wClass.hInstance = hInstance_;
+		wClass.style = CS_HREDRAW | CS_VREDRAW;
+		wClass.lpfnWndProc = TerminalWindow::EventHandler; // event handler function for the window class
+		wClass.cbClsExtra = 0; // extra memory to be allocated for the class
+		wClass.cbWndExtra = 0; // extra memory to be allocated for each window
+		wClass.lpszClassName = TerminalWindowClassName_; // class name
+		wClass.lpszMenuName = nullptr; // menu name
+		wClass.hIcon = LoadIcon(nullptr, IDI_APPLICATION); // big icon (alt-tab)
+		wClass.hIconSm = LoadIcon(nullptr, IDI_APPLICATION); // small icon (taskbar)
+		wClass.hCursor = LoadCursor(nullptr, IDC_IBEAM); // mouse pointer icon
+		wClass.hbrBackground = nullptr; // do not display background - the terminal window does it itself
+		// register the class
+		ATOM result = RegisterClassEx(&wClass);
+		ASSERT(result != 0) << "Unable to register window class";
+	}
+
+
 
 } // namespace tpp
 

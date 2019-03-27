@@ -15,6 +15,13 @@ namespace tpp {
 		void mainLoop() override;
 
 	private:
+		friend class TerminalWindow;
+
+		static char const * const TerminalWindowClassName_;
+
+		void registerTerminalWindowClass();
+
+		
 		HINSTANCE hInstance_;
 	};
 

@@ -4,6 +4,9 @@
 #include "win32/pty_terminal.h"
 #include "win32/application.h"
 #include "win32/terminal_window.h"
+// link to directwrite
+#pragma comment(lib, "d2d1.lib")
+#pragma comment(lib, "dwrite.lib") 
 #else
 #error "Unsupported platform"
 #endif
@@ -24,8 +27,19 @@ using namespace tpp;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 
 
-	Application app(hInstance);
+	TerminalSettings ts;
+	ts.defaultCols = 80;
+	ts.defaultRows = 25;
+	ts.defaultName = "terminal++";
+	ts.defaultFontHeight = 16;
+	ts.defaultFontWidth = 10;
+	ts.defaultZoom = 1;
+	ts.font = "Iosevka NF";
+
+	Application * app = new Application(hInstance);
 	std::cout << "OH HAI, CAN I HAZ CONSOLE?" << std::endl;
+	TerminalWindow * tw = new TerminalWindow(app, &ts);
+	tw->show();
 
 
 	//vterm::ConPTYTerminal * t(new vterm::ConPTYTerminal("wsl -e echo hello", 80, 25));
@@ -52,7 +66,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//ConPTYConnector c("wsl -e screenfetch", vterm1);
 	// Now run the main loop
 	//application->mainLoop();
-	app.mainLoop();
+	app->mainLoop();
 
 	return EXIT_SUCCESS;
 }
