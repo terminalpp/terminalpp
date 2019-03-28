@@ -60,6 +60,8 @@ namespace tpp {
 		 */
 		~TerminalWindow() override;
 
+		void resizeWindow(unsigned width, unsigned height) override;
+
 		void repaint(vterm::Terminal::RepaintEvent & e) override;
 
 

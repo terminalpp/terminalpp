@@ -37,6 +37,14 @@ namespace tpp {
 		DeleteObject(bufferDC_);
 	}
 
+	void TerminalWindow::resizeWindow(unsigned width, unsigned height) {
+		// invalidate the buffer
+		DeleteObject(buffer_);
+		buffer_ = nullptr;
+		// resize the window
+		BaseTerminalWindow::resizeWindow(width, height);
+	}
+
 	void TerminalWindow::repaint(vterm::Terminal::RepaintEvent & e) {
 		// do not bother with repainting if shadow buffer is invalid, the WM_PAINT will redraw the whole buffer when the redraw is processed
 		if (buffer_ == nullptr)
@@ -114,6 +122,47 @@ namespace tpp {
 					tw->frameWidth_ = fw;
 					tw->frameHeight_ = fh;
 					SetWindowPos(hWnd, HWND_TOP, cs.x, cs.y, cs.cx + fw, cs.cy + fh, SWP_NOZORDER);
+				}
+				break;
+			}
+			/* Called when the window is resized interactively by the user. Makes sure that the window size snaps to discrete terminal sizes. */
+			case WM_SIZING: {
+				RECT * winRect = reinterpret_cast<RECT*>(lParam);
+				switch (wParam) {
+				case WMSZ_BOTTOM:
+				case WMSZ_BOTTOMRIGHT:
+				case WMSZ_BOTTOMLEFT:
+					winRect->bottom -= (winRect->bottom - winRect->top - tw->frameHeight_) % tw->cellHeightPx_;
+					break;
+				default:
+					winRect->top += (winRect->bottom - winRect->top - tw->frameHeight_) % tw->cellHeightPx_;
+					break;
+				}
+				switch (wParam) {
+				case WMSZ_RIGHT:
+				case WMSZ_TOPRIGHT:
+				case WMSZ_BOTTOMRIGHT:
+					winRect->right -= (winRect->right - winRect->left - tw->frameWidth_) % tw->cellWidthPx_;
+					break;
+				default:
+					winRect->left += (winRect->right - winRect->left - tw->frameWidth_) % tw->cellWidthPx_;
+					break;
+				}
+				break;
+			}
+			/* Called when the window is resized to given values.
+
+			   No resize is performed if the window is minimized (we would have terminal size of length 0).
+
+			   It is ok if no terminal window is associated with the handle as the message can be sent from the WM_CREATE when window is resized to account for the window border which has to be calculated.
+			 */
+			case WM_SIZE: {
+				if (wParam == SIZE_MINIMIZED)
+					break;
+				if (tw != nullptr) {
+					RECT rect;
+					GetClientRect(hWnd, &rect);
+					tw->resizeWindow(rect.right, rect.bottom);
 				}
 				break;
 			}

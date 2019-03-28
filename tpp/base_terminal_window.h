@@ -140,7 +140,7 @@ namespace tpp {
 
 		    Recalculates the number of columns and rows displayabe and calls the renderer's resize method which in turn updates the underlying terminal. When the terminal changes, it would trigger the repaint event on the window. 
 		 */
-		virtual void windowResized(unsigned widthPx, unsigned heightPx) {
+		virtual void resizeWindow(unsigned widthPx, unsigned heightPx) {
 			widthPx_ = widthPx;
 			heightPx_ = heightPx;
 			resize(widthPx / cellWidthPx_, heightPx / cellHeightPx_);
