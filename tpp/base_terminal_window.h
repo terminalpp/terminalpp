@@ -1,8 +1,67 @@
 #pragma once
 
+#include <cmath>
+
 #include "vterm/renderer.h"
 
 namespace tpp {
+
+	/** Stores and retrieves font objects so that they do not have to be created each time they are needed. 
+	 */
+	template<typename T>
+	class Font {
+	public:
+
+		/** Return a font for given terminal font description and zoom. 
+		 */
+		static Font * GetOrCreate(vterm::Font font, unsigned fontHeight, double zoom) {
+			// disable blinking as it is not really important for font selection
+			font.setBlink(false);
+			unsigned height = static_cast<unsigned>(std::round(zoom * fontHeight));
+			unsigned id = (height << 8) + font.raw();
+			auto i = Fonts_.find(id);
+			if (i == Fonts_.end())
+				i = Fonts_.insert(std::make_pair(id, Create(font, height))).first;
+			return i->second;
+		}
+
+		T const & handle() const {
+			return handle_;
+		}
+
+		unsigned widthPx() const {
+			return widthPx_;
+		}
+
+		unsigned heightPx() const {
+			return heightPx_;
+		}
+
+	private:
+
+		Font(vterm::Font font, unsigned width, unsigned height, T const & handle) :
+			font_(font),
+			widthPx_(width),
+			heightPx_(height),
+			handle_(handle) {
+		}
+
+		vterm::Font font_;
+		unsigned widthPx_;
+		unsigned heightPx_;
+		T handle_;
+
+		/** This must be implemented in platform specific code. 
+		 */
+		static Font * Create(vterm::Font font, unsigned height);
+
+		static std::unordered_map<unsigned, Font *> Fonts_;
+	};
+
+
+	template<typename T>
+	std::unordered_map<unsigned, Font<T> *> Font<T>::Fonts_;
+
 
 	/** Description of settings relevant for terminal windows. 
 
@@ -12,23 +71,20 @@ namespace tpp {
 
 		/** Basic title for the terminal window. 
 		 */
-		std::string defaultName;
+		std::string defaultName = "terminal++";
 
 		/** Default width and height of the terminal display (in terminal rows and cols, not in pixels). 
 		 */
-		unsigned defaultCols;
-		unsigned defaultRows;
-
-		/** Name of the font to be used by the terminal. */
-		std::string font;
+		unsigned defaultCols = 80;
+		unsigned defaultRows = 25;
 
 		/** Default width and height in pixels, of the selected font. I.e. the width and height of a single terminal cell. */
-		unsigned defaultFontHeight;
-		unsigned defaultFontWidth;
+		unsigned defaultFontHeight = 16;
+		unsigned defaultFontWidth = 0;
 
 		/** Default zoom of the window. 
 		 */
-		double defaultZoom;
+		double defaultZoom = 1.0;
 
 	}; // tpp::TerminalSettings
 
@@ -72,8 +128,8 @@ namespace tpp {
 			vterm::Renderer(settings->defaultCols, settings->defaultRows),
 			settings_(settings),
 			name_(settings->defaultName),
-			widthPx_(cellWidthPx_ * settings->defaultCols),
-			heightPx_(cellHeightPx_ * settings->defaultRows),
+			widthPx_(settings->defaultFontWidth * settings->defaultCols),
+			heightPx_(settings->defaultFontHeight * settings->defaultRows),
 			zoom_(settings->defaultZoom),
 			cellWidthPx_(settings->defaultFontWidth),
 			cellHeightPx_(settings->defaultFontHeight) {
@@ -96,8 +152,8 @@ namespace tpp {
 		 */
 		virtual void doSetZoom(double value) {
 			// update width & height of the cell
-			cellWidthPx_ = settings_->defaultFontWidth * value;
-			cellHeightPx_ = settings_->defaultFontHeight * value;
+			cellWidthPx_ = std::round(value * settings_->defaultFontWidth);
+			cellHeightPx_ = std::round(value * settings_->defaultFontHeight);
 			NOT_IMPLEMENTED;
 			// resize the terminal properly
 		}

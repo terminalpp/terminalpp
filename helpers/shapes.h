@@ -70,9 +70,9 @@ namespace helpers {
 		 */
 		static Rect Intersection(Rect const & first, Rect const & second) {
 			if (first.empty())
-				return second;
-			else if (second.empty())
 				return first;
+			else if (second.empty())
+				return second;
 			else
 				return Rect{
 					std::max(first.left, second.left),

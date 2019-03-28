@@ -13,8 +13,37 @@ namespace tpp {
 
 	class Application;
 
+	template<>
+	inline Font<HFONT> * Font<HFONT>::Create(vterm::Font font, unsigned height) {
+		HFONT handle = CreateFont(
+			height * font.size(),
+			0, // default escapment
+			0, // default orientation 
+			0, // default width, we must calculate the width when done
+			font.bold() ? FW_BOLD : FW_DONTCARE,
+			font.italics(),
+			font.underline(),
+			font.strikeout(),
+			DEFAULT_CHARSET,
+			OUT_OUTLINE_PRECIS,
+			CLIP_DEFAULT_PRECIS,
+			CLEARTYPE_QUALITY,
+			FIXED_PITCH,
+			"Iosevka NF");
+		// we have the handle for the font, now determine the width of it
+		ABC abc;
+		HDC dc = CreateCompatibleDC(nullptr);
+		SelectObject(dc, handle);
+		GetCharABCWidths(dc, 'm', 'm', &abc);
+		DeleteObject(dc);
+		unsigned width = abc.abcA + abc.abcB + abc.abcC;
+		return new Font<HFONT>(font, width, height, handle);
+	}
+
 	class TerminalWindow : public BaseTerminalWindow {
 	public:
+		typedef Font<HFONT> Font;
+
 		TerminalWindow(Application * app, TerminalSettings * settings);
 
 		void show() override {
@@ -37,9 +66,22 @@ namespace tpp {
 	private:
 		friend class Application;
 
+		void updateBuffer(helpers::Rect const & rect);
+
+		static TerminalSettings * FillPlatformSettings(TerminalSettings * ts);
+
 		static LRESULT CALLBACK EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 		HWND hWnd_;
+
+		/** Contains the shadow buffer for the window. The bitmap itself and the memory only buffer device context is required. */
+		HBITMAP buffer_;
+		HDC bufferDC_;
+
+		/** Width and height of the window frame so that the width and height of the window can be adjusted accordingly. 
+		 */
+		unsigned frameWidth_;
+		unsigned frameHeight_;
 
 		static std::unordered_map<HWND, TerminalWindow *> Windows_;
 
