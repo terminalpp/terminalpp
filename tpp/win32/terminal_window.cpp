@@ -57,15 +57,31 @@ namespace tpp {
 		if (terminal() == nullptr)
 			return;
 		vterm::Terminal::Layer l = terminal()->getDefaultLayer();
-		HFONT hFont = Font::GetOrCreate(vterm::Font(), settings_->defaultFontHeight, zoom_)->handle();
-		SetTextColor(bufferDC_, RGB(255, 255, 255));
-		SetBkColor(bufferDC_, RGB(0,0,0));
-		SelectObject(bufferDC_, hFont);
+		// initialize the font & colors
+		vterm::Cell & c = l->at(rect.left, rect.top);
+		vterm::Color currentFg = c.fg;
+		vterm::Color currentBg = c.bg;
+		vterm::Font currentFont = DropBlink(c.font);
+		SetTextColor(bufferDC_, RGB(currentFg.red, currentFg.green, currentFg.blue));
+		SetBkColor(bufferDC_, RGB(currentBg.red, currentBg.green,currentBg.blue));
+		SelectObject(bufferDC_, Font::GetOrCreate(currentFont, settings_->defaultFontHeight, zoom_)->handle());
 		for (unsigned col = rect.left; col < rect.right; ++col) {
 			for (unsigned row = rect.top; row < rect.bottom; ++row) {
 				vterm::Cell & c = l->at(col, row);
-				// ISSUE 4 - make sure we can print full Unicode, not just UCS2
-				wchar_t wc = L'3';//c.c.toWChar();
+				if (currentFg != c.fg) {
+					currentFg = c.fg;
+					SetTextColor(bufferDC_, RGB(currentFg.red, currentFg.green, currentFg.blue));
+				}
+				if (currentBg != c.bg) {
+					currentBg = c.bg;
+					SetBkColor(bufferDC_, RGB(currentBg.red, currentBg.green, currentBg.blue));
+				}
+				if (currentFont != DropBlink(c.font)) {
+					currentFont = DropBlink(c.font);
+					SelectObject(bufferDC_, Font::GetOrCreate(currentFont, settings_->defaultFontHeight, zoom_)->handle());
+				}
+				// ISSUE 4 - make sure we can print full Unicode, not just UCS2 - perhaps not possible with GDI alone
+				wchar_t wc = c.c.toWChar();
 				TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
 			}
 		}

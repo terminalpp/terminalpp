@@ -124,6 +124,12 @@ namespace tpp {
 
 	protected:
 
+		/** Because the blink attribute has really nothing to do with the font itself, this simple functions strips its value from given font so that fonts excluding the blinking can be easily compared. */
+		static vterm::Font DropBlink(vterm::Font font) {
+			font.setBlink(false);
+			return font;
+		}
+
 		BaseTerminalWindow(TerminalSettings * settings) :
 			vterm::Renderer(settings->defaultCols, settings->defaultRows),
 			settings_(settings),

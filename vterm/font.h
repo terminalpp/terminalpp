@@ -84,7 +84,6 @@ namespace vterm {
 			return raw_ != other.raw_;
 		}
 
-
 	private:
 		friend struct ::std::hash<Font>;
 
