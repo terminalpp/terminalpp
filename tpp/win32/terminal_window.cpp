@@ -105,11 +105,12 @@ namespace tpp {
 			}
 			/* When the window is created, the border width and height of a terminal window is determined and the window's size is updated to adjust for it. */
 			case WM_CREATE: {
-				ASSERT(tw == nullptr);
-				tw = reinterpret_cast<TerminalWindow*>(lParam);
-				ASSERT(tw != nullptr);
 				// now calculate the border and actually update the window size to account for it
 				CREATESTRUCT & cs = *reinterpret_cast<CREATESTRUCT*>(lParam);
+				// get the tw member from the create struct argument
+				ASSERT(tw == nullptr);
+				tw = reinterpret_cast<TerminalWindow*>(cs.lpCreateParams);
+				ASSERT(tw != nullptr);
 				RECT r;
 				r.left = cs.x;
 				r.right = cs.x + cs.cx;
