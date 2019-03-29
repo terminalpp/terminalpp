@@ -1,22 +1,57 @@
 #pragma once
 
-#include <unordered_map>
-
-#include "helpers/strings.h"
-
 #include "terminal.h"
 
 namespace vterm {
 
 	class VT100 : public virtual IOTerminal {
 	public:
-		VT100(unsigned cols, unsigned rows) :
-		    IOTerminal(cols, rows) {
-		}
-
+		VT100(unsigned cols, unsigned rows);
+		
 	protected:
 
 		void processInputStream(char * buffer, size_t & size) override;
+
+		bool skipEscapeSequence();
+
+		bool processEscapeSequence();
+
+		bool processCSI();
+
+		bool processSetter();
+
+		void updateCursorPosition() {
+			if (cursorCol_ >= cols_) {
+				cursorCol_ = 0;
+				++cursorRow_;
+			}
+			if (cursorRow_ >= rows_) {
+				scrollDown(cursorRow_ - rows_ + 1);
+				cursorRow_ = rows_ - 1;
+			}
+		}
+
+
+		/** Updates the cursor position. 
+		 */
+		void setCursor(unsigned col, unsigned row) {
+			cursorCol_ = col;
+			cursorRow_ = row;
+		}
+
+		void scrollDown(unsigned lines);
+
+
+
+		Color fg_;
+		Color bg_;
+		Font font_;
+		unsigned cursorCol_;
+		unsigned cursorRow_;
+
+		char * buffer_;
+		char * bufferEnd_;
+
 	};
 
 

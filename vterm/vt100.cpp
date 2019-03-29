@@ -12,31 +12,129 @@
 
 namespace vterm {
 
+
+	VT100::VT100(unsigned cols, unsigned rows):
+		IOTerminal(cols, rows),
+		fg_(Color::White),
+		bg_(Color::Black),
+		font_(),
+		cursorCol_(0),
+        cursorRow_(0) {
+
+	}
+
 	void VT100::processInputStream(char * buffer, size_t & size) {
 		std::cout << "Received " << size << " bytes" << std::endl;
-		for (size_t i = 0; i < size; ++i) {
-			switch (buffer[i]) {
-			case ESC:
-				std::cout << "[ESC]";
+		buffer_ = buffer;
+		bufferEnd_ = buffer_ + size;
+		{
+
+			// lock the terminal for updates while decoding
+			std::lock_guard<std::mutex> g(m_);
+
+			while (buffer_ < bufferEnd_) {
+				switch (*buffer_) {
+				case ESC: {
+					// make a copy of buffer in case process escape sequence advances it and then fails
+					char * b = buffer_;
+					if (!processEscapeSequence()) {
+						buffer_ = b;
+						if (!skipEscapeSequence()) {
+							size = b - buffer;
+							return;
+						}
+						else {
+							std::cout << "unknown escape sequence: ";
+							for (++b; b < buffer_; ++b)
+								std::cout << *b;
+							std::cout << std::endl;
+						}
+					}
+					break;
+				}
+						  /* New line simply moves to next line.
+						   */
+				case '\n':
+					++cursorRow_;
+					cursorCol_ = 0;
+					++buffer_;
+					break;
+					/* default variant is to print the character received to current cell.
+					 */
+				default: {
+					// make sure that cursor is positioned within the terminal (previous advances may have placed it outside of the terminal area)
+					updateCursorPosition();
+					// get the cell and update its contents
+					Cell & c = defaultLayer_->at(cursorCol_, cursorRow_);
+					c.fg = fg_;
+					c.bg = bg_;
+					c.font = font_;
+					c.c = *buffer_++;
+					// move to next column
+					++cursorCol_;
+				}
+				}
+			}
+		}
+		repaintAll();
+	}
+
+
+	bool VT100::skipEscapeSequence() {
+		ASSERT(*buffer_ == ESC);
+		++buffer_;
+		if (buffer_ == bufferEnd_)
+			return false;
+		// if the next character is `[` then we match CSI, otherwise we just sklip it as the second byte of the sequence
+		switch (*buffer_) {
+			case '[': {
+				++buffer_;
+				// the CSI is now followed by arbitrary number parameter bytes (0x30 - 0x3f)
+				while (true) {
+					if (buffer_ == bufferEnd_)
+						return false;
+					if (*buffer_ < 0x30 || *buffer_ > 0x3f)
+						break;
+					++buffer_;
+				}
+				// then by any number of intermediate bytes (0x20 - 0x2f)
+				while (true) {
+					if (buffer_ == bufferEnd_)
+						return false;
+					if (*buffer_ < 0x20 || *buffer_ > 0x2f)
+						break;
+					++buffer_;
+				}
+				// and then by the final byte
+				if (buffer_ == bufferEnd_)
+					return false;
+				++buffer_;
 				break;
-			case BEL:
-				std::cout << "[BEL]";
-				break;
-			case '\n':
-				std::cout << "[\\n]";
-				break;
-			case '\r':
-				std::cout << "[\\r]";
-				break;
-			case '\t':
-				std::cout << "[\\t]";
-				break;
-			default:
-				std::cout << buffer[i];
+			}
+			case ']': {
+				// TODO for now we only handle BEL
+				while (*buffer_ != BEL) {
+					if (buffer_ == bufferEnd_)
+						return false;
+					++buffer_;
+				}
+				++buffer_;
 				break;
 			}
 		}
-		std::cout << std::endl;
+		return true;
+	}
+
+	bool VT100::processEscapeSequence() {
+		return false;
+	}
+
+	bool VT100::processCSI() {
+		return false;
+	}
+
+	void VT100::scrollDown(unsigned lines) {
+
 	}
 
 #ifdef FOOBAR
@@ -69,50 +167,6 @@ namespace vterm {
 		return size;
 	}
 
-	bool VT100::skipEscapeSequence(char * & buffer, char * end) {
-		ASSERT(*buffer == ESC);
-		++buffer;
-		if (buffer == end)
-			return false;
-		// if the next character is `[` then we match CSI, otherwise we just sklip it as the second byte of the sequence
-		switch (*buffer) {
-		case '[': {
-			++buffer;
-			// the CSI is now followed by arbitrary number parameter bytes (0x30 - 0x3f)
-			while (true) {
-				if (buffer == end)
-					return false;
-				if (*buffer < 0x30 || *buffer > 0x3f)
-					break;
-				++buffer;
-			}
-			// then by any number of intermediate bytes (0x20 - 0x2f)
-			while (true) {
-				if (buffer == end)
-					return false;
-				if (*buffer < 0x20 || *buffer > 0x2f)
-					break;
-				++buffer;
-			}
-			// and then by the final byte
-			if (buffer == end)
-				return false;
-			++buffer;
-			break;
-		}
-		case ']': {
-			// TODO for now we only handle BEL
-			while (*buffer != BEL) {
-				if (buffer == end)
-					return false;
-				++buffer;
-			}
-			++buffer;
-			break;
-		}
-		}
-		return true;
-	}
 
 	bool VT100::parseEscapeSequence(VirtualTerminal::ScreenBuffer & sb, char * & buffer, char * end) {
 		ASSERT(* buffer == ESC);

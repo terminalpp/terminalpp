@@ -215,27 +215,18 @@ namespace vterm {
 				trigger(onRepaint, rect);
 		}
 
+		void repaintAll() {
+			trigger(onRepaint, helpers::Rect{ 0,0,cols_, rows_ });
+		}
+
 		/** Actually resizes the terminal.
 		 */
 		virtual void doResize(unsigned cols, unsigned rows);
 
-		/** Returns the number of columns. Should only be called by code after obtaining the m_ mutex. 
-		 */
-		unsigned cols() {
-			return cols_;
-		}
-
-		/** Returns the number of rows. Should only be called by code after obtaining the m_ mutex.
-		 */
-		unsigned rows() {
-			return rows_;
-		}
 
 		/** Mutex for protecting read and write access to the terminal contents to make sure that all requests will return consistent data.
 		 */
 		mutable std::mutex m_;
-
-	private:
 
 		/** Number of columns the terminal stores in each layer. */
 		unsigned cols_;
@@ -243,9 +234,12 @@ namespace vterm {
 		/** Number of rows the terminal stores in each layer. */
 		unsigned rows_;
 
-		/** The default layer. 
+		/** The default layer.
 		 */
 		LayerImpl * defaultLayer_;
+
+	private:
+
 
 	}; // vterm::VTerm
 
@@ -327,6 +321,7 @@ namespace vterm {
 		 */
 		virtual bool readInputStream(char * buffer, size_t & size) = 0;
 
+
 	private:
 
 		static void InputStreamReader(IOTerminal * terminal);
@@ -334,6 +329,7 @@ namespace vterm {
 		std::thread inputReader_;
 
 		char * inputBuffer_;
+
 		size_t inputBufferSize_;
 
 	};

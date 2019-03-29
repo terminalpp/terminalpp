@@ -26,8 +26,8 @@ namespace vterm {
 			THROW(helpers::Win32Error("Unable to create pipes for the subprocess"));
 		// determine the console size from the terminal we have
 		COORD consoleSize{};
-		consoleSize.X = cols();
-		consoleSize.Y = rows();;
+		consoleSize.X = cols_;
+		consoleSize.Y = rows_;
 		// now create the pseudo console
 		result = CreatePseudoConsole(consoleSize, pipePTYIn, pipePTYOut, 0, &conPTY_);
 		// delete the pipes on PTYs end, since they are now in conhost and will be deleted when the conpty is deleted
