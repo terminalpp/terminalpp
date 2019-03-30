@@ -25,6 +25,11 @@ namespace vterm {
 	 */
 	class Char {
 	public:
+		static constexpr char BEL = 7;
+		static constexpr char BACKSPACE = 8;
+		static constexpr char LF = 10;
+		static constexpr char CR = 13;
+		static constexpr char ESC = 27;
 
 		template<Encoding E>
 		class Representation;

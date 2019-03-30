@@ -158,8 +158,8 @@ namespace tpp {
 		 */
 		virtual void doSetZoom(double value) {
 			// update width & height of the cell
-			cellWidthPx_ = std::round(value * settings_->defaultFontWidth);
-			cellHeightPx_ = std::round(value * settings_->defaultFontHeight);
+			cellWidthPx_ = static_cast<unsigned>(std::round(value * settings_->defaultFontWidth));
+			cellHeightPx_ = static_cast<unsigned>(std::round(value * settings_->defaultFontHeight));
 			NOT_IMPLEMENTED;
 			// resize the terminal properly
 		}

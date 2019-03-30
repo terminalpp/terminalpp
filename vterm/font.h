@@ -50,6 +50,18 @@ namespace vterm {
 			bold_ = value;
 		}
 
+		void setItalics(bool value) {
+			italics_ = value;
+		}
+
+		void setUnderline(bool value) {
+			underline_ = value;
+		}
+
+		void setStrikeout(bool value) {
+			strikeout_ = value;
+		}
+
 		void setBlink(bool value) {
 			blink_ = value;
 		}

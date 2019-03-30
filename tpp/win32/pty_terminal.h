@@ -11,8 +11,8 @@ namespace tpp {
 
 	class Terminal : public vterm::VT100, public vterm::ConPTYTerminal {
 	public:
-		Terminal(std::string const & cmd, unsigned cols, unsigned rows) :
-			VT100(cols, rows),
+		Terminal(std::string const & cmd, unsigned cols, unsigned rows, vterm::Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
+			VT100(cols, rows, palette, defaultFg, defaultBg),
 			ConPTYTerminal(cmd, cols, rows),
 			IOTerminal(cols, rows) {
 		}

@@ -6,24 +6,64 @@
 
 #include "vt100.h"
 
-#define BEL '\x07'
-#define ESC '\033'
-
-
-
-
 namespace vterm {
 
+	Palette const Palette::Colors16{
+		Color::Black(), // 0
+		Color::DarkRed(), // 1
+		Color::DarkGreen(), // 2
+		Color::DarkYellow(), // 3
+		Color::DarkBlue(), // 4
+		Color::DarkMagenta(), // 5
+		Color::DarkCyan(), // 6
+		Color::Gray(), // 7
+		Color::DarkGray(), // 8
+		Color::Red(), // 9
+		Color::Green(), // 10
+		Color::Yellow(), // 11
+		Color::Blue(), // 12
+		Color::Magenta(), // 13
+		Color::Cyan(), // 14
+		Color::White() // 15
+	};
 
-	VT100::VT100(unsigned cols, unsigned rows) :
+	Palette::Palette(std::initializer_list<Color> colors):
+		size_(colors.size()),
+		colors_(new Color[colors.size()]) {
+		unsigned i = 0;
+		for (Color c : colors)
+			colors_[i++] = c;
+	}
+
+	Palette::Palette(Palette const & from) :
+		size_(from.size_),
+		colors_(new Color[from.size_]) {
+		memcpy(colors_, from.colors_, sizeof(Color) * size_);
+	}
+
+	Palette::Palette(Palette && from) :
+		size_(from.size_),
+		colors_(from.colors_) {
+		from.size_ = 0;
+		from.colors_ = nullptr;
+	}
+
+	void Palette::fillFrom(Palette const & from) {
+		size_t s = std::min(size_, from.size_);
+		std::memcpy(colors_, from.colors_, sizeof(Color) * s);
+	}
+
+	VT100::VT100(unsigned cols, unsigned rows, Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
 		IOTerminal(cols, rows),
-		defaultFg_(Color::White),
-		defaultBg_(Color::Black),
-		fg_(Color::White),
-		bg_(Color::Black),
+		palette_(256),
+		defaultFg_(defaultFg),
+		defaultBg_(defaultBg),
+		fg_(this->defaultFg()),
+		bg_(this->defaultBg()),
 		font_(),
 		cursorCol_(0),
         cursorRow_(0) {
+		palette_.fillFrom(palette);
 	}
 
 	void VT100::processInputStream(char * buffer, size_t & size) {
@@ -38,7 +78,7 @@ namespace vterm {
 			while (! eof()) {
 				char c = pop();
 				switch (c) {
-				case ESC: {
+				case Char::ESC: {
 					// make a copy of buffer in case process escape sequence advances it and then fails
 					char * b = buffer_;
 					if (!parseEscapeSequence()) {
@@ -59,14 +99,16 @@ namespace vterm {
 
 				   TODO - should this also do carriage return? I guess so
 				 */
-				case '\n':
+				case Char::LF:
 					++cursorRow_;
 					cursorCol_ = 0;
 					break;
 				/* Carriage return sets cursor column to 0. 
 				 */
-				case '\r':
+				case Char::CR:
 					cursorCol_ = 0;
+					break;
+				case Char::BACKSPACE:
 					break;
 				/* default variant is to print the character received to current cell.
 				 */
@@ -78,6 +120,8 @@ namespace vterm {
 					cell.fg = fg_;
 					cell.bg = bg_;
 					cell.font = font_;
+					if (c < 32)
+						std::cout << "Weird character: " << (int)c << std::endl;
 					cell.c = c;
 					// move to next column
 					++cursorCol_;
@@ -91,7 +135,7 @@ namespace vterm {
 
 
 	bool VT100::skipEscapeSequence() {
-		ASSERT(* (buffer_ - 1) == ESC);
+		ASSERT(* (buffer_ - 1) == Char::ESC);
 		if (eof())
 			return false;
 		// if the next character is `[` then we match CSI, otherwise we just sklip it as the second byte of the sequence
@@ -111,7 +155,7 @@ namespace vterm {
 			}
 			case ']': {
 				// TODO for now we only handle BEL
-				while (! condPop(BEL)) {
+				while (! condPop(Char::BEL)) {
 					if (eof())
 						return false;
 					pop();
@@ -132,7 +176,7 @@ namespace vterm {
 	}
 
 	bool VT100::parseEscapeSequence() {
-		ASSERT(*(buffer_-1) == ESC); 
+		ASSERT(*(buffer_-1) == Char::ESC); 
 		switch (pop()) {
 		    case ']':
 				return parseOSC();
@@ -159,10 +203,7 @@ namespace vterm {
 			 */
 			case 'm':
 				pop();
-				font_ = Font();
-				fg_ = defaultFg_;
-				bg_ = defaultBg_;
-				return true;
+				return SGR(0);
 			default:
 				break;
 		}
@@ -228,6 +269,9 @@ namespace vterm {
 					fillRect(helpers::Rect(0, l, first, l + 1), ' ');
 				return true;
 			}
+			/* CSI <n> m -- Set Graphics Rendition */
+			case 'm': 
+				return SGR(first);
 			// second argument
 			case ';': {
 				int second = parseNumber(1);
@@ -261,6 +305,7 @@ namespace vterm {
 			// cursor show/hide
 			case 25:
 				// TODO needs to be actually implemented
+				return true;
 		default:
 			return false;
 		}
@@ -268,6 +313,43 @@ namespace vterm {
 
 	bool VT100::parseOSC() {
 		return false;
+	}
+
+	bool VT100::SGR(unsigned value) {
+		switch (value) {
+			/* Resets all attributes. */
+		    case 0:
+				font_ = Font();
+				fg_ = defaultFg();
+				bg_ = defaultBg();
+				return true;
+			/* Bold / bright foreground. */
+			case 1:
+				font_.setBold(true);
+				return true;
+			/* Underline */
+			case 4:
+				font_.setUnderline(true);
+				return true;
+			/* Disable underline. */
+			case 24:
+				font_.setUnderline(false);
+				return true;
+
+
+		    default:
+				if (value >= 30 && value <= 37)
+					fg_ = palette_[value - 30];
+				else if (value >= 40 && value <= 47) 
+					bg_ = palette_[value - 40];
+				else if (value >= 90 && value <= 97) 
+					fg_ = palette_[value - 82];
+				else if (value >= 100 && value <= 107) 
+					bg_ = palette_[value - 92];
+				else 
+					return false;
+				return true;
+		}
 	}
 
 
@@ -284,7 +366,7 @@ namespace vterm {
 	}
 
 	void VT100::scrollDown(unsigned lines) {
-		ASSERT(lines < cols_);
+		ASSERT(lines < rows_);
 		for (unsigned r = 0, re = rows_ - lines; r < re; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
 				defaultLayer_->at(c, r) = defaultLayer_->at(c, r + lines);

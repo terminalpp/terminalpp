@@ -43,8 +43,8 @@ namespace vterm {
 		/** Default constructor for a cell created white space on a black background.
 		 */
 		Cell() :
-			fg(Color::White),
-			bg(Color::Black),
+			fg(Color::White()),
+			bg(Color::Black()),
 			c(' ') {
 		}
 	}; // vterm::Cell

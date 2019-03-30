@@ -34,5 +34,9 @@ Available only on Windows, virtually inherits from `IOTerminal` and describes th
 
 ## Escape Sequence Questions
 
+- cursor movements likely not work across lines, fix!
+- backspace does not work
+- cursor enable/disable does not work
+
 - EraseDisplay, EraseLine and EraseCharacter - what are the colors & font used? default or current? 
 - what is the exact effect of `\n`

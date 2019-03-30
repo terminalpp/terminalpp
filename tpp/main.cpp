@@ -43,8 +43,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//vterm::ConPTYTerminal * t(new vterm::ConPTYTerminal("wsl -e echo hello", 80, 25));
 	//Terminal * t = new Terminal("wsl -e echo hello mmoo", 80, 25);
-	Terminal * t = new Terminal("wsl -e ping www.seznam.cz", 80, 25);
-
+	//Terminal * t = new Terminal("wsl -e ping www.seznam.cz", 80, 25);
+	Terminal * t = new Terminal("wsl -e screenfetch", 80, 25, vterm::Palette::Colors16, 15, 0);
 	
 	t->execute();
 
