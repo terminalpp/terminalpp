@@ -284,7 +284,12 @@ namespace vterm {
 	}
 
 	void VT100::scrollDown(unsigned lines) {
-		NOT_IMPLEMENTED;
+		ASSERT(lines < cols_);
+		for (unsigned r = 0, re = rows_ - lines; r < re; ++r) {
+			for (unsigned c = 0; c < cols_; ++c) {
+				defaultLayer_->at(c, r) = defaultLayer_->at(c, r + lines);
+			}
+		}
 	}
 
 } // namespace vterm
