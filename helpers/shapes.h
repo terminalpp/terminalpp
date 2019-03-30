@@ -11,6 +11,7 @@ namespace helpers {
 
 	/** Rectangle definition.
 
+	    The rectange is assumed to be inclusive of its left and top coordinates and exclusive for its bottom and right coordinates. 
 	 */
 	class Rect {
 	public:
@@ -37,6 +38,13 @@ namespace helpers {
 
 		bool operator != (Rect const & other) const {
 			return left != other.left || top != other.top || right != other.right || bottom != other.bottom;
+		}
+
+		Rect(unsigned width, unsigned height) :
+			left(0),
+			top(0),
+			right(width),
+			bottom(height) {
 		}
 
 		Rect(unsigned left, unsigned top, unsigned right, unsigned bottom) :

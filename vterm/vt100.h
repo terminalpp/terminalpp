@@ -10,15 +10,50 @@ namespace vterm {
 		
 	protected:
 
+		char top() {
+			return (buffer_ == bufferEnd_) ? 0 : *buffer_;
+		}
+
+		char pop() {
+			if (buffer_ != bufferEnd_)
+				return *buffer_++;
+			else
+				return 0;
+		}
+
+		bool condPop(char what) {
+			if (top() == what) {
+				pop();
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		bool eof() {
+			return buffer_ == bufferEnd_;
+		}
+
 		void processInputStream(char * buffer, size_t & size) override;
 
 		bool skipEscapeSequence();
 
-		bool processEscapeSequence();
+		unsigned parseNumber(unsigned defaultValue = 0);
 
-		bool processCSI();
+		bool parseEscapeSequence();
 
-		bool processSetter();
+		/** Parses supported Control Sequence Introducers (CSIs), which start with ESC[.
+		 */
+		bool parseCSI();
+
+		/** Parses a setter, which is ESC[? <id> (h|l). 
+		 */
+		bool parseSetter();
+
+		/** Parses supported Operating System Commands (OSCs), which start with ESC].
+		 */
+		bool parseOSC();
+
 
 		void updateCursorPosition() {
 			if (cursorCol_ >= cols_) {
@@ -39,9 +74,19 @@ namespace vterm {
 			cursorRow_ = row;
 		}
 
+		/** Fills the given rectangle with character, colors and font.
+		 */
+		void fillRect(helpers::Rect const & rect, Char::UTF8 c, Color fg, Color bg, Font font = Font());
+		void fillRect(helpers::Rect const & rect, Char::UTF8 c, Font font = Font()) {
+			fillRect(rect, c, defaultFg_, defaultBg_, font);
+		}
+
 		void scrollDown(unsigned lines);
 
 
+
+		Color defaultFg_;
+		Color defaultBg_;
 
 		Color fg_;
 		Color bg_;

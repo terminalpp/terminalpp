@@ -27,3 +27,12 @@ Inherits (virtually) from `IOTerminal` and provides decoding and encoding functi
 ## `ConPTYTerminal`
 
 Available only on Windows, virtually inherits from `IOTerminal` and describes the actual stream communication between the terminal and its attached process using Win32 ConPTY. 
+
+# Supported ANSI Escape Sequences
+
+
+
+## Escape Sequence Questions
+
+- EraseDisplay, EraseLine and EraseCharacter - what are the colors & font used? default or current? 
+- what is the exact effect of `\n`
