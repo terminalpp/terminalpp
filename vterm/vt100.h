@@ -72,6 +72,8 @@ namespace vterm {
 		
 	protected:
 
+		void doResize(unsigned cols, unsigned rows) override;
+
 		Color const & defaultFg() const {
 			return palette_[defaultFg_];;
 		}

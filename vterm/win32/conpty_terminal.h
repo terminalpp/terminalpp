@@ -34,6 +34,8 @@ namespace vterm {
 
 		bool readInputStream(char * buffer, size_t & size) override;
 
+		void doResize(unsigned cols, unsigned rows) override;
+
 	private:
 		/** The command executed by the connector.
 

@@ -88,6 +88,15 @@ namespace vterm {
 		return readOk;
 	}
 
+	void ConPTYTerminal::doResize(unsigned cols, unsigned rows) {
+		// resize the underlying ConPTY
+		COORD size;
+		size.X = cols;
+		size.Y = rows;
+		ResizePseudoConsole(conPTY_, size);
+		// IOTerminal's doResize() is not called because of the virtual inheritance
+	}
+
 
 } // namespace vterm
 

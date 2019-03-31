@@ -66,6 +66,16 @@ namespace vterm {
 		palette_.fillFrom(palette);
 	}
 
+	void VT100::doResize(unsigned cols, unsigned rows) {
+		// update the cursor so that it stays on the screen at all times
+		if (cursorCol_ >= cols_)
+			cursorCol_ = cols_ - 1;
+		if (cursorRow_ >= rows_)
+			cursorRow_ = rows_ - 1;
+		// IOTerminal's doResize() is not called because of the virtual inheritance
+	}
+
+
 	void VT100::processInputStream(char * buffer, size_t & size) {
 		std::cout << "Received " << size << " bytes" << std::endl;
 		buffer_ = buffer;
@@ -311,6 +321,7 @@ namespace vterm {
 		}
 	}
 
+	// ]0;C:\WINDOWS\SYSTEM32\wsl.exe
 	bool VT100::parseOSC() {
 		return false;
 	}

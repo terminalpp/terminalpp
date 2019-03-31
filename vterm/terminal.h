@@ -220,9 +220,10 @@ namespace vterm {
 		}
 
 		/** Actually resizes the terminal.
+
+		    The called code may assume that the terminal is locked. 
 		 */
 		virtual void doResize(unsigned cols, unsigned rows);
-
 
 		/** Mutex for protecting read and write access to the terminal contents to make sure that all requests will return consistent data.
 		 */

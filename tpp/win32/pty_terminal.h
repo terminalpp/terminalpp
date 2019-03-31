@@ -16,6 +16,15 @@ namespace tpp {
 			ConPTYTerminal(cmd, cols, rows),
 			IOTerminal(cols, rows) {
 		}
+
+	protected:
+
+		void doResize(unsigned cols, unsigned rows) override {
+			IOTerminal::doResize(cols, rows);
+			VT100::doResize(cols, rows);
+			ConPTYTerminal::doResize(cols, rows);
+		}
+
 	}; // tpp::Terminal
 	#pragma warning(default:4250)
 
