@@ -158,10 +158,7 @@ namespace vterm {
 
 		/** Updates the cursor position. 
 		 */
-		void setCursor(unsigned col, unsigned row) {
-			cursorCol_ = col;
-			cursorRow_ = row;
-		}
+		void setCursor(unsigned col, unsigned row);
 
 		/** Fills the given rectangle with character, colors and font.
 		 */

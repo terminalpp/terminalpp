@@ -1,3 +1,8 @@
+# TODO
+
+- log should define default stream, which starts as cerr, but can be also a file, or so, for which all stream logs would output. Separate logs can then define specific streams
+- log documentation
+
 # C++ Helpers
 
 This repository is a collection of header only helper classes to be used in C++ applications. Everything in the project happens is defined in the `helpers` namespace. 

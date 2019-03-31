@@ -7,6 +7,8 @@
 #include <d2d1.h>
 #include <dwrite.h>
 
+#include "helpers/log.h"
+
 #include "../base_terminal_window.h"
 
 namespace tpp {
@@ -53,6 +55,14 @@ namespace tpp {
 
 		void hide() override {
 			NOT_IMPLEMENTED;
+		}
+
+		void redraw() override {
+			if (buffer_ != nullptr) {
+				DeleteObject(buffer_);
+				buffer_ = nullptr;
+			}
+			InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 		}
 
 	protected:

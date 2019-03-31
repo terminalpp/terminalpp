@@ -185,7 +185,7 @@ namespace helpers {
 		}
 	};
 
-	Log::Writer::~Writer() {
+	inline Log::Writer::~Writer() {
 		if (logger_ != nullptr) {
 			m_.text = s_.str();
 			logger_->log(m_);

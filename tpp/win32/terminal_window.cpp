@@ -202,6 +202,11 @@ namespace tpp {
 				EndPaint(hWnd, &ps);
 				break;
         	}
+			/* DEBUG - debugging events hooked to keypresses now: */
+			case WM_KEYDOWN:
+				if (wParam == VK_F2)
+					tw->redraw();
+				break;
 		} // end of switch
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}

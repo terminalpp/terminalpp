@@ -3,8 +3,13 @@
 
 
 #include "helpers/strings.h"
+#include "helpers/log.h"
 
 #include "vt100.h"
+
+
+#define L_VT100 LOG("VT100")
+#define L_UNKNOWN_SEQ LOG("VT100_Unknown")
 
 namespace vterm {
 
@@ -73,6 +78,7 @@ namespace vterm {
 		if (cursorRow_ >= rows_)
 			cursorRow_ = rows_ - 1;
 		// IOTerminal's doResize() is not called because of the virtual inheritance
+		L_VT100 << "terminal resized to " << cols << "," << rows;
 	}
 
 
@@ -96,10 +102,7 @@ namespace vterm {
 							size = b - buffer;
 							return;
 						} else {
-							std::cout << "unknown escape sequence: ESC ";
-							for (++b; b < buffer_; ++b)
-								std::cout << *b;
-							std::cout << std::endl;
+							L_UNKNOWN_SEQ << "ESC " << std::string(++b, buffer_);
 						}
 					}
 					break;
@@ -109,6 +112,7 @@ namespace vterm {
 				   TODO - should this also do carriage return? I guess so
 				 */
 				case Char::LF:
+					L_VT100 << "LF";
 					pop();
 					++cursorRow_;
 					cursorCol_ = 0;
@@ -116,10 +120,12 @@ namespace vterm {
 				/* Carriage return sets cursor column to 0. 
 				 */
 				case Char::CR:
+					L_VT100 << "CR";
 					pop();
 					cursorCol_ = 0;
 					break;
 				case Char::BACKSPACE:
+					L_UNKNOWN_SEQ << "backspace";
 					pop();
 					// TODO
 					break;
@@ -134,6 +140,7 @@ namespace vterm {
 						size = buffer_ - buffer;
 						return;
 					}
+					L_VT100 << "codepoint" << std::hex << c8.codepoint();
 					// get the cell and update its contents
 					Cell & cell = defaultLayer_->at(cursorCol_, cursorRow_);
 					cell.fg = fg_;
@@ -441,6 +448,12 @@ namespace vterm {
 					return false;
 				return true;
 		}
+	}
+
+	void VT100::setCursor(unsigned col, unsigned row) {
+		L_VT100 << "setCursor " << col << ", " << row;
+		cursorCol_ = col;
+		cursorRow_ = row;
 	}
 
 

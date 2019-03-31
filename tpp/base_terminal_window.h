@@ -123,6 +123,10 @@ namespace tpp {
 		virtual void show() = 0;
 		virtual void hide() = 0;
 
+		/** Redraws the window completely from the attached vterm. 
+		 */
+		virtual void redraw() = 0;
+
 	protected:
 
 		/** Because the blink attribute has really nothing to do with the font itself, this simple functions strips its value from given font so that fonts excluding the blinking can be easily compared. */

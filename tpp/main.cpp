@@ -42,8 +42,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Application * app = new Application(hInstance);
 	std::cout << "OH HAI, CAN I HAZ CONSOLE?" << std::endl;
 	// initialize log levels we use
-	helpers::Log::RegisterLogger(new helpers::StreamLogger("VT100", std::cout));
-	helpers::Log::RegisterLogger(new helpers::StreamLogger("VT100_Invalid", std::cout));
+	helpers::Log::RegisterLogger((new helpers::StreamLogger("VT100", std::cout))->toFile("c:/delete/tpp.txt"));
+	helpers::Log::RegisterLogger((new helpers::StreamLogger("VT100_Unknown", std::cout)));
 
 	TerminalWindow * tw = new TerminalWindow(app, &ts);
 	tw->show();
