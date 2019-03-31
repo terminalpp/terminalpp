@@ -1,5 +1,8 @@
 ﻿#include <iostream>
 
+#include "helpers/log.h"
+
+
 #ifdef WIN32
 #include "win32/pty_terminal.h"
 #include "win32/application.h"
@@ -10,6 +13,8 @@
 #else
 #error "Unsupported platform"
 #endif
+
+
 
 using namespace tpp;
 
@@ -26,7 +31,6 @@ using namespace tpp;
  */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 
-
 	TerminalSettings ts;
 	ts.defaultCols = 80;
 	ts.defaultRows = 25;
@@ -37,6 +41,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Application * app = new Application(hInstance);
 	std::cout << "OH HAI, CAN I HAZ CONSOLE?" << std::endl;
+	// initialize log levels we use
+	helpers::Log::RegisterLogger(new helpers::StreamLogger("VT100", std::cout));
+	helpers::Log::RegisterLogger(new helpers::StreamLogger("VT100_Invalid", std::cout));
+
 	TerminalWindow * tw = new TerminalWindow(app, &ts);
 	tw->show();
 

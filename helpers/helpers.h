@@ -10,6 +10,7 @@
 #define ASSERT(...) if (false) std::stringstream()
 #else
 #define THROW(...) do { auto i = __VA_ARGS__; i.setOrigin(__LINE__, __FILE__); throw i; } while (false)
+// we must use standard throw because of the possibility of appending extra message after ASSERT() via <<
 #define ASSERT(...) if (! (__VA_ARGS__)) throw ::helpers::AssertionError(__LINE__, __FILE__, #__VA_ARGS__)
 #endif
 
@@ -100,6 +101,12 @@ namespace helpers {
 		}
 	};
 
+	class IOError : public Exception {
+	public:
+		IOError(std::string const & what) :
+			Exception(what) {
+		}
+	};
 
 	/** Shorthand for determining whether value is in given inclusive interval. 
 	 */
