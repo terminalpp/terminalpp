@@ -53,6 +53,10 @@ namespace tpp {
 		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 	}
 
+	void TerminalWindow::doTitleChange(vterm::VT100::TitleEvent & e) {
+		SetWindowTextA(hWnd_, e->c_str());
+	}
+
 	void TerminalWindow::updateBuffer(helpers::Rect const & rect) {
 		if (terminal() == nullptr)
 			return;

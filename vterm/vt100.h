@@ -60,15 +60,29 @@ namespace vterm {
 
         https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
 
-	    There will most likely be some more to explore - check the ST terminal as well.
+	    There will most likely be some more to explore - check the ST terminal as well. Here is xterm:
+
+		https://invisible-island.net/xterm/ctlseqs/ctlseqs.pdf
+
+
 	*/
 	class VT100 : public virtual IOTerminal {
 	public:
+		// events ---------------------------------------------------------------------------------------
+
+		typedef helpers::EventPayload<std::string, helpers::Object> TitleEvent;
+
+		/** Triggered when terminal client requests terminal title change. 
+		 */
+		helpers::Event<TitleEvent> onTitleChange;
+
 		VT100(unsigned cols, unsigned rows, Palette const & palette, unsigned defaultFg, unsigned defaulrBg);
 
 		Palette const & palette() const {
 			return palette_;
 		}
+
+
 		
 	protected:
 
@@ -153,7 +167,7 @@ namespace vterm {
 		 */
 		void fillRect(helpers::Rect const & rect, Char::UTF8 c, Color fg, Color bg, Font font = Font());
 		void fillRect(helpers::Rect const & rect, Char::UTF8 c, Font font = Font()) {
-			fillRect(rect, c, defaultFg(), defaultBg(), font);
+			fillRect(rect, c, fg_, bg_, font);
 		}
 
 		void scrollDown(unsigned lines);

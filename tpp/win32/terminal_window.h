@@ -65,6 +65,7 @@ namespace tpp {
 
 		void repaint(vterm::Terminal::RepaintEvent & e) override;
 
+		void doTitleChange(vterm::VT100::TitleEvent & e) override;
 
 	private:
 		friend class Application;

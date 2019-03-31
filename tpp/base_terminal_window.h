@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "vterm/renderer.h"
+#include "vterm/vt100.h"
 
 namespace tpp {
 
@@ -142,6 +143,23 @@ namespace tpp {
 
 		}
 
+		void doAttachTerminal(vterm::Terminal * terminal) override {
+			Renderer::doAttachTerminal(terminal);
+			vterm::VT100 * vt = dynamic_cast<vterm::VT100 *>(terminal);
+			if (vt != nullptr) {
+				vt->onTitleChange += HANDLER(BaseTerminalWindow::doTitleChange);
+			}
+		}
+
+		void doDetachTerminal(vterm::Terminal * terminal) override {
+			vterm::VT100 * vt = dynamic_cast<vterm::VT100 *>(terminal);
+			if (vt != nullptr) {
+				vt->onTitleChange -= HANDLER(BaseTerminalWindow::doTitleChange);
+			}
+			Renderer::doDetachTerminal(terminal);
+		}
+
+
 		/** Handles resize of the window's client area (in pixels). 
 
 		    Recalculates the number of columns and rows displayabe and calls the renderer's resize method which in turn updates the underlying terminal. When the terminal changes, it would trigger the repaint event on the window. 
@@ -163,6 +181,8 @@ namespace tpp {
 			NOT_IMPLEMENTED;
 			// resize the terminal properly
 		}
+
+		virtual void doTitleChange(vterm::VT100::TitleEvent & e) = 0;
 
 		TerminalSettings * settings_;
 

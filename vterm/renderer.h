@@ -26,22 +26,13 @@ namespace vterm {
 		void attachTerminal(Terminal * terminal) {
 			if (terminal == terminal_)
 				return;
-			if (terminal_ != nullptr)
-			    detachTerminal();
-			// set the terminal 
-			terminal_ = terminal;
-			// inform the terminal that a new renderer has been attached and subscribe to its repaint event
-			if (terminal_ != nullptr) {
-				terminal_->onRepaint += HANDLER(Renderer::repaint);
-				if (!terminal_->resize(cols_, rows_))
-					repaintAll();
-			}
+			doAttachTerminal(terminal);
 		}
 
 		void detachTerminal() {
-			ASSERT(terminal_ != nullptr);
-			terminal_->onRepaint -= HANDLER(Renderer::repaint);
-			terminal_ = nullptr;
+			if (terminal_ == nullptr)
+				return;
+			doDetachTerminal(terminal_);
 		}
 
 		/** Returns the number of columns the renderer is capable of displaying. 
@@ -93,6 +84,26 @@ namespace vterm {
 			if (terminal_ != nullptr)
 				terminal_->resize(cols, rows);
 		}
+
+		virtual void doAttachTerminal(Terminal * terminal) {
+			if (terminal_ != nullptr)
+				doDetachTerminal(terminal_);
+			// set the terminal 
+			terminal_ = terminal;
+			// inform the terminal that a new renderer has been attached and subscribe to its repaint event
+			if (terminal_ != nullptr) {
+				terminal_->onRepaint += HANDLER(Renderer::repaint);
+				if (!terminal_->resize(cols_, rows_))
+					repaintAll();
+			}
+		}
+
+		virtual void doDetachTerminal(Terminal * terminal) {
+			ASSERT(terminal_ != nullptr);
+			terminal_->onRepaint -= HANDLER(Renderer::repaint);
+			terminal_ = nullptr;
+		}
+
 
 	private:
 

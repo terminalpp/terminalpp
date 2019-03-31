@@ -91,12 +91,12 @@ namespace vterm {
 		unsigned codepoint() const {
 			if (bytes_[0] <= 0x7f)
 				return bytes_[0]; // 0x0xxx xxxx
-			else if (bytes_[0] <= 0xbf)
+			else if (bytes_[0] < 0xe0)
 				return ((bytes_[0] & 0x1f) << 6) + (bytes_[1] & 0x3f); // 0x110x xxxx + 0x10xx xxxx
-			else if (bytes_[0] <= 0xdf)
-				return 0;
+			else if (bytes_[0] < 0xf0)
+				return ((bytes_[0] & 0x0f) << 12)  + ((bytes_[1] & 0x3f) << 6) + (bytes_[2] & 0x3f);
 			else
-				return 0;
+				return ((bytes_[0] & 0x07) << 18) + ((bytes_[1] & 0x3f) << 12) + ((bytes_[2] & 0x3f) << 6) + (bytes_[3] & 0x3f);
 		}
 
 		/** Returns the codepoint stored encoded as UCS2 character. 
@@ -109,6 +109,23 @@ namespace vterm {
 			return (cp & 0xffff);
 		}
 
+		bool readFromStream(char * & buffer, char * bufferEnd) {
+			unsigned char first = static_cast<unsigned char>(*buffer);
+			unsigned size = 4;
+			if (first < 0x80)
+				size = 1;
+			else if (first < 0xe0)
+				size = 2;
+			else if (first < 0xf0)
+				size = 3;
+			// check if we have enough data to read the character
+			if (buffer + size > bufferEnd)
+				return false;
+			// copy the bytes
+			std::memcpy(bytes_, buffer, size);
+			buffer += size;
+			return true;
+		}
 
 	private:
 		/** Takes a UTF codepoint and encodes it in UTF8. 

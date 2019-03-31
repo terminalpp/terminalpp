@@ -77,7 +77,6 @@ namespace vterm {
 
 
 	void VT100::processInputStream(char * buffer, size_t & size) {
-		std::cout << "Received " << size << " bytes" << std::endl;
 		buffer_ = buffer;
 		bufferEnd_ = buffer_ + size;
 		{
@@ -86,7 +85,7 @@ namespace vterm {
 			std::lock_guard<std::mutex> g(m_);
 
 			while (! eof()) {
-				char c = pop();
+				char c = top();
 				switch (c) {
 				case Char::ESC: {
 					// make a copy of buffer in case process escape sequence advances it and then fails
@@ -110,29 +109,37 @@ namespace vterm {
 				   TODO - should this also do carriage return? I guess so
 				 */
 				case Char::LF:
+					pop();
 					++cursorRow_;
 					cursorCol_ = 0;
 					break;
 				/* Carriage return sets cursor column to 0. 
 				 */
 				case Char::CR:
+					pop();
 					cursorCol_ = 0;
 					break;
 				case Char::BACKSPACE:
+					pop();
+					// TODO
 					break;
 				/* default variant is to print the character received to current cell.
 				 */
 				default: {
 					// make sure that cursor is positioned within the terminal (previous advances may have placed it outside of the terminal area)
 					updateCursorPosition();
+					// it could be we are dealing with unicode
+					Char::UTF8 c8;
+					if (! c8.readFromStream(buffer_, bufferEnd_)) {
+						size = buffer_ - buffer;
+						return;
+					}
 					// get the cell and update its contents
 					Cell & cell = defaultLayer_->at(cursorCol_, cursorRow_);
 					cell.fg = fg_;
 					cell.bg = bg_;
 					cell.font = font_;
-					if (c < 32)
-						std::cout << "Weird character: " << (int)c << std::endl;
-					cell.c = c;
+					cell.c = c8;
 					// move to next column
 					++cursorCol_;
 				}
@@ -145,7 +152,8 @@ namespace vterm {
 
 
 	bool VT100::skipEscapeSequence() {
-		ASSERT(* (buffer_ - 1) == Char::ESC);
+		ASSERT(*buffer_ == Char::ESC);
+		pop();
 		if (eof())
 			return false;
 		// if the next character is `[` then we match CSI, otherwise we just sklip it as the second byte of the sequence
@@ -186,7 +194,8 @@ namespace vterm {
 	}
 
 	bool VT100::parseEscapeSequence() {
-		ASSERT(*(buffer_-1) == Char::ESC); 
+		ASSERT(*buffer_ == Char::ESC);
+		pop();
 		switch (pop()) {
 		    case ']':
 				return parseOSC();
@@ -279,6 +288,22 @@ namespace vterm {
 					fillRect(helpers::Rect(0, l, first, l + 1), ' ');
 				return true;
 			}
+			/* CSI <n> h -- Reset mode enable 
+			   Depending on the argument, certain things are turned on. None of the RM settings are currently supported. 
+			 */
+			case 'h':
+				return false;
+			/* CSI <n> l -- Reset mode disable 
+			   Depending on the argument, certain things are turned off. Turning the features on/off is not allowed, but if the client wishes to disable something that is disabled, it's happily ignored. 
+			 */
+			case 'l':
+				switch (first) {
+					/* CSI 4 l -- disable insert mode */
+				    case 4:
+						return true;
+					default:
+						return false;
+				}
 			/* CSI <n> m -- Set Graphics Rendition */
 			case 'm': 
 				return SGR(first);
@@ -309,21 +334,64 @@ namespace vterm {
 		bool value = condPop('h');
 		if (! value && ! condPop('l'))
 			return false;
+		// TODO it can also be 's' for save
 		switch (id) {
+			/* Smooth scrolling -- ignored*/
+		    case 4:
+				return true;
 			// cursor blinking
 		    case 12:
 			// cursor show/hide
 			case 25:
 				// TODO needs to be actually implemented
 				return true;
+			/* Mouse tracking movement & buttons.
+
+			   https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
+			 */
+			case 1001: // mouse highlighting
+			case 1006: // 
+			case 1003:
+				return false;
+			/* Enable or disable the alternate screen buffer.
+			 */
+			case 47: 
+			case 1049:
+				return false;
+
+			/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. */
+			case 2004:
+				// TODO
+				return true;
+
 		default:
 			return false;
 		}
 	}
 
-	// ]0;C:\WINDOWS\SYSTEM32\wsl.exe
+	// ]0;C:\WINDOWS\SYSTEM32\wsl.exe BEL
+
 	bool VT100::parseOSC() {
-		return false;
+		unsigned id = parseNumber(0);
+		switch (id) {
+			/* ESC ] 0 ; <string> BEL -- Sets the window title. */
+			case 0: {
+				if (pop() != ';')
+					return false;
+				char * start = buffer_;
+				while (!condPop(Char::BEL)) {
+					if (eof()) // incomplete sequence
+						return false;
+					pop();
+				}
+				std::string title(start, buffer_);
+				// trigger the event
+				trigger(onTitleChange, title);
+				return true;
+			}
+		    default:
+				return false;
+		}
 	}
 
 	bool VT100::SGR(unsigned value) {
@@ -346,7 +414,19 @@ namespace vterm {
 			case 24:
 				font_.setUnderline(false);
 				return true;
+			/* 30 - 37 are dark foreground colors, handled in the default case. */
+			/* Foreground default. */
+			case 39:
+				fg_ = defaultFg();
+				return true;
+			/* 40 - 47 are dark background color, handled in the default case. */
+			/* Background default */
+			case 49:
+				bg_ = defaultBg();
+				return true;
 
+			/* 90 - 97 are bright foreground colors, handled in the default case. */
+			/* 100 - 107 are bright background colors, handled in the default case. */
 
 		    default:
 				if (value >= 30 && value <= 37)
