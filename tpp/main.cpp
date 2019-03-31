@@ -41,7 +41,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	tw->show();
 
 
-	//vterm::ConPTYTerminal * t(new vterm::ConPTYTerminal("wsl -e echo hello", 80, 25));
 	//Terminal * t = new Terminal("wsl -e echo hello mmoo", 80, 25);
 	//Terminal * t = new Terminal("wsl -e ping www.seznam.cz", 80, 25);
 	//Terminal * t = new Terminal("wsl -e screenfetch", 80, 25, vterm::Palette::Colors16, 15, 0);
@@ -51,26 +50,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	tw->attachTerminal(t);
 
-	// create the application
-	//application = new GDIApplication(hInstance);
-
-	// create the screen buffer
-	//vterm::VT100 * vterm1 = new vterm::VT100(80,25);
-
-
-
-	// and create the terminal window
-	//TerminalWindow * tw = application->createNewTerminalWindow();
-	//tw->setTerminal(vterm1);
-	//tw->show();
-
-	//ConPTYProcess c("wsl -e echo hello", vterm1);
-	//ConPTYConnector c("wsl -e ls /home/peta/devel -la", vterm1);
-	//ConPTYConnector c("wsl -e ping www.seznam.cz", vterm1);
-	//ConPTYConnector c("wsl -e mc", vterm1);
-	//ConPTYConnector c("wsl -e screenfetch", vterm1);
-	// Now run the main loop
-	//application->mainLoop();
 	app->mainLoop();
 
 	return EXIT_SUCCESS;
