@@ -80,9 +80,12 @@ namespace tpp {
 		void doTitleChange(vterm::VT100::TitleEvent & e) override;
 
 	private:
+
+		static constexpr WPARAM MSG_TITLE_CHANGE = 0;
+
 		friend class Application;
 
-		void updateBuffer(helpers::Rect const & rect);
+		void updateBuffer();
 
 		static TerminalSettings * FillPlatformSettings(TerminalSettings * ts);
 
@@ -93,6 +96,7 @@ namespace tpp {
 		/** Contains the shadow buffer for the window. The bitmap itself and the memory only buffer device context is required. */
 		HBITMAP buffer_;
 		HDC bufferDC_;
+		helpers::Rect updateRect_;
 
 		/** Placement of the window to which the window is restored after fullscreen toggle. 
 		 */

@@ -14,7 +14,8 @@
 
 #include "helpers.h"
 
-#define LOG ::helpers::Log::CreateWriter(__FILE__, __LINE__)
+//#define LOG ::helpers::Log::CreateWriter(__FILE__, __LINE__)
+#define LOG if (false) ::helpers::Log::CreateWriter(__FILE__, __LINE__)
 
 namespace helpers {
 

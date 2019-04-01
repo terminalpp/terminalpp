@@ -72,7 +72,7 @@ namespace tpp {
 
 		/** Basic title for the terminal window. 
 		 */
-		std::string defaultName = "terminal++";
+		std::string defaultTitle = "terminal++";
 
 		/** Default width and height of the terminal display (in terminal rows and cols, not in pixels). 
 		 */
@@ -103,6 +103,12 @@ namespace tpp {
 
 		TerminalSettings * settings() const {
 			return settings_;
+		}
+
+		/** Returns the title of the window. 
+		 */
+		std::string const & title() const {
+			return title_;
 		}
 
 		/** Returns the zoom level of the window. 
@@ -153,7 +159,7 @@ namespace tpp {
 		BaseTerminalWindow(TerminalSettings * settings) :
 			vterm::Renderer(settings->defaultCols, settings->defaultRows),
 			settings_(settings),
-			name_(settings->defaultName),
+			title_(settings->defaultTitle),
 			widthPx_(settings->defaultFontWidth * settings->defaultCols),
 			heightPx_(settings->defaultFontHeight * settings->defaultRows),
 			zoom_(settings->defaultZoom),
@@ -208,7 +214,7 @@ namespace tpp {
 
 		TerminalSettings * settings_;
 
-		std::string name_;
+		std::string title_;
 
 		/** Width and height of the window client area in pixels. 
 		 */

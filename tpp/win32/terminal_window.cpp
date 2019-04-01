@@ -12,13 +12,14 @@ namespace tpp {
 		BaseTerminalWindow{FillPlatformSettings(settings)},
 		bufferDC_(CreateCompatibleDC(nullptr)),
 		buffer_(nullptr),
+		updateRect_(0,0),
 		wndPlacement_{sizeof(wndPlacement_)},
 		frameWidth_{0},
 		frameHeight_{0} {
 		hWnd_ = CreateWindowEx(
 			WS_EX_LEFT, // the default
 			app->TerminalWindowClassName_, // window class
-			name_.c_str(), // window name (all start as terminal++)
+			title_.c_str(), // window name (all start as terminal++)
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, // x position
 			CW_USEDEFAULT, // y position
@@ -50,7 +51,7 @@ namespace tpp {
 		// do not bother with repainting if shadow buffer is invalid, the WM_PAINT will redraw the whole buffer when the redraw is processed
 		if (buffer_ == nullptr)
 			return;
-		updateBuffer(*e);
+		updateRect_ = helpers::Rect::Union(*e, updateRect_);
 		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 	}
 
@@ -83,23 +84,26 @@ namespace tpp {
 	}
 
 	void TerminalWindow::doTitleChange(vterm::VT100::TitleEvent & e) {
-		SetWindowTextA(hWnd_, e->c_str());
+		if (title_ != *e) {
+			title_ = *e;
+			PostMessage(hWnd_, WM_USER, MSG_TITLE_CHANGE, 0);
+		}
 	}
 
-	void TerminalWindow::updateBuffer(helpers::Rect const & rect) {
+	void TerminalWindow::updateBuffer() {
 		if (terminal() == nullptr)
 			return;
 		vterm::Terminal::Layer l = terminal()->getDefaultLayer();
 		// initialize the font & colors
-		vterm::Cell & c = l->at(rect.left, rect.top);
+		vterm::Cell & c = l->at(updateRect_.left, updateRect_.top);
 		vterm::Color currentFg = c.fg;
 		vterm::Color currentBg = c.bg;
 		vterm::Font currentFont = DropBlink(c.font);
 		SetTextColor(bufferDC_, RGB(currentFg.red, currentFg.green, currentFg.blue));
 		SetBkColor(bufferDC_, RGB(currentBg.red, currentBg.green,currentBg.blue));
 		SelectObject(bufferDC_, Font::GetOrCreate(currentFont, settings_->defaultFontHeight, zoom_)->handle());
-		for (unsigned col = rect.left; col < rect.right; ++col) {
-			for (unsigned row = rect.top; row < rect.bottom; ++row) {
+		for (unsigned row = updateRect_.top; row < updateRect_.bottom; ++row) {
+			for (unsigned col = updateRect_.left; col < updateRect_.right; ++col) {
 				vterm::Cell & c = l->at(col, row);
 				if (currentFg != c.fg) {
 					currentFg = c.fg;
@@ -118,6 +122,7 @@ namespace tpp {
 				TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
 			}
 		}
+		updateRect_ = helpers::Rect(0,0);
 	}
 
 	TerminalSettings * TerminalWindow::FillPlatformSettings(TerminalSettings * ts) {
@@ -224,9 +229,11 @@ namespace tpp {
 				if (tw->buffer_ == nullptr) {
 					tw->buffer_ = CreateCompatibleBitmap(hdc, tw->widthPx_, tw->heightPx_);
 					SelectObject(tw->bufferDC_, tw->buffer_);
-					// do the repaint 
-					tw->updateBuffer(helpers::Rect(0,0,tw->cols(), tw->rows()));
+					tw->updateRect_ = helpers::Rect(tw->cols(), tw->rows());
 				}
+				// do the repaint 
+				if (!tw->updateRect_.empty())
+					tw->updateBuffer();
 				BitBlt(hdc, 0, 0, tw->widthPx_, tw->heightPx_, tw->bufferDC_, 0, 0, SRCCOPY);
 				EndPaint(hWnd, &ps);
 				break;
@@ -240,6 +247,17 @@ namespace tpp {
 				case VK_F3:
 					tw->setFullscreen(!tw->fullscreen());
 					break;
+				}
+				break;
+			/* User specified messages for various events that we want to be handled in the app thread. 
+			 */
+			case WM_USER:
+				switch (wParam) {
+				case MSG_TITLE_CHANGE:
+					SetWindowTextA(hWnd, tw->title().c_str());
+					break;
+				default:
+					LOG("Win32") << "Invalid user message " << wParam;
 				}
 				break;
 		} // end of switch

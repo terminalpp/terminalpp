@@ -34,7 +34,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	TerminalSettings ts;
 	ts.defaultCols = 80;
 	ts.defaultRows = 25;
-	ts.defaultName = "terminal++";
 	ts.defaultFontHeight = 18;
 	ts.defaultFontWidth = 0;
 	ts.defaultZoom = 1;
