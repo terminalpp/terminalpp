@@ -4,6 +4,16 @@
 
 > This looks like a good font: http://typeof.net/Iosevka/ - it is also part of nerdfonts, which is the same font, but augmented with many extra symbols. Iosevka is by default not truly monospace between regular and bold variants, but both can be downloaded and installed at the same time, which fixes the issue.
 
+
+# Installation
+
+## Windows 10
+
+## Linux
+
+    sudo apt install libx11-dev libxft-dev
+
+
 ## Links to study:
 
 https://github.com/Microsoft/console/tree/master/samples/ConPTY/EchoCon
