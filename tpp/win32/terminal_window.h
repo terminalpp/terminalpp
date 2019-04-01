@@ -75,6 +75,8 @@ namespace tpp {
 
 		void repaint(vterm::Terminal::RepaintEvent & e) override;
 
+		void doSetFullscreen(bool value) override;
+
 		void doTitleChange(vterm::VT100::TitleEvent & e) override;
 
 	private:
@@ -91,6 +93,10 @@ namespace tpp {
 		/** Contains the shadow buffer for the window. The bitmap itself and the memory only buffer device context is required. */
 		HBITMAP buffer_;
 		HDC bufferDC_;
+
+		/** Placement of the window to which the window is restored after fullscreen toggle. 
+		 */
+		WINDOWPLACEMENT wndPlacement_;
 
 		/** Width and height of the window frame so that the width and height of the window can be adjusted accordingly. 
 		 */

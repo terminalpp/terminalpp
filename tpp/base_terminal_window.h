@@ -87,6 +87,10 @@ namespace tpp {
 		 */
 		double defaultZoom = 1.0;
 
+		/** Determines whether the window starts in fullscreen mode or not. 
+		 */
+		double fullscreen = false;
+
 	}; // tpp::TerminalSettings
 
 
@@ -105,6 +109,17 @@ namespace tpp {
 		 */
 		double zoom() const {
 			return zoom_;
+		}
+
+		bool fullscreen() const {
+			return fullscreen_;
+		}
+
+		void setFullscreen(bool value = true) {
+			if (value != fullscreen_) {
+				fullscreen_ = value;
+				doSetFullscreen(value);
+			}
 		}
 
 		/** Sets the zoom level of the window. 
@@ -142,6 +157,7 @@ namespace tpp {
 			widthPx_(settings->defaultFontWidth * settings->defaultCols),
 			heightPx_(settings->defaultFontHeight * settings->defaultRows),
 			zoom_(settings->defaultZoom),
+			fullscreen_(settings->fullscreen),
 			cellWidthPx_(settings->defaultFontWidth),
 			cellHeightPx_(settings->defaultFontHeight) {
 
@@ -186,6 +202,8 @@ namespace tpp {
 			// resize the terminal properly
 		}
 
+		virtual void doSetFullscreen(bool value) = 0;
+
 		virtual void doTitleChange(vterm::VT100::TitleEvent & e) = 0;
 
 		TerminalSettings * settings_;
@@ -200,6 +218,10 @@ namespace tpp {
 		/** Zoom level of the window. 
 		 */
 		double zoom_;
+
+		/** Determines whether the window is fullscreen or not. 
+		 */
+		bool fullscreen_;
 
 		/** Width of a single cell in pixels. 
 		 */

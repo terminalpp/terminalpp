@@ -12,6 +12,7 @@ namespace tpp {
 		BaseTerminalWindow{FillPlatformSettings(settings)},
 		bufferDC_(CreateCompatibleDC(nullptr)),
 		buffer_(nullptr),
+		wndPlacement_{sizeof(wndPlacement_)},
 		frameWidth_{0},
 		frameHeight_{0} {
 		hWnd_ = CreateWindowEx(
@@ -51,6 +52,34 @@ namespace tpp {
 			return;
 		updateBuffer(*e);
 		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
+	}
+
+	/** Basically taken from:
+
+	    https://devblogs.microsoft.com/oldnewthing/20100412-00/?p=14353
+	 */
+	void TerminalWindow::doSetFullscreen(bool value) {
+		DWORD style = GetWindowLong(hWnd_, GWL_STYLE);
+		if (value == true) {
+			MONITORINFO mInfo = { sizeof(mInfo) };
+			if (GetWindowPlacement(hWnd_, &wndPlacement_) &&
+				GetMonitorInfo(MonitorFromWindow(hWnd_, MONITOR_DEFAULTTOPRIMARY), &mInfo)) {
+				SetWindowLong(hWnd_, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+				int width = mInfo.rcMonitor.right - mInfo.rcMonitor.left;
+				int height = mInfo.rcMonitor.bottom - mInfo.rcMonitor.top;
+				SetWindowPos(hWnd_, HWND_TOP, mInfo.rcMonitor.left, mInfo.rcMonitor.top, width, height, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+			} else {
+				// we are not actually fullscreen
+				fullscreen_ = false;
+				LOG("Win32") << "Unable to enter fullscreen mode";
+			}
+		} else {
+			SetWindowLong(hWnd_, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+			SetWindowPlacement(hWnd_, &wndPlacement_);
+			SetWindowPos(hWnd_, nullptr, 0, 0, 0, 0,
+				SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+				SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+		}
 	}
 
 	void TerminalWindow::doTitleChange(vterm::VT100::TitleEvent & e) {
@@ -204,8 +233,14 @@ namespace tpp {
         	}
 			/* DEBUG - debugging events hooked to keypresses now: */
 			case WM_KEYDOWN:
-				if (wParam == VK_F2)
+				switch (wParam) {
+				case VK_F2:
 					tw->redraw();
+					break;
+				case VK_F3:
+					tw->setFullscreen(!tw->fullscreen());
+					break;
+				}
 				break;
 		} // end of switch
 		return DefWindowProc(hWnd, msg, wParam, lParam);

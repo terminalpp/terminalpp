@@ -299,7 +299,7 @@ namespace vterm {
 	 */
 	class IOTerminal : public Terminal {
 	public:
-		static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
+		static constexpr size_t DEFAULT_BUFFER_SIZE = 10240;
 
 	protected:
 		IOTerminal(unsigned cols, unsigned rows, size_t bufferSize = DEFAULT_BUFFER_SIZE) :

@@ -53,6 +53,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Terminal * t = new Terminal("wsl -e ping www.seznam.cz", 80, 25);
 	//Terminal * t = new Terminal("wsl -e screenfetch", 80, 25, vterm::Palette::Colors16, 15, 0);
 	Terminal * t = new Terminal("wsl -e mc", 80, 25, vterm::Palette::Colors16, 15, 0);
+	//Terminal * t = new Terminal("wsl -e bash -c \"ssh orange \"", 80, 25, vterm::Palette::Colors16, 15, 0);
 
 	t->execute();
 
