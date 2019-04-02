@@ -68,6 +68,10 @@ namespace vterm {
 	*/
 	class VT100 : public virtual IOTerminal {
 	public:
+
+		static constexpr char const * const SEQ = "VT100";
+		static constexpr char const * const UNKNOWN_SEQ = "VT100_UNKNOWN";
+
 		// events ---------------------------------------------------------------------------------------
 
 		typedef helpers::EventPayload<std::string, helpers::Object> TitleEvent;
@@ -132,6 +136,14 @@ namespace vterm {
 		 */
 		bool parseCSI();
 
+		bool parseCSI(unsigned first);
+
+		bool parseCSI(unsigned first, unsigned second);
+
+		bool parseCSI(unsigned first, unsigned second, unsigned third);
+
+		bool parseCSI(unsigned first, unsigned second, unsigned third, unsigned fourth);
+
 		/** Parses a setter, which is ESC[? <id> (h|l). 
 		 */
 		bool parseSetter();
@@ -143,6 +155,10 @@ namespace vterm {
 		/** Executes the VT100 SGR (Set Graphics Rendition) command. 
 		 */
 		bool SGR(unsigned value);
+
+		/** Parses SGR 38 and 48 (extended color either RGB or from palette 
+		 */
+		bool parseExtendedColor(Color& storeInto);
 
 		void updateCursorPosition() {
 			if (cursorCol_ >= cols_) {

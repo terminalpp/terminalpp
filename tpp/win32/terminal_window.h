@@ -39,7 +39,7 @@ namespace tpp {
 		GetCharABCWidths(dc, 'm', 'm', &abc);
 		DeleteObject(dc);
 		// TODO this feels wrong, I should be able to determine this precisely w/o + 1 magic
-		unsigned width = abc.abcA + abc.abcB + abc.abcC + 1;
+		unsigned width = abc.abcA + abc.abcB + abc.abcC;
 		return new Font<HFONT>(font, width, height, handle);
 	}
 

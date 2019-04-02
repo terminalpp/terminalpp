@@ -8,8 +8,6 @@
 #include "vt100.h"
 
 
-#define L_VT100 LOG("VT100")
-#define L_UNKNOWN_SEQ LOG("VT100_Unknown")
 
 namespace vterm {
 
@@ -67,7 +65,9 @@ namespace vterm {
 		bg_(this->defaultBg()),
 		font_(),
 		cursorCol_(0),
-        cursorRow_(0) {
+        cursorRow_(0),
+	    buffer_(nullptr),
+	    bufferEnd_(nullptr) {
 		palette_.fillFrom(palette);
 	}
 
@@ -78,13 +78,14 @@ namespace vterm {
 		if (cursorRow_ >= rows_)
 			cursorRow_ = rows_ - 1;
 		// IOTerminal's doResize() is not called because of the virtual inheritance
-		L_VT100 << "terminal resized to " << cols << "," << rows;
+		LOG(SEQ) << "terminal resized to " << cols << "," << rows;
 	}
 
 
 	void VT100::processInputStream(char * buffer, size_t & size) {
 		buffer_ = buffer;
 		bufferEnd_ = buffer_ + size;
+		std::string text;
 		{
 
 			// lock the terminal for updates while decoding
@@ -94,6 +95,10 @@ namespace vterm {
 				char c = top();
 				switch (c) {
 				case Char::ESC: {
+					if (!text.empty()) {
+						LOG(SEQ) << "text " << text;
+						text.clear();
+					}
 					// make a copy of buffer in case process escape sequence advances it and then fails
 					char * b = buffer_;
 					if (!parseEscapeSequence()) {
@@ -102,7 +107,7 @@ namespace vterm {
 							size = b - buffer;
 							return;
 						} else {
-							L_UNKNOWN_SEQ << "ESC " << std::string(++b, buffer_);
+							LOG(UNKNOWN_SEQ) << "ESC " << std::string(++b, buffer_);
 						}
 					}
 					break;
@@ -112,7 +117,7 @@ namespace vterm {
 				   TODO - should this also do carriage return? I guess so
 				 */
 				case Char::LF:
-					L_VT100 << "LF";
+					LOG(SEQ) << "LF";
 					pop();
 					++cursorRow_;
 					cursorCol_ = 0;
@@ -120,12 +125,12 @@ namespace vterm {
 				/* Carriage return sets cursor column to 0. 
 				 */
 				case Char::CR:
-					L_VT100 << "CR";
+					LOG(SEQ) << "CR";
 					pop();
 					cursorCol_ = 0;
 					break;
 				case Char::BACKSPACE:
-					L_UNKNOWN_SEQ << "backspace";
+					LOG(UNKNOWN_SEQ) << "backspace";
 					pop();
 					// TODO
 					break;
@@ -140,7 +145,9 @@ namespace vterm {
 						size = buffer_ - buffer;
 						return;
 					}
-					L_VT100 << "codepoint" << std::hex << c8.codepoint();
+					// TODO fix this to utf8
+					text += static_cast<char>(c8.codepoint() & 0xff);
+					//LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
 					// get the cell and update its contents
 					Cell & cell = defaultLayer_->at(cursorCol_, cursorRow_);
 					cell.fg = fg_;
@@ -153,6 +160,11 @@ namespace vterm {
 				}
 			}
 		}
+		if (!text.empty()) {
+			LOG(SEQ) << "text " << text;
+			text.clear();
+		}
+
 		// TODO do not repaint all but only what has changed
 		repaintAll();
 	}
@@ -315,25 +327,94 @@ namespace vterm {
 			case 'm': 
 				return SGR(first);
 			// second argument
-			case ';': {
-				int second = parseNumber(1);
-				switch (pop()) {
-					// CSI <row> ; <col> H -- sets cursor position
-				    case 'H':
-					case 'f':
-						setCursor(second - 1, first - 1);
-						return true;
-				    default:
-					    break;
-				}
-				break;
-			}
+			case ';':
+				return parseCSI(first);
 		    // otherwise we are dealing with an unrecognized sequence, return false
 			default:
-				break;
+				return false;
 		}
-		return false;
 	}
+
+	bool VT100::parseCSI(unsigned first) {
+		unsigned second = parseNumber(1);
+		switch (pop()) {
+			// CSI <row> ; <col> H -- sets cursor position
+			case 'H':
+			case 'f':
+				setCursor(second - 1, first - 1);
+				return true;
+				// third argument
+			case ';': 
+				return parseCSI(first, second);
+			default:
+				return false;
+		}
+	}
+
+	bool VT100::parseCSI(unsigned first, unsigned second) {
+		unsigned third = parseNumber(0);
+		switch (pop()) {
+			/* CSI 38 ; 5 ; <index> m - SGR 38, select from palette foreground */
+			/* CSI 48 ; 5 ; <index> m - SGR 48, select from palette background */
+		    case 'm': {
+				if (second != 5 || third > 255)
+					return false;
+				if (first == 38) {
+					fg_ = palette_[third];
+					LOG(SEQ) << "fg set to index " << third << " (" << fg_ << ")";
+				} else if (first == 48) {
+					bg_ = palette_[third];
+					LOG(SEQ) << "bg set to index " << third << " (" << bg_ << ")";
+				} else {
+					return false;
+				}
+				return true;
+			}
+			case ';':
+				return parseCSI(first, second, third);
+			default:
+				return false;
+		}
+	}
+
+	bool VT100::parseCSI(unsigned first, unsigned second, unsigned third) {
+		unsigned fourth = parseNumber(0);
+		switch (pop()) {
+		    case ';':
+				return parseCSI(first, second, third, fourth);
+			default:
+				return false;
+		}
+	}
+
+	bool VT100::parseCSI(unsigned first, unsigned second, unsigned third, unsigned fourth) {
+		unsigned fifth = parseNumber(0);
+		switch (pop()) {
+			/* CSI 38 ; 2 ; <r> ; <g> ; <b> m - SGR 38, specify color RGB */
+			/* CSI 48 ; 2 ; <r> ; <g> ; <b> m - SGR 48, specify color RGB */
+		    case 'm': {
+				if (second != 2 || third > 255 || fourth > 255 || fifth > 255)
+					return false;
+				if (first == 38) {
+					fg_ = Color(third, fourth, fifth);
+					LOG(SEQ) << "fg set to " << fg_;
+				} else if (first == 48) {
+					bg_ = Color(third, fourth, fifth);
+					LOG(SEQ) << "bg set to " << bg_;
+				} else {
+					return false;
+				}
+				return true;
+
+			}
+			default:
+				return false;
+		}
+	}
+
+
+
+
 
 	bool VT100::parseSetter() {
 		int id = parseNumber();
@@ -364,6 +445,10 @@ namespace vterm {
 			 */
 			case 47: 
 			case 1049:
+				// switching to the alternate buffer, or enabling it again should trigger buffer reset
+				fg_ = defaultFg();
+				bg_ = defaultBg();
+				fillRect(helpers::Rect(cols_, rows_), ' ');
 				return false;
 
 			/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. */
@@ -375,8 +460,6 @@ namespace vterm {
 			return false;
 		}
 	}
-
-	// ]0;C:\WINDOWS\SYSTEM32\wsl.exe BEL
 
 	bool VT100::parseOSC() {
 		unsigned id = parseNumber(0);
@@ -408,56 +491,91 @@ namespace vterm {
 				font_ = Font();
 				fg_ = defaultFg();
 				bg_ = defaultBg();
+				LOG(SEQ) << "font fg bg reset";
 				return true;
 			/* Bold / bright foreground. */
 			case 1:
 				font_.setBold(true);
+				LOG(SEQ) << "bold set";
 				return true;
 			/* Underline */
 			case 4:
 				font_.setUnderline(true);
+				LOG(SEQ) << "underline set";
 				return true;
 			/* Disable underline. */
 			case 24:
 				font_.setUnderline(false);
+				LOG(SEQ) << "undeline unset";
 				return true;
 			/* 30 - 37 are dark foreground colors, handled in the default case. */
+			/* 38 - extended foreground color - see parseCSI with more arguments */
 			/* Foreground default. */
 			case 39:
 				fg_ = defaultFg();
+				LOG(SEQ) << "fg reset";
 				return true;
 			/* 40 - 47 are dark background color, handled in the default case. */
+			/* 38 - extended foreground color - see parseCSI with more arguments */
 			/* Background default */
 			case 49:
 				bg_ = defaultBg();
+				LOG(SEQ) << "bg reset";
 				return true;
 
 			/* 90 - 97 are bright foreground colors, handled in the default case. */
 			/* 100 - 107 are bright background colors, handled in the default case. */
 
 		    default:
-				if (value >= 30 && value <= 37)
+				if (value >= 30 && value <= 37) {
 					fg_ = palette_[value - 30];
-				else if (value >= 40 && value <= 47) 
+					LOG(SEQ) << "fg set to " << palette_[value - 30];
+				} else if (value >= 40 && value <= 47) {
 					bg_ = palette_[value - 40];
-				else if (value >= 90 && value <= 97) 
+					LOG(SEQ) << "bg set to " << palette_[value - 40];
+				} else if (value >= 90 && value <= 97) {
 					fg_ = palette_[value - 82];
-				else if (value >= 100 && value <= 107) 
+					LOG(SEQ) << "fg set to " << palette_[value - 82];
+				} else if (value >= 100 && value <= 107) {
 					bg_ = palette_[value - 92];
-				else 
+					LOG(SEQ) << "bg set to " << palette_[value - 92];
+				} else {
 					return false;
+				}
 				return true;
 		}
 	}
 
+	bool VT100::parseExtendedColor(Color& storeInto) {
+		// already parsed ESC [ 38 or ESC [ 48
+		if (!condPop(';'))
+			return false;
+		switch (parseNumber(0)) {
+			case 2: {
+
+			}
+			case 5: {
+				if (!condPop(';'))
+					return false;
+
+
+			}
+			default:
+				return false;
+		}
+
+	}
+
 	void VT100::setCursor(unsigned col, unsigned row) {
-		L_VT100 << "setCursor " << col << ", " << row;
+		LOG(SEQ) << "setCursor " << col << ", " << row;
 		cursorCol_ = col;
 		cursorRow_ = row;
 	}
 
 
 	void VT100::fillRect(helpers::Rect const & rect, Char::UTF8 c, Color fg, Color bg, Font font) {
+		LOG(SEQ) << "fillRect (" << rect.left << "," << rect.top << "," << rect.right << "," << rect.bottom << ")  fg: " << fg << ", bg: " << bg;
+		// TODO add print of the char as well
 		for (unsigned row = rect.top; row < rect.bottom; ++row) {
 			for (unsigned col = rect.left; col < rect.right; ++col) {
 				Cell & cell = defaultLayer_->at(col, row);
@@ -471,6 +589,7 @@ namespace vterm {
 
 	void VT100::scrollDown(unsigned lines) {
 		ASSERT(lines < rows_);
+		LOG(SEQ) << "scrolling down " << lines << " lines";
 		for (unsigned r = 0, re = rows_ - lines; r < re; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
 				defaultLayer_->at(c, r) = defaultLayer_->at(c, r + lines);

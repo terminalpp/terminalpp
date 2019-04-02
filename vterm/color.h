@@ -70,4 +70,9 @@ namespace vterm {
 		static Color DarkGray() { return Color(128, 128, 128); }
 	};
 
+	inline std::ostream & operator << (std::ostream & s, Color const & c) {
+		s << static_cast<unsigned>(c.red) << ";" << static_cast<unsigned>(c.green) << ";" << static_cast<unsigned>(c.blue);
+		return s;
+	}
+
 } // namespace vterm

@@ -14,8 +14,8 @@
 
 #include "helpers.h"
 
-//#define LOG ::helpers::Log::CreateWriter(__FILE__, __LINE__)
-#define LOG if (false) ::helpers::Log::CreateWriter(__FILE__, __LINE__)
+#define LOG ::helpers::Log::CreateWriter(__FILE__, __LINE__)
+//#define LOG if (false) ::helpers::Log::CreateWriter(__FILE__, __LINE__)
 
 namespace helpers {
 
@@ -51,7 +51,7 @@ namespace helpers {
 
 			Writer(Writer const &) = delete;
 
-			Writer(Writer && from) :
+			Writer(Writer && from) noexcept :
 				m_(from.m_),
 				logger_(from.logger_),
 				s_(std::move(from.s_)) {
@@ -83,10 +83,9 @@ namespace helpers {
 			 */
 			template<typename T>
 			Writer & operator << (T const & what) {
-				if (logger_ != nullptr) {
+				if (logger_ != nullptr)
 					s_ << what;
-					return *this;
-				}
+				return *this;
 			}
 
 		private:
@@ -137,10 +136,7 @@ namespace helpers {
 
 		/** Log destructor, which is only called on the singleton in Instance method deletes all registered loggers. 
 		 */
-		~Log() {
-			for (auto l : registeredLoggers_)
-				delete l;
-		}
+		~Log();
 
 		/** All loggers are registered in a map so that they can be selected by their name without the need of having the logger static functions in sight. 
 		 */
@@ -193,6 +189,12 @@ namespace helpers {
 		}
 	}
 
+	inline Log::~Log() {
+		for (auto l : registeredLoggers_)
+			delete l;
+	}
+
+
 	class StreamLogger : public Logger {
 	public:
 
@@ -216,8 +218,11 @@ namespace helpers {
 			if (s_ != nullptr) {
 				std::lock_guard<std::mutex> g(m_);
 				// TODO actually print the message
-				if (printTime_)
-					(*s_) << std::put_time(std::localtime(&m.time), "%c") << " ";
+				if (printTime_) {
+					tm t;
+					localtime_s(&t, &m.time);
+					(*s_) << std::put_time(&t, "%c") << " ";
+				}
 				if (printName_)
 					(*s_) << '[' << name << "] ";
 				(*s_) << m.text;
