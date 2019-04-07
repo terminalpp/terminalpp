@@ -89,6 +89,10 @@ namespace tpp {
 
 		static TerminalSettings * FillPlatformSettings(TerminalSettings * ts);
 
+		/** Maps win32 virtual keys to their vterm equivalents. 
+		 */
+		static vterm::Key GetKey(WPARAM vk);
+
 		static LRESULT CALLBACK EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 		HWND hWnd_;

@@ -134,6 +134,73 @@ namespace tpp {
 		return ts;
 	}
 
+	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
+	vterm::Key TerminalWindow::GetKey(WPARAM vk) {
+		// MSB == pressed, LSB state since last time
+		bool shift = GetAsyncKeyState(VK_SHIFT) & 0x8000;
+		bool ctrl = GetAsyncKeyState(VK_CONTROL) & 0x8000;
+		bool alt = GetAsyncKeyState(VK_MENU) & 0x8000;
+		bool win = (GetAsyncKeyState(VK_LWIN) & 0x8000) || (GetAsyncKeyState(VK_RWIN) & 0x8000);
+		switch (vk) {
+		    case VK_UP:
+				return vterm::Key(vterm::Key::Up, true, shift, ctrl, alt, win);
+			case VK_DOWN:
+				return vterm::Key(vterm::Key::Down, true, shift, ctrl, alt, win);
+			case VK_LEFT:
+				return vterm::Key(vterm::Key::Left, true, shift, ctrl, alt, win);
+			case VK_RIGHT:
+				return vterm::Key(vterm::Key::Right, true, shift, ctrl, alt, win);
+			case VK_PRIOR:
+				return vterm::Key(vterm::Key::PageUp, true, shift, ctrl, alt, win);
+			case VK_NEXT:
+				return vterm::Key(vterm::Key::PageDown, true, shift, ctrl, alt, win);
+			case VK_HOME:
+				return vterm::Key(vterm::Key::Home, true, shift, ctrl, alt, win);
+			case VK_END:
+				return vterm::Key(vterm::Key::End, true, shift, ctrl, alt, win);
+			case VK_INSERT:
+				return vterm::Key(vterm::Key::Insert, true, shift, ctrl, alt, win);
+			case VK_DELETE:
+				return vterm::Key(vterm::Key::Delete, true, shift, ctrl, alt, win);
+			case VK_BACK:
+				return vterm::Key(vterm::Key::Backspace, true, shift, ctrl, alt, win);
+			case VK_SNAPSHOT:
+				return vterm::Key(vterm::Key::PrintScreen, true, shift, ctrl, alt, win);
+			case VK_ESCAPE:
+				return vterm::Key(vterm::Key::Esc, true, shift, ctrl, alt, win);
+			case VK_F1:
+				return vterm::Key(vterm::Key::F1, true, shift, ctrl, alt, win);
+			case VK_F2:
+				return vterm::Key(vterm::Key::F2, true, shift, ctrl, alt, win);
+			case VK_F3:
+				return vterm::Key(vterm::Key::F3, true, shift, ctrl, alt, win);
+			case VK_F4:
+				return vterm::Key(vterm::Key::F4, true, shift, ctrl, alt, win);
+			case VK_F5:
+				return vterm::Key(vterm::Key::F5, true, shift, ctrl, alt, win);
+			case VK_F6:
+				return vterm::Key(vterm::Key::F6, true, shift, ctrl, alt, win);
+			case VK_F7:
+				return vterm::Key(vterm::Key::F7, true, shift, ctrl, alt, win);
+			case VK_F8:
+				return vterm::Key(vterm::Key::F8, true, shift, ctrl, alt, win);
+			case VK_F9:
+				return vterm::Key(vterm::Key::F9, true, shift, ctrl, alt, win);
+			case VK_F10:
+				return vterm::Key(vterm::Key::F10, true, shift, ctrl, alt, win);
+			case VK_F11:
+				return vterm::Key(vterm::Key::F11, true, shift, ctrl, alt, win);
+			case VK_F12:
+				return vterm::Key(vterm::Key::F12, true, shift, ctrl, alt, win);
+			case VK_SPACE:
+				return vterm::Key(' ', false, shift, ctrl, alt, win);
+			default:
+				if ((vk >= 0x30 && vk <= 0x39) || (vk >= 0x41 && vk <= 0x5a))
+					return vterm::Key(vk, false, shift, ctrl, alt, win);
+				return vterm::Key(vterm::Key::None);
+		}
+	}
+
 	LRESULT CALLBACK TerminalWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 		// determine terminal window corresponding to the handle given with the message
 		auto i = Windows_.find(hWnd);
@@ -247,42 +314,22 @@ namespace tpp {
 				break;
 			/* DEBUG - debugging events hooked to keypresses now: */
 			/* Processes special key events.*/
-			case WM_KEYDOWN:
-				switch (wParam) {
-				case VK_UP:
-					tw->terminal()->keyDown(vterm::Key(vterm::Key::Up, true));
-					break;
-				case VK_DOWN:
-					tw->terminal()->keyDown(vterm::Key(vterm::Key::Down, true));
-					break;
-				case VK_LEFT:
-					tw->terminal()->keyDown(vterm::Key(vterm::Key::Left, true));
-					break;
-				case VK_RIGHT:
-					tw->terminal()->keyDown(vterm::Key(vterm::Key::Right, true));
-					break;
-				case VK_F2:
-					tw->redraw();
-					break;
-				case VK_F3:
+			case WM_KEYDOWN: {
+				vterm::Key k = GetKey(wParam);
+				if (k == vterm::Key('\n').withAlt()) {
 					tw->setFullscreen(!tw->fullscreen());
-					break;
-				default:
-					break;
+				} else if (k == vterm::Key(vterm::Key::F5, true)) {
+					tw->redraw();
+				} else if (k.codepoint() != vterm::Key::None) {
+					tw->terminal()->keyDown(k);
 				}
 				break;
-			case WM_KEYUP:
-				switch (wParam) {
-				case VK_F4:
-					std::cout << "F4 up";
-					break;
-				case VK_F5:
-					std::cout << "F5 up";
-					break;
-				default:
-					break;
-				}
+			}
+			case WM_KEYUP: {
+				vterm::Key k = GetKey(wParam);
+				tw->terminal()->keyUp(k);
 				break;
+			}
 			/* User specified messages for various events that we want to be handled in the app thread.
 			 */
 			case WM_USER:

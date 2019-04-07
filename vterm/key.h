@@ -7,6 +7,8 @@ namespace vterm {
 	 */
 	class Key {
 	public:
+		static constexpr unsigned None = 0;
+		static constexpr unsigned Enter = 13;
 		static constexpr unsigned Up = 1024;
 		static constexpr unsigned Down = 1025;
 		static constexpr unsigned Left = 1026;
@@ -33,6 +35,7 @@ namespace vterm {
 		static constexpr unsigned F11 = 1047;
 		static constexpr unsigned F12 = 1048;
 
+
 		unsigned codepoint() const {
 			return codepoint_;
 		}
@@ -57,17 +60,44 @@ namespace vterm {
 			return meta_;
 		}
 
-		Key(unsigned codepoint, bool special = false) :
+		Key withShift() const {
+			return Key(codepoint_, special_, true, ctrl_, alt_, meta_);
+		}
+
+		Key withCtrl() const {
+			return Key(codepoint_, special_, shift_, true, alt_, meta_);
+		}
+
+		Key withAlt() const {
+			return Key(codepoint_, special_, shift_, ctrl_, true, meta_);
+		}
+
+		Key withMeta() const {
+			return Key(codepoint_, special_, shift_, ctrl_, alt_, true);
+		}
+
+
+		Key(unsigned codepoint, bool special = false, bool shift = false, bool ctrl = false, bool alt = false, bool meta = false) :
+			raw_(0),
 			codepoint_(codepoint),
 			special_(special),
-			shift_(0),
-			ctrl_(0),
-			alt_(0),
-			meta_(0) {
+			shift_(shift),
+			ctrl_(ctrl),
+			alt_(alt),
+			meta_(meta) {
+		}
+
+		bool operator == (Key const& other) const {
+			return raw_ == other.raw_;
+		}
+
+		bool operator != (Key const& other) const {
+			return raw_ != other.raw_;
 		}
 
 	private:
 		union {
+			unsigned raw_;
 			struct {
 				unsigned codepoint_ : 21;
 				unsigned special_ : 1;
@@ -76,7 +106,6 @@ namespace vterm {
 				unsigned alt_ : 1;
 				unsigned meta_ : 1;
 			};
-			unsigned raw_;
 		};
 
 
