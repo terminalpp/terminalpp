@@ -97,6 +97,13 @@ namespace vterm {
 		// IOTerminal's doResize() is not called because of the virtual inheritance
 	}
 
+	bool ConPTYTerminal::write(char const * buffer, size_t size) {
+		DWORD bytesWritten = 0;
+		WriteFile(pipeOut_, buffer, static_cast<DWORD>(size), &bytesWritten, nullptr);
+		ASSERT(bytesWritten == size);
+	}
+
+
 
 } // namespace vterm
 

@@ -36,6 +36,8 @@ namespace vterm {
 
 		void doResize(unsigned cols, unsigned rows) override;
 
+		bool write(char const * buffer, size_t size) override;
+
 	private:
 		/** The command executed by the connector.
 

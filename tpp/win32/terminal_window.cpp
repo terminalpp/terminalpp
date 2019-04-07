@@ -238,18 +238,52 @@ namespace tpp {
 				EndPaint(hWnd, &ps);
 				break;
         	}
+			/* TODO It would be nice to actually switch to unicode. */
+			case WM_UNICHAR:
+				UNREACHABLE;
+				break;
+			case WM_CHAR:
+				tw->terminal()->keyDown(vterm::Key(wParam));
+				break;
 			/* DEBUG - debugging events hooked to keypresses now: */
+			/* Processes special key events.*/
 			case WM_KEYDOWN:
 				switch (wParam) {
+				case VK_UP:
+					tw->terminal()->keyDown(vterm::Key(vterm::Key::Up, true));
+					break;
+				case VK_DOWN:
+					tw->terminal()->keyDown(vterm::Key(vterm::Key::Down, true));
+					break;
+				case VK_LEFT:
+					tw->terminal()->keyDown(vterm::Key(vterm::Key::Left, true));
+					break;
+				case VK_RIGHT:
+					tw->terminal()->keyDown(vterm::Key(vterm::Key::Right, true));
+					break;
 				case VK_F2:
 					tw->redraw();
 					break;
 				case VK_F3:
 					tw->setFullscreen(!tw->fullscreen());
 					break;
+				default:
+					break;
 				}
 				break;
-			/* User specified messages for various events that we want to be handled in the app thread. 
+			case WM_KEYUP:
+				switch (wParam) {
+				case VK_F4:
+					std::cout << "F4 up";
+					break;
+				case VK_F5:
+					std::cout << "F5 up";
+					break;
+				default:
+					break;
+				}
+				break;
+			/* User specified messages for various events that we want to be handled in the app thread.
 			 */
 			case WM_USER:
 				switch (wParam) {

@@ -124,7 +124,11 @@ namespace vterm {
 			// copy the bytes
 			std::memcpy(bytes_, buffer, size);
 			buffer += size;
-			return true;
+			return true; 
+		}
+
+		char const* rawBytes() const {
+			return reinterpret_cast<char const *>(& bytes_);
 		}
 
 	private:

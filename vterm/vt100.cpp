@@ -71,6 +71,34 @@ namespace vterm {
 		palette_.fillFrom(palette);
 	}
 
+	void VT100::keyDown(Key k) {
+		if (k.special()) {
+			switch (k.codepoint()) {
+			case Key::Up:
+				write("\033[A", 3);
+				break;
+			case Key::Down:
+				write("\033[B", 3);
+				break;
+			case Key::Left:
+				write("\033[D", 3);
+				break;
+			case Key::Right:
+				write("\033[C", 3);
+				break;
+
+
+
+
+			}
+
+		} else {
+			Char::UTF8 c(k.codepoint());
+			write(c.rawBytes(), c.size());
+		}
+	}
+
+
 	void VT100::doResize(unsigned cols, unsigned rows) {
 		// update the cursor so that it stays on the screen at all times
 		if (cursorCol_ >= cols_)

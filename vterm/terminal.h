@@ -173,6 +173,9 @@ namespace vterm {
 
 		// methods --------------------------------------------------------------------------------
 
+		virtual void keyDown(Key k) = 0;
+		virtual void keyUp(Key k) = 0;
+
 		/** Resizes the terminal to given size.
 		 */
 		bool resize(unsigned cols, unsigned rows) {
@@ -299,7 +302,7 @@ namespace vterm {
 	 */
 	class IOTerminal : public Terminal {
 	public:
-		static constexpr size_t DEFAULT_BUFFER_SIZE = 10240;
+		static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
 
 	protected:
 		IOTerminal(unsigned cols, unsigned rows, size_t bufferSize = DEFAULT_BUFFER_SIZE) :
@@ -313,15 +316,16 @@ namespace vterm {
 		virtual void doStart();
 
 		/** Called when new data has been received on the input stream. 
-		    
 		 */
 		virtual void processInputStream(char * buffer, size_t & size) = 0;
 
 		/** Called by the reader thread when new data from the input stream should be read. 
-
 		 */
 		virtual bool readInputStream(char * buffer, size_t & size) = 0;
 
+		/** Writes the given buffer to the output, i.e. sends the data to the connected application. 
+		 */
+		virtual bool write(char const * buffer, size_t size) = 0;
 
 	private:
 
