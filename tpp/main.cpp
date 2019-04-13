@@ -24,6 +24,8 @@ using namespace tpp;
 
 // https://docs.microsoft.com/en-us/windows/desktop/api/_gdi/
 
+// https://github.com/Microsoft/node-pty/blob/master/src/win/conpty.cc
+
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
@@ -52,7 +54,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Terminal * t = new Terminal("wsl -e echo hello mmoo", 80, 25);
 	//Terminal * t = new Terminal("wsl -e ping www.seznam.cz", 80, 25);
 	//Terminal * t = new Terminal("wsl -e screenfetch", 80, 25, vterm::Palette::Colors16, 15, 0);
-	Terminal * t = new Terminal("wsl -e mc", 80, 25, vterm::Palette::Colors16, 15, 0);
+	Terminal * t = new Terminal("wsl -e bash", 80, 25, vterm::Palette::Colors16, 15, 0);
     //Terminal * t = new Terminal("wsl -e emacs ~/settings/emacs/init.el", 80, 25, vterm::Palette::Colors16, 15, 0);
 	//Terminal * t = new Terminal("wsl -e bash -c \"ssh orange \"", 80, 25, vterm::Palette::Colors16, 15, 0);
 

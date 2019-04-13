@@ -92,25 +92,25 @@ namespace vterm {
 		addKey(Key::F11, "\033[23~");
 		addKey(Key::F12, "\033[24~");
 
-		addVTModifiers(Key::Up, "[1;", "A");
-		addVTModifiers(Key::Down, "[1;", "B");
-		addVTModifiers(Key::Left, "[1;", "D");
-		addVTModifiers(Key::Right, "[1;", "C");
-		addVTModifiers(Key::Home, "[1;", "H");
-		addVTModifiers(Key::End, "[1;", "F");
+		addVTModifiers(Key::Up, "\033[1;", "A");
+		addVTModifiers(Key::Down, "\033[1;", "B");
+		addVTModifiers(Key::Left, "\033[1;", "D");
+		addVTModifiers(Key::Right, "\033[1;", "C");
+		addVTModifiers(Key::Home, "\033[1;", "H");
+		addVTModifiers(Key::End, "\033[1;", "F");
 
-		addVTModifiers(Key::F1, "[1;", "P");
-		addVTModifiers(Key::F2, "[1;", "Q");
-		addVTModifiers(Key::F3, "[1;", "R");
-		addVTModifiers(Key::F4, "[1;", "S");
-		addVTModifiers(Key::F5, "[15;", "~");
-		addVTModifiers(Key::F6, "[17;", "~");
-		addVTModifiers(Key::F7, "[18;", "~");
-		addVTModifiers(Key::F8, "[19;", "~");
-		addVTModifiers(Key::F9, "[20;", "~");
-		addVTModifiers(Key::F10, "[21;", "~");
-		addVTModifiers(Key::F11, "[23;", "~");
-		addVTModifiers(Key::F12, "[24;", "~");
+		addVTModifiers(Key::F1, "\033[1;", "P");
+		addVTModifiers(Key::F2, "\033[1;", "Q");
+		addVTModifiers(Key::F3, "\033[1;", "R");
+		addVTModifiers(Key::F4, "\033[1;", "S");
+		addVTModifiers(Key::F5, "\033[15;", "~");
+		addVTModifiers(Key::F6, "\033[17;", "~");
+		addVTModifiers(Key::F7, "\033[18;", "~");
+		addVTModifiers(Key::F8, "\033[19;", "~");
+		addVTModifiers(Key::F9, "\033[20;", "~");
+		addVTModifiers(Key::F10, "\033[21;", "~");
+		addVTModifiers(Key::F11, "\033[23;", "~");
+		addVTModifiers(Key::F12, "\033[24;", "~");
 
 	}
 
@@ -612,6 +612,11 @@ namespace vterm {
 			case 4:
 				font_.setUnderline(true);
 				LOG(SEQ) << "underline set";
+				return true;
+			/* Normal - neither bold, nor faint. */
+			case 22:
+				font_.setBold(false);
+				LOG(SEQ) << "normal font set";
 				return true;
 			/* Disable underline. */
 			case 24:
