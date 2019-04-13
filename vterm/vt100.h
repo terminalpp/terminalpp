@@ -192,13 +192,13 @@ namespace vterm {
 		bool parseExtendedColor(Color& storeInto);
 
 		void updateCursorPosition() {
-			if (cursorCol_ >= cols_) {
-				cursorCol_ = 0;
-				++cursorRow_;
+			if (cursorPos_.col >= cols_) {
+				cursorPos_.col = 0;
+				++cursorPos_.row;
 			}
-			if (cursorRow_ >= rows_) {
-				scrollDown(cursorRow_ - rows_ + 1);
-				cursorRow_ = rows_ - 1;
+			if (cursorPos_.row >= rows_) {
+				scrollDown(cursorPos_.row - rows_ + 1);
+				cursorPos_.row = rows_ - 1;
 			}
 		}
 
@@ -225,8 +225,6 @@ namespace vterm {
 		Color fg_;
 		Color bg_;
 		Font font_;
-		unsigned cursorCol_;
-		unsigned cursorRow_;
 
 		char * buffer_;
 		char * bufferEnd_;

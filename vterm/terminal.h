@@ -171,6 +171,12 @@ namespace vterm {
 			return Size{ cols_, rows_ };
 		}
 
+		/** Returns the cursor coordinates. 
+		 */
+		helpers::Point cursorPos() const {
+			return cursorPos_;
+		}
+
 		// methods --------------------------------------------------------------------------------
 
 		virtual void keyDown(Key k) = 0;
@@ -238,6 +244,10 @@ namespace vterm {
 
 		/** Number of rows the terminal stores in each layer. */
 		unsigned rows_;
+
+		/** Position of the cursor. 
+		 */
+		helpers::Point cursorPos_;
 
 		/** The default layer.
 		 */

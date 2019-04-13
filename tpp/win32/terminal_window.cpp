@@ -122,6 +122,11 @@ namespace tpp {
 				TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
 			}
 		}
+		wchar_t x = '_';
+		SetTextColor(bufferDC_, RGB(255, 255, 255));
+		SetBkColor(bufferDC_, TRANSPARENT);
+		helpers::Point cp = terminal()->cursorPos();
+		TextOutW(bufferDC_, cp.col * cellWidthPx_, cp.row * cellHeightPx_, &x, 1);
 		updateRect_ = helpers::Rect(0,0);
 	}
 

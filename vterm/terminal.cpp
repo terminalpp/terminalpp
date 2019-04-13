@@ -8,6 +8,7 @@ namespace vterm {
 	Terminal::Terminal(unsigned cols, unsigned rows) :
 		cols_(cols),
 		rows_(rows),
+		cursorPos_(0,0),
 		defaultLayer_(new LayerImpl(this)) {
 	}
 

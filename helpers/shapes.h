@@ -8,6 +8,22 @@
 #endif
 
 namespace helpers {
+	
+
+	// TODO this should move to vterm because the shapes are very much terminal oriented only
+
+	/** Point definition. 
+	 */
+	class Point {
+	public:
+		unsigned col;
+		unsigned row;
+
+		Point(unsigned col, unsigned row) :
+			col(col),
+			row(row) {
+		}
+	};
 
 	/** Rectangle definition.
 

@@ -58,8 +58,8 @@ namespace vterm {
 		std::memcpy(colors_, from.colors_, sizeof(Color) * s);
 	}
 
-
-
+	/** showkey -a shows what keys were pressed in a linux environment. 
+	 */
 	VT100::KeyMap::KeyMap() {
 		// shift + ctrl + alt + meta modifiers and their combinations
 		keys_.resize(16);
@@ -166,8 +166,6 @@ namespace vterm {
 		fg_(this->defaultFg()),
 		bg_(this->defaultBg()),
 		font_(),
-		cursorCol_(0),
-        cursorRow_(0),
 	    buffer_(nullptr),
 	    bufferEnd_(nullptr) {
 		palette_.fillFrom(palette);
@@ -189,10 +187,10 @@ namespace vterm {
 
 	void VT100::doResize(unsigned cols, unsigned rows) {
 		// update the cursor so that it stays on the screen at all times
-		if (cursorCol_ >= cols_)
-			cursorCol_ = cols_ - 1;
-		if (cursorRow_ >= rows_)
-			cursorRow_ = rows_ - 1;
+		if (cursorPos_.col >= cols_)
+			cursorPos_.col = cols_ - 1;
+		if (cursorPos_.row >= rows_)
+			cursorPos_.row = rows_ - 1;
 		// IOTerminal's doResize() is not called because of the virtual inheritance
 		LOG(SEQ) << "terminal resized to " << cols << "," << rows;
 	}
@@ -234,15 +232,15 @@ namespace vterm {
 				case Char::LF:
 					LOG(SEQ) << "LF";
 					pop();
-					++cursorRow_;
-					cursorCol_ = 0;
+					++cursorPos_.row;
+					cursorPos_.col = 0;
 					break;
 				/* Carriage return sets cursor column to 0. 
 				 */
 				case Char::CR:
 					LOG(SEQ) << "CR";
 					pop();
-					cursorCol_ = 0;
+					cursorPos_.col = 0;
 					break;
 				case Char::BACKSPACE:
 					LOG(UNKNOWN_SEQ) << "backspace";
@@ -264,13 +262,13 @@ namespace vterm {
 					text += static_cast<char>(c8.codepoint() & 0xff);
 					//LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
 					// get the cell and update its contents
-					Cell & cell = defaultLayer_->at(cursorCol_, cursorRow_);
+					Cell & cell = defaultLayer_->at(cursorPos_.col, cursorPos_.row);
 					cell.fg = fg_;
 					cell.bg = bg_;
 					cell.font = font_;
 					cell.c = c8;
 					// move to next column
-					++cursorCol_;
+					++cursorPos_.col;
 				}
 				}
 			}
@@ -365,19 +363,19 @@ namespace vterm {
 		switch (pop()) {
 			// CSI <n> A -- moves cursor n rows up 
 			case 'A':
-				setCursor(cursorCol_, cursorRow_ - first);
+				setCursor(cursorPos_.col, cursorPos_.row - first);
 				return true;
 			// CSI <n> B -- moves cursor n rows down 
 			case 'B':
-				setCursor(cursorCol_, cursorRow_ + first);
+				setCursor(cursorPos_.col, cursorPos_.row + first);
 				return true;
 			// CSI <n> C -- moves cursor n columns forward (right)
 			case 'C':
-				setCursor(cursorCol_ + first, cursorRow_);
+				setCursor(cursorPos_.col + first, cursorPos_.row);
 				return true;
 			// CSI <n> D -- moves cursor n columns back (left)
 			case 'D': // cursor backward
-				setCursor(cursorCol_ - first, cursorRow_);
+				setCursor(cursorPos_.col - first, cursorPos_.row);
 				return true;
 			/* CSI <n> J -- erase display, depending on <n>:
 			    0 = erase from the current position (inclusive) to the end of display
@@ -388,13 +386,13 @@ namespace vterm {
 				switch (first) {
 					case 0:
 						updateCursorPosition();
-						fillRect(helpers::Rect(cursorCol_, cursorRow_, cols_, cursorRow_ + 1), ' ');
-						fillRect(helpers::Rect(0, cursorRow_ + 1, cols_, rows_), ' ');
+						fillRect(helpers::Rect(cursorPos_.col, cursorPos_.row, cols_, cursorPos_.row + 1), ' ');
+						fillRect(helpers::Rect(0, cursorPos_.row + 1, cols_, rows_), ' ');
 						return true;
 					case 1:
 						updateCursorPosition();
-						fillRect(helpers::Rect(0, 0, cols_, cursorRow_), ' ');
-						fillRect(helpers::Rect(0, cursorRow_, cursorCol_ + 1, cursorRow_ + 1), ' ');
+						fillRect(helpers::Rect(0, 0, cols_, cursorPos_.row), ' ');
+						fillRect(helpers::Rect(0, cursorPos_.row, cursorPos_.col + 1, cursorPos_.row + 1), ' ');
 						return true;
 					case 2:
 						fillRect(helpers::Rect(cols_, rows_), ' ');
@@ -408,11 +406,11 @@ namespace vterm {
 			case 'X': {
 				updateCursorPosition();
 				// erase from first line
-				unsigned l = std::min(cols_ - cursorCol_, first);
-				fillRect(helpers::Rect(cursorCol_, cursorRow_, cursorCol_ + l, cursorRow_ + 1), ' ');
+				unsigned l = std::min(cols_ - cursorPos_.col, first);
+				fillRect(helpers::Rect(cursorPos_.col, cursorPos_.row, cursorPos_.col + l, cursorPos_.row + 1), ' ');
 				first -= l;
 				// while there is enough stuff left to be larger than a line, erase entire line
-				l = cursorRow_ + 1;
+				l = cursorPos_.row + 1;
 				while (first >= cols_ && l < rows_) {
 					fillRect(helpers::Rect(0, l, cols_, ++l), ' ');
 					first -= cols_;
@@ -688,8 +686,8 @@ namespace vterm {
 
 	void VT100::setCursor(unsigned col, unsigned row) {
 		LOG(SEQ) << "setCursor " << col << ", " << row;
-		cursorCol_ = col;
-		cursorRow_ = row;
+		cursorPos_.col = col;
+		cursorPos_.row = row;
 	}
 
 
