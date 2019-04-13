@@ -11,6 +11,8 @@
 
 namespace vterm {
 
+	VT100::KeyMap VT100::keyMap_;
+
 	Palette const Palette::Colors16{
 		Color::Black(), // 0
 		Color::DarkRed(), // 1
@@ -56,6 +58,101 @@ namespace vterm {
 		std::memcpy(colors_, from.colors_, sizeof(Color) * s);
 	}
 
+
+
+	VT100::KeyMap::KeyMap() {
+		// shift + ctrl + alt + meta modifiers and their combinations
+		keys_.resize(16);
+		// add ctrl + letters
+		for (unsigned k = 'A'; k <= 'Z'; ++k) {
+			std::string seq;
+			seq += static_cast<char>(k - 'A');
+			addKey(Key(k) + Key::Ctrl, seq.c_str());
+		}
+		addKey(Key::Up, "\033[A");
+		addKey(Key::Down, "\033[B");
+		addKey(Key::Right, "\033[C");
+		addKey(Key::Left, "\033[D");
+		addKey(Key::Home, "\033[H"); // also \033[1~
+		addKey(Key::End, "\033[F"); // also \033[4~
+		addKey(Key::PageUp, "\033[5~");
+		addKey(Key::PageDown, "\33[6~");
+		addKey(Key::Insert, "\033[2~");
+		addKey(Key::Delete, "\033[3~");
+		addKey(Key::F1, "\033OP");
+		addKey(Key::F2, "\033OQ");
+		addKey(Key::F3, "\033OR");
+		addKey(Key::F4, "\033OS");
+		addKey(Key::F5, "\033[15~");
+		addKey(Key::F6, "\033[17~");
+		addKey(Key::F7, "\033[18~");
+		addKey(Key::F8, "\033[19~");
+		addKey(Key::F9, "\033[20~");
+		addKey(Key::F10, "\033[21~");
+		addKey(Key::F11, "\033[23~");
+		addKey(Key::F12, "\033[24~");
+
+		addVTModifiers(Key::Up, "[1;", "A");
+		addVTModifiers(Key::Down, "[1;", "B");
+		addVTModifiers(Key::Left, "[1;", "D");
+		addVTModifiers(Key::Right, "[1;", "C");
+		addVTModifiers(Key::Home, "[1;", "H");
+		addVTModifiers(Key::End, "[1;", "F");
+
+		addVTModifiers(Key::F1, "[1;", "P");
+		addVTModifiers(Key::F2, "[1;", "Q");
+		addVTModifiers(Key::F3, "[1;", "R");
+		addVTModifiers(Key::F4, "[1;", "S");
+		addVTModifiers(Key::F5, "[15;", "~");
+		addVTModifiers(Key::F6, "[17;", "~");
+		addVTModifiers(Key::F7, "[18;", "~");
+		addVTModifiers(Key::F8, "[19;", "~");
+		addVTModifiers(Key::F9, "[20;", "~");
+		addVTModifiers(Key::F10, "[21;", "~");
+		addVTModifiers(Key::F11, "[23;", "~");
+		addVTModifiers(Key::F12, "[24;", "~");
+
+	}
+
+	std::string const* VT100::KeyMap::getSequence(Key k) {
+		auto & m = getModifierMap(k);
+		auto i = m.find(k.code());
+		if (i == m.end())
+			return nullptr;
+		else
+			return & (i->second);
+	}
+
+	void VT100::KeyMap::addKey(Key k, char const * seq) {
+		auto& m = getModifierMap(k);
+		ASSERT(m.find(k.code()) == m.end());
+		m[k.code()] = std::string(seq);
+	}
+
+	void VT100::KeyMap::addVTModifiers(Key k, char const* seq1, char const* seq2) {
+		std::string shift = STR(seq1 << 2 << seq2); 
+		std::string alt = STR(seq1 << 3 << seq2); 
+		std::string alt_shift = STR(seq1 << 4 << seq2); 
+		std::string ctrl = STR(seq1 << 5 << seq2); 
+		std::string ctrl_shift = STR(seq1 << 6 << seq2); 
+		std::string ctrl_alt = STR(seq1 << 7 << seq2); 
+		std::string ctrl_alt_shift = STR(seq1 << 8 << seq2); 
+		addKey(k + Key::Shift, shift.c_str());
+		addKey(k + Key::Alt, alt.c_str());
+		addKey(k + Key::Shift + Key::Alt, alt_shift.c_str());
+		addKey(k + Key::Ctrl, ctrl.c_str());
+		addKey(k + Key::Ctrl + Key::Shift, ctrl_shift.c_str());
+		addKey(k + Key::Ctrl + Key::Alt, ctrl_alt.c_str());
+		addKey(k + Key::Ctrl + Key::Alt + Key::Shift, ctrl_alt_shift.c_str());
+	}
+
+	std::unordered_map<unsigned, std::string>& VT100::KeyMap::getModifierMap(Key k) {
+		unsigned m = (k.modifiers() >> 16);
+		ASSERT(m < 16);
+		return keys_[m];
+	}
+
+
 	VT100::VT100(unsigned cols, unsigned rows, Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
 		IOTerminal(cols, rows),
 		palette_(256),
@@ -72,32 +169,18 @@ namespace vterm {
 	}
 
 	void VT100::keyDown(Key k) {
-		if (k.special()) {
-			switch (k.codepoint()) {
-			case Key::Up:
-				write("\033[A", 3);
-				break;
-			case Key::Down:
-				write("\033[B", 3);
-				break;
-			case Key::Left:
-				write("\033[D", 3);
-				break;
-			case Key::Right:
-				write("\033[C", 3);
-				break;
-
-
-
-
-			}
-
-		} else {
-			Char::UTF8 c(k.codepoint());
-			write(c.rawBytes(), c.size());
+		std::string const* seq = keyMap_.getSequence(k);
+		if (seq != nullptr) {
+			write(seq->c_str(), seq->size());
+			LOG << "key sent";
 		}
+		LOG << "Key pressed: " << k;
 	}
 
+	void VT100::charInput(Char::UTF8 c) {
+		// TODO make sure that the character is within acceptable range, i.e. it does not clash with ctrl+ stuff, etc. 
+		write(c.rawBytes(), c.size());
+	}
 
 	void VT100::doResize(unsigned cols, unsigned rows) {
 		// update the cursor so that it stays on the screen at all times
@@ -108,7 +191,6 @@ namespace vterm {
 		// IOTerminal's doResize() is not called because of the virtual inheritance
 		LOG(SEQ) << "terminal resized to " << cols << "," << rows;
 	}
-
 
 	void VT100::processInputStream(char * buffer, size_t & size) {
 		buffer_ = buffer;

@@ -94,10 +94,32 @@ namespace vterm {
 		 */
 		void keyUp(Key k) override { };
 
+		void charInput(Char::UTF8 c) override;
 
 
 		
 	protected:
+
+		/** Describes the keys understood by the VT100 and the sequences to be sent when the keys are emited. 
+		 */
+		class KeyMap {
+		public:
+			KeyMap();
+
+			std::string const* getSequence(Key k);
+
+		private:
+
+			void addKey(Key k, char const * seq);
+
+			void addVTModifiers(Key k, char const* seq1, char const* seq2);
+
+			std::unordered_map<unsigned, std::string> & getModifierMap(Key k);
+
+
+			std::vector<std::unordered_map<unsigned, std::string>> keys_;
+		};
+
 
 		void doResize(unsigned cols, unsigned rows) override;
 
@@ -208,6 +230,8 @@ namespace vterm {
 
 		char * buffer_;
 		char * bufferEnd_;
+
+		static KeyMap keyMap_;
 
 	};
 

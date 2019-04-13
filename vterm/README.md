@@ -28,6 +28,23 @@ Inherits (virtually) from `IOTerminal` and provides decoding and encoding functi
 
 Available only on Windows, virtually inherits from `IOTerminal` and describes the actual stream communication between the terminal and its attached process using Win32 ConPTY. 
 
+
+
+# Input
+
+## Keyboard
+
+- difference between key press and character input. Key press maps physical buttons on the keyboard, 
+- char input actually sends printable characters to the stream to be received. 
+
+
+
+
+## Mouse
+
+
+
+
 # Supported ANSI Escape Sequences
 
 

@@ -24,7 +24,6 @@ using namespace tpp;
 
 // https://docs.microsoft.com/en-us/windows/desktop/api/_gdi/
 
-
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
@@ -40,6 +39,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Application * app = new Application(hInstance);
 	std::cout << "OH HAI, CAN I HAZ CONSOLE?" << std::endl;
+
+
 	// initialize log levels we use
 	//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout))->toFile("c:/delete/tpp.txt"));
 	helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
