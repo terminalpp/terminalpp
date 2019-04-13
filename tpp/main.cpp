@@ -9,7 +9,10 @@
 #include "win32/terminal_window.h"
 // link to directwrite
 #pragma comment(lib, "d2d1.lib")
-#pragma comment(lib, "dwrite.lib") 
+#pragma comment(lib, "dwrite.lib")
+#elif __linux__
+#include "linux/application.h"
+#include "linux/terminal_window.h"
 #else
 #error "Unsupported platform"
 #endif
@@ -30,6 +33,8 @@ using namespace tpp;
 
     For now creates single terminal window and one virtual terminal. 
  */
+#ifdef WIN32
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 
 	TerminalSettings ts;
@@ -66,3 +71,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	return EXIT_SUCCESS;
 }
+
+#elif __linux__
+
+int main(int argc, char* argv[]) {
+
+
+	return EXIT_SUCCESS;
+}
+
+#endif

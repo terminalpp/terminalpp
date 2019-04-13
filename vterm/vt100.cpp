@@ -250,8 +250,8 @@ namespace vterm {
 					} else {
 						--cursorPos_.col;
 					}
-					Cell& cell = defaultLayer_->at(cursorPos_.col, cursorPos_.row);
 					// TODO backspace behaves weirdly - it seems we do not need to actually delete the character at all, in fact the whole backspace character seems to make very little difference
+					//Cell& cell = defaultLayer_->at(cursorPos_.col, cursorPos_.row);
 					//cell.c = ' ';
 					pop();
 					break;
@@ -422,7 +422,8 @@ namespace vterm {
 				// while there is enough stuff left to be larger than a line, erase entire line
 				l = cursorPos_.row + 1;
 				while (first >= cols_ && l < rows_) {
-					fillRect(helpers::Rect(0, l, cols_, ++l), ' ');
+					fillRect(helpers::Rect(0, l, cols_, l + 1), ' ');
+					++l;
 					first -= cols_;
 				}
 				// if there is still something to erase, erase from the beginning

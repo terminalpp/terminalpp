@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt : CMake project for t++, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.5)
 
 project(tpp)
 
@@ -13,6 +13,9 @@ if (WIN32)
     add_compile_definitions(TPP_RENDERED=gdi)
     add_executable(tpp WIN32 ${SRC})
 else (WIN32)
+	add_definitions(
+			-std=c++11 -g -Wall
+		)
     add_executable(tpp ${SRC})
 endif (WIN32)
 

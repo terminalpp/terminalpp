@@ -38,8 +38,8 @@ namespace helpers {
 		 */
 		template<typename EVENT>
 		void trigger(EVENT & e) {
-			static_assert(std::is_same<EVENT::Payload::Sender, Object >::value, "Only events with sender being Object should be used");
-			EVENT::Payload p(this);
+			static_assert(std::is_same<typename EVENT::Payload::Sender, Object >::value, "Only events with sender being Object should be used");
+			typename EVENT::Payload p(this);
 			e.trigger(p);
 		}
 
@@ -49,8 +49,8 @@ namespace helpers {
 		 */
 		template<typename EVENT>
 		void trigger(EVENT & e, typename EVENT::Payload::Payload const & payload) {
-			static_assert(std::is_same<EVENT::Payload::Sender, Object >::value, "Only events with sender being Object should be used");
-			EVENT::Payload p(this, payload);
+			static_assert(std::is_same<typename EVENT::Payload::Sender, Object >::value, "Only events with sender being Object should be used");
+			typename EVENT::Payload p(this, payload);
 			e.trigger(p);
 		}
 	};

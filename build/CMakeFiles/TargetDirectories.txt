@@ -1,0 +1,8 @@
+/c/devel/terminalpp/build/CMakeFiles/edit_cache.dir
+/c/devel/terminalpp/build/CMakeFiles/rebuild_cache.dir
+/c/devel/terminalpp/build/vterm/CMakeFiles/edit_cache.dir
+/c/devel/terminalpp/build/vterm/CMakeFiles/rebuild_cache.dir
+/c/devel/terminalpp/build/vterm/CMakeFiles/libvterm.dir
+/c/devel/terminalpp/build/tpp/CMakeFiles/edit_cache.dir
+/c/devel/terminalpp/build/tpp/CMakeFiles/rebuild_cache.dir
+/c/devel/terminalpp/build/tpp/CMakeFiles/tpp.dir

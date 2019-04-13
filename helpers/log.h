@@ -1,5 +1,8 @@
 #pragma once
 
+//#define __STDC_WANT_LIB_EXT1__ 1
+//#include <ctime>
+
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -220,7 +223,11 @@ namespace helpers {
 				// TODO actually print the message
 				if (printTime_) {
 					tm t;
+#ifdef WIN32
 					localtime_s(&t, &m.time);
+#elif __linux__
+					localtime_r(&m.time, &t);
+#endif
 					(*s_) << std::put_time(&t, "%c") << " ";
 				}
 				if (printName_)

@@ -1,3 +1,5 @@
+#ifdef WIN32
+
 #include "application.h"
 
 #include "terminal_window.h"
@@ -330,3 +332,5 @@ namespace tpp {
 	}
 
 } // namespace tpp
+
+#endif
