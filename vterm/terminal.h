@@ -40,13 +40,19 @@ namespace vterm {
 		 */
 		Char::UTF8 c;
 
+		/** Determines if the cell is dirty, i.e. it should be redrawn. 
+		 */
+		bool dirty;
+
 		/** Default constructor for a cell created white space on a black background.
 		 */
 		Cell() :
 			fg(Color::White()),
 			bg(Color::Black()),
-			c(' ') {
+			c(' '),
+		    dirty(false) {
 		}
+
 	}; // vterm::Cell
 
 	/** Virtual Terminal Implementation. 

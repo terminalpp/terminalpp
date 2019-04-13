@@ -164,8 +164,8 @@ namespace tpp {
 			heightPx_(settings->defaultFontHeight * settings->defaultRows),
 			zoom_(settings->defaultZoom),
 			fullscreen_(settings->fullscreen),
-			cellWidthPx_(settings->defaultFontWidth),
-			cellHeightPx_(settings->defaultFontHeight) {
+			cellWidthPx_(settings->defaultFontWidth * settings->defaultZoom),
+			cellHeightPx_(settings->defaultFontHeight * settings->defaultZoom) {
 
 		}
 

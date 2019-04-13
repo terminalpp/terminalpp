@@ -12,7 +12,7 @@ namespace tpp {
 		BaseTerminalWindow{FillPlatformSettings(settings)},
 		bufferDC_(CreateCompatibleDC(nullptr)),
 		buffer_(nullptr),
-		updateRect_(0,0),
+		forceUpdate_(true),
 		wndPlacement_{sizeof(wndPlacement_)},
 		frameWidth_{0},
 		frameHeight_{0} {
@@ -52,7 +52,7 @@ namespace tpp {
 		// do not bother with repainting if shadow buffer is invalid, the WM_PAINT will redraw the whole buffer when the redraw is processed
 		if (buffer_ == nullptr)
 			return;
-		updateRect_ = helpers::Rect::Union(*e, updateRect_);
+		forceUpdate_ = true;
 		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 	}
 
@@ -95,8 +95,14 @@ namespace tpp {
 		if (terminal() == nullptr)
 			return;
 		vterm::Terminal::Layer l = terminal()->getDefaultLayer();
+		/* Determine if cursor is to be shown by checking if the cursor is in the visible range. If it is, then make sure the cursor's position is set to dirty. 
+		 */
+		helpers::Point cp = terminal()->cursorPos();
+		bool cursorInRange = cp.col < cols() && cp.row < rows();
+		if (cursorInRange)
+			l->at(cp).dirty = true;
 		// initialize the font & colors
-		vterm::Cell & c = l->at(updateRect_.left, updateRect_.top);
+		vterm::Cell & c = l->at(0,0);
 		vterm::Color currentFg = c.fg;
 		vterm::Color currentBg = c.bg;
 		vterm::Font currentFont = DropBlink(c.font);
@@ -104,45 +110,41 @@ namespace tpp {
 		SetBkColor(bufferDC_, RGB(currentBg.red, currentBg.green,currentBg.blue));
 		SetBkMode(bufferDC_, OPAQUE);
 		SelectObject(bufferDC_, Font::GetOrCreate(currentFont, settings_->defaultFontHeight, zoom_)->handle());
-		for (unsigned row = updateRect_.top; row < updateRect_.bottom; ++row) {
-			for (unsigned col = updateRect_.left; col < updateRect_.right; ++col) {
+		for (unsigned row = 0; row < rows(); ++row) {
+			for (unsigned col = 0; col < cols(); ++col) {
 				vterm::Cell & c = l->at(col, row);
-				if (currentFg != c.fg) {
-					currentFg = c.fg;
-					SetTextColor(bufferDC_, RGB(currentFg.red, currentFg.green, currentFg.blue));
+				if (forceUpdate_ || c.dirty) {
+					c.dirty = false; // clear the dirty flag
+					if (currentFg != c.fg) {
+						currentFg = c.fg;
+						SetTextColor(bufferDC_, RGB(currentFg.red, currentFg.green, currentFg.blue));
+					}
+					if (currentBg != c.bg) {
+						currentBg = c.bg;
+						SetBkColor(bufferDC_, RGB(currentBg.red, currentBg.green, currentBg.blue));
+					}
+					if (currentFont != DropBlink(c.font)) {
+						currentFont = DropBlink(c.font);
+						SelectObject(bufferDC_, Font::GetOrCreate(currentFont, settings_->defaultFontHeight, zoom_)->handle());
+					}
+					// ISSUE 4 - make sure we can print full Unicode, not just UCS2 - perhaps not possible with GDI alone
+					wchar_t wc = c.c.toWChar();
+					TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
 				}
-				if (currentBg != c.bg) {
-					currentBg = c.bg;
-					SetBkColor(bufferDC_, RGB(currentBg.red, currentBg.green, currentBg.blue));
-				}
-				if (currentFont != DropBlink(c.font)) {
-					currentFont = DropBlink(c.font);
-					SelectObject(bufferDC_, Font::GetOrCreate(currentFont, settings_->defaultFontHeight, zoom_)->handle());
-				}
-				// ISSUE 4 - make sure we can print full Unicode, not just UCS2 - perhaps not possible with GDI alone
-				wchar_t wc = c.c.toWChar();
-				TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
 			}
 		}
-		// now display the cursor
-		if (terminal()->cursorVisible()) {
-			helpers::Point cp = terminal()->cursorPos();
-			vterm::Cell& c = l->at(terminal()->cursorPos());
-			SetTextColor(bufferDC_, RGB(c.fg.red, c.fg.green, c.fg.blue));
-			SetBkColor(bufferDC_, RGB(c.bg.red, c.bg.green, c.bg.blue));
-			SelectObject(bufferDC_, Font::GetOrCreate(DropBlink(c.font), settings_->defaultFontHeight, zoom_)->handle());
-			wchar_t wc = c.c.toWChar();
+		/* Determine whether the cursor character itself should be drawn and draw it if so. 
+		 */
+		if (cursorInRange && terminal()->cursorVisible() && (blink_ || ! terminal()->cursorBlink())) {
+			wchar_t wc = terminal()->cursorCharacter().toWChar();
+			SetTextColor(bufferDC_, RGB(255, 255, 255));
+			SetBkMode(bufferDC_, TRANSPARENT);
+			// select default font
+			// TODO - how should this change when we have multiple font sizes
+			SelectObject(bufferDC_, Font::GetOrCreate(vterm::Font(), settings_->defaultFontHeight, zoom_)->handle());
 			TextOutW(bufferDC_, cp.col * cellWidthPx_, cp.row * cellHeightPx_, &wc, 1);
-			//
-			if (blink_ || !terminal()->cursorBlink()) {
-				wc = terminal()->cursorCharacter().toWChar();
-				SetTextColor(bufferDC_, RGB(255, 255, 255));
-				SetBkMode(bufferDC_, TRANSPARENT);
-				TextOutW(bufferDC_, cp.col * cellWidthPx_, cp.row * cellHeightPx_, &wc, 1);
-			}
-			// TODO set cursor font properly
 		}
-		updateRect_ = helpers::Rect(0,0);
+		forceUpdate_ = false;
 	}
 
 	TerminalSettings * TerminalWindow::FillPlatformSettings(TerminalSettings * ts) {
@@ -262,11 +264,11 @@ namespace tpp {
 				if (tw->buffer_ == nullptr) {
 					tw->buffer_ = CreateCompatibleBitmap(hdc, tw->widthPx_, tw->heightPx_);
 					SelectObject(tw->bufferDC_, tw->buffer_);
-					tw->updateRect_ = helpers::Rect(tw->cols(), tw->rows());
+					tw->forceUpdate_ = true;
 				}
-				// do the repaint 
-				if (!tw->updateRect_.empty())
-					tw->updateBuffer();
+				// check if we ned to repaint any cells
+				tw->updateBuffer();
+				// copy the shadow image
 				BitBlt(hdc, 0, 0, tw->widthPx_, tw->heightPx_, tw->bufferDC_, 0, 0, SRCCOPY);
 				EndPaint(hWnd, &ps);
 				break;
@@ -286,8 +288,14 @@ namespace tpp {
 				vterm::Key k = GetKey(wParam);
 				if (k == (vterm::Key::Enter | vterm::Key::Alt)) {
 					tw->setFullscreen(!tw->fullscreen());
-				} else if (k == vterm::Key::F5) {
+				}
+				else if (k == vterm::Key::F5) {
 					tw->redraw();
+				} else if (k == vterm::Key::F4) {
+					if (tw->zoom() == 1)
+						tw->setZoom(2);
+					else
+						tw->setZoom(1);
 				} else if (k != vterm::Key::None) {
 					tw->terminal()->keyDown(k);
 				}

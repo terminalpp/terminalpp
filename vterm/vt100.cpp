@@ -92,7 +92,7 @@ namespace vterm {
 		addKey(Key::F11, "\033[23~");
 		addKey(Key::F12, "\033[24~");
 
-		addKey(Key::Enter, "\n");
+		addKey(Key::Enter, "\r"); // carriage return, not LF
 		addKey(Key::Tab, "\t");
 		addKey(Key::Esc, "\033");
 		addKey(Key::Backspace, "\x7f");
@@ -250,16 +250,16 @@ namespace vterm {
 					} else {
 						--cursorPos_.col;
 					}
-					updateCursorPosition();
 					Cell& cell = defaultLayer_->at(cursorPos_.col, cursorPos_.row);
-					cell.c = ' ';
+					// TODO backspace behaves weirdly - it seems we do not need to actually delete the character at all, in fact the whole backspace character seems to make very little difference
+					//cell.c = ' ';
 					pop();
 					break;
 				}
 				/* default variant is to print the character received to current cell.
 				 */
 				default: {
-					// make sure that cursor is positioned within the terminal (previous advances may have placed it outside of the terminal area)
+					// make sure that the cursor is in visible part of the screen
 					updateCursorPosition();
 					// it could be we are dealing with unicode
 					Char::UTF8 c8;
@@ -276,8 +276,9 @@ namespace vterm {
 					cell.bg = bg_;
 					cell.font = font_;
 					cell.c = c8;
+					cell.dirty = true;
 					// move to next column
-					++cursorPos_.col;
+					setCursor(cursorPos_.col + 1, cursorPos_.row);
 				}
 				}
 			}
@@ -699,6 +700,10 @@ namespace vterm {
 
 	void VT100::setCursor(unsigned col, unsigned row) {
 		LOG(SEQ) << "setCursor " << col << ", " << row;
+		while (col > cols_) {
+			col -= cols_;
+			++row;
+		}
 		cursorPos_.col = col;
 		cursorPos_.row = row;
 	}
@@ -714,6 +719,7 @@ namespace vterm {
 				cell.bg = bg;
 				cell.font = font;
 				cell.c = c;
+				cell.dirty = true;
 			}
 		}
 	}

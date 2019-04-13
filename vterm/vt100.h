@@ -192,10 +192,7 @@ namespace vterm {
 		bool parseExtendedColor(Color& storeInto);
 
 		void updateCursorPosition() {
-			if (cursorPos_.col >= cols_) {
-				cursorPos_.col = 0;
-				++cursorPos_.row;
-			}
+			ASSERT(cursorPos_.col < cols_);
 			if (cursorPos_.row >= rows_) {
 				scrollDown(cursorPos_.row - rows_ + 1);
 				cursorPos_.row = rows_ - 1;

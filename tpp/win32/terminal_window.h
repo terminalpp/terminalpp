@@ -100,7 +100,10 @@ namespace tpp {
 		/** Contains the shadow buffer for the window. The bitmap itself and the memory only buffer device context is required. */
 		HBITMAP buffer_;
 		HDC bufferDC_;
-		helpers::Rect updateRect_;
+
+		/** If true, when the window is redrawn, all cells are forced to update. 
+		 */
+		bool forceUpdate_;
 
 		/** Placement of the window to which the window is restored after fullscreen toggle. 
 		 */
