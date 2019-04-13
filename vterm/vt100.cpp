@@ -66,7 +66,7 @@ namespace vterm {
 		// add ctrl + letters
 		for (unsigned k = 'A'; k <= 'Z'; ++k) {
 			std::string seq;
-			seq += static_cast<char>(k - 'A');
+			seq += static_cast<char>(k + 1 - 'A');
 			addKey(Key(k) + Key::Ctrl, seq.c_str());
 		}
 		addKey(Key::Up, "\033[A");
@@ -76,7 +76,7 @@ namespace vterm {
 		addKey(Key::Home, "\033[H"); // also \033[1~
 		addKey(Key::End, "\033[F"); // also \033[4~
 		addKey(Key::PageUp, "\033[5~");
-		addKey(Key::PageDown, "\33[6~");
+		addKey(Key::PageDown, "\033[6~");
 		addKey(Key::Insert, "\033[2~");
 		addKey(Key::Delete, "\033[3~");
 		addKey(Key::F1, "\033OP");
@@ -91,6 +91,11 @@ namespace vterm {
 		addKey(Key::F10, "\033[21~");
 		addKey(Key::F11, "\033[23~");
 		addKey(Key::F12, "\033[24~");
+
+		addKey(Key::Enter, "\n");
+		addKey(Key::Tab, "\t");
+		addKey(Key::Esc, "\033");
+		addKey(Key::Backspace, "\x7f");
 
 		addVTModifiers(Key::Up, "\033[1;", "A");
 		addVTModifiers(Key::Down, "\033[1;", "B");
@@ -172,7 +177,7 @@ namespace vterm {
 		std::string const* seq = keyMap_.getSequence(k);
 		if (seq != nullptr) {
 			write(seq->c_str(), seq->size());
-			LOG << "key sent";
+			LOG << "key sent" << (unsigned) seq->c_str()[0] << " - " << seq->size();
 		}
 		LOG << "Key pressed: " << k;
 	}

@@ -256,7 +256,8 @@ namespace tpp {
 				UNREACHABLE;
 				break;
 			case WM_CHAR:
-				tw->terminal()->charInput(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
+				if (wParam >= 0x20)
+				    tw->terminal()->charInput(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
 				break;
 			/* DEBUG - debugging events hooked to keypresses now: */
 			/* Processes special key events.*/
