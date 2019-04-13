@@ -558,6 +558,7 @@ namespace vterm {
 			case 25:
 				cursorVisible_ = value;
 				LOG(SEQ) << "cursor visible: " << value;
+				return true;
 			/* Mouse tracking movement & buttons.
 
 			   https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
