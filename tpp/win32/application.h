@@ -23,7 +23,7 @@ namespace tpp {
 
 		
 		HINSTANCE hInstance_;
-	};
+	}; // tpp::Application [win32]
 
 } // namespace tpp
 #endif

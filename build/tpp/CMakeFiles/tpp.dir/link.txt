@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/tpp.dir/main.cpp.o CMakeFiles/tpp.dir/win32/application.cpp.o CMakeFiles/tpp.dir/win32/terminal_window.cpp.o  -o tpp ../vterm/liblibvterm.a 

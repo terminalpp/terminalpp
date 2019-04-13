@@ -13,7 +13,10 @@ if (WIN32)
     add_compile_definitions(TPP_RENDERED=gdi)
     add_executable(tpp WIN32 ${SRC})
 else (WIN32)
-	add_definitions(
+       find_package(X11 REQUIRED)
+	   include_directories(${X11_INCLUDE_DIR})
+       link_libraries(${X11_LIBRARIES})  
+       add_definitions(
 			-std=c++11 -g -Wall
 		)
     add_executable(tpp ${SRC})
