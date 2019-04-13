@@ -177,6 +177,18 @@ namespace vterm {
 			return cursorPos_;
 		}
 
+		Char::UTF8 cursorCharacter() const {
+			return cursorCharacter_;
+		}
+
+		bool cursorVisible() const {
+			return cursorVisible_;
+		}
+
+		bool cursorBlink() const {
+			return cursorBlink_;
+		}
+
 		// methods --------------------------------------------------------------------------------
 
 		virtual void keyDown(Key k) = 0;
@@ -249,6 +261,12 @@ namespace vterm {
 		 */
 		helpers::Point cursorPos_;
 
+		Char::UTF8 cursorCharacter_;
+
+		bool cursorVisible_;
+
+		bool cursorBlink_;
+
 		/** The default layer.
 		 */
 		LayerImpl * defaultLayer_;
@@ -275,9 +293,17 @@ namespace vterm {
 			return cells_[row * cols() + col];
 		}
 
+		Cell & at(helpers::Point const& p) {
+			return at(p.col, p.row);
+		}
+
 		Cell const & at(unsigned col, unsigned row) const {
 			ASSERT(col < cols() && row < rows());
 			return cells_[row * cols() + col];
+		}
+
+		Cell const & at(helpers::Point const& p) const {
+			return at(p.col, p.row);
 		}
 
 	private:

@@ -30,6 +30,7 @@ namespace tpp {
 			app->hInstance_, // module handle
 			this // lParam for WM_CREATE message
 		);
+		SetTimer(hWnd_, TIMERID_BLINK, 500, nullptr);
 		ASSERT(hWnd_ != 0) << "Cannot create window : " << GetLastError();
 		Windows_.insert(std::make_pair(hWnd_, this));
 	}
@@ -101,6 +102,7 @@ namespace tpp {
 		vterm::Font currentFont = DropBlink(c.font);
 		SetTextColor(bufferDC_, RGB(currentFg.red, currentFg.green, currentFg.blue));
 		SetBkColor(bufferDC_, RGB(currentBg.red, currentBg.green,currentBg.blue));
+		SetBkMode(bufferDC_, OPAQUE);
 		SelectObject(bufferDC_, Font::GetOrCreate(currentFont, settings_->defaultFontHeight, zoom_)->handle());
 		for (unsigned row = updateRect_.top; row < updateRect_.bottom; ++row) {
 			for (unsigned col = updateRect_.left; col < updateRect_.right; ++col) {
@@ -122,11 +124,24 @@ namespace tpp {
 				TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
 			}
 		}
-		wchar_t x = '_';
-		SetTextColor(bufferDC_, RGB(255, 255, 255));
-		SetBkColor(bufferDC_, TRANSPARENT);
-		helpers::Point cp = terminal()->cursorPos();
-		TextOutW(bufferDC_, cp.col * cellWidthPx_, cp.row * cellHeightPx_, &x, 1);
+		// now display the cursor
+		if (terminal()->cursorVisible()) {
+			helpers::Point cp = terminal()->cursorPos();
+			vterm::Cell& c = l->at(terminal()->cursorPos());
+			SetTextColor(bufferDC_, RGB(c.fg.red, c.fg.green, c.fg.blue));
+			SetBkColor(bufferDC_, RGB(c.bg.red, c.bg.green, c.bg.blue));
+			SelectObject(bufferDC_, Font::GetOrCreate(DropBlink(c.font), settings_->defaultFontHeight, zoom_)->handle());
+			wchar_t wc = c.c.toWChar();
+			TextOutW(bufferDC_, cp.col * cellWidthPx_, cp.row * cellHeightPx_, &wc, 1);
+			//
+			if (blink_ || !terminal()->cursorBlink()) {
+				wc = terminal()->cursorCharacter().toWChar();
+				SetTextColor(bufferDC_, RGB(255, 255, 255));
+				SetBkMode(bufferDC_, TRANSPARENT);
+				TextOutW(bufferDC_, cp.col * cellWidthPx_, cp.row * cellHeightPx_, &wc, 1);
+			}
+			// TODO set cursor font properly
+		}
 		updateRect_ = helpers::Rect(0,0);
 	}
 
@@ -281,6 +296,14 @@ namespace tpp {
 			case WM_KEYUP: {
 				vterm::Key k = GetKey(wParam);
 				tw->terminal()->keyUp(k);
+				break;
+			}
+			case WM_TIMER: {
+				if (wParam == TIMERID_BLINK) {
+					tw->blink_ = !tw->blink_;
+					tw->updateBuffer();
+					InvalidateRect(hWnd, nullptr, /* erase */ false);
+				}
 				break;
 			}
 			/* User specified messages for various events that we want to be handled in the app thread.

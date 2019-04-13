@@ -106,12 +106,17 @@ namespace tpp {
 		 */
 		WINDOWPLACEMENT wndPlacement_;
 
+		bool blink_;
+
 		/** Width and height of the window frame so that the width and height of the window can be adjusted accordingly. 
 		 */
 		unsigned frameWidth_;
 		unsigned frameHeight_;
 
 		static std::unordered_map<HWND, TerminalWindow *> Windows_;
+
+		static constexpr UINT_PTR TIMERID_BLINK = 34;
+
 
 	};
 

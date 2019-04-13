@@ -242,11 +242,20 @@ namespace vterm {
 					pop();
 					cursorPos_.col = 0;
 					break;
-				case Char::BACKSPACE:
-					LOG(UNKNOWN_SEQ) << "backspace";
+				case Char::BACKSPACE: {
+					if (cursorPos_.col == 0) {
+						if (cursorPos_.row > 0)
+							--cursorPos_.row;
+						cursorPos_.col = cols_ - 1;
+					} else {
+						--cursorPos_.col;
+					}
+					updateCursorPosition();
+					Cell& cell = defaultLayer_->at(cursorPos_.col, cursorPos_.row);
+					cell.c = ' ';
 					pop();
-					// TODO
 					break;
+				}
 				/* default variant is to print the character received to current cell.
 				 */
 				default: {
@@ -542,10 +551,13 @@ namespace vterm {
 				return true;
 			// cursor blinking
 		    case 12:
+				cursorBlink_ = value;
+				LOG(SEQ) << "cursor blinking: " << value;
+				return true;
 			// cursor show/hide
 			case 25:
-				// TODO needs to be actually implemented
-				return true;
+				cursorVisible_ = value;
+				LOG(SEQ) << "cursor visible: " << value;
 			/* Mouse tracking movement & buttons.
 
 			   https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash

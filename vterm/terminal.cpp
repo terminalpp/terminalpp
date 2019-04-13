@@ -9,6 +9,9 @@ namespace vterm {
 		cols_(cols),
 		rows_(rows),
 		cursorPos_(0,0),
+		cursorCharacter_(0x2581),
+		cursorVisible_(true),
+		cursorBlink_(true),
 		defaultLayer_(new LayerImpl(this)) {
 	}
 

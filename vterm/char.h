@@ -67,6 +67,10 @@ namespace vterm {
 			fillFromCodepoint(codepoint);
 		}
 
+		Representation(int codepoint) { // so that ambiguity from int literals is resolved
+			fillFromCodepoint(codepoint);
+		}
+
 		/** Creates the UTF8 representation from given UCS2 16bit character. 
 		 */
 		Representation(wchar_t ucs2) {
