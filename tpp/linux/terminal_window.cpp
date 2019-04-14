@@ -14,7 +14,7 @@ namespace tpp {
 	    app_(app) {
 		unsigned long black = BlackPixel(app->display_, app->screen_);	/* get color black */
 		unsigned long white = WhitePixel(app->display_, app->screen_);  /* get color white */
-		window_ = XCreateSimpleWindow(app->display_, DefaultRootWindow(app->display_), 0, 0, 200, 300, 5, white, black);
+		window_ = XCreateSimpleWindow(app->display_, RootWindow(app->display_, app->screen_), 0, 0, 200, 300, 5, white, black);
 
 		// from http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
 
