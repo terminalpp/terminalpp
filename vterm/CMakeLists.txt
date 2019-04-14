@@ -7,11 +7,15 @@ project(libvterm)
 
 file(GLOB_RECURSE SRC "*.cpp" "*.h")
 
-if (UNIX)
+if(WIN32)
+    add_definitions()
+elseif(UNIX)
 	add_definitions(
 			-std=c++11 -g -Wall
 		)
-endif (UNIX)
+else()
+    message(FATAL_ERROR "Only Windows and Linux are supported for now")
+endif()
 
 
 add_library(libvterm ${SRC})

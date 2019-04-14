@@ -161,7 +161,7 @@ namespace tpp {
 	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
 	vterm::Key TerminalWindow::GetKey(WPARAM vk) {
 		if (!vterm::Key::IsValidCode(vk))
-			return vterm::Key(vterm::Key::None);
+			return vterm::Key(vterm::Key::Invalid);
 		// MSB == pressed, LSB state since last time
 		unsigned shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? vterm::Key::Shift : 0;
 		unsigned ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) ? vterm::Key::Ctrl : 0;
@@ -298,7 +298,7 @@ namespace tpp {
 						tw->setZoom(2);
 					else
 						tw->setZoom(1);
-				} else if (k != vterm::Key::None) {
+				} else if (k != vterm::Key::Invalid) {
 					tw->terminal()->keyDown(k);
 				}
 				break;

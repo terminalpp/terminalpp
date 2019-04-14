@@ -22,8 +22,8 @@ namespace vterm {
 		if (k | Key::Meta)
 			s << "M-";
 		switch (k.code()) {
-		case Key::None:
-			s << "NONE";
+		case Key::Invalid:
+			s << "Invalid";
 			break;
 #define KEY(NAME, CODE) case CODE: s << #NAME; break;
 #include "keys.inc.h"

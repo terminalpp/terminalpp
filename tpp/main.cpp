@@ -76,6 +76,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 int main(int argc, char* argv[]) {
 
+	TerminalSettings ts;
+	ts.defaultCols = 80;
+	ts.defaultRows = 25;
+	ts.defaultFontHeight = 18;
+	ts.defaultFontWidth = 0;
+	ts.defaultZoom = 1;
+
+
+	Application* app = new Application();
+	TerminalWindow* tw = new TerminalWindow(app, &ts);
+	tw->show();
+
+	app->mainLoop();
 
 	return EXIT_SUCCESS;
 }

@@ -71,7 +71,8 @@ namespace vterm {
 		/** Triggers repainting of the entire terminal contents. 
 		 */
 		void repaintAll() {
-			repaint(Terminal::RepaintEvent(nullptr, helpers::Rect{ 0,0,cols_,rows_ }));
+			Terminal::RepaintEvent re(nullptr, helpers::Rect{ 0,0,cols_,rows_ });
+			repaint(re);
 		}
 
 		/** Resizes the terminal to given size.

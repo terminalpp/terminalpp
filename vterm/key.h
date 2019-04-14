@@ -13,7 +13,6 @@ namespace vterm {
 	 */
 	class Key {
 	public:
-		static constexpr unsigned None = 0;
 
 #define KEY(NAME, CODE) static constexpr unsigned NAME = CODE;
 #include "keys.inc.h"
@@ -25,10 +24,13 @@ namespace vterm {
 		static constexpr unsigned Alt = 1 << 18;
 		static constexpr unsigned Meta = 1 << 19;
 
+		static constexpr unsigned Invalid = 0;
+
+
 		static bool IsValidCode(unsigned c);
 
 		Key() :
-			raw_(None) {
+			raw_(Invalid) {
 		}
 
 		Key(unsigned code, unsigned modifiers = 0) :
