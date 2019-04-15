@@ -1,5 +1,6 @@
 #ifdef __linux__
 
+#include "helpers/helpers.h"
 #include "helpers/log.h"
 
 #include "application.h"
@@ -36,7 +37,11 @@ namespace tpp {
 		XSelectInput(app->display_, window_, ExposureMask | ButtonPressMask | KeyPressMask);
 
 
-		XftFont* font;
+
+
+
+
+#ifdef HAHA
 
 		/* create the Graphics Context */
 		gc_ = XCreateGC(app->display_, window_, 0, 0);
@@ -47,9 +52,38 @@ namespace tpp {
 		XSetBackground(app->display_, gc_, white);
 		XSetForeground(app->display_, gc_, black);
 
+#endif
+
 		/* clear the window and bring it on top of the other windows */
 		XClearWindow(app->display_, window_);
 		XMapRaised(app_->display_, window_);
+
+		XftFont* font = XftFontOpenName(app->display_, app->screen_, "Iosevka Term:pixelsize=16");
+		XftFont* fontb = XftFontOpenName(app->display_, app->screen_, "Iosevka Term:pixelsize=16:bold");
+
+		ASSERT(font != nullptr);
+
+		Visual * visual = DefaultVisual(app->display_, app->screen_);
+		Colormap colorMap = DefaultColormap(app->display_, app->screen_);
+
+		XftDraw * draw = XftDrawCreate(app->display_, window_, visual, colorMap);
+
+		ASSERT(draw != nullptr);
+
+		XRenderColor c;
+		c.red = 65535;
+		c.green = 0;
+		c.blue = 0;
+		c.alpha = 65535;
+		XftColor xftc;
+		XftColorAllocValue(app->display_, visual, colorMap, &c, &xftc);
+
+
+		XftDrawString8(draw, &xftc, font, 16, 16, (XftChar8*)"Hello World!", 12);
+		XftDrawString8(draw, &xftc, fontb, 16, 32, (XftChar8*)"Hello World!", 12);
+		XftDrawString8(draw, &xftc, fontb, 290, 290, (XftChar8*)"Hello World!", 1);
+
+		//XFlush(app->display_);
 		LOG << "done";
 
 	}
