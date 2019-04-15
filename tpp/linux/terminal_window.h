@@ -1,6 +1,12 @@
 #pragma once
 #ifdef __linux__
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xos.h>
+#include <X11/Xft/Xft.h>
+
+
 #include "../base_terminal_window.h"
 
 namespace tpp {

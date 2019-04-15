@@ -8,6 +8,11 @@
 
 namespace tpp {
 
+	// http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
+	// https://keithp.com/~keithp/talks/xtc2001/paper/
+    // https://en.wikibooks.org/wiki/Guide_to_X11/Fonts
+	// https://keithp.com/~keithp/render/Xft.tutorial
+
 
 	TerminalWindow::TerminalWindow(Application* app, TerminalSettings* settings):
 		BaseTerminalWindow(settings),
@@ -29,6 +34,9 @@ namespace tpp {
 		   the input.  see the appropriate section for details...
 		*/
 		XSelectInput(app->display_, window_, ExposureMask | ButtonPressMask | KeyPressMask);
+
+
+		XftFont* font;
 
 		/* create the Graphics Context */
 		gc_ = XCreateGC(app->display_, window_, 0, 0);

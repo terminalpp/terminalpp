@@ -3,5 +3,5 @@
 # https://en.wikibooks.org/wiki/Guide_to_X11/Fonts
 
 mkdir -p ~/.fonts
-cp fonts/* ~/.fonts/
+cp tpp/fonts/* ~/.fonts/
 fc-cache -v
