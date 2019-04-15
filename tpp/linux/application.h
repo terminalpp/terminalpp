@@ -4,6 +4,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
+#include <X11/Xft/Xft.h>
 
 #include "../base_application.h"
 
@@ -19,6 +20,7 @@ namespace tpp {
 	private:
 		friend class TerminalWindow;
 
+		/** X11 display. */
 		Display* display_;
 		int screen_;
 

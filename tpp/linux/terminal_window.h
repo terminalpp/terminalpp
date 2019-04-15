@@ -41,9 +41,11 @@ namespace tpp {
 
 		void doTitleChange(vterm::VT100::TitleEvent& e) override;
 
-		Application * app_;
 		Window window_;
-		GC gc_;
+		Display* display_;
+		int screen_;
+		Visual* visual_;
+		Colormap colorMap_;
 
 	}; // TerminalWinfdow [linux]
 
