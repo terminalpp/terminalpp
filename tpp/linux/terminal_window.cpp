@@ -14,7 +14,7 @@ namespace tpp {
 	    app_(app) {
 		unsigned long black = BlackPixel(app->display_, app->screen_);	/* get color black */
 		unsigned long white = WhitePixel(app->display_, app->screen_);  /* get color white */
-		window_ = XCreateSimpleWindow(app->display_, RootWindow(app->display_, app->screen_), 0, 0, 200, 300, 5, white, black);
+		window_ = XCreateSimpleWindow(app->display_, RootWindow(app->display_, app->screen_), 0, 0, 300, 300, 5, white, black);
 
 		// from http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
 
@@ -23,7 +23,7 @@ namespace tpp {
 			   at the top of the window and the name of the minimized window
 			   respectively.
 			*/
-		XSetStandardProperties(app->display_, window_, "My Window", "HI!", None, NULL, 0, NULL);
+		XSetStandardProperties(app->display_, window_, title_.c_str(), nullptr, None, nullptr, 0, nullptr);
 
 		/* this routine determines which types of input are allowed in
 		   the input.  see the appropriate section for details...
