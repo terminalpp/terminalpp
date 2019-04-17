@@ -16,7 +16,7 @@ namespace tpp {
 	class Application;
 
 	template<>
-	inline Font<HFONT> * Font<HFONT>::Create(vterm::Font font, unsigned height) {
+	inline FontSpec<HFONT> * FontSpec<HFONT>::Create(vterm::Font font, unsigned height) {
 		HFONT handle = CreateFont(
 			height * font.size(),
 			0, // default escapment
@@ -40,12 +40,12 @@ namespace tpp {
 		DeleteObject(dc);
 		// TODO this feels wrong, I should be able to determine this precisely w/o + 1 magic
 		unsigned width = abc.abcA + abc.abcB + abc.abcC;
-		return new Font<HFONT>(font, width, height, handle);
+		return new FontSpec<HFONT>(font, width, height, handle);
 	}
 
 	class TerminalWindow : public BaseTerminalWindow {
 	public:
-		typedef Font<HFONT> Font;
+		typedef FontSpec<HFONT> Font;
 
 		TerminalWindow(Application * app, TerminalSettings * settings);
 
@@ -86,8 +86,6 @@ namespace tpp {
 		friend class Application;
 
 		void updateBuffer();
-
-		static TerminalSettings * FillPlatformSettings(TerminalSettings * ts);
 
 		/** Maps win32 virtual keys to their vterm equivalents. 
 		 */

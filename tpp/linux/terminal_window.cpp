@@ -15,13 +15,16 @@ namespace tpp {
 	// https://keithp.com/~keithp/render/Xft.tutorial
 
 
-	TerminalWindow::TerminalWindow(Application* app, TerminalSettings* settings):
+	TerminalWindow::TerminalWindow(Application* app, TerminalSettings* settings) :
 		BaseTerminalWindow(settings),
-	    display_(app->display_),
-	    screen_(app->screen_) {
+		display_(Application::XDisplay()),
+		screen_(Application::XScreen()),
+	    visual_(DefaultVisual(display_, screen_)),
+	    colorMap_(DefaultColormap(display_, screen_)) {
 		unsigned long black = BlackPixel(display_, screen_);	/* get color black */
 		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
-		window_ = XCreateSimpleWindow(display_, RootWindow(display_, screen_), 0, 0, 300, 300, 5, white, black);
+		LOG << widthPx_ << " x " << heightPx_;
+		window_ = XCreateSimpleWindow(display_, RootWindow(display_, screen_), 0, 0, widthPx_, heightPx_, 5, white, black);
 
 		// from http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
 
@@ -36,62 +39,14 @@ namespace tpp {
 		   the input.  see the appropriate section for details...
 		*/
 		XSelectInput(display_, window_, ExposureMask | ButtonPressMask | KeyPressMask);
-
-
-
-
-
-
-#ifdef HAHA
-
-		/* create the Graphics Context */
-		gc_ = XCreateGC(app->display_, window_, 0, 0);
-
-		/* here is another routine to set the foreground and background
-		   colors _currently_ in use in the window.
-		*/
-		XSetBackground(app->display_, gc_, white);
-		XSetForeground(app->display_, gc_, black);
-
-#endif
-
-		/* clear the window and bring it on top of the other windows */
-		XClearWindow(display_, window_);
-		XMapRaised(display_, window_);
-
-		XftFont* font = XftFontOpenName(display_, screen_, "Iosevka Term:pixelsize=16");
-		XftFont* fontb = XftFontOpenName(display_, screen_, "Iosevka Term:pixelsize=16:bold");
-
-		ASSERT(font != nullptr);
-
-		Visual * visual = DefaultVisual(display_, screen_);
-		Colormap colorMap = DefaultColormap(display_, screen_);
-
-		XftDraw * draw = XftDrawCreate(display_, window_, visual, colorMap);
-
-		ASSERT(draw != nullptr);
-
-		XRenderColor c;
-		c.red = 65535;
-		c.green = 0;
-		c.blue = 0;
-		c.alpha = 65535;
-		XftColor xftc;
-		xftc.color = c;
-		//XftColorAllocValue(app->display_, visual, colorMap, &c, &xftc);
-
-
-		XftDrawString8(draw, &xftc, font, 16, 16, (XftChar8*)"Hello World!", 12);
-		XftDrawString8(draw, &xftc, fontb, 16, 32, (XftChar8*)"Hello World!", 12);
-		XftDrawString8(draw, &xftc, fontb, 290, 290, (XftChar8*)"Hello World!", 1);
-
-		//XFlush(app->display_);
-		LOG << "done";
-
 	}
 
 	void TerminalWindow::show() {
 		XMapRaised(display_, window_);
+	}
+
+	void TerminalWindow::redraw() {
+		updateBuffer();
 	}
 
 	TerminalWindow::~TerminalWindow() {
@@ -104,7 +59,7 @@ namespace tpp {
 	}
 
 	void TerminalWindow::repaint(vterm::Terminal::RepaintEvent& e) {
-
+		updateBuffer();
 	}
 
 	void TerminalWindow::doSetFullscreen(bool value) {
@@ -115,7 +70,67 @@ namespace tpp {
 
 	}
 
+	void TerminalWindow::updateBuffer() {
+		bool forceUpdate_ = true;
+		if (terminal() == nullptr)
+			return;
+		vterm::Terminal::Layer l = terminal()->getDefaultLayer();
+		/* Determine if cursor is to be shown by checking if the cursor is in the visible range. If it is, then make sure the cursor's position is set to dirty.
+		 */
+		helpers::Point cp = terminal()->cursorPos();
+		bool cursorInRange = cp.col < cols() && cp.row < rows();
+		if (cursorInRange)
+			l->at(cp).dirty = true;
+		// initialize the font & colors
+		vterm::Cell & c = l->at(0, 0);
+		vterm::Color currentFg = c.fg;
+		vterm::Color currentBg = c.bg;
+		XftColor fg = toXftColor(currentFg);
+		XftColor bg = toXftColor(currentBg);
+		Font* font = Font::GetOrCreate(DropBlink(c.font), settings_->defaultFontHeight, zoom_);
+		XftDraw* draw = XftDrawCreate(display_, window_, visual_, colorMap_);
+		ASSERT(draw != nullptr);
+		for (unsigned row = 0; row < rows(); ++row) {
+			for (unsigned col = 0; col < cols(); ++col) {
+				vterm::Cell& c = l->at(col, row);
+				if (forceUpdate_ || c.dirty) {
+					c.dirty = false; // clear the dirty flag
+					if (currentFg != c.fg) {
+						currentFg = c.fg;
+					    fg = toXftColor(currentFg);
+					}
+					if (currentBg != c.bg) {
+						currentBg = c.bg;
+						bg = toXftColor(currentBg);
+					}
+					if (font->font() != DropBlink(c.font)) {
+						font = Font::GetOrCreate(DropBlink(c.font), settings_->defaultFontHeight, zoom_);
+					}
+					if (col % 2 == 0)
+						XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font->handle()->descent, (XftChar8*)"A", 1);
+					else 
+						XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font->handle()->descent, (XftChar8*)"p", 1);
+					//XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_, (XftChar8*)(c.c.rawBytes()), 1);
 
+					//TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
+				}
+			}
+		}
+		/* Determine whether the cursor character itself should be drawn and draw it if so.
+		 * /
+		if (cursorInRange && terminal()->cursorVisible() && (blink_ || !terminal()->cursorBlink())) {
+			wchar_t wc = terminal()->cursorCharacter().toWChar();
+			SetTextColor(bufferDC_, RGB(255, 255, 255));
+			SetBkMode(bufferDC_, TRANSPARENT);
+			// select default font
+			// TODO - how should this change when we have multiple font sizes
+			SelectObject(bufferDC_, Font::GetOrCreate(vterm::Font(), settings_->defaultFontHeight, zoom_)->handle());
+			TextOutW(bufferDC_, cp.col * cellWidthPx_, cp.row * cellHeightPx_, &wc, 1);
+		}
+			*/
+			//forceUpdate_ = false;
+		LOG << "redraw done";
+	}
 
 } // namespace tpp
 

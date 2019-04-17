@@ -10,6 +10,8 @@
 
 namespace tpp {
 
+	class TerminalWindow;
+
 	class Application : public BaseApplication {
 	public:
 		Application();
@@ -17,12 +19,21 @@ namespace tpp {
 
 		void mainLoop() override;
 
+		// Can't be named display because there is already a class named display in X11
+		static Display* XDisplay() {
+			return XDisplay_;
+		}
+
+		static int XScreen() {
+			return XScreen_;
+		}
+
 	private:
 		friend class TerminalWindow;
 
 		/** X11 display. */
-		Display* display_;
-		int screen_;
+		static Display* XDisplay_;
+		static int XScreen_;
 
 	}; // tpp::Application [linux]
 

@@ -11,6 +11,7 @@
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
 #elif __linux__
+#include "linux/pty_terminal.h"
 #include "linux/application.h"
 #include "linux/terminal_window.h"
 #else
@@ -29,6 +30,15 @@ using namespace tpp;
 
 // https://github.com/Microsoft/node-pty/blob/master/src/win/conpty.cc
 
+
+void FixMissingSettings(TerminalSettings & ts) {
+	vterm::Font defaultFont;
+	TerminalWindow::Font* f = TerminalWindow::Font::GetOrCreate(defaultFont, ts.defaultFontHeight, 1);
+	ts.defaultFontWidth = f->widthPx();
+}
+
+
+
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
@@ -37,6 +47,8 @@ using namespace tpp;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 
+	Application* app = new Application(hInstance);
+
 	TerminalSettings ts;
 	ts.defaultCols = 80;
 	ts.defaultRows = 25;
@@ -44,7 +56,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ts.defaultFontWidth = 0;
 	ts.defaultZoom = 1;
 
-	Application * app = new Application(hInstance);
+	FixMissingSettings(ts);
+
 	std::cout << "OH HAI, CAN I HAZ CONSOLE?" << std::endl;
 
 
@@ -76,6 +89,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 int main(int argc, char* argv[]) {
 
+	Application* app = new Application();
+
 	TerminalSettings ts;
 	ts.defaultCols = 80;
 	ts.defaultRows = 25;
@@ -83,10 +98,16 @@ int main(int argc, char* argv[]) {
 	ts.defaultFontWidth = 0;
 	ts.defaultZoom = 1;
 
+	FixMissingSettings(ts);
 
-	Application* app = new Application();
+
 	TerminalWindow* tw = new TerminalWindow(app, &ts);
 	tw->show();
+
+	Terminal* t = new Terminal("wsl -e bash", 80, 25, vterm::Palette::Colors16, 15, 0);
+
+	tw->attachTerminal(t);
+
 
 	app->mainLoop();
 

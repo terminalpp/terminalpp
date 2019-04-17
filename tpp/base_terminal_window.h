@@ -10,12 +10,12 @@ namespace tpp {
 	/** Stores and retrieves font objects so that they do not have to be created each time they are needed. 
 	 */
 	template<typename T>
-	class Font {
+	class FontSpec {
 	public:
 
 		/** Return a font for given terminal font description and zoom. 
 		 */
-		static Font * GetOrCreate(vterm::Font font, unsigned fontHeight, double zoom) {
+		static FontSpec * GetOrCreate(vterm::Font font, unsigned fontHeight, double zoom) {
 			// disable blinking as it is not really important for font selection
 			font.setBlink(false);
 			unsigned height = static_cast<unsigned>(std::round(zoom * fontHeight));
@@ -24,6 +24,10 @@ namespace tpp {
 			if (i == Fonts_.end())
 				i = Fonts_.insert(std::make_pair(id, Create(font, height))).first;
 			return i->second;
+		}
+
+		vterm::Font font() const {
+			return font_;
 		}
 
 		T const & handle() const {
@@ -40,7 +44,7 @@ namespace tpp {
 
 	private:
 
-		Font(vterm::Font font, unsigned width, unsigned height, T const & handle) :
+		FontSpec(vterm::Font font, unsigned width, unsigned height, T const & handle) :
 			font_(font),
 			widthPx_(width),
 			heightPx_(height),
@@ -54,14 +58,14 @@ namespace tpp {
 
 		/** This must be implemented in platform specific code. 
 		 */
-		static Font * Create(vterm::Font font, unsigned height);
+		static FontSpec * Create(vterm::Font font, unsigned height);
 
-		static std::unordered_map<unsigned, Font *> Fonts_;
+		static std::unordered_map<unsigned, FontSpec *> Fonts_;
 	};
 
 
 	template<typename T>
-	std::unordered_map<unsigned, Font<T> *> Font<T>::Fonts_;
+	std::unordered_map<unsigned, FontSpec<T> *> FontSpec<T>::Fonts_;
 
 
 	/** Description of settings relevant for terminal windows. 

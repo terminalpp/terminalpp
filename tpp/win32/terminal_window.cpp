@@ -11,7 +11,7 @@ namespace tpp {
 	std::unordered_map<HWND, TerminalWindow *> TerminalWindow::Windows_;
 
 	TerminalWindow::TerminalWindow(Application * app, TerminalSettings * settings) :
-		BaseTerminalWindow{FillPlatformSettings(settings)},
+		BaseTerminalWindow(settings),
 		bufferDC_(CreateCompatibleDC(nullptr)),
 		buffer_(nullptr),
 		forceUpdate_(true),
@@ -147,15 +147,6 @@ namespace tpp {
 			TextOutW(bufferDC_, cp.col * cellWidthPx_, cp.row * cellHeightPx_, &wc, 1);
 		}
 		forceUpdate_ = false;
-	}
-
-	TerminalSettings * TerminalWindow::FillPlatformSettings(TerminalSettings * ts) {
-		vterm::Font defaultFont;
-		Font * f = Font::GetOrCreate(defaultFont, ts->defaultFontHeight, 1);
-		defaultFont.setBold(true);
-		Font * bf = Font::GetOrCreate(defaultFont, ts->defaultFontHeight, 1);
-		ts->defaultFontWidth = std::max(f->widthPx(), bf->widthPx());
-		return ts;
 	}
 
 	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
