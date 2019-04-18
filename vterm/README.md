@@ -4,21 +4,6 @@ The virtual terminal (`vterm`) is a class which describes the input and output i
 
 !! Single UI thread is assumed, or at least single ui thread per renderer-terminal-process etc chain. If not many things will break
 
-
-# Platform Support
-
-## Windows
-
-## WSL
-
-Make sure that X server, such as `vcxsrv` is running and add the following to `.bashrc` or so:
-
-    export DISPLAY=localhost:0.0
-
-> Using this allows also X11 tunelling when using `ssh`. 
-
-## Linux
-
 # Class Description
 
 ## `Terminal`

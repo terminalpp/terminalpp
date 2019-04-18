@@ -5,14 +5,21 @@
 > This looks like a good font: http://typeof.net/Iosevka/ - it is also part of nerdfonts, which is the same font, but augmented with many extra symbols. Iosevka is by default not truly monospace between regular and bold variants, but both can be downloaded and installed at the same time, which fixes the issue.
 
 
-# Installation
+# Platform Support
 
-## Windows 10
+## Windows
 
 ## Linux
 
     sudo apt install libx11-dev libxft-dev
 
+## WSL
+
+First follow the linux rules above, then make sure that X server, such as `vcxsrv` is running and add the following to `.bashrc` or so:
+
+    export DISPLAY=localhost:0.0
+
+> Using this allows also X11 tunelling when using `ssh`. 
 
 ## Links to study:
 
