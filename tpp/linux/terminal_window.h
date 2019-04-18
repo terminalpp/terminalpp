@@ -26,6 +26,7 @@ namespace tpp {
 
 		XGlyphInfo gi;
 		XftFont* handle = XftFontOpenName(Application::XDisplay(), Application::XScreen(), fname.c_str());
+        ASSERT(handle != nullptr);
 		XftTextExtentsUtf8(Application::XDisplay(), handle, (FcChar8*)"m", 1, &gi);
 		LOG << handle->ascent;
 		LOG << handle->descent;
@@ -71,14 +72,20 @@ namespace tpp {
 
 	private:
 
+        friend class Application;
+
 
 		void updateBuffer();
+
+        static void EventHandler(XEvent & e);
 
 		Window window_;
 		Display* display_;
 		int screen_;
 		Visual* visual_;
 		Colormap colorMap_;
+
+		static std::unordered_map<Window, TerminalWindow *> Windows_;
 
 	}; // TerminalWinfdow [linux]
 

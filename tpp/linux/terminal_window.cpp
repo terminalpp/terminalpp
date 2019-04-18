@@ -9,6 +9,9 @@
 
 namespace tpp {
 
+    std::unordered_map<Window, TerminalWindow *> TerminalWindow::Windows_;
+
+
 	// http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
 	// https://keithp.com/~keithp/talks/xtc2001/paper/
     // https://en.wikibooks.org/wiki/Guide_to_X11/Fonts
@@ -24,7 +27,7 @@ namespace tpp {
 		unsigned long black = BlackPixel(display_, screen_);	/* get color black */
 		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
 		LOG << widthPx_ << " x " << heightPx_;
-		window_ = XCreateSimpleWindow(display_, RootWindow(display_, screen_), 0, 0, widthPx_, heightPx_, 5, white, black);
+		window_ = XCreateSimpleWindow(display_, RootWindow(display_, screen_), 0, 0, widthPx_, heightPx_, 1, white, black);
 
 		// from http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
 
@@ -39,10 +42,13 @@ namespace tpp {
 		   the input.  see the appropriate section for details...
 		*/
 		XSelectInput(display_, window_, ExposureMask | ButtonPressMask | KeyPressMask);
+
+        Windows_[window_] = this;
 	}
 
 	void TerminalWindow::show() {
-		XMapRaised(display_, window_);
+        XMapWindow(display_, window_);
+		//XMapRaised(display_, window_);
 	}
 
 	void TerminalWindow::redraw() {
@@ -50,6 +56,7 @@ namespace tpp {
 	}
 
 	TerminalWindow::~TerminalWindow() {
+        Windows_.erase(window_);
 		//XFreeGC(display_, gc_);
 		XDestroyWindow(display_, window_);
 	}
@@ -81,14 +88,16 @@ namespace tpp {
 		bool cursorInRange = cp.col < cols() && cp.row < rows();
 		if (cursorInRange)
 			l->at(cp).dirty = true;
+		XftDraw* draw = XftDrawCreate(display_, window_, visual_, colorMap_);
+        
 		// initialize the font & colors
 		vterm::Cell & c = l->at(0, 0);
 		vterm::Color currentFg = c.fg;
 		vterm::Color currentBg = c.bg;
-		XftColor fg = toXftColor(currentFg);
+
+        XftColor fg; // = toXftColor(currentFg);
 		XftColor bg = toXftColor(currentBg);
 		Font* font = Font::GetOrCreate(DropBlink(c.font), settings_->defaultFontHeight, zoom_);
-		XftDraw* draw = XftDrawCreate(display_, window_, visual_, colorMap_);
 		ASSERT(draw != nullptr);
 		for (unsigned row = 0; row < rows(); ++row) {
 			for (unsigned col = 0; col < cols(); ++col) {
@@ -97,7 +106,7 @@ namespace tpp {
 					c.dirty = false; // clear the dirty flag
 					if (currentFg != c.fg) {
 						currentFg = c.fg;
-					    fg = toXftColor(currentFg);
+					    //fg = toXftColor(currentFg);
 					}
 					if (currentBg != c.bg) {
 						currentBg = c.bg;
@@ -131,6 +140,27 @@ namespace tpp {
 			//forceUpdate_ = false;
 		LOG << "redraw done";
 	}
+
+    void TerminalWindow::EventHandler(XEvent & e) {
+        TerminalWindow * tw = nullptr;
+        auto i = Windows_.find(e.xany.window);
+        if (i != Windows_.end())
+            tw = i->second;
+        switch(e.type) {
+            case Expose:
+                LOG << "Exposed";
+                tw->updateBuffer();
+                break;
+            case MapNotify:
+                break;
+            case KeyPress:
+                return;
+            case ButtonPress:
+                break;
+            default:
+            break;
+        }
+    }
 
 } // namespace tpp
 
