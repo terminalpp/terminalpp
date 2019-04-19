@@ -735,7 +735,19 @@ namespace vterm {
 		LOG(SEQ) << "scrolling down " << lines << " lines";
 		for (unsigned r = 0, re = rows_ - lines; r < re; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
-				defaultLayer_->at(c, r) = defaultLayer_->at(c, r + lines);
+				Cell & cell = defaultLayer_->at(c, r);
+				cell = defaultLayer_->at(c, r + lines);
+				cell.dirty = true;
+			}
+		}
+		for (unsigned r = rows_ - lines; r < rows_; ++r) {
+			for (unsigned c = 0; c < cols_; ++c) {
+				Cell & cell = defaultLayer_->at(c, r);
+				cell.c = ' ';
+				cell.fg = fg_;
+				cell.bg = bg_;
+				cell.font = Font();
+				cell.dirty = true;
 			}
 		}
 	}
