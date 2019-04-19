@@ -23,6 +23,7 @@ namespace tpp {
 			PTYTerminal::doResize(cols, rows);
 		}
 
+
 	}; // tpp::Terminal
 
 

@@ -13,6 +13,8 @@ namespace vterm {
 
 		}
 
+		void execute();
+
 	protected:
 
 		bool readInputStream(char* buffer, size_t& size) override;
@@ -23,6 +25,10 @@ namespace vterm {
 
 	private:
 		std::string command_;
+
+		int pipeIn_;
+
+		int pipeOut_;
 
 	};
 } // namespace vterm

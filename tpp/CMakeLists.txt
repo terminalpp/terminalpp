@@ -16,6 +16,7 @@ elseif(UNIX)
     find_package(X11 REQUIRED)
 	find_package(Threads REQUIRED)
     find_package(Freetype REQUIRED)
+	message(${LUTIL})
     include_directories(${X11_INCLUDE_DIR})
     include_directories(${FREETYPE_INCLUDE_DIRS})
     add_definitions(
