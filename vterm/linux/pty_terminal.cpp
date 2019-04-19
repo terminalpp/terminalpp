@@ -1,6 +1,9 @@
 #ifdef __linux__
 
+#include <unistd.h>
 #include <pty.h>
+
+#include "helpers/log.h"
 
 #include "pty_terminal.h"
 
@@ -12,12 +15,35 @@ namespace vterm {
 	}
 
 	void PTYTerminal::execute() {
-		if (openpty(&pipeIn_, &pipeOut_, nullptr, nullptr, nullptr) > 0)
-			NOT_IMPLEMENTED; // throw proper error using strerror(errno)
+		// fork & open the pty
+		switch (pid_ = forkpty(&pipe_, nullptr, nullptr, nullptr)) {
+			// forkpty failed
+			case -1:
+				NOT_IMPLEMENTED; // an error
+		    // running the child process,
+			case 0: {
+				printf("Oh my god!\n");
+				while (true) {
+					printf("haha\n");
+					sleep(10);
+				}
+			}
+			// continuing the terminal program 
+			default:
+				LOG << "Executed, pid " << pid_;
+				IOTerminal::doStart();
+				break;
+		}
 	}
 
 	bool PTYTerminal::readInputStream(char* buffer, size_t& size) {
-		return false;
+		LOG << "Reading from child process";
+		int cnt = read(pipe_, (void*)buffer, size);
+		if (cnt < 0)
+			NOT_IMPLEMENTED;
+		size = cnt;
+		LOG << "Read " << cnt << " bytes";
+		return true;
 	}
 
 	void PTYTerminal::doResize(unsigned cols, unsigned rows) {
@@ -25,7 +51,7 @@ namespace vterm {
 	}
 
 	bool PTYTerminal::write(char const* buffer, size_t size) {
-		return false;
+		return true;
 	}
 
 }

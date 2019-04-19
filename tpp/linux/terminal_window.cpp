@@ -106,7 +106,7 @@ namespace tpp {
 					c.dirty = false; // clear the dirty flag
 					if (currentFg != c.fg) {
 						currentFg = c.fg;
-					    //fg = toXftColor(currentFg);
+					    fg = toXftColor(currentFg);
 					}
 					if (currentBg != c.bg) {
 						currentBg = c.bg;
@@ -115,11 +115,11 @@ namespace tpp {
 					if (font->font() != DropBlink(c.font)) {
 						font = Font::GetOrCreate(DropBlink(c.font), settings_->defaultFontHeight, zoom_);
 					}
-					if (col % 2 == 0)
+/*					if (col % 2 == 0)
 						XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font->handle()->descent, (XftChar8*)"A", 1);
 					else 
-						XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font->handle()->descent, (XftChar8*)"p", 1);
-					//XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_, (XftChar8*)(c.c.rawBytes()), 1);
+						XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font->handle()->descent, (XftChar8*)"p", 1); */
+					XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_, (XftChar8*)(c.c.rawBytes()), 1);
 
 					//TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
 				}

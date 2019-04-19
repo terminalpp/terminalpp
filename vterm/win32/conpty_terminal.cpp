@@ -101,6 +101,7 @@ namespace vterm {
 		DWORD bytesWritten = 0;
 		WriteFile(pipeOut_, buffer, static_cast<DWORD>(size), &bytesWritten, nullptr);
 		ASSERT(bytesWritten == size);
+		return true;
 	}
 
 

@@ -26,9 +26,9 @@ namespace vterm {
 	private:
 		std::string command_;
 
-		int pipeIn_;
+		int pipe_;
 
-		int pipeOut_;
+		pid_t pid_;
 
 	};
 } // namespace vterm
