@@ -706,10 +706,10 @@ namespace vterm {
 	}
 
 	void VT100::setCursor(unsigned col, unsigned row) {
-		while (col >= cols_) {
+/*		while (col >= cols_) {
 			col -= cols_;
 			++row;
-		}
+		} */
 		cursorPos_.col = col;
 		cursorPos_.row = row;
 	}

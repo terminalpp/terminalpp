@@ -120,7 +120,8 @@ namespace tpp {
 						XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font->handle()->descent, (XftChar8*)"A", 1);
 					else 
 						XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font->handle()->descent, (XftChar8*)"p", 1); */
-					XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_, (XftChar8*)(c.c.rawBytes()), 1);
+					XftDrawRect(draw, &bg, col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_, cellHeightPx_);
+					XftDrawString8(draw, &fg, font->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font->handle()->descent, (XftChar8*)(c.c.rawBytes()), c.c.size());
 
 					//TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
 				}
