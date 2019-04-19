@@ -94,7 +94,6 @@ namespace tpp {
 		vterm::Cell & c = l->at(0, 0);
 		vterm::Color currentFg = c.fg;
 		vterm::Color currentBg = c.bg;
-		LOG << currentFg;
         XftColor fg = toXftColor(currentFg);
 		XftColor bg = toXftColor(currentBg);
 		Font* font = Font::GetOrCreate(DropBlink(c.font), settings_->defaultFontHeight, zoom_);
@@ -105,9 +104,8 @@ namespace tpp {
 				if (forceUpdate_ || c.dirty) {
 					c.dirty = false; // clear the dirty flag
 					if (currentFg != c.fg) {
-						//currentFg = c.fg;
-					    //fg = toXftColor(currentFg);
-						//LOG << currentFg;
+						currentFg = c.fg;
+					    fg = toXftColor(currentFg);
 					}
 					if (currentBg != c.bg) {
 						currentBg = c.bg;
