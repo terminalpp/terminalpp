@@ -7,7 +7,7 @@ namespace vterm {
 	 
 	class PTYTerminal : public virtual IOTerminal {
 	public:
-		PTYTerminal(std::string const & command, unsigned cols, unsigned rows);
+		PTYTerminal(std::string const & command, std::initializer_list<std::string> args, unsigned cols, unsigned rows);
 
 		~PTYTerminal() {
 
@@ -25,6 +25,8 @@ namespace vterm {
 
 	private:
 		std::string command_;
+
+		std::vector<std::string> args_;
 
 		int pipe_;
 

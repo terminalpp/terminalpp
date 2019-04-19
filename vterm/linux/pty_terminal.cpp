@@ -9,9 +9,10 @@
 
 namespace vterm {
 
-	PTYTerminal::PTYTerminal(std::string const & command, unsigned cols, unsigned rows):
+	PTYTerminal::PTYTerminal(std::string const & command, std::initializer_list<std::string> args, unsigned cols, unsigned rows):
 		IOTerminal(cols, rows),
-		command_{ command } {
+		command_{ command },
+		args_{ args } {
 	}
 
 	void PTYTerminal::execute() {
@@ -19,14 +20,23 @@ namespace vterm {
 		switch (pid_ = forkpty(&pipe_, nullptr, nullptr, nullptr)) {
 			// forkpty failed
 			case -1:
+				LOG << "fork fail";
 				NOT_IMPLEMENTED; // an error
 		    // running the child process,
 			case 0: {
-				printf("Oh my god!\n");
-				while (true) {
-					printf("haha\n");
-					sleep(10);
-				}
+				//system("ls -la");
+				
+				char** args = new char* [args_.size() + 2];
+				args[0] = const_cast<char*>(command_.c_str());
+				for (size_t i = 0; i < args_.size(); ++i)
+					args[i + 1] = const_cast<char*>(args_[i].c_str());
+				
+				args[args_.size() + 1] = nullptr;
+				// execvp never returns
+				execvp(command_.c_str(), args);
+				printf("Hello\n");
+				while (true) {};
+				NOT_IMPLEMENTED;
 			}
 			// continuing the terminal program 
 			default:
@@ -39,8 +49,11 @@ namespace vterm {
 	bool PTYTerminal::readInputStream(char* buffer, size_t& size) {
 		LOG << "Reading from child process";
 		int cnt = read(pipe_, (void*)buffer, size);
-		if (cnt < 0)
-			NOT_IMPLEMENTED;
+		if (cnt < 0) {
+			LOG << strerror(errno) << " - " << cnt;
+			size = 0;
+			return false;
+		}
 		size = cnt;
 		LOG << "Read " << cnt << " bytes";
 		return true;

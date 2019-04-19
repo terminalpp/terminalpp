@@ -163,8 +163,8 @@ namespace vterm {
 		palette_(256),
 		defaultFg_(defaultFg),
 		defaultBg_(defaultBg),
-		fg_(this->defaultFg()),
-		bg_(this->defaultBg()),
+		fg_(palette[defaultFg]),
+		bg_(palette[defaultBg]),
 		font_(),
 	    buffer_(nullptr),
 	    bufferEnd_(nullptr) {
@@ -358,6 +358,7 @@ namespace vterm {
 			 */
 			case 'H':
 				pop();
+				LOG(SEQ) << "setCursor 0, 0";
 				setCursor(0, 0);
 				return true;
 			/* ESC [ m -- SGR reset to default font and colors 
@@ -373,18 +374,22 @@ namespace vterm {
 		switch (pop()) {
 			// CSI <n> A -- moves cursor n rows up 
 			case 'A':
+				LOG(SEQ) << "setCursor " << cursorPos_.col << ", " << cursorPos_.row - first;
 				setCursor(cursorPos_.col, cursorPos_.row - first);
 				return true;
 			// CSI <n> B -- moves cursor n rows down 
 			case 'B':
+				LOG(SEQ) << "setCursor " << cursorPos_.col << ", " << cursorPos_.row + first;
 				setCursor(cursorPos_.col, cursorPos_.row + first);
 				return true;
 			// CSI <n> C -- moves cursor n columns forward (right)
 			case 'C':
+				LOG(SEQ) << "setCursor " << cursorPos_.col + first << ", " << cursorPos_.row;
 				setCursor(cursorPos_.col + first, cursorPos_.row);
 				return true;
 			// CSI <n> D -- moves cursor n columns back (left)
 			case 'D': // cursor backward
+				LOG(SEQ) << "setCursor " << cursorPos_.col - first << ", " << cursorPos_.row;
 				setCursor(cursorPos_.col - first, cursorPos_.row);
 				return true;
 			/* CSI <n> J -- erase display, depending on <n>:
@@ -465,6 +470,7 @@ namespace vterm {
 			// CSI <row> ; <col> H -- sets cursor position
 			case 'H':
 			case 'f':
+				LOG(SEQ) << "setCursor " << second - 1 << ", " << first - 1;
 				setCursor(second - 1, first - 1);
 				return true;
 				// third argument
@@ -700,7 +706,6 @@ namespace vterm {
 	}
 
 	void VT100::setCursor(unsigned col, unsigned row) {
-		LOG(SEQ) << "setCursor " << col << ", " << row;
 		while (col > cols_) {
 			col -= cols_;
 			++row;

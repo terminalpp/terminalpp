@@ -88,36 +88,47 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #elif __linux__
 
 int main(int argc, char* argv[]) {
+	try {
 
-	Application* app = new Application();
+		Application* app = new Application();
 
-	TerminalSettings ts;
-	ts.defaultCols = 80;
-	ts.defaultRows = 25;
-	ts.defaultFontHeight = 18;
-	ts.defaultFontWidth = 0;
-	ts.defaultZoom = 1;
+		TerminalSettings ts;
+		ts.defaultCols = 80;
+		ts.defaultRows = 25;
+		ts.defaultFontHeight = 18;
+		ts.defaultFontWidth = 0;
+		ts.defaultZoom = 1;
 
-	helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
-	helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
-
-
-	FixMissingSettings(ts);
+		helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
+		helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
 
 
-	TerminalWindow* tw = new TerminalWindow(app, &ts);
-	tw->show();
-
-	Terminal* t = new Terminal("wsl -e bash", 80, 25, vterm::Palette::Colors16, 15, 0);
-
-	tw->attachTerminal(t);
-
-	t->execute();
+		FixMissingSettings(ts);
 
 
-	app->mainLoop();
+		TerminalWindow* tw = new TerminalWindow(app, &ts);
+		tw->show();
 
-	return EXIT_SUCCESS;
+		Terminal* t = new Terminal("ls", { "-la" }, 80, 25, vterm::Palette::Colors16, 15, 0);
+		//Terminal* t = new Terminal("mc", { }, 80, 25, vterm::Palette::Colors16, 15, 0);
+
+		tw->attachTerminal(t);
+
+		t->execute();
+
+
+		app->mainLoop();
+		return EXIT_SUCCESS;
+	} catch (helpers::Exception const& e) {
+		std::cout << e;
+	}
+	catch (std::exception const& e) {
+		std::cout << e.what();
+	} 
+	catch (...) {
+		std::cout << "unknown error";
+	}
+	return EXIT_FAILURE;
 } 
 
 #endif

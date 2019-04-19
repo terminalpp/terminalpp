@@ -330,6 +330,12 @@ namespace vterm {
 			ASSERT(terminal_->cols_ == cols && terminal_->rows_ == rows);
 			delete[] cells_;
 			cells_ = new Cell[cols * rows];
+/*			for (size_t i = 0; i < cols * rows; ++i) {
+				cells_[i].c = 'a';
+				cells_[i].fg = Color::White();
+				cells_[i].fg = Color::White();
+			} */ 
+			  
 		}
 
 		/** Terminal the layer belongs to. 
