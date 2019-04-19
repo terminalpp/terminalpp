@@ -72,7 +72,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Terminal * t = new Terminal("wsl -e echo hello mmoo", 80, 25);
 	//Terminal * t = new Terminal("wsl -e ping www.seznam.cz", 80, 25);
 	//Terminal * t = new Terminal("wsl -e screenfetch", 80, 25, vterm::Palette::Colors16, 15, 0);
-	Terminal * t = new Terminal("wsl -e bash", 80, 25, vterm::Palette::Colors16, 15, 0);
+	//Terminal * t = new Terminal("wsl -e bash", 80, 25, vterm::Palette::Colors16, 15, 0);
+	//Terminal* t = new Terminal("wsl -e infocmp", 80, 25, vterm::Palette::Colors16, 15, 0);
+	Terminal* t = new Terminal("wsl -e mc", 80, 25, vterm::Palette::Colors16, 15, 0);
     //Terminal * t = new Terminal("wsl -e emacs ~/settings/emacs/init.el", 80, 25, vterm::Palette::Colors16, 15, 0);
 	//Terminal * t = new Terminal("wsl -e bash -c \"ssh orange \"", 80, 25, vterm::Palette::Colors16, 15, 0);
 
@@ -93,8 +95,8 @@ int main(int argc, char* argv[]) {
 		Application* app = new Application();
 
 		TerminalSettings ts;
-		ts.defaultCols = 80;
-		ts.defaultRows = 25;
+		ts.defaultCols = 100;
+		ts.defaultRows = 40;
 		ts.defaultFontHeight = 18;
 		ts.defaultFontWidth = 0;
 		ts.defaultZoom = 1;
@@ -109,8 +111,12 @@ int main(int argc, char* argv[]) {
 		TerminalWindow* tw = new TerminalWindow(app, &ts);
 		tw->show();
 
-		Terminal* t = new Terminal("ls", { "-la" }, 80, 25, vterm::Palette::Colors16, 15, 0);
-		//Terminal* t = new Terminal("mc", { }, 80, 25, vterm::Palette::Colors16, 15, 0);
+		//Terminal* t = new Terminal("./check-tty.sh", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
+		Terminal* t = new Terminal("printenv", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
+		//Terminal* t = new Terminal("ls", { "-la" }, 100, 40, vterm::Palette::Colors16, 15, 0);
+		//Terminal* t = new Terminal("infocmp", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
+		//Terminal* t = new Terminal("screenfetch", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
+		//Terminal* t = new Terminal("mc", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
 
 		tw->attachTerminal(t);
 
