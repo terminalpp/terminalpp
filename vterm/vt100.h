@@ -102,6 +102,126 @@ namespace vterm {
 		
 	protected:
 
+        class CSISequence;
+
+        class InvalidCSISequence : public helpers::Exception {
+        public:
+            InvalidCSISequence(CSISequence const & seq);
+            InvalidCSISequence(std::string const & msg, CSISequence const & seq);
+        };
+
+        /** Desrcibes parsed CSI sequence. 
+            
+            The CSI sequence may have a first character and a last character which determine the kind of sequence and an arbitrary number of integer arguments. 
+         */
+        class CSISequence {
+        public:
+            char firstByte() const {
+                return firstByte_;
+            }
+
+            char finalByte() const {
+                return finalByte_;
+            }
+
+            size_t numArgs() const {
+                return args_.size();
+            }
+
+            /** Returns the index-th argument. 
+             
+                If such argument was not parsed or explicitly set to default value, returns the default default value, which is 0. 
+             */
+            int arg(size_t index) const {
+                if (index >= args_.size())
+                    return 0;
+                return args_[index].first;
+            }
+
+            int operator [] (size_t index) const {
+                if (index >= args_.size())
+                    return 0;
+                return args_[index].first;
+            }
+
+            /** Returns the index-th argument if given either by the sequence or explicitly by default value. 
+             */
+            int argExcplicit(size_t index) const {
+                if (index >= args_.size())
+                    THROW(InvalidCSISequence(*this));
+                return args_[index].first;
+            }
+
+            /** Returns the index-th argument if it was given in the parsed sequence. 
+             
+                I.e. fails if the argument was not given at all, or only his default value was specified. 
+            */
+            int argGiven(size_t index) const {
+                if (index >= args_.size())
+                    THROW(InvalidCSISequence(*this));
+                std::pair<int, bool> arg = args_[index];
+                if (! arg.second)
+                    THROW(InvalidCSISequence(*this));
+                return arg.first;
+            }
+
+            /** Sets the default value of given argument. 
+             
+                If the argument was already specified by the user, setting the default value is ignored. 
+             */
+            void setArgDefault(size_t index, int value) {
+                while (args_.size() <= index)
+                    args_.push_back(std::make_pair(0, false));
+                std::pair<int, bool> & arg = args_[index];
+                if (! arg.second)
+                    arg.first = value;
+            }
+
+            /** Creates an empty CSI sequence. 
+             */
+            CSISequence():
+                firstByte_(0),
+                finalByte_(0),
+                start_(nullptr),
+                end_(nullptr) {
+            }
+
+            /** Parses the sequence from the given terminal's current position. 
+              
+                Returns true if the sequence was parsed successfully (or raises the InvalidCSISequence eror *after* parsing the whole sequence if the sequence does have unsupported structure). Returns false if the buffer did not contain whole sequence. 
+             */
+            bool parse(VT100 & term);
+
+        private:
+
+            static bool IsParameterByte(char c) {
+                return (c >= 0x30) && (c <= 0x3f);
+            }
+
+            static bool IsIntermediateByte(char c) {
+                return (c >= 0x20) && (c <= 0x2f);
+            }
+
+            static bool IsFinalByte(char c) {
+                return (c >= 0x40) && (c <= 0x7f);
+            }
+
+            friend std::ostream & operator << (std::ostream & s, CSISequence const & seq) {
+                s << std::string(seq.start_, seq.end_ - seq.start_);
+                return s;
+            }
+
+            char firstByte_;
+            char finalByte_;
+            /** List of arguments.
+             
+                Each argument is specified by a tuple of the value and a boolean flag which determines if the value was explicitly given by the parsed sequence (true), or if it is default value (false). 
+             */
+            std::vector<std::pair<int, bool>> args_;
+            char const * start_;
+            char const * end_;
+        };
+
 		/** Describes the keys understood by the VT100 and the sequences to be sent when the keys are emited. 
 		 */
 		class KeyMap {
@@ -167,19 +287,13 @@ namespace vterm {
 
 		/** Parses supported Control Sequence Introducers (CSIs), which start with ESC[.
 		 */
-		bool parseCSI();
+		void parseCSI(CSISequence & seq);
 
-		bool parseCSI(unsigned first);
-
-		bool parseCSI(unsigned first, unsigned second);
-
-		bool parseCSI(unsigned first, unsigned second, unsigned third);
-
-		bool parseCSI(unsigned first, unsigned second, unsigned third, unsigned fourth);
+        void parseSGR(CSISequence & seq);
 
 		/** Parses a setter, which is ESC[? <id> (h|l). 
 		 */
-		bool parseSetter();
+        void parseSetterOrGetter(CSISequence & seq);
 
 		/** Parses supported Operating System Commands (OSCs), which start with ESC].
 		 */
@@ -188,10 +302,6 @@ namespace vterm {
 		/** Executes the VT100 SGR (Set Graphics Rendition) command. 
 		 */
 		bool SGR(unsigned value);
-
-		/** Parses SGR 38 and 48 (extended color either RGB or from palette 
-		 */
-		bool parseExtendedColor(Color& storeInto);
 
 		void updateCursorPosition() {
 			while (cursorPos_.col >= cols_) {

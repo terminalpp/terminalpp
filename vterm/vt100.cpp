@@ -13,6 +13,9 @@ namespace vterm {
 
 	VT100::KeyMap VT100::keyMap_;
 
+
+    // Palette
+
 	Palette const Palette::Colors16{
 		Color::Black(), // 0
 		Color::DarkRed(), // 1
@@ -57,6 +60,8 @@ namespace vterm {
 		size_t s = std::min(size_, from.size_);
 		std::memcpy(colors_, from.colors_, sizeof(Color) * s);
 	}
+
+    // VT100::KeyMap
 
 	/** showkey -a shows what keys were pressed in a linux environment. 
 	 */
@@ -157,6 +162,61 @@ namespace vterm {
 		return keys_[m];
 	}
 
+    // VT100::InvalidCSISequence
+
+    VT100::InvalidCSISequence::InvalidCSISequence(VT100::CSISequence const & seq):
+        helpers::Exception(STR("Invalid CSI sequence: " << seq)) {
+    }
+    VT100::InvalidCSISequence::InvalidCSISequence(std::string const & msg, VT100::CSISequence const & seq):
+        helpers::Exception(STR(msg << seq)) {
+    }
+
+    // VT100::CSISequence
+
+    bool VT100::CSISequence::parse(VT100 & term) {
+        bool throwAtEnd = false;
+        start_ = term.buffer_;
+        char c = term.top();
+        // if the first char is parameter byte other than number or semicolon, store it in the firstByte
+        if (IsParameterByte(c) && (c != ';') && ! helpers::IsDecimalDigit(c) ) {
+            firstByte_ = term.pop();
+            c = term.top();
+        }
+        // now we parse arguments
+        while (IsParameterByte(c)) {
+            // skip argument
+            if (c == ';') {
+                term.pop();
+                args_.push_back(std::make_pair(0, false));
+            } else if (helpers::IsDecimalDigit(c)) {
+                args_.push_back(std::make_pair(term.parseNumber(), true));
+                if (term.condPop(';')) {
+                    c = term.top();
+                    continue;
+                }
+            } else {
+                term.pop();
+                throwAtEnd = true; // unsupported parameter character
+            }
+            c = term.top();
+        }
+        // now check the intermediate bytes
+        while (IsIntermediateByte(term.top())) {
+            term.pop();
+            throwAtEnd = true;
+        }
+        if (! IsFinalByte(term.top()))
+            return false;
+        // parse the final byte
+        finalByte_ = term.pop();
+        end_ = term.buffer_;
+        // if unsupported structure was encountered, throw the error
+        if (throwAtEnd)
+            THROW(InvalidCSISequence("Unsupported sequence structure :", *this));
+        return true;
+    }
+
+    // VT100
 
 	VT100::VT100(unsigned cols, unsigned rows, Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
 		IOTerminal(cols, rows),
@@ -214,15 +274,10 @@ namespace vterm {
 					}
 					// make a copy of buffer in case process escape sequence advances it and then fails
 					char * b = buffer_;
-					if (!parseEscapeSequence()) {
-						buffer_ = b;
-						if (!skipEscapeSequence()) {
-							size = b - buffer;
-							return;
-						} else {
-							LOG(UNKNOWN_SEQ) << "ESC " << std::string(++b, buffer_);
-						}
-					}
+                    if (! parseEscapeSequence()) {
+                        size = b - buffer;
+                        return;
+                    }
 					break;
 				}
 				/* New line simply moves to next line.
@@ -335,238 +390,266 @@ namespace vterm {
 		return value;
 	}
 
+    /** Returns true if valid escape sequence has been parsed from the buffer regardless of whether that sequence is supported or not. Return false if an incomplete possibly valid sequence has been found and therefore more data must be read from the terminal in order to proceed. 
+     */
 	bool VT100::parseEscapeSequence() {
 		ASSERT(*buffer_ == Char::ESC);
 		pop();
-		switch (pop()) {
+        // if at eof now, we need to read more so that we know what to escape
+        if (eof())
+            return false;
+        char c = pop();
+		switch (c) {
+            /* Operating system command. */
 		    case ']':
 				return parseOSC();
-			case '[':
-				return parseCSI();
+            /* CSI Sequence - parse using the CSISequence class. */
+			case '[': {
+                try {
+                    CSISequence csi;
+                    if (! csi.parse(*this))
+                        return false;
+                    // TODO now actually do what the sequence says
+                    parseCSI(csi);
+                    return true;
+                } catch (InvalidCSISequence const & e) {
+                    LOG(UNKNOWN_SEQ) << e;
+                    return true;
+	            }
+            }
+            /* Character set specification - ignored, we just have to parse it. */
+            case '(':
+            case ')':
+            case '*':
+            case '+':
+                // missing character set specification
+                if (eof())
+                    return false;
+                if (condPop('B')) // US
+                    return true;
+                LOG(UNKNOWN_SEQ) << "Unknown (possibly mismatched) character set final char " << pop();
+                return true;
+            /* Application keypad - TODO what is this */
+            case '=':
+                LOG(UNKNOWN_SEQ) << "Application keypad (ESC=)";
+                return true;
+            /* Normal keypad - TODO what is this */
+            case '>':
+                LOG(UNKNOWN_SEQ) << "Normal keypad (ESC>)";
+                return true;
+            /* Otherwise we have unknown escape sequence. This is an issue since we do not know when it ends and therefore may break the parsing.
+             */
 			default:
-				return false;
+                LOG(UNKNOWN_SEQ) << "Unknown (possibly mismatched) char after ESC " << c;
+				return true;
 		}
 	}
 
-	bool VT100::parseCSI() {
-		switch (top()) {
-			// option setter
-		    case '?':
-				pop();
-				return parseSetter();
-			/* ESC [ H -- set cursor coordinates to top-left corner (default arg for row and col) 
-			 */
-			case 'H':
-				pop();
-				LOG(SEQ) << "setCursor 0, 0";
-				setCursor(0, 0);
-				return true;
-			/* ESC [ m -- SGR reset to default font and colors 
-			 */
-			case 'm':
-				pop();
-				return SGR(0);
-			default:
-				break;
-		}
-		// parse the first numeric argument
-		unsigned first = parseNumber(1);
-		switch (pop()) {
-			// CSI <n> A -- moves cursor n rows up 
-			case 'A':
-				LOG(SEQ) << "setCursor " << cursorPos_.col << ", " << cursorPos_.row - first;
-				setCursor(cursorPos_.col, cursorPos_.row - first);
-				return true;
-			// CSI <n> B -- moves cursor n rows down 
-			case 'B':
-				LOG(SEQ) << "setCursor " << cursorPos_.col << ", " << cursorPos_.row + first;
-				setCursor(cursorPos_.col, cursorPos_.row + first);
-				return true;
-			// CSI <n> C -- moves cursor n columns forward (right)
-			case 'C':
-				LOG(SEQ) << "setCursor " << cursorPos_.col + first << ", " << cursorPos_.row;
-				setCursor(cursorPos_.col + first, cursorPos_.row);
-				return true;
-			// CSI <n> D -- moves cursor n columns back (left)
-			case 'D': // cursor backward
-				LOG(SEQ) << "setCursor " << cursorPos_.col - first << ", " << cursorPos_.row;
-				setCursor(cursorPos_.col - first, cursorPos_.row);
-				return true;
-			/* CSI <n> J -- erase display, depending on <n>:
-			    0 = erase from the current position (inclusive) to the end of display
-				1 = erase from the beginning to the current position(inclusive)
-				2 = erase entire display
-			 */
-			case 'J':
-				switch (first) {
-					case 0:
-						updateCursorPosition();
-						fillRect(helpers::Rect(cursorPos_.col, cursorPos_.row, cols_, cursorPos_.row + 1), ' ');
-						fillRect(helpers::Rect(0, cursorPos_.row + 1, cols_, rows_), ' ');
-						return true;
-					case 1:
-						updateCursorPosition();
-						fillRect(helpers::Rect(0, 0, cols_, cursorPos_.row), ' ');
-						fillRect(helpers::Rect(0, cursorPos_.row, cursorPos_.col + 1, cursorPos_.row + 1), ' ');
-						return true;
-					case 2:
-						fillRect(helpers::Rect(cols_, rows_), ' ');
-						return true;
-				    default:
-						break;
-				}
-				return false;
-			/* CSI <n> X -- erase <n> characters from the current position 
-			 */
-			case 'X': {
-				updateCursorPosition();
-				// erase from first line
-				unsigned l = std::min(cols_ - cursorPos_.col, first);
-				fillRect(helpers::Rect(cursorPos_.col, cursorPos_.row, cursorPos_.col + l, cursorPos_.row + 1), ' ');
-				first -= l;
-				// while there is enough stuff left to be larger than a line, erase entire line
-				l = cursorPos_.row + 1;
-				while (first >= cols_ && l < rows_) {
-					fillRect(helpers::Rect(0, l, cols_, l + 1), ' ');
-					++l;
-					first -= cols_;
-				}
-				// if there is still something to erase, erase from the beginning
-				if (first != 0 && l < rows_) 
-					fillRect(helpers::Rect(0, l, first, l + 1), ' ');
-				return true;
-			}
-			/* CSI <n> h -- Reset mode enable 
-			   Depending on the argument, certain things are turned on. None of the RM settings are currently supported. 
-			 */
-			case 'h':
-				return false;
-			/* CSI <n> l -- Reset mode disable 
-			   Depending on the argument, certain things are turned off. Turning the features on/off is not allowed, but if the client wishes to disable something that is disabled, it's happily ignored. 
-			 */
-			case 'l':
-				switch (first) {
-					/* CSI 4 l -- disable insert mode */
-				    case 4:
-						return true;
-					default:
-						return false;
-				}
-			/* CSI <n> m -- Set Graphics Rendition */
-			case 'm': 
-				return SGR(first);
-			// second argument
-			case ';':
-				return parseCSI(first);
-		    // otherwise we are dealing with an unrecognized sequence, return false
-			default:
-				return false;
-		}
-	}
+	void VT100::parseCSI(CSISequence & seq) {
+        if (seq.firstByte() == '?') {
+            switch (seq.finalByte()) {
+                case 'h':
+                case 'l':
+                    if (seq.numArgs() == 1)
+                        return parseSetterOrGetter(seq);
+                    break;
+                default:
+                    break;
+            }
+        } else if (seq.firstByte() == 0) {
+            switch (seq.finalByte()) {
+                // CSI <n> A -- moves cursor n rows up 
+                case 'A':
+                    seq.setArgDefault(0, 1);
+                    ASSERT(seq.numArgs() == 1);
+                    LOG(SEQ) << "setCursor " << cursorPos_.col << ", " << cursorPos_.row - seq[0];
+                    setCursor(cursorPos_.col, cursorPos_.row - seq[0]);
+                    return;
+                // CSI <n> B -- moves cursor n rows down 
+                case 'B':
+                    seq.setArgDefault(0, 1);
+                    ASSERT(seq.numArgs() == 1);
+                    LOG(SEQ) << "setCursor " << cursorPos_.col << ", " << cursorPos_.row + seq[0];
+                    setCursor(cursorPos_.col, cursorPos_.row + seq[0]);
+                    return;
+                // CSI <n> C -- moves cursor n columns forward (right)
+                case 'C':
+                    seq.setArgDefault(0, 1);
+                    ASSERT(seq.numArgs() == 1);
+                    LOG(SEQ) << "setCursor " << cursorPos_.col + seq[0] << ", " << cursorPos_.row;
+                    setCursor(cursorPos_.col + seq[0], cursorPos_.row);
+                    return;
+                // CSI <n> D -- moves cursor n columns back (left)
+                case 'D': // cursor backward
+                    seq.setArgDefault(0, 1);
+                    ASSERT(seq.numArgs() == 1);
+                    LOG(SEQ) << "setCursor " << cursorPos_.col - seq[0] << ", " << cursorPos_.row;
+                    setCursor(cursorPos_.col - seq[0], cursorPos_.row);
+                    return;
+                /* set cursor coordinates */
+                case 'H':
+                case 'f':
+                    seq.setArgDefault(0, 1);
+                    seq.setArgDefault(1, 1);
+                    ASSERT(seq.numArgs() == 2);
+                    LOG(SEQ) << "setCursor " << seq[1] - 1 << ", " << seq[0] - 1;
+                    setCursor(seq[1] - 1, seq[0] - 1);
+                    return;
+                /* CSI <n> J -- erase display, depending on <n>:
+                    0 = erase from the current position (inclusive) to the end of display
+                    1 = erase from the beginning to the current position(inclusive)
+                    2 = erase entire display
+                */
+                case 'J':
+                    ASSERT(seq.numArgs() <= 1);
+                    switch (seq[0]) {
+                        case 0:
+                            updateCursorPosition();
+                            fillRect(helpers::Rect(cursorPos_.col, cursorPos_.row, cols_, cursorPos_.row + 1), ' ');
+                            fillRect(helpers::Rect(0, cursorPos_.row + 1, cols_, rows_), ' ');
+                            return;
+                        case 1:
+                            updateCursorPosition();
+                            fillRect(helpers::Rect(0, 0, cols_, cursorPos_.row), ' ');
+                            fillRect(helpers::Rect(0, cursorPos_.row, cursorPos_.col + 1, cursorPos_.row + 1), ' ');
+                            return;
+                        case 2:
+                            fillRect(helpers::Rect(cols_, rows_), ' ');
+                            return;
+                        default:
+                            break;
+                    }
+                    break;
+                /* CSI <n> K -- erase in line, depending on <n>
+                0 = Erase to Right
+                1 = Erase to Left
+                2 = Erase entire line
+                */
+                case 'K':
+                    ASSERT(seq.numArgs() <= 1);
+                    switch (seq[0]) {
+                        case 0:
+                            updateCursorPosition();
+                            fillRect(helpers::Rect(cursorPos_.col, cursorPos_.row, cols_, cursorPos_.row + 1), ' ');
+                            return;
+                        case 1:
+                            updateCursorPosition();
+                            fillRect(helpers::Rect(0, cursorPos_.row, cursorPos_.col + 1, cursorPos_.row + 1), ' '); 
+                            return;
+                        case 2:
+                            updateCursorPosition();
+                            fillRect(helpers::Rect(0, cursorPos_.row, cols_, cursorPos_.row + 1), ' ');
+                            return;
+                        default:
+                            break;
+                    }
+                    break;
+                /* CSI <n> X -- erase <n> characters from the current position 
+                */
+                case 'X': {
+                    seq.setArgDefault(0, 1);
+                    ASSERT(seq.numArgs() == 1);
+                    updateCursorPosition();
+                    // erase from first line
+                    unsigned n = static_cast<unsigned>(seq[0]);
+                    unsigned l = std::min(cols_ - cursorPos_.col, n);
+                    fillRect(helpers::Rect(cursorPos_.col, cursorPos_.row, cursorPos_.col + l, cursorPos_.row + 1), ' ');
+                    n -= l;
+                    // while there is enough stuff left to be larger than a line, erase entire line
+                    l = cursorPos_.row + 1;
+                    while (n >= cols_ && l < rows_) {
+                        fillRect(helpers::Rect(0, l, cols_, l + 1), ' ');
+                        ++l;
+                        n -= cols_;
+                    }
+                    // if there is still something to erase, erase from the beginning
+                    if (n != 0 && l < rows_) 
+                        fillRect(helpers::Rect(0, l, n, l + 1), ' ');
+                    return;
+                }
+                /* CSI <n> h -- Reset mode enable 
+                Depending on the argument, certain things are turned on. None of the RM settings are currently supported. 
+                */
+                case 'h':
+                    THROW(InvalidCSISequence("Unsupported CSI seqauence: ", seq));
+                /* CSI <n> l -- Reset mode disable 
+                Depending on the argument, certain things are turned off. Turning the features on/off is not allowed, but if the client wishes to disable something that is disabled, it's happily ignored. 
+                */
+                case 'l':
+                    THROW(InvalidCSISequence("Unsupported CSI seqauence: ", seq));
+                /* SGR 
+                */
+                case 'm':
+                    return parseSGR(seq);
+                default:
+                    break;
+            }
+        }
+        THROW(InvalidCSISequence(seq));
+    }
 
-	bool VT100::parseCSI(unsigned first) {
-		unsigned second = parseNumber(1);
-		switch (pop()) {
-			// CSI <row> ; <col> H -- sets cursor position
-			case 'H':
-			case 'f':
-				LOG(SEQ) << "setCursor " << second - 1 << ", " << first - 1;
-				setCursor(second - 1, first - 1);
-				return true;
-				// third argument
-			case ';': 
-				return parseCSI(first, second);
-			default:
-				return false;
-		}
-	}
-
-	bool VT100::parseCSI(unsigned first, unsigned second) {
-		unsigned third = parseNumber(0);
-		switch (pop()) {
-			/* CSI 38 ; 5 ; <index> m - SGR 38, select from palette foreground */
-			/* CSI 48 ; 5 ; <index> m - SGR 48, select from palette background */
-		    case 'm': {
-				if (second != 5 || third > 255)
-					return false;
-				if (first == 38) {
-					fg_ = palette_[third];
-					LOG(SEQ) << "fg set to index " << third << " (" << fg_ << ")";
-				} else if (first == 48) {
-					bg_ = palette_[third];
-					LOG(SEQ) << "bg set to index " << third << " (" << bg_ << ")";
-				} else {
-					return false;
-				}
-				return true;
-			}
-			case ';':
-				return parseCSI(first, second, third);
-			default:
-				return false;
-		}
-	}
-
-	bool VT100::parseCSI(unsigned first, unsigned second, unsigned third) {
-		unsigned fourth = parseNumber(0);
-		switch (pop()) {
-		    case ';':
-				return parseCSI(first, second, third, fourth);
-			default:
-				return false;
-		}
-	}
-
-	bool VT100::parseCSI(unsigned first, unsigned second, unsigned third, unsigned fourth) {
-		unsigned fifth = parseNumber(0);
-		switch (pop()) {
-			/* CSI 38 ; 2 ; <r> ; <g> ; <b> m - SGR 38, specify color RGB */
-			/* CSI 48 ; 2 ; <r> ; <g> ; <b> m - SGR 48, specify color RGB */
-		    case 'm': {
-				if (second != 2 || third > 255 || fourth > 255 || fifth > 255)
-					return false;
-				if (first == 38) {
-					fg_ = Color(third, fourth, fifth);
-					LOG(SEQ) << "fg set to " << fg_;
-				} else if (first == 48) {
-					bg_ = Color(third, fourth, fifth);
-					LOG(SEQ) << "bg set to " << bg_;
-				} else {
-					return false;
-				}
-				return true;
-
-			}
-			default:
-				return false;
-		}
-	}
+    void VT100::parseSGR(CSISequence & seq) {
+        seq.setArgDefault(0, 0);
+        switch (seq.arg(0)) {
+            case 38:
+            case 48:
+                switch (seq[1]) {
+                    case '5': 
+                        ASSERT(seq.numArgs() == 3);
+                        if (seq[2] > 255) // not valid num code
+                            break;
+                        if (seq[0] == 38) {
+                            fg_ = palette_[seq[2]];
+                            LOG(SEQ) << "fg set to index " << seq[2] << " (" << fg_ << ")";
+                        } else {
+                            bg_ = palette_[seq[2]];
+                            LOG(SEQ) << "bg set to index " << seq[2] << " (" << bg_ << ")";
+                        }
+                        return;
+                    case '2':
+                        ASSERT(seq.numArgs() == 5);
+                        if (seq[2] > 255 || seq[3] > 255 || seq[4] > 255) // not valid color
+                            break;
+                        if (seq[0] == 38) {
+                            fg_ = Color(seq[2], seq[3], seq[4]);
+                            LOG(SEQ) << "fg set to " << fg_;
+                        } else {
+                            bg_ = Color(seq[2], seq[3], seq[4]);
+                            LOG(SEQ) << "bg set to " << bg_;
+                        }
+                        return;
+                    default:
+                        break;
+                }
+                break;
+            default:
+                if (! SGR(seq.arg(0)))
+                    break;
+                // TODO do multiple SGR values 
+                return;
+        }
+        THROW(InvalidCSISequence(seq));
+    }
 
 
 
-
-
-	bool VT100::parseSetter() {
-		int id = parseNumber();
-		// the number must be followed by 'h' for turning on, or 'l' for turning the feature off
-		bool value = condPop('h');
-		if (! value && ! condPop('l'))
-			return false;
-		// TODO it can also be 's' for save
+    void VT100::parseSetterOrGetter(CSISequence & seq) {
+        int id = seq[0];
+        bool value = seq.finalByte() == 'h';
 		switch (id) {
 			/* Smooth scrolling -- ignored*/
 		    case 4:
-				return true;
+				return;
 			// cursor blinking
 		    case 12:
 				cursorBlink_ = value;
 				LOG(SEQ) << "cursor blinking: " << value;
-				return true;
+				return;
 			// cursor show/hide
 			case 25:
 				cursorVisible_ = value;
 				LOG(SEQ) << "cursor visible: " << value;
-				return true;
+				return;
 			/* Mouse tracking movement & buttons.
 
 			   https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
@@ -574,7 +657,7 @@ namespace vterm {
 			case 1001: // mouse highlighting
 			case 1006: // 
 			case 1003:
-				return false;
+                break;
 			/* Enable or disable the alternate screen buffer.
 			 */
 			case 47: 
@@ -583,39 +666,42 @@ namespace vterm {
 				fg_ = defaultFg();
 				bg_ = defaultBg();
 				fillRect(helpers::Rect(cols_, rows_), ' ');
-				return false;
-
+				break;
 			/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. */
 			case 2004:
 				// TODO
-				return true;
+				break;
 
-		default:
-			return false;
+    		default:
+	    		break;
 		}
-	}
+        THROW(InvalidCSISequence("Invalid Get/Set command: ", seq));
+    }
 
+    /** Operating System Commands end with either an ST (ESC \), or with BEL. For now, only setting the terminal window command is supported. 
+     */
 	bool VT100::parseOSC() {
-		unsigned id = parseNumber(0);
-		switch (id) {
-			/* ESC ] 0 ; <string> BEL -- Sets the window title. */
-			case 0: {
-				if (pop() != ';')
-					return false;
-				char * start = buffer_;
-				while (!condPop(Char::BEL)) {
-					if (eof()) // incomplete sequence
-						return false;
-					pop();
-				}
-				std::string title(start, buffer_);
-				// trigger the event
-				trigger(onTitleChange, title);
-				return true;
-			}
-		    default:
-				return false;
-		}
+        // first try parsing
+        char * start = buffer_;
+        while (true) {
+            // if we did not see the end of the sequence, we must read more
+            if (eof())
+                return false;
+            if (condPop(Char::BEL))
+                break;
+            if (condPop(Char::ESC) && condPop('\\'))
+                break;
+            pop(); 
+        }
+        // we have now parsed the whole OSC - let's see if it is one we understand
+        if (buffer_[-1] == Char::BEL && start[0] == '0' && start[1] == ';') {
+            std::string title(start + 2, buffer_ - 1);
+            LOG(SEQ) << "Title change to " << title;
+            trigger(onTitleChange, title);
+        } else {
+            LOG(UNKNOWN_SEQ) << "Unknown OSC: " << std::string(start, buffer_ - start);
+        }
+        return true;
 	}
 
 	bool VT100::SGR(unsigned value) {
@@ -683,26 +769,6 @@ namespace vterm {
 				}
 				return true;
 		}
-	}
-
-	bool VT100::parseExtendedColor(Color& storeInto) {
-		// already parsed ESC [ 38 or ESC [ 48
-		if (!condPop(';'))
-			return false;
-		switch (parseNumber(0)) {
-			case 2: {
-
-			}
-			case 5: {
-				if (!condPop(';'))
-					return false;
-
-
-			}
-			default:
-				return false;
-		}
-
 	}
 
 	void VT100::setCursor(unsigned col, unsigned row) {

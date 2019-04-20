@@ -12,6 +12,7 @@ namespace tpp {
 	int Application::XScreen_ = 0;
 
 	Application::Application() {
+        XInitThreads();
 		ASSERT(XDisplay_ == nullptr) << "Application is a singleton";
 		XDisplay_ = XOpenDisplay(nullptr);
 		if (XDisplay_ == nullptr)
