@@ -289,6 +289,10 @@ namespace vterm {
 		 */
 		void parseCSI(CSISequence & seq);
 
+        Color parseExtendedColor(CSISequence & seq, size_t & i);
+
+		/** Executes the VT100 SGR (Set Graphics Rendition) command. 
+		 */
         void parseSGR(CSISequence & seq);
 
 		/** Parses a setter, which is ESC[? <id> (h|l). 
@@ -298,10 +302,6 @@ namespace vterm {
 		/** Parses supported Operating System Commands (OSCs), which start with ESC].
 		 */
 		bool parseOSC();
-
-		/** Executes the VT100 SGR (Set Graphics Rendition) command. 
-		 */
-		bool SGR(unsigned value);
 
 		void updateCursorPosition() {
 			while (cursorPos_.col >= cols_) {

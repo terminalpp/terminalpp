@@ -116,8 +116,8 @@ int main(int argc, char* argv[]) {
 		//Terminal* t = new Terminal("tput", { "colors" }, 100, 40, vterm::Palette::Colors16, 15, 0);
 		//Terminal* t = new Terminal("ls", { "-la" }, 100, 40, vterm::Palette::Colors16, 15, 0);
 		//Terminal* t = new Terminal("infocmp", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		//Terminal* t = new Terminal("screenfetch", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		Terminal* t = new Terminal("mc", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
+		Terminal* t = new Terminal("screenfetch", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
+		//Terminal* t = new Terminal("mc", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
 
 		tw->attachTerminal(t);
 

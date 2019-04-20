@@ -588,50 +588,110 @@ namespace vterm {
         THROW(InvalidCSISequence(seq));
     }
 
-    void VT100::parseSGR(CSISequence & seq) {
-        seq.setArgDefault(0, 0);
-        switch (seq.arg(0)) {
-            case 38:
-            case 48:
-                switch (seq[1]) {
-                    case '5': 
-                        ASSERT(seq.numArgs() == 3);
-                        if (seq[2] > 255) // not valid num code
-                            break;
-                        if (seq[0] == 38) {
-                            fg_ = palette_[seq[2]];
-                            LOG(SEQ) << "fg set to index " << seq[2] << " (" << fg_ << ")";
-                        } else {
-                            bg_ = palette_[seq[2]];
-                            LOG(SEQ) << "bg set to index " << seq[2] << " (" << bg_ << ")";
-                        }
-                        return;
-                    case '2':
-                        ASSERT(seq.numArgs() == 5);
-                        if (seq[2] > 255 || seq[3] > 255 || seq[4] > 255) // not valid color
-                            break;
-                        if (seq[0] == 38) {
-                            fg_ = Color(seq[2], seq[3], seq[4]);
-                            LOG(SEQ) << "fg set to " << fg_;
-                        } else {
-                            bg_ = Color(seq[2], seq[3], seq[4]);
-                            LOG(SEQ) << "bg set to " << bg_;
-                        }
-                        return;
-                    default:
+    Color VT100::parseExtendedColor(CSISequence & seq, size_t & i) {
+        ++i;
+        if (i < seq.numArgs()) {
+            switch (seq[i++]) {
+                /* index from 256 colors */
+                case '5':
+                    if (i == seq.numArgs()) // not enough args
                         break;
-                }
-                break;
-            default:
-                if (! SGR(seq.arg(0)))
+                    if (seq[i] > 255) // invalid color spec
+                        break;
+                    return palette_[seq[i]];
+                /* true color rgb */
+                case '2':
+                    i += 2;
+                    if (i >= seq.numArgs()) // not enough args
+                        break;
+                    if (seq[i - 2] > 255 || seq[i - 1] > 255 || seq[i] > 255) // invalid color spec
+                        break;
+                    return Color(seq[i - 2], seq[i - 1], seq[1]);
+                /* everything else is an error */
+                default:
                     break;
-                // TODO do multiple SGR values 
-                return;
+            }
         }
-        THROW(InvalidCSISequence(seq));
+        THROW(InvalidCSISequence("Invalid extended color: ", seq));
     }
 
+    void VT100::parseSGR(CSISequence & seq) {
+        seq.setArgDefault(0, 0);
+        for (size_t i = 0; i < seq.numArgs(); ++i) {
+            switch (seq[i]) {
+                /* Resets all attributes. */
+                case 0:
+                    font_ = Font();
+                    fg_ = defaultFg();
+                    bg_ = defaultBg();
+                    LOG(SEQ) << "font fg bg reset";
+                    break;
+                /* Bold / bright foreground. */
+                case 1:
+                    font_.setBold(true);
+                    LOG(SEQ) << "bold set";
+                    break;
+                /* Underline */
+                case 4:
+                    font_.setUnderline(true);
+                    LOG(SEQ) << "underline set";
+                    break;
+                /* Normal - neither bold, nor faint. */
+                case 22:
+                    font_.setBold(false);
+                    LOG(SEQ) << "normal font set";
+                    break;
+                /* Disable underline. */
+                case 24:
+                    font_.setUnderline(false);
+                    LOG(SEQ) << "undeline unset";
+                    break;
+    			/* 30 - 37 are dark foreground colors, handled in the default case. */
+    			/* 38 - extended foreground color */
+                case 38:
+                    fg_ = parseExtendedColor(seq, i);
+                    LOG(SEQ) << "fg set to " << fg_;
+                    break;
+                /* Foreground default. */
+                case 39:
+                    fg_ = defaultFg();
+                    LOG(SEQ) << "fg reset";
+                    break;
+     			/* 40 - 47 are dark background color, handled in the default case. */
+    			/* 48 - extended background color */
+                case 48:
+                    bg_ = parseExtendedColor(seq, i);
+                    LOG(SEQ) << "fg set to " << fg_;
+                    break;
+                /* Background default */
+                case 49:
+                    bg_ = defaultBg();
+                    LOG(SEQ) << "bg reset";
+                    break;
 
+                /* 90 - 97 are bright foreground colors, handled in the default case. */
+                /* 100 - 107 are bright background colors, handled in the default case. */
+
+                default:
+                    if (seq[i] >= 30 && seq[i] <= 37) {
+                        fg_ = palette_[seq[i] - 30];
+                        LOG(SEQ) << "fg set to " << palette_[seq[i] - 30];
+                    } else if (seq[i] >= 40 && seq[i] <= 47) {
+                        bg_ = palette_[seq[i] - 40];
+                        LOG(SEQ) << "bg set to " << palette_[seq[i] - 40];
+                    } else if (seq[i] >= 90 && seq[i] <= 97) {
+                        fg_ = palette_[seq[i] - 82];
+                        LOG(SEQ) << "fg set to " << palette_[seq[i] - 82];
+                    } else if (seq[i] >= 100 && seq[i] <= 107) {
+                        bg_ = palette_[seq[i] - 92];
+                        LOG(SEQ) << "bg set to " << palette_[seq[i] - 92];
+                    } else {
+                        THROW(InvalidCSISequence("Invalid SGR code: ", seq));
+                    }
+                    break;
+            }
+        }
+    }
 
     void VT100::parseSetterOrGetter(CSISequence & seq) {
         int id = seq[0];
@@ -704,72 +764,6 @@ namespace vterm {
         return true;
 	}
 
-	bool VT100::SGR(unsigned value) {
-		switch (value) {
-			/* Resets all attributes. */
-		    case 0:
-				font_ = Font();
-				fg_ = defaultFg();
-				bg_ = defaultBg();
-				LOG(SEQ) << "font fg bg reset";
-				return true;
-			/* Bold / bright foreground. */
-			case 1:
-				font_.setBold(true);
-				LOG(SEQ) << "bold set";
-				return true;
-			/* Underline */
-			case 4:
-				font_.setUnderline(true);
-				LOG(SEQ) << "underline set";
-				return true;
-			/* Normal - neither bold, nor faint. */
-			case 22:
-				font_.setBold(false);
-				LOG(SEQ) << "normal font set";
-				return true;
-			/* Disable underline. */
-			case 24:
-				font_.setUnderline(false);
-				LOG(SEQ) << "undeline unset";
-				return true;
-			/* 30 - 37 are dark foreground colors, handled in the default case. */
-			/* 38 - extended foreground color - see parseCSI with more arguments */
-			/* Foreground default. */
-			case 39:
-				fg_ = defaultFg();
-				LOG(SEQ) << "fg reset";
-				return true;
-			/* 40 - 47 are dark background color, handled in the default case. */
-			/* 38 - extended foreground color - see parseCSI with more arguments */
-			/* Background default */
-			case 49:
-				bg_ = defaultBg();
-				LOG(SEQ) << "bg reset";
-				return true;
-
-			/* 90 - 97 are bright foreground colors, handled in the default case. */
-			/* 100 - 107 are bright background colors, handled in the default case. */
-
-		    default:
-				if (value >= 30 && value <= 37) {
-					fg_ = palette_[value - 30];
-					LOG(SEQ) << "fg set to " << palette_[value - 30];
-				} else if (value >= 40 && value <= 47) {
-					bg_ = palette_[value - 40];
-					LOG(SEQ) << "bg set to " << palette_[value - 40];
-				} else if (value >= 90 && value <= 97) {
-					fg_ = palette_[value - 82];
-					LOG(SEQ) << "fg set to " << palette_[value - 82];
-				} else if (value >= 100 && value <= 107) {
-					bg_ = palette_[value - 92];
-					LOG(SEQ) << "bg set to " << palette_[value - 92];
-				} else {
-					return false;
-				}
-				return true;
-		}
-	}
 
 	void VT100::setCursor(unsigned col, unsigned row) {
 /*		while (col >= cols_) {
