@@ -71,13 +71,44 @@ namespace tpp {
 		 */
 		~TerminalWindow() override;
 
-		void resizeWindow(unsigned width, unsigned height) override;
-
 		void repaint(vterm::Terminal::RepaintEvent & e) override;
 
 		void doSetFullscreen(bool value) override;
 
 		void doTitleChange(vterm::VT100::TitleEvent & e) override;
+
+		/** Deletes the double buffer object. 
+		 */
+		void doInvalidate() override {
+			DeleteObject(buffer_);
+			buffer_ = nullptr;
+		}
+
+		void doPaint() override;
+
+		void doSetForeground(vterm::Color const& fg) override {
+			SetTextColor(bufferDC_, RGB(fg.red, fg.green, fg.blue));
+		}
+
+		void doSetBackground(vterm::Color const& bg) override {
+			SetBkColor(bufferDC_, RGB(bg.red, bg.green, bg.blue));
+		}
+
+		void doSetFont(vterm::Font font) override {
+			SelectObject(bufferDC_, Font::GetOrCreate(font, settings_->defaultFontHeight, zoom_)->handle());
+		}
+
+		void doDrawCell(unsigned col, unsigned row, vterm::Cell const& c) override {
+			wchar_t wc = c.c.toWChar();
+			TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
+		}
+
+		void doDrawCursor(unsigned col, unsigned row, vterm::Cell const& c) override {
+			doSetForeground(c.fg);
+			doSetFont(c.font);
+			SetBkMode(bufferDC_, TRANSPARENT);
+			doDrawCell(col, row, c);
+		}
 
 	private:
 
@@ -85,7 +116,7 @@ namespace tpp {
 
 		friend class Application;
 
-		void updateBuffer();
+		//void updateBuffer();
 
 		/** Maps win32 virtual keys to their vterm equivalents. 
 		 */
@@ -99,15 +130,9 @@ namespace tpp {
 		HBITMAP buffer_;
 		HDC bufferDC_;
 
-		/** If true, when the window is redrawn, all cells are forced to update. 
-		 */
-		bool forceUpdate_;
-
 		/** Placement of the window to which the window is restored after fullscreen toggle. 
 		 */
 		WINDOWPLACEMENT wndPlacement_;
-
-		bool blink_;
 
 		/** Width and height of the window frame so that the width and height of the window can be adjusted accordingly. 
 		 */

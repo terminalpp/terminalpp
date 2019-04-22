@@ -14,7 +14,6 @@ namespace tpp {
 		BaseTerminalWindow(settings),
 		bufferDC_(CreateCompatibleDC(nullptr)),
 		buffer_(nullptr),
-		forceUpdate_(true),
 		wndPlacement_{sizeof(wndPlacement_)},
 		frameWidth_{0},
 		frameHeight_{0} {
@@ -42,19 +41,9 @@ namespace tpp {
 		DeleteObject(bufferDC_);
 	}
 
-	void TerminalWindow::resizeWindow(unsigned width, unsigned height) {
-		// invalidate the buffer
-		DeleteObject(buffer_);
-		buffer_ = nullptr;
-		// resize the window
-		BaseTerminalWindow::resizeWindow(width, height);
-	}
-
 	void TerminalWindow::repaint(vterm::Terminal::RepaintEvent & e) {
 		// do not bother with repainting if shadow buffer is invalid, the WM_PAINT will redraw the whole buffer when the redraw is processed
-		if (buffer_ == nullptr)
-			return;
-		forceUpdate_ = true;
+		doInvalidate();
 		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 	}
 
@@ -93,60 +82,21 @@ namespace tpp {
 		}
 	}
 
-	void TerminalWindow::updateBuffer() {
-		if (terminal() == nullptr)
-			return;
-		vterm::Terminal::Layer l = terminal()->getDefaultLayer();
-		/* Determine if cursor is to be shown by checking if the cursor is in the visible range. If it is, then make sure the cursor's position is set to dirty. 
-		 */
-		helpers::Point cp = terminal()->cursorPos();
-		bool cursorInRange = cp.col < cols() && cp.row < rows();
-		if (cursorInRange)
-			l->at(cp).dirty = true;
-		// initialize the font & colors
-		vterm::Cell & c = l->at(0,0);
-		vterm::Color currentFg = c.fg;
-		vterm::Color currentBg = c.bg;
-		vterm::Font currentFont = DropBlink(c.font);
-		SetTextColor(bufferDC_, RGB(currentFg.red, currentFg.green, currentFg.blue));
-		SetBkColor(bufferDC_, RGB(currentBg.red, currentBg.green,currentBg.blue));
+	void TerminalWindow::doPaint() {
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hWnd_, &ps);
+		bool forceDirty = false;
+		if (buffer_ == nullptr) {
+			buffer_ = CreateCompatibleBitmap(hdc, widthPx_, heightPx_);
+			SelectObject(bufferDC_, buffer_);
+			forceDirty = true;
+		}
 		SetBkMode(bufferDC_, OPAQUE);
-		SelectObject(bufferDC_, Font::GetOrCreate(currentFont, settings_->defaultFontHeight, zoom_)->handle());
-		for (unsigned row = 0; row < rows(); ++row) {
-			for (unsigned col = 0; col < cols(); ++col) {
-				vterm::Cell & c = l->at(col, row);
-				if (forceUpdate_ || c.dirty) {
-					c.dirty = false; // clear the dirty flag
-					if (currentFg != c.fg) {
-						currentFg = c.fg;
-						SetTextColor(bufferDC_, RGB(currentFg.red, currentFg.green, currentFg.blue));
-					}
-					if (currentBg != c.bg) {
-						currentBg = c.bg;
-						SetBkColor(bufferDC_, RGB(currentBg.red, currentBg.green, currentBg.blue));
-					}
-					if (currentFont != DropBlink(c.font)) {
-						currentFont = DropBlink(c.font);
-						SelectObject(bufferDC_, Font::GetOrCreate(currentFont, settings_->defaultFontHeight, zoom_)->handle());
-					}
-					// ISSUE 4 - make sure we can print full Unicode, not just UCS2 - perhaps not possible with GDI alone
-					wchar_t wc = c.c.toWChar();
-					TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
-				}
-			}
-		}
-		/* Determine whether the cursor character itself should be drawn and draw it if so. 
-		 */
-		if (cursorInRange && terminal()->cursorVisible() && (blink_ || ! terminal()->cursorBlink())) {
-			wchar_t wc = terminal()->cursorCharacter().toWChar();
-			SetTextColor(bufferDC_, RGB(255, 255, 255));
-			SetBkMode(bufferDC_, TRANSPARENT);
-			// select default font
-			// TODO - how should this change when we have multiple font sizes
-			SelectObject(bufferDC_, Font::GetOrCreate(vterm::Font(), settings_->defaultFontHeight, zoom_)->handle());
-			TextOutW(bufferDC_, cp.col * cellWidthPx_, cp.row * cellHeightPx_, &wc, 1);
-		}
-		forceUpdate_ = false;
+		// check if we ned to repaint any cells
+		doUpdateBuffer(forceDirty);
+		// copy the shadow image
+		BitBlt(hdc, 0, 0, widthPx_, heightPx_, bufferDC_, 0, 0, SRCCOPY);
+		EndPaint(hWnd_, &ps);
 	}
 
 	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
@@ -252,18 +202,7 @@ namespace tpp {
 			/* Repaint of the window is requested. */
 			case WM_PAINT: {
 				ASSERT(tw != nullptr) << "Attempt to paint unknown window";
-				PAINTSTRUCT ps;
-				HDC hdc = BeginPaint(hWnd, &ps);
-				if (tw->buffer_ == nullptr) {
-					tw->buffer_ = CreateCompatibleBitmap(hdc, tw->widthPx_, tw->heightPx_);
-					SelectObject(tw->bufferDC_, tw->buffer_);
-					tw->forceUpdate_ = true;
-				}
-				// check if we ned to repaint any cells
-				tw->updateBuffer();
-				// copy the shadow image
-				BitBlt(hdc, 0, 0, tw->widthPx_, tw->heightPx_, tw->bufferDC_, 0, 0, SRCCOPY);
-				EndPaint(hWnd, &ps);
+				tw->doPaint();
 				break;
         	}
 			/* TODO It would be nice to actually switch to unicode. */
@@ -302,7 +241,6 @@ namespace tpp {
 			case WM_TIMER: {
 				if (wParam == TIMERID_BLINK) {
 					tw->blink_ = !tw->blink_;
-					tw->updateBuffer();
 					InvalidateRect(hWnd, nullptr, /* erase */ false);
 				}
 				break;

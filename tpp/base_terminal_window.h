@@ -8,6 +8,8 @@
 namespace tpp {
 
 	/** Stores and retrieves font objects so that they do not have to be created each time they are needed. 
+
+	    Templated by the actual font handle, which is platform dependent. 
 	 */
 	template<typename T>
 	class FontSpec {
@@ -150,7 +152,10 @@ namespace tpp {
 
 		/** Redraws the window completely from the attached vterm. 
 		 */
-		virtual void redraw() = 0;
+		virtual void redraw() {
+			doInvalidate();
+			doPaint();
+		}
 
 	protected:
 
@@ -159,7 +164,7 @@ namespace tpp {
 			font.setBlink(false);
 			return font;
 		}
-
+		
 		BaseTerminalWindow(TerminalSettings * settings) :
 			vterm::Renderer(settings->defaultCols, settings->defaultRows),
 			settings_(settings),
@@ -169,7 +174,8 @@ namespace tpp {
 			zoom_(settings->defaultZoom),
 			fullscreen_(settings->fullscreen),
 			cellWidthPx_(settings->defaultFontWidth * settings->defaultZoom),
-			cellHeightPx_(settings->defaultFontHeight * settings->defaultZoom) {
+			cellHeightPx_(settings->defaultFontHeight * settings->defaultZoom),
+		    blink_(false) {
 
 		}
 
@@ -195,6 +201,7 @@ namespace tpp {
 		    Recalculates the number of columns and rows displayabe and calls the renderer's resize method which in turn updates the underlying terminal. When the terminal changes, it would trigger the repaint event on the window. 
 		 */
 		virtual void resizeWindow(unsigned widthPx, unsigned heightPx) {
+			doInvalidate();
 			widthPx_ = widthPx;
 			heightPx_ = heightPx;
 			resize(widthPx / cellWidthPx_, heightPx / cellHeightPx_);
@@ -215,6 +222,78 @@ namespace tpp {
 		virtual void doSetFullscreen(bool value) = 0;
 
 		virtual void doTitleChange(vterm::VT100::TitleEvent & e) = 0;
+
+		/** Invalidates the contents of the window without triggering immediate repaint. 
+		 */
+		virtual void doInvalidate() = 0;
+
+		/** Paints the window. 
+		 */
+		virtual void doPaint() = 0;
+
+		virtual void doSetForeground(vterm::Color const& fg) = 0;
+
+		virtual void doSetBackground(vterm::Color const& bg) = 0;
+
+		virtual void doSetFont(vterm::Font font) = 0;
+
+		virtual void doDrawCell(unsigned col, unsigned row, vterm::Cell const& c) = 0;
+
+		virtual void doDrawCursor(unsigned col, unsigned row, vterm::Cell const& c) = 0;
+
+		void doUpdateBuffer(bool forceDirty = false) {
+			vterm::Terminal::Layer l = terminal()->getDefaultLayer();
+			// initialize the first font and colors
+			vterm::Color fg;
+			vterm::Color bg;
+			vterm::Font font;
+			{
+				vterm::Cell& c = l->at(0, 0);
+				fg = c.fg;
+				bg = c.bg;
+				font = DropBlink(c.font);
+			}
+			doSetForeground(fg);
+			doSetBackground(bg);
+			doSetFont(font);
+			// if cursor state changed, mark the cell containing it as dirty
+			helpers::Point cp = terminal()->cursorPos();
+			bool cursorInRange = cp.col < cols() && cp.row < rows();
+			if (!forceDirty && cursorInRange)
+				l->at(cp.col, cp.row).dirty = true;
+			// now loop over the entire terminal and update the cells
+			for (unsigned r = 0, re = rows(); r < re; ++r) {
+				for (unsigned c = 0, ce = cols(); c < ce; ++c) {
+					vterm::Cell& cell = l->at(c, r);
+					if (forceDirty || cell.dirty) {
+						cell.dirty = false;
+						if (fg != cell.fg) {
+							fg = cell.fg;
+							doSetForeground(fg);
+						}
+						if (bg != cell.bg) {
+							bg = cell.bg;
+							doSetBackground(bg);
+						}
+						if (font != DropBlink(cell.font)) {
+							font = DropBlink(cell.font);
+							doSetFont(font);
+						}
+						doDrawCell(c, r, cell);
+					}
+				}
+			}
+			// determine whether cursor should be display and display it if so
+			if (cursorInRange && terminal()->cursorVisible() && (blink_ || !terminal()->cursorBlink())) {
+				vterm::Cell c = l->at(cp.col, cp.row);
+				// TODO these should be selected somewhere!
+				c.fg = vterm::Color::White();
+				c.bg = vterm::Color::Black();
+				c.c = terminal()->cursorCharacter();
+				c.font = DropBlink(c.font);
+				doDrawCursor(cp.col, cp.row, c);
+			}
+		}
 
 		TerminalSettings * settings_;
 
@@ -240,6 +319,12 @@ namespace tpp {
 		/** Height of a single cell in pixels. 
 		 */
 		unsigned cellHeightPx_;
+
+		/** Toggle for the visibility of the blinking text and cursor. 
+
+		    Should be toggled by the terminal window implementation in regular intervals. 
+		 */
+	    bool blink_;
 
 	};
 
