@@ -8,6 +8,15 @@
 
 namespace tpp {
 
+    namespace {
+
+        int X11ErrorHandler(Display * display, XErrorEvent * e) {
+            LOG << "X error: " << e->error_code;
+            return 0;
+        }
+
+    } // anonymous namespace
+
 	Display* Application::XDisplay_ = nullptr;
 	int Application::XScreen_ = 0;
 
@@ -18,6 +27,7 @@ namespace tpp {
 		if (XDisplay_ == nullptr)
 			THROW(helpers::Exception("Unable to open X display"));
 		XScreen_ = DefaultScreen(XDisplay_);
+        XSetErrorHandler(X11ErrorHandler);
 	}
 
 	Application::~Application() {
@@ -34,6 +44,8 @@ namespace tpp {
             TerminalWindow::EventHandler(e);
        }
 	}
+
+
 
 } // namespace tpp
 

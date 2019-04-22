@@ -85,6 +85,9 @@ namespace tpp {
 		Visual* visual_;
 		Colormap colorMap_;
 
+        GC gc_;
+        Pixmap buffer_;
+
 		static std::unordered_map<Window, TerminalWindow *> Windows_;
 
 	}; // TerminalWinfdow [linux]

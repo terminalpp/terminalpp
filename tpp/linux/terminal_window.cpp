@@ -26,8 +26,11 @@ namespace tpp {
 	    colorMap_(DefaultColormap(display_, screen_)) {
 		unsigned long black = BlackPixel(display_, screen_);	/* get color black */
 		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
+        Window parent = RootWindow(display_, screen_);
+
 		LOG << widthPx_ << " x " << heightPx_;
-		window_ = XCreateSimpleWindow(display_, RootWindow(display_, screen_), 0, 0, widthPx_, heightPx_, 1, white, black);
+
+		window_ = XCreateSimpleWindow(display_, parent, 0, 0, widthPx_, heightPx_, 1, white, black);
 
 		// from http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
 
@@ -43,6 +46,12 @@ namespace tpp {
 		*/
 		XSelectInput(display_, window_, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask);
 
+        XGCValues gcv;
+        memset(&gcv, 0, sizeof(XGCValues));
+    	gcv.graphics_exposures = False;
+        gc_ = XCreateGC(display_, parent, GCGraphicsExposures, &gcv);
+
+
         Windows_[window_] = this;
 	}
 
@@ -57,7 +66,7 @@ namespace tpp {
 
 	TerminalWindow::~TerminalWindow() {
         Windows_.erase(window_);
-		//XFreeGC(display_, gc_);
+		XFreeGC(display_, gc_);
 		XDestroyWindow(display_, window_);
 	}
 
@@ -78,6 +87,11 @@ namespace tpp {
 	}
 
 	void TerminalWindow::updateBuffer() {
+        LOG << " update start";
+        // create the buffer
+        buffer_ = XCreatePixmap(display_, window_, widthPx_, heightPx_, DefaultDepth(display_, screen_));
+
+
 		bool forceUpdate_ = true;
 		if (terminal() == nullptr)
 			return;
@@ -88,8 +102,8 @@ namespace tpp {
 		bool cursorInRange = cp.col < cols() && cp.row < rows();
 		if (cursorInRange)
 			l->at(cp).dirty = true;
-		XftDraw* draw = XftDrawCreate(display_, window_, visual_, colorMap_);
-        
+//		XftDraw* draw = XftDrawCreate(display_, window_, visual_, colorMap_);
+		XftDraw* draw = XftDrawCreate(display_, buffer_, visual_, colorMap_);
 		// initialize the font & colors
 		vterm::Cell & c = l->at(0, 0);
 		vterm::Color currentFg = c.fg;
@@ -138,6 +152,9 @@ namespace tpp {
 		}
 			*/
 			//forceUpdate_ = false;
+        XCopyArea(display_, buffer_, window_, gc_, 0, 0, widthPx_, heightPx_, 0, 0);
+        XftDrawDestroy(draw);
+        XFreePixmap(display_, buffer_);
 		LOG << "redraw done";
 	}
 
