@@ -90,7 +90,7 @@ namespace vterm {
 
 		// methods --------------------------------------------------------------------------------------
 
-		void keyDown(Key k) override;
+    void keyDown(Key k) override;
 
 		/* VT100 is not interested in keyups, the key is sent on keydown event alone. 
 		 */

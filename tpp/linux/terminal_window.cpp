@@ -41,7 +41,7 @@ namespace tpp {
 		/* this routine determines which types of input are allowed in
 		   the input.  see the appropriate section for details...
 		*/
-		XSelectInput(display_, window_, ExposureMask | ButtonPressMask | KeyPressMask);
+		XSelectInput(display_, window_, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask);
 
         Windows_[window_] = this;
 	}
@@ -62,7 +62,7 @@ namespace tpp {
 	}
 
 	void TerminalWindow::resizeWindow(unsigned width, unsigned height) {
-
+        BaseTerminalWindow::resizeWindow(width, height);
 	}
 
 	void TerminalWindow::repaint(vterm::Terminal::RepaintEvent& e) {
@@ -151,6 +151,13 @@ namespace tpp {
                 LOG << "Exposed";
                 tw->updateBuffer();
                 break;
+            /** Handles window resize, which should change the terminal size accordingly. 
+             */  
+            case ConfigureNotify: {
+                if (tw->widthPx_ != static_cast<unsigned>(e.xconfigure.width) || tw->heightPx_ != static_cast<unsigned>(e.xconfigure.height))
+                    tw->resizeWindow(e.xconfigure.width, e.xconfigure.height);
+                break;
+            }
             case MapNotify:
                 break;
             case KeyPress:

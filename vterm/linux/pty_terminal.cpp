@@ -78,7 +78,14 @@ namespace vterm {
 	}
 
 	void PTYTerminal::doResize(unsigned cols, unsigned rows) {
-		return;
+        struct winsize s;
+        s.ws_row = rows;
+        s.ws_col = cols;
+        s.ws_xpixel = 0;
+        s.ws_ypixel = 0;
+        LOG << "Terminal window resized: " << cols << "x" << rows;
+        if (ioctl(pipe_, TIOCSWINSZ, &s) < 0)
+            NOT_IMPLEMENTED;
 	}
 
 	bool PTYTerminal::write(char const* buffer, size_t size) {
