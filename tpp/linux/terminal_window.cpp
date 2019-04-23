@@ -23,7 +23,9 @@ namespace tpp {
 		display_(Application::XDisplay()),
 		screen_(Application::XScreen()),
 	    visual_(DefaultVisual(display_, screen_)),
-	    colorMap_(DefaultColormap(display_, screen_)) {
+	    colorMap_(DefaultColormap(display_, screen_)),
+	    buffer_(0),
+	    draw_(nullptr) {
 		unsigned long black = BlackPixel(display_, screen_);	/* get color black */
 		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
         Window parent = RootWindow(display_, screen_);
@@ -60,22 +62,17 @@ namespace tpp {
 		//XMapRaised(display_, window_);
 	}
 
-	void TerminalWindow::redraw() {
-		updateBuffer();
-	}
-
 	TerminalWindow::~TerminalWindow() {
         Windows_.erase(window_);
+		doInvalidate();
 		XFreeGC(display_, gc_);
 		XDestroyWindow(display_, window_);
 	}
 
-	void TerminalWindow::resizeWindow(unsigned width, unsigned height) {
-        BaseTerminalWindow::resizeWindow(width, height);
-	}
-
 	void TerminalWindow::repaint(vterm::Terminal::RepaintEvent& e) {
-		updateBuffer();
+		doInvalidate();
+		// TODO actually invalidate the window, is this really doUpdateBuffer
+		doPaint();
 	}
 
 	void TerminalWindow::doSetFullscreen(bool value) {
@@ -86,6 +83,25 @@ namespace tpp {
 
 	}
 
+	void TerminalWindow::doPaint() {
+		LOG << "doPaint";
+		ASSERT(draw_ == nullptr);
+		bool forceDirty = false;
+		if (buffer_ == 0) {
+			buffer_ = XCreatePixmap(display_, window_, widthPx_, heightPx_, DefaultDepth(display_, screen_));
+			ASSERT(buffer_ != 0);
+			forceDirty = true;
+		}
+		draw_ = XftDrawCreate(display_, buffer_, visual_, colorMap_);
+		doUpdateBuffer(forceDirty);
+		XCopyArea(display_, buffer_, window_, gc_, 0, 0, widthPx_, heightPx_, 0, 0);
+		XftDrawDestroy(draw_);
+		draw_ = nullptr;
+		LOG << "doPaint done";
+	}
+
+
+#ifdef HAHA
 	void TerminalWindow::updateBuffer() {
         LOG << " update start";
         // create the buffer
@@ -157,6 +173,7 @@ namespace tpp {
         XFreePixmap(display_, buffer_);
 		LOG << "redraw done";
 	}
+#endif
 
     void TerminalWindow::EventHandler(XEvent & e) {
         TerminalWindow * tw = nullptr;
@@ -166,7 +183,7 @@ namespace tpp {
         switch(e.type) {
             case Expose:
                 LOG << "Exposed";
-                tw->updateBuffer();
+                tw->doPaint();
                 break;
             /** Handles window resize, which should change the terminal size accordingly. 
              */  
@@ -178,7 +195,7 @@ namespace tpp {
             case MapNotify:
                 break;
             case KeyPress:
-				tw->updateBuffer();
+				tw->redraw();
                 return;
             case ButtonPress:
                 break;

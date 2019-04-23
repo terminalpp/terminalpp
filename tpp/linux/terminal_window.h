@@ -47,19 +47,43 @@ namespace tpp {
 			NOT_IMPLEMENTED;
 		}
 
-		void redraw() override;
-
 	protected:
 
 		~TerminalWindow() override;
-
-		void resizeWindow(unsigned width, unsigned height) override;
 
 		void repaint(vterm::Terminal::RepaintEvent& e) override;
 
 		void doSetFullscreen(bool value) override;
 
 		void doTitleChange(vterm::VT100::TitleEvent& e) override;
+
+		void doInvalidate() override {
+			if (buffer_ != 0)
+			    XFreePixmap(display_, buffer_);
+		}
+
+		void doPaint() override;
+
+		void doSetForeground(vterm::Color const& fg) override {
+			fg_ = toXftColor(fg);
+		}
+
+		void doSetBackground(vterm::Color const& bg) override {
+			bg_ = toXftColor(bg);
+		}
+
+		void doSetFont(vterm::Font font) override {
+			font_ = Font::GetOrCreate(font, settings_->defaultFontHeight, zoom_);
+		}
+
+		void doDrawCell(unsigned col, unsigned row, vterm::Cell const& c) override {
+			XftDrawRect(draw_, &bg_, col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_, cellHeightPx_);
+			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font_->handle()->descent, (XftChar8*)(c.c.rawBytes()), c.c.size());
+		}
+
+		void doDrawCursor(unsigned col, unsigned row, vterm::Cell const& c) override {
+			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font_->handle()->descent, (XftChar8*)(c.c.rawBytes()), c.c.size());
+		}
 
 		XftColor toXftColor(vterm::Color const& c) {
 			XftColor result;
@@ -75,7 +99,7 @@ namespace tpp {
         friend class Application;
 
 
-		void updateBuffer();
+		//void updateBuffer();
 
         static void EventHandler(XEvent & e);
 
@@ -87,6 +111,11 @@ namespace tpp {
 
         GC gc_;
         Pixmap buffer_;
+
+		XftDraw * draw_;
+		XftColor fg_;
+		XftColor bg_;
+		Font * font_;
 
 		static std::unordered_map<Window, TerminalWindow *> Windows_;
 

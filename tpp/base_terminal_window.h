@@ -231,69 +231,33 @@ namespace tpp {
 		 */
 		virtual void doPaint() = 0;
 
+		/** Sets the foreground color for next cells or cursor to be drawn.  
+		 */
 		virtual void doSetForeground(vterm::Color const& fg) = 0;
 
+		/** Sets the background color for next cells to be drawn note that backrgound color should not be used when drawing the cursor. 
+		 */
 		virtual void doSetBackground(vterm::Color const& bg) = 0;
 
+		/** Sets the font for next cells or cursor to be drawn.
+		 */
 		virtual void doSetFont(vterm::Font font) = 0;
 
+		/** Draws single cell. 
+		 */
 		virtual void doDrawCell(unsigned col, unsigned row, vterm::Cell const& c) = 0;
 
+		/** Draws the cursor, described as a cell. 
+
+		    Only the font, character and foreground color from the cell should be used. 
+		 */
 		virtual void doDrawCursor(unsigned col, unsigned row, vterm::Cell const& c) = 0;
 
-		void doUpdateBuffer(bool forceDirty = false) {
-			vterm::Terminal::Layer l = terminal()->getDefaultLayer();
-			// initialize the first font and colors
-			vterm::Color fg;
-			vterm::Color bg;
-			vterm::Font font;
-			{
-				vterm::Cell& c = l->at(0, 0);
-				fg = c.fg;
-				bg = c.bg;
-				font = DropBlink(c.font);
-			}
-			doSetForeground(fg);
-			doSetBackground(bg);
-			doSetFont(font);
-			// if cursor state changed, mark the cell containing it as dirty
-			helpers::Point cp = terminal()->cursorPos();
-			bool cursorInRange = cp.col < cols() && cp.row < rows();
-			if (!forceDirty && cursorInRange)
-				l->at(cp.col, cp.row).dirty = true;
-			// now loop over the entire terminal and update the cells
-			for (unsigned r = 0, re = rows(); r < re; ++r) {
-				for (unsigned c = 0, ce = cols(); c < ce; ++c) {
-					vterm::Cell& cell = l->at(c, r);
-					if (forceDirty || cell.dirty) {
-						cell.dirty = false;
-						if (fg != cell.fg) {
-							fg = cell.fg;
-							doSetForeground(fg);
-						}
-						if (bg != cell.bg) {
-							bg = cell.bg;
-							doSetBackground(bg);
-						}
-						if (font != DropBlink(cell.font)) {
-							font = DropBlink(cell.font);
-							doSetFont(font);
-						}
-						doDrawCell(c, r, cell);
-					}
-				}
-			}
-			// determine whether cursor should be display and display it if so
-			if (cursorInRange && terminal()->cursorVisible() && (blink_ || !terminal()->cursorBlink())) {
-				vterm::Cell c = l->at(cp.col, cp.row);
-				// TODO these should be selected somewhere!
-				c.fg = vterm::Color::White();
-				c.bg = vterm::Color::Black();
-				c.c = terminal()->cursorCharacter();
-				c.font = DropBlink(c.font);
-				doDrawCursor(cp.col, cp.row, c);
-			}
-		}
+		/** Updates the terminal buffer displayed. 
+
+		    Triggers repaint of all dirty terminal cells (or all cells if forceDirty is true) and the cursor. 
+		 */
+		void doUpdateBuffer(bool forceDirty = false);
 
 		TerminalSettings * settings_;
 
