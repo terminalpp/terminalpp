@@ -154,7 +154,7 @@ namespace tpp {
 		 */
 		virtual void redraw() {
 			doInvalidate();
-			doPaint();
+			//doPaint();
 		}
 
 	protected:

@@ -74,7 +74,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Terminal * t = new Terminal("wsl -e screenfetch", 80, 25, vterm::Palette::Colors16, 15, 0);
 	//Terminal * t = new Terminal("wsl -e bash", 80, 25, vterm::Palette::Colors16, 15, 0);
 	//Terminal* t = new Terminal("wsl -e infocmp", 80, 25, vterm::Palette::Colors16, 15, 0);
-	Terminal* t = new Terminal("wsl -e mc", 80, 25, vterm::Palette::Colors16, 15, 0);
+	//Terminal* t = new Terminal("wsl -e mc", 80, 25, vterm::Palette::Colors16, 15, 0);
     //Terminal * t = new Terminal("wsl -e emacs ~/settings/emacs/init.el", 80, 25, vterm::Palette::Colors16, 15, 0);
 	//Terminal * t = new Terminal("wsl -e bash -c \"ssh orange \"", 80, 25, vterm::Palette::Colors16, 15, 0);
 
@@ -101,8 +101,8 @@ int main(int argc, char* argv[]) {
 		ts.defaultFontWidth = 0;
 		ts.defaultZoom = 1;
 
-		helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
-		helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
+		//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
+		//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
 
 
 		FixMissingSettings(ts);

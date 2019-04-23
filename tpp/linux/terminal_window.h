@@ -1,6 +1,8 @@
 #pragma once
 #ifdef __linux__
 
+#include <mutex>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
@@ -58,8 +60,17 @@ namespace tpp {
 		void doTitleChange(vterm::VT100::TitleEvent& e) override;
 
 		void doInvalidate() override {
-			if (buffer_ != 0)
+            std::lock_guard<std::mutex> g(drawGuard_);
+			if (buffer_ != 0) {
 			    XFreePixmap(display_, buffer_);
+                buffer_ = 0;
+            }
+                // also trigger a refresh
+                XExposeEvent msg;
+                msg.type = Expose;
+                msg.display = display_;
+                msg.window = window_;
+                XSendEvent(display_, window_, true, 0, (XEvent *) & msg);
 		}
 
 		void doPaint() override;
@@ -116,6 +127,8 @@ namespace tpp {
 		XftColor fg_;
 		XftColor bg_;
 		Font * font_;
+
+        std::mutex drawGuard_;
 
 		static std::unordered_map<Window, TerminalWindow *> Windows_;
 
