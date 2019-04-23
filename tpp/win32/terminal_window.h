@@ -82,6 +82,7 @@ namespace tpp {
 		void doInvalidate() override {
 			DeleteObject(buffer_);
 			buffer_ = nullptr;
+			InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 		}
 
 		void doPaint() override;

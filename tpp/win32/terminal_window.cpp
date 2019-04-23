@@ -44,7 +44,6 @@ namespace tpp {
 	void TerminalWindow::repaint(vterm::Terminal::RepaintEvent & e) {
 		// do not bother with repainting if shadow buffer is invalid, the WM_PAINT will redraw the whole buffer when the redraw is processed
 		doInvalidate();
-		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 	}
 
 	/** Basically taken from:
