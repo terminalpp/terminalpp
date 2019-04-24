@@ -90,16 +90,10 @@ namespace vterm {
 				return * layer_;
 			}
 
-			/** Marks the given rectangle as changed, which will trigger the onPaint event on a rectangle encompassing when the layer is deleted. 
+			/** Marks the layer changed so that when the layer accessor object is terminated, the terminal will repaint. 
 			 */
-			void commitRect(helpers::Rect rect) {
-				changed_ = helpers::Rect::Union(changed_, rect);
-			}
-
-			/** Marks the entire terminal area as changed, which will trigger repaint of everything when the layer is deleted. 
-			 */
-			void commitAll() {
-				changed_ = helpers::Rect{ 0,0, terminal_->cols_, terminal_->rows_ };
+			void markChanged() {
+				changed_ = true;
 			}
 
 			/** To prevent data inconsistency, there could be only one instance of a layer pointer per terminal at any given time.
@@ -111,7 +105,7 @@ namespace vterm {
 			Layer(Layer && from) :
 				terminal_(from.terminal_),
 				layer_(from.layer_),
-			    changed_(from.changed_) {
+                changed_(from.changed_) {
 				from.terminal_ = nullptr;
 			}
 
@@ -120,7 +114,8 @@ namespace vterm {
 			~Layer() {
 				if (terminal_ != nullptr) {
 					terminal_->m_.unlock();
-					terminal_->repaintRect(changed_);
+                    if (changed_)
+					    terminal_->repaint();
 				}
 			}
 
@@ -130,13 +125,13 @@ namespace vterm {
 			Layer(Terminal * terminal, LayerImpl * layer) :
 				terminal_(terminal),
 				layer_(layer),
-				changed_{ 0,0,0,0 } {
+                changed_(false) {
 				terminal_->m_.lock();
 			}
 
 			Terminal * terminal_;
 			LayerImpl * layer_;
-			helpers::Rect changed_;
+            bool changed_;
 		};
 
 		// events ---------------------------------------------------------------------------------
@@ -156,7 +151,7 @@ namespace vterm {
 		};
 
 		typedef helpers::EventPayload<Size, helpers::Object> ResizeEvent;
-		typedef helpers::EventPayload<helpers::Rect, helpers::Object> RepaintEvent;
+		typedef helpers::EventPayload<void, helpers::Object> RepaintEvent;
 
 		/** Triggered when the terminal is resized.
 		 */
@@ -237,14 +232,8 @@ namespace vterm {
 		 */
 		Terminal(unsigned cols, unsigned rows);
 
-		void repaintRect(helpers::Rect rect) {
-			ASSERT(helpers::Rect::Intersection(rect, helpers::Rect{ 0,0,cols_,rows_ }) == rect);
-			if (!rect.empty())
-				trigger(onRepaint, rect);
-		}
-
-		void repaintAll() {
-			trigger(onRepaint, helpers::Rect{ 0,0,cols_, rows_ });
+		void repaint() {
+    		trigger(onRepaint);
 		}
 
 		/** Actually resizes the terminal.

@@ -71,8 +71,6 @@ namespace tpp {
 		 */
 		~TerminalWindow() override;
 
-		void repaint(vterm::Terminal::RepaintEvent & e) override;
-
 		void doSetFullscreen(bool value) override;
 
 		void doTitleChange(vterm::VT100::TitleEvent & e) override;
@@ -80,9 +78,10 @@ namespace tpp {
 		/** Deletes the double buffer object. 
 		 */
 		void doInvalidate() override {
-			DeleteObject(buffer_);
-			buffer_ = nullptr;
-			InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
+            // set the invalidate flag
+            BaseTerminalWindow::doInvalidate(); 
+            // repaint the window
+    		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 		}
 
 		void doPaint() override;

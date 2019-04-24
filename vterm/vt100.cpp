@@ -342,9 +342,7 @@ namespace vterm {
 			LOG(SEQ) << "text " << text;
 			text.clear();
 		}
-
-		// TODO do not repaint all but only what has changed
-		repaintAll();
+		repaint();
 	}
 
 

@@ -62,18 +62,11 @@ namespace vterm {
 		    rows_(rows) {
 		}
 
-		/** Triggered when the selected part of the terminal screen has been changed. 
+		/** Triggered when the screen contents has changed. 
 
 		    This method is to be overriden by the respective renderers. 
 		 */
 		virtual void repaint(Terminal::RepaintEvent & e) = 0;
-
-		/** Triggers repainting of the entire terminal contents. 
-		 */
-		void repaintAll() {
-			Terminal::RepaintEvent re(nullptr, helpers::Rect{ 0,0,cols_,rows_ });
-			repaint(re);
-		}
 
 		/** Resizes the terminal to given size.
 
@@ -94,8 +87,10 @@ namespace vterm {
 			// inform the terminal that a new renderer has been attached and subscribe to its repaint event
 			if (terminal_ != nullptr) {
 				terminal_->onRepaint += HANDLER(Renderer::repaint);
-				if (!terminal_->resize(cols_, rows_))
-					repaintAll();
+				if (!terminal_->resize(cols_, rows_)) {
+                    Terminal::RepaintEvent re(terminal);
+					repaint(re);
+                }
 			}
 		}
 

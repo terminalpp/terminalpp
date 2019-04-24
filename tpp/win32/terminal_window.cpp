@@ -41,11 +41,6 @@ namespace tpp {
 		DeleteObject(bufferDC_);
 	}
 
-	void TerminalWindow::repaint(vterm::Terminal::RepaintEvent & e) {
-		// do not bother with repainting if shadow buffer is invalid, the WM_PAINT will redraw the whole buffer when the redraw is processed
-		doInvalidate();
-	}
-
 	/** Basically taken from:
 
 	    https://devblogs.microsoft.com/oldnewthing/20100412-00/?p=14353
@@ -85,10 +80,15 @@ namespace tpp {
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd_, &ps);
 		bool forceDirty = false;
+        if (invalidated_ && buffer_ != nullptr) {
+			DeleteObject(buffer_);
+			buffer_ = nullptr;
+        }
 		if (buffer_ == nullptr) {
 			buffer_ = CreateCompatibleBitmap(hdc, widthPx_, heightPx_);
 			SelectObject(bufferDC_, buffer_);
 			forceDirty = true;
+            invalidated_ = false;
 		}
 		SetBkMode(bufferDC_, OPAQUE);
 		// check if we ned to repaint any cells
