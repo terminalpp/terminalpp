@@ -82,7 +82,7 @@ namespace tpp {
 		LOG << "doPaint";
 		ASSERT(draw_ == nullptr);
 		bool forceDirty = false;
-        if (invalidated_) {
+        if (invalidated_ && buffer_ != 0) {
             XFreePixmap(display_, buffer_);
             buffer_ = 0;
         }
@@ -90,9 +90,18 @@ namespace tpp {
 			buffer_ = XCreatePixmap(display_, window_, widthPx_, heightPx_, DefaultDepth(display_, screen_));
 			ASSERT(buffer_ != 0);
 			forceDirty = true;
+            invalidated_ = false;
 		}
 		draw_ = XftDrawCreate(display_, buffer_, visual_, colorMap_);
 		doUpdateBuffer(forceDirty);
+        // first clear the borders that won't be used (don't clear the whole window to prevent flicker)
+        unsigned marginRight = widthPx_ % cellWidthPx_;
+        unsigned marginBottom = heightPx_ % cellHeightPx_;
+        if (marginRight != 0) 
+            XClearArea(display_, window_, widthPx_ - marginRight, 0, marginRight, heightPx_, false);
+        if (marginBottom != 0)
+            XClearArea(display_, window_, 0, heightPx_ - marginBottom, widthPx_, marginBottom, false);
+        // now bitblt the buffer
 		XCopyArea(display_, buffer_, window_, gc_, 0, 0, widthPx_, heightPx_, 0, 0);
 		XftDrawDestroy(draw_);
 		draw_ = nullptr;

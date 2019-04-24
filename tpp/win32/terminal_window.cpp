@@ -80,15 +80,15 @@ namespace tpp {
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd_, &ps);
 		bool forceDirty = false;
-        if (invalidated_) {
+        if (invalidated_ && buffer_ != nullptr) {
 			DeleteObject(buffer_);
 			buffer_ = nullptr;
-            invalidated_ = false;
         }
 		if (buffer_ == nullptr) {
 			buffer_ = CreateCompatibleBitmap(hdc, widthPx_, heightPx_);
 			SelectObject(bufferDC_, buffer_);
 			forceDirty = true;
+            invalidated_ = false;
 		}
 		SetBkMode(bufferDC_, OPAQUE);
 		// check if we ned to repaint any cells
