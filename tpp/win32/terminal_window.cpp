@@ -41,12 +41,6 @@ namespace tpp {
 		DeleteObject(bufferDC_);
 	}
 
-	void TerminalWindow::repaint(vterm::Terminal::RepaintEvent & e) {
-		// do not bother with repainting if shadow buffer is invalid, the WM_PAINT will redraw the whole buffer when the redraw is processed
-		doInvalidate();
-		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
-	}
-
 	/** Basically taken from:
 
 	    https://devblogs.microsoft.com/oldnewthing/20100412-00/?p=14353
@@ -86,6 +80,11 @@ namespace tpp {
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd_, &ps);
 		bool forceDirty = false;
+        if (invalidated_) {
+			DeleteObject(buffer_);
+			buffer_ = nullptr;
+            invalidated_ = false;
+        }
 		if (buffer_ == nullptr) {
 			buffer_ = CreateCompatibleBitmap(hdc, widthPx_, heightPx_);
 			SelectObject(bufferDC_, buffer_);

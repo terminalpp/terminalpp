@@ -53,24 +53,21 @@ namespace tpp {
 
 		~TerminalWindow() override;
 
-		void repaint(vterm::Terminal::RepaintEvent& e) override;
-
 		void doSetFullscreen(bool value) override;
 
 		void doTitleChange(vterm::VT100::TitleEvent& e) override;
 
 		void doInvalidate() override {
-            std::lock_guard<std::mutex> g(drawGuard_);
-			if (buffer_ != 0) {
-			    XFreePixmap(display_, buffer_);
-                buffer_ = 0;
-            }
-                // also trigger a refresh
-                XExposeEvent msg;
-                msg.type = Expose;
-                msg.display = display_;
-                msg.window = window_;
-                XSendEvent(display_, window_, true, 0, (XEvent *) & msg);
+            // set the flag
+            BaseTerminalWindow::doInvalidate(); 
+            // trigger a refresh
+            XExposeEvent msg;
+            memset(&msg, 0, sizeof(XExposeEvent));
+            msg.type = Expose;
+            msg.display = display_;
+            msg.window = window_;
+            XSendEvent(display_, window_, false, ExposureMask, (XEvent *) & msg);
+            XFlush(display_);
 		}
 
 		void doPaint() override;
@@ -129,6 +126,7 @@ namespace tpp {
 		Font * font_;
 
         std::mutex drawGuard_;
+        std::atomic<bool> invalidate_;
 
 		static std::unordered_map<Window, TerminalWindow *> Windows_;
 

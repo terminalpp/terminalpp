@@ -28,7 +28,7 @@ namespace tpp {
 			THROW(helpers::Exception("Unable to open X display"));
 		XScreen_ = DefaultScreen(XDisplay_);
         XSetErrorHandler(X11ErrorHandler);
-        XSynchronize(XDisplay_, true);
+        //XSynchronize(XDisplay_, true);
 
 	}
 

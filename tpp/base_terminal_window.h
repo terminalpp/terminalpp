@@ -195,6 +195,9 @@ namespace tpp {
 			Renderer::doDetachTerminal(terminal);
 		}
 
+        void repaint(vterm::Terminal::RepaintEvent & e) override {
+            doInvalidate();
+        }
 
 		/** Handles resize of the window's client area (in pixels). 
 
@@ -223,9 +226,13 @@ namespace tpp {
 
 		virtual void doTitleChange(vterm::VT100::TitleEvent & e) = 0;
 
-		/** Invalidates the contents of the window without triggering immediate repaint. 
+		/** Invalidates the contents of the window and triggers a repaint.
+
+            The base window sets the invalidation flag and the implementations should provide the repaint trigger. 
 		 */
-		virtual void doInvalidate() = 0;
+		virtual void doInvalidate() {
+            invalidated_ = true;
+        }
 
 		/** Paints the window. 
 		 */
@@ -289,6 +296,12 @@ namespace tpp {
 		    Should be toggled by the terminal window implementation in regular intervals. 
 		 */
 	    bool blink_;
+
+        /** If true, the entire window contents has been invalidated and the window should be repainted.
+         
+            If the window contents is buffered, the flag also means that the buffer must be recreated (such as when window size changes).
+         */
+        bool invalidated_;
 
 	};
 

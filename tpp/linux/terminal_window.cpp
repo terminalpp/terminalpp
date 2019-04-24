@@ -69,22 +69,6 @@ namespace tpp {
 		XDestroyWindow(display_, window_);
 	}
 
-	void TerminalWindow::repaint(vterm::Terminal::RepaintEvent& e) {
-		doInvalidate();
-		// TODO actually invalidate the window, is this really doUpdateBuffer
-        /*XClientMessageEvent msg;
-        msg.type = ClientMessage;
-        msg.message_type = 1;
-        msg.format = 8; */
-/*
-        XExposeEvent msg;
-        msg.type = Expose;
-        msg.display = display_;
-        msg.window = window_;
-        XSendEvent(display_, window_, true, 0, (XEvent *) & msg);
-		//doPaint(); */
-	}
-
 	void TerminalWindow::doSetFullscreen(bool value) {
 
 	}
@@ -98,6 +82,10 @@ namespace tpp {
 		LOG << "doPaint";
 		ASSERT(draw_ == nullptr);
 		bool forceDirty = false;
+        if (invalidated_) {
+            XFreePixmap(display_, buffer_);
+            buffer_ = 0;
+        }
 		if (buffer_ == 0) {
 			buffer_ = XCreatePixmap(display_, window_, widthPx_, heightPx_, DefaultDepth(display_, screen_));
 			ASSERT(buffer_ != 0);
