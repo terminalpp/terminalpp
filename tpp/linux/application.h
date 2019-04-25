@@ -34,6 +34,7 @@ namespace tpp {
 		/** X11 display. */
 		static Display* XDisplay_;
 		static int XScreen_;
+        static XIM XIm_;
 
 	}; // tpp::Application [linux]
 

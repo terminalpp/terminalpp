@@ -19,6 +19,7 @@ namespace tpp {
 
 	Display* Application::XDisplay_ = nullptr;
 	int Application::XScreen_ = 0;
+    XIM Application::XIm_;
 
 	Application::Application() {
         XInitThreads();
@@ -29,6 +30,16 @@ namespace tpp {
 		XScreen_ = DefaultScreen(XDisplay_);
         //XSetErrorHandler(X11ErrorHandler);
         //XSynchronize(XDisplay_, true);
+
+
+        // set the default machine locale instead of the "C" locale
+        setlocale(LC_CTYPE, "");
+        XSetLocaleModifiers("");
+
+        // create X Input Method, each window then has its own context
+        XIm_ = XOpenIM(XDisplay_, nullptr, nullptr, nullptr);
+        ASSERT(XIm_ != nullptr);
+
 	}
 
 	Application::~Application() {

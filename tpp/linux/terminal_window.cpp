@@ -53,6 +53,9 @@ namespace tpp {
     	gcv.graphics_exposures = False;
         gc_ = XCreateGC(display_, parent, GCGraphicsExposures, &gcv);
 
+        // create input context for the window... The extra arguments to the XCreateIC are c-c c-v from the internet and for now are a mystery to me
+    	ic_ = XCreateIC(Application::XIm_, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+    				XNClientWindow, window_, XNFocusWindow, window_, nullptr);
 
         Windows_[window_] = this;
 	}
@@ -128,9 +131,17 @@ namespace tpp {
             }
             case MapNotify:
                 break;
-            case KeyPress:
+            case KeyPress: {
+                KeySym kSym;
+                char str[32];
+                Status status;
+                int strLen = Xutf8LookupString(tw->ic_, & e.xkey, str, sizeof str, &kSym, &status);
+                //int strLen = XLookupString(&e.xkey, str, sizeof(str), &kSym, nullptr);
+                str[strLen] = 0;
+                LOG << "Key press " << XKeysymToString(kSym) << "(" << kSym << "):" <<  str << "(size: " << strLen << ")";
 				tw->redraw();
                 return;
+            }
             case ButtonPress:
                 break;
             default:

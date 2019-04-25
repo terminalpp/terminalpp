@@ -116,6 +116,7 @@ namespace tpp {
 		int screen_;
 		Visual* visual_;
 		Colormap colorMap_;
+        XIC ic_;
 
         GC gc_;
         Pixmap buffer_;
