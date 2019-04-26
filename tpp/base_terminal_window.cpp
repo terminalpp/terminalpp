@@ -2,11 +2,11 @@
 
 namespace tpp {
 
-	void BaseTerminalWindow::doSendChar(vterm::Char::UTF8 c) {
+	void BaseTerminalWindow::sendChar(vterm::Char::UTF8 c) {
 		terminal()->sendChar(c);
 	}
 
-	void BaseTerminalWindow::doKeyDown(vterm::Key key) {
+	void BaseTerminalWindow::keyDown(vterm::Key key) {
 		if (key == vterm::Key::Enter + vterm::Key::Alt) {
 			setFullscreen(!fullscreen());
 		} else if (key == vterm::Key::F5) {
@@ -21,7 +21,7 @@ namespace tpp {
 		}
 	}
 
-	void BaseTerminalWindow::doKeyUp(vterm::Key key) {
+	void BaseTerminalWindow::keyUp(vterm::Key key) {
 		terminal()->keyUp(key);
 	}
 

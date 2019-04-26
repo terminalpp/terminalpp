@@ -106,7 +106,7 @@ namespace tpp {
 		unsigned shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? vterm::Key::Shift : 0;
 		unsigned ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) ? vterm::Key::Ctrl : 0;
 		unsigned alt = (GetAsyncKeyState(VK_MENU) & 0x8000) ? vterm::Key::Alt : 0;
-		unsigned win = (GetAsyncKeyState(VK_LWIN) & 0x8000) || (GetAsyncKeyState(VK_RWIN) & 0x8000) ? vterm::Key::Meta : 0;
+		unsigned win = (GetAsyncKeyState(VK_LWIN) & 0x8000) || (GetAsyncKeyState(VK_RWIN) & 0x8000) ? vterm::Key::Win : 0;
 
 		return vterm::Key(vk, shift | ctrl | alt | win);
 	}
@@ -210,16 +210,31 @@ namespace tpp {
 				break;
 			case WM_CHAR:
 				if (wParam >= 0x20)
-					tw->doSendChar(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
+				    tw->terminal()->charInput(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
 				break;
 			/* DEBUG - debugging events hooked to keypresses now: */
 			/* Processes special key events.*/
 			case WM_SYSKEYDOWN:
-			case WM_KEYDOWN: 
-				tw->doKeyDown(GetKey(wParam));
+			case WM_KEYDOWN: {
+				vterm::Key k = GetKey(wParam);
+				if (k == (vterm::Key::Enter | vterm::Key::Alt)) {
+					tw->setFullscreen(!tw->fullscreen());
+				}
+				else if (k == vterm::Key::F5) {
+					tw->redraw();
+				} else if (k == vterm::Key::F4) {
+					if (tw->zoom() == 1)
+						tw->setZoom(2);
+					else
+						tw->setZoom(1);
+				} else if (k != vterm::Key::Invalid) {
+					tw->terminal()->keyDown(k);
+				}
 				break;
+			}
 			case WM_KEYUP: {
-				tw->doKeyUp(GetKey(wParam));
+				vterm::Key k = GetKey(wParam);
+				tw->terminal()->keyUp(k);
 				break;
 			}
 			case WM_TIMER: {

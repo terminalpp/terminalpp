@@ -101,8 +101,8 @@ int main(int argc, char* argv[]) {
 		ts.defaultFontWidth = 0;
 		ts.defaultZoom = 1;
 
-		//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
-		//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
+		helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
+		helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
 
 
 		FixMissingSettings(ts);
@@ -117,7 +117,8 @@ int main(int argc, char* argv[]) {
 		//Terminal* t = new Terminal("ls", { "-la" }, 100, 40, vterm::Palette::Colors16, 15, 0);
 		//Terminal* t = new Terminal("infocmp", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
 		//Terminal* t = new Terminal("screenfetch", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		Terminal* t = new Terminal("mc", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
+		//Terminal* t = new Terminal("mc", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
+		Terminal* t = new Terminal("bash", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
 
 		tw->attachTerminal(t);
 

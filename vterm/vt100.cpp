@@ -235,7 +235,7 @@ namespace vterm {
 		std::string const* seq = keyMap_.getSequence(k);
 		if (seq != nullptr) {
 			write(seq->c_str(), seq->size());
-			LOG << "key sent" << (unsigned) seq->c_str()[0] << " - " << seq->size();
+			LOG << "key sent " << (unsigned) seq->c_str()[0] << " - " << seq->size() << " " << seq->substr(1);
 		}
 		LOG << "Key pressed: " << k;
 	}

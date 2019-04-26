@@ -89,6 +89,8 @@ namespace vterm {
 	}
 
 	bool PTYTerminal::write(char const* buffer, size_t size) {
+        int nw = ::write(pipe_, (void*) buffer, size);
+        ASSERT(nw == size);
 		return true;
 	}
 

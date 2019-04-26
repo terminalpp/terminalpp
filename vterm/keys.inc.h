@@ -16,7 +16,8 @@ KEY(Left,37)
 KEY(Up,38)
 KEY(Right,39)
 KEY(Down,40)
-KEY(PrintScreen,44)
+// not supported in X11 
+//KEY(PrintScreen,44)
 KEY(Insert,45)
 KEY(Delete,46)
 KEY(Num0,'0') // 48
@@ -99,7 +100,7 @@ KEY(Minus,0xbd)
 KEY(Dot,0xbe)
 
 KEY(Slash,0xbf)
-KEY(Tick,0xc0)
+KEY(Tick,0xc0) // `
 
 KEY(SquareOpen,0xdb)
 KEY(Backslash,0xdc)

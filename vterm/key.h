@@ -22,7 +22,7 @@ namespace vterm {
 		static constexpr unsigned Shift = 1 << 16;
 		static constexpr unsigned Ctrl = 1 << 17;
 		static constexpr unsigned Alt = 1 << 18;
-		static constexpr unsigned Meta = 1 << 19;
+		static constexpr unsigned Win = 1 << 19;
 
 		static constexpr unsigned Invalid = 0;
 

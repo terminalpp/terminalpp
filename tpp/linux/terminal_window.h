@@ -109,6 +109,10 @@ namespace tpp {
 
 		//void updateBuffer();
 
+        /** Converts the KeySym and state as reported by X11 to vterm's Key. 
+         */
+        static vterm::Key GetKey(KeySym k, unsigned state);
+
         static void EventHandler(XEvent & e);
 
 		Window window_;

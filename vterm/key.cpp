@@ -19,8 +19,8 @@ namespace vterm {
 			s << "C-";
 		if (k | Key::Alt)
 			s << "A-";
-		if (k | Key::Meta)
-			s << "M-";
+		if (k | Key::Win)
+			s << "W-";
 		switch (k.code()) {
 		case Key::Invalid:
 			s << "Invalid";

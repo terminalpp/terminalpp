@@ -228,15 +228,15 @@ namespace tpp {
 
         /** Sends given character to the attached terminal. 
          */  
-        virtual void doSendChar(vterm::Char::UTF8 c);
+        virtual void sendChar(vterm::Char::UTF8 c);
 
         /** Handles the key press event. 
          */ 
-        virtual void doKeyUp(vterm::Key key);
+        virtual void keyUp(vterm::Key key);
 
         /** Handles the key release event.
          */
-        virtual void doKeyDown(vterm::Key key);
+        virtual void keyDown(vterm::Key key);
 
 		/** Invalidates the contents of the window and triggers a repaint.
 

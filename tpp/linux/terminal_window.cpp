@@ -112,17 +112,119 @@ namespace tpp {
 		LOG << "doPaint done";
 	}
 
+    vterm::Key TerminalWindow::GetKey(KeySym k, unsigned state) {
+        unsigned modifiers = 0;
+        if (state & 1)
+            modifiers += vterm::Key::Shift;
+        if (state & 4)
+            modifiers += vterm::Key::Ctrl;
+        if (state & 8)
+            modifiers += vterm::Key::Alt;
+        if (state & 64)
+            modifiers += vterm::Key::Win;
+        if (k >= 'a' && k <= 'z') 
+            return vterm::Key(k - 32, modifiers);
+        if (k >= 'A' && k <= 'Z')
+            return vterm::Key(k, modifiers);
+        if (k >= '0' && k <= '9')
+            return vterm::Key(k, modifiers);
+        // numpad
+        if (k >= XK_0 && k <= XK_9)
+            return vterm::Key(vterm::Key::Numpad0 + k - XK_0, modifiers);
+        // fn keys
+        if (k >= XK_F1 && k <= XK_F12)
+            return vterm::Key(vterm::Key::F1 + k - XK_F1, modifiers);
+        // others
+        switch (k) {
+            case XK_BackSpace:
+                return vterm::Key(vterm::Key::Backspace, modifiers);
+            case XK_Tab:
+                return vterm::Key(vterm::Key::Tab, modifiers);
+            case XK_Return:
+                return vterm::Key(vterm::Key::Enter, modifiers);
+            case XK_Caps_Lock:
+                return vterm::Key(vterm::Key::CapsLock, modifiers);
+            case XK_Escape:
+                return vterm::Key(vterm::Key::Esc, modifiers);
+            case XK_space:
+                return vterm::Key(vterm::Key::Space, modifiers);
+            case XK_Page_Up:
+                return vterm::Key(vterm::Key::PageUp, modifiers);
+            case XK_Page_Down:
+                return vterm::Key(vterm::Key::PageDown, modifiers);
+            case XK_End:
+                return vterm::Key(vterm::Key::End, modifiers);
+            case XK_Home:
+                return vterm::Key(vterm::Key::Home, modifiers);
+            case XK_Left:
+                return vterm::Key(vterm::Key::Left, modifiers);
+            case XK_Up:
+                return vterm::Key(vterm::Key::Up, modifiers);
+            case XK_Right:
+                return vterm::Key(vterm::Key::Right, modifiers);
+            case XK_Down:
+                return vterm::Key(vterm::Key::Down, modifiers);
+            case XK_Insert:
+                return vterm::Key(vterm::Key::Insert, modifiers);
+            case XK_Delete:
+                return vterm::Key(vterm::Key::Delete, modifiers);
+            case XK_Menu:
+                return vterm::Key(vterm::Key::Menu, modifiers);
+            case XK_KP_Multiply:
+                return vterm::Key(vterm::Key::NumpadMul, modifiers);
+            case XK_KP_Add:
+                return vterm::Key(vterm::Key::NumpadAdd, modifiers);
+            case XK_KP_Separator:
+                return vterm::Key(vterm::Key::NumpadComma, modifiers);
+            case XK_KP_Subtract:
+                return vterm::Key(vterm::Key::NumpadSub, modifiers);
+            case XK_KP_Decimal:
+                return vterm::Key(vterm::Key::NumpadDot, modifiers);
+            case XK_KP_Divide:
+                return vterm::Key(vterm::Key::NumpadDiv, modifiers);
+            case XK_Num_Lock:
+                return vterm::Key(vterm::Key::NumLock, modifiers);
+            case XK_Scroll_Lock:
+                return vterm::Key(vterm::Key::ScrollLock, modifiers);
+            case XK_semicolon:
+                return vterm::Key(vterm::Key::Semicolon, modifiers);
+            case XK_equal:
+                return vterm::Key(vterm::Key::Equals, modifiers);
+            case XK_comma:
+                return vterm::Key(vterm::Key::Comma, modifiers);
+            case XK_minus:
+                return vterm::Key(vterm::Key::Minus, modifiers);
+            case XK_period: // .
+                return vterm::Key(vterm::Key::Dot, modifiers);
+            case XK_slash:
+                return vterm::Key(vterm::Key::Slash, modifiers);
+            case XK_grave: // `
+                return vterm::Key(vterm::Key::Tick, modifiers);
+            case XK_bracketleft: // [
+                return vterm::Key(vterm::Key::SquareOpen, modifiers);
+            case XK_backslash:  
+                return vterm::Key(vterm::Key::Backslash, modifiers);
+            case XK_bracketright: // ]
+                return vterm::Key(vterm::Key::SquareClose, modifiers);
+            case XK_apostrophe: // '
+                return vterm::Key(vterm::Key::Quote, modifiers);
+            default:
+                return vterm::Key(vterm::Key::Invalid, 0);
+        }
+    }
+
     void TerminalWindow::EventHandler(XEvent & e) {
         TerminalWindow * tw = nullptr;
         auto i = Windows_.find(e.xany.window);
         if (i != Windows_.end())
             tw = i->second;
         switch(e.type) {
+            /* Handles repaint event when window is shown or a repaint was triggered. 
+             */
             case Expose: 
-                LOG << "Exposed";
                 tw->doPaint();
                 break;
-            /** Handles window resize, which should change the terminal size accordingly. 
+            /* Handles window resize, which should change the terminal size accordingly. 
              */  
             case ConfigureNotify: {
                 if (tw->widthPx_ != static_cast<unsigned>(e.xconfigure.width) || tw->heightPx_ != static_cast<unsigned>(e.xconfigure.height))
@@ -131,16 +233,34 @@ namespace tpp {
             }
             case MapNotify:
                 break;
+            /* Unlike Win32 we have to determine whether we are dealing with sendChar, or keyDown. 
+             */
             case KeyPress: {
                 KeySym kSym;
                 char str[32];
                 Status status;
                 int strLen = Xutf8LookupString(tw->ic_, & e.xkey, str, sizeof str, &kSym, &status);
-                //int strLen = XLookupString(&e.xkey, str, sizeof(str), &kSym, nullptr);
-                str[strLen] = 0;
-                LOG << "Key press " << XKeysymToString(kSym) << "(" << kSym << "):" <<  str << "(size: " << strLen << ")";
-				tw->redraw();
-                return;
+                // if it is printable character we are dealing with sendchar
+                if (strLen > 0 && str[0] >= 0x20) {
+                    vterm::Char::UTF8 c;
+                    char * x = reinterpret_cast<char*>(& str);
+                    if (c.readFromStream(x, x+32)) {
+                        tw->sendChar(c);
+                        break;
+                    }
+                }
+                // otherwise if the keysym was recognized, it is a keyDown event
+                vterm::Key key = GetKey(kSym, e.xkey.state);
+                if (key != vterm::Key::Invalid)
+                    tw->keyDown(key);
+                break;
+            }
+            case KeyRelease: {
+                KeySym kSym = XLookupKeysym(& e.xkey, 0);
+                vterm::Key key = GetKey(kSym, e.xkey.state);
+                if (key != vterm::Key::Invalid)
+                    tw->keyUp(key);
+                break;
             }
             case ButtonPress:
                 break;
