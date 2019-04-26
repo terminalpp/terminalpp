@@ -226,6 +226,18 @@ namespace tpp {
 
 		virtual void doTitleChange(vterm::VT100::TitleEvent & e) = 0;
 
+        /** Sends given character to the attached terminal. 
+         */  
+        virtual void doSendChar(vterm::Char::UTF8 c);
+
+        /** Handles the key press event. 
+         */ 
+        virtual void doKeyPress(vterm::Key key);
+
+        /** Handles the key release event.
+         */
+        virtual void doKeyRelease(vterm::Key key);
+
 		/** Invalidates the contents of the window and triggers a repaint.
 
             The base window sets the invalidation flag and the implementations should provide the repaint trigger. 
