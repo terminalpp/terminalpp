@@ -2,6 +2,29 @@
 
 namespace tpp {
 
+	void BaseTerminalWindow::doSendChar(vterm::Char::UTF8 c) {
+		terminal()->sendChar(c);
+	}
+
+	void BaseTerminalWindow::doKeyDown(vterm::Key key) {
+		if (key == vterm::Key::Enter + vterm::Key::Alt) {
+			setFullscreen(!fullscreen());
+		} else if (key == vterm::Key::F5) {
+			redraw();
+		} else if (key == vterm::Key::F4) {
+			if (zoom() == 1)
+				setZoom(2);
+			else
+				setZoom(1);
+		} else if (key != vterm::Key::Invalid) {
+			terminal()->keyDown(key);
+		}
+	}
+
+	void BaseTerminalWindow::doKeyUp(vterm::Key key) {
+		terminal()->keyUp(key);
+	}
+
 	void BaseTerminalWindow::doUpdateBuffer(bool forceDirty) {
 		vterm::Terminal::Layer l = terminal()->getDefaultLayer();
 		// initialize the first font and colors

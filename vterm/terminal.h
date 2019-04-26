@@ -194,7 +194,7 @@ namespace vterm {
 
 		virtual void keyDown(Key k) = 0;
 		virtual void keyUp(Key k) = 0;
-		virtual void charInput(Char::UTF8 c) = 0;
+		virtual void sendChar(Char::UTF8 c) = 0;
 
 		/** Resizes the terminal to given size.
 		 */

@@ -96,7 +96,7 @@ namespace vterm {
 		 */
 		void keyUp(Key k) override { };
 
-		void charInput(Char::UTF8 c) override;
+		void sendChar(Char::UTF8 c) override;
 
 
 		

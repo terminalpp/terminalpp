@@ -240,7 +240,7 @@ namespace vterm {
 		LOG << "Key pressed: " << k;
 	}
 
-	void VT100::charInput(Char::UTF8 c) {
+	void VT100::sendChar(Char::UTF8 c) {
 		// TODO make sure that the character is within acceptable range, i.e. it does not clash with ctrl+ stuff, etc. 
 		write(c.rawBytes(), c.size());
 	}

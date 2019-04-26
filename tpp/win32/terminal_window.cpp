@@ -210,31 +210,16 @@ namespace tpp {
 				break;
 			case WM_CHAR:
 				if (wParam >= 0x20)
-				    tw->terminal()->charInput(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
+					tw->doSendChar(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
 				break;
 			/* DEBUG - debugging events hooked to keypresses now: */
 			/* Processes special key events.*/
 			case WM_SYSKEYDOWN:
-			case WM_KEYDOWN: {
-				vterm::Key k = GetKey(wParam);
-				if (k == (vterm::Key::Enter | vterm::Key::Alt)) {
-					tw->setFullscreen(!tw->fullscreen());
-				}
-				else if (k == vterm::Key::F5) {
-					tw->redraw();
-				} else if (k == vterm::Key::F4) {
-					if (tw->zoom() == 1)
-						tw->setZoom(2);
-					else
-						tw->setZoom(1);
-				} else if (k != vterm::Key::Invalid) {
-					tw->terminal()->keyDown(k);
-				}
+			case WM_KEYDOWN: 
+				tw->doKeyDown(GetKey(wParam));
 				break;
-			}
 			case WM_KEYUP: {
-				vterm::Key k = GetKey(wParam);
-				tw->terminal()->keyUp(k);
+				tw->doKeyUp(GetKey(wParam));
 				break;
 			}
 			case WM_TIMER: {

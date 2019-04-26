@@ -232,11 +232,11 @@ namespace tpp {
 
         /** Handles the key press event. 
          */ 
-        virtual void doKeyPress(vterm::Key key);
+        virtual void doKeyUp(vterm::Key key);
 
         /** Handles the key release event.
          */
-        virtual void doKeyRelease(vterm::Key key);
+        virtual void doKeyDown(vterm::Key key);
 
 		/** Invalidates the contents of the window and triggers a repaint.
 
