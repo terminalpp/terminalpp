@@ -214,7 +214,7 @@ namespace vterm {
         if (throwAtEnd)
             THROW(InvalidCSISequence("Unsupported sequence structure :", *this));
         return true;
-    }
+    } 
 
     // VT100
 
@@ -280,6 +280,10 @@ namespace vterm {
                     }
 					break;
 				}
+                case Char::TAB:
+                    pop();
+                    // TODO tabstops and stuff
+                    break;
 				/* New line simply moves to next line.
 
 				   TODO - should this also do carriage return? I guess so
@@ -591,14 +595,14 @@ namespace vterm {
         if (i < seq.numArgs()) {
             switch (seq[i++]) {
                 /* index from 256 colors */
-                case '5':
-                    if (i == seq.numArgs()) // not enough args
+                case 5:
+                    if (i >= seq.numArgs()) // not enough args 
                         break;
                     if (seq[i] > 255) // invalid color spec
                         break;
                     return palette_[seq[i]];
                 /* true color rgb */
-                case '2':
+                case 2:
                     i += 2;
                     if (i >= seq.numArgs()) // not enough args
                         break;
@@ -659,7 +663,7 @@ namespace vterm {
     			/* 48 - extended background color */
                 case 48:
                     bg_ = parseExtendedColor(seq, i);
-                    LOG(SEQ) << "fg set to " << fg_;
+                    LOG(SEQ) << "bg set to " << bg_;
                     break;
                 /* Background default */
                 case 49:

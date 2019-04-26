@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
 		ts.defaultFontWidth = 0;
 		ts.defaultZoom = 1;
 
-		helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
+		//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
 		helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
 
 
