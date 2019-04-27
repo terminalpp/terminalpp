@@ -30,8 +30,6 @@ namespace tpp {
 		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
         Window parent = RootWindow(display_, screen_);
 
-		LOG << widthPx_ << " x " << heightPx_;
-
 		window_ = XCreateSimpleWindow(display_, parent, 0, 0, widthPx_, heightPx_, 1, white, black);
 
 		// from http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
@@ -82,7 +80,6 @@ namespace tpp {
 
 	void TerminalWindow::doPaint() {
         std::lock_guard<std::mutex> g(drawGuard_);
-		LOG << "doPaint";
 		ASSERT(draw_ == nullptr);
 		bool forceDirty = false;
         if (invalidated_ && buffer_ != 0) {
@@ -109,7 +106,6 @@ namespace tpp {
 		XftDrawDestroy(draw_);
 		draw_ = nullptr;
         XFlush(display_);
-		LOG << "doPaint done";
 	}
 
     vterm::Key TerminalWindow::GetKey(KeySym k, unsigned state) {

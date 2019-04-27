@@ -30,8 +30,6 @@ namespace tpp {
 		XftFont* handle = XftFontOpenName(Application::XDisplay(), Application::XScreen(), fname.c_str());
         ASSERT(handle != nullptr);
 		XftTextExtentsUtf8(Application::XDisplay(), handle, (FcChar8*)"m", 1, &gi);
-		LOG << handle->ascent;
-		LOG << handle->descent;
 		return new FontSpec<XftFont*>(font, gi.width, handle->ascent + handle->descent, handle);
 	}
 

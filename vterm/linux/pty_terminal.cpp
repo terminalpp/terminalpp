@@ -58,14 +58,12 @@ namespace vterm {
 			}
 			// continuing the terminal program 
 			default:
-				LOG << "Executed, pid " << pid_;
 				IOTerminal::doStart();
 				break;
 		}
 	}
 
 	bool PTYTerminal::readInputStream(char* buffer, size_t& size) {
-		LOG << "Reading from child process";
 		int cnt = read(pipe_, (void*)buffer, size);
 		if (cnt < 0) {
 			LOG << strerror(errno) << " - " << cnt;
@@ -73,7 +71,6 @@ namespace vterm {
 			return false;
 		}
 		size = cnt;
-		LOG << "Read " << cnt << " bytes";
 		return true;
 	}
 
@@ -83,7 +80,6 @@ namespace vterm {
         s.ws_col = cols;
         s.ws_xpixel = 0;
         s.ws_ypixel = 0;
-        LOG << "Terminal window resized: " << cols << "x" << rows;
         if (ioctl(pipe_, TIOCSWINSZ, &s) < 0)
             NOT_IMPLEMENTED;
 	}

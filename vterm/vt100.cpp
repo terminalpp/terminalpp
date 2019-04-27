@@ -450,11 +450,11 @@ namespace vterm {
 	void VT100::parseCSI(CSISequence & seq) {
         if (seq.firstByte() == '?') {
             switch (seq.finalByte()) {
+                /* Multiple options can be set high or low in a single command. 
+                 */
                 case 'h':
                 case 'l':
-                    if (seq.numArgs() == 1)
-                        return parseSetterOrGetter(seq);
-                    break;
+                    return parseSetterOrGetter(seq);
                 default:
                     break;
             }
@@ -696,48 +696,50 @@ namespace vterm {
     }
 
     void VT100::parseSetterOrGetter(CSISequence & seq) {
-        int id = seq[0];
         bool value = seq.finalByte() == 'h';
-		switch (id) {
-			/* Smooth scrolling -- ignored*/
-		    case 4:
-				return;
-			// cursor blinking
-		    case 12:
-				cursorBlink_ = value;
-				LOG(SEQ) << "cursor blinking: " << value;
-				return;
-			// cursor show/hide
-			case 25:
-				cursorVisible_ = value;
-				LOG(SEQ) << "cursor visible: " << value;
-				return;
-			/* Mouse tracking movement & buttons.
+        for (size_t i = 0; i < seq.numArgs(); ++i) {
+            int id = seq[i];
+            switch (id) {
+                /* Smooth scrolling -- ignored*/
+                case 4:
+                    continue;
+                // cursor blinking
+                case 12:
+                    cursorBlink_ = value;
+                    LOG(SEQ) << "cursor blinking: " << value;
+                    continue;
+                // cursor show/hide
+                case 25:
+                    cursorVisible_ = value;
+                    LOG(SEQ) << "cursor visible: " << value;
+                    continue;
+                /* Mouse tracking movement & buttons.
 
-			   https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
-			 */
-			case 1001: // mouse highlighting
-			case 1006: // 
-			case 1003:
-                break;
-			/* Enable or disable the alternate screen buffer.
-			 */
-			case 47: 
-			case 1049:
-				// switching to the alternate buffer, or enabling it again should trigger buffer reset
-				fg_ = defaultFg();
-				bg_ = defaultBg();
-				fillRect(helpers::Rect(cols_, rows_), ' ');
-				break;
-			/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. */
-			case 2004:
-				// TODO
-				break;
+                https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
+                */
+                case 1001: // mouse highlighting
+                case 1006: // 
+                case 1003:
+                    break;
+                /* Enable or disable the alternate screen buffer.
+                */
+                case 47: 
+                case 1049:
+                    // switching to the alternate buffer, or enabling it again should trigger buffer reset
+                    fg_ = defaultFg();
+                    bg_ = defaultBg();
+                    fillRect(helpers::Rect(cols_, rows_), ' ');
+                    break;
+                /* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. */
+                case 2004:
+                    // TODO
+                    break;
 
-    		default:
-	    		break;
-		}
-        THROW(InvalidCSISequence("Invalid Get/Set command: ", seq));
+                default:
+                    break;
+            }
+            THROW(InvalidCSISequence("Invalid Get/Set command: ", seq));
+        }
     }
 
     /** Operating System Commands end with either an ST (ESC \), or with BEL. For now, only setting the terminal window command is supported. 
