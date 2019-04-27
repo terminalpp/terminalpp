@@ -210,7 +210,7 @@ namespace tpp {
 				break;
 			case WM_CHAR:
 				if (wParam >= 0x20)
-				    tw->terminal()->charInput(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
+				    tw->terminal()->sendChar(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
 				break;
 			/* DEBUG - debugging events hooked to keypresses now: */
 			/* Processes special key events.*/
