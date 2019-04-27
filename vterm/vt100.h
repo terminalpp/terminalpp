@@ -49,7 +49,8 @@ namespace vterm {
 			return colors_[index];
 		}
 
-		static Palette const Colors16;
+		static Palette Colors16();
+        static Palette ColorsXTerm256();
 
 	private:
 		size_t size_;
@@ -101,6 +102,7 @@ namespace vterm {
 
 		
 	protected:
+
 
         class CSISequence;
 
@@ -330,6 +332,8 @@ namespace vterm {
 		void scrollDown(unsigned lines);
 
 
+        bool applicationKeypadMode_;
+        bool applicationCursorMode_;
 
 		Palette palette_;
 		unsigned defaultFg_;

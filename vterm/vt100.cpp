@@ -13,27 +13,57 @@ namespace vterm {
 
 	VT100::KeyMap VT100::keyMap_;
 
-
     // Palette
 
-	Palette const Palette::Colors16{
-		Color::Black(), // 0
-		Color::DarkRed(), // 1
-		Color::DarkGreen(), // 2
-		Color::DarkYellow(), // 3
-		Color::DarkBlue(), // 4
-		Color::DarkMagenta(), // 5
-		Color::DarkCyan(), // 6
-		Color::Gray(), // 7
-		Color::DarkGray(), // 8
-		Color::Red(), // 9
-		Color::Green(), // 10
-		Color::Yellow(), // 11
-		Color::Blue(), // 12
-		Color::Magenta(), // 13
-		Color::Cyan(), // 14
-		Color::White() // 15
-	};
+	Palette Palette::Colors16() {
+        return Palette{
+            Color::Black(), // 0
+            Color::DarkRed(), // 1
+            Color::DarkGreen(), // 2
+            Color::DarkYellow(), // 3
+            Color::DarkBlue(), // 4
+            Color::DarkMagenta(), // 5
+            Color::DarkCyan(), // 6
+            Color::Gray(), // 7
+            Color::DarkGray(), // 8
+            Color::Red(), // 9
+            Color::Green(), // 10
+            Color::Yellow(), // 11
+            Color::Blue(), // 12
+            Color::Magenta(), // 13
+            Color::Cyan(), // 14
+            Color::White() // 15
+        };
+	}
+
+    Palette Palette::ColorsXTerm256() {
+            Palette result(256);
+            // start with the 16 colors
+            result.fillFrom(Colors16());
+            // now do the xterm color cube
+            unsigned i = 16;
+            for (unsigned r = 0; r < 256; r += 40) {
+                for (unsigned g = 0; g < 256; g += 40) {
+                    for (unsigned b = 0; b < 256; b += 40) {
+                        result[i] = Color(r, g, b);
+                        ++i;
+                        if (b == 0)
+                            b = 55;
+                    }
+                    if (g == 0)
+                        g = 55;
+                }
+                if (r == 0)
+                    r = 55;
+            }
+            // and finally do the grayscale
+            for (unsigned x = 8; x <= 238; x +=10) {
+                result[i] = Color(x, x, x);
+                ++i;
+            }
+            return result;
+    }
+
 
 	Palette::Palette(std::initializer_list<Color> colors):
 		size_(colors.size()),
@@ -220,6 +250,8 @@ namespace vterm {
 
 	VT100::VT100(unsigned cols, unsigned rows, Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
 		IOTerminal(cols, rows),
+        applicationKeypadMode_(false),
+        applicationCursorMode_(false),
 		palette_(256),
 		defaultFg_(defaultFg),
 		defaultBg_(defaultBg),
@@ -234,10 +266,26 @@ namespace vterm {
 	void VT100::keyDown(Key k) {
 		std::string const* seq = keyMap_.getSequence(k);
 		if (seq != nullptr) {
+            switch (k.code()) {
+                case Key::Up:
+                case Key::Down:
+                case Key::Left:
+                case Key::Right:
+                case Key::Home:
+                case Key::End:
+                    if (applicationCursorMode_) {
+                        std::string sa(*seq);
+                        sa[1] = 'O';
+                        write(sa.c_str(), sa.size());
+                        return;
+                    }
+                    break;
+                default:
+                    break;
+            }
 			write(seq->c_str(), seq->size());
-			LOG << "key sent " << (unsigned) seq->c_str()[0] << " - " << seq->size() << " " << seq->substr(1);
-		}
-		LOG << "Key pressed: " << k;
+        }
+		//LOG << "Key pressed: " << k;
 	}
 
 	void VT100::sendChar(Char::UTF8 c) {
@@ -431,13 +479,15 @@ namespace vterm {
                     return true;
                 LOG(UNKNOWN_SEQ) << "Unknown (possibly mismatched) character set final char " << pop();
                 return true;
-            /* Application keypad - TODO what is this */
+            /* ESC = -- Application keypad */
             case '=':
-                LOG(UNKNOWN_SEQ) << "Application keypad (ESC=)";
+                LOG(SEQ) << "Application keypad mode enabled";
+                applicationKeypadMode_ = true;
                 return true;
-            /* Normal keypad - TODO what is this */
+            /* ESC > -- Normal keypad */
             case '>':
-                LOG(UNKNOWN_SEQ) << "Normal keypad (ESC>)";
+                LOG(SEQ) << "Normal keypad mode enabled";
+                applicationKeypadMode_ = false;
                 return true;
             /* Otherwise we have unknown escape sequence. This is an issue since we do not know when it ends and therefore may break the parsing.
              */
@@ -455,6 +505,19 @@ namespace vterm {
                 case 'h':
                 case 'l':
                     return parseSetterOrGetter(seq);
+                default:
+                    break;
+            }
+        } else if (seq.firstByte() == '>') {
+            switch (seq.finalByte()) {
+                /* CSI > 0 c -- Send secondary device attributes. 
+                 */
+                case 'c':
+                    if (seq[0] != 0)
+                        break;
+                    LOG(SEQ) << "Secondary Device Attributes - VT100 sent";
+                    write("\033[>0;0;0c",5); // we are VT100, no version third must always be zero (ROM cartridge)
+                    return;
                 default:
                     break;
             }
@@ -569,6 +632,31 @@ namespace vterm {
                         fillRect(helpers::Rect(0, l, n, l + 1), ' ');
                     return;
                 }
+                /* CSI <n> c - primary device attributes.
+                 */
+                case 'c': {
+                    if (seq[0] != 0)
+                        break;
+                    LOG(SEQ) << "Device Attributes - VT102 sent";
+                    write("\033[?6c",5); // send VT-102 for now, go for VT-220? 
+                    return;
+                }
+                /* CSI <n> d -- Line position absolute
+                 */
+                case 'd': {
+                    seq.setArgDefault(0, 1);
+                    if (seq.numArgs() != 1)
+                        break;
+                    unsigned r = seq[0];
+                    if (r < 1)
+                        r = 1;
+                    else if (r > rows_)
+                        r = rows_;
+                    setCursor(cols_, r - 1);
+                    return;
+                }
+                    
+                    
                 /* CSI <n> h -- Reset mode enable 
                 Depending on the argument, certain things are turned on. None of the RM settings are currently supported. 
                 */
@@ -700,6 +788,12 @@ namespace vterm {
         for (size_t i = 0; i < seq.numArgs(); ++i) {
             int id = seq[i];
             switch (id) {
+                /* application cursor mode on/off 
+                 */
+                case 1:
+                    applicationCursorMode_ = value;
+                    LOG(SEQ) << "application cursor mode: " << value;
+                    continue;
                 /* Smooth scrolling -- ignored*/
                 case 4:
                     continue;

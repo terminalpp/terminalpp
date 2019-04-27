@@ -74,7 +74,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Terminal * t = new Terminal("wsl -e screenfetch", 80, 25, vterm::Palette::Colors16, 15, 0);
 	//Terminal * t = new Terminal("wsl -e bash", 80, 25, vterm::Palette::Colors16, 15, 0);
 	//Terminal* t = new Terminal("wsl -e infocmp", 80, 25, vterm::Palette::Colors16, 15, 0);
-	Terminal* t = new Terminal("wsl -e mc", 80, 25, vterm::Palette::Colors16, 15, 0);
+    Palette
+	Terminal* t = new Terminal("wsl -e mc", 80, 25, vterm::Palette::ColorsXTerm256(), 15, 0);
     //Terminal * t = new Terminal("wsl -e emacs ~/settings/emacs/init.el", 80, 25, vterm::Palette::Colors16, 15, 0);
 	//Terminal * t = new Terminal("wsl -e bash -c \"ssh orange \"", 80, 25, vterm::Palette::Colors16, 15, 0);
 
@@ -118,7 +119,7 @@ int main(int argc, char* argv[]) {
 		//Terminal* t = new Terminal("infocmp", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
 		//Terminal* t = new Terminal("screenfetch", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
 		//Terminal* t = new Terminal("mc", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		Terminal* t = new Terminal("bash", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
+		Terminal* t = new Terminal("bash", { }, 100, 40, vterm::Palette::ColorsXTerm256(), 15, 0);
 
 		tw->attachTerminal(t);
 

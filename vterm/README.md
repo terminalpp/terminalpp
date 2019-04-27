@@ -57,3 +57,7 @@ Available only on Windows, virtually inherits from `IOTerminal` and describes th
 
 - EraseDisplay, EraseLine and EraseCharacter - what are the colors & font used? default or current? 
 - what is the exact effect of `\n`
+
+- http://www.nic.funet.fi/index/doc/hardware/terminals/vt102.codes
+
+- `infocmp vt102 vt220`
