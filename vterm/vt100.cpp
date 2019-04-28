@@ -333,19 +333,28 @@ namespace vterm {
                     }
 					break;
 				}
-                case Char::TAB:
+                /* BEL is sent if user should be notified, i.e. play a notification sound or so. 
+                 */
+                case Char::BEL:
                     pop();
+                    LOG(UNKNOWN_SEQ) << "BEL charatcer received";
+                    break;
+                case Char::TAB:
                     // TODO tabstops and stuff
+                    pop();
+                    updateCursorPosition();
+                    if (cursorPos_.col % 8 == 0) 
+                        cursorPos_.col += 8;
+                    else
+                        cursorPos_.col += 8 - (cursorPos_.col % 8);
+                    LOG(SEQ) << "Tab: cursor col is " << cursorPos_.col;
                     break;
 				/* New line simply moves to next line.
-
-				   TODO - should this also do carriage return? I guess so
 				 */
 				case Char::LF:
 					LOG(SEQ) << "LF";
 					pop();
 					++cursorPos_.row;
-					cursorPos_.col = 0;
 					break;
 				/* Carriage return sets cursor column to 0. 
 				 */
@@ -528,41 +537,41 @@ namespace vterm {
             }
         } else if (seq.firstByte() == 0) {
             switch (seq.finalByte()) {
-                // CSI <n> A -- moves cursor n rows up 
+                // CSI <n> A -- moves cursor n rows up (CUU)
                 case 'A':
                     seq.setArgDefault(0, 1);
                     ASSERT(seq.numArgs() == 1);
-                    LOG(SEQ) << "setCursor " << cursorPos_.col << ", " << cursorPos_.row - seq[0];
+                    LOG(SEQ) << "CUU: setCursor " << cursorPos_.col << ", " << cursorPos_.row - seq[0];
                     setCursor(cursorPos_.col, cursorPos_.row - seq[0]);
                     return;
-                // CSI <n> B -- moves cursor n rows down 
+                // CSI <n> B -- moves cursor n rows down (CUD)
                 case 'B':
                     seq.setArgDefault(0, 1);
                     ASSERT(seq.numArgs() == 1);
-                    LOG(SEQ) << "setCursor " << cursorPos_.col << ", " << cursorPos_.row + seq[0];
+                    LOG(SEQ) << "CUD: setCursor " << cursorPos_.col << ", " << cursorPos_.row + seq[0];
                     setCursor(cursorPos_.col, cursorPos_.row + seq[0]);
                     return;
-                // CSI <n> C -- moves cursor n columns forward (right)
+                // CSI <n> C -- moves cursor n columns forward (right) (CUF)
                 case 'C':
                     seq.setArgDefault(0, 1);
                     ASSERT(seq.numArgs() == 1);
-                    LOG(SEQ) << "setCursor " << cursorPos_.col + seq[0] << ", " << cursorPos_.row;
+                    LOG(SEQ) << "CUF: setCursor " << cursorPos_.col + seq[0] << ", " << cursorPos_.row;
                     setCursor(cursorPos_.col + seq[0], cursorPos_.row);
                     return;
-                // CSI <n> D -- moves cursor n columns back (left)
+                // CSI <n> D -- moves cursor n columns back (left) (CUB)
                 case 'D': // cursor backward
                     seq.setArgDefault(0, 1);
                     ASSERT(seq.numArgs() == 1);
-                    LOG(SEQ) << "setCursor " << cursorPos_.col - seq[0] << ", " << cursorPos_.row;
+                    LOG(SEQ) << "CUB: setCursor " << cursorPos_.col - seq[0] << ", " << cursorPos_.row;
                     setCursor(cursorPos_.col - seq[0], cursorPos_.row);
                     return;
-                /* set cursor coordinates */
-                case 'H':
-                case 'f':
+                /* set cursor position (CUP) */
+                case 'H': // CUP
+                case 'f': // HVP
                     seq.setArgDefault(0, 1);
                     seq.setArgDefault(1, 1);
                     ASSERT(seq.numArgs() == 2);
-                    LOG(SEQ) << "setCursor " << seq[1] - 1 << ", " << seq[0] - 1;
+                    LOG(SEQ) << "CUP: setCursor " << seq[1] - 1 << ", " << seq[0] - 1;
                     setCursor(seq[1] - 1, seq[0] - 1);
                     return;
                 /* CSI <n> J -- erase display, depending on <n>:
@@ -614,17 +623,21 @@ namespace vterm {
                             break;
                     }
                     break;
-                /* CSI <n> L -- Insert n lines. 
+                /* CSI <n> L -- Insert n lines. (IL)
                  */
                 case 'L':
                     seq.setArgDefault(0, 1);
-                    scrollUp(seq[0]);
+                    LOG(SEQ) << "IL: scrollUp " << seq[0]; 
+                    insertLine(seq[0], cursorPos_.row);
+                    //scrollUp(seq[0]);
                     return;
-                /* CSI <n> M -- Remove n lines.
+                /* CSI <n> M -- Remove n lines. (DL)
                  */
                 case 'M':
                     seq.setArgDefault(0,1);
-                    scrollDown(seq[0]);
+                    LOG(SEQ) << "DL: scrollDown " << seq[0]; 
+                    deleteLine(seq[0], cursorPos_.row);
+                    //scrollDown(seq[0]);
                     return;
                 /* CSI <n> X -- erase <n> characters from the current position 
                 */
@@ -658,7 +671,7 @@ namespace vterm {
                     write("\033[?6c",5); // send VT-102 for now, go for VT-220? 
                     return;
                 }
-                /* CSI <n> d -- Line position absolute
+                /* CSI <n> d -- Line position absolute (VPA)
                  */
                 case 'd': {
                     seq.setArgDefault(0, 1);
@@ -669,7 +682,8 @@ namespace vterm {
                         r = 1;
                     else if (r > rows_)
                         r = rows_;
-                    setCursor(cols_, r - 1);
+                    LOG(SEQ) << "VPA: setCursor " << cursorPos_.col << ", " << r - 1;
+                    setCursor(cursorPos_.col, r - 1);
                     return;
                 }
                     
@@ -916,17 +930,22 @@ namespace vterm {
 		}
 	}
 
-	void VT100::scrollDown(unsigned lines) {
-		ASSERT(lines < scrollEnd_ - scrollStart_);
-		LOG(SEQ) << "scrolling down " << lines << " lines";
-		for (unsigned r = scrollStart_, re = scrollEnd_ - lines; r < re; ++r) {
+
+    void VT100::deleteLine(unsigned lines, unsigned from) {
+        // don't do any scrolling if origin is outside scrolling region
+        if (from < scrollStart_ || from >= scrollEnd_)
+            return;
+        // delete the n lines by moving the lines below them up, be defensive on arguments
+        lines = std::min(lines, scrollEnd_ - from);
+        for (unsigned r = from, re = scrollEnd_ - lines; r < re; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
 				Cell & cell = defaultLayer_->at(c, r);
 				cell = defaultLayer_->at(c, r + lines);
 				cell.dirty = true;
 			}
-		}
-		for (unsigned r = scrollEnd_ - lines; r < scrollEnd_; ++r) {
+        }
+        // now make the lines at the bottom empty
+        for (unsigned r = scrollEnd_ - lines; r < scrollEnd_; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
 				Cell & cell = defaultLayer_->at(c, r);
 				cell.c = ' ';
@@ -935,21 +954,24 @@ namespace vterm {
 				cell.font = Font();
 				cell.dirty = true;
 			}
-		}
-	}
+        }
+    }
 
-	void VT100::scrollUp(unsigned lines) {
-		ASSERT(lines < scrollEnd_ - scrollStart_);
-		LOG(SEQ) << "scrolling up " << lines << " lines";
-        for (unsigned r = scrollEnd_ - 1, rs = scrollStart_ + lines; r >= rs; --r) {
+    void VT100::insertLine(unsigned lines, unsigned from) {
+        // don't do any scrolling if origin is outside scrolling region
+        if (from < scrollStart_ || from >= scrollEnd_)
+            return;
+        // create space by moving the contents in scroll window appropriate amount of lines down
+        lines = std::min(lines, scrollEnd_ - from);
+        for (unsigned r = scrollEnd_ - 1, rs = from + lines; r >= rs; --r) {
 			for (unsigned c = 0; c < cols_; ++c) {
 				Cell & cell = defaultLayer_->at(c, r);
 				cell = defaultLayer_->at(c, r - lines);
 				cell.dirty = true;
 			}
-		}
-        /*
-		for (unsigned r = scrollStart_, re = scrollStart_ + lines; r < re; ++r) {
+        }
+        // now clear the top n lines
+        for (unsigned r = from, re = from + lines; r < re; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
 				Cell & cell = defaultLayer_->at(c, r);
 				cell.c = ' ';
@@ -958,8 +980,7 @@ namespace vterm {
 				cell.font = Font();
 				cell.dirty = true;
 			}
-		} */
-	}
-
+        }
+    }
 
 } // namespace vterm

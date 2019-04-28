@@ -67,6 +67,8 @@ namespace vterm {
 
 		https://invisible-island.net/xterm/ctlseqs/ctlseqs.pdf
 
+        https://www.vt100.net/docs/vt102-ug/chapter5.html        
+
 
 	*/
 	class VT100 : public virtual IOTerminal {
@@ -291,7 +293,9 @@ namespace vterm {
 			}
 			ASSERT(cursorPos_.col < cols_);
 			if (cursorPos_.row >= rows_) {
-				scrollDown(cursorPos_.row - rows_ + 1);
+                // TODO is this the correct behavior? i.e. scroll only when cursor in scroll window
+                //if (cursorPos_.row >= scrollStart_ && cursorPos_.row < scrollEnd_)
+                    deleteLine(cursorPos_.row - rows_ + 1, 0);
 				cursorPos_.row = rows_ - 1;
 			}
 		}
@@ -308,8 +312,9 @@ namespace vterm {
 			fillRect(rect, c, fg_, bg_, font);
 		}
 
-		void scrollDown(unsigned lines);
-        void scrollUp(unsigned lines);
+        void deleteLine(unsigned lines, unsigned from);
+        void insertLine(unsigned lines, unsigned from);
+
 
 
         /** True if application keypad mode is enabled. 
