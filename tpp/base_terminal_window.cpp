@@ -1,3 +1,5 @@
+#include "helpers/log.h"
+
 #include "base_terminal_window.h"
 
 namespace tpp {
@@ -10,6 +12,7 @@ namespace tpp {
 		if (key == vterm::Key::Enter + vterm::Key::Alt) {
 			setFullscreen(!fullscreen());
 		} else if (key == vterm::Key::F5) {
+            LOG << "redraw...";
 			redraw();
 		} else if (key == vterm::Key::F4) {
 			if (zoom() == 1)

@@ -175,7 +175,7 @@ namespace tpp {
 			fullscreen_(settings->fullscreen),
 			cellWidthPx_(settings->defaultFontWidth * settings->defaultZoom),
 			cellHeightPx_(settings->defaultFontHeight * settings->defaultZoom),
-		    blink_(false) {
+		    blink_(true) {
 
 		}
 

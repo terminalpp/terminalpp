@@ -252,6 +252,8 @@ namespace vterm {
 		IOTerminal(cols, rows),
         applicationKeypadMode_(false),
         applicationCursorMode_(false),
+        scrollStart_(0),
+        scrollEnd_(rows),
 		palette_(256),
 		defaultFg_(defaultFg),
 		defaultBg_(defaultBg),
@@ -299,6 +301,9 @@ namespace vterm {
 			cursorPos_.col = cols_ - 1;
 		if (cursorPos_.row >= rows_)
 			cursorPos_.row = rows_ - 1;
+        // reset the scroll region to whole window
+        scrollStart_ = 0;
+        scrollEnd_ = rows;
 		// IOTerminal's doResize() is not called because of the virtual inheritance
 		LOG(SEQ) << "terminal resized to " << cols << "," << rows;
 	}
@@ -609,6 +614,18 @@ namespace vterm {
                             break;
                     }
                     break;
+                /* CSI <n> L -- Insert n lines. 
+                 */
+                case 'L':
+                    seq.setArgDefault(0, 1);
+                    scrollUp(seq[0]);
+                    return;
+                /* CSI <n> M -- Remove n lines.
+                 */
+                case 'M':
+                    seq.setArgDefault(0,1);
+                    scrollDown(seq[0]);
+                    return;
                 /* CSI <n> X -- erase <n> characters from the current position 
                 */
                 case 'X': {
@@ -671,6 +688,17 @@ namespace vterm {
                 */
                 case 'm':
                     return parseSGR(seq);
+                /* CSI <n> ; <n> r -- Set scrolling region (default is the whole window)
+                 */
+                case 'r':
+                    seq.setArgDefault(0, 1); // inclusive
+                    seq.setArgDefault(1, rows_); // inclusive
+                    if (seq.numArgs() != 2)
+                        break;
+                    scrollStart_ = std::min(seq[0] - 1, rows_ - 1); // inclusive
+                    scrollEnd_ = std::min(seq[1] , rows_); // exclusive 
+                    LOG(SEQ) << "Scroll region set to " << scrollStart_ << " - " << scrollEnd_;
+                    return;
                 default:
                     break;
             }
@@ -889,16 +917,16 @@ namespace vterm {
 	}
 
 	void VT100::scrollDown(unsigned lines) {
-		ASSERT(lines < rows_);
+		ASSERT(lines < scrollEnd_ - scrollStart_);
 		LOG(SEQ) << "scrolling down " << lines << " lines";
-		for (unsigned r = 0, re = rows_ - lines; r < re; ++r) {
+		for (unsigned r = scrollStart_, re = scrollEnd_ - lines; r < re; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
 				Cell & cell = defaultLayer_->at(c, r);
 				cell = defaultLayer_->at(c, r + lines);
 				cell.dirty = true;
 			}
 		}
-		for (unsigned r = rows_ - lines; r < rows_; ++r) {
+		for (unsigned r = scrollEnd_ - lines; r < scrollEnd_; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
 				Cell & cell = defaultLayer_->at(c, r);
 				cell.c = ' ';
@@ -909,5 +937,29 @@ namespace vterm {
 			}
 		}
 	}
+
+	void VT100::scrollUp(unsigned lines) {
+		ASSERT(lines < scrollEnd_ - scrollStart_);
+		LOG(SEQ) << "scrolling up " << lines << " lines";
+        for (unsigned r = scrollEnd_ - 1, rs = scrollStart_ + lines; r >= rs; --r) {
+			for (unsigned c = 0; c < cols_; ++c) {
+				Cell & cell = defaultLayer_->at(c, r);
+				cell = defaultLayer_->at(c, r - lines);
+				cell.dirty = true;
+			}
+		}
+        /*
+		for (unsigned r = scrollStart_, re = scrollStart_ + lines; r < re; ++r) {
+			for (unsigned c = 0; c < cols_; ++c) {
+				Cell & cell = defaultLayer_->at(c, r);
+				cell.c = ' ';
+				cell.fg = fg_;
+				cell.bg = bg_;
+				cell.font = Font();
+				cell.dirty = true;
+			}
+		} */
+	}
+
 
 } // namespace vterm

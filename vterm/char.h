@@ -85,9 +85,9 @@ namespace vterm {
 		size_t size() const {
 			if (bytes_[0] <= 0x7f) // 0xxxxxxx
 				return 1;
-			else if (bytes_[0] <= 0xbf) // 10xxxxxx
-				return 2;
 			else if (bytes_[0] <= 0xdf) // 110xxxxx
+				return 2;
+			else if (bytes_[0] <= 0xef) // 1110xxxx
 				return 3;
 			else
 				return 4;
@@ -158,8 +158,6 @@ namespace vterm {
 				bytes_[3] = (0x80) | (cp & 0x3f); // 10xxxxxx
 			}
 		}
-
-
 
 		unsigned char bytes_[4];
 

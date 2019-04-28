@@ -134,47 +134,26 @@ namespace vterm {
              
                 If such argument was not parsed or explicitly set to default value, returns the default default value, which is 0. 
              */
-            int arg(size_t index) const {
+            unsigned arg(size_t index) const {
                 if (index >= args_.size())
                     return 0;
                 return args_[index].first;
             }
 
-            int operator [] (size_t index) const {
+            unsigned operator [] (size_t index) const {
                 if (index >= args_.size())
                     return 0;
                 return args_[index].first;
-            }
-
-            /** Returns the index-th argument if given either by the sequence or explicitly by default value. 
-             */
-            int argExcplicit(size_t index) const {
-                if (index >= args_.size())
-                    THROW(InvalidCSISequence(*this));
-                return args_[index].first;
-            }
-
-            /** Returns the index-th argument if it was given in the parsed sequence. 
-             
-                I.e. fails if the argument was not given at all, or only his default value was specified. 
-            */
-            int argGiven(size_t index) const {
-                if (index >= args_.size())
-                    THROW(InvalidCSISequence(*this));
-                std::pair<int, bool> arg = args_[index];
-                if (! arg.second)
-                    THROW(InvalidCSISequence(*this));
-                return arg.first;
             }
 
             /** Sets the default value of given argument. 
              
                 If the argument was already specified by the user, setting the default value is ignored. 
              */
-            void setArgDefault(size_t index, int value) {
+            void setArgDefault(size_t index, unsigned value) {
                 while (args_.size() <= index)
                     args_.push_back(std::make_pair(0, false));
-                std::pair<int, bool> & arg = args_[index];
+                std::pair<unsigned, bool> & arg = args_[index];
                 if (! arg.second)
                     arg.first = value;
             }
@@ -219,7 +198,7 @@ namespace vterm {
              
                 Each argument is specified by a tuple of the value and a boolean flag which determines if the value was explicitly given by the parsed sequence (true), or if it is default value (false). 
              */
-            std::vector<std::pair<int, bool>> args_;
+            std::vector<std::pair<unsigned, bool>> args_;
             char const * start_;
             char const * end_;
         };
@@ -330,10 +309,24 @@ namespace vterm {
 		}
 
 		void scrollDown(unsigned lines);
+        void scrollUp(unsigned lines);
 
 
+        /** True if application keypad mode is enabled. 
+         */
         bool applicationKeypadMode_;
+
+        /** True if application cursor mode is enabled. 
+         */
         bool applicationCursorMode_;
+
+        /** Start of the scrolling region (inclusive row).
+         */
+        unsigned scrollStart_;
+
+        /** End of the scrolling region (exclusive row). 
+         */
+        unsigned scrollEnd_;
 
 		Palette palette_;
 		unsigned defaultFg_;
