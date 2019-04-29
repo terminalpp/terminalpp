@@ -29,13 +29,13 @@ namespace tpp {
 	}
 
 	void BaseTerminalWindow::doUpdateBuffer(bool forceDirty) {
-		vterm::Terminal::Layer l = terminal()->getDefaultLayer();
+		vterm::Terminal::Buffer b = terminal()->getBuffer();
 		// initialize the first font and colors
 		vterm::Color fg;
 		vterm::Color bg;
 		vterm::Font font;
 		{
-			vterm::Cell& c = l->at(0, 0);
+			vterm::Cell& c = b.at(0, 0);
 			fg = c.fg;
 			bg = c.bg;
 			font = DropBlink(c.font);
@@ -47,11 +47,11 @@ namespace tpp {
 		helpers::Point cp = terminal()->cursorPos();
 		bool cursorInRange = cp.col < cols() && cp.row < rows();
 		if (!forceDirty && cursorInRange)
-			l->at(cp.col, cp.row).dirty = true;
+			b.at(cp.col, cp.row).dirty = true;
 		// now loop over the entire terminal and update the cells
 		for (unsigned r = 0, re = rows(); r < re; ++r) {
 			for (unsigned c = 0, ce = cols(); c < ce; ++c) {
-				vterm::Cell& cell = l->at(c, r);
+				vterm::Cell& cell = b.at(c, r);
 				if (forceDirty || cell.dirty) {
 					cell.dirty = false;
 					if (fg != cell.fg) {
@@ -72,7 +72,7 @@ namespace tpp {
 		}
 		// determine whether cursor should be display and display it if so
 		if (cursorInRange && terminal()->cursorVisible() && (blink_ || !terminal()->cursorBlink())) {
-			vterm::Cell c = l->at(cp.col, cp.row);
+			vterm::Cell c = b.at(cp.col, cp.row);
 			// TODO these should be selected somewhere!
 			c.fg = vterm::Color::White();
 			c.bg = vterm::Color::Black();

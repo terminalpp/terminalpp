@@ -12,19 +12,20 @@ namespace vterm {
 		cursorCharacter_(0x2581),
 		cursorVisible_(true),
 		cursorBlink_(true),
-		defaultLayer_(new LayerImpl(this)) {
+		cells_(new Cell[cols * rows]) {
 	}
 
 	Terminal::~Terminal() {
-		delete defaultLayer_;
+		delete [] cells_;
 	}
 
 
 	void Terminal::doResize(unsigned cols, unsigned rows) {
 		cols_ = cols;
 		rows_ = rows;
-		// resize the layers. 
-		defaultLayer_->resize(cols, rows);
+		// resize the layers.
+		delete [] cells_;
+		cells_ = new Cell[cols * rows];
 	}
 
 	// IOTerminal ------------------------------------------------------------------------------------

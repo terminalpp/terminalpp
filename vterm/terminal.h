@@ -65,74 +65,75 @@ namespace vterm {
 	public:
 		class LayerImpl;
 
-		/** Non-copyable pointer to terminal layer which also acts as a terminal data acccess guard.
-
-			TODO add layer switching when multiple layers are supported in the terminal (and determine *how* they are supported.
+		/** Provides access to the terminal's buffer and associated features. 
 		 */
-		class Layer {
+		class Buffer {
 		public:
-
-			/** The layer is above all a smart pointer to the layer implementation.
+			/** Returns the terminal associated with the buffer. 
 			 */
-			LayerImpl * operator -> () {
-				return layer_;
+			Terminal * terminal() {
+				return terminal_;
 			}
 
-			LayerImpl & operator * () {
-				return *layer_;
+			Terminal const* terminal() const {
+				return terminal_;
 			}
 
-			LayerImpl const * operator -> () const {
-				return layer_;
-			}
-
-			LayerImpl const & operator * () const {
-				return * layer_;
-			}
-
-			/** Marks the layer changed so that when the layer accessor object is terminated, the terminal will repaint. 
+			/* Returns the width and height of the buffer (and the terminal). 
 			 */
-			void markChanged() {
-				changed_ = true;
+
+			unsigned cols() const {
+				return terminal_->cols_;
 			}
 
-			/** To prevent data inconsistency, there could be only one instance of a layer pointer per terminal at any given time.
-			 */
-			Layer(Layer const &) = delete;
-
-			/** Move constuctor creates a copy and then invalidates the original so that its deletion would not release the terminal lock.
-			 */
-			Layer(Layer && from) :
-				terminal_(from.terminal_),
-				layer_(from.layer_),
-                changed_(from.changed_) {
-				from.terminal_ = nullptr;
+			unsigned rows() const {
+				return terminal_->rows_;
 			}
 
-			/** When layer is deleted, it releases the lock on the terminal access and informs it to trigger the on change event. 
+			/** Returns the given cell of the terminal's buffer. 
 			 */
-			~Layer() {
-				if (terminal_ != nullptr) {
-					terminal_->m_.unlock();
-                    if (changed_)
-					    terminal_->repaint();
-				}
+			Cell & at(unsigned col, unsigned row) {
+				ASSERT(col < cols() && row < rows());
+				return terminal_->cells_[row * cols() + col];
 			}
 
-		private:
-			friend class Terminal;
+			Cell & at(helpers::Point const& p) {
+				return at(p.col, p.row);
+			}
 
-			Layer(Terminal * terminal, LayerImpl * layer) :
-				terminal_(terminal),
-				layer_(layer),
-                changed_(false) {
+			Cell const & at(unsigned col, unsigned row) const {
+				ASSERT(col < cols() && row < rows());
+				return terminal_->cells_[row * cols() + col];
+			}
+
+			Cell const & at(helpers::Point const& p) const {
+				return at(p.col, p.row);
+			}
+
+			// constructors, assignments
+
+			Buffer(Terminal* t) :
+				terminal_(t) {
 				terminal_->m_.lock();
 			}
 
+			Buffer(Buffer&& from) :
+				terminal_(from.terminal_) {
+				from.terminal_ = nullptr;
+			}
+
+			Buffer(Buffer const&) = delete;
+
+			~Buffer() {
+				if (terminal_ != nullptr)
+					terminal_->m_.unlock();
+			}
+
+		private:
 			Terminal * terminal_;
-			LayerImpl * layer_;
-            bool changed_;
-		};
+		}; // Terminal::Buffer
+
+
 
 		// events ---------------------------------------------------------------------------------
 
@@ -216,8 +217,8 @@ namespace vterm {
 
 			The returned layer smart pointer locks the whole terminal for reads or updates of the screen and its size so the layer should be kept around for as little time as needed (typically to update its contents, or render it).
 		 */
-		Layer getDefaultLayer() {
-			return Layer(this, defaultLayer_);
+		Buffer getBuffer() {
+			return Buffer(this);
 		}
 
 		// constructors & destructors -------------------------------------------------------------
@@ -242,6 +243,18 @@ namespace vterm {
 		 */
 		virtual void doResize(unsigned cols, unsigned rows);
 
+		/** Access to the terminal's buffer without the automatically locking buffer. 
+		 */
+		Cell const& at(unsigned col, unsigned row) const {
+			ASSERT(col < cols_ && row < rows_);
+			return cells_[row * cols_ + col];
+		}
+
+		Cell& at(unsigned col, unsigned row) {
+			ASSERT(col < cols_ && row < rows_);
+			return cells_[row * cols_ + col];
+		}
+
 		/** Mutex for protecting read and write access to the terminal contents to make sure that all requests will return consistent data.
 		 */
 		mutable std::mutex m_;
@@ -262,79 +275,15 @@ namespace vterm {
 
 		bool cursorBlink_;
 
-		/** The default layer.
+		/** Actual contents of the terminal buffer. 
 		 */
-		LayerImpl * defaultLayer_;
+		Cell * cells_;
 
 	private:
 
 
 	}; // vterm::VTerm
 
-	/** Implementation of a layer for the virtual terminal. 
-	 */
-	class Terminal::LayerImpl {
-	public:
-		unsigned cols() const {
-			return terminal_->cols_;
-		}
-
-		unsigned rows() const {
-			return terminal_->rows_;
-		}
-
-		Cell & at(unsigned col, unsigned row) {
-			ASSERT(col < cols() && row < rows());
-			return cells_[row * cols() + col];
-		}
-
-		Cell & at(helpers::Point const& p) {
-			return at(p.col, p.row);
-		}
-
-		Cell const & at(unsigned col, unsigned row) const {
-			ASSERT(col < cols() && row < rows());
-			return cells_[row * cols() + col];
-		}
-
-		Cell const & at(helpers::Point const& p) const {
-			return at(p.col, p.row);
-		}
-
-	private:
-		friend class Terminal;
-
-		LayerImpl(Terminal * terminal):
-			terminal_(terminal),
-			cells_(new Cell[terminal_->cols_ * terminal_->rows_]) {
-		}
-
-		~LayerImpl() {
-			delete[] cells_;
-		}
-
-		/** Resizes the layer. 
-		 */
-		void resize(unsigned cols, unsigned rows) {
-			ASSERT(terminal_->cols_ == cols && terminal_->rows_ == rows);
-			delete[] cells_;
-			cells_ = new Cell[cols * rows];
-/*			for (size_t i = 0; i < cols * rows; ++i) {
-				cells_[i].c = 'a';
-				cells_[i].fg = Color::White();
-				cells_[i].fg = Color::White();
-			} */ 
-			  
-		}
-
-		/** Terminal the layer belongs to. 
-		 */
-		Terminal * const terminal_;
-
-		/** The actual cells in the layer.
-		 */
-		Cell * cells_;
-	};
 
 	/** Terminal extension to allow communication over input output streams. 
 	 */

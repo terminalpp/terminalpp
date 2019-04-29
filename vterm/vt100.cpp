@@ -313,7 +313,6 @@ namespace vterm {
 		bufferEnd_ = buffer_ + size;
 		std::string text;
 		{
-
 			// lock the terminal for updates while decoding
 			std::lock_guard<std::mutex> g(m_);
 
@@ -392,7 +391,7 @@ namespace vterm {
 					text += static_cast<char>(c8.codepoint() & 0xff);
 					//LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
 					// get the cell and update its contents
-					Cell & cell = defaultLayer_->at(cursorPos_.col, cursorPos_.row);
+					Cell & cell = at(cursorPos_.col, cursorPos_.row);
 					cell.fg = fg_;
 					cell.bg = bg_;
 					cell.font = font_;
@@ -920,7 +919,7 @@ namespace vterm {
 		// TODO add print of the char as well
 		for (unsigned row = rect.top; row < rect.bottom; ++row) {
 			for (unsigned col = rect.left; col < rect.right; ++col) {
-				Cell & cell = defaultLayer_->at(col, row);
+				Cell & cell = at(col, row);
 				cell.fg = fg;
 				cell.bg = bg;
 				cell.font = font;
@@ -939,15 +938,15 @@ namespace vterm {
         lines = std::min(lines, scrollEnd_ - from);
         for (unsigned r = from, re = scrollEnd_ - lines; r < re; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
-				Cell & cell = defaultLayer_->at(c, r);
-				cell = defaultLayer_->at(c, r + lines);
+				Cell & cell = at(c, r);
+				cell = at(c, r + lines);
 				cell.dirty = true;
 			}
         }
         // now make the lines at the bottom empty
         for (unsigned r = scrollEnd_ - lines; r < scrollEnd_; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
-				Cell & cell = defaultLayer_->at(c, r);
+				Cell & cell = at(c, r);
 				cell.c = ' ';
 				cell.fg = fg_;
 				cell.bg = bg_;
@@ -965,15 +964,15 @@ namespace vterm {
         lines = std::min(lines, scrollEnd_ - from);
         for (unsigned r = scrollEnd_ - 1, rs = from + lines; r >= rs; --r) {
 			for (unsigned c = 0; c < cols_; ++c) {
-				Cell & cell = defaultLayer_->at(c, r);
-				cell = defaultLayer_->at(c, r - lines);
+				Cell & cell = at(c, r);
+				cell = at(c, r - lines);
 				cell.dirty = true;
 			}
         }
         // now clear the top n lines
         for (unsigned r = from, re = from + lines; r < re; ++r) {
 			for (unsigned c = 0; c < cols_; ++c) {
-				Cell & cell = defaultLayer_->at(c, r);
+				Cell & cell = at(c, r);
 				cell.c = ' ';
 				cell.fg = fg_;
 				cell.bg = bg_;
