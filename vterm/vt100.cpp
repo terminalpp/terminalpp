@@ -260,6 +260,17 @@ namespace vterm {
 		fg_(palette[defaultFg]),
 		bg_(palette[defaultBg]),
 		font_(),
+		alternateBuffer_(false),
+		otherCells_(new Cell[cols * rows]),
+		otherCursorPos_(cursorPos_),
+		otherCursorCharacter_(cursorCharacter_),
+		otherCursorVisible_(cursorVisible_),
+		otherCursorBlink_(cursorBlink_),
+		otherScrollStart_(0),
+		otherScrollEnd_(rows),
+		otherFg_(fg_),
+		otherBg_(bg_),
+		otherFont_(font_),
 	    buffer_(nullptr),
 	    bufferEnd_(nullptr) {
 		palette_.fillFrom(palette);
@@ -304,6 +315,16 @@ namespace vterm {
         // reset the scroll region to whole window
         scrollStart_ = 0;
         scrollEnd_ = rows;
+		// do the same for the other buffer
+		if (otherCursorPos_.col >= cols_)
+			otherCursorPos_.col = cols_ - 1;
+		if (otherCursorPos_.row >= rows_)
+			otherCursorPos_.row = rows_ - 1;
+		otherScrollStart_ = 0;
+		otherScrollEnd_ = rows;
+		// and resize its cells
+		delete [] otherCells_;
+		otherCells_ = new Cell[cols * rows];
 		// IOTerminal's doResize() is not called because of the virtual inheritance
 		LOG(SEQ) << "terminal resized to " << cols << "," << rows;
 	}
@@ -981,5 +1002,19 @@ namespace vterm {
 			}
         }
     }
+
+	void VT100::flipBuffer() {
+		alternateBuffer_ = ! alternateBuffer_;
+		std::swap(cells_, otherCells_);
+		std::swap(cursorPos_, otherCursorPos_);
+		std::swap(cursorCharacter_, otherCursorCharacter_);
+		std::swap(cursorVisible_, otherCursorVisible_);
+		std::swap(cursorBlink_, otherCursorBlink_);
+		std::swap(scrollStart_, otherScrollStart_);
+		std::swap(scrollEnd_, otherScrollEnd_);
+		std::swap(fg_, otherFg_);
+		std::swap(bg_, otherBg_);
+		std::swap(font_, otherFont_);
+	}
 
 } // namespace vterm

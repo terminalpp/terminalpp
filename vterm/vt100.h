@@ -7,6 +7,10 @@
 namespace vterm {
 
 	/** Palette of colors. 
+
+	    Although vterm fully supports the true color rendering, for compatibility and shorter escape codes, the 256 color palette as defined for xterm is supported via this class. 
+
+		The separation of the palette and the terminal allows very simple theming in the future, should this feature be implemented. 
 	 */
 	class Palette {
 	public:
@@ -93,7 +97,7 @@ namespace vterm {
 
 		// methods --------------------------------------------------------------------------------------
 
-    void keyDown(Key k) override;
+        void keyDown(Key k) override;
 
 		/* VT100 is not interested in keyups, the key is sent on keydown event alone. 
 		 */
@@ -225,7 +229,6 @@ namespace vterm {
 			std::vector<std::unordered_map<unsigned, std::string>> keys_;
 		};
 
-
 		void doResize(unsigned cols, unsigned rows) override;
 
 		Color const & defaultFg() const {
@@ -300,7 +303,6 @@ namespace vterm {
 			}
 		}
 
-
 		/** Updates the cursor position. 
 		 */
 		void setCursor(unsigned col, unsigned row);
@@ -315,6 +317,9 @@ namespace vterm {
         void deleteLine(unsigned lines, unsigned from);
         void insertLine(unsigned lines, unsigned from);
 
+		/** Flips the current and other buffers. 
+		 */
+		void flipBuffer();
 
 
         /** True if application keypad mode is enabled. 
@@ -341,8 +346,26 @@ namespace vterm {
 		Color bg_;
 		Font font_;
 
-		char * buffer_;
-		char * bufferEnd_;
+		/** Determines whether alternate, or normal buffer is used. 
+		 */
+		bool alternateBuffer_;
+
+		/** Backup of the values for the inactive buffer. 
+		 */
+		Cell* otherCells_;
+		helpers::Point otherCursorPos_;
+		Char::UTF8 otherCursorCharacter_;
+		bool otherCursorVisible_;
+		bool otherCursorBlink_;
+		unsigned otherScrollStart_;
+		unsigned otherScrollEnd_;
+		Color otherFg_;
+		Color otherBg_;
+		Font otherFont_;
+
+		char* buffer_;
+		char* bufferEnd_;
+
 
 		static KeyMap keyMap_;
 
