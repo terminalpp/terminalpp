@@ -63,7 +63,6 @@ namespace vterm {
 	 */
 	class Terminal : public helpers::Object {
 	public:
-		class LayerImpl;
 
 		/** Provides access to the terminal's buffer and associated features. 
 		 */
@@ -132,8 +131,6 @@ namespace vterm {
 		private:
 			Terminal * terminal_;
 		}; // Terminal::Buffer
-
-
 
 		// events ---------------------------------------------------------------------------------
 

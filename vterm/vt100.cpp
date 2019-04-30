@@ -262,10 +262,6 @@ namespace vterm {
 		font_(),
 		alternateBuffer_(false),
 		otherCells_(new Cell[cols * rows]),
-		otherCursorPos_(cursorPos_),
-		otherCursorCharacter_(cursorCharacter_),
-		otherCursorVisible_(cursorVisible_),
-		otherCursorBlink_(cursorBlink_),
 		otherScrollStart_(0),
 		otherScrollEnd_(rows),
 		otherFg_(fg_),
@@ -315,11 +311,6 @@ namespace vterm {
         // reset the scroll region to whole window
         scrollStart_ = 0;
         scrollEnd_ = rows;
-		// do the same for the other buffer
-		if (otherCursorPos_.col >= cols_)
-			otherCursorPos_.col = cols_ - 1;
-		if (otherCursorPos_.row >= rows_)
-			otherCursorPos_.row = rows_ - 1;
 		otherScrollStart_ = 0;
 		otherScrollEnd_ = rows;
 		// and resize its cells
@@ -774,8 +765,8 @@ namespace vterm {
                 /* Resets all attributes. */
                 case 0:
                     font_ = Font();
-                    fg_ = defaultFg();
-                    bg_ = defaultBg();
+                    fg_ = palette_[defaultFg_];
+                    bg_ = palette_[defaultBg_];
                     LOG(SEQ) << "font fg bg reset";
                     break;
                 /* Bold / bright foreground. */
@@ -806,7 +797,7 @@ namespace vterm {
                     break;
                 /* Foreground default. */
                 case 39:
-                    fg_ = defaultFg();
+                    fg_ = palette_[defaultFg_];
                     LOG(SEQ) << "fg reset";
                     break;
      			/* 40 - 47 are dark background color, handled in the default case. */
@@ -817,7 +808,7 @@ namespace vterm {
                     break;
                 /* Background default */
                 case 49:
-                    bg_ = defaultBg();
+                    bg_ = palette_[defaultBg_];
                     LOG(SEQ) << "bg reset";
                     break;
 
@@ -881,11 +872,19 @@ namespace vterm {
                 */
                 case 47: 
                 case 1049:
-                    // switching to the alternate buffer, or enabling it again should trigger buffer reset
-                    fg_ = defaultFg();
-                    bg_ = defaultBg();
-                    fillRect(helpers::Rect(cols_, rows_), ' ');
-                    break;
+                    if (value) {
+                        if (! alternateBuffer_) {
+                            storeCursorInfo();
+                            flipBuffer();
+                        }
+                        resetCurrentBuffer();
+                    } else {
+                        if (alternateBuffer_) {
+                            flipBuffer();
+                            loadCursorInfo();
+                        }
+                    }
+                    continue;
                 /* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. */
                 case 2004:
                     // TODO
@@ -1003,18 +1002,43 @@ namespace vterm {
         }
     }
 
+    void VT100::storeCursorInfo() {
+        cursorStack_.push_back(CursorInfo(cursorPos_, cursorCharacter_, cursorVisible_, cursorBlink_));
+    }
+
+    void VT100::loadCursorInfo() {
+        ASSERT(! cursorStack_.empty());
+        CursorInfo & ci = cursorStack_.back();
+        cursorPos_ = ci.pos;
+        if (cursorPos_.col >= cols_)
+            cursorPos_.col = cols_ - 1;
+        if (cursorPos_.row >= rows_)
+            cursorPos_.row = rows_ - 1;
+        cursorCharacter_ = ci.character;
+        cursorVisible_ = ci.visible;
+        cursorBlink_ = ci.blink;
+        cursorStack_.pop_back();
+    }
+
 	void VT100::flipBuffer() {
 		alternateBuffer_ = ! alternateBuffer_;
 		std::swap(cells_, otherCells_);
-		std::swap(cursorPos_, otherCursorPos_);
-		std::swap(cursorCharacter_, otherCursorCharacter_);
-		std::swap(cursorVisible_, otherCursorVisible_);
-		std::swap(cursorBlink_, otherCursorBlink_);
 		std::swap(scrollStart_, otherScrollStart_);
 		std::swap(scrollEnd_, otherScrollEnd_);
 		std::swap(fg_, otherFg_);
 		std::swap(bg_, otherBg_);
 		std::swap(font_, otherFont_);
 	}
+
+    void VT100::resetCurrentBuffer() {
+        fg_ = palette_[defaultFg_];
+        bg_ = palette_[defaultBg_];
+        font_ = Font();
+        fillRect(helpers::Rect(cols_, rows_), ' ');
+        cursorPos_ = helpers::Point(0,0);
+        cursorCharacter_ = 0x2581;
+        cursorVisible_ = true;
+        cursorBlink_ = true;
+    }
 
 } // namespace vterm

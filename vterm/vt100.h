@@ -229,15 +229,27 @@ namespace vterm {
 			std::vector<std::unordered_map<unsigned, std::string>> keys_;
 		};
 
+        /** Cursor information. 
+         
+            Used in the cursor position push/pop buffer. 
+         */
+        class CursorInfo {
+        public:
+            helpers::Point pos;
+            Char::UTF8 character;
+            bool visible;
+            bool blink;
+
+            CursorInfo(helpers::Point pos, Char::UTF8 character, bool visible, bool blink):
+                pos(pos),
+                character(character),
+                visible(visible),
+                blink(blink) {
+            }
+
+        };
+
 		void doResize(unsigned cols, unsigned rows) override;
-
-		Color const & defaultFg() const {
-			return palette_[defaultFg_];;
-		}
-
-		Color const & defaultBg() const {
-			return palette_[defaultBg_];;
-		}
 
 		char top() {
 			return (buffer_ == bufferEnd_) ? 0 : *buffer_;
@@ -317,10 +329,16 @@ namespace vterm {
         void deleteLine(unsigned lines, unsigned from);
         void insertLine(unsigned lines, unsigned from);
 
+
+        void storeCursorInfo();
+
+        void loadCursorInfo();
+
 		/** Flips the current and other buffers. 
 		 */
 		void flipBuffer();
 
+        void resetCurrentBuffer();
 
         /** True if application keypad mode is enabled. 
          */
@@ -353,10 +371,6 @@ namespace vterm {
 		/** Backup of the values for the inactive buffer. 
 		 */
 		Cell* otherCells_;
-		helpers::Point otherCursorPos_;
-		Char::UTF8 otherCursorCharacter_;
-		bool otherCursorVisible_;
-		bool otherCursorBlink_;
 		unsigned otherScrollStart_;
 		unsigned otherScrollEnd_;
 		Color otherFg_;
@@ -365,6 +379,10 @@ namespace vterm {
 
 		char* buffer_;
 		char* bufferEnd_;
+
+        /** Stack for cursor information. 
+         */
+        std::vector<CursorInfo> cursorStack_;
 
 
 		static KeyMap keyMap_;
