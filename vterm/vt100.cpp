@@ -267,6 +267,7 @@ namespace vterm {
 		otherFg_(fg_),
 		otherBg_(bg_),
 		otherFont_(font_),
+        bracketedPaste_(false),
 	    buffer_(nullptr),
 	    bufferEnd_(nullptr) {
 		palette_.fillFrom(palette);
@@ -301,6 +302,16 @@ namespace vterm {
 		// TODO make sure that the character is within acceptable range, i.e. it does not clash with ctrl+ stuff, etc. 
 		write(c.rawBytes(), c.size());
 	}
+
+    void VT100::paste(std::string const & what) {
+        if (bracketedPaste_) {
+            write("\033[200~",6);
+            write(what.c_str(), what.size());
+            write("\033[201~",6);
+        } else {
+            write(what.c_str(), what.size());
+        }
+    }
 
 	void VT100::doResize(unsigned cols, unsigned rows) {
 		// update the cursor so that it stays on the screen at all times
@@ -422,7 +433,6 @@ namespace vterm {
 		repaint();
 	}
 
-
 	bool VT100::skipEscapeSequence() {
 		ASSERT(*buffer_ == Char::ESC);
 		pop();
@@ -475,6 +485,12 @@ namespace vterm {
             return false;
         char c = pop();
 		switch (c) {
+            /* Reverse line feed - move up 1 row, same column.
+             */
+            case 'M':
+                LOG(SEQ) << "RI: move cursor 1 line up";
+                setCursor(cursorPos_.row - 1, cursorPos_.col);
+                return true;
             /* Operating system command. */
 		    case ']':
 				return parseOSC();
@@ -576,6 +592,13 @@ namespace vterm {
                     LOG(SEQ) << "CUB: setCursor " << cursorPos_.col - seq[0] << ", " << cursorPos_.row;
                     setCursor(cursorPos_.col - seq[0], cursorPos_.row);
                     return;
+                /* CSI <n> G -- set cursor character absolute
+                 */
+                case 'G': // CHA
+                    seq.setArgDefault(0,1);
+                    LOG(SEQ) << "CHA: set column " << seq[0] - 1;
+                    setCursor(seq[0] - 1, cursorPos_.row);
+                    return;
                 /* set cursor position (CUP) */
                 case 'H': // CUP
                 case 'f': // HVP
@@ -650,6 +673,13 @@ namespace vterm {
                     deleteLine(seq[0], cursorPos_.row);
                     //scrollDown(seq[0]);
                     return;
+                /* CSI <n> T -- Scroll down n lines
+                 */
+                case 'T':
+                    seq.setArgDefault(0, 1);
+                    LOG(SEQ) << "SD: scrollDown " << seq[0];
+                    insertLine(seq[0], cursorPos_.row);
+                    return;
                 /* CSI <n> X -- erase <n> characters from the current position 
                 */
                 case 'X': {
@@ -703,12 +733,16 @@ namespace vterm {
                 Depending on the argument, certain things are turned on. None of the RM settings are currently supported. 
                 */
                 case 'h':
-                    THROW(InvalidCSISequence("Unsupported CSI seqauence: ", seq));
+                    break;
                 /* CSI <n> l -- Reset mode disable 
                 Depending on the argument, certain things are turned off. Turning the features on/off is not allowed, but if the client wishes to disable something that is disabled, it's happily ignored. 
                 */
                 case 'l':
-                    THROW(InvalidCSISequence("Unsupported CSI seqauence: ", seq));
+                    seq.setArgDefault(0,0);
+                    // enable replace mode (IRM) since this is the only mode we allow, do nothing
+                    if (seq[0] == 4) 
+                        return;
+                    break;
                 /* SGR 
                 */
                 case 'm':
@@ -724,6 +758,29 @@ namespace vterm {
                     scrollEnd_ = std::min(seq[1] , rows_); // exclusive 
                     LOG(SEQ) << "Scroll region set to " << scrollStart_ << " - " << scrollEnd_;
                     return;
+                /* CSI <n> : <n> : <n> t -- window manipulation (xterm)
+
+                   We do nothing for these at the moment, just recognize the few possibly interesting ones.
+                 */
+                case 't':
+                    seq.setArgDefault(0, 0);
+                    seq.setArgDefault(1, 0);
+                    seq.setArgDefault(2, 0);
+                    switch (seq[0]) {
+                        case 22:
+                            // 22;0;0 -- save xterm icon and window title on stack
+                            if (seq[1] == 0 && seq[2] == 0)
+                                return;
+                            break;
+                        case 23:
+                            // 23;0;0 -- restore xterm icon and window title from stack
+                            if (seq[1] == 0 && seq[2] == 0)
+                                return;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
                 default:
                     break;
             }
@@ -860,13 +917,17 @@ namespace vterm {
                     cursorVisible_ = value;
                     LOG(SEQ) << "cursor visible: " << value;
                     continue;
+                case 1000:
+                    break;
+
                 /* Mouse tracking movement & buttons.
 
                 https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
                 */
                 case 1001: // mouse highlighting
-                case 1006: // 
                 case 1003:
+                case 1005:
+                case 1006: // 
                     break;
                 /* Enable or disable the alternate screen buffer.
                 */
@@ -887,9 +948,8 @@ namespace vterm {
                     continue;
                 /* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. */
                 case 2004:
-                    // TODO
-                    break;
-
+                    bracketedPaste_ = value;
+                    continue;
                 default:
                     break;
             }
@@ -918,6 +978,7 @@ namespace vterm {
             LOG(SEQ) << "Title change to " << title;
             trigger(onTitleChange, title);
         } else {
+            // TODO ignore for now 112 == reset cursor color             
             LOG(UNKNOWN_SEQ) << "Unknown OSC: " << std::string(start, buffer_ - start);
         }
         return true;

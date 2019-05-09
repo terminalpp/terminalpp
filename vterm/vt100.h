@@ -71,7 +71,9 @@ namespace vterm {
 
 		https://invisible-island.net/xterm/ctlseqs/ctlseqs.pdf
 
-        https://www.vt100.net/docs/vt102-ug/chapter5.html        
+        https://www.vt100.net/docs/vt102-ug/chapter5.html    
+
+        https://chromium.googlesource.com/apps/libapps/+/a5fb83c190aa9d74f4a9bca233dac6be2664e9e9/hterm/doc/ControlSequences.md    
 
 
 	*/
@@ -104,6 +106,8 @@ namespace vterm {
 		void keyUp(Key k) override { };
 
 		void sendChar(Char::UTF8 c) override;
+
+        void paste(std::string const & what) override;
 
 
 		
@@ -376,6 +380,10 @@ namespace vterm {
 		Color otherFg_;
 		Color otherBg_;
 		Font otherFont_;
+
+
+        bool bracketedPaste_;
+
 
 		char* buffer_;
 		char* bufferEnd_;

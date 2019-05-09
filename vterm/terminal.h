@@ -58,8 +58,6 @@ namespace vterm {
 	/** Virtual Terminal Implementation. 
 
 	    The terminal only implements the storage and programmatic manipulation of the terminal data and does not concern itself with either making the contents visible to the user (this is the job of terminal renderer), or by specifying ways on how & when the contents of the terminal should be updated, which is a job of classes that inherit from the virtual terminal (such as PTYTerminal). 
-
-	    TODO for now the terminal class is rather small and its functionality limited, but in the future with support for layers, overlays, graphic objects, links, etc. its size would grow a lot. 
 	 */
 	class Terminal : public helpers::Object {
 	public:
@@ -188,11 +186,16 @@ namespace vterm {
 			return cursorBlink_;
 		}
 
+
 		// methods --------------------------------------------------------------------------------
 
 		virtual void keyDown(Key k) = 0;
 		virtual void keyUp(Key k) = 0;
 		virtual void sendChar(Char::UTF8 c) = 0;
+
+        /** Call when paste from clipboard has been issued in the terminal window. 
+         */
+        virtual void paste(std::string const & what) = 0;
 
 		/** Resizes the terminal to given size.
 		 */
