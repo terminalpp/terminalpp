@@ -14,8 +14,6 @@
 #include "char.h"
 #include "key.h"
 
-
-
 namespace vterm {
 
 	/** Describes a single character cell of the terminal. 
