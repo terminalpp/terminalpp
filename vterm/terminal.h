@@ -17,67 +17,58 @@
 
 namespace vterm {
 
-	/** Describes a single character cell of the terminal. 
+	/** Implementation of the terminal. 
 
-	    Each cell may specify its own font and attributes, text and background color and a character to display. 
+	    The terminal provides encapsulation over the screen buffer and provides the communication between the frontend and backend. The terminal frontend is responsible for rendering the contents of the terminal to the user and sending the terminal the user input events. The backend of the terminal relays the user input events to the underlying process and reads from the process updates to the terminal state and stores them. 
 	 */
-	class Cell {
-	public:
-		/** The font to be used to render the cell.
-		 */
-		Font font;
-
-		/** Text color.
-		 */
-		Color fg;
-
-		/** Background color.
-		 */
-		Color bg;
-
-		/** Character to be displayed (utf8).
-		 */
-		Char::UTF8 c;
-
-		/** Determines if the cell is dirty, i.e. it should be redrawn. 
-		 */
-		bool dirty;
-
-		/** Default constructor for a cell created white space on a black background.
-		 */
-		Cell() :
-			fg(Color::White()),
-			bg(Color::Black()),
-			c(' '),
-		    dirty(false) {
-		}
-
-	}; // vterm::Cell
-
-	/** Virtual Terminal Implementation. 
-
-	    The terminal only implements the storage and programmatic manipulation of the terminal data and does not concern itself with either making the contents visible to the user (this is the job of terminal renderer), or by specifying ways on how & when the contents of the terminal should be updated, which is a job of classes that inherit from the virtual terminal (such as PTYTerminal). 
-	 */
-	class Terminal : public helpers::Object {
+	class Terminal {
 	public:
 
-		/** Provides access to the terminal's buffer and associated features. 
+		/** Properties of a single cell of the terminal buffer.
 		 */
-		class Buffer {
+		class Terminal::Cell {
 		public:
-			/** Returns the terminal associated with the buffer. 
+			/** The font to be used to render the cell.
 			 */
-			Terminal * terminal() {
+			Font font;
+
+			/** Text color.
+			 */
+			Color fg;
+
+			/** Background color.
+			 */
+			Color bg;
+
+			/** Character to be displayed (utf8).
+			 */
+			Char::UTF8 c;
+
+			/** Determines if the cell is dirty, i.e. it should be redrawn.
+			 */
+			bool dirty;
+
+			/** Default constructor for a cell created white space on a black background.
+			 */
+			Cell() :
+				fg(Color::White()),
+				bg(Color::Black()),
+				c(' '),
+				dirty(false) {
+			}
+		};
+
+		class Terminal::Buffer {
+		public:
+
+			/** Returns the terminal to which the buffer belongs.
+			 */
+			Terminal* terminal() const {
 				return terminal_;
 			}
 
-			Terminal const* terminal() const {
-				return terminal_;
-			}
-
-			/* Returns the width and height of the buffer (and the terminal). 
+			/** Returns the columns and rows of the buffer.
 			 */
-
 			unsigned cols() const {
 				return terminal_->cols_;
 			}
@@ -86,48 +77,287 @@ namespace vterm {
 				return terminal_->rows_;
 			}
 
-			/** Returns the given cell of the terminal's buffer. 
+			/** Returns the given cell of the terminal's buffer.
 			 */
-			Cell & at(unsigned col, unsigned row) {
+			Terminal::Cell& at(unsigned col, unsigned row) {
 				ASSERT(col < cols() && row < rows());
-				return terminal_->cells_[row * cols() + col];
+				return cells_[row * cols() + col];
 			}
 
-			Cell & at(helpers::Point const& p) {
+			/* Not needed?
+			Cell& at(helpers::Point const& p) {
 				return at(p.col, p.row);
 			}
+			*/
 
-			Cell const & at(unsigned col, unsigned row) const {
+			Terminal::Cell const& at(unsigned col, unsigned row) const {
 				ASSERT(col < cols() && row < rows());
-				return terminal_->cells_[row * cols() + col];
+				return cells_[row * cols() + col];
 			}
 
-			Cell const & at(helpers::Point const& p) const {
+			/* Not needed?
+			Cell const& at(helpers::Point const& p) const {
 				return at(p.col, p.row);
 			}
-
-			// constructors, assignments
-
-			Buffer(Terminal* t) :
-				terminal_(t) {
-				terminal_->m_.lock();
-			}
-
-			Buffer(Buffer&& from) :
-				terminal_(from.terminal_) {
-				from.terminal_ = nullptr;
-			}
-
-			Buffer(Buffer const&) = delete;
+			*/
 
 			~Buffer() {
-				if (terminal_ != nullptr)
-					terminal_->m_.unlock();
+				delete[] cells_;
 			}
 
 		private:
-			Terminal * terminal_;
-		}; // Terminal::Buffer
+
+			friend class Terminal;
+
+			Buffer(Terminal* terminal) :
+				terminal_(terminal),
+				cells_(new Cell[cols() * rows()]) {
+				ASSERT(terminal != nullptr) << "Buffer must always belong to a terminal";
+			}
+
+			/** Resizes the buffer.
+			 */
+			void resize() {
+				// TODO resizing the terminal should preserve some of the original context, if applicable
+				delete[] cells_;
+				cells_ = new Cell[cols() * rows()];
+			}
+
+			/** The terminal to which the buffer belongs.
+			 */
+			Terminal* terminal_;
+
+			/** Number of columns and rows the buffer stores.
+			 */
+			unsigned cols_;
+			unsigned rows_;
+
+			/** The underlying array of cells.
+			 */
+			Cell* cells_;
+		};
+
+
+		class Frontend {
+		public:
+
+			/** Called by the attached terminal backend when new dirty cells exist which must be repainted.
+			 */
+			virtual void update() = 0;
+
+		protected:
+
+			virtual void resize(unsigned cols, unsigned rows) {
+				if (terminal_)
+					terminal_->resize(cols, rows);
+			}
+
+			// keyboard events
+
+			virtual void keyDown(Key k) {
+				if (terminal_)
+					terminal_->keyDown(k);
+			}
+
+			virtual void keyUp(Key k) {
+				if (terminal_)
+					terminal_->keyDown(k);
+			}
+
+			virtual void keyChar(Char::UTF8 c) {
+				if (terminal_)
+					terminal_->keyChar(c);
+			}
+
+			// mouse events
+
+			virtual void mouseDown(unsigned col, unsigned row, MouseButton button) {
+				if (terminal_)
+					terminal_->mouseDown(col, row, button);
+			}
+
+			virtual void mouseUp(unsigned col, unsigned row, MouseButton button) {
+				if (terminal_)
+					terminal_->mouseUp(col, row, button);
+			}
+
+			virtual void mouseWheel(unsigned col, unsigned row, int by) {
+				if (terminal_)
+					terminal_->mouseWheel(col, row, by);
+			}
+
+			virtual void mouseMove(unsigned col, unsigned row) {
+				if (terminal_)
+					terminal_->mouseMove(col, row);
+			}
+
+			// clipboard events
+
+			virtual void paste(std::string const& what) {
+				if (terminal_)
+					terminal_->paste(what);
+			}
+
+		private:
+			Terminal* terminal_;
+
+		};
+
+		class Backend {
+		public:
+			Terminal* terminal() const {
+				return terminal_;
+			}
+
+			virtual void resize(unsigned cols, unsigned rows) = 0;
+
+			virtual void keyDown(Key k) = 0;
+			virtual void keyUp(Key k) = 0;
+			virtual void keyChar(Char::UTF8 c) = 0;
+
+			virtual void mouseDown(unsigned col, unsigned row, MouseButton button) = 0;
+			virtual void mouseUp(unsigned col, unsigned row, MouseButton button) = 0;
+			virtual void mouseWheel(unsigned col, unsigned row, int by) = 0;
+			virtual void mouseMove(unsigned col, unsigned row) = 0;
+
+			virtual void paste(std::string const & what) = 0;
+
+
+		protected:
+
+			virtual void update() {
+				if (terminal_)
+					terminal_->update();
+			}
+
+		private:
+			Terminal* terminal_;
+
+		};
+
+		Terminal(unsigned cols, unsigned rows, Frontend* frontend = nullptr, Backend* backend = nullptr) :
+			cols_(cols),
+			rows_(rows),
+			buffer_(this),
+			frontend_(nullptr),
+			backend_(nullptr) {
+			// TODO attach frontend and backend
+		}
+
+		/** Returns the width and height of the terminal.
+		 */
+		unsigned cols() const {
+			return cols_;
+		}
+
+		unsigned rows() const {
+			return rows_;
+		}
+
+		/** Returns the buffer associated with the terminal. 
+		 */
+		Buffer const& buffer() const {
+			return buffer_;
+		}
+
+		Buffer& buffer() {
+			return buffer_;
+		}
+
+		void resize(unsigned cols, unsigned rows) {
+			if (cols_ != cols || rows_ != rows) {
+				cols_ = cols;
+				rows_ = rows;
+				if (backend_)
+					backend_->resize(cols, rows);
+			}
+		}
+
+		// keyboard events
+
+		void keyDown(Key k) {
+			if (backend_)
+				backend_->keyDown(k);
+		}
+
+		void keyUp(Key k) {
+			if (backend_)
+				backend_->keyDown(k);
+		}
+
+		void keyChar(Char::UTF8 c) {
+			if (backend_)
+				backend_->keyChar(c);
+		}
+
+		// mouse events
+
+		void mouseDown(unsigned col, unsigned row, MouseButton button) {
+			if (backend_)
+				backend_->mouseDown(col, row, button);
+		}
+
+		void mouseUp(unsigned col, unsigned row, MouseButton button) {
+			if (backend_)
+				backend_->mouseUp(col, row, button);
+		}
+
+		void mouseWheel(unsigned col, unsigned row, int by) {
+			if (backend_)
+				backend_->mouseWheel(col, row, by);
+		}
+
+		void mouseMove(unsigned col, unsigned row) {
+			if (backend_)
+				backend_->mouseMove(col, row);
+		}
+
+		// clipboard events
+
+		void paste(std::string const& what) {
+			if (backend_)
+				backend_->paste(what);
+		}
+
+
+
+
+		void update() {
+			if (frontend_)
+				frontend_->update();
+		}
+
+	private:
+		/** Size of the terminal. 
+		 */
+		unsigned cols_;
+		unsigned rows_;
+
+		/** The buffer containing rendering information for all the cells. 
+		 */
+		Buffer buffer_;
+
+		/** Frontend attached to the terminal.
+		 */
+		Frontend* frontend_;
+
+		/** Backend attached to the terminal. 
+		 */
+		Backend* backend_;
+
+
+	};
+
+
+
+#ifdef HAHA
+
+	/** Virtual Terminal Implementation. 
+
+	    The terminal only implements the storage and programmatic manipulation of the terminal data and does not concern itself with either making the contents visible to the user (this is the job of terminal renderer), or by specifying ways on how & when the contents of the terminal should be updated, which is a job of classes that inherit from the virtual terminal (such as PTYTerminal). 
+	 */
+	class Terminal : public helpers::Object {
+	public:
 
 		// events ---------------------------------------------------------------------------------
 
@@ -329,5 +559,115 @@ namespace vterm {
 		size_t inputBufferSize_;
 
 	};
+
+	/** Describes a single character cell of the terminal.
+
+	Each cell may specify its own font and attributes, text and background color and a character to display.
+ */
+	class Cell {
+	public:
+		/** The font to be used to render the cell.
+		 */
+		Font font;
+
+		/** Text color.
+		 */
+		Color fg;
+
+		/** Background color.
+		 */
+		Color bg;
+
+		/** Character to be displayed (utf8).
+		 */
+		Char::UTF8 c;
+
+		/** Determines if the cell is dirty, i.e. it should be redrawn.
+		 */
+		bool dirty;
+
+		/** Default constructor for a cell created white space on a black background.
+		 */
+		Cell() :
+			fg(Color::White()),
+			bg(Color::Black()),
+			c(' '),
+			dirty(false) {
+		}
+
+	}; // vterm::Cell
+
+		/** Provides access to the terminal's buffer and associated features.
+		 */
+	class Buffer {
+	public:
+		/** Returns the terminal associated with the buffer.
+		 */
+		Terminal* terminal() {
+			return terminal_;
+		}
+
+		Terminal const* terminal() const {
+			return terminal_;
+		}
+
+		/* Returns the width and height of the buffer (and the terminal).
+		 */
+
+		unsigned cols() const {
+			return terminal_->cols_;
+		}
+
+		unsigned rows() const {
+			return terminal_->rows_;
+		}
+
+		/** Returns the given cell of the terminal's buffer.
+		 */
+		Cell& at(unsigned col, unsigned row) {
+			ASSERT(col < cols() && row < rows());
+			return terminal_->cells_[row * cols() + col];
+		}
+
+		Cell& at(helpers::Point const& p) {
+			return at(p.col, p.row);
+		}
+
+		Cell const& at(unsigned col, unsigned row) const {
+			ASSERT(col < cols() && row < rows());
+			return terminal_->cells_[row * cols() + col];
+		}
+
+		Cell const& at(helpers::Point const& p) const {
+			return at(p.col, p.row);
+		}
+
+		// constructors, assignments
+
+		Buffer(Terminal* t) :
+			terminal_(t) {
+			terminal_->m_.lock();
+		}
+
+		Buffer(Buffer&& from) :
+			terminal_(from.terminal_) {
+			from.terminal_ = nullptr;
+		}
+
+		Buffer(Buffer const&) = delete;
+
+		~Buffer() {
+			if (terminal_ != nullptr)
+				terminal_->m_.unlock();
+		}
+
+	private:
+		Terminal* terminal_;
+	}; // Terminal::Buffer
+
+
+
+
+#endif
 
 } // namespace vterm
