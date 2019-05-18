@@ -303,6 +303,24 @@ namespace vterm {
 		write(c.rawBytes(), c.size());
 	}
 
+	void VT100::mouseMove(unsigned col, unsigned row) {
+		LOG << "Mouse moved to " << col << ";" << row;
+	}
+
+	void VT100::mouseDown(unsigned col, unsigned row, unsigned button) {
+		LOG << "Button " << button << " down at " << col << ";" << row;
+	}
+
+	void VT100::mouseUp(unsigned col, unsigned row, unsigned button) {
+		LOG << "Button " << button << " up at " << col << ";" << row;
+	}
+
+	void VT100::mouseWheel(unsigned col, unsigned row, int offset) {
+		LOG << "Wheel offset " << offset << " at " << col << ";" << row;
+	}
+
+
+
     void VT100::paste(std::string const & what) {
         if (bracketedPaste_) {
             write("\033[200~",6);
@@ -907,6 +925,13 @@ namespace vterm {
                 /* Smooth scrolling -- ignored*/
                 case 4:
                     continue;
+				/* DECAWM - autowrap mode on/off */
+				case 7:
+					if (value)
+						LOG(SEQ) << "autowrap mode enable (by default)";
+					else
+						LOG(UNKNOWN_SEQ) << "CSI?7l, DECAWM does not support being disabled";
+					continue;
                 // cursor blinking
                 case 12:
                     cursorBlink_ = value;

@@ -13,6 +13,7 @@
 #include "font.h"
 #include "char.h"
 #include "key.h"
+#include "mouse.h"
 
 namespace vterm {
 
@@ -190,6 +191,11 @@ namespace vterm {
 		virtual void keyDown(Key k) = 0;
 		virtual void keyUp(Key k) = 0;
 		virtual void sendChar(Char::UTF8 c) = 0;
+
+		virtual void mouseMove(unsigned col, unsigned row) = 0;
+		virtual void mouseDown(unsigned col, unsigned row, unsigned button) = 0;
+		virtual void mouseUp(unsigned col, unsigned row, unsigned button) = 0;
+		virtual void mouseWheel(unsigned col, unsigned row, int offset) = 0;
 
         /** Call when paste from clipboard has been issued in the terminal window. 
          */

@@ -107,6 +107,11 @@ namespace vterm {
 
 		void sendChar(Char::UTF8 c) override;
 
+		void mouseMove(unsigned col, unsigned row) override;
+		void mouseDown(unsigned col, unsigned row, unsigned button) override;
+		void mouseUp(unsigned col, unsigned row, unsigned button) override;
+		void mouseWheel(unsigned col, unsigned row, int offset) override;
+
         void paste(std::string const & what) override;
 
 

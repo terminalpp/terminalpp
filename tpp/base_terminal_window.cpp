@@ -28,6 +28,35 @@ namespace tpp {
 		terminal()->keyUp(key);
 	}
 
+	void BaseTerminalWindow::mouseMove(unsigned x, unsigned y) {
+		convertMouseCoordsToCells(x, y);
+		if (x != mouseCol_ || y != mouseRow_) {
+			mouseCol_ = x;
+			mouseRow_ = y;
+			terminal()->mouseMove(x, y);
+		}
+	}
+
+	void BaseTerminalWindow::mouseDown(unsigned x, unsigned y, unsigned button) {
+		convertMouseCoordsToCells(x, y);
+		mouseCol_ = x;
+		mouseRow_ = y;
+		terminal()->mouseDown(x, y, button);
+	}
+
+	void BaseTerminalWindow::mouseUp(unsigned x, unsigned y, unsigned button) {
+		convertMouseCoordsToCells(x, y);
+		mouseCol_ = x;
+		mouseRow_ = y;
+		terminal()->mouseUp(x, y, button);
+	}
+
+	void BaseTerminalWindow::mouseWheel(unsigned x, unsigned y, int offset) {
+		convertMouseCoordsToCells(x, y);
+		terminal()->mouseWheel(x, y, offset);
+	}
+
+
 	void BaseTerminalWindow::doUpdateBuffer(bool forceDirty) {
 		vterm::Terminal::Buffer b = terminal()->getBuffer();
 		// initialize the first font and colors

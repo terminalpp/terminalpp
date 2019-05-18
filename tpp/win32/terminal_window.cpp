@@ -237,6 +237,34 @@ namespace tpp {
 				tw->terminal()->keyUp(k);
 				break;
 			}
+		    /* Mouse events which simply obtain the mouse coordinates, convert the buttons and wheel values to vterm standards and then calls the TerminalWindow's events, which perform the pixels to cols & rows translation and then call the terminal itself. 
+			 */
+			case WM_LBUTTONDOWN:
+				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseLeft);
+				break;
+			case WM_LBUTTONUP: 
+				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseLeft);
+				break;
+			case WM_RBUTTONDOWN:
+				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseRight);
+				break;
+			case WM_RBUTTONUP:
+				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseRight);
+				break;
+			case WM_MBUTTONDOWN:
+				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseWheel);
+				break;
+			case WM_MBUTTONUP:
+				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseWheel);
+				break;
+			case WM_MOUSEWHEEL:
+				tw->mouseWheel(lParam & 0xffff, lParam >> 16, GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+				break;
+			case WM_MOUSEMOVE:
+				tw->mouseMove(lParam & 0xffff, lParam >> 16);
+				break;
+			/* Timer even for blink text and cursor. 
+			 */
 			case WM_TIMER: {
 				if (wParam == TIMERID_BLINK) {
 					tw->blink_ = !tw->blink_;

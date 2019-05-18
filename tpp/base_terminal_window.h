@@ -175,8 +175,9 @@ namespace tpp {
 			fullscreen_(settings->fullscreen),
 			cellWidthPx_(settings->defaultFontWidth * settings->defaultZoom),
 			cellHeightPx_(settings->defaultFontHeight * settings->defaultZoom),
-		    blink_(true) {
-
+		    blink_(true),
+		    mouseCol_(0),
+		    mouseRow_(0) {
 		}
 
 		void doAttachTerminal(vterm::Terminal * terminal) override {
@@ -237,6 +238,17 @@ namespace tpp {
         /** Handles the key release event.
          */
         virtual void keyDown(vterm::Key key);
+
+
+		void convertMouseCoordsToCells(unsigned & x, unsigned & y) {
+			x = x / cellWidthPx_;
+			y = y / cellHeightPx_;
+		}
+
+		virtual void mouseMove(unsigned x, unsigned y);
+		virtual void mouseDown(unsigned x, unsigned y, unsigned button);
+		virtual void mouseUp(unsigned x, unsigned y, unsigned button);
+		virtual void mouseWheel(unsigned x, unsigned y, int offset);
 
 		/** Invalidates the contents of the window and triggers a repaint.
 
@@ -314,6 +326,13 @@ namespace tpp {
             If the window contents is buffered, the flag also means that the buffer must be recreated (such as when window size changes).
          */
         bool invalidated_;
+
+
+
+		/** Last known mouse coordinates in terminal columns & rows (not in pixels).
+		 */
+		unsigned mouseCol_;
+		unsigned mouseRow_;
 
 	};
 
