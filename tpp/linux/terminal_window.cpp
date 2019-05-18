@@ -44,7 +44,7 @@ namespace tpp {
 		/* this routine determines which types of input are allowed in
 		   the input.  see the appropriate section for details...
 		*/
-		XSelectInput(display_, window_, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask);
+		XSelectInput(display_, window_, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask);
 
         XGCValues gcv;
         memset(&gcv, 0, sizeof(XGCValues));
@@ -258,7 +258,44 @@ namespace tpp {
                     tw->keyUp(key);
                 break;
             }
-            case ButtonPress:
+            case ButtonPress: 
+                switch (e.xbutton.button) {
+                    case 1:
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseLeft);
+                        break;
+                    case 2:
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseWheel);
+                        break;
+                    case 3:
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseRight);
+                        break;
+                    case 4:
+                        tw->mouseWheel(e.xbutton.x, e.xbutton.y, 1);
+                        break;
+                    case 5:
+                        tw->mouseWheel(e.xbutton.x, e.xbutton.y, -1);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case ButtonRelease: 
+                switch (e.xbutton.button) {
+                    case 1:
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseLeft);
+                        break;
+                    case 2:
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseWheel);
+                        break;
+                    case 3:
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseRight);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case MotionNotify:
+                tw->mouseMove(e.xmotion.x, e.xmotion.y);
                 break;
             default:
                 break;
