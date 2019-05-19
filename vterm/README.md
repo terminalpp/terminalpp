@@ -8,6 +8,16 @@ The virtual terminal (`vterm`) is a class which describes the input and output i
 
 ## `Terminal`
 
+The terminal contains the matrix of cells representing the screen and other terminal properties, such as cursor character and position. The terminal also knows its frontend and backend. There is a limit of 1 frontend and 1 backend on each terminal. 
+
+> Terminal will not know about its frontends, but would use events since there is only the update event so far to be sent to the frontends. 
+
+
+
+
+
+## `Terminal`
+
 The base class for the virtual terminal, which implements storage of the terminal screen and defines the basic terminal events & structures. 
 
 ## `Renderer`

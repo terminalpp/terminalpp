@@ -15,14 +15,19 @@
 #include "key.h"
 #include "mouse.h"
 
+
 namespace vterm {
+
+	class PTY;
 
 	/** Implementation of the terminal. 
 
 	    The terminal provides encapsulation over the screen buffer and provides the communication between the frontend and backend. The terminal frontend is responsible for rendering the contents of the terminal to the user and sending the terminal the user input events. The backend of the terminal relays the user input events to the underlying process and reads from the process updates to the terminal state and stores them. 
 	 */
-	class Terminal {
+	class Terminal : public helpers::Object {
 	public:
+
+		typedef helpers::EventPayload<void, helpers::Object> RepaintEvent;
 
 		/** Properties of a single cell of the terminal buffer.
 		 */
@@ -137,15 +142,37 @@ namespace vterm {
 			Cell* cells_;
 		};
 
-
-		class Frontend {
+		class Frontend : public helpers::Object {
 		public:
 
-			/** Called by the attached terminal backend when new dirty cells exist which must be repainted.
-			 */
-			virtual void update() = 0;
+			Terminal* terminal() const {
+				return terminal_;
+			}
+
+			void setTerminal(Terminal* terminal) {
+				if (terminal_ != terminal) {
+					detachFromTerminal();
+					if (terminal != nullptr)
+						attachToTerminal(terminal);
+				}
+			}
+
+
+			virtual ~Frontend() {
+				detachFromTerminal();
+			}
 
 		protected:
+
+			/** Called by the attached terminal backend when new dirty cells exist which must be repainted.
+             */
+			virtual void repaint() = 0;
+
+			Frontend(unsigned cols, unsigned rows) :
+				terminal_(nullptr),
+				cols_(cols),
+				rows_(rows) {
+			}
 
 			virtual void resize(unsigned cols, unsigned rows) {
 				if (terminal_)
@@ -199,7 +226,28 @@ namespace vterm {
 			}
 
 		private:
+
+			void doRepaint(RepaintEvent& e) {
+				repaint();
+			}
+
+			void detachFromTerminal() {
+				if (terminal_ == nullptr)
+					return;
+				terminal_->onRepaint -= HANDLER(Frontend::doRepaint);
+				terminal_ = nullptr;
+			}
+
+			void attachToTerminal(Terminal* terminal) {
+				terminal_ = terminal;
+				terminal->resize(cols_, rows_);
+				terminal_->onRepaint += HANDLER(Frontend::doRepaint);
+			}
+
 			Terminal* terminal_;
+
+			unsigned cols_;
+			unsigned rows_;
 
 		};
 
@@ -207,6 +255,20 @@ namespace vterm {
 		public:
 			Terminal* terminal() const {
 				return terminal_;
+			}
+
+			void setTerminal(Terminal* terminal) {
+				if (terminal_ != terminal) {
+					detachFromTerminal();
+					if (terminal != nullptr)
+						attachToTerminal(terminal);
+				}
+			}
+
+		protected:
+
+			Backend() :
+				terminal_(nullptr) {
 			}
 
 			virtual void resize(unsigned cols, unsigned rows) = 0;
@@ -222,27 +284,116 @@ namespace vterm {
 
 			virtual void paste(std::string const & what) = 0;
 
-
-		protected:
-
-			virtual void update() {
-				if (terminal_)
-					terminal_->update();
+			virtual ~Backend() {
+				detachFromTerminal();
 			}
 
 		private:
-			Terminal* terminal_;
+			friend class Terminal;
 
+			void detachFromTerminal() {
+				if (terminal_ == nullptr)
+					return;
+				terminal_->backend_ = nullptr;
+				terminal_ = nullptr;
+			}
+
+			/** Attaches the backend to specified terminal. 
+
+			    Verifies that the terminal is unattached, links the terminal to the backend and then calls the resize function with the new terminal's size. 
+			 */
+			void attachToTerminal(Terminal* terminal) {
+				ASSERT(terminal->backend_ == nullptr) << "Terminal already attached";
+				terminal->backend_ = this;
+				terminal_ = terminal;
+				resize(terminal->cols(), terminal->rows());
+			}
+
+			Terminal* terminal_;
 		};
 
-		Terminal(unsigned cols, unsigned rows, Frontend* frontend = nullptr, Backend* backend = nullptr) :
+		/** Backend which defines API for reading from / writing to PTY like deviced (i.e. input and output streams). 
+		 */
+		class PTYBackend : public Backend {
+		public:
+
+			/** Returns the pseudoterminal object associated with the backend. 
+			 */
+			PTY * pty() const {
+				return pty_;
+			}
+
+			/** Sets the pseudoterminal object associated with the backend. 
+			 */
+			void setPty(PTY* value);
+
+			~PTYBackend() override {
+				delete[] buffer_;
+			}
+
+		protected:
+
+			/** When the backend is resized, propagates the resize information to the underlying PTY, if present. 
+			 */
+			void resize(unsigned cols, unsigned rows) override;
+
+
+			PTYBackend(size_t bufferSize = 1024) :
+				bufferSize_(bufferSize),
+				buffer_(new char[bufferSize]),
+				writeStart_(buffer_) {
+			}
+
+			/** Called when data is received.
+
+				The first argument is the buffer containing the received data. The second argument is the size of available data from the buffer start. The function must return the number of bytes from the input actually processed. The remaining bytes will be prefetched to the next call to the dataReceived when more data has been sent by the client.
+			 */
+			virtual size_t dataReceived(char * buffer, size_t size) = 0;
+
+			/** Sends given data using the attached PTY. 
+			    
+				Returns the number of bytes send which should be identical to the second argument (size) unless there was an I/O error while sending. 
+			 */
+			size_t sendData(char * buffer, size_t size);
+
+			/** Resizes the internal buffer. 
+			 */
+			void resizeBuffer(size_t newSize);
+
+			/** Using the internal buffer, reads new data from the target process via the attached PTY and then calls the dataReceived() method to process it. 
+
+			    If there are any unprocessed data left after the call, they are copied to the beginning of the buffer so that next read will be appended after them. 
+			 */
+			void receiveAndProcessData();
+
+			/** Starts a new thread that waits for new data from the attached PTY and when received calls the dataReceived periodically. 
+			
+			    Any unprocessed data is always prepended to the next received bits. 
+			 */
+			void threadedReceiver();
+
+		private:
+			PTY * pty_;
+
+			size_t bufferSize_;
+			char * buffer_;
+			char * writeStart_;
+		};
+
+		Terminal(unsigned cols, unsigned rows, Backend* backend = nullptr) :
 			cols_(cols),
 			rows_(rows),
 			buffer_(this),
-			frontend_(nullptr),
 			backend_(nullptr) {
-			// TODO attach frontend and backend
+			if (backend) {
+				backend->setTerminal(this);
+				ASSERT(backend_ == backend) << "Terminal backend not set property when attaching";
+			}
 		}
+
+		// events
+
+		helpers::Event<RepaintEvent> onRepaint;
 
 		/** Returns the width and height of the terminal.
 		 */
@@ -268,6 +419,7 @@ namespace vterm {
 			if (cols_ != cols || rows_ != rows) {
 				cols_ = cols;
 				rows_ = rows;
+				buffer_.resize();
 				if (backend_)
 					backend_->resize(cols, rows);
 			}
@@ -319,12 +471,10 @@ namespace vterm {
 				backend_->paste(what);
 		}
 
-
-
-
-		void update() {
-			if (frontend_)
-				frontend_->update();
+		/** When terminal repaint is requested, the onRepaint event is triggered. 
+		 */
+		void repaint() {
+			trigger(onRepaint);
 		}
 
 	private:
@@ -337,17 +487,11 @@ namespace vterm {
 		 */
 		Buffer buffer_;
 
-		/** Frontend attached to the terminal.
-		 */
-		Frontend* frontend_;
-
 		/** Backend attached to the terminal. 
 		 */
 		Backend* backend_;
 
-
 	};
-
 
 
 #ifdef HAHA
