@@ -10,6 +10,9 @@ namespace vterm {
 	/** Pseudoterminal base api which specifies blocking send and receive methods. 
 	 */
 	class PTY {
+	public:
+		virtual ~PTY() {
+		}
 	protected:
 		friend class Terminal::PTYBackend;
 
@@ -17,7 +20,7 @@ namespace vterm {
 
 		    Sends the buffer of given size to the target process. Returns the number of bytes sent, which is identical to the size of the buffer given unless there was a failure. 
 		 */
-		virtual size_t sendData(char * buffer, size_t size) = 0;
+		virtual size_t sendData(char const * buffer, size_t size) = 0;
 
 		/** Waits for the target process to send data and populates the given buffer. 
 

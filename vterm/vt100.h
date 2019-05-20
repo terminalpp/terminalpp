@@ -77,7 +77,7 @@ namespace vterm {
 
 
 	*/
-	class VT100 : public virtual IOTerminal {
+	class VT100 : public Terminal::PTYBackend {
 	public:
 
 		static constexpr char const * const SEQ = "VT100";
@@ -105,11 +105,11 @@ namespace vterm {
 		 */
 		void keyUp(Key k) override { };
 
-		void sendChar(Char::UTF8 c) override;
+		void keyChar(Char::UTF8 c) override;
 
 		void mouseMove(unsigned col, unsigned row) override;
-		void mouseDown(unsigned col, unsigned row, unsigned button) override;
-		void mouseUp(unsigned col, unsigned row, unsigned button) override;
+		void mouseDown(unsigned col, unsigned row, MouseButton button) override;
+		void mouseUp(unsigned col, unsigned row, MouseButton button) override;
 		void mouseWheel(unsigned col, unsigned row, int offset) override;
 
         void paste(std::string const & what) override;
@@ -234,31 +234,10 @@ namespace vterm {
 
 			std::unordered_map<unsigned, std::string> & getModifierMap(Key k);
 
-
 			std::vector<std::unordered_map<unsigned, std::string>> keys_;
 		};
 
-        /** Cursor information. 
-         
-            Used in the cursor position push/pop buffer. 
-         */
-        class CursorInfo {
-        public:
-            helpers::Point pos;
-            Char::UTF8 character;
-            bool visible;
-            bool blink;
-
-            CursorInfo(helpers::Point pos, Char::UTF8 character, bool visible, bool blink):
-                pos(pos),
-                character(character),
-                visible(visible),
-                blink(blink) {
-            }
-
-        };
-
-		void doResize(unsigned cols, unsigned rows) override;
+		void resize(unsigned cols, unsigned rows) override;
 
 		char top() {
 			return (buffer_ == bufferEnd_) ? 0 : *buffer_;
@@ -284,7 +263,7 @@ namespace vterm {
 			return buffer_ == bufferEnd_;
 		}
 
-		void processInputStream(char * buffer, size_t & size) override;
+		size_t dataReceived(char * buffer, size_t size) override;
 
 		bool skipEscapeSequence();
 
@@ -311,16 +290,16 @@ namespace vterm {
 		bool parseOSC();
 
 		void updateCursorPosition() {
-			while (cursorPos_.col >= cols_) {
-				cursorPos_.col -= cols_;
-				++cursorPos_.row;
+			while (cursor().col >= cols()) {
+				cursor().col -= cols();
+				++cursor().row;
 			}
-			ASSERT(cursorPos_.col < cols_);
-			if (cursorPos_.row >= rows_) {
+			ASSERT(cursor().col < cols());
+			if (cursor().row >= rows()) {
                 // TODO is this the correct behavior? i.e. scroll only when cursor in scroll window
                 //if (cursorPos_.row >= scrollStart_ && cursorPos_.row < scrollEnd_)
-                    deleteLine(cursorPos_.row - rows_ + 1, 0);
-				cursorPos_.row = rows_ - 1;
+                    deleteLine(cursor().row - rows() + 1, 0);
+				cursor().row = rows() - 1;
 			}
 		}
 
@@ -379,7 +358,7 @@ namespace vterm {
 
 		/** Backup of the values for the inactive buffer. 
 		 */
-		Cell* otherCells_;
+		Terminal::Cell* otherCells_;
 		unsigned otherScrollStart_;
 		unsigned otherScrollEnd_;
 		Color otherFg_;
@@ -395,7 +374,7 @@ namespace vterm {
 
         /** Stack for cursor information. 
          */
-        std::vector<CursorInfo> cursorStack_;
+        std::vector<Terminal::Cursor> cursorStack_;
 
 
 		static KeyMap keyMap_;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ostream>
+
 namespace vterm {
 
 	enum class MouseButton {
@@ -8,9 +10,21 @@ namespace vterm {
 		Wheel
 	};
 
-
-	constexpr unsigned MouseLeft = 1;
-	constexpr unsigned MouseRight = 2;
-	constexpr unsigned MouseWheel = 3;
+	inline std::ostream& operator << (std::ostream& s, MouseButton const& b) {
+		switch (b) {
+		case MouseButton::Left:
+			s << "Left button";
+			break;
+		case MouseButton::Right:
+			s << "Right button";
+			break;
+		case MouseButton::Wheel:
+			s << "Wheel button";
+			break;
+		default:
+			UNREACHABLE;
+		}
+		return s;
+	}
 
 } // namespace vterm

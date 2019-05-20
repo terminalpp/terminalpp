@@ -19,13 +19,13 @@ namespace vterm {
 			pty_->resize(cols, rows);
 	}
 
-	size_t Terminal::PTYBackend::sendData(char * buffer, size_t size) {
+	size_t Terminal::PTYBackend::sendData(char const * buffer, size_t size) {
 		ASSERT(pty_ != nullptr) << "Cannot send data when no PTY is attached";
 		return pty_->sendData(buffer, size);
 	}
 
 	void Terminal::PTYBackend::resizeBuffer(size_t newSize) {
-		ASSERT(newSize >= writeStart_ - buffer_) << "Not enough space for unprocessed data after resizing (unprocessed " << (writeStart_ - buffer_) << ", requested size " << newSize << ")";
+		ASSERT(newSize >= (writeStart_ - buffer_)) << "Not enough space for unprocessed data after resizing (unprocessed " << (writeStart_ - buffer_) << ", requested size " << newSize << ")";
 		char* nb = new char[newSize];
 		memcpy(nb, buffer_, writeStart_ - buffer_);
 		writeStart_ = nb + (writeStart_ - buffer_);

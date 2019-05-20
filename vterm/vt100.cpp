@@ -249,7 +249,7 @@ namespace vterm {
     // VT100
 
 	VT100::VT100(unsigned cols, unsigned rows, Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
-		IOTerminal(cols, rows),
+		PTYBackend(),
         applicationKeypadMode_(false),
         applicationCursorMode_(false),
         scrollStart_(0),
@@ -261,7 +261,7 @@ namespace vterm {
 		bg_(palette[defaultBg]),
 		font_(),
 		alternateBuffer_(false),
-		otherCells_(new Cell[cols * rows]),
+		otherCells_(new Terminal::Cell[cols * rows]),
 		otherScrollStart_(0),
 		otherScrollEnd_(rows),
 		otherFg_(fg_),
@@ -286,32 +286,32 @@ namespace vterm {
                     if (applicationCursorMode_) {
                         std::string sa(*seq);
                         sa[1] = 'O';
-                        write(sa.c_str(), sa.size());
+                        sendData(sa.c_str(), sa.size());
                         return;
                     }
                     break;
                 default:
                     break;
             }
-			write(seq->c_str(), seq->size());
+			sendData(seq->c_str(), seq->size());
         }
 		//LOG << "Key pressed: " << k;
 	}
 
-	void VT100::sendChar(Char::UTF8 c) {
+	void VT100::keyChar(Char::UTF8 c) {
 		// TODO make sure that the character is within acceptable range, i.e. it does not clash with ctrl+ stuff, etc. 
-		write(c.rawBytes(), c.size());
+		sendData(c.rawBytes(), c.size());
 	}
 
 	void VT100::mouseMove(unsigned col, unsigned row) {
 		LOG << "Mouse moved to " << col << ";" << row;
 	}
 
-	void VT100::mouseDown(unsigned col, unsigned row, unsigned button) {
+	void VT100::mouseDown(unsigned col, unsigned row, MouseButton button) {
 		LOG << "Button " << button << " down at " << col << ";" << row;
 	}
 
-	void VT100::mouseUp(unsigned col, unsigned row, unsigned button) {
+	void VT100::mouseUp(unsigned col, unsigned row, MouseButton button) {
 		LOG << "Button " << button << " up at " << col << ";" << row;
 	}
 
@@ -323,20 +323,15 @@ namespace vterm {
 
     void VT100::paste(std::string const & what) {
         if (bracketedPaste_) {
-            write("\033[200~",6);
-            write(what.c_str(), what.size());
-            write("\033[201~",6);
+            sendData("\033[200~",6);
+            sendData(what.c_str(), what.size());
+            sendData("\033[201~",6);
         } else {
-            write(what.c_str(), what.size());
+            sendData(what.c_str(), what.size());
         }
     }
 
-	void VT100::doResize(unsigned cols, unsigned rows) {
-		// update the cursor so that it stays on the screen at all times
-		if (cursorPos_.col >= cols_)
-			cursorPos_.col = cols_ - 1;
-		if (cursorPos_.row >= rows_)
-			cursorPos_.row = rows_ - 1;
+	void VT100::resize(unsigned cols, unsigned rows) {
         // reset the scroll region to whole window
         scrollStart_ = 0;
         scrollEnd_ = rows;
@@ -344,111 +339,103 @@ namespace vterm {
 		otherScrollEnd_ = rows;
 		// and resize its cells
 		delete [] otherCells_;
-		otherCells_ = new Cell[cols * rows];
+		otherCells_ = new Terminal::Cell[cols * rows];
 		// IOTerminal's doResize() is not called because of the virtual inheritance
 		LOG(SEQ) << "terminal resized to " << cols << "," << rows;
 	}
 
-	void VT100::processInputStream(char * buffer, size_t & size) {
+	size_t VT100::dataReceived(char * buffer, size_t size) {
 		buffer_ = buffer;
 		bufferEnd_ = buffer_ + size;
 		std::string text;
-		{
-			// lock the terminal for updates while decoding
-			std::lock_guard<std::mutex> g(m_);
-
-			while (! eof()) {
-				char c = top();
-				switch (c) {
-				case Char::ESC: {
-					if (!text.empty()) {
-						LOG(SEQ) << "text " << text;
-						text.clear();
-					}
-					// make a copy of buffer in case process escape sequence advances it and then fails
-					char * b = buffer_;
-                    if (! parseEscapeSequence()) {
-                        size = b - buffer;
-                        return;
-                    }
-					break;
+		while (! eof()) {
+			char c = top();
+			switch (c) {
+			case Char::ESC: {
+				if (!text.empty()) {
+					LOG(SEQ) << "text " << text;
+					text.clear();
 				}
-                /* BEL is sent if user should be notified, i.e. play a notification sound or so. 
-                 */
-                case Char::BEL:
-                    pop();
-                    LOG(UNKNOWN_SEQ) << "BEL charatcer received";
-                    break;
-                case Char::TAB:
-                    // TODO tabstops and stuff
-                    pop();
-                    updateCursorPosition();
-                    if (cursorPos_.col % 8 == 0) 
-                        cursorPos_.col += 8;
-                    else
-                        cursorPos_.col += 8 - (cursorPos_.col % 8);
-                    LOG(SEQ) << "Tab: cursor col is " << cursorPos_.col;
-                    break;
-				/* New line simply moves to next line.
-				 */
-				case Char::LF:
-					LOG(SEQ) << "LF";
-					pop();
-					++cursorPos_.row;
-					break;
-				/* Carriage return sets cursor column to 0. 
-				 */
-				case Char::CR:
-					LOG(SEQ) << "CR";
-					pop();
-					cursorPos_.col = 0;
-					break;
-				case Char::BACKSPACE: {
-					if (cursorPos_.col == 0) {
-						if (cursorPos_.row > 0)
-							--cursorPos_.row;
-						cursorPos_.col = cols_ - 1;
-					} else {
-						--cursorPos_.col;
-					}
-					// TODO backspace behaves weirdly - it seems we do not need to actually delete the character at all, in fact the whole backspace character seems to make very little difference
-					//Cell& cell = defaultLayer_->at(cursorPos_.col, cursorPos_.row);
-					//cell.c = ' ';
-					pop();
-					break;
+				// make a copy of buffer in case process escape sequence advances it and then fails
+				char * b = buffer_;
+                if (! parseEscapeSequence())
+                    return b - buffer;
+				break;
+			}
+            /* BEL is sent if user should be notified, i.e. play a notification sound or so. 
+                */
+            case Char::BEL:
+                pop();
+                LOG(UNKNOWN_SEQ) << "BEL charatcer received";
+                break;
+            case Char::TAB:
+                // TODO tabstops and stuff
+                pop();
+                updateCursorPosition();
+                if (cursor().col % 8 == 0) 
+                    cursor().col += 8;
+                else
+                    cursor().col += 8 - (cursor().col % 8);
+                LOG(SEQ) << "Tab: cursor col is " << cursor().col;
+                break;
+			/* New line simply moves to next line.
+				*/
+			case Char::LF:
+				LOG(SEQ) << "LF";
+				pop();
+				++cursor().row;
+				break;
+			/* Carriage return sets cursor column to 0. 
+				*/
+			case Char::CR:
+				LOG(SEQ) << "CR";
+				pop();
+				cursor().col = 0;
+				break;
+			case Char::BACKSPACE: {
+				if (cursor().col == 0) {
+					if (cursor().row > 0)
+						--cursor().row;
+					cursor().col = cols() - 1;
+				} else {
+					--cursor().col;
 				}
-				/* default variant is to print the character received to current cell.
-				 */
-				default: {
-					// make sure that the cursor is in visible part of the screen
-					updateCursorPosition();
-					// it could be we are dealing with unicode
-					Char::UTF8 c8;
-					if (! c8.readFromStream(buffer_, bufferEnd_)) {
-						size = buffer_ - buffer;
-						return;
-					}
-					// TODO fix this to utf8
-					text += static_cast<char>(c8.codepoint() & 0xff);
-					//LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
-					// get the cell and update its contents
-					Cell & cell = at(cursorPos_.col, cursorPos_.row);
-					cell.fg = fg_;
-					cell.bg = bg_;
-					cell.font = font_;
-					cell.c = c8;
-					cell.dirty = true;
-					// move to next column
-					setCursor(cursorPos_.col + 1, cursorPos_.row);
-				}
-				}
+				// TODO backspace behaves weirdly - it seems we do not need to actually delete the character at all, in fact the whole backspace character seems to make very little difference
+				//Cell& cell = defaultLayer_->at(cursor().col, cursor().row);
+				//cell.c = ' ';
+				pop();
+				break;
+			}
+			/* default variant is to print the character received to current cell.
+				*/
+			default: {
+				// make sure that the cursor is in visible part of the screen
+				updateCursorPosition();
+				// it could be we are dealing with unicode
+				Char::UTF8 c8;
+				if (! c8.readFromStream(buffer_, bufferEnd_)) 
+					return buffer_ - buffer;
+				// TODO fix this to utf8
+				text += static_cast<char>(c8.codepoint() & 0xff);
+				//LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
+				// get the cell and update its contents
+				Terminal::Cell & cell = this->buffer().at(cursor().col, cursor().row);
+				cell.fg = fg_;
+				cell.bg = bg_;
+				cell.font = font_;
+				cell.c = c8;
+				cell.dirty = true;
+				// move to next column
+				setCursor(cursor().col + 1, cursor().row);
+			}
 			}
 		}
 		if (!text.empty()) {
 			LOG(SEQ) << "text " << text;
 			text.clear();
 		}
-		repaint();
+		terminal()->repaint();
+		return size;
 	}
 
 	bool VT100::skipEscapeSequence() {
@@ -507,7 +494,7 @@ namespace vterm {
              */
             case 'M':
                 LOG(SEQ) << "RI: move cursor 1 line up";
-                setCursor(cursorPos_.row - 1, cursorPos_.col);
+                setCursor(cursor().row - 1, cursor().col);
                 return true;
             /* Operating system command. */
 		    case ']':
@@ -575,7 +562,7 @@ namespace vterm {
                     if (seq[0] != 0)
                         break;
                     LOG(SEQ) << "Secondary Device Attributes - VT100 sent";
-                    write("\033[>0;0;0c",5); // we are VT100, no version third must always be zero (ROM cartridge)
+                    sendData("\033[>0;0;0c",5); // we are VT100, no version third must always be zero (ROM cartridge)
                     return;
                 default:
                     break;
@@ -586,36 +573,36 @@ namespace vterm {
                 case 'A':
                     seq.setArgDefault(0, 1);
                     ASSERT(seq.numArgs() == 1);
-                    LOG(SEQ) << "CUU: setCursor " << cursorPos_.col << ", " << cursorPos_.row - seq[0];
-                    setCursor(cursorPos_.col, cursorPos_.row - seq[0]);
+                    LOG(SEQ) << "CUU: setCursor " << cursor().col << ", " << cursor().row - seq[0];
+                    setCursor(cursor().col, cursor().row - seq[0]);
                     return;
                 // CSI <n> B -- moves cursor n rows down (CUD)
                 case 'B':
                     seq.setArgDefault(0, 1);
                     ASSERT(seq.numArgs() == 1);
-                    LOG(SEQ) << "CUD: setCursor " << cursorPos_.col << ", " << cursorPos_.row + seq[0];
-                    setCursor(cursorPos_.col, cursorPos_.row + seq[0]);
+                    LOG(SEQ) << "CUD: setCursor " << cursor().col << ", " << cursor().row + seq[0];
+                    setCursor(cursor().col, cursor().row + seq[0]);
                     return;
                 // CSI <n> C -- moves cursor n columns forward (right) (CUF)
                 case 'C':
                     seq.setArgDefault(0, 1);
                     ASSERT(seq.numArgs() == 1);
-                    LOG(SEQ) << "CUF: setCursor " << cursorPos_.col + seq[0] << ", " << cursorPos_.row;
-                    setCursor(cursorPos_.col + seq[0], cursorPos_.row);
+                    LOG(SEQ) << "CUF: setCursor " << cursor().col + seq[0] << ", " << cursor().row;
+                    setCursor(cursor().col + seq[0], cursor().row);
                     return;
                 // CSI <n> D -- moves cursor n columns back (left) (CUB)
                 case 'D': // cursor backward
                     seq.setArgDefault(0, 1);
                     ASSERT(seq.numArgs() == 1);
-                    LOG(SEQ) << "CUB: setCursor " << cursorPos_.col - seq[0] << ", " << cursorPos_.row;
-                    setCursor(cursorPos_.col - seq[0], cursorPos_.row);
+                    LOG(SEQ) << "CUB: setCursor " << cursor().col - seq[0] << ", " << cursor().row;
+                    setCursor(cursor().col - seq[0], cursor().row);
                     return;
                 /* CSI <n> G -- set cursor character absolute
                  */
                 case 'G': // CHA
                     seq.setArgDefault(0,1);
                     LOG(SEQ) << "CHA: set column " << seq[0] - 1;
-                    setCursor(seq[0] - 1, cursorPos_.row);
+                    setCursor(seq[0] - 1, cursor().row);
                     return;
                 /* set cursor position (CUP) */
                 case 'H': // CUP
@@ -636,16 +623,16 @@ namespace vterm {
                     switch (seq[0]) {
                         case 0:
                             updateCursorPosition();
-                            fillRect(helpers::Rect(cursorPos_.col, cursorPos_.row, cols_, cursorPos_.row + 1), ' ');
-                            fillRect(helpers::Rect(0, cursorPos_.row + 1, cols_, rows_), ' ');
+                            fillRect(helpers::Rect(cursor().col, cursor().row, cols(), cursor().row + 1), ' ');
+                            fillRect(helpers::Rect(0, cursor().row + 1, cols(), rows()), ' ');
                             return;
                         case 1:
                             updateCursorPosition();
-                            fillRect(helpers::Rect(0, 0, cols_, cursorPos_.row), ' ');
-                            fillRect(helpers::Rect(0, cursorPos_.row, cursorPos_.col + 1, cursorPos_.row + 1), ' ');
+                            fillRect(helpers::Rect(0, 0, cols(), cursor().row), ' ');
+                            fillRect(helpers::Rect(0, cursor().row, cursor().col + 1, cursor().row + 1), ' ');
                             return;
                         case 2:
-                            fillRect(helpers::Rect(cols_, rows_), ' ');
+                            fillRect(helpers::Rect(cols(), rows()), ' ');
                             return;
                         default:
                             break;
@@ -661,15 +648,15 @@ namespace vterm {
                     switch (seq[0]) {
                         case 0:
                             updateCursorPosition();
-                            fillRect(helpers::Rect(cursorPos_.col, cursorPos_.row, cols_, cursorPos_.row + 1), ' ');
+                            fillRect(helpers::Rect(cursor().col, cursor().row, cols(), cursor().row + 1), ' ');
                             return;
                         case 1:
                             updateCursorPosition();
-                            fillRect(helpers::Rect(0, cursorPos_.row, cursorPos_.col + 1, cursorPos_.row + 1), ' '); 
+                            fillRect(helpers::Rect(0, cursor().row, cursor().col + 1, cursor().row + 1), ' '); 
                             return;
                         case 2:
                             updateCursorPosition();
-                            fillRect(helpers::Rect(0, cursorPos_.row, cols_, cursorPos_.row + 1), ' ');
+                            fillRect(helpers::Rect(0, cursor().row, cols(), cursor().row + 1), ' ');
                             return;
                         default:
                             break;
@@ -680,7 +667,7 @@ namespace vterm {
                 case 'L':
                     seq.setArgDefault(0, 1);
                     LOG(SEQ) << "IL: scrollUp " << seq[0]; 
-                    insertLine(seq[0], cursorPos_.row);
+                    insertLine(seq[0], cursor().row);
                     //scrollUp(seq[0]);
                     return;
                 /* CSI <n> M -- Remove n lines. (DL)
@@ -688,7 +675,7 @@ namespace vterm {
                 case 'M':
                     seq.setArgDefault(0,1);
                     LOG(SEQ) << "DL: scrollDown " << seq[0]; 
-                    deleteLine(seq[0], cursorPos_.row);
+                    deleteLine(seq[0], cursor().row);
                     //scrollDown(seq[0]);
                     return;
                 /* CSI <n> T -- Scroll down n lines
@@ -696,7 +683,7 @@ namespace vterm {
                 case 'T':
                     seq.setArgDefault(0, 1);
                     LOG(SEQ) << "SD: scrollDown " << seq[0];
-                    insertLine(seq[0], cursorPos_.row);
+                    insertLine(seq[0], cursor().row);
                     return;
                 /* CSI <n> X -- erase <n> characters from the current position 
                 */
@@ -706,18 +693,18 @@ namespace vterm {
                     updateCursorPosition();
                     // erase from first line
                     unsigned n = static_cast<unsigned>(seq[0]);
-                    unsigned l = std::min(cols_ - cursorPos_.col, n);
-                    fillRect(helpers::Rect(cursorPos_.col, cursorPos_.row, cursorPos_.col + l, cursorPos_.row + 1), ' ');
+                    unsigned l = std::min(cols() - cursor().col, n);
+                    fillRect(helpers::Rect(cursor().col, cursor().row, cursor().col + l, cursor().row + 1), ' ');
                     n -= l;
                     // while there is enough stuff left to be larger than a line, erase entire line
-                    l = cursorPos_.row + 1;
-                    while (n >= cols_ && l < rows_) {
-                        fillRect(helpers::Rect(0, l, cols_, l + 1), ' ');
+                    l = cursor().row + 1;
+                    while (n >= cols() && l < rows()) {
+                        fillRect(helpers::Rect(0, l, cols(), l + 1), ' ');
                         ++l;
-                        n -= cols_;
+                        n -= cols();
                     }
                     // if there is still something to erase, erase from the beginning
-                    if (n != 0 && l < rows_) 
+                    if (n != 0 && l < rows()) 
                         fillRect(helpers::Rect(0, l, n, l + 1), ' ');
                     return;
                 }
@@ -727,7 +714,7 @@ namespace vterm {
                     if (seq[0] != 0)
                         break;
                     LOG(SEQ) << "Device Attributes - VT102 sent";
-                    write("\033[?6c",5); // send VT-102 for now, go for VT-220? 
+                    sendData("\033[?6c",5); // send VT-102 for now, go for VT-220? 
                     return;
                 }
                 /* CSI <n> d -- Line position absolute (VPA)
@@ -739,10 +726,10 @@ namespace vterm {
                     unsigned r = seq[0];
                     if (r < 1)
                         r = 1;
-                    else if (r > rows_)
-                        r = rows_;
-                    LOG(SEQ) << "VPA: setCursor " << cursorPos_.col << ", " << r - 1;
-                    setCursor(cursorPos_.col, r - 1);
+                    else if (r > rows())
+                        r = rows();
+                    LOG(SEQ) << "VPA: setCursor " << cursor().col << ", " << r - 1;
+                    setCursor(cursor().col, r - 1);
                     return;
                 }
                     
@@ -769,11 +756,11 @@ namespace vterm {
                  */
                 case 'r':
                     seq.setArgDefault(0, 1); // inclusive
-                    seq.setArgDefault(1, rows_); // inclusive
+                    seq.setArgDefault(1, rows()); // inclusive
                     if (seq.numArgs() != 2)
                         break;
-                    scrollStart_ = std::min(seq[0] - 1, rows_ - 1); // inclusive
-                    scrollEnd_ = std::min(seq[1] , rows_); // exclusive 
+                    scrollStart_ = std::min(seq[0] - 1, rows() - 1); // inclusive
+                    scrollEnd_ = std::min(seq[1] , rows()); // exclusive 
                     LOG(SEQ) << "Scroll region set to " << scrollStart_ << " - " << scrollEnd_;
                     return;
                 /* CSI <n> : <n> : <n> t -- window manipulation (xterm)
@@ -934,12 +921,12 @@ namespace vterm {
 					continue;
                 // cursor blinking
                 case 12:
-                    cursorBlink_ = value;
+                    cursor().blink = value;
                     LOG(SEQ) << "cursor blinking: " << value;
                     continue;
                 // cursor show/hide
                 case 25:
-                    cursorVisible_ = value;
+                    cursor().visible = value;
                     LOG(SEQ) << "cursor visible: " << value;
                     continue;
                 case 1000:
@@ -1001,7 +988,7 @@ namespace vterm {
         if (buffer_[-1] == Char::BEL && start[0] == '0' && start[1] == ';') {
             std::string title(start + 2, buffer_ - 1);
             LOG(SEQ) << "Title change to " << title;
-            trigger(onTitleChange, title);
+			terminal()->changeTitle(title);
         } else {
             // TODO ignore for now 112 == reset cursor color             
             LOG(UNKNOWN_SEQ) << "Unknown OSC: " << std::string(start, buffer_ - start);
@@ -1011,12 +998,12 @@ namespace vterm {
 
 
 	void VT100::setCursor(unsigned col, unsigned row) {
-/*		while (col >= cols_) {
-			col -= cols_;
+/*		while (col >= cols()) {
+			col -= cols();
 			++row;
 		} */
-		cursorPos_.col = col;
-		cursorPos_.row = row;
+		cursor().col = col;
+		cursor().row = row;
 	}
 
 
@@ -1025,7 +1012,7 @@ namespace vterm {
 		// TODO add print of the char as well
 		for (unsigned row = rect.top; row < rect.bottom; ++row) {
 			for (unsigned col = rect.left; col < rect.right; ++col) {
-				Cell & cell = at(col, row);
+				Terminal::Cell & cell = buffer().at(col, row);
 				cell.fg = fg;
 				cell.bg = bg;
 				cell.font = font;
@@ -1043,16 +1030,16 @@ namespace vterm {
         // delete the n lines by moving the lines below them up, be defensive on arguments
         lines = std::min(lines, scrollEnd_ - from);
         for (unsigned r = from, re = scrollEnd_ - lines; r < re; ++r) {
-			for (unsigned c = 0; c < cols_; ++c) {
-				Cell & cell = at(c, r);
-				cell = at(c, r + lines);
+			for (unsigned c = 0; c < cols(); ++c) {
+				Terminal::Cell & cell = buffer().at(c, r);
+				cell = buffer().at(c, r + lines);
 				cell.dirty = true;
 			}
         }
         // now make the lines at the bottom empty
         for (unsigned r = scrollEnd_ - lines; r < scrollEnd_; ++r) {
-			for (unsigned c = 0; c < cols_; ++c) {
-				Cell & cell = at(c, r);
+			for (unsigned c = 0; c < cols(); ++c) {
+				Terminal::Cell & cell = buffer().at(c, r);
 				cell.c = ' ';
 				cell.fg = fg_;
 				cell.bg = bg_;
@@ -1069,16 +1056,16 @@ namespace vterm {
         // create space by moving the contents in scroll window appropriate amount of lines down
         lines = std::min(lines, scrollEnd_ - from);
         for (unsigned r = scrollEnd_ - 1, rs = from + lines; r >= rs; --r) {
-			for (unsigned c = 0; c < cols_; ++c) {
-				Cell & cell = at(c, r);
-				cell = at(c, r - lines);
+			for (unsigned c = 0; c < cols(); ++c) {
+				Terminal::Cell & cell = buffer().at(c, r);
+				cell = buffer().at(c, r - lines);
 				cell.dirty = true;
 			}
         }
         // now clear the top n lines
         for (unsigned r = from, re = from + lines; r < re; ++r) {
-			for (unsigned c = 0; c < cols_; ++c) {
-				Cell & cell = at(c, r);
+			for (unsigned c = 0; c < cols(); ++c) {
+				Terminal::Cell & cell = buffer().at(c, r);
 				cell.c = ' ';
 				cell.fg = fg_;
 				cell.bg = bg_;
@@ -1089,26 +1076,24 @@ namespace vterm {
     }
 
     void VT100::storeCursorInfo() {
-        cursorStack_.push_back(CursorInfo(cursorPos_, cursorCharacter_, cursorVisible_, cursorBlink_));
+        cursorStack_.push_back(cursor());
     }
 
     void VT100::loadCursorInfo() {
         ASSERT(! cursorStack_.empty());
-        CursorInfo & ci = cursorStack_.back();
-        cursorPos_ = ci.pos;
-        if (cursorPos_.col >= cols_)
-            cursorPos_.col = cols_ - 1;
-        if (cursorPos_.row >= rows_)
-            cursorPos_.row = rows_ - 1;
-        cursorCharacter_ = ci.character;
-        cursorVisible_ = ci.visible;
-        cursorBlink_ = ci.blink;
+        Terminal::Cursor const & ci = cursorStack_.back();
+		cursor() = ci;
+        if (cursor().col >= cols())
+            cursor().col = cols() - 1;
+        if (cursor().row >= rows())
+            cursor().row = rows() - 1;
         cursorStack_.pop_back();
     }
 
 	void VT100::flipBuffer() {
 		alternateBuffer_ = ! alternateBuffer_;
-		std::swap(cells_, otherCells_);
+		NOT_IMPLEMENTED;
+		//std::swap(cells_, otherCells_);
 		std::swap(scrollStart_, otherScrollStart_);
 		std::swap(scrollEnd_, otherScrollEnd_);
 		std::swap(fg_, otherFg_);
@@ -1120,11 +1105,8 @@ namespace vterm {
         fg_ = palette_[defaultFg_];
         bg_ = palette_[defaultBg_];
         font_ = Font();
-        fillRect(helpers::Rect(cols_, rows_), ' ');
-        cursorPos_ = helpers::Point(0,0);
-        cursorCharacter_ = 0x2581;
-        cursorVisible_ = true;
-        cursorBlink_ = true;
+        fillRect(helpers::Rect(cols(), rows()), ' ');
+        cursor() = Terminal::Cursor();
     }
 
 } // namespace vterm

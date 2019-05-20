@@ -1,5 +1,8 @@
-#include "local_pty.h"
+#ifdef WIN32
+#include "helpers/win32.h"
+#endif
 
+#include "local_pty.h"
 
 namespace vterm {
 
@@ -16,7 +19,7 @@ namespace vterm {
 		start();
 	}
 
-	~LocalPTY::LocalPTY() {
+	LocalPTY::~LocalPTY() {
 		if (conPTY_ != INVALID_HANDLE_VALUE)
 			ClosePseudoConsole(conPTY_);
 		if (pipeIn_ != INVALID_HANDLE_VALUE)
@@ -26,21 +29,23 @@ namespace vterm {
 		free(startupInfo_.lpAttributeList);
 	}
 
-	size_t LocalPTY::sendData(char* buffer, size_t size) override {
+	size_t LocalPTY::sendData(char const * buffer, size_t size) {
 		DWORD bytesWritten = 0;
 		WriteFile(pipeOut_, buffer, static_cast<DWORD>(size), &bytesWritten, nullptr);
+		// TODO check this properly for errors
+		ASSERT(bytesWritten == size);
 		return bytesWritten;
 	}
 
-	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) override {
+	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) {
 		DWORD bytesRead = 0;
-		bool readOk = ReadFile(pipeIn_, buffer, static_cast<DWORD>(size), &bytesRead, nullptr);
+		bool readOk = ReadFile(pipeIn_, buffer, static_cast<DWORD>(availableSize), &bytesRead, nullptr);
 		// make sure that if readOk is false nothing was read
 		ASSERT(readOk || bytesRead == 0);
 		return bytesRead;
 	}
 
-	void LocalPTY::resize(unsigned cols, unsigned rows) override {
+	void LocalPTY::resize(unsigned cols, unsigned rows) {
 		// resize the underlying ConPTY
 		COORD size;
 		size.X = cols;
@@ -57,8 +62,8 @@ namespace vterm {
 			THROW(helpers::Win32Error("Unable to create pipes for the subprocess"));
 		// determine the console size from the terminal we have
 		COORD consoleSize{};
-		consoleSize.X = cols_;
-		consoleSize.Y = rows_;
+		consoleSize.X = 80;
+		consoleSize.Y = 25;
 		// now create the pseudo console
 		result = CreatePseudoConsole(consoleSize, pipePTYIn, pipePTYOut, 0, &conPTY_);
 		// delete the pipes on PTYs end, since they are now in conhost and will be deleted when the conpty is deleted

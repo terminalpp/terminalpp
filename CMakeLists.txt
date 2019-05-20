@@ -9,5 +9,5 @@ include_directories(".")
 
 add_subdirectory("vterm")
 
-add_subdirectory("tpp")
+#add_subdirectory("tpp")
 

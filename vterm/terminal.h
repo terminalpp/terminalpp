@@ -29,9 +29,47 @@ namespace vterm {
 
 		typedef helpers::EventPayload<void, helpers::Object> RepaintEvent;
 
+		class Cursor {
+		public:
+			/** Cursor column. 
+			 */
+			unsigned col;
+
+			/** Cursor row. 
+			 */
+			unsigned row;
+
+			/** Character of the cursor. 
+			 */
+			Char::UTF8 character;
+
+			/** Color of the cursor (foreground)
+			 */
+			Color color;
+
+			/** If true, the cursor should blink, if false, the cursor should be always on. 
+			 */
+			bool blink;
+
+			/** If true, the cursor will be rendered by the terminal, if false, the cursor is not to be shown. 
+			 */
+			bool visible;
+
+			Cursor() :
+				col(0),
+				row(0),
+				character(0x2581), // underscore character
+				color(Color::White()),
+				blink(true),
+				visible(true) {
+			}
+
+			//Cursor& operator = (Cursor const& other) = default;
+		};
+
 		/** Properties of a single cell of the terminal buffer.
 		 */
-		class Terminal::Cell {
+		class Cell {
 		public:
 			/** The font to be used to render the cell.
 			 */
@@ -63,7 +101,7 @@ namespace vterm {
 			}
 		};
 
-		class Terminal::Buffer {
+		class Buffer {
 		public:
 
 			/** Returns the terminal to which the buffer belongs.
@@ -142,7 +180,7 @@ namespace vterm {
 			Cell* cells_;
 		};
 
-		class Frontend : public helpers::Object {
+		class Renderer : public helpers::Object {
 		public:
 
 			Terminal* terminal() const {
@@ -158,7 +196,7 @@ namespace vterm {
 			}
 
 
-			virtual ~Frontend() {
+			virtual ~Renderer() {
 				detachFromTerminal();
 			}
 
@@ -168,7 +206,7 @@ namespace vterm {
              */
 			virtual void repaint() = 0;
 
-			Frontend(unsigned cols, unsigned rows) :
+			Renderer(unsigned cols, unsigned rows) :
 				terminal_(nullptr),
 				cols_(cols),
 				rows_(rows) {
@@ -234,14 +272,14 @@ namespace vterm {
 			void detachFromTerminal() {
 				if (terminal_ == nullptr)
 					return;
-				terminal_->onRepaint -= HANDLER(Frontend::doRepaint);
+				terminal_->onRepaint -= HANDLER(Renderer::doRepaint);
 				terminal_ = nullptr;
 			}
 
 			void attachToTerminal(Terminal* terminal) {
 				terminal_ = terminal;
 				terminal->resize(cols_, rows_);
-				terminal_->onRepaint += HANDLER(Frontend::doRepaint);
+				terminal_->onRepaint += HANDLER(Renderer::doRepaint);
 			}
 
 			Terminal* terminal_;
@@ -269,6 +307,29 @@ namespace vterm {
 
 			Backend() :
 				terminal_(nullptr) {
+			}
+
+			/** Returns the current cursor information for the attached terminal so that it can be modified by the backend. 
+			 */
+			Cursor & cursor() {
+				ASSERT(terminal_ != nullptr);
+				return terminal_->cursor_;
+			}
+
+			unsigned cols() {
+				ASSERT(terminal_ != nullptr);
+				return terminal_->cols_;
+			}
+
+			unsigned rows() {
+				ASSERT(terminal_ != nullptr);
+				return terminal_->rows_;
+			}
+
+			Terminal::Buffer& buffer() {
+				ASSERT(terminal_ != nullptr);
+				return terminal_->buffer();
+
 			}
 
 			virtual void resize(unsigned cols, unsigned rows) = 0;
@@ -339,6 +400,7 @@ namespace vterm {
 
 
 			PTYBackend(size_t bufferSize = 1024) :
+				pty_(nullptr),
 				bufferSize_(bufferSize),
 				buffer_(new char[bufferSize]),
 				writeStart_(buffer_) {
@@ -354,7 +416,7 @@ namespace vterm {
 			    
 				Returns the number of bytes send which should be identical to the second argument (size) unless there was an I/O error while sending. 
 			 */
-			size_t sendData(char * buffer, size_t size);
+			size_t sendData(char const * buffer, size_t size);
 
 			/** Resizes the internal buffer. 
 			 */
@@ -420,6 +482,12 @@ namespace vterm {
 				cols_ = cols;
 				rows_ = rows;
 				buffer_.resize();
+				// update cursor position
+				if (cursor_.col >= cols_)
+					cursor_.col = cols_ - 1;
+				if (cursor_.row >= rows_)
+					cursor_.row = rows_ - 1;
+				// pass to the backend
 				if (backend_)
 					backend_->resize(cols, rows);
 			}
@@ -476,6 +544,14 @@ namespace vterm {
 		void repaint() {
 			trigger(onRepaint);
 		}
+
+		void changeTitle(std::string const& what) {
+			NOT_IMPLEMENTED;
+		}
+
+	protected:
+
+		Cursor cursor_;
 
 	private:
 		/** Size of the terminal. 

@@ -1,5 +1,5 @@
 #pragma once
-
+#ifdef HAHA
 #include "helpers/object.h"
 
 #include "terminal.h"
@@ -110,3 +110,5 @@ namespace vterm {
 	};
 
 }
+
+#endif

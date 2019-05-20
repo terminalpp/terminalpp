@@ -104,7 +104,7 @@ namespace tpp {
 
 	    The terminal window is a vterm renderer that can display the contents of the associated terminal. This class provides the common, platform independent functionality. 
 	 */
-	class BaseTerminalWindow : public vterm::Renderer {
+	class BaseTerminalWindow : public vterm::Terminal::Renderer {
 	public:
 
 		TerminalSettings * settings() const {
@@ -276,13 +276,13 @@ namespace tpp {
 
 		/** Draws single cell. 
 		 */
-		virtual void doDrawCell(unsigned col, unsigned row, vterm::Cell const& c) = 0;
+		virtual void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) = 0;
 
 		/** Draws the cursor, described as a cell. 
 
 		    Only the font, character and foreground color from the cell should be used. 
 		 */
-		virtual void doDrawCursor(unsigned col, unsigned row, vterm::Cell const& c) = 0;
+		virtual void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) = 0;
 
 		/** Updates the terminal buffer displayed. 
 

@@ -21,7 +21,7 @@ namespace vterm {
 
 		// PTY interface implementation
 
-		size_t sendData(char* buffer, size_t size) override;
+		size_t sendData(char const * buffer, size_t size) override;
 		size_t receiveData(char* buffer, size_t availableSize) override;
 		void resize(unsigned cols, unsigned rows) override;
 
