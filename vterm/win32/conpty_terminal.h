@@ -1,5 +1,5 @@
 #pragma once
-#ifdef WIN32
+#ifdef WIN32__
 #include <windows.h>
 
 #include "../terminal.h"

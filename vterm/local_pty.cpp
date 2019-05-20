@@ -1,15 +1,11 @@
-#ifdef HAHA
+#include "local_pty.h"
 
-#ifdef WIN32
-
-#include "helpers/win32.h"
-
-#include "conpty_terminal.h"
 
 namespace vterm {
 
-	ConPTYTerminal::ConPTYTerminal(std::string const & command, unsigned cols, unsigned rows) :
-		IOTerminal{ cols, rows },
+#ifdef WIN32
+
+	LocalPTY::LocalPTY(std::string const & command) :
 		command_{ command },
 		startupInfo_{},
 		conPTY_{ INVALID_HANDLE_VALUE },
@@ -17,9 +13,42 @@ namespace vterm {
 		pipeOut_{ INVALID_HANDLE_VALUE } {
 		startupInfo_.lpAttributeList = nullptr; // just to be sure
 		createPseudoConsole();
+		start();
 	}
 
-	void ConPTYTerminal::createPseudoConsole() {
+	~LocalPTY::LocalPTY() {
+		if (conPTY_ != INVALID_HANDLE_VALUE)
+			ClosePseudoConsole(conPTY_);
+		if (pipeIn_ != INVALID_HANDLE_VALUE)
+			CloseHandle(pipeIn_);
+		if (pipeOut_ != INVALID_HANDLE_VALUE)
+			CloseHandle(pipeOut_);
+		free(startupInfo_.lpAttributeList);
+	}
+
+	size_t LocalPTY::sendData(char* buffer, size_t size) override {
+		DWORD bytesWritten = 0;
+		WriteFile(pipeOut_, buffer, static_cast<DWORD>(size), &bytesWritten, nullptr);
+		return bytesWritten;
+	}
+
+	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) override {
+		DWORD bytesRead = 0;
+		bool readOk = ReadFile(pipeIn_, buffer, static_cast<DWORD>(size), &bytesRead, nullptr);
+		// make sure that if readOk is false nothing was read
+		ASSERT(readOk || bytesRead == 0);
+		return bytesRead;
+	}
+
+	void LocalPTY::resize(unsigned cols, unsigned rows) override {
+		// resize the underlying ConPTY
+		COORD size;
+		size.X = cols;
+		size.Y = rows;
+		ResizePseudoConsole(conPTY_, size);
+	}
+
+	void LocalPTY::createPseudoConsole() {
 		HRESULT result{ E_UNEXPECTED };
 		HANDLE pipePTYIn{ INVALID_HANDLE_VALUE };
 		HANDLE pipePTYOut{ INVALID_HANDLE_VALUE };
@@ -41,7 +70,7 @@ namespace vterm {
 			THROW(helpers::Win32Error("Unable to open pseudo console"));
 	}
 
-	void ConPTYTerminal::doStart() {
+	void LocalPTY::start() {
 		// first generate the startup info 
 		STARTUPINFOEX startupInfo{};
 		size_t attrListSize = 0;
@@ -77,39 +106,11 @@ namespace vterm {
 			&pInfo_ // info about the process
 		))
 			THROW(helpers::Win32Error(STR("Unable to start process " << command_)));
-		// start the input reader thread from PTYTerminal
-		IOTerminal::doStart();
 	}
 
-	bool ConPTYTerminal::readInputStream(char * buffer, size_t & size) {
-		DWORD bytesRead = 0;
-		bool readOk = ReadFile(pipeIn_, buffer, static_cast<DWORD>(size), &bytesRead, nullptr);
-		// make sure that if readOk is false nothing was read
-		ASSERT(readOk || bytesRead == 0);
-		size = bytesRead;
-		return readOk;
-	}
+#endif
 
-	void ConPTYTerminal::doResize(unsigned cols, unsigned rows) {
-		// resize the underlying ConPTY
-		COORD size;
-		size.X = cols;
-		size.Y = rows;
-		ResizePseudoConsole(conPTY_, size);
-		// IOTerminal's doResize() is not called because of the virtual inheritance
-	}
-
-	bool ConPTYTerminal::write(char const * buffer, size_t size) {
-		DWORD bytesWritten = 0;
-		WriteFile(pipeOut_, buffer, static_cast<DWORD>(size), &bytesWritten, nullptr);
-		ASSERT(bytesWritten == size);
-		return true;
-	}
 
 
 
 } // namespace vterm
-
-#endif
-
-#endif

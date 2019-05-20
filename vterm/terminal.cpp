@@ -60,7 +60,7 @@ namespace vterm {
 		t.detach();
 	}
 
-
+#ifdef HAHA
 
 	// Terminal --------------------------------------------------------------------------------------
 
@@ -123,5 +123,7 @@ namespace vterm {
 			}
 		}
 	}
+
+#endif
 
 } // namespace vterm
