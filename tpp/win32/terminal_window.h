@@ -73,7 +73,7 @@ namespace tpp {
 
 		void doSetFullscreen(bool value) override;
 
-		void doTitleChange(vterm::VT100::TitleEvent & e) override;
+		void titleChange(vterm::Terminal::TitleChangeEvent & e) override;
 
 		/** Deletes the double buffer object. 
 		 */
@@ -98,12 +98,12 @@ namespace tpp {
 			SelectObject(bufferDC_, Font::GetOrCreate(font, settings_->defaultFontHeight, zoom_)->handle());
 		}
 
-		void doDrawCell(unsigned col, unsigned row, vterm::Cell const& c) override {
+		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
 			wchar_t wc = c.c.toWChar();
 			TextOutW(bufferDC_, col * cellWidthPx_, row * cellHeightPx_, &wc, 1);
 		}
 
-		void doDrawCursor(unsigned col, unsigned row, vterm::Cell const& c) override {
+		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
 			doSetForeground(c.fg);
 			doSetFont(c.font);
 			SetBkMode(bufferDC_, TRANSPARENT);

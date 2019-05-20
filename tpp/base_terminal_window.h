@@ -166,7 +166,7 @@ namespace tpp {
 		}
 		
 		BaseTerminalWindow(TerminalSettings * settings) :
-			vterm::Renderer(settings->defaultCols, settings->defaultRows),
+			vterm::Terminal::Renderer(settings->defaultCols, settings->defaultRows),
 			settings_(settings),
 			title_(settings->defaultTitle),
 			widthPx_(settings->defaultFontWidth * settings->defaultCols),
@@ -180,23 +180,7 @@ namespace tpp {
 		    mouseRow_(0) {
 		}
 
-		void doAttachTerminal(vterm::Terminal * terminal) override {
-			Renderer::doAttachTerminal(terminal);
-			vterm::VT100 * vt = dynamic_cast<vterm::VT100 *>(terminal);
-			if (vt != nullptr) {
-				vt->onTitleChange += HANDLER(BaseTerminalWindow::doTitleChange);
-			}
-		}
-
-		void doDetachTerminal(vterm::Terminal * terminal) override {
-			vterm::VT100 * vt = dynamic_cast<vterm::VT100 *>(terminal);
-			if (vt != nullptr) {
-				vt->onTitleChange -= HANDLER(BaseTerminalWindow::doTitleChange);
-			}
-			Renderer::doDetachTerminal(terminal);
-		}
-
-        void repaint(vterm::Terminal::RepaintEvent & e) override {
+        void repaint(vterm::Terminal::RepaintEvent &) override {
             doInvalidate();
         }
 
@@ -225,11 +209,9 @@ namespace tpp {
 
 		virtual void doSetFullscreen(bool value) = 0;
 
-		virtual void doTitleChange(vterm::VT100::TitleEvent & e) = 0;
-
         /** Sends given character to the attached terminal. 
          */  
-        virtual void sendChar(vterm::Char::UTF8 c);
+        virtual void keyChar(vterm::Char::UTF8 c);
 
         /** Handles the key press event. 
          */ 
@@ -246,8 +228,8 @@ namespace tpp {
 		}
 
 		virtual void mouseMove(unsigned x, unsigned y);
-		virtual void mouseDown(unsigned x, unsigned y, unsigned button);
-		virtual void mouseUp(unsigned x, unsigned y, unsigned button);
+		virtual void mouseDown(unsigned x, unsigned y, vterm::MouseButton button);
+		virtual void mouseUp(unsigned x, unsigned y, vterm::MouseButton button);
 		virtual void mouseWheel(unsigned x, unsigned y, int offset);
 
 		/** Invalidates the contents of the window and triggers a repaint.

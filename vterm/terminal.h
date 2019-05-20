@@ -28,6 +28,8 @@ namespace vterm {
 	public:
 
 		typedef helpers::EventPayload<void, helpers::Object> RepaintEvent;
+		typedef helpers::EventPayload<std::string, helpers::Object> TitleChangeEvent;
+
 
 		class Cursor {
 		public:
@@ -195,6 +197,13 @@ namespace vterm {
 				}
 			}
 
+			unsigned cols() const {
+				return cols_;
+			}
+
+			unsigned rows() const {
+				return rows_;
+			}
 
 			virtual ~Renderer() {
 				detachFromTerminal();
@@ -204,7 +213,9 @@ namespace vterm {
 
 			/** Called by the attached terminal backend when new dirty cells exist which must be repainted.
              */
-			virtual void repaint() = 0;
+			virtual void repaint(RepaintEvent & e) = 0;
+
+			virtual void titleChange(TitleChangeEvent& e) = 0;
 
 			Renderer(unsigned cols, unsigned rows) :
 				terminal_(nullptr),
@@ -265,21 +276,20 @@ namespace vterm {
 
 		private:
 
-			void doRepaint(RepaintEvent& e) {
-				repaint();
-			}
 
-			void detachFromTerminal() {
+			virtual void detachFromTerminal() {
 				if (terminal_ == nullptr)
 					return;
-				terminal_->onRepaint -= HANDLER(Renderer::doRepaint);
+				terminal_->onRepaint -= HANDLER(Renderer::repaint);
+				terminal_->onTitleChange -= HANDLER(Renderer::titleChange);
 				terminal_ = nullptr;
 			}
 
-			void attachToTerminal(Terminal* terminal) {
+			virtual void attachToTerminal(Terminal* terminal) {
 				terminal_ = terminal;
 				terminal->resize(cols_, rows_);
-				terminal_->onRepaint += HANDLER(Renderer::doRepaint);
+				terminal_->onRepaint += HANDLER(Renderer::repaint);
+				terminal_->onTitleChange += HANDLER(Renderer::titleChange);
 			}
 
 			Terminal* terminal_;
@@ -456,6 +466,7 @@ namespace vterm {
 		// events
 
 		helpers::Event<RepaintEvent> onRepaint;
+		helpers::Event<TitleChangeEvent> onTitleChange;
 
 		/** Returns the width and height of the terminal.
 		 */
@@ -475,6 +486,10 @@ namespace vterm {
 
 		Buffer& buffer() {
 			return buffer_;
+		}
+
+		Cursor const& cursor() const {
+			return cursor_;
 		}
 
 		void resize(unsigned cols, unsigned rows) {
@@ -546,7 +561,8 @@ namespace vterm {
 		}
 
 		void changeTitle(std::string const& what) {
-			NOT_IMPLEMENTED;
+			// TODO keep title as property of the terminal
+			trigger(onTitleChange, what);
 		}
 
 	protected:

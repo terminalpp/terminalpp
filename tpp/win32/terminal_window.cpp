@@ -69,7 +69,7 @@ namespace tpp {
 		}
 	}
 
-	void TerminalWindow::doTitleChange(vterm::VT100::TitleEvent & e) {
+	void TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
 		if (title_ != *e) {
 			title_ = *e;
 			PostMessage(hWnd_, WM_USER, MSG_TITLE_CHANGE, 0);
@@ -210,7 +210,7 @@ namespace tpp {
 				break;
 			case WM_CHAR:
 				if (wParam >= 0x20)
-				    tw->terminal()->sendChar(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
+				    tw->terminal()->keyChar(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
 				break;
 			/* DEBUG - debugging events hooked to keypresses now: */
 			/* Processes special key events.*/
@@ -240,22 +240,22 @@ namespace tpp {
 		    /* Mouse events which simply obtain the mouse coordinates, convert the buttons and wheel values to vterm standards and then calls the TerminalWindow's events, which perform the pixels to cols & rows translation and then call the terminal itself. 
 			 */
 			case WM_LBUTTONDOWN:
-				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseLeft);
+				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Left);
 				break;
 			case WM_LBUTTONUP: 
-				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseLeft);
+				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Left);
 				break;
 			case WM_RBUTTONDOWN:
-				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseRight);
+				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Right);
 				break;
 			case WM_RBUTTONUP:
-				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseRight);
+				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Right);
 				break;
 			case WM_MBUTTONDOWN:
-				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseWheel);
+				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Wheel);
 				break;
 			case WM_MBUTTONUP:
-				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseWheel);
+				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Wheel);
 				break;
 			case WM_MOUSEWHEEL:
 				tw->mouseWheel(lParam & 0xffff, lParam >> 16, GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);

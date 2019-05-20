@@ -4,8 +4,8 @@
 
 namespace tpp {
 
-	void BaseTerminalWindow::sendChar(vterm::Char::UTF8 c) {
-		terminal()->sendChar(c);
+	void BaseTerminalWindow::keyChar(vterm::Char::UTF8 c) {
+		terminal()->keyChar(c);
 	}
 
 	void BaseTerminalWindow::keyDown(vterm::Key key) {
@@ -37,14 +37,14 @@ namespace tpp {
 		}
 	}
 
-	void BaseTerminalWindow::mouseDown(unsigned x, unsigned y, unsigned button) {
+	void BaseTerminalWindow::mouseDown(unsigned x, unsigned y, vterm::MouseButton button) {
 		convertMouseCoordsToCells(x, y);
 		mouseCol_ = x;
 		mouseRow_ = y;
 		terminal()->mouseDown(x, y, button);
 	}
 
-	void BaseTerminalWindow::mouseUp(unsigned x, unsigned y, unsigned button) {
+	void BaseTerminalWindow::mouseUp(unsigned x, unsigned y, vterm::MouseButton button) {
 		convertMouseCoordsToCells(x, y);
 		mouseCol_ = x;
 		mouseRow_ = y;
@@ -58,13 +58,13 @@ namespace tpp {
 
 
 	void BaseTerminalWindow::doUpdateBuffer(bool forceDirty) {
-		vterm::Terminal::Buffer b = terminal()->getBuffer();
+		vterm::Terminal::Buffer & b = terminal()->buffer();
 		// initialize the first font and colors
 		vterm::Color fg;
 		vterm::Color bg;
 		vterm::Font font;
 		{
-			vterm::Cell& c = b.at(0, 0);
+			vterm::Terminal::Cell& c = b.at(0, 0);
 			fg = c.fg;
 			bg = c.bg;
 			font = DropBlink(c.font);
@@ -72,15 +72,15 @@ namespace tpp {
 		doSetForeground(fg);
 		doSetBackground(bg);
 		doSetFont(font);
+		vterm::Terminal::Cursor const & cursor = terminal()->cursor();
 		// if cursor state changed, mark the cell containing it as dirty
-		helpers::Point cp = terminal()->cursorPos();
-		bool cursorInRange = cp.col < cols() && cp.row < rows();
+		bool cursorInRange = cursor.col < cols() && cursor.row < rows();
 		if (!forceDirty && cursorInRange)
-			b.at(cp.col, cp.row).dirty = true;
+			b.at(cursor.col, cursor.row).dirty = true;
 		// now loop over the entire terminal and update the cells
 		for (unsigned r = 0, re = rows(); r < re; ++r) {
 			for (unsigned c = 0, ce = cols(); c < ce; ++c) {
-				vterm::Cell& cell = b.at(c, r);
+				vterm::Terminal::Cell& cell = b.at(c, r);
 				if (forceDirty || cell.dirty) {
 					cell.dirty = false;
 					if (fg != cell.fg) {
@@ -100,14 +100,13 @@ namespace tpp {
 			}
 		}
 		// determine whether cursor should be display and display it if so
-		if (cursorInRange && terminal()->cursorVisible() && (blink_ || !terminal()->cursorBlink())) {
-			vterm::Cell c = b.at(cp.col, cp.row);
-			// TODO these should be selected somewhere!
-			c.fg = vterm::Color::White();
+		if (cursorInRange && cursor.visible && (blink_ || !cursor.blink)) {
+			vterm::Terminal::Cell c = b.at(cursor.col, cursor.row);
+			c.fg = cursor.color;
 			c.bg = vterm::Color::Black();
-			c.c = terminal()->cursorCharacter();
+			c.c = cursor.character;
 			c.font = DropBlink(c.font);
-			doDrawCursor(cp.col, cp.row, c);
+			doDrawCursor(cursor.col, cursor.row, c);
 		}
 	}
 
