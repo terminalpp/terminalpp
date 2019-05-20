@@ -248,12 +248,12 @@ namespace vterm {
 
     // VT100
 
-	VT100::VT100(unsigned cols, unsigned rows, Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
+	VT100::VT100(Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
 		PTYBackend(),
         applicationKeypadMode_(false),
         applicationCursorMode_(false),
         scrollStart_(0),
-        scrollEnd_(rows),
+        scrollEnd_(0),
 		palette_(256),
 		defaultFg_(defaultFg),
 		defaultBg_(defaultBg),
@@ -261,9 +261,9 @@ namespace vterm {
 		bg_(palette[defaultBg]),
 		font_(),
 		alternateBuffer_(false),
-		otherCells_(new Terminal::Cell[cols * rows]),
+		otherCells_(nullptr),
 		otherScrollStart_(0),
-		otherScrollEnd_(rows),
+		otherScrollEnd_(0),
 		otherFg_(fg_),
 		otherBg_(bg_),
 		otherFont_(font_),
@@ -1092,7 +1092,7 @@ namespace vterm {
 
 	void VT100::flipBuffer() {
 		alternateBuffer_ = ! alternateBuffer_;
-		NOT_IMPLEMENTED;
+		//NOT_IMPLEMENTED;
 		//std::swap(cells_, otherCells_);
 		std::swap(scrollStart_, otherScrollStart_);
 		std::swap(scrollEnd_, otherScrollEnd_);

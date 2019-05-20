@@ -129,22 +129,10 @@ namespace vterm {
 				return cells_[row * cols() + col];
 			}
 
-			/* Not needed?
-			Cell& at(helpers::Point const& p) {
-				return at(p.col, p.row);
-			}
-			*/
-
 			Terminal::Cell const& at(unsigned col, unsigned row) const {
 				ASSERT(col < cols() && row < rows());
 				return cells_[row * cols() + col];
 			}
-
-			/* Not needed?
-			Cell const& at(helpers::Point const& p) const {
-				return at(p.col, p.row);
-			}
-			*/
 
 			~Buffer() {
 				delete[] cells_;
@@ -171,11 +159,6 @@ namespace vterm {
 			/** The terminal to which the buffer belongs.
 			 */
 			Terminal* terminal_;
-
-			/** Number of columns and rows the buffer stores.
-			 */
-			unsigned cols_;
-			unsigned rows_;
 
 			/** The underlying array of cells.
 			 */

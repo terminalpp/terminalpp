@@ -75,7 +75,7 @@ namespace tpp {
 		doSetForeground(fg);
 		doSetBackground(bg);
 		doSetFont(font);
-		vterm::Terminal::Cursor const & cursor = terminal()->cursor();
+		vterm::Terminal::Cursor cursor = terminal()->cursor();
 		// if cursor state changed, mark the cell containing it as dirty
 		bool cursorInRange = cursor.col < cols() && cursor.row < rows();
 		if (!forceDirty && cursorInRange)

@@ -71,7 +71,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
 
 
-	vterm::VT100* vt100 = new vterm::VT100(80, 25, vterm::Palette::ColorsXTerm256(), 15, 0);
+	vterm::VT100* vt100 = new vterm::VT100(vterm::Palette::ColorsXTerm256(), 15, 0);
 	vt100->setPty(new vterm::LocalPTY("wsl -e mc"));
 
 	vt100->startThreadedReceiver();

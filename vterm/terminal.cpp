@@ -51,7 +51,7 @@ namespace vterm {
 			return;
 		writeStart_ += size;
 		// process the data together with any leftovers
-		size = dataReceived(buffer_, writeStart_ - buffer_);
+		size = size - dataReceived(buffer_, writeStart_ - buffer_);
 		// if not all was processed, copy leftovers to the beginning
 		if (buffer_ + size != writeStart_) 
 			// TODO - is this ok for memcpy? (overlapped, etc? )
