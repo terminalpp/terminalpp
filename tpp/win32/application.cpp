@@ -49,10 +49,8 @@ namespace tpp {
 		while (GetMessage(&msg, nullptr, 0, 0) > 0) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-			/*			if (msg.wParam == VK_ESCAPE)
-							break;
-							*/
 		}
+		// here we are in the on idle mode so we can process queues of all terminals. 
 	}
 
 	void Application::registerTerminalWindowClass() {

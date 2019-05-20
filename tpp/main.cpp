@@ -2,6 +2,10 @@
 
 #include "helpers/log.h"
 
+#include "vterm/local_pty.h"
+#include "vterm/vt100.h"
+
+
 
 #ifdef WIN32
 #include "win32/pty_terminal.h"
@@ -66,8 +70,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
 	helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
 
+
+	vterm::VT100* vt100 = new vterm::VT100(80, 25, vterm::Palette::ColorsXTerm256(), 15, 0);
+	vt100->setPty(new vterm::LocalPTY("wsl -e mc"));
+
+	vt100->startThreadedReceiver();
+
+	vterm::Terminal * t = new vterm::Terminal(80, 25, vt100);
+
 	TerminalWindow * tw = new TerminalWindow(app, &ts);
 	tw->show();
+
+	tw->setTerminal(t);
+
 
 
 	//Terminal * t = new Terminal("wsl -e echo hello mmoo", 80, 25);

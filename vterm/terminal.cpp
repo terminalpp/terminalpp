@@ -14,6 +14,14 @@ namespace vterm {
 		}
 	}
 
+	void Terminal::PTYBackend::startThreadedReceiver() {
+		std::thread t([this]() {
+			while (true)
+				receiveAndProcessData();
+			});
+		t.detach();
+	}
+
 	void Terminal::PTYBackend::resize(unsigned cols, unsigned rows) {
 		if (pty_ != nullptr)
 			pty_->resize(cols, rows);
@@ -52,14 +60,7 @@ namespace vterm {
 		writeStart_ = buffer_ + size;
 	}
 
-	void Terminal::PTYBackend::threadedReceiver() {
-		std::thread t([this]() {
-			while (true)
-				receiveAndProcessData();
-			});
-		t.detach();
-	}
-
+	
 #ifdef HAHA
 
 	// Terminal --------------------------------------------------------------------------------------

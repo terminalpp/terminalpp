@@ -58,6 +58,9 @@ namespace tpp {
 
 
 	void BaseTerminalWindow::doUpdateBuffer(bool forceDirty) {
+		// don't do anything if terminal is not attached
+		if (terminal() == nullptr)
+			return;
 		vterm::Terminal::Buffer & b = terminal()->buffer();
 		// initialize the first font and colors
 		vterm::Color fg;

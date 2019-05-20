@@ -398,6 +398,12 @@ namespace vterm {
 			 */
 			void setPty(PTY* value);
 
+			/** Starts a new thread that waits for new data from the attached PTY and when received calls the dataReceived periodically.
+
+				Any unprocessed data is always prepended to the next received bits.
+			 */
+			void startThreadedReceiver();
+
 			~PTYBackend() override {
 				delete[] buffer_;
 			}
@@ -437,12 +443,6 @@ namespace vterm {
 			    If there are any unprocessed data left after the call, they are copied to the beginning of the buffer so that next read will be appended after them. 
 			 */
 			void receiveAndProcessData();
-
-			/** Starts a new thread that waits for new data from the attached PTY and when received calls the dataReceived periodically. 
-			
-			    Any unprocessed data is always prepended to the next received bits. 
-			 */
-			void threadedReceiver();
 
 		private:
 			PTY * pty_;
