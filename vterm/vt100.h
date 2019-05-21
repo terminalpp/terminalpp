@@ -375,6 +375,7 @@ namespace vterm {
         /** Stack for cursor information. 
          */
         std::vector<Terminal::Cursor> cursorStack_;
+        
 
 
 		static KeyMap keyMap_;
