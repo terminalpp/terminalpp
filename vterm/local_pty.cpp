@@ -1,6 +1,11 @@
 #ifdef WIN32
 #include "helpers/win32.h"
+#elif __linux__
+#include <unistd.h>
+#include <pty.h>
+#include <signal.h>
 #endif
+#include "helpers/log.h"
 
 #include "local_pty.h"
 
@@ -119,14 +124,85 @@ namespace vterm {
 
 #elif __linux__
 
-    void LocalPTY::LocalPTY(std::string const& cmd, std::initializer_list<std::string &> args) :
+    LocalPTY::LocalPTY(std::string const& cmd, std::initializer_list<std::string> args) :
 	    command_(cmd),
 	    args_(args) {
+        start();
 	}
 
-	size_t LocalPTY::sendData(char const* buffer, size_t size) override;
-	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) override;
-	void LocalPTY::resize(unsigned cols, unsigned rows) override;
+	LocalPTY::~LocalPTY() {
+	}
+
+	size_t LocalPTY::sendData(char const* buffer, size_t size) {
+        int nw = write(pipe_, (void*) buffer, size);
+        ASSERT(nw >= 0 && static_cast<unsigned>(nw) == size);
+		return size;
+    }
+
+	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) {
+		int cnt = read(pipe_, (void*)buffer, availableSize);
+		if (cnt < 0) {
+			LOG << strerror(errno) << " - " << cnt;
+			return 0;
+		}
+        return cnt;
+    }
+
+	void LocalPTY::resize(unsigned cols, unsigned rows) {
+        struct winsize s;
+        s.ws_row = rows;
+        s.ws_col = cols;
+        s.ws_xpixel = 0;
+        s.ws_ypixel = 0;
+        if (ioctl(pipe_, TIOCSWINSZ, &s) < 0)
+            NOT_IMPLEMENTED;
+    }
+
+    void LocalPTY::start() {
+		// fork & open the pty
+		switch (pid_ = forkpty(&pipe_, nullptr, nullptr, nullptr)) {
+			// forkpty failed
+			case -1:
+				LOG << "fork fail";
+				NOT_IMPLEMENTED; // an error
+		    // running the child process,
+			case 0: {
+				setsid();
+				if (ioctl(1, TIOCSCTTY, nullptr) < 0)
+					NOT_IMPLEMENTED;
+				if (!isatty(1))
+					printf("NOT A TERMINAL\n");
+				else
+					printf("IS TERMINAL\n");
+				unsetenv("COLUMNS");
+				unsetenv("LINES");
+				unsetenv("TERMCAP");
+				setenv("TERM", "xterm-256color", /* overwrite */ true);
+				setenv("COLORTERM", "truecolor", /* overwrite */ true);
+
+				signal(SIGCHLD, SIG_DFL);
+				signal(SIGHUP, SIG_DFL);
+				signal(SIGINT, SIG_DFL);
+				signal(SIGQUIT, SIG_DFL);
+				signal(SIGTERM, SIG_DFL);
+				signal(SIGALRM, SIG_DFL);
+
+
+				char** args = new char* [args_.size() + 2];
+				args[0] = const_cast<char*>(command_.c_str());
+				for (size_t i = 0; i < args_.size(); ++i)
+					args[i + 1] = const_cast<char*>(args_[i].c_str());
+				
+				args[args_.size() + 1] = nullptr;
+				// execvp never returns
+				execvp(command_.c_str(), args);
+				UNREACHABLE;
+			}
+			// continuing the terminal program 
+			default:
+				break;
+		}
+    }
 
 #else
 #error "Unsupported platform"

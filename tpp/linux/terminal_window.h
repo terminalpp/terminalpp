@@ -53,7 +53,7 @@ namespace tpp {
 
 		void doSetFullscreen(bool value) override;
 
-		void doTitleChange(vterm::VT100::TitleEvent& e) override;
+		void titleChange(vterm::Terminal::TitleChangeEvent & e) override;
 
 		void doInvalidate() override {
             // set the flag
@@ -82,12 +82,12 @@ namespace tpp {
 			font_ = Font::GetOrCreate(font, settings_->defaultFontHeight, zoom_);
 		}
 
-		void doDrawCell(unsigned col, unsigned row, vterm::Cell const& c) override {
+		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
 			XftDrawRect(draw_, &bg_, col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_, cellHeightPx_);
 			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font_->handle()->descent, (XftChar8*)(c.c.rawBytes()), c.c.size());
 		}
 
-		void doDrawCursor(unsigned col, unsigned row, vterm::Cell const& c) override {
+		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
 			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font_->handle()->descent, (XftChar8*)(c.c.rawBytes()), c.c.size());
 		}
 

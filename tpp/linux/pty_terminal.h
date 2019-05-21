@@ -1,13 +1,12 @@
 #pragma once
-#ifdef __linux__
+#ifdef __linux___
 
 #include "vterm/vt100.h"
-#include "vterm/linux/pty_terminal.h"
 
 
 namespace tpp {
 
-	class Terminal : public vterm::VT100, public vterm::PTYTerminal {
+	class Terminal : public vterm::VT100 {
 	public:
 		Terminal(std::string const& cmd, std::initializer_list<std::string> args, unsigned cols, unsigned rows, vterm::Palette const& palette, unsigned defaultFg, unsigned defaultBg) :
 			IOTerminal(cols, rows),

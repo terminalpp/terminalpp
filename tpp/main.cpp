@@ -123,8 +123,8 @@ int main(int argc, char* argv[]) {
 		FixMissingSettings(ts);
 
 
-		TerminalWindow* tw = new TerminalWindow(app, &ts);
-		tw->show();
+		//TerminalWindow* tw = new TerminalWindow(app, &ts);
+		//tw->show();
 
 		//Terminal* t = new Terminal("./check-tty.sh", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
 		//Terminal* t = new Terminal("printenv", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
@@ -133,11 +133,30 @@ int main(int argc, char* argv[]) {
 		//Terminal* t = new Terminal("infocmp", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
 		//Terminal* t = new Terminal("screenfetch", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
 		//Terminal* t = new Terminal("mc", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		Terminal* t = new Terminal("bash", { }, 100, 40, vterm::Palette::ColorsXTerm256(), 15, 0);
+		//Terminal* t = new Terminal("bash", { }, 100, 40, vterm::Palette::ColorsXTerm256(), 15, 0);
 
-		tw->attachTerminal(t);
+		//tw->attachTerminal(t);
 
-		t->execute();
+		//t->execute();
+
+        vterm::Terminal * t = new vterm::Terminal(80, 25);
+
+        TerminalWindow * tw = new TerminalWindow(app, &ts);
+        tw->show();
+
+        tw->setTerminal(t);
+
+
+
+
+        vterm::VT100* vt100 = new vterm::VT100(vterm::Palette::ColorsXTerm256(), 15, 0);
+        vt100->setTerminal(t);
+        vt100->setPty(new vterm::LocalPTY("bash", {}));
+
+        vt100->startThreadedReceiver();
+
+
+
 
 
 		app->mainLoop();

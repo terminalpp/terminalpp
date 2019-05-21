@@ -70,7 +70,6 @@ namespace vterm {
 
 		pid_t pid_;
 
-
 #else
 #error "Unsupported platform"
 #endif

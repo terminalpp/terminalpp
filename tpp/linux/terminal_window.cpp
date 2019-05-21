@@ -71,11 +71,11 @@ namespace tpp {
 	}
 
 	void TerminalWindow::doSetFullscreen(bool value) {
-
+        // TODO Implement
 	}
 
-	void TerminalWindow::doTitleChange(vterm::VT100::TitleEvent& e) {
-
+	void TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
+        // TODO implement
 	}
 
 	void TerminalWindow::doPaint() {
@@ -241,7 +241,7 @@ namespace tpp {
                     vterm::Char::UTF8 c;
                     char * x = reinterpret_cast<char*>(& str);
                     if (c.readFromStream(x, x+32)) {
-                        tw->sendChar(c);
+                        tw->keyChar(c);
                         break;
                     }
                 }
@@ -261,13 +261,13 @@ namespace tpp {
             case ButtonPress: 
                 switch (e.xbutton.button) {
                     case 1:
-                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseLeft);
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Left);
                         break;
                     case 2:
-                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseWheel);
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Wheel);
                         break;
                     case 3:
-                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseRight);
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Right);
                         break;
                     case 4:
                         tw->mouseWheel(e.xbutton.x, e.xbutton.y, 1);
@@ -282,13 +282,13 @@ namespace tpp {
             case ButtonRelease: 
                 switch (e.xbutton.button) {
                     case 1:
-                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseLeft);
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Left);
                         break;
                     case 2:
-                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseWheel);
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Wheel);
                         break;
                     case 3:
-                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseRight);
+                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Right);
                         break;
                     default:
                         break;

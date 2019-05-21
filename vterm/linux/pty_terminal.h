@@ -1,5 +1,5 @@
 #pragma once
-#ifdef __linux__
+#ifdef __linux___
 
 #include "../terminal.h"
 

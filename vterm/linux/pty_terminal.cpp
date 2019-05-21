@@ -1,4 +1,4 @@
-#ifdef __linux__
+#ifdef __linux___
 
 #include <unistd.h>
 #include <pty.h>

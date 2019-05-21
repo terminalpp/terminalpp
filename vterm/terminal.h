@@ -437,15 +437,11 @@ namespace vterm {
 			char * writeStart_;
 		};
 
-		Terminal(unsigned cols, unsigned rows, Backend* backend = nullptr) :
+		Terminal(unsigned cols, unsigned rows) :
 			cols_(cols),
 			rows_(rows),
 			buffer_(this),
 			backend_(nullptr) {
-			if (backend) {
-				backend->setTerminal(this);
-				ASSERT(backend_ == backend) << "Terminal backend not set property when attaching";
-			}
 		}
 
 		// events
