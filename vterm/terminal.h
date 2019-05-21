@@ -502,7 +502,7 @@ namespace vterm {
 
 		void keyUp(Key k) {
 			if (backend_)
-				backend_->keyDown(k);
+				backend_->keyUp(k);
 		}
 
 		void keyChar(Char::UTF8 c) {
