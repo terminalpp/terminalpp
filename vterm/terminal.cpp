@@ -49,15 +49,16 @@ namespace vterm {
 		// TODO can we assume this is EOF and how to communicate this nicely?
 		if (size == 0)
 			return;
-		writeStart_ += size;
+		// update size to include the writeStart_ offset so that it means all available data from the beginning of the buffer
+		size = size + (writeStart_ - buffer_);
 		// process the data together with any leftovers
-		size = size - dataReceived(buffer_, writeStart_ - buffer_);
+		size_t processed = dataReceived(buffer_, size);
 		// if not all was processed, copy leftovers to the beginning
-		if (buffer_ + size != writeStart_) 
+		if (processed != size) 
 			// TODO - is this ok for memcpy? (overlapped, etc? )
-			memcpy(buffer_, buffer_ + size, writeStart_ - buffer_ - size);
+			memcpy(buffer_, buffer_ + processed, size - processed);
 		// set new start of writing after the leftovers (if any)		
-		writeStart_ = buffer_ + size;
+		writeStart_ = buffer_ + (size - processed);
 	}
 
 	

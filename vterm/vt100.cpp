@@ -340,7 +340,8 @@ namespace vterm {
 		// and resize its cells
 		delete [] otherCells_;
 		otherCells_ = new Terminal::Cell[cols * rows];
-		// IOTerminal's doResize() is not called because of the virtual inheritance
+		// call the PTY backend's resize which propagates the change to the pty
+		PTYBackend::resize(cols, rows);
 		LOG(SEQ) << "terminal resized to " << cols << "," << rows;
 	}
 

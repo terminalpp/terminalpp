@@ -75,6 +75,7 @@ namespace tpp {
 		doSetForeground(fg);
 		doSetBackground(bg);
 		doSetFont(font);
+		// TODO -- we are taking a copy in case the cursor is moved while the print happens - this should not happen though and needs some investigation on how it could be achieved, or if simpler synchronization should be implemented in backends... 
 		vterm::Terminal::Cursor cursor = terminal()->cursor();
 		// if cursor state changed, mark the cell containing it as dirty
 		bool cursorInRange = cursor.col < cols() && cursor.row < rows();

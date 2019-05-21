@@ -207,6 +207,8 @@ namespace vterm {
 			}
 
 			virtual void resize(unsigned cols, unsigned rows) {
+				cols_ = cols;
+				rows_ = rows;
 				if (terminal_)
 					terminal_->resize(cols, rows);
 			}
