@@ -8,8 +8,9 @@ namespace vterm {
 
 #ifdef WIN32
 
-	LocalPTY::LocalPTY(std::string const & command) :
+	LocalPTY::LocalPTY(std::string const & command, std::initializer_list<std::string> args) :
 		command_{ command },
+		args_{ args },
 		startupInfo_{},
 		conPTY_{ INVALID_HANDLE_VALUE },
 		pipeIn_{ INVALID_HANDLE_VALUE },
@@ -97,10 +98,13 @@ namespace vterm {
 			nullptr
 		))
 			THROW(helpers::Win32Error("Unable to set pseudoconsole attribute"));
+		std::string cmd = command_;
+		for (auto i : args_)
+			cmd = command_ + " " + i;
 		// finally, create the process with given commandline
 		if (!CreateProcess(
 			nullptr,
-			&command_[0], // the command to execute
+			&cmd[0], // the command to execute
 			nullptr, // process handle cannot be inherited
 			nullptr, // thread handle cannot be inherited
 			false, // the new process does not inherit any handles
@@ -113,6 +117,19 @@ namespace vterm {
 			THROW(helpers::Win32Error(STR("Unable to start process " << command_)));
 	}
 
+#elif __linux__
+
+    void LocalPTY::LocalPTY(std::string const& cmd, std::initializer_list<std::string &> args) :
+	    command_(cmd),
+	    args_(args) {
+	}
+
+	size_t LocalPTY::sendData(char const* buffer, size_t size) override;
+	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) override;
+	void LocalPTY::resize(unsigned cols, unsigned rows) override;
+
+#else
+#error "Unsupported platform"
 #endif
 
 

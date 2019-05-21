@@ -13,7 +13,7 @@ namespace vterm {
 
 		/** Starts the local pseudoterminal for given command. 
 		 */
-		LocalPTY(std::string const& command);
+		LocalPTY(std::string const& command, std::initializer_list<std::string> args);
 
 		~LocalPTY() override;
 
@@ -28,6 +28,8 @@ namespace vterm {
 
 	private:
 		std::string command_;
+
+		std::vector<std::string> args_;
 
 
 #ifdef WIN32
@@ -60,7 +62,19 @@ namespace vterm {
 		 */
 		PROCESS_INFORMATION pInfo_;
 
+#elif __linux__
+
+		void start();
+
+		int pipe_;
+
+		pid_t pid_;
+
+
+#else
+#error "Unsupported platform"
 #endif
+
 
 
 

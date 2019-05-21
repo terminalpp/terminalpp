@@ -8,7 +8,6 @@
 
 
 #ifdef WIN32
-#include "win32/pty_terminal.h"
 #include "win32/application.h"
 #include "win32/terminal_window.h"
 // link to directwrite
@@ -72,7 +71,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	vterm::VT100* vt100 = new vterm::VT100(vterm::Palette::ColorsXTerm256(), 15, 0);
-	vt100->setPty(new vterm::LocalPTY("wsl -e mc"));
+	vt100->setPty(new vterm::LocalPTY("wsl", {"-e", "emacs"}));
 
 	vt100->startThreadedReceiver();
 
