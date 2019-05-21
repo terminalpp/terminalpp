@@ -2,7 +2,6 @@
 
 #include <cmath>
 
-#include "vterm/renderer.h"
 #include "vterm/vt100.h"
 
 namespace tpp {

@@ -14,7 +14,6 @@
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
 #elif __linux__
-#include "linux/pty_terminal.h"
 #include "linux/application.h"
 #include "linux/terminal_window.h"
 #else
