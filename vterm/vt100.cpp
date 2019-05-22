@@ -362,7 +362,7 @@ namespace vterm {
 			return;
 		mouseLastButton_ = encodeMouseButton(button);
 		sendMouseEvent(mouseLastButton_, col, row, 'm');
-		LOG << "Button " << button << " up at " << col << ";" << row;
+		LOG(SEQ) << "Button " << button << " up at " << col << ";" << row;
 	}
 
 	void VT100::mouseWheel(unsigned col, unsigned row, int offset) {
