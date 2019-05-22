@@ -260,12 +260,22 @@ namespace vterm {
         applicationCursorMode_(false),
 		alternateBuffer_(false),
         bracketedPaste_(false),
+		mouseMode_(MouseMode::Off),
+		mouseEncoding_(MouseEncoding::Default),
 	    buffer_(nullptr),
 	    bufferEnd_(nullptr) {
 		palette_.fillFrom(palette);
 	}
 
 	void VT100::keyDown(Key k) {
+		if (k | Key::Shift)
+			inputState_.shift = true;
+		if (k | Key::Ctrl)
+			inputState_.ctrl = true;
+		if (k | Key::Alt)
+			inputState_.alt = true;
+		if (k | Key::Win)
+			inputState_.win = true;
 		std::string const* seq = keyMap_.getSequence(k);
 		if (seq != nullptr) {
             switch (k.code()) {
@@ -290,28 +300,79 @@ namespace vterm {
 		//LOG << "Key pressed: " << k;
 	}
 
+	void VT100::keyUp(Key k) {
+		if (k | Key::Shift)
+			inputState_.shift = false;
+		if (k | Key::Ctrl)
+			inputState_.ctrl = false;
+		if (k | Key::Alt)
+			inputState_.alt = false;
+		if (k | Key::Win)
+			inputState_.win = false;
+
+	}
+
 	void VT100::keyChar(Char::UTF8 c) {
 		// TODO make sure that the character is within acceptable range, i.e. it does not clash with ctrl+ stuff, etc. 
 		sendData(c.rawBytes(), c.size());
 	}
 
 	void VT100::mouseMove(unsigned col, unsigned row) {
-		LOG << "Mouse moved to " << col << ";" << row;
+		if (mouseMode_ == MouseMode::Off)
+			return;
+		if (mouseMode_ == MouseMode::ButtonEvent && !inputState_.mouseLeft && !inputState_.mouseRight && !inputState_.mouseWheel)
+			return;
+		// mouse move adds 32 to the last known button press
+		sendMouseEvent(mouseLastButton_ + 32, col, row, 'M');
+		LOG(SEQ) << "Mouse moved to " << col << ";" << row;
 	}
 
 	void VT100::mouseDown(unsigned col, unsigned row, MouseButton button) {
-		LOG << "Button " << button << " down at " << col << ";" << row;
+		switch (button) {
+			case MouseButton::Left:
+				inputState_.mouseLeft = true;
+				break;
+			case MouseButton::Right:
+				inputState_.mouseRight = true;
+				break;
+			case MouseButton::Wheel:
+				inputState_.mouseWheel = true;
+				break;
+		}
+		if (mouseMode_ == MouseMode::Off)
+			return;
+		mouseLastButton_ = encodeMouseButton(button);
+		sendMouseEvent(mouseLastButton_, col, row, 'M');
+		LOG(SEQ) << "Button " << button << " down at " << col << ";" << row;
 	}
 
 	void VT100::mouseUp(unsigned col, unsigned row, MouseButton button) {
+		switch (button) {
+			case MouseButton::Left:
+				inputState_.mouseLeft = false;
+				break;
+			case MouseButton::Right:
+				inputState_.mouseRight = false;
+				break;
+			case MouseButton::Wheel:
+				inputState_.mouseWheel = false;
+				break;
+			}
+		if (mouseMode_ == MouseMode::Off)
+			return;
+		mouseLastButton_ = encodeMouseButton(button);
+		sendMouseEvent(mouseLastButton_, col, row, 'm');
 		LOG << "Button " << button << " up at " << col << ";" << row;
 	}
 
 	void VT100::mouseWheel(unsigned col, unsigned row, int offset) {
-		LOG << "Wheel offset " << offset << " at " << col << ";" << row;
+		if (mouseMode_ == MouseMode::Off)
+			return;
+		// mouse wheel adds 64 to the value
+		mouseLastButton_ = encodeMouseButton((offset > 0) ? MouseButton::Left : MouseButton::Right) + 64;
+		sendMouseEvent(mouseLastButton_, col, row, 'M');
+		LOG(SEQ) << "Wheel offset " << offset << " at " << col << ";" << row;
 	}
-
-
 
     void VT100::paste(std::string const & what) {
         if (bracketedPaste_) {
@@ -919,18 +980,44 @@ namespace vterm {
                     cursor().visible = value;
                     LOG(SEQ) << "cursor visible: " << value;
                     continue;
+				/* Mouse tracking movement & buttons.
+
+				https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
+				*/
+				/* Enable normal mouse mode, i.e. report button press & release events only.
+				 */
                 case 1000:
-                    break;
-
-                /* Mouse tracking movement & buttons.
-
-                https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
-                */
-                case 1001: // mouse highlighting
+					mouseMode_ = value ? MouseMode::Normal : MouseMode::Off;
+     				LOG(SEQ) << "normal mouse tracking: " << value;
+                    continue;
+				/* Mouse highlighting - will not support because it requires supporting application and may hang terminal if not used properly, which sounds rather dangerous. 
+				 */
+                case 1001:
+					break;
+				/* Mouse button events (report mouse button press & release and mouse movement if any of the buttons is down. 
+				 */
+				case 1002:
+					mouseMode_ = value ? MouseMode::ButtonEvent : MouseMode::Off;
+					LOG(SEQ) << "button-event mouse tracking: " << value;
+					continue;
+				/* Report all mouse events (i.e. report mouse move even when buttons are not pressed).
+				 */
                 case 1003:
-                case 1005:
+					mouseMode_ = value ? MouseMode::All : MouseMode::Off;
+					LOG(SEQ) << "all mouse tracking: " << value;
+					continue;
+				/* UTF8 encoded tracking.
+				 */
+				case 1005:
+					mouseEncoding_ = value ? MouseEncoding::UTF8 : MouseEncoding::Default;
+					LOG(SEQ) << "UTF8 mouse encoding: " << value;
+					continue;
+				/* SGR mouse encoding. 
+				 */
                 case 1006: // 
-                    break;
+					mouseEncoding_ = value ? MouseEncoding::SGR : MouseEncoding::Default;
+					LOG(SEQ) << "UTF8 mouse encoding: " << value;
+					continue;
                 /* Enable or disable the alternate screen buffer.
                 */
                 case 47: 
@@ -1088,5 +1175,63 @@ namespace vterm {
         fillRect(helpers::Rect(cols(), rows()), ' ');
         cursor() = Terminal::Cursor();
     }
+
+	unsigned VT100::encodeMouseButton(MouseButton btn) {
+		unsigned result =
+			(inputState_.shift ? 4 : 0) +
+			(inputState_.alt ? 8 : 0) +
+			(inputState_.ctrl ? 16 : 0);
+		switch (btn) {
+			case MouseButton::Left:
+				return result;
+			case MouseButton::Right:
+				return result + 1;
+			case MouseButton::Wheel:
+				return result + 2;
+			default:
+				UNREACHABLE;
+		}
+	}
+
+	void VT100::sendMouseEvent(unsigned button, unsigned col, unsigned row, char end) {
+		// first increment col & row since terminal starts from 1
+		++col;
+		++row;
+		switch (mouseEncoding_) {
+		case MouseEncoding::Default: {
+			// if the event is release, button number is 3
+			if (end == 'm')
+				button |= 3;
+			// increment all values so that we start at 32
+			button += 32;
+			col += 32;
+			row += 32;
+			// if the col & row are too high, ignore the event
+			if (col > 255 || row > 255)
+				return;
+			// otherwise output the sequence
+			char buffer[6];
+			buffer[0] = '\033';
+			buffer[1] = '[';
+			buffer[2] = 'M';
+			buffer[3] = button & 0xff;
+			buffer[4] = col & 0xff;
+			buffer[5] = row & 0xff;
+			sendData(buffer, 6);
+			break;
+		}
+		case MouseEncoding::UTF8: {
+			NOT_IMPLEMENTED;
+			break;
+		}
+		case MouseEncoding::SGR: {
+			std::string buffer = STR("\033[<" << button << ';' << col << ';' << row << end);
+			sendData(buffer.c_str(), buffer.size());
+			break;
+		}
+		}
+	}
+
+
 
 } // namespace vterm

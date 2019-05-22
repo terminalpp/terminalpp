@@ -101,9 +101,7 @@ namespace vterm {
 
         void keyDown(Key k) override;
 
-		/* VT100 is not interested in keyups, the key is sent on keydown event alone. 
-		 */
-		void keyUp(Key k) override { };
+		void keyUp(Key k) override;
 
 		void keyChar(Char::UTF8 c) override;
 
@@ -328,6 +326,10 @@ namespace vterm {
 
         void resetCurrentBuffer();
 
+		unsigned encodeMouseButton(MouseButton btn);
+
+		void sendMouseEvent(unsigned button, unsigned col, unsigned row, char end);
+
         /** Current palette used by the terminal. 
           
             The palette determines the 256 fixed colors used by the terminal. 
@@ -398,6 +400,61 @@ namespace vterm {
          */
         bool bracketedPaste_;
 
+
+
+
+
+
+		enum class MouseMode {
+			Off,
+			Normal,
+			ButtonEvent,
+			All
+		};
+
+		MouseMode mouseMode_;
+
+		/** Determines encoding used to send mouse information. 
+		 */
+		enum class MouseEncoding {
+			Default,
+			UTF8,
+			SGR
+		};
+
+		MouseEncoding mouseEncoding_;
+
+		/** When reporting mouse motion, the last button value is used. 
+		 */
+		unsigned mouseLastButton_;
+
+
+
+
+
+		class InputState {
+		public:
+			bool shift;
+			bool ctrl;
+			bool alt;
+			bool win;
+			bool mouseLeft;
+			bool mouseRight;
+			bool mouseWheel;
+
+			InputState() :
+				shift(false),
+				ctrl(false),
+				alt(false),
+				win(false),
+				mouseLeft(false),
+				mouseRight(false),
+				mouseWheel(false) {
+			}
+
+		};
+
+		InputState inputState_;
 
         /** Helper pointers to the communications buffer (current index and buffer end).
          */

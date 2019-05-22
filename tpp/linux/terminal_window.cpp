@@ -282,13 +282,13 @@ namespace tpp {
             case ButtonRelease: 
                 switch (e.xbutton.button) {
                     case 1:
-                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Left);
+                        tw->mouseUp(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Left);
                         break;
                     case 2:
-                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Wheel);
+                        tw->mouseUp(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Wheel);
                         break;
                     case 3:
-                        tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Right);
+                        tw->mouseUp(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Right);
                         break;
                     default:
                         break;

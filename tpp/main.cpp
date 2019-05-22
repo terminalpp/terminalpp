@@ -79,7 +79,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	vterm::VT100* vt100 = new vterm::VT100(vterm::Palette::ColorsXTerm256(), 15, 0);
 	vt100->setTerminal(t);
-	vt100->setPty(new vterm::LocalPTY("wsl", {"-e", "emacs"}));
+	vt100->setPty(new vterm::LocalPTY("wsl", {"-e", "bash"}));
 
 	vt100->startThreadedReceiver();
 
