@@ -69,17 +69,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
 
 
+	vterm::Terminal* t = new vterm::Terminal(80, 25);
+
+	TerminalWindow* tw = new TerminalWindow(app, &ts);
+	tw->show();
+
+	tw->setTerminal(t);
+
+
 	vterm::VT100* vt100 = new vterm::VT100(vterm::Palette::ColorsXTerm256(), 15, 0);
+	vt100->setTerminal(t);
 	vt100->setPty(new vterm::LocalPTY("wsl", {"-e", "emacs"}));
 
 	vt100->startThreadedReceiver();
 
-	vterm::Terminal * t = new vterm::Terminal(80, 25, vt100);
-
-	TerminalWindow * tw = new TerminalWindow(app, &ts);
-	tw->show();
-
-	tw->setTerminal(t);
 
 
 
