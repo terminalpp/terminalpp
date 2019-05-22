@@ -106,59 +106,79 @@ namespace vterm {
 		class Buffer {
 		public:
 
-			/** Returns the terminal to which the buffer belongs.
-			 */
-			Terminal* terminal() const {
-				return terminal_;
-			}
-
 			/** Returns the columns and rows of the buffer.
 			 */
 			unsigned cols() const {
-				return terminal_->cols_;
+				return cols_;
 			}
 
 			unsigned rows() const {
-				return terminal_->rows_;
+				return rows_;
 			}
 
 			/** Returns the given cell of the terminal's buffer.
 			 */
 			Terminal::Cell& at(unsigned col, unsigned row) {
-				ASSERT(col < cols() && row < rows());
-				return cells_[row * cols() + col];
+				ASSERT(col < cols_ && row < rows_);
+				return cells_[row * cols_ + col];
 			}
 
 			Terminal::Cell const& at(unsigned col, unsigned row) const {
-				ASSERT(col < cols() && row < rows());
-				return cells_[row * cols() + col];
+				ASSERT(col < cols_ && row < rows_);
+				return cells_[row * cols_ + col];
 			}
 
-			~Buffer() {
+			Buffer(unsigned cols, unsigned rows) :
+                cols_(cols),
+                rows_(rows),
+				cells_(new Cell[cols_ * rows_]) {
+			}
+
+            Buffer(Buffer && other): 
+                cols_(other.cols_),
+                rows_(other.rows_),
+                cells_(other.cells_) {
+                    other.cols_ = 0;
+                    other.rows_ = 0;
+                    other.cells_ = nullptr;
+                }
+
+            Buffer & operator = (Buffer && other) {
+                if (this != & other) {
+                    delete[] cells_;
+                    cols_ = other.cols_;
+                    rows_ = other.rows_;
+                    cells_ = other.cells_;
+                    other.cols_ = 0;
+                    other.rows_ = 0;
+                    other.cells_ = nullptr;
+                }
+                return *this;
+            }
+
+            ~Buffer() {
 				delete[] cells_;
 			}
 
 		private:
 
 			friend class Terminal;
+            friend class Backend;
 
-			Buffer(Terminal* terminal) :
-				terminal_(terminal),
-				cells_(new Cell[cols() * rows()]) {
-				ASSERT(terminal != nullptr) << "Buffer must always belong to a terminal";
-			}
 
 			/** Resizes the buffer.
 			 */
-			void resize() {
+			void resize(unsigned cols, unsigned rows) {
 				// TODO resizing the terminal should preserve some of the original context, if applicable
 				delete[] cells_;
-				cells_ = new Cell[cols() * rows()];
+                cols_ = cols;
+                rows_ = rows;
+				cells_ = new Cell[cols_ * rows_];
 			}
 
-			/** The terminal to which the buffer belongs.
-			 */
-			Terminal* terminal_;
+            unsigned cols_;
+
+            unsigned rows_;
 
 			/** The underlying array of cells.
 			 */
@@ -300,6 +320,10 @@ namespace vterm {
 
 		protected:
 
+            void resizeBuffer(Buffer & buffer, unsigned cols, unsigned rows) {
+                buffer.resize(cols, rows);
+            }
+
 			Backend() :
 				terminal_(nullptr) {
 			}
@@ -313,12 +337,12 @@ namespace vterm {
 
 			unsigned cols() {
 				ASSERT(terminal_ != nullptr);
-				return terminal_->cols_;
+				return terminal_->buffer().cols();
 			}
 
 			unsigned rows() {
 				ASSERT(terminal_ != nullptr);
-				return terminal_->rows_;
+				return terminal_->buffer().rows();
 			}
 
 			Terminal::Buffer& buffer() {
@@ -421,7 +445,7 @@ namespace vterm {
 
 			/** Resizes the internal buffer. 
 			 */
-			void resizeBuffer(size_t newSize);
+			void resizeComBuffer(size_t newSize);
 
 			/** Using the internal buffer, reads new data from the target process via the attached PTY and then calls the dataReceived() method to process it. 
 
@@ -438,9 +462,7 @@ namespace vterm {
 		};
 
 		Terminal(unsigned cols, unsigned rows) :
-			cols_(cols),
-			rows_(rows),
-			buffer_(this),
+			buffer_(cols, rows),
 			backend_(nullptr) {
 		}
 
@@ -452,11 +474,11 @@ namespace vterm {
 		/** Returns the width and height of the terminal.
 		 */
 		unsigned cols() const {
-			return cols_;
+			return buffer_.cols_;
 		}
 
 		unsigned rows() const {
-			return rows_;
+			return buffer_.rows_;
 		}
 
 		/** Returns the buffer associated with the terminal. 
@@ -474,15 +496,13 @@ namespace vterm {
 		}
 
 		void resize(unsigned cols, unsigned rows) {
-			if (cols_ != cols || rows_ != rows) {
-				cols_ = cols;
-				rows_ = rows;
-				buffer_.resize();
+			if (buffer_.cols_ != cols || buffer_.rows_ != rows) {
+				buffer_.resize(cols, rows);
 				// update cursor position
-				if (cursor_.col >= cols_)
-					cursor_.col = cols_ - 1;
-				if (cursor_.row >= rows_)
-					cursor_.row = rows_ - 1;
+				if (cursor_.col >= buffer_.cols_)
+					cursor_.col = buffer_.cols_ - 1;
+				if (cursor_.row >= buffer_.rows_)
+					cursor_.row = buffer_.rows_ - 1;
 				// pass to the backend
 				if (backend_)
 					backend_->resize(cols, rows);
@@ -551,10 +571,6 @@ namespace vterm {
 		Cursor cursor_;
 
 	private:
-		/** Size of the terminal. 
-		 */
-		unsigned cols_;
-		unsigned rows_;
 
 		/** The buffer containing rendering information for all the cells. 
 		 */

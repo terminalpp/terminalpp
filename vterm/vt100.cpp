@@ -250,23 +250,15 @@ namespace vterm {
 
 	VT100::VT100(Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
 		PTYBackend(),
-        applicationKeypadMode_(false),
-        applicationCursorMode_(false),
-        scrollStart_(0),
-        scrollEnd_(0),
 		palette_(256),
 		defaultFg_(defaultFg),
 		defaultBg_(defaultBg),
-		fg_(palette[defaultFg]),
-		bg_(palette[defaultBg]),
-		font_(),
+        state_{palette[defaultFg], palette[defaultBg], Font(), 0, 0},
+        otherState_{palette[defaultFg], palette[defaultBg], Font(), 0, 0},
+        otherBuffer_(0,0),
+        applicationKeypadMode_(false),
+        applicationCursorMode_(false),
 		alternateBuffer_(false),
-		otherCells_(nullptr),
-		otherScrollStart_(0),
-		otherScrollEnd_(0),
-		otherFg_(fg_),
-		otherBg_(bg_),
-		otherFont_(font_),
         bracketedPaste_(false),
 	    buffer_(nullptr),
 	    bufferEnd_(nullptr) {
@@ -333,13 +325,10 @@ namespace vterm {
 
 	void VT100::resize(unsigned cols, unsigned rows) {
         // reset the scroll region to whole window
-        scrollStart_ = 0;
-        scrollEnd_ = rows;
-		otherScrollStart_ = 0;
-		otherScrollEnd_ = rows;
+        state_.resize(cols, rows);
+        otherState_.resize(cols, rows);
 		// and resize its cells
-		delete [] otherCells_;
-		otherCells_ = new Terminal::Cell[cols * rows];
+        resizeBuffer(otherBuffer_,cols, rows);
 		// call the PTY backend's resize which propagates the change to the pty
 		PTYBackend::resize(cols, rows);
 		LOG(SEQ) << "terminal resized to " << cols << "," << rows;
@@ -421,9 +410,9 @@ namespace vterm {
 				//LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
 				// get the cell and update its contents
 				Terminal::Cell & cell = this->buffer().at(cursor().col, cursor().row);
-				cell.fg = fg_;
-				cell.bg = bg_;
-				cell.font = font_;
+				cell.fg = state_.fg;
+				cell.bg = state_.bg;
+				cell.font = state_.font;
 				cell.c = c8;
 				cell.dirty = true;
 				// move to next column
@@ -760,9 +749,9 @@ namespace vterm {
                     seq.setArgDefault(1, rows()); // inclusive
                     if (seq.numArgs() != 2)
                         break;
-                    scrollStart_ = std::min(seq[0] - 1, rows() - 1); // inclusive
-                    scrollEnd_ = std::min(seq[1] , rows()); // exclusive 
-                    LOG(SEQ) << "Scroll region set to " << scrollStart_ << " - " << scrollEnd_;
+                    state_.scrollStart = std::min(seq[0] - 1, rows() - 1); // inclusive
+                    state_.scrollEnd = std::min(seq[1] , rows()); // exclusive 
+                    LOG(SEQ) << "Scroll region set to " << state_.scrollStart << " - " << state_.scrollEnd;
                     return;
                 /* CSI <n> : <n> : <n> t -- window manipulation (xterm)
 
@@ -827,51 +816,51 @@ namespace vterm {
             switch (seq[i]) {
                 /* Resets all attributes. */
                 case 0:
-                    font_ = Font();
-                    fg_ = palette_[defaultFg_];
-                    bg_ = palette_[defaultBg_];
+                    state_.font = Font();
+                    state_.fg = palette_[defaultFg_];
+                    state_.bg = palette_[defaultBg_];
                     LOG(SEQ) << "font fg bg reset";
                     break;
                 /* Bold / bright foreground. */
                 case 1:
-                    font_.setBold(true);
+                    state_.font.setBold(true);
                     LOG(SEQ) << "bold set";
                     break;
                 /* Underline */
                 case 4:
-                    font_.setUnderline(true);
+                    state_.font.setUnderline(true);
                     LOG(SEQ) << "underline set";
                     break;
                 /* Normal - neither bold, nor faint. */
                 case 22:
-                    font_.setBold(false);
+                    state_.font.setBold(false);
                     LOG(SEQ) << "normal font set";
                     break;
                 /* Disable underline. */
                 case 24:
-                    font_.setUnderline(false);
+                    state_.font.setUnderline(false);
                     LOG(SEQ) << "undeline unset";
                     break;
     			/* 30 - 37 are dark foreground colors, handled in the default case. */
     			/* 38 - extended foreground color */
                 case 38:
-                    fg_ = parseExtendedColor(seq, i);
-                    LOG(SEQ) << "fg set to " << fg_;
+                    state_.fg = parseExtendedColor(seq, i);
+                    LOG(SEQ) << "fg set to " << state_.fg;
                     break;
                 /* Foreground default. */
                 case 39:
-                    fg_ = palette_[defaultFg_];
+                    state_.fg = palette_[defaultFg_];
                     LOG(SEQ) << "fg reset";
                     break;
      			/* 40 - 47 are dark background color, handled in the default case. */
     			/* 48 - extended background color */
                 case 48:
-                    bg_ = parseExtendedColor(seq, i);
-                    LOG(SEQ) << "bg set to " << bg_;
+                    state_.bg = parseExtendedColor(seq, i);
+                    LOG(SEQ) << "bg set to " << state_.bg;
                     break;
                 /* Background default */
                 case 49:
-                    bg_ = palette_[defaultBg_];
+                    state_.bg = palette_[defaultBg_];
                     LOG(SEQ) << "bg reset";
                     break;
 
@@ -880,16 +869,16 @@ namespace vterm {
 
                 default:
                     if (seq[i] >= 30 && seq[i] <= 37) {
-                        fg_ = palette_[seq[i] - 30];
+                        state_.fg = palette_[seq[i] - 30];
                         LOG(SEQ) << "fg set to " << palette_[seq[i] - 30];
                     } else if (seq[i] >= 40 && seq[i] <= 47) {
-                        bg_ = palette_[seq[i] - 40];
+                        state_.bg = palette_[seq[i] - 40];
                         LOG(SEQ) << "bg set to " << palette_[seq[i] - 40];
                     } else if (seq[i] >= 90 && seq[i] <= 97) {
-                        fg_ = palette_[seq[i] - 82];
+                        state_.fg = palette_[seq[i] - 82];
                         LOG(SEQ) << "fg set to " << palette_[seq[i] - 82];
                     } else if (seq[i] >= 100 && seq[i] <= 107) {
-                        bg_ = palette_[seq[i] - 92];
+                        state_.bg = palette_[seq[i] - 92];
                         LOG(SEQ) << "bg set to " << palette_[seq[i] - 92];
                     } else {
                         THROW(InvalidCSISequence("Invalid SGR code: ", seq));
@@ -999,10 +988,6 @@ namespace vterm {
 
 
 	void VT100::setCursor(unsigned col, unsigned row) {
-/*		while (col >= cols()) {
-			col -= cols();
-			++row;
-		} */
 		cursor().col = col;
 		cursor().row = row;
 	}
@@ -1023,14 +1008,13 @@ namespace vterm {
 		}
 	}
 
-
     void VT100::deleteLine(unsigned lines, unsigned from) {
         // don't do any scrolling if origin is outside scrolling region
-        if (from < scrollStart_ || from >= scrollEnd_)
+        if (from < state_.scrollStart || from >= state_.scrollEnd)
             return;
         // delete the n lines by moving the lines below them up, be defensive on arguments
-        lines = std::min(lines, scrollEnd_ - from);
-        for (unsigned r = from, re = scrollEnd_ - lines; r < re; ++r) {
+        lines = std::min(lines, state_.scrollEnd - from);
+        for (unsigned r = from, re = state_.scrollEnd - lines; r < re; ++r) {
 			for (unsigned c = 0; c < cols(); ++c) {
 				Terminal::Cell & cell = buffer().at(c, r);
 				cell = buffer().at(c, r + lines);
@@ -1038,12 +1022,12 @@ namespace vterm {
 			}
         }
         // now make the lines at the bottom empty
-        for (unsigned r = scrollEnd_ - lines; r < scrollEnd_; ++r) {
+        for (unsigned r = state_.scrollEnd - lines; r < state_.scrollEnd; ++r) {
 			for (unsigned c = 0; c < cols(); ++c) {
 				Terminal::Cell & cell = buffer().at(c, r);
 				cell.c = ' ';
-				cell.fg = fg_;
-				cell.bg = bg_;
+				cell.fg = state_.fg;
+				cell.bg = state_.bg;
 				cell.font = Font();
 				cell.dirty = true;
 			}
@@ -1052,11 +1036,11 @@ namespace vterm {
 
     void VT100::insertLine(unsigned lines, unsigned from) {
         // don't do any scrolling if origin is outside scrolling region
-        if (from < scrollStart_ || from >= scrollEnd_)
+        if (from < state_.scrollStart || from >= state_.scrollEnd)
             return;
         // create space by moving the contents in scroll window appropriate amount of lines down
-        lines = std::min(lines, scrollEnd_ - from);
-        for (unsigned r = scrollEnd_ - 1, rs = from + lines; r >= rs; --r) {
+        lines = std::min(lines, state_.scrollEnd - from);
+        for (unsigned r = state_.scrollEnd - 1, rs = from + lines; r >= rs; --r) {
 			for (unsigned c = 0; c < cols(); ++c) {
 				Terminal::Cell & cell = buffer().at(c, r);
 				cell = buffer().at(c, r - lines);
@@ -1068,8 +1052,8 @@ namespace vterm {
 			for (unsigned c = 0; c < cols(); ++c) {
 				Terminal::Cell & cell = buffer().at(c, r);
 				cell.c = ' ';
-				cell.fg = fg_;
-				cell.bg = bg_;
+				cell.fg = state_.fg;
+				cell.bg = state_.bg;
 				cell.font = Font();
 				cell.dirty = true;
 			}
@@ -1093,19 +1077,14 @@ namespace vterm {
 
 	void VT100::flipBuffer() {
 		alternateBuffer_ = ! alternateBuffer_;
-		//NOT_IMPLEMENTED;
-		//std::swap(cells_, otherCells_);
-		std::swap(scrollStart_, otherScrollStart_);
-		std::swap(scrollEnd_, otherScrollEnd_);
-		std::swap(fg_, otherFg_);
-		std::swap(bg_, otherBg_);
-		std::swap(font_, otherFont_);
+        std::swap(state_, otherState_);
+        std::swap(buffer(), otherBuffer_);
 	}
 
     void VT100::resetCurrentBuffer() {
-        fg_ = palette_[defaultFg_];
-        bg_ = palette_[defaultBg_];
-        font_ = Font();
+        state_.fg = palette_[defaultFg_];
+        state_.bg = palette_[defaultBg_];
+        state_.font = Font();
         fillRect(helpers::Rect(cols(), rows()), ' ');
         cursor() = Terminal::Cursor();
     }

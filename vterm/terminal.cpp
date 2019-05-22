@@ -32,7 +32,7 @@ namespace vterm {
 		return pty_->sendData(buffer, size);
 	}
 
-	void Terminal::PTYBackend::resizeBuffer(size_t newSize) {
+	void Terminal::PTYBackend::resizeComBuffer(size_t newSize) {
 		ASSERT(newSize >= (writeStart_ - buffer_)) << "Not enough space for unprocessed data after resizing (unprocessed " << (writeStart_ - buffer_) << ", requested size " << newSize << ")";
 		char* nb = new char[newSize];
 		memcpy(nb, buffer_, writeStart_ - buffer_);

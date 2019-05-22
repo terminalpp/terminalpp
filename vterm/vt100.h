@@ -311,7 +311,7 @@ namespace vterm {
 		 */
 		void fillRect(helpers::Rect const & rect, Char::UTF8 c, Color fg, Color bg, Font font = Font());
 		void fillRect(helpers::Rect const & rect, Char::UTF8 c, Font font = Font()) {
-			fillRect(rect, c, fg_, bg_, font);
+			fillRect(rect, c, state_.fg, state_.bg, font);
 		}
 
         void deleteLine(unsigned lines, unsigned from);
@@ -328,6 +328,60 @@ namespace vterm {
 
         void resetCurrentBuffer();
 
+        /** Current palette used by the terminal. 
+          
+            The palette determines the 256 fixed colors used by the terminal. 
+         */
+		Palette palette_;
+
+        /** Index into the palette corresponding to default foreground color. 
+         */
+		unsigned defaultFg_;
+
+        /** Index to the palette corresponding to default background color. 
+         */
+		unsigned defaultBg_;
+
+        /** The state of the terminal. 
+         
+            The state is kept in a separate class so that it can be easily swapped or archived in a stack. 
+         */
+        class State {
+        public:
+            Color fg;
+            Color bg;
+            Font font;
+            /** Start of the scrolling region (inclusive row).
+             */
+            unsigned scrollStart;
+
+            /** End of the scrolling region (exclusive row). 
+             */
+            unsigned scrollEnd;
+
+            void resize(unsigned cols, unsigned rows) {
+                scrollStart = 0;
+                scrollEnd = rows;
+            }
+
+        };
+
+        /** State of the current buffer. 
+         */
+        State state_;
+
+        /** State of the other buffer (depending on which buffer is active this is either the normal, or the alternate buffer).
+         */
+        State otherState_;
+
+		/** Backup of the values for the inactive buffer. 
+		 */
+        Terminal::Buffer otherBuffer_;
+
+        /** Stack for cursor information. 
+         */
+        std::vector<Terminal::Cursor> cursorStack_;
+
         /** True if application keypad mode is enabled. 
          */
         bool applicationKeypadMode_;
@@ -336,45 +390,20 @@ namespace vterm {
          */
         bool applicationCursorMode_;
 
-        /** Start of the scrolling region (inclusive row).
-         */
-        unsigned scrollStart_;
-
-        /** End of the scrolling region (exclusive row). 
-         */
-        unsigned scrollEnd_;
-
-		Palette palette_;
-		unsigned defaultFg_;
-		unsigned defaultBg_;
-
-		Color fg_;
-		Color bg_;
-		Font font_;
-
 		/** Determines whether alternate, or normal buffer is used. 
 		 */
 		bool alternateBuffer_;
 
-		/** Backup of the values for the inactive buffer. 
-		 */
-		Terminal::Cell* otherCells_;
-		unsigned otherScrollStart_;
-		unsigned otherScrollEnd_;
-		Color otherFg_;
-		Color otherBg_;
-		Font otherFont_;
-
-
+        /** If true, uses the bracketed paste mode. 
+         */
         bool bracketedPaste_;
 
 
+        /** Helper pointers to the communications buffer (current index and buffer end).
+         */
 		char* buffer_;
 		char* bufferEnd_;
 
-        /** Stack for cursor information. 
-         */
-        std::vector<Terminal::Cursor> cursorStack_;
         
 
 
