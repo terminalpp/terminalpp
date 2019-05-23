@@ -66,7 +66,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// initialize log levels we use
 	//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout))->toFile("c:/delete/tpp.txt"));
 	//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
-	helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::UNKNOWN_SEQ, std::cout)));
+	helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout)));
 
 
 	vterm::Terminal* t = new vterm::Terminal(80, 25);

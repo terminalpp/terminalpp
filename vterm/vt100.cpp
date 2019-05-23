@@ -417,7 +417,7 @@ namespace vterm {
                 */
             case Char::BEL:
                 pop();
-                LOG(UNKNOWN_SEQ) << "BEL charatcer received";
+                LOG(SEQ_UNKNOWN) << "BEL charatcer received";
                 break;
             case Char::TAB:
                 // TODO tabstops and stuff
@@ -560,7 +560,7 @@ namespace vterm {
                     parseCSI(csi);
                     return true;
                 } catch (InvalidCSISequence const & e) {
-                    LOG(UNKNOWN_SEQ) << e;
+                    LOG(SEQ_UNKNOWN) << e;
                     return true;
 	            }
             }
@@ -574,7 +574,7 @@ namespace vterm {
                     return false;
                 if (condPop('B')) // US
                     return true;
-                LOG(UNKNOWN_SEQ) << "Unknown (possibly mismatched) character set final char " << pop();
+                LOG(SEQ_UNKNOWN) << "Unknown (possibly mismatched) character set final char " << pop();
                 return true;
             /* ESC = -- Application keypad */
             case '=':
@@ -589,7 +589,7 @@ namespace vterm {
             /* Otherwise we have unknown escape sequence. This is an issue since we do not know when it ends and therefore may break the parsing.
              */
 			default:
-                LOG(UNKNOWN_SEQ) << "Unknown (possibly mismatched) char after ESC " << c;
+                LOG(SEQ_UNKNOWN) << "Unknown (possibly mismatched) char after ESC " << c;
 				return true;
 		}
 	}
@@ -602,6 +602,9 @@ namespace vterm {
                 case 'h':
                 case 'l':
                     return parseSetterOrGetter(seq);
+				case 's':
+				case 'r':
+					return parseSaveOrRestore(seq);
                 default:
                     break;
             }
@@ -968,7 +971,7 @@ namespace vterm {
 					if (value)
 						LOG(SEQ) << "autowrap mode enable (by default)";
 					else
-						LOG(UNKNOWN_SEQ) << "CSI?7l, DECAWM does not support being disabled";
+						LOG(SEQ_UNKNOWN) << "CSI?7l, DECAWM does not support being disabled";
 					continue;
                 // cursor blinking
                 case 12:
@@ -993,7 +996,8 @@ namespace vterm {
 				/* Mouse highlighting - will not support because it requires supporting application and may hang terminal if not used properly, which sounds rather dangerous. 
 				 */
                 case 1001:
-					break;
+					LOG(SEQ_WONT_SUPPORT) << "hilite mouse mode";
+					continue;
 				/* Mouse button events (report mouse button press & release and mouse movement if any of the buttons is down. 
 				 */
 				case 1002:
@@ -1046,6 +1050,11 @@ namespace vterm {
         }
     }
 
+	void VT100::parseSaveOrRestore(CSISequence& seq) {
+		for (size_t i = 0; i < seq.numArgs(); ++i)
+			LOG(SEQ_WONT_SUPPORT) << "Private mode " << (seq.finalByte() == 's' ? "save" : "restore") << ", id " << seq[i];
+	}
+
     /** Operating System Commands end with either an ST (ESC \), or with BEL. For now, only setting the terminal window command is supported. 
      */
 	bool VT100::parseOSC() {
@@ -1068,7 +1077,7 @@ namespace vterm {
 			terminal()->changeTitle(title);
         } else {
             // TODO ignore for now 112 == reset cursor color             
-            LOG(UNKNOWN_SEQ) << "Unknown OSC: " << std::string(start, buffer_ - start);
+            LOG(SEQ_UNKNOWN) << "Unknown OSC: " << std::string(start, buffer_ - start);
         }
         return true;
 	}

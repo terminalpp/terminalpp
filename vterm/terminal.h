@@ -30,7 +30,8 @@ namespace vterm {
 		typedef helpers::EventPayload<void, helpers::Object> RepaintEvent;
 		typedef helpers::EventPayload<std::string, helpers::Object> TitleChangeEvent;
 
-
+		/** Cursor information. 
+		 */
 		class Cursor {
 		public:
 			/** Cursor column. 

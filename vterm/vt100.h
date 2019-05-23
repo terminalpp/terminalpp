@@ -81,7 +81,8 @@ namespace vterm {
 	public:
 
 		static constexpr char const * const SEQ = "VT100";
-		static constexpr char const * const UNKNOWN_SEQ = "VT100_UNKNOWN";
+		static constexpr char const* const SEQ_UNKNOWN = "VT100_UNKNOWN";
+		static constexpr char const* const SEQ_WONT_SUPPORT = "VT100_WONT_SUPPORT";
 
 		// events ---------------------------------------------------------------------------------------
 
@@ -282,6 +283,10 @@ namespace vterm {
 		/** Parses a setter, which is ESC[? <id> (h|l). 
 		 */
         void parseSetterOrGetter(CSISequence & seq);
+
+		/** Parses the private mode save or restore command. 
+		 */
+		void parseSaveOrRestore(CSISequence & seq);
 
 		/** Parses supported Operating System Commands (OSCs), which start with ESC].
 		 */
