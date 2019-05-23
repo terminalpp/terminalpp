@@ -4,70 +4,22 @@ The virtual terminal (`vterm`) is a class which describes the input and output i
 
 !! Single UI thread is assumed, or at least single ui thread per renderer-terminal-process etc chain. If not many things will break
 
-# Class Description
+# Overview
 
-## `Terminal`
+The `Terminal` class encapsulates the screen buffer (drawable cells) and state (cursor, etc.) and defines a simple API capable of things like:
 
-The terminal contains the matrix of cells representing the screen and other terminal properties, such as cursor character and position. The terminal also knows its frontend and backend. There is a limit of 1 frontend and 1 backend on each terminal. 
+- resizing the terminal
+- sending key & mouse events
+- sending clipboard events
 
-> Terminal will not know about its frontends, but would use events since there is only the update event so far to be sent to the frontends. 
+The `Terminal::Renderer` class sits between the `Terminal` and the user. It connects to terminal via events, renders its contents and sends to it the user input events.
 
+The `Terminal::Backend` class is paired with particular terminal and it connects to the terminal client responsible for reacting on the terminal user events and filling in the terminal buffer. For most scenarios, the backend decodes whatever communication protocol the client uses into terminal buffer updates and similarly encodes the user input events and sends them to the client. 
 
+The terminal backend only provides API for interfacing the terminal itself, it leaves the means of connecting to the client process on its children. One of them is the `Terminal::PTYBackend` which specifies a primitive pseudoterminal-like API for connecting to pseudoterminals using input and output streams (these should inherit from the `PTY` class).
 
+Finally, the `LocalPTY` inherits from `PTY` and defines for each of the supported operating systems a pseudoterminal for locally running processes. This uses pseudoterminals in Linux and ConPTY on Windows. 
 
+# The VT100 Backend
 
-## `Terminal`
-
-The base class for the virtual terminal, which implements storage of the terminal screen and defines the basic terminal events & structures. 
-
-## `Renderer`
-
-Renderer provides minimal interface and some common implementation useful for any class whose task is to display the contents of a `Terminal` on various devices, such as screen (the default expected from virtual terminals), or as part of an UI framework, or even encode the terminal's contents using ANSI escape codes and send it to other machine/ terminal. 
-
-## `IOTerminal`
-
-The `IOTerminal` adds a standardized way of communication between the terminal and its feeder (usually process) using streams. The exact nature of the streams is however not defined in the class since multiple options, such as network streams, OS PTY, etc. can be used. 
-
-> `IOTerminal` defines two interfaces - one for processing the input and displaying it correctly and the other one for implementing buffered reads and writes into the terminal streams. Children of `PTYTerminal` are expected to use virtual inheritance and define either various forms of decoding / encoding the events, or implement the stream accesses. 
-
-## `VT100` 
-
-Inherits (virtually) from `IOTerminal` and provides decoding and encoding functions for the terminal input and events using the VT100 and parts of ANSI terminal sequences. 
-
-## `ConPTYTerminal`
-
-Available only on Windows, virtually inherits from `IOTerminal` and describes the actual stream communication between the terminal and its attached process using Win32 ConPTY. 
-
-
-
-# Input
-
-## Keyboard
-
-- difference between key press and character input. Key press maps physical buttons on the keyboard, 
-- char input actually sends printable characters to the stream to be received. 
-
-
-
-
-## Mouse
-
-
-
-
-# Supported ANSI Escape Sequences
-
-
-
-## Escape Sequence Questions
-
-- cursor movements likely not work across lines, fix!
-- backspace does not work
-- cursor enable/disable does not work
-
-- EraseDisplay, EraseLine and EraseCharacter - what are the colors & font used? default or current? 
-- what is the exact effect of `\n`
-
-- http://www.nic.funet.fi/index/doc/hardware/terminals/vt102.codes
-
-- `infocmp vt102 vt220`
+The `VT100` class inherits from `Terminal::PTYBackend` and implements much of the `xterm` & VT100 ansi codes. Detailed information about the escape sequences `VT100` backend understands can be found in a separate file.   

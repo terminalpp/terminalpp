@@ -574,7 +574,7 @@ namespace vterm {
                     return false;
                 if (condPop('B')) // US
                     return true;
-                LOG(SEQ_UNKNOWN) << "Unknown (possibly mismatched) character set final char " << pop();
+                LOG(SEQ_WONT_SUPPORT) << "Unknown (possibly mismatched) character set final char " << pop();
                 return true;
             /* ESC = -- Application keypad */
             case '=':
@@ -965,6 +965,7 @@ namespace vterm {
                     continue;
                 /* Smooth scrolling -- ignored*/
                 case 4:
+					LOG(SEQ_WONT_SUPPORT) << "Smooth scrolling: " << value;
                     continue;
 				/* DECAWM - autowrap mode on/off */
 				case 7:
@@ -1013,8 +1014,8 @@ namespace vterm {
 				/* UTF8 encoded tracking.
 				 */
 				case 1005:
-					mouseEncoding_ = value ? MouseEncoding::UTF8 : MouseEncoding::Default;
-					LOG(SEQ) << "UTF8 mouse encoding: " << value;
+					//mouseEncoding_ = value ? MouseEncoding::UTF8 : MouseEncoding::Default;
+					LOG(SEQ_WONT_SUPPORT) << "UTF8 mouse encoding: " << value;
 					continue;
 				/* SGR mouse encoding. 
 				 */
@@ -1023,7 +1024,9 @@ namespace vterm {
 					LOG(SEQ) << "UTF8 mouse encoding: " << value;
 					continue;
                 /* Enable or disable the alternate screen buffer.
-                */
+
+				   TODO what is the difference between the two
+                 */
                 case 47: 
                 case 1049:
                     if (value) {
