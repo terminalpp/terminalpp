@@ -202,8 +202,8 @@ namespace tpp {
 			// update width & height of the cell
 			cellWidthPx_ = static_cast<unsigned>(std::round(value * settings_->defaultFontWidth));
 			cellHeightPx_ = static_cast<unsigned>(std::round(value * settings_->defaultFontHeight));
-			NOT_IMPLEMENTED;
 			// resize the terminal properly
+			resize(widthPx_ / cellWidthPx_, heightPx_ / cellHeightPx_);
 		}
 
 		virtual void doSetFullscreen(bool value) = 0;
