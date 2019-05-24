@@ -350,12 +350,9 @@ namespace vterm {
 			Terminal::Buffer& buffer() {
 				ASSERT(terminal_ != nullptr);
 				return terminal_->buffer();
-
 			}
 
 			virtual void resize(unsigned cols, unsigned rows) = 0;
-
-			virtual void processInput(bool wait) = 0;
 
 			virtual void keyDown(Key k) = 0;
 			virtual void keyUp(Key k) = 0;
@@ -407,9 +404,13 @@ namespace vterm {
 				return pty_;
 			}
 
-			/** Sets the pseudoterminal object associated with the backend. 
+			/** Waits for input to become available for processing, but does not process it right away. 
 			 */
-			void setPty(PTY* value);
+			bool waitForInput();
+
+			/** If input is available, processes it, otherwise does nothing.  
+			 */
+			void processInput();
 
 			~PTYBackend() override {
 				delete[] buffer_;
@@ -421,17 +422,12 @@ namespace vterm {
 			 */
 			void resize(unsigned cols, unsigned rows) override;
 
-			/** Using the internal buffer, reads new data from the target process via the attached PTY and then calls the dataReceived() method to process it.
-
-				If there are any unprocessed data left after the call, they are copied to the beginning of the buffer so that next read will be appended after them.
-			 */
-			void processInput(bool wait) override;
-
-			PTYBackend(size_t bufferSize = 10240) :
-				pty_(nullptr),
+			PTYBackend(PTY * pty, size_t bufferSize = 10240) :
+				pty_(pty),
 				bufferSize_(bufferSize),
 				buffer_(new char[bufferSize]),
-				writeStart_(buffer_) {
+				writeStart_(buffer_),
+			    available_(false) {
 			}
 
 			/** Called when data is received.
@@ -456,6 +452,7 @@ namespace vterm {
 			size_t bufferSize_;
 			char * buffer_;
 			char * writeStart_;
+			bool available_;
 		};
 
 		Terminal(unsigned cols, unsigned rows) :
@@ -505,11 +502,6 @@ namespace vterm {
 				if (backend_)
 					backend_->resize(cols, rows);
 			}
-		}
-
-		void processInput(bool wait = false) {
-			if (backend_)
-				backend_->processInput(wait);
 		}
 
 		// keyboard events

@@ -61,12 +61,6 @@ namespace vterm {
 		return bytesWritten;
 	}
 
-	size_t LocalPTY::receiveDataReady() {
-		DWORD bytesAvailable = 0;
-		PeekNamedPipe(pipeIn_, nullptr, 0, nullptr, &bytesAvailable, nullptr);
-		return bytesAvailable;
-	}
-
 	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) {
 		DWORD bytesRead = 0;
 		bool readOk = ReadFile(pipeIn_, buffer, static_cast<DWORD>(availableSize), &bytesRead, nullptr);
@@ -177,13 +171,6 @@ namespace vterm {
         ASSERT(nw >= 0 && static_cast<unsigned>(nw) == size);
 		return size;
     }
-
-	size_t LocalPTY::receiveDataReady() {
-		int bytesAvailable;
-		ioctl(pipe_, FIONREAD, &bytesAvailable);
-		return bytesAvailable;
-	}
-
 
 	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) {
 		if (terminated_)

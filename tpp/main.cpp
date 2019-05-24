@@ -99,6 +99,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//t->execute();
 
 	//tw->attachTerminal(t);
+	std::thread tt([&]() {
+		while (true) {
+			vt100->waitForInput();
+			vt100->processInput();
+		}
+	});
+	tt.detach();
 
 	app->mainLoop();
 

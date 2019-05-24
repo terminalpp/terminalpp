@@ -69,10 +69,6 @@ namespace vterm {
 		 */
 		virtual size_t sendData(char const * buffer, size_t size) = 0;
 
-		/** Returns the number of bytes available to read.
-		 */
-		virtual size_t receiveDataReady() = 0;
-
 		/** Waits for the target process to send data and populates the given buffer.
 
 		    Up to availableSize bytes can be read at once, but the actual number of bytes received is to be returned by the function. 
