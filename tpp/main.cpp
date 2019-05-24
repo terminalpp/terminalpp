@@ -77,10 +77,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	tw->setTerminal(t);
 
 
-	vterm::VT100* vt100 = new vterm::VT100(vterm::Palette::ColorsXTerm256(), 15, 0);
-	vt100->setTerminal(t);
-	vt100->setPty(new vterm::LocalPTY("wsl", {"-e", "bash"}));
+	vterm::VT100* vt100 = new vterm::VT100(
+		new vterm::LocalPTY("wsl", {"-e", "bash"}),
+		vterm::Palette::ColorsXTerm256(), 15, 0
+	);
 
+	vt100->setTerminal(t);
 	vt100->startThreadedReceiver();
 
 
@@ -151,14 +153,12 @@ int main(int argc, char* argv[]) {
 
 
 
-        vterm::VT100* vt100 = new vterm::VT100(vterm::Palette::ColorsXTerm256(), 15, 0);
+        vterm::VT100* vt100 = new vterm::VT100(
+			new vterm::LocalPTY("bash", {}),
+			vterm::Palette::ColorsXTerm256(), 15, 0
+		);
         vt100->setTerminal(t);
-        vt100->setPty(new vterm::LocalPTY("bash", {}));
-
         vt100->startThreadedReceiver();
-
-
-
 
 
 		app->mainLoop();

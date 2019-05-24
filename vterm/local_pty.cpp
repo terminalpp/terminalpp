@@ -28,6 +28,7 @@ namespace vterm {
 
 	LocalPTY::~LocalPTY() {
 		terminate();
+		waitFor();
 		CloseHandle(pInfo_.hProcess);
 		CloseHandle(pInfo_.hThread);
 		if (conPTY_ != INVALID_HANDLE_VALUE)
@@ -39,11 +40,17 @@ namespace vterm {
 		free(startupInfo_.lpAttributeList);
 	}
 
-	void LocalPTY::terminate() {
-		if (!terminated_) {
-			PTY::terminate();
-			TerminateProcess(pInfo_.hProcess, -1);
-		}
+	void LocalPTY::doTerminate() {
+		TerminateProcess(pInfo_.hProcess, -1);
+	}
+
+	PTY::ExitCode LocalPTY::doWaitFor() {
+		size_t result = WaitForSingleObject(pInfo_.hProcess, INFINITE);
+		if (result != 0)
+			NOT_IMPLEMENTED;
+		ExitCode ec;
+		GetExitCodeProcess(pInfo_.hProcess, &ec);
+		return ec;
 	}
 
 	size_t LocalPTY::sendData(char const * buffer, size_t size) {
@@ -131,19 +138,6 @@ namespace vterm {
 			&pInfo_ // info about the process
 		))
 			THROW(helpers::Win32Error(STR("Unable to start process " << command_)));
-		// now that the process has been created, make a thread wait on its termination
-		t_ = std::thread([this]() {
-			size_t result = WaitForSingleObject(pInfo_.hProcess, INFINITE);
-			if (terminated_)
-				return;
-			if (result != 0)
-				NOT_IMPLEMENTED; // an error
-			// get the process exit status and trigger the event
-			GetExitCodeProcess(pInfo_.hProcess, &exitStatus_);
-			terminated_ = true;
-			LOG << "terminated: " << exitStatus_;
-			trigger(onTerminated, exitStatus_);
-		});
 	}
 
 #elif __linux__
@@ -156,17 +150,20 @@ namespace vterm {
 
 	LocalPTY::~LocalPTY() {
 		terminate();
-		pid_ = IGNORE_TERMINATION;
-		t_.join();
+		waitFor();
 	}
 
-	void LocalPTY::terminate() {
-		if (!terminated_) {
-			PTY::terminate();
-			kill(pid_, SIGKILL);
-		}
+	void LocalPTY::doTerminate() {
+		kill(pid_, SIGKILL);
 	}
 
+	PTY::ExitCode LocalPTY::doWaitFor() {
+		ExitCode ec;
+		pid_t x = waitpid(pid_, &ec, 0);
+		if (x != pid_)
+			NOT_IMPLEMENTED; // error
+		return ec;
+	}
 
 	size_t LocalPTY::sendData(char const* buffer, size_t size) {
 		ASSERT(!terminated_) << "Terminated PTY cannot send data";
@@ -235,18 +232,6 @@ namespace vterm {
 			default:
 				break;
 		}
-		// start a thread that waits on the process and if the process is killed, raises the onTerminated events
-		t_ = std::thread([this]() {
-			pid_t x = waitpid(pid_, &exitStatus_, 0);
-			if (terminated_)
-				return;
-			if (x < 0) 
-				// an error - this should never happen
-				NOT_IMPLEMENTED;
-			terminated_ = true;
-			LOG << "terminated: " << exitStatus_;
-			trigger(onTerminated, exitStatus_);
-		});
     }
 
 #else

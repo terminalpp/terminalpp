@@ -248,7 +248,7 @@ namespace vterm {
 
     // VT100
 
-	VT100::VT100(Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
+	VT100::VT100(PTY * pty, Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
 		PTYBackend(),
 		palette_(256),
 		defaultFg_(defaultFg),
@@ -265,6 +265,7 @@ namespace vterm {
 	    buffer_(nullptr),
 	    bufferEnd_(nullptr) {
 		palette_.fillFrom(palette);
+		setPty(pty);
 	}
 
 	void VT100::keyDown(Key k) {

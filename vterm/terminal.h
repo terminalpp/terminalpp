@@ -29,6 +29,7 @@ namespace vterm {
 
 		typedef helpers::EventPayload<void, helpers::Object> RepaintEvent;
 		typedef helpers::EventPayload<std::string, helpers::Object> TitleChangeEvent;
+		typedef helpers::EventPayload<int, helpers::Object> TerminationEvent;
 
 		/** Cursor information. 
 		 */
@@ -471,6 +472,7 @@ namespace vterm {
 
 		helpers::Event<RepaintEvent> onRepaint;
 		helpers::Event<TitleChangeEvent> onTitleChange;
+		helpers::Event<TerminationEvent> onBackendTerminated;
 
 		/** Returns the width and height of the terminal.
 		 */
@@ -568,6 +570,12 @@ namespace vterm {
 		}
 
 	protected:
+
+		/** Should be raised by the backend in case it is terminated. 
+		 */
+		void backendTerminated(int exitCode) {
+			trigger(onBackendTerminated, exitCode);
+		}
 
 		Cursor cursor_;
 

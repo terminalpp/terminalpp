@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef WIN32
-#include <windows.h>
-#endif
-
 #include <cstring>
 
 #include "helpers/object.h"
@@ -14,55 +10,58 @@ namespace vterm {
 
 	/** Pseudoterminal base api which specifies blocking send and receive methods. 
 	 */
-	class PTY : public helpers::Object {
+	class PTY {
 	public:
-		typedef helpers::EventPayload<int, helpers::Object> TerminatedEvent;
 
-		/** This event should be raised when the underlying process is terminated. 
-		 */
-		helpers::Event<TerminatedEvent> onTerminated;
-
-		/** Returns true if the process has terminated. 
-		 */
-		bool terminated() const {
-			return terminated_;
-		}
-
-		/** Returns the exit status of the process if it has terminated. 
-
-		    Should not be called if the process has not terminated yet. 
+		/** Because different operating systems support different exit code types, we define the type exit code separately. 
 		 */
 #ifdef WIN32
-		DWORD exitStatus() const {
-			ASSERT(terminated_) << "Undefined value for still running processes";
-			return exitStatus_;
-		}
+		typedef unsigned long ExitCode;
 #elif __linux__
-		int exitStatus() const {
-			ASSERT(terminated_) << "Undefined value for still running processes";
-			return exitStatus_;
-	    }
+		typedef int ExitCode;
 #endif
 
-		/** Terminates the underlying process. 
+		/** Immediately terminates the attached process. 
 
-		    Terminating the process explicitly via the terminate() method should not invoke the onTerminated event. The actual termination is left for the children to implement.
+		    Has no effect if the process has already terminated. 
 		 */
-		virtual void terminate() {
-			terminated_ = true;
+		void terminate() {
+			if (terminated_)
+				return;
+			doTerminate();
 		}
 
+		/** Blocks the current thread, waiting for the attached process to terminate. 
+		
+		    When done, returns the exit code of the process. Waiting for process that is not running should immediately return the exit code. 
+		 */
+		ExitCode waitFor() {
+			if (!terminated_)
+				exitCode_ = doWaitFor();
+			return exitCode_;
+		}
+
+		/** Virtual destructor so that resources are properly deleted. 
+
+		    Children of PTY are expected to terminate the attached procesa and clear all resources here.
+		 */
 		virtual ~PTY() {
 		}
-
 
 	protected:
 		friend class Terminal::PTYBackend;
 
 		PTY() :
-			terminated_(false),
-			exitStatus_(0) {
+			terminated_(false) {
 		}
+
+		/** Terminates the attached process. 
+		 */
+		virtual void doTerminate() = 0;
+
+		/** Waits for the attached process to terminate and then returns the exit code. 
+		 */
+		virtual ExitCode doWaitFor() = 0;
 
 		/** Called when data should be sent to the target process. 
 
@@ -80,14 +79,15 @@ namespace vterm {
 		 */
 		virtual void resize(unsigned cols, unsigned rows) = 0;
 
-		volatile bool terminated_;
 
-#ifdef WIN32
-		DWORD exitStatus_;
-#elif __linux__
-		int exitStatus_;
-#endif
+		void markAsTerminated(int exitCode) {
+			ASSERT(! terminated_);
+			terminated_ = true;
+			exitCode_ = exitCode;
+		}
 
+		bool terminated_;
+		ExitCode exitCode_;
 
 	}; // vterm::PTY
 

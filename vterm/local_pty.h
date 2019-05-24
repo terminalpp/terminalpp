@@ -17,14 +17,14 @@ namespace vterm {
 
 		~LocalPTY() override;
 
-		/** Terminates the underlying process.
-		 */
-		void terminate() override;
-
 	protected:
 
 		// PTY interface implementation
 
+		/** Terminates the process immediately. 
+		 */
+		void doTerminate() override;
+		ExitCode doWaitFor() override;
 		size_t sendData(char const * buffer, size_t size) override;
 		size_t receiveData(char* buffer, size_t availableSize) override;
 		void resize(unsigned cols, unsigned rows) override;
@@ -34,10 +34,6 @@ namespace vterm {
 		std::string command_;
 
 		std::vector<std::string> args_;
-
-		/** Thread which waits for the attached process to terminate. 
-		 */
-		std::thread t_;
 
 #ifdef WIN32
 
@@ -82,11 +78,6 @@ namespace vterm {
 #else
 #error "Unsupported platform"
 #endif
-
-
-
-
-
 
 	}; // vterm::LocalPTY
 
