@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include <cstring>
 
 #include "helpers/object.h"
@@ -28,10 +32,17 @@ namespace vterm {
 
 		    Should not be called if the process has not terminated yet. 
 		 */
-		int exitStatus() const {
+#ifdef WIN32
+		DWORD exitStatus() const {
 			ASSERT(terminated_) << "Undefined value for still running processes";
 			return exitStatus_;
 		}
+#elif __linux__
+		int exitStatus() const {
+			ASSERT(terminated_) << "Undefined value for still running processes";
+			return exitStatus_;
+	    }
+#endif
 
 		/** Terminates the underlying process. 
 
@@ -70,7 +81,12 @@ namespace vterm {
 		virtual void resize(unsigned cols, unsigned rows) = 0;
 
 		volatile bool terminated_;
+
+#ifdef WIN32
+		DWORD exitStatus_;
+#elif __linux__
 		int exitStatus_;
+#endif
 
 
 	}; // vterm::PTY

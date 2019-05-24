@@ -69,8 +69,6 @@ namespace vterm {
 		 */
 		PROCESS_INFORMATION pInfo_;
 
-		DWORD exitStatus_;
-
 #elif __linux__
 
 		static constexpr pid_t IGNORE_TERMINATION = 0;
@@ -79,7 +77,7 @@ namespace vterm {
 
 		int pipe_;
 
-		volatile pid_t pid_;
+		pid_t pid_;
 
 #else
 #error "Unsupported platform"
