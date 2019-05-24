@@ -355,6 +355,8 @@ namespace vterm {
 
 			virtual void resize(unsigned cols, unsigned rows) = 0;
 
+			virtual void processInput(bool wait) = 0;
+
 			virtual void keyDown(Key k) = 0;
 			virtual void keyUp(Key k) = 0;
 			virtual void keyChar(Char::UTF8 c) = 0;
@@ -409,12 +411,6 @@ namespace vterm {
 			 */
 			void setPty(PTY* value);
 
-			/** Starts a new thread that waits for new data from the attached PTY and when received calls the dataReceived periodically.
-
-				Any unprocessed data is always prepended to the next received bits.
-			 */
-			void startThreadedReceiver();
-
 			~PTYBackend() override {
 				delete[] buffer_;
 			}
@@ -425,8 +421,13 @@ namespace vterm {
 			 */
 			void resize(unsigned cols, unsigned rows) override;
 
+			/** Using the internal buffer, reads new data from the target process via the attached PTY and then calls the dataReceived() method to process it.
 
-			PTYBackend(size_t bufferSize = 1024) :
+				If there are any unprocessed data left after the call, they are copied to the beginning of the buffer so that next read will be appended after them.
+			 */
+			void processInput(bool wait) override;
+
+			PTYBackend(size_t bufferSize = 10240) :
 				pty_(nullptr),
 				bufferSize_(bufferSize),
 				buffer_(new char[bufferSize]),
@@ -448,12 +449,6 @@ namespace vterm {
 			/** Resizes the internal buffer. 
 			 */
 			void resizeComBuffer(size_t newSize);
-
-			/** Using the internal buffer, reads new data from the target process via the attached PTY and then calls the dataReceived() method to process it. 
-
-			    If there are any unprocessed data left after the call, they are copied to the beginning of the buffer so that next read will be appended after them. 
-			 */
-			void receiveAndProcessData();
 
 		private:
 			PTY * pty_;
@@ -510,6 +505,11 @@ namespace vterm {
 				if (backend_)
 					backend_->resize(cols, rows);
 			}
+		}
+
+		void processInput(bool wait = false) {
+			if (backend_)
+				backend_->processInput(wait);
 		}
 
 		// keyboard events

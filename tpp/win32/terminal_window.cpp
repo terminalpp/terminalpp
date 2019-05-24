@@ -256,6 +256,7 @@ namespace tpp {
 			 */
 			case WM_TIMER: {
 				if (wParam == TIMERID_BLINK) {
+					tw->terminal()->processInput(false);
 					tw->blink_ = !tw->blink_;
 					InvalidateRect(hWnd, nullptr, /* erase */ false);
 				}

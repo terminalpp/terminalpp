@@ -83,7 +83,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	);
 
 	vt100->setTerminal(t);
-	vt100->startThreadedReceiver();
 
 
 
@@ -158,7 +157,7 @@ int main(int argc, char* argv[]) {
 			vterm::Palette::ColorsXTerm256(), 15, 0
 		);
         vt100->setTerminal(t);
-        vt100->startThreadedReceiver();
+        //vt100->startThreadedReceiver();
 
 
 		app->mainLoop();
