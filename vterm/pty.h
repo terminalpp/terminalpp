@@ -2,19 +2,56 @@
 
 #include <cstring>
 
+#include "helpers/object.h"
+
 #include "terminal.h"
 
 namespace vterm {
 
-
 	/** Pseudoterminal base api which specifies blocking send and receive methods. 
 	 */
-	class PTY {
+	class PTY : public helpers::Object {
 	public:
+		typedef helpers::EventPayload<int, helpers::Object> TerminatedEvent;
+
+		/** This event should be raised when the underlying process is terminated. 
+		 */
+		helpers::Event<TerminatedEvent> onTerminated;
+
+		/** Returns true if the process has terminated. 
+		 */
+		bool terminated() const {
+			return terminated_;
+		}
+
+		/** Returns the exit status of the process if it has terminated. 
+
+		    Should not be called if the process has not terminated yet. 
+		 */
+		int exitStatus() const {
+			ASSERT(terminated_) << "Undefined value for still running processes";
+			return exitStatus_;
+		}
+
+		/** Terminates the underlying process. 
+
+		    Terminating the process explicitly via the terminate() method should not invoke the onTerminated event. The actual termination is left for the children to implement.
+		 */
+		virtual void terminate() {
+			terminated_ = true;
+		}
+
 		virtual ~PTY() {
 		}
+
+
 	protected:
 		friend class Terminal::PTYBackend;
+
+		PTY() :
+			terminated_(false),
+			exitStatus_(0) {
+		}
 
 		/** Called when data should be sent to the target process. 
 
@@ -31,6 +68,10 @@ namespace vterm {
 		/** Notifies the underlying terminal process that the terminal size has changed to given values. 
 		 */
 		virtual void resize(unsigned cols, unsigned rows) = 0;
+
+		volatile bool terminated_;
+		int exitStatus_;
+
 
 	}; // vterm::PTY
 

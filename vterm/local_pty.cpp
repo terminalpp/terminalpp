@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <pty.h>
 #include <signal.h>
+#include <sys/wait.h>
 #endif
 #include "helpers/log.h"
 
@@ -26,6 +27,9 @@ namespace vterm {
 	}
 
 	LocalPTY::~LocalPTY() {
+		terminate();
+		CloseHandle(pInfo_.hProcess);
+		CloseHandle(pInfo_.hThread);
 		if (conPTY_ != INVALID_HANDLE_VALUE)
 			ClosePseudoConsole(conPTY_);
 		if (pipeIn_ != INVALID_HANDLE_VALUE)
@@ -33,6 +37,13 @@ namespace vterm {
 		if (pipeOut_ != INVALID_HANDLE_VALUE)
 			CloseHandle(pipeOut_);
 		free(startupInfo_.lpAttributeList);
+	}
+
+	void LocalPTY::terminate() {
+		if (!terminated_) {
+			PTY::terminate();
+			TerminateProcess(pInfo_.hProcess, -1);
+		}
 	}
 
 	size_t LocalPTY::sendData(char const * buffer, size_t size) {
@@ -120,6 +131,19 @@ namespace vterm {
 			&pInfo_ // info about the process
 		))
 			THROW(helpers::Win32Error(STR("Unable to start process " << command_)));
+		// now that the process has been created, make a thread wait on its termination
+		t_ = std::thread([this]() {
+			size_t result = WaitForSingleObject(pInfo_.hProcess, INFINITE);
+			if (terminated_)
+				return;
+			if (result != 0)
+				NOT_IMPLEMENTED; // an error
+			// get the process exit status and trigger the event
+			GetExitCodeProcess(pInfo_.hProcess, &exitStatus_);
+			terminated_ = true;
+			LOG << "terminated: " << exitStatus_;
+			trigger(onTerminated, exitStatus_);
+		});
 	}
 
 #elif __linux__
@@ -131,20 +155,33 @@ namespace vterm {
 	}
 
 	LocalPTY::~LocalPTY() {
+		terminate();
+		pid_ = IGNORE_TERMINATION;
+		t_.join();
 	}
 
+	void LocalPTY::terminate() {
+		if (!terminated_) {
+			PTY::terminate();
+			kill(pid_, SIGKILL);
+		}
+	}
+
+
 	size_t LocalPTY::sendData(char const* buffer, size_t size) {
+		ASSERT(!terminated_) << "Terminated PTY cannot send data";
         int nw = write(pipe_, (void*) buffer, size);
         ASSERT(nw >= 0 && static_cast<unsigned>(nw) == size);
 		return size;
     }
 
 	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) {
-		int cnt = read(pipe_, (void*)buffer, availableSize);
-		if (cnt < 0) {
-			LOG << strerror(errno) << " - " << cnt;
+		if (terminated_)
 			return 0;
-		}
+		int cnt = read(pipe_, (void*)buffer, availableSize);
+		// if there is an error while reading, just return it as reading 0 bytes, let the termination handling deal with the cause for the error
+		if (cnt < 0)
+			return 0;
         return cnt;
     }
 
@@ -164,16 +201,12 @@ namespace vterm {
 			// forkpty failed
 			case -1:
 				LOG << "fork fail";
-				NOT_IMPLEMENTED; // an error
+				UNREACHABLE; // an error
 		    // running the child process,
 			case 0: {
 				setsid();
 				if (ioctl(1, TIOCSCTTY, nullptr) < 0)
-					NOT_IMPLEMENTED;
-				if (!isatty(1))
-					printf("NOT A TERMINAL\n");
-				else
-					printf("IS TERMINAL\n");
+					UNREACHABLE;
 				unsetenv("COLUMNS");
 				unsetenv("LINES");
 				unsetenv("TERMCAP");
@@ -202,6 +235,18 @@ namespace vterm {
 			default:
 				break;
 		}
+		// start a thread that waits on the process and if the process is killed, raises the onTerminated events
+		t_ = std::thread([this]() {
+			pid_t x = waitpid(pid_, &exitStatus_, 0);
+			if (terminated_)
+				return;
+			if (x < 0) 
+				// an error - this should never happen
+				NOT_IMPLEMENTED;
+			terminated_ = true;
+			LOG << "terminated: " << exitStatus_;
+			trigger(onTerminated, exitStatus_);
+		});
     }
 
 #else

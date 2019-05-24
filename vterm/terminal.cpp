@@ -33,7 +33,7 @@ namespace vterm {
 	}
 
 	void Terminal::PTYBackend::resizeComBuffer(size_t newSize) {
-		ASSERT(newSize >= (writeStart_ - buffer_)) << "Not enough space for unprocessed data after resizing (unprocessed " << (writeStart_ - buffer_) << ", requested size " << newSize << ")";
+		ASSERT(newSize >= static_cast<size_t>(writeStart_ - buffer_)) << "Not enough space for unprocessed data after resizing (unprocessed " << (writeStart_ - buffer_) << ", requested size " << newSize << ")";
 		char* nb = new char[newSize];
 		memcpy(nb, buffer_, writeStart_ - buffer_);
 		writeStart_ = nb + (writeStart_ - buffer_);

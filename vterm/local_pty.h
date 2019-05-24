@@ -17,6 +17,10 @@ namespace vterm {
 
 		~LocalPTY() override;
 
+		/** Terminates the underlying process.
+		 */
+		void terminate() override;
+
 	protected:
 
 		// PTY interface implementation
@@ -31,6 +35,9 @@ namespace vterm {
 
 		std::vector<std::string> args_;
 
+		/** Thread which waits for the attached process to terminate. 
+		 */
+		std::thread t_;
 
 #ifdef WIN32
 
@@ -62,13 +69,17 @@ namespace vterm {
 		 */
 		PROCESS_INFORMATION pInfo_;
 
+		DWORD exitStatus_;
+
 #elif __linux__
+
+		static constexpr pid_t IGNORE_TERMINATION = 0;
 
 		void start();
 
 		int pipe_;
 
-		pid_t pid_;
+		volatile pid_t pid_;
 
 #else
 #error "Unsupported platform"
