@@ -100,10 +100,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//tw->attachTerminal(t);
 	std::thread tt([&]() {
-		while (true) {
-			vt100->waitForInput();
+		while (vt100->waitForInput()) {
 			vt100->processInput();
 		}
+		LOG << "terminated";
 	});
 	tt.detach();
 
@@ -165,6 +165,13 @@ int main(int argc, char* argv[]) {
 		);
         vt100->setTerminal(t);
         //vt100->startThreadedReceiver();
+		std::thread tt([&]() {
+			while (vt100->waitForInput()) {
+				vt100->processInput();
+			}
+			LOG << "terminated";
+			});
+		tt.detach();
 
 
 		app->mainLoop();
