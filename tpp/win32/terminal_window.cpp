@@ -20,7 +20,7 @@ namespace tpp {
 		hWnd_ = CreateWindowEx(
 			WS_EX_LEFT, // the default
 			app->TerminalWindowClassName_, // window class
-			title_.c_str(), // window name (all start as terminal++)
+			settings->defaultTitle.c_str(), // window name (all start as terminal++)
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, // x position
 			CW_USEDEFAULT, // y position
@@ -70,10 +70,7 @@ namespace tpp {
 	}
 
 	void TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
-		if (title_ != *e) {
-			title_ = *e;
-			PostMessage(hWnd_, WM_USER, MSG_TITLE_CHANGE, 0);
-		}
+		PostMessage(hWnd_, WM_USER, MSG_TITLE_CHANGE, 0);
 	}
 
 	void TerminalWindow::doPaint() {
@@ -266,7 +263,7 @@ namespace tpp {
 			case WM_USER:
 				switch (wParam) {
 				case MSG_TITLE_CHANGE:
-					SetWindowTextA(hWnd, tw->title().c_str());
+					SetWindowTextA(hWnd, tw->terminal()->title().c_str());
 					break;
 				default:
 					LOG("Win32") << "Invalid user message " << wParam;

@@ -39,7 +39,7 @@ namespace tpp {
 			   at the top of the window and the name of the minimized window
 			   respectively.
 			*/
-		XSetStandardProperties(display_, window_, title_.c_str(), nullptr, None, nullptr, 0, nullptr);
+		XSetStandardProperties(display_, window_, settings->defaultTitle.c_str(), nullptr, None, nullptr, 0, nullptr);
 
 		/* this routine determines which types of input are allowed in
 		   the input.  see the appropriate section for details...

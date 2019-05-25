@@ -490,6 +490,17 @@ namespace vterm {
 			return cursor_;
 		}
 
+		std::string const& title() const {
+			return title_;
+		}
+
+		void setTitle(std::string const& value) {
+			if (title_ != value) {
+				title_ = value;
+				trigger(onTitleChange, value);
+			}
+		}
+
 		void resize(unsigned cols, unsigned rows) {
 			if (buffer_.cols_ != cols || buffer_.rows_ != rows) {
 				buffer_.resize(cols, rows);
@@ -556,11 +567,6 @@ namespace vterm {
 			trigger(onRepaint);
 		}
 
-		void changeTitle(std::string const& what) {
-			// TODO keep title as property of the terminal
-			trigger(onTitleChange, what);
-		}
-
 	protected:
 
 		/** Should be raised by the backend in case it is terminated. 
@@ -580,6 +586,10 @@ namespace vterm {
 		/** Backend attached to the terminal. 
 		 */
 		Backend* backend_;
+
+		/** Title of the terminal. 
+		 */
+		std::string title_;
 
 	};
 

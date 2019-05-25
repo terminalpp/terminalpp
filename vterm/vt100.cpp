@@ -1077,7 +1077,7 @@ namespace vterm {
         if (buffer_[-1] == Char::BEL && start[0] == '0' && start[1] == ';') {
             std::string title(start + 2, buffer_ - 1);
             LOG(SEQ) << "Title change to " << title;
-			terminal()->changeTitle(title);
+			terminal()->setTitle(title);
         } else {
             // TODO ignore for now 112 == reset cursor color             
             LOG(SEQ_UNKNOWN) << "Unknown OSC: " << std::string(start, buffer_ - start);

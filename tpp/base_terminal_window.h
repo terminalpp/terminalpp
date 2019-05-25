@@ -110,12 +110,6 @@ namespace tpp {
 			return settings_;
 		}
 
-		/** Returns the title of the window. 
-		 */
-		std::string const & title() const {
-			return title_;
-		}
-
 		/** Returns the zoom level of the window. 
 		 */
 		double zoom() const {
@@ -167,7 +161,6 @@ namespace tpp {
 		BaseTerminalWindow(TerminalSettings * settings) :
 			vterm::Terminal::Renderer(settings->defaultCols, settings->defaultRows),
 			settings_(settings),
-			title_(settings->defaultTitle),
 			widthPx_(settings->defaultFontWidth * settings->defaultCols),
 			heightPx_(settings->defaultFontHeight * settings->defaultRows),
 			zoom_(settings->defaultZoom),
@@ -272,8 +265,6 @@ namespace tpp {
 		void doUpdateBuffer(bool forceDirty = false);
 
 		TerminalSettings * settings_;
-
-		std::string title_;
 
 		/** Width and height of the window client area in pixels. 
 		 */

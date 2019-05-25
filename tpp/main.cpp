@@ -39,8 +39,6 @@ void FixMissingSettings(TerminalSettings & ts) {
 	ts.defaultFontWidth = f->widthPx();
 }
 
-
-
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
