@@ -84,6 +84,9 @@ namespace tpp {
     		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 		}
 
+		void clipboardPaste() override;
+		void clipboardCopy(std::string const& str) override;
+
 		void doPaint() override;
 
 		void doSetForeground(vterm::Color const& fg) override {

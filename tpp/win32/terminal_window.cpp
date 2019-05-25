@@ -2,6 +2,8 @@
 
 #include "application.h"
 
+#include "helpers/strings.h"
+
 #include "terminal_window.h"
 
 
@@ -11,7 +13,7 @@ namespace tpp {
 	std::unordered_map<HWND, TerminalWindow *> TerminalWindow::Windows_;
 
 	TerminalWindow::TerminalWindow(Application * app, TerminalSettings * settings) :
-		BaseTerminalWindow(settings),
+		BaseTerminalWindow(app, settings),
 		bufferDC_(CreateCompatibleDC(nullptr)),
 		buffer_(nullptr),
 		wndPlacement_{sizeof(wndPlacement_)},
@@ -72,6 +74,42 @@ namespace tpp {
 	void TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
 		PostMessage(hWnd_, WM_USER, MSG_TITLE_CHANGE, 0);
 	}
+
+	void TerminalWindow::clipboardPaste() {
+		if (OpenClipboard(nullptr)) {
+			HANDLE clipboard = GetClipboardData(CF_UNICODETEXT);
+			if (clipboard) {
+				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clipboard));
+				if (data) {
+					std::string str(helpers::UTF16toUTF8(data));
+					GlobalUnlock(clipboard);
+					if (!str.empty())
+					    terminal()->paste(str);
+				}
+			}
+			CloseClipboard();
+		}
+	}
+
+	void TerminalWindow::clipboardCopy(std::string const& str) {
+		if (OpenClipboard(nullptr)) {
+			EmptyClipboard();
+			// encode the string into UTF16 and get the size of the data we need
+			NOT_IMPLEMENTED;
+			size_t size = 0;
+			HGLOBAL clipboard = GlobalAlloc(0, size);
+			if (clipboard) {
+				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clipboard));
+				if (data) {
+					// TODO copy the memory
+					GlobalUnlock(clipboard);
+					SetClipboardData(CF_UNICODETEXT, clipboard);
+				}
+			}
+			CloseClipboard();
+		}
+	}
+
 
 	void TerminalWindow::doPaint() {
 		PAINTSTRUCT ps;

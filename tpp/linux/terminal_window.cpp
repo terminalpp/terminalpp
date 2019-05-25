@@ -19,7 +19,7 @@ namespace tpp {
 
 
 	TerminalWindow::TerminalWindow(Application* app, TerminalSettings* settings) :
-		BaseTerminalWindow(settings),
+		BaseTerminalWindow(app, settings),
 		display_(Application::XDisplay()),
 		screen_(Application::XScreen()),
 	    visual_(DefaultVisual(display_, screen_)),
@@ -76,6 +76,16 @@ namespace tpp {
 
 	void TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
         // TODO implement
+	}
+
+	void TerminalWindow::clipboardPaste() {
+		Atom clipboard;
+		clipboard = XInternAtom(display_, "CLIPBOARD", 0);
+		XConvertSelection(display_, clipboard, Application::ClipboardFormat_, clipboard, window_, CurrentTime);
+	}
+
+	void TerminalWindow::clipboardCopy(std::string const& str) {
+		NOT_IMPLEMENTED;
 	}
 
 	void TerminalWindow::doPaint() {
@@ -297,6 +307,23 @@ namespace tpp {
             case MotionNotify:
                 tw->mouseMove(e.xmotion.x, e.xmotion.y);
                 break;
+			case SelectionNotify:
+				if (e.xselection.property) {
+					char * result;
+					unsigned long ressize, restail;
+					Atom type = None;
+					int format = 0;
+					XGetWindowProperty(tw->display_, tw->window_, e.xselection.property, 0, LONG_MAX / 4, False, AnyPropertyType,
+						&type, &format, &ressize, &restail, (unsigned char**)& result);
+					if (type == Application::ClipboardIncr_)
+						// buffer too larger, incremental reads must be implemented
+						// https://stackoverflow.com/questions/27378318/c-get-string-from-clipboard-on-linux
+						NOT_IMPLEMENTED;
+					else
+						tw->terminal()->paste(std::string(result, ressize));
+					XFree(result);
+                 }
+				 break;
             default:
                 break;
         }

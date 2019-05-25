@@ -1,6 +1,8 @@
 #include "helpers/log.h"
 
+#include "base_application.h"
 #include "base_terminal_window.h"
+
 
 namespace tpp {
 
@@ -11,8 +13,7 @@ namespace tpp {
 	void BaseTerminalWindow::keyDown(vterm::Key key) {
 		if (key == vterm::Key::Enter + vterm::Key::Alt) {
 			setFullscreen(!fullscreen());
-		}
-		else if (key == vterm::Key::F5) {
+		} else if (key == vterm::Key::F5) {
 			LOG << "redraw...";
 			redraw();
 		// zoom in
@@ -23,11 +24,14 @@ namespace tpp {
 		} else if (key == vterm::Key::Minus + vterm::Key::Ctrl) {
 			if (zoom() > 1)
 			    setZoom(std::max(1.0, zoom() / 1.25));
-		} else if (key == vterm::Key::F4) {
+		}
+		else if (key == vterm::Key::F4) {
 			if (zoom() == 1)
 				setZoom(2);
 			else
 				setZoom(1);
+		} else if (key == vterm::Key::V + vterm::Key::Ctrl) {
+			clipboardPaste();
 		} else if (key != vterm::Key::Invalid) {
 			terminal()->keyDown(key);
 		}

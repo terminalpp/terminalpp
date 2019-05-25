@@ -35,6 +35,8 @@ namespace tpp {
 		static Display* XDisplay_;
 		static int XScreen_;
         static XIM XIm_;
+		static Atom ClipboardFormat_;
+		static Atom ClipboardIncr_;
 
 	}; // tpp::Application [linux]
 

@@ -68,6 +68,9 @@ namespace tpp {
             XFlush(display_);
 		}
 
+		void clipboardPaste() override;
+		void clipboardCopy(std::string const& str) override;
+
 		void doPaint() override;
 
 		void doSetForeground(vterm::Color const& fg) override {

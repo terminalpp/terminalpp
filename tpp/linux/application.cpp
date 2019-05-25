@@ -20,6 +20,8 @@ namespace tpp {
 	Display* Application::XDisplay_ = nullptr;
 	int Application::XScreen_ = 0;
     XIM Application::XIm_;
+	Atom Application::ClipboardFormat_;
+	Atom Application::ClipboardIncr_;
 
 	Application::Application() {
         XInitThreads();
@@ -40,6 +42,10 @@ namespace tpp {
         XIm_ = XOpenIM(XDisplay_, nullptr, nullptr, nullptr);
         ASSERT(XIm_ != nullptr);
 
+		ClipboardFormat_ = XInternAtom(XDisplay_, "UTF8_STRING", false);
+		ClipboardIncr_ = XInternAtom(XDisplay_, "INCR", false);
+		ASSERT(ClipboardFormat_ != None);
+		ASSERT(ClipboardIncr_ != None);
 	}
 
 	Application::~Application() {

@@ -6,6 +6,8 @@
 
 namespace tpp {
 
+	class BaseApplication;
+
 	/** Stores and retrieves font objects so that they do not have to be created each time they are needed. 
 
 	    Templated by the actual font handle, which is platform dependent. 
@@ -116,6 +118,17 @@ namespace tpp {
 			return zoom_;
 		}
 
+		/** Sets the zoom level of the window.
+
+			Zoom value of 1.0 means default size.
+		 */
+		void setZoom(double value) {
+			if (value != zoom_) {
+				zoom_ = value;
+				doSetZoom(value);
+			}
+		}
+
 		bool fullscreen() const {
 			return fullscreen_;
 		}
@@ -127,16 +140,6 @@ namespace tpp {
 			}
 		}
 
-		/** Sets the zoom level of the window. 
-
-		    Zoom value of 1.0 means default size.
-		 */
-		void setZoom(double value) {
-			if (value != zoom_) {
-				zoom_ = value;
-				doSetZoom(value);
-			}
-		}
 
 		// methods --------------------------------------------------------------------------------------
 
@@ -158,8 +161,9 @@ namespace tpp {
 			return font;
 		}
 		
-		BaseTerminalWindow(TerminalSettings * settings) :
+		BaseTerminalWindow(BaseApplication * application, TerminalSettings * settings) :
 			vterm::Terminal::Renderer(settings->defaultCols, settings->defaultRows),
+			application_(application),
 			settings_(settings),
 			widthPx_(settings->defaultFontWidth * settings->defaultCols),
 			heightPx_(settings->defaultFontHeight * settings->defaultRows),
@@ -232,7 +236,10 @@ namespace tpp {
             invalidated_ = true;
         }
 
-		/** Paints the window. 
+		virtual void clipboardPaste() = 0;
+		virtual void clipboardCopy(std::string const& str) = 0;
+
+		/** Paints the window.
 		 */
 		virtual void doPaint() = 0;
 
@@ -263,6 +270,8 @@ namespace tpp {
 		    Triggers repaint of all dirty terminal cells (or all cells if forceDirty is true) and the cursor. 
 		 */
 		void doUpdateBuffer(bool forceDirty = false);
+
+		BaseApplication * application_;
 
 		TerminalSettings * settings_;
 
