@@ -8,14 +8,14 @@
 
 
 #ifdef WIN32
-#include "win32/application.h"
-#include "win32/terminal_window.h"
+#include "gdi/gdi_application.h"
+#include "gdi/gdi_terminal_window.h"
 // link to directwrite
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
 #elif __linux__
-#include "linux/application.h"
-#include "linux/terminal_window.h"
+#include "x11/x11_application.h"
+#include "x11/x11_terminal_window.h"
 #else
 #error "Unsupported platform"
 #endif
@@ -32,12 +32,24 @@ using namespace tpp;
 
 // https://github.com/Microsoft/node-pty/blob/master/src/win/conpty.cc
 
+#ifdef WIN32
 
 void FixMissingSettings(TerminalSettings & ts) {
 	vterm::Font defaultFont;
-	TerminalWindow::Font* f = TerminalWindow::Font::GetOrCreate(defaultFont, ts.defaultFontHeight, 1);
+	GDITerminalWindow::Font* f = GDITerminalWindow::Font::GetOrCreate(defaultFont, ts.defaultFontHeight, 1);
 	ts.defaultFontWidth = f->widthPx();
 }
+
+#elif __linux__
+
+void FixMissingSettings(TerminalSettings& ts) {
+	vterm::Font defaultFont;
+	X11TerminalWindow::Font* f = X11TerminalWindow::Font::GetOrCreate(defaultFont, ts.defaultFontHeight, 1);
+	ts.defaultFontWidth = f->widthPx();
+}
+
+
+#endif
 
 /** Terminal++ App Entry Point
 
@@ -47,7 +59,7 @@ void FixMissingSettings(TerminalSettings & ts) {
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 
-	Application* app = new Application(hInstance);
+	GDIApplication* app = new GDIApplication(hInstance);
 
 	TerminalSettings ts;
 	ts.defaultCols = 80;
@@ -69,7 +81,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	vterm::Terminal* t = new vterm::Terminal(80, 25);
 
-	TerminalWindow* tw = new TerminalWindow(app, &ts);
+	TerminalWindow* tw = new GDITerminalWindow(app, &ts);
 	tw->show();
 
 	tw->setTerminal(t);
@@ -115,7 +127,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 int main(int argc, char* argv[]) {
 	try {
 
-		Application* app = new Application();
+		X11Application* app = new X11Application();
 
 		TerminalSettings ts;
 		ts.defaultCols = 100;
@@ -149,7 +161,7 @@ int main(int argc, char* argv[]) {
 
         vterm::Terminal * t = new vterm::Terminal(80, 25);
 
-        TerminalWindow * tw = new TerminalWindow(app, &ts);
+        X11TerminalWindow * tw = new X11TerminalWindow(app, &ts);
         tw->show();
 
         tw->setTerminal(t);

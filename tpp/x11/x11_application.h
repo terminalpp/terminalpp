@@ -6,16 +6,16 @@
 #include <X11/Xos.h>
 #include <X11/Xft/Xft.h>
 
-#include "../base_application.h"
+#include "../application.h"
 
 namespace tpp {
 
-	class TerminalWindow;
+	class X11TerminalWindow;
 
-	class Application : public BaseApplication {
+	class X11Application : public Application {
 	public:
-		Application();
-		~Application() override;
+		X11Application();
+		~X11Application() override;
 
 		void mainLoop() override;
 
@@ -29,7 +29,7 @@ namespace tpp {
 		}
 
 	private:
-		friend class TerminalWindow;
+		friend class X11TerminalWindow;
 
 		/** X11 display. */
 		static Display* XDisplay_;

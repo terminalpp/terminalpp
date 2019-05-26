@@ -5,11 +5,9 @@
 
 namespace tpp {
 
-	class BaseTerminalWindow;
-
-	class BaseApplication {
+	class Application {
 	public:
-		virtual ~BaseApplication() {
+		virtual ~Application() {
 
 		}
 

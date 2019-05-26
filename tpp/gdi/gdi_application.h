@@ -3,19 +3,19 @@
 
 #include <windows.h>
 
-#include "../base_application.h"
+#include "../application.h"
 
 namespace tpp {
-	class Application : public BaseApplication {
+	class GDIApplication : public Application {
 	public:
-		Application(HINSTANCE hInstance);
+		GDIApplication(HINSTANCE hInstance);
 
-		~Application() override;
+		~GDIApplication() override;
 
 		void mainLoop() override;
 
 	private:
-		friend class TerminalWindow;
+		friend class GDITerminalWindow;
 
 		static char const * const TerminalWindowClassName_;
 
@@ -23,7 +23,7 @@ namespace tpp {
 
 		
 		HINSTANCE hInstance_;
-	}; // tpp::Application [win32]
+	}; // tpp::GDIApplication 
 
 } // namespace tpp
 #endif

@@ -1,19 +1,19 @@
 #ifdef WIN32
 
-#include "application.h"
-
 #include "helpers/strings.h"
 
-#include "terminal_window.h"
+#include "gdi_application.h"
+
+#include "gdi_terminal_window.h"
 
 
 
 namespace tpp {
 
-	std::unordered_map<HWND, TerminalWindow *> TerminalWindow::Windows_;
+	std::unordered_map<HWND, GDITerminalWindow *> GDITerminalWindow::Windows_;
 
-	TerminalWindow::TerminalWindow(Application * app, TerminalSettings * settings) :
-		BaseTerminalWindow(app, settings),
+	GDITerminalWindow::GDITerminalWindow(GDIApplication * app, TerminalSettings * settings) :
+		TerminalWindow(app, settings),
 		bufferDC_(CreateCompatibleDC(nullptr)),
 		buffer_(nullptr),
 		wndPlacement_{sizeof(wndPlacement_)},
@@ -38,7 +38,7 @@ namespace tpp {
 		Windows_.insert(std::make_pair(hWnd_, this));
 	}
 
-	TerminalWindow::~TerminalWindow() {
+	GDITerminalWindow::~GDITerminalWindow() {
 		DeleteObject(buffer_);
 		DeleteObject(bufferDC_);
 	}
@@ -47,7 +47,7 @@ namespace tpp {
 
 	    https://devblogs.microsoft.com/oldnewthing/20100412-00/?p=14353
 	 */
-	void TerminalWindow::doSetFullscreen(bool value) {
+	void GDITerminalWindow::doSetFullscreen(bool value) {
 		DWORD style = GetWindowLong(hWnd_, GWL_STYLE);
 		if (value == true) {
 			MONITORINFO mInfo = { sizeof(mInfo) };
@@ -71,11 +71,11 @@ namespace tpp {
 		}
 	}
 
-	void TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
+	void GDITerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
 		PostMessage(hWnd_, WM_USER, MSG_TITLE_CHANGE, 0);
 	}
 
-	void TerminalWindow::clipboardPaste() {
+	void GDITerminalWindow::clipboardPaste() {
 		if (OpenClipboard(nullptr)) {
 			HANDLE clipboard = GetClipboardData(CF_UNICODETEXT);
 			if (clipboard) {
@@ -91,7 +91,7 @@ namespace tpp {
 		}
 	}
 
-	void TerminalWindow::clipboardCopy(std::string const& str) {
+	void GDITerminalWindow::clipboardCopy(std::string const& str) {
 		if (OpenClipboard(nullptr)) {
 			EmptyClipboard();
 			// encode the string into UTF16 and get the size of the data we need
@@ -111,7 +111,7 @@ namespace tpp {
 	}
 
 
-	void TerminalWindow::doPaint() {
+	void GDITerminalWindow::doPaint() {
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd_, &ps);
 		bool forceDirty = false;
@@ -134,7 +134,7 @@ namespace tpp {
 	}
 
 	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
-	vterm::Key TerminalWindow::GetKey(WPARAM vk) {
+	vterm::Key GDITerminalWindow::GetKey(WPARAM vk) {
 		if (!vterm::Key::IsValidCode(vk))
 			return vterm::Key(vterm::Key::Invalid);
 		// MSB == pressed, LSB state since last time
@@ -146,10 +146,10 @@ namespace tpp {
 		return vterm::Key(vk, shift | ctrl | alt | win);
 	}
 
-	LRESULT CALLBACK TerminalWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+	LRESULT CALLBACK GDITerminalWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 		// determine terminal window corresponding to the handle given with the message
 		auto i = Windows_.find(hWnd);
-		TerminalWindow * tw = i == Windows_.end() ? nullptr : i->second;
+		GDITerminalWindow * tw = i == Windows_.end() ? nullptr : i->second;
 		// do the message
 		switch (msg) {
 			/** Closes the current window. */
@@ -175,7 +175,7 @@ namespace tpp {
 				CREATESTRUCT & cs = *reinterpret_cast<CREATESTRUCT*>(lParam);
 				// get the tw member from the create struct argument
 				ASSERT(tw == nullptr);
-				tw = reinterpret_cast<TerminalWindow*>(cs.lpCreateParams);
+				tw = reinterpret_cast<GDITerminalWindow*>(cs.lpCreateParams);
 				ASSERT(tw != nullptr);
 				RECT r;
 				r.left = cs.x;
@@ -261,7 +261,7 @@ namespace tpp {
 				tw->keyUp(k);
 				break;
 			}
-		    /* Mouse events which simply obtain the mouse coordinates, convert the buttons and wheel values to vterm standards and then calls the TerminalWindow's events, which perform the pixels to cols & rows translation and then call the terminal itself. 
+		    /* Mouse events which simply obtain the mouse coordinates, convert the buttons and wheel values to vterm standards and then calls the GDITerminalWindow's events, which perform the pixels to cols & rows translation and then call the terminal itself. 
 			 */
 			case WM_LBUTTONDOWN:
 				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Left);

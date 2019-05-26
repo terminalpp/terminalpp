@@ -9,9 +9,9 @@
 #include <X11/Xft/Xft.h>
 
 
-#include "../base_terminal_window.h"
+#include "../terminal_window.h"
 
-#include "application.h"
+#include "x11_application.h"
 
 namespace tpp {
 
@@ -27,18 +27,18 @@ namespace tpp {
 		// TODO underline and strikethrough
 
 		XGlyphInfo gi;
-		XftFont* handle = XftFontOpenName(Application::XDisplay(), Application::XScreen(), fname.c_str());
+		XftFont* handle = XftFontOpenName(X11Application::XDisplay(), X11Application::XScreen(), fname.c_str());
         ASSERT(handle != nullptr);
-		XftTextExtentsUtf8(Application::XDisplay(), handle, (FcChar8*)"m", 1, &gi);
+		XftTextExtentsUtf8(X11Application::XDisplay(), handle, (FcChar8*)"m", 1, &gi);
 		return new FontSpec<XftFont*>(font, gi.width, handle->ascent + handle->descent, handle);
 	}
 
-	class TerminalWindow : public BaseTerminalWindow {
+	class X11TerminalWindow : public TerminalWindow {
 	public:
 
 		typedef FontSpec<XftFont*> Font;
 
-		TerminalWindow(Application* app, TerminalSettings* settings);
+		X11TerminalWindow(X11Application* app, TerminalSettings* settings);
 
 
 		void show() override;
@@ -49,7 +49,7 @@ namespace tpp {
 
 	protected:
 
-		~TerminalWindow() override;
+		~X11TerminalWindow() override;
 
 		void doSetFullscreen(bool value) override;
 
@@ -57,7 +57,7 @@ namespace tpp {
 
 		void doInvalidate() override {
             // set the flag
-            BaseTerminalWindow::doInvalidate(); 
+            TerminalWindow::doInvalidate(); 
             // trigger a refresh
             XExposeEvent msg;
             memset(&msg, 0, sizeof(XExposeEvent));
@@ -105,7 +105,7 @@ namespace tpp {
 
 	private:
 
-        friend class Application;
+        friend class X11Application;
 
 
 		//void updateBuffer();
@@ -134,7 +134,7 @@ namespace tpp {
         std::mutex drawGuard_;
         std::atomic<bool> invalidate_;
 
-		static std::unordered_map<Window, TerminalWindow *> Windows_;
+		static std::unordered_map<Window, X11TerminalWindow *> Windows_;
 
 	}; // TerminalWinfdow [linux]
 

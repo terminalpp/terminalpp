@@ -6,7 +6,7 @@
 
 namespace tpp {
 
-	class BaseApplication;
+	class Application;
 
 	/** Stores and retrieves font objects so that they do not have to be created each time they are needed. 
 
@@ -105,7 +105,7 @@ namespace tpp {
 
 	    The terminal window is a vterm renderer that can display the contents of the associated terminal. This class provides the common, platform independent functionality. 
 	 */
-	class BaseTerminalWindow : public vterm::Terminal::Renderer {
+	class TerminalWindow : public vterm::Terminal::Renderer {
 	public:
 
 		TerminalSettings * settings() const {
@@ -161,7 +161,7 @@ namespace tpp {
 			return font;
 		}
 		
-		BaseTerminalWindow(BaseApplication * application, TerminalSettings * settings) :
+		TerminalWindow(Application * application, TerminalSettings * settings) :
 			vterm::Terminal::Renderer(settings->defaultCols, settings->defaultRows),
 			application_(application),
 			settings_(settings),
@@ -271,7 +271,7 @@ namespace tpp {
 		 */
 		void doUpdateBuffer(bool forceDirty = false);
 
-		BaseApplication * application_;
+		Application * application_;
 
 		TerminalSettings * settings_;
 

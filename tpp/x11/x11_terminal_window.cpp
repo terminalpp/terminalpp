@@ -3,13 +3,13 @@
 #include "helpers/helpers.h"
 #include "helpers/log.h"
 
-#include "application.h"
+#include "x11_application.h"
 
-#include "terminal_window.h"
+#include "x11_terminal_window.h"
 
 namespace tpp {
 
-    std::unordered_map<Window, TerminalWindow *> TerminalWindow::Windows_;
+    std::unordered_map<Window, X11TerminalWindow *> X11TerminalWindow::Windows_;
 
 
 	// http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
@@ -18,10 +18,10 @@ namespace tpp {
 	// https://keithp.com/~keithp/render/Xft.tutorial
 
 
-	TerminalWindow::TerminalWindow(Application* app, TerminalSettings* settings) :
-		BaseTerminalWindow(app, settings),
-		display_(Application::XDisplay()),
-		screen_(Application::XScreen()),
+	X11TerminalWindow::X11TerminalWindow(X11Application* app, TerminalSettings* settings) :
+		TerminalWindow(app, settings),
+		display_(X11Application::XDisplay()),
+		screen_(X11Application::XScreen()),
 	    visual_(DefaultVisual(display_, screen_)),
 	    colorMap_(DefaultColormap(display_, screen_)),
 	    buffer_(0),
@@ -52,43 +52,43 @@ namespace tpp {
         gc_ = XCreateGC(display_, parent, GCGraphicsExposures, &gcv);
 
         // create input context for the window... The extra arguments to the XCreateIC are c-c c-v from the internet and for now are a mystery to me
-    	ic_ = XCreateIC(Application::XIm_, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+    	ic_ = XCreateIC(X11Application::XIm_, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
     				XNClientWindow, window_, XNFocusWindow, window_, nullptr);
 
         Windows_[window_] = this;
 	}
 
-	void TerminalWindow::show() {
+	void X11TerminalWindow::show() {
         XMapWindow(display_, window_);
 		//XMapRaised(display_, window_);
 	}
 
-	TerminalWindow::~TerminalWindow() {
+	X11TerminalWindow::~X11TerminalWindow() {
         Windows_.erase(window_);
 		doInvalidate();
 		XFreeGC(display_, gc_);
 		XDestroyWindow(display_, window_);
 	}
 
-	void TerminalWindow::doSetFullscreen(bool value) {
+	void X11TerminalWindow::doSetFullscreen(bool value) {
         // TODO Implement
 	}
 
-	void TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
+	void X11TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
         // TODO implement
 	}
 
-	void TerminalWindow::clipboardPaste() {
+	void X11TerminalWindow::clipboardPaste() {
 		Atom clipboard;
 		clipboard = XInternAtom(display_, "CLIPBOARD", 0);
-		XConvertSelection(display_, clipboard, Application::ClipboardFormat_, clipboard, window_, CurrentTime);
+		XConvertSelection(display_, clipboard, X11Application::ClipboardFormat_, clipboard, window_, CurrentTime);
 	}
 
-	void TerminalWindow::clipboardCopy(std::string const& str) {
+	void X11TerminalWindow::clipboardCopy(std::string const& str) {
 		NOT_IMPLEMENTED;
 	}
 
-	void TerminalWindow::doPaint() {
+	void X11TerminalWindow::doPaint() {
         std::lock_guard<std::mutex> g(drawGuard_);
 		ASSERT(draw_ == nullptr);
 		bool forceDirty = false;
@@ -118,7 +118,7 @@ namespace tpp {
         XFlush(display_);
 	}
 
-    vterm::Key TerminalWindow::GetKey(KeySym k, unsigned state) {
+    vterm::Key X11TerminalWindow::GetKey(KeySym k, unsigned state) {
         unsigned modifiers = 0;
         if (state & 1)
             modifiers += vterm::Key::Shift;
@@ -219,8 +219,8 @@ namespace tpp {
         }
     }
 
-    void TerminalWindow::EventHandler(XEvent & e) {
-        TerminalWindow * tw = nullptr;
+    void X11TerminalWindow::EventHandler(XEvent & e) {
+        X11TerminalWindow * tw = nullptr;
         auto i = Windows_.find(e.xany.window);
         if (i != Windows_.end())
             tw = i->second;
@@ -315,7 +315,7 @@ namespace tpp {
 					int format = 0;
 					XGetWindowProperty(tw->display_, tw->window_, e.xselection.property, 0, LONG_MAX / 4, False, AnyPropertyType,
 						&type, &format, &ressize, &restail, (unsigned char**)& result);
-					if (type == Application::ClipboardIncr_)
+					if (type == X11Application::ClipboardIncr_)
 						// buffer too larger, incremental reads must be implemented
 						// https://stackoverflow.com/questions/27378318/c-get-string-from-clipboard-on-linux
 						NOT_IMPLEMENTED;

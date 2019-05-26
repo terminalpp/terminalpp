@@ -9,11 +9,11 @@
 
 #include "helpers/log.h"
 
-#include "../base_terminal_window.h"
+#include "../terminal_window.h"
 
 namespace tpp {
 
-	class Application;
+	class GDIApplication;
 
 	template<>
 	inline FontSpec<HFONT> * FontSpec<HFONT>::Create(vterm::Font font, unsigned height) {
@@ -43,11 +43,11 @@ namespace tpp {
 		return new FontSpec<HFONT>(font, width, height, handle);
 	}
 
-	class TerminalWindow : public BaseTerminalWindow {
+	class GDITerminalWindow : public TerminalWindow {
 	public:
 		typedef FontSpec<HFONT> Font;
 
-		TerminalWindow(Application * app, TerminalSettings * settings);
+		GDITerminalWindow(GDIApplication * app, TerminalSettings * settings);
 
 		void show() override {
 			ShowWindow(hWnd_, SW_SHOWNORMAL);
@@ -69,7 +69,7 @@ namespace tpp {
 
 		/** Just deleting a terminal window is not allowed, therefore protected.
 		 */
-		~TerminalWindow() override;
+		~GDITerminalWindow() override;
 
 		void doSetFullscreen(bool value) override;
 
@@ -79,7 +79,7 @@ namespace tpp {
 		 */
 		void doInvalidate() override {
             // set the invalidate flag
-            BaseTerminalWindow::doInvalidate(); 
+            TerminalWindow::doInvalidate(); 
             // repaint the window
     		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 		}
@@ -117,7 +117,7 @@ namespace tpp {
 
 		static constexpr WPARAM MSG_TITLE_CHANGE = 0;
 
-		friend class Application;
+		friend class GDIApplication;
 
 		//void updateBuffer();
 
@@ -142,7 +142,7 @@ namespace tpp {
 		unsigned frameWidth_;
 		unsigned frameHeight_;
 
-		static std::unordered_map<HWND, TerminalWindow *> Windows_;
+		static std::unordered_map<HWND, GDITerminalWindow *> Windows_;
 
 		static constexpr UINT_PTR TIMERID_BLINK = 34;
 

@@ -3,8 +3,8 @@
 #include "helpers/helpers.h"
 #include "helpers/log.h"
 
-#include "application.h"
-#include "terminal_window.h"
+#include "x11_application.h"
+#include "x11_terminal_window.h"
 
 namespace tpp {
 
@@ -17,15 +17,15 @@ namespace tpp {
 
     } // anonymous namespace
 
-	Display* Application::XDisplay_ = nullptr;
-	int Application::XScreen_ = 0;
-    XIM Application::XIm_;
-	Atom Application::ClipboardFormat_;
-	Atom Application::ClipboardIncr_;
+	Display* X11Application::XDisplay_ = nullptr;
+	int X11Application::XScreen_ = 0;
+    XIM X11Application::XIm_;
+	Atom X11Application::ClipboardFormat_;
+	Atom X11Application::ClipboardIncr_;
 
-	Application::Application() {
+	X11Application::X11Application() {
         XInitThreads();
-		ASSERT(XDisplay_ == nullptr) << "Application is a singleton";
+		ASSERT(XDisplay_ == nullptr) << "X11Application is a singleton";
 		XDisplay_ = XOpenDisplay(nullptr);
 		if (XDisplay_ == nullptr)
 			THROW(helpers::Exception("Unable to open X display"));
@@ -48,18 +48,18 @@ namespace tpp {
 		ASSERT(ClipboardIncr_ != None);
 	}
 
-	Application::~Application() {
+	X11Application::~X11Application() {
 		XCloseDisplay(XDisplay_);
 		XDisplay_ = nullptr;
 	}
 
-	void Application::mainLoop() {
+	void X11Application::mainLoop() {
 		XEvent e;
 		while (true) {
 			XNextEvent(XDisplay_, &e);
             if (XFilterEvent(&e, None))
                 continue;
-            TerminalWindow::EventHandler(e);
+            X11TerminalWindow::EventHandler(e);
        }
 	}
 

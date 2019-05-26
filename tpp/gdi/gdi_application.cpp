@@ -5,13 +5,13 @@
 
 #include "helpers/win32.h"
 
-#include "application.h"
-#include "terminal_window.h"
+#include "gdi_application.h"
+#include "gdi_terminal_window.h"
 
 
 namespace tpp {
 	namespace {
-		/** Attaches a console to the application for debugging purposes. 
+		/** Attaches a console to the GDIApplication for debugging purposes. 
 		 */
 		void AttachConsole() {
 			if (AllocConsole() == 0)
@@ -31,20 +31,20 @@ namespace tpp {
 
 	} // anonymous namespace
 
-	char const * const Application::TerminalWindowClassName_ = "TerminalWindowClass";
+	char const * const GDIApplication::TerminalWindowClassName_ = "TerminalWindowClass";
 
-	Application::Application(HINSTANCE hInstance):
+	GDIApplication::GDIApplication(HINSTANCE hInstance):
 	    hInstance_(hInstance) {
 		// TODO this should be conditional on a debug flag
 		AttachConsole();
 		registerTerminalWindowClass();
 	}
 
-	Application::~Application() {
+	GDIApplication::~GDIApplication() {
 
 	}
 
-	void Application::mainLoop() {
+	void GDIApplication::mainLoop() {
 		MSG msg;
 		while (GetMessage(&msg, nullptr, 0, 0) > 0) {
 			TranslateMessage(&msg);
@@ -53,12 +53,12 @@ namespace tpp {
 		// here we are in the on idle mode so we can process queues of all terminals. 
 	}
 
-	void Application::registerTerminalWindowClass() {
+	void GDIApplication::registerTerminalWindowClass() {
 		WNDCLASSEX wClass = { 0 };
 		wClass.cbSize = sizeof(WNDCLASSEX); // size of the class info
 		wClass.hInstance = hInstance_;
 		wClass.style = CS_HREDRAW | CS_VREDRAW;
-		wClass.lpfnWndProc = TerminalWindow::EventHandler; // event handler function for the window class
+		wClass.lpfnWndProc = GDITerminalWindow::EventHandler; // event handler function for the window class
 		wClass.cbClsExtra = 0; // extra memory to be allocated for the class
 		wClass.cbWndExtra = 0; // extra memory to be allocated for each window
 		wClass.lpszClassName = TerminalWindowClassName_; // class name

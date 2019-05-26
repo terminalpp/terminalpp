@@ -1,16 +1,16 @@
 #include "helpers/log.h"
 
-#include "base_application.h"
-#include "base_terminal_window.h"
+#include "application.h"
+#include "terminal_window.h"
 
 
 namespace tpp {
 
-	void BaseTerminalWindow::keyChar(vterm::Char::UTF8 c) {
+	void TerminalWindow::keyChar(vterm::Char::UTF8 c) {
 		terminal()->keyChar(c);
 	}
 
-	void BaseTerminalWindow::keyDown(vterm::Key key) {
+	void TerminalWindow::keyDown(vterm::Key key) {
 		if (key == vterm::Key::Enter + vterm::Key::Alt) {
 			setFullscreen(!fullscreen());
 		} else if (key == vterm::Key::F5) {
@@ -37,11 +37,11 @@ namespace tpp {
 		}
 	}
 
-	void BaseTerminalWindow::keyUp(vterm::Key key) {
+	void TerminalWindow::keyUp(vterm::Key key) {
 		terminal()->keyUp(key);
 	}
 
-	void BaseTerminalWindow::mouseMove(unsigned x, unsigned y) {
+	void TerminalWindow::mouseMove(unsigned x, unsigned y) {
 		convertMouseCoordsToCells(x, y);
 		if (x != mouseCol_ || y != mouseRow_) {
 			mouseCol_ = x;
@@ -50,27 +50,27 @@ namespace tpp {
 		}
 	}
 
-	void BaseTerminalWindow::mouseDown(unsigned x, unsigned y, vterm::MouseButton button) {
+	void TerminalWindow::mouseDown(unsigned x, unsigned y, vterm::MouseButton button) {
 		convertMouseCoordsToCells(x, y);
 		mouseCol_ = x;
 		mouseRow_ = y;
 		terminal()->mouseDown(x, y, button);
 	}
 
-	void BaseTerminalWindow::mouseUp(unsigned x, unsigned y, vterm::MouseButton button) {
+	void TerminalWindow::mouseUp(unsigned x, unsigned y, vterm::MouseButton button) {
 		convertMouseCoordsToCells(x, y);
 		mouseCol_ = x;
 		mouseRow_ = y;
 		terminal()->mouseUp(x, y, button);
 	}
 
-	void BaseTerminalWindow::mouseWheel(unsigned x, unsigned y, int offset) {
+	void TerminalWindow::mouseWheel(unsigned x, unsigned y, int offset) {
 		convertMouseCoordsToCells(x, y);
 		terminal()->mouseWheel(x, y, offset);
 	}
 
 
-	void BaseTerminalWindow::doUpdateBuffer(bool forceDirty) {
+	void TerminalWindow::doUpdateBuffer(bool forceDirty) {
 		// don't do anything if terminal is not attached
 		if (terminal() == nullptr)
 			return;
