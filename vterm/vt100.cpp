@@ -98,12 +98,59 @@ namespace vterm {
 	VT100::KeyMap::KeyMap() {
 		// shift + ctrl + alt + meta modifiers and their combinations
 		keys_.resize(16);
-		// add ctrl + letters
+		// add modifiers + letter
 		for (unsigned k = 'A'; k <= 'Z'; ++k) {
-			std::string seq;
-			seq += static_cast<char>(k + 1 - 'A');
-			addKey(Key(k) + Key::Ctrl, seq.c_str());
+			// ctrl + letter and ctrl + shift + letter are the same
+			addKey(Key(k) + Key::Ctrl, STR(static_cast<char>(k + 1 - 'A')).c_str());
+			addKey(Key(k) + Key::Ctrl + Key::Shift, STR(static_cast<char>(k + 1 - 'A')).c_str());
+			// alt simply prepends escape to whatever the non-alt key would be
+			addKey(Key(k) + Key::Alt, STR('\033' << static_cast<char>(k + 32)).c_str());
+			addKey(Key(k) + Key::Shift + Key::Alt, STR('\033' << static_cast<char>(k)).c_str());
+			addKey(Key(k) + Key::Ctrl + Key::Alt, STR('\033' << static_cast<char>(k + 1 - 'A')).c_str());
+			addKey(Key(k) + Key::Ctrl + Key::Shift + Key::Alt, STR('\033' << static_cast<char>(k + 1 - 'A')).c_str());
 		}
+		// modifiers + numbers
+		for (unsigned k = '0'; k <= '9'; ++k) {
+			// alt + key prepends escape character
+			addKey(Key(k) + Key::Alt, STR('\033' << static_cast<char>(k)).c_str());
+		}
+		// ctrl + 2 is 0
+		addKey(Key(Key::Num0) + Key::Ctrl, "\000");
+		// alt + shift keys and other extre keys
+		addKey(Key(Key::Num0) + Key::Shift + Key::Alt, "\033)");
+		addKey(Key(Key::Num1) + Key::Shift + Key::Alt, "\033!");
+		addKey(Key(Key::Num2) + Key::Shift + Key::Alt, "\033@");
+		addKey(Key(Key::Num3) + Key::Shift + Key::Alt, "\033#");
+		addKey(Key(Key::Num4) + Key::Shift + Key::Alt, "\033$");
+		addKey(Key(Key::Num5) + Key::Shift + Key::Alt, "\033%");
+		addKey(Key(Key::Num6) + Key::Shift + Key::Alt, "\033^");
+		addKey(Key(Key::Num7) + Key::Shift + Key::Alt, "\033&");
+		addKey(Key(Key::Num8) + Key::Shift + Key::Alt, "\033*");
+		addKey(Key(Key::Num9) + Key::Shift + Key::Alt, "\033(");
+		// other special characters with alt
+		addKey(Key(Key::Tick) + Key::Alt, "\033`");
+		addKey(Key(Key::Tick) + Key::Shift + Key::Alt, "\033~");
+		addKey(Key(Key::Minus) + Key::Alt, "\033-");
+		addKey(Key(Key::Minus) + Key::Alt + Key::Shift, "\033_");
+		addKey(Key(Key::Equals) + Key::Alt, "\033=");
+		addKey(Key(Key::Equals) + Key::Alt + Key::Shift, "\033+");
+		addKey(Key(Key::SquareOpen) + Key::Alt, "\033[");
+		addKey(Key(Key::SquareOpen) + Key::Alt + Key::Shift, "\033{");
+		addKey(Key(Key::SquareClose) + Key::Alt, "\033]");
+		addKey(Key(Key::SquareClose) + Key::Alt + Key::Shift, "\033}");
+		addKey(Key(Key::Backslash) + Key::Alt, "\033\\");
+		addKey(Key(Key::Backslash) + Key::Alt + Key::Shift, "\033|");
+		addKey(Key(Key::Semicolon) + Key::Alt, "\033;");
+		addKey(Key(Key::Semicolon) + Key::Alt + Key::Shift, "\033:");
+		addKey(Key(Key::Quote) + Key::Alt, "\033'");
+		addKey(Key(Key::Quote) + Key::Alt + Key::Shift, "\033\"");
+		addKey(Key(Key::Comma) + Key::Alt, "\033,");
+		addKey(Key(Key::Comma) + Key::Alt + Key::Shift, "\033<");
+		addKey(Key(Key::Dot) + Key::Alt, "\033.");
+		addKey(Key(Key::Dot) + Key::Alt + Key::Shift, "\033>");
+		addKey(Key(Key::Slash) + Key::Alt, "\033/");
+		addKey(Key(Key::Slash) + Key::Alt + Key::Shift, "\033?");
+		// arrows, fn keys & friends
 		addKey(Key::Up, "\033[A");
 		addKey(Key::Down, "\033[B");
 		addKey(Key::Right, "\033[C");
@@ -152,6 +199,9 @@ namespace vterm {
 		addVTModifiers(Key::F11, "\033[23;", "~");
 		addVTModifiers(Key::F12, "\033[24;", "~");
 
+		addKey(Key(Key::SquareOpen) + Key::Ctrl, "\033");
+		addKey(Key(Key::Backslash) + Key::Ctrl, "\034");
+		addKey(Key(Key::SquareClose) + Key::Ctrl, "\035");
 	}
 
 	std::string const* VT100::KeyMap::getSequence(Key k) {
