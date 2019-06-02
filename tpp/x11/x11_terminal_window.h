@@ -18,6 +18,7 @@ namespace tpp {
 
 	template<>
 	inline FontSpec<XftFont*>* FontSpec<XftFont*>::Create(vterm::Font font, unsigned height) {
+		X11Application* app = reinterpret_cast<X11Application*>(Application::Instance());
 		//std::string fname = STR("Iosevka Term:pixelsize=" << height);
 		std::string fname = STR("Iosevka Term:pixelsize=" << (height - 3));
 		if (font.bold())
@@ -27,9 +28,9 @@ namespace tpp {
 		// TODO underline and strikethrough
 
 		XGlyphInfo gi;
-		XftFont* handle = XftFontOpenName(X11Application::XDisplay(), X11Application::XScreen(), fname.c_str());
+		XftFont* handle = XftFontOpenName(app->xDisplay(), app->xScreen(), fname.c_str());
         ASSERT(handle != nullptr);
-		XftTextExtentsUtf8(X11Application::XDisplay(), handle, (FcChar8*)"m", 1, &gi);
+		XftTextExtentsUtf8(app->xDisplay(), handle, (FcChar8*)"m", 1, &gi);
 		return new FontSpec<XftFont*>(font, gi.width, handle->ascent + handle->descent, handle);
 	}
 
@@ -38,7 +39,7 @@ namespace tpp {
 
 		typedef FontSpec<XftFont*> Font;
 
-		X11TerminalWindow(X11Application* app, TerminalSettings* settings);
+		X11TerminalWindow(Properties const & properties, std::string const & title);
 
 
 		void show() override;
@@ -48,6 +49,12 @@ namespace tpp {
 		}
 
 	protected:
+
+		/** Returns the application instance casted to X11 app. 
+		 */
+		X11Application* app() {
+			return reinterpret_cast<X11Application*>(Application::Instance());
+		}
 
 		~X11TerminalWindow() override;
 
@@ -82,7 +89,7 @@ namespace tpp {
 		}
 
 		void doSetFont(vterm::Font font) override {
-			font_ = Font::GetOrCreate(font, settings_->defaultFontHeight, zoom_);
+			font_ = Font::GetOrCreate(font, cellHeightPx_);
 		}
 
 		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {

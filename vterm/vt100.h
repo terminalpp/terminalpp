@@ -198,7 +198,8 @@ namespace vterm {
             }
 
             static bool IsFinalByte(char c) {
-                return (c >= 0x40) && (c <= 0x7f);
+				// no need to check the upper bound - char is signed
+                return (c >= 0x40) /*&& (c <= 0x7f) */;
             }
 
             friend std::ostream & operator << (std::ostream & s, CSISequence const & seq) {
@@ -365,6 +366,7 @@ namespace vterm {
             /** End of the scrolling region (exclusive row). 
              */
             unsigned scrollEnd;
+
 
             void resize(unsigned cols, unsigned rows) {
                 scrollStart = 0;

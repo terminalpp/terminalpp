@@ -12,6 +12,11 @@ namespace tpp {
 
 		~GDIApplication() override;
 
+		TerminalWindow * createTerminalWindow(TerminalWindow::Properties const& properties, std::string const & name);
+
+
+	protected:
+
 		void mainLoop() override;
 
 	private:

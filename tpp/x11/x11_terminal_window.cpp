@@ -18,10 +18,10 @@ namespace tpp {
 	// https://keithp.com/~keithp/render/Xft.tutorial
 
 
-	X11TerminalWindow::X11TerminalWindow(X11Application* app, TerminalSettings* settings) :
-		TerminalWindow(app, settings),
-		display_(X11Application::XDisplay()),
-		screen_(X11Application::XScreen()),
+	X11TerminalWindow::X11TerminalWindow(Properties const& properties, std::string const& title) :
+		TerminalWindow(properties, title),
+		display_(app()->xDisplay()),
+		screen_(app()->xScreen()),
 	    visual_(DefaultVisual(display_, screen_)),
 	    colorMap_(DefaultColormap(display_, screen_)),
 	    buffer_(0),
@@ -39,7 +39,7 @@ namespace tpp {
 			   at the top of the window and the name of the minimized window
 			   respectively.
 			*/
-		XSetStandardProperties(display_, window_, settings->defaultTitle.c_str(), nullptr, None, nullptr, 0, nullptr);
+		XSetStandardProperties(display_, window_, title_.c_str(), nullptr, None, nullptr, 0, nullptr);
 
 		/* this routine determines which types of input are allowed in
 		   the input.  see the appropriate section for details...
@@ -52,7 +52,7 @@ namespace tpp {
         gc_ = XCreateGC(display_, parent, GCGraphicsExposures, &gcv);
 
         // create input context for the window... The extra arguments to the XCreateIC are c-c c-v from the internet and for now are a mystery to me
-    	ic_ = XCreateIC(X11Application::XIm_, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+    	ic_ = XCreateIC(app()->xIm_, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
     				XNClientWindow, window_, XNFocusWindow, window_, nullptr);
 
         Windows_[window_] = this;
@@ -81,7 +81,7 @@ namespace tpp {
 	void X11TerminalWindow::clipboardPaste() {
 		Atom clipboard;
 		clipboard = XInternAtom(display_, "CLIPBOARD", 0);
-		XConvertSelection(display_, clipboard, X11Application::ClipboardFormat_, clipboard, window_, CurrentTime);
+		XConvertSelection(display_, clipboard, app()->clipboardFormat_, clipboard, window_, CurrentTime);
 	}
 
 	void X11TerminalWindow::clipboardCopy(std::string const& str) {
@@ -315,7 +315,7 @@ namespace tpp {
 					int format = 0;
 					XGetWindowProperty(tw->display_, tw->window_, e.xselection.property, 0, LONG_MAX / 4, False, AnyPropertyType,
 						&type, &format, &ressize, &restail, (unsigned char**)& result);
-					if (type == X11Application::ClipboardIncr_)
+					if (type == tw->app()->clipboardIncr_)
 						// buffer too larger, incremental reads must be implemented
 						// https://stackoverflow.com/questions/27378318/c-get-string-from-clipboard-on-linux
 						NOT_IMPLEMENTED;

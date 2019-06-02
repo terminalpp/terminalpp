@@ -5,6 +5,7 @@
 #include "vterm/local_pty.h"
 #include "vterm/vt100.h"
 
+#include "session.h"
 
 
 #ifdef WIN32
@@ -32,24 +33,15 @@ using namespace tpp;
 
 // https://github.com/Microsoft/node-pty/blob/master/src/win/conpty.cc
 
-#ifdef WIN32
 
-void FixMissingSettings(TerminalSettings & ts) {
-	vterm::Font defaultFont;
-	GDITerminalWindow::Font* f = GDITerminalWindow::Font::GetOrCreate(defaultFont, ts.defaultFontHeight, 1);
-	ts.defaultFontWidth = f->widthPx();
-}
-
-#elif __linux__
-
+/*
 void FixMissingSettings(TerminalSettings& ts) {
 	vterm::Font defaultFont;
 	X11TerminalWindow::Font* f = X11TerminalWindow::Font::GetOrCreate(defaultFont, ts.defaultFontHeight, 1);
 	ts.defaultFontWidth = f->widthPx();
 }
+*/
 
-
-#endif
 
 /** Terminal++ App Entry Point
 
@@ -58,74 +50,39 @@ void FixMissingSettings(TerminalSettings& ts) {
 #ifdef WIN32
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+	// create the application singleton
+	new GDIApplication(hInstance);
 
-	GDIApplication* app = new GDIApplication(hInstance);
+	Session* s = new Session("wsl", helpers::Command("wsl", { "-e", "bash" }));
+	s->start();
+	s->show();
 
-	TerminalSettings ts;
-	ts.defaultCols = 80;
-	ts.defaultRows = 25;
-	ts.defaultFontHeight = 18;
-	ts.defaultFontWidth = 0;
-	ts.defaultZoom = 1;
-
-	FixMissingSettings(ts);
-
-	std::cout << "OH HAI, CAN I HAZ CONSOLE?" << std::endl;
-
-
-	// initialize log levels we use
-	//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout))->toFile("c:/delete/tpp.txt"));
-	//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
-	helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout)));
-
-
-
-	vterm::VT100* vt100 = new vterm::VT100(
-		new vterm::LocalPTY(helpers::Command("wsl", { "-e", "bash" })),
-		vterm::Palette::ColorsXTerm256(), 15, 0
-	);
-
-	vterm::Terminal* t = new vterm::Terminal(80, 25, vt100);
-
-
-
-	TerminalWindow* tw = new GDITerminalWindow(app, &ts);
-
-	tw->setTerminal(t);
-
-	tw->show();
-
-
-
-	//Terminal * t = new Terminal("wsl -e echo hello mmoo", 80, 25);
-	//Terminal * t = new Terminal("wsl -e ping www.seznam.cz", 80, 25);
-	//Terminal * t = new Terminal("wsl -e screenfetch", 80, 25, vterm::Palette::ColorsXTerm256(), 15, 0);
-	//Terminal * t = new Terminal("wsl -e bash", 80, 25, vterm::Palette::ColorsXTerm256(), 15, 0);
-	//Terminal* t = new Terminal("wsl -e infocmp", 80, 25, vterm::Palette::ColorsXTerm256(), 15, 0);
-	//Terminal* t = new Terminal("wsl -e mc", 80, 25, vterm::Palette::ColorsXTerm256(), 15, 0);
-    //Terminal * t = new Terminal("wsl -e emacs ~/settings/emacs/init.el", 80, 25, vterm::Palette::Colors256(), 15, 0);
-	//Terminal * t = new Terminal("wsl -e bash -c \"ssh orange \"", 80, 25, vterm::Palette::ColorsXTerm256(), 15, 0);
-
-	//t->execute();
-
-	//tw->attachTerminal(t);
-	std::thread tt([&]() {
-		while (vt100->waitForInput()) {
-			vt100->processInput();
-		}
-		LOG << "terminated";
-	});
-	tt.detach();
-
-	app->mainLoop();
+	Application::MainLoop();
 
 	return EXIT_SUCCESS;
+
 }
 
 #elif __linux__
 
 int main(int argc, char* argv[]) {
 	try {
+
+		// create the application singleton
+		new X11Application();
+
+		Session* s = new Session("bash", helpers::Command("bash", {}));
+		s->start();
+		s->show();
+
+		Application::MainLoop();
+
+		return EXIT_SUCCESS;
+
+
+		/*
+
+
 
 		X11Application* app = new X11Application();
 
@@ -187,6 +144,8 @@ int main(int argc, char* argv[]) {
 
 		app->mainLoop();
 		return EXIT_SUCCESS;
+
+		*/
 	} catch (helpers::Exception const& e) {
 		std::cout << e;
 	}

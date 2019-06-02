@@ -53,6 +53,12 @@ namespace helpers {
 			command_(command),
 			args_(args) {
 		}
+
+		Command& operator = (Command const& other) {
+			command_ = other.command_;
+			args_ = other.args_;
+			return *this;
+		}
 	private:
 		std::string command_;
 		std::vector<std::string> args_;

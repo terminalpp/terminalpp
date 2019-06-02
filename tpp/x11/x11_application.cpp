@@ -15,22 +15,29 @@ namespace tpp {
             return 0;
         }
 
+		void FixDefaultTerminalWindowProperties(TerminalWindow::Properties & props) {
+			vterm::Font defaultFont;
+			X11TerminalWindow::Font* f = X11TerminalWindow::Font::GetOrCreate(defaultFont, props.fontHeight);
+			props.fontWidth = f->widthPx();
+		}
+
     } // anonymous namespace
 
-	Display* X11Application::XDisplay_ = nullptr;
-	int X11Application::XScreen_ = 0;
-    XIM X11Application::XIm_;
-	Atom X11Application::ClipboardFormat_;
-	Atom X11Application::ClipboardIncr_;
 
-	X11Application::X11Application() {
+	X11Application::X11Application():
+		xDisplay_(nullptr),
+		xScreen_(0) {
         XInitThreads();
-		ASSERT(XDisplay_ == nullptr) << "X11Application is a singleton";
-		XDisplay_ = XOpenDisplay(nullptr);
-		if (XDisplay_ == nullptr)
+		xDisplay_ = XOpenDisplay(nullptr);
+		if (xDisplay_ == nullptr)
 			THROW(helpers::Exception("Unable to open X display"));
-		XScreen_ = DefaultScreen(XDisplay_);
-        //XSetErrorHandler(X11ErrorHandler);
+		xScreen_ = DefaultScreen(xDisplay_);
+
+		// this needs to be done *after* the display & screen are initialized
+		FixDefaultTerminalWindowProperties(defaultTerminalWindowProperties_);
+
+
+		//XSetErrorHandler(X11ErrorHandler);
         //XSynchronize(XDisplay_, true);
 
 
@@ -39,24 +46,30 @@ namespace tpp {
         XSetLocaleModifiers("");
 
         // create X Input Method, each window then has its own context
-        XIm_ = XOpenIM(XDisplay_, nullptr, nullptr, nullptr);
-        ASSERT(XIm_ != nullptr);
+        xIm_ = XOpenIM(xDisplay_, nullptr, nullptr, nullptr);
+        ASSERT(xIm_ != nullptr);
 
-		ClipboardFormat_ = XInternAtom(XDisplay_, "UTF8_STRING", false);
-		ClipboardIncr_ = XInternAtom(XDisplay_, "INCR", false);
-		ASSERT(ClipboardFormat_ != None);
-		ASSERT(ClipboardIncr_ != None);
+		clipboardFormat_ = XInternAtom(xDisplay_, "UTF8_STRING", false);
+		clipboardIncr_ = XInternAtom(xDisplay_, "INCR", false);
+		ASSERT(clipboardFormat_ != None);
+		ASSERT(clipboardIncr_ != None);
+
 	}
 
 	X11Application::~X11Application() {
-		XCloseDisplay(XDisplay_);
-		XDisplay_ = nullptr;
+		XCloseDisplay(xDisplay_);
+		xDisplay_ = nullptr;
 	}
+
+	TerminalWindow* X11Application::createTerminalWindow(TerminalWindow::Properties const& properties, std::string const& name) {
+		return new X11TerminalWindow(properties, name);
+	}
+
 
 	void X11Application::mainLoop() {
 		XEvent e;
 		while (true) {
-			XNextEvent(XDisplay_, &e);
+			XNextEvent(xDisplay_, &e);
             if (XFilterEvent(&e, None))
                 continue;
             X11TerminalWindow::EventHandler(e);

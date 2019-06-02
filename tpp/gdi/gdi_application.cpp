@@ -28,6 +28,11 @@ namespace tpp {
 			std::cerr.clear();
 		}
 
+		void FixDefaultTerminalWindowProperties(TerminalWindow::Properties & props) {
+			vterm::Font defaultFont;
+			GDITerminalWindow::Font* f = GDITerminalWindow::Font::GetOrCreate(defaultFont, props.fontHeight);
+			props.fontWidth = f->widthPx();
+	    }
 
 	} // anonymous namespace
 
@@ -35,6 +40,7 @@ namespace tpp {
 
 	GDIApplication::GDIApplication(HINSTANCE hInstance):
 	    hInstance_(hInstance) {
+		FixDefaultTerminalWindowProperties(defaultTerminalWindowProperties_);
 		// TODO this should be conditional on a debug flag
 		AttachConsole();
 		registerTerminalWindowClass();
@@ -42,6 +48,10 @@ namespace tpp {
 
 	GDIApplication::~GDIApplication() {
 
+	}
+
+	TerminalWindow* GDIApplication::createTerminalWindow(TerminalWindow::Properties const& properties, std::string const & name) {
+		return new GDITerminalWindow(properties, name);
 	}
 
 	void GDIApplication::mainLoop() {

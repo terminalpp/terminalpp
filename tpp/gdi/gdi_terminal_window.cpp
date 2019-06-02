@@ -12,8 +12,8 @@ namespace tpp {
 
 	std::unordered_map<HWND, GDITerminalWindow *> GDITerminalWindow::Windows_;
 
-	GDITerminalWindow::GDITerminalWindow(GDIApplication * app, TerminalSettings * settings) :
-		TerminalWindow(app, settings),
+	GDITerminalWindow::GDITerminalWindow(Properties const & properties, std::string const & title) :
+		TerminalWindow(properties, title),
 		bufferDC_(CreateCompatibleDC(nullptr)),
 		buffer_(nullptr),
 		wndPlacement_{sizeof(wndPlacement_)},
@@ -21,8 +21,8 @@ namespace tpp {
 		frameHeight_{0} {
 		hWnd_ = CreateWindowEx(
 			WS_EX_LEFT, // the default
-			app->TerminalWindowClassName_, // window class
-			settings->defaultTitle.c_str(), // window name (all start as terminal++)
+			app()->TerminalWindowClassName_, // window class
+			title_.c_str(), // window name (all start as terminal++)
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, // x position
 			CW_USEDEFAULT, // y position
@@ -30,7 +30,7 @@ namespace tpp {
 			heightPx_,
 			nullptr, // handle to parent
 			nullptr, // handle to menu - TODO I should actually create a menu
-			app->hInstance_, // module handle
+			app()->hInstance_, // module handle
 			this // lParam for WM_CREATE message
 		);
 		SetTimer(hWnd_, TIMERID_BLINK, 500, nullptr);
@@ -72,6 +72,7 @@ namespace tpp {
 	}
 
 	void GDITerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
+		title_ = *e;
 		PostMessage(hWnd_, WM_USER, MSG_TITLE_CHANGE, 0);
 	}
 

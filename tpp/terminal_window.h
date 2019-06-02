@@ -18,10 +18,9 @@ namespace tpp {
 
 		/** Return a font for given terminal font description and zoom. 
 		 */
-		static FontSpec * GetOrCreate(vterm::Font font, unsigned fontHeight, double zoom) {
+		static FontSpec * GetOrCreate(vterm::Font font, unsigned height) {
 			// disable blinking as it is not really important for font selection
 			font.setBlink(false);
-			unsigned height = static_cast<unsigned>(std::round(zoom * fontHeight));
 			unsigned id = (height << 8) + font.raw();
 			auto i = Fonts_.find(id);
 			if (i == Fonts_.end())
@@ -71,36 +70,6 @@ namespace tpp {
 	std::unordered_map<unsigned, FontSpec<T> *> FontSpec<T>::Fonts_;
 
 
-	/** Description of settings relevant for terminal windows. 
-
-	 */
-	class TerminalSettings {
-	public:
-
-		/** Basic title for the terminal window. 
-		 */
-		std::string defaultTitle = "terminal++";
-
-		/** Default width and height of the terminal display (in terminal rows and cols, not in pixels). 
-		 */
-		unsigned defaultCols = 80;
-		unsigned defaultRows = 25;
-
-		/** Default width and height in pixels, of the selected font. I.e. the width and height of a single terminal cell. */
-		unsigned defaultFontHeight = 16;
-		unsigned defaultFontWidth = 0;
-
-		/** Default zoom of the window. 
-		 */
-		double defaultZoom = 1.0;
-
-		/** Determines whether the window starts in fullscreen mode or not. 
-		 */
-		double fullscreen = false;
-
-	}; // tpp::TerminalSettings
-
-
 	/** Single terminal window.
 
 	    The terminal window is a vterm renderer that can display the contents of the associated terminal. This class provides the common, platform independent functionality. 
@@ -120,7 +89,7 @@ namespace tpp {
 
 			/** Creates the properties object and fills in the values. 
 			 */
-			Properties(unsigned cols = 80, unsigned rows = 25, unsigned fontWidth = 0, unsigned fontHeight = 16, double zoom = 1) :
+			Properties(unsigned cols = 80, unsigned rows = 25, unsigned fontWidth = 0, unsigned fontHeight = 18, double zoom = 1) :
 				cols(cols),
 				rows(rows),
 				fontWidth(fontWidth),
@@ -133,8 +102,10 @@ namespace tpp {
 			Properties(TerminalWindow const* tw);
 		}; // TerminalWindow::Properties
 
-		TerminalSettings * settings() const {
-			return settings_;
+		/** Returns the title of the window. 
+		 */
+		std::string const& title() {
+			return title_;
 		}
 
 		/** Returns the zoom level of the window. 
@@ -186,16 +157,17 @@ namespace tpp {
 			return font;
 		}
 		
-		TerminalWindow(Application * application, TerminalSettings * settings) :
-			vterm::Terminal::Renderer(settings->defaultCols, settings->defaultRows),
-			application_(application),
-			settings_(settings),
-			widthPx_(settings->defaultFontWidth * settings->defaultCols),
-			heightPx_(settings->defaultFontHeight * settings->defaultRows),
-			zoom_(settings->defaultZoom),
-			fullscreen_(settings->fullscreen),
-			cellWidthPx_(settings->defaultFontWidth * settings->defaultZoom),
-			cellHeightPx_(settings->defaultFontHeight * settings->defaultZoom),
+		TerminalWindow(Properties const & properties, std::string const & title) :
+			vterm::Terminal::Renderer(properties.cols, properties.rows),
+			widthPx_(properties.fontWidth * properties.cols),
+			heightPx_(properties.fontHeight * properties.rows),
+			title_(title),
+			zoom_(properties.zoom),
+			fullscreen_(false),
+			fontWidth_(properties.fontWidth),
+			fontHeight_(properties.fontHeight),
+			cellWidthPx_(static_cast<unsigned>(properties.fontWidth * properties.zoom)),
+			cellHeightPx_(static_cast<unsigned>(properties.fontHeight * properties.zoom)),
 		    blink_(true),
 		    mouseCol_(0),
 		    mouseRow_(0) {
@@ -222,8 +194,8 @@ namespace tpp {
 		 */
 		virtual void doSetZoom(double value) {
 			// update width & height of the cell
-			cellWidthPx_ = static_cast<unsigned>(std::round(value * settings_->defaultFontWidth));
-			cellHeightPx_ = static_cast<unsigned>(std::round(value * settings_->defaultFontHeight));
+			cellWidthPx_ = static_cast<unsigned>(std::round(value * fontWidth_));
+			cellHeightPx_ = static_cast<unsigned>(std::round(value * fontHeight_));
 			// resize the terminal properly
 			resize(widthPx_ / cellWidthPx_, heightPx_ / cellHeightPx_);
 		}
@@ -298,12 +270,14 @@ namespace tpp {
 
 		Application * application_;
 
-		TerminalSettings * settings_;
-
 		/** Width and height of the window client area in pixels. 
 		 */
 		unsigned widthPx_;
 		unsigned heightPx_;
+
+		/** Title of the terminal window. 
+		 */
+		std::string title_;
 
 		/** Zoom level of the window. 
 		 */
@@ -312,6 +286,11 @@ namespace tpp {
 		/** Determines whether the window is fullscreen or not. 
 		 */
 		bool fullscreen_;
+
+		/** Font size at zoom level 1
+		 */
+		unsigned fontWidth_;
+		unsigned fontHeight_;
 
 		/** Width of a single cell in pixels. 
 		 */

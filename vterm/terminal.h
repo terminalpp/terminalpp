@@ -376,7 +376,6 @@ namespace vterm {
 			    Verifies that the terminal is unattached, links the terminal to the backend and then calls the resize function with the new terminal's size. 
 			 */
 			void attachToTerminal(Terminal* terminal) {
-				ASSERT(terminal->backend_ == nullptr) << "Terminal already attached";
 				terminal->backend_ = this;
 				terminal_ = terminal;
 				resize(terminal->cols(), terminal->rows());
@@ -404,10 +403,7 @@ namespace vterm {
 			 */
 			void processInput();
 
-			~PTYBackend() override {
-				delete[] buffer_;
-				delete pty_;
-			}
+			~PTYBackend() override;
 
 		protected:
 

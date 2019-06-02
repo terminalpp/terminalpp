@@ -11,8 +11,8 @@ namespace tpp {
 	TerminalWindow::Properties::Properties(TerminalWindow const* tw) :
 		cols(tw->cols()),
 		rows(tw->rows()),
-	    fontWidth(tw->cellWidthPx_),
-	    fontHeight(tw->cellHeightPx_),
+	    fontWidth(tw->cellWidthPx_ * tw->zoom_),
+	    fontHeight(tw->cellHeightPx_ * tw->zoom_),
 	    zoom(tw->zoom_) {
 	}
 

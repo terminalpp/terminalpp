@@ -4,7 +4,10 @@
 
 #include "vterm/terminal.h"
 
+#include "terminal_window.h"
+
 namespace tpp {
+
 
 	/** Encapsulates a single session in the terminal. 
 
@@ -16,9 +19,7 @@ namespace tpp {
 
 		/** Creates new session. 
 		 */
-		Session(std::string const& name) :
-			name_(name) {
-		}
+		Session(std::string const& name, helpers::Command const& command);
 
 		/** Name of the session. 
 		
@@ -41,11 +42,11 @@ namespace tpp {
 
 			TODO: Once more connection types are available, the command should change. 
 		 */
-		helpers::Commandconst& command() const {
+		helpers::Command const& command() const {
 			return command_;
 		}
 
-		void setCommand(helpers::Commandconst& cmd) {
+		void setCommand(helpers::Command const& command) {
 			command_ = command;
 			// TODO update console? 
 		}
@@ -54,11 +55,11 @@ namespace tpp {
 
 		    
 		 */
-		void start() {
-			ASSERT(terminal_ == nullptr) << "Session " << name_ << " already started";
-			// create the terminal
-			terminal_ = new vterm::Terminal(windowProperties_.cols, windowProperties_.rows);
-			// create the VT100 decoder, and associated PTY backend
+		void start();
+
+
+		void show() {
+			window_->show();
 		}
 
 
@@ -70,9 +71,16 @@ namespace tpp {
 		/** Name of the session. */
 		std::string name_;
 
+		/** Command to be executed for the terminal.
+		 */
+		helpers::Command command_;
+
+		/** The PTY for the session. */
+		vterm::LocalPTY* pty_;
+
 		/** The associated terminal. 
 		 */
-		vterm::Terminal::Terminal * terminal_;
+		vterm::Terminal * terminal_;
 
 		/** Window associated with the terminal. 
 		 */
@@ -82,9 +90,6 @@ namespace tpp {
 		 */
 		TerminalWindow::Properties windowProperties_;
 
-		/** Command to be executed for the terminal. 
-		 */
-		helpers::Command command_;
 
 
 	};

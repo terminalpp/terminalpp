@@ -47,7 +47,7 @@ namespace tpp {
 	public:
 		typedef FontSpec<HFONT> Font;
 
-		GDITerminalWindow(GDIApplication * app, TerminalSettings * settings);
+		GDITerminalWindow(Properties const & properties, std::string const & title);
 
 		void show() override {
 			ShowWindow(hWnd_, SW_SHOWNORMAL);
@@ -66,6 +66,12 @@ namespace tpp {
 		}
 
 	protected:
+
+		/** Returns the Application singleton, converted to GDIApplication. 
+		 */
+		GDIApplication* app() {
+			return reinterpret_cast<GDIApplication*>(Application::Instance());
+		}
 
 		/** Just deleting a terminal window is not allowed, therefore protected.
 		 */
@@ -98,7 +104,7 @@ namespace tpp {
 		}
 
 		void doSetFont(vterm::Font font) override {
-			SelectObject(bufferDC_, Font::GetOrCreate(font, settings_->defaultFontHeight, zoom_)->handle());
+			SelectObject(bufferDC_, Font::GetOrCreate(font, cellHeightPx_)->handle());
 		}
 
 		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {

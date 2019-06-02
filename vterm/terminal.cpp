@@ -40,6 +40,11 @@ namespace vterm {
 		available_ = false;
 	}
 
+	Terminal::PTYBackend::~PTYBackend() {
+		delete[] buffer_;
+		delete pty_;
+	}
+
 	size_t Terminal::PTYBackend::sendData(char const * buffer, size_t size) {
 		ASSERT(pty_ != nullptr) << "Cannot send data when no PTY is attached";
 		return pty_->sendData(buffer, size);

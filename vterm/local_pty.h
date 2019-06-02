@@ -25,6 +25,7 @@ namespace vterm {
 		/** Terminates the process immediately. 
 		 */
 		void doTerminate() override;
+
 		ExitCode doWaitFor() override;
 		size_t sendData(char const * buffer, size_t size) override;
 		size_t receiveData(char* buffer, size_t availableSize) override;

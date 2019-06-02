@@ -17,26 +17,30 @@ namespace tpp {
 		X11Application();
 		~X11Application() override;
 
+		TerminalWindow * createTerminalWindow(TerminalWindow::Properties const& properties, std::string const& name);
+
+
+
+		Display* xDisplay() {
+			return xDisplay_;
+		}
+
+		int xScreen() {
+			return xScreen_;
+		}
+
+	protected:
+
 		void mainLoop() override;
-
-		// Can't be named display because there is already a class named display in X11
-		static Display* XDisplay() {
-			return XDisplay_;
-		}
-
-		static int XScreen() {
-			return XScreen_;
-		}
-
 	private:
 		friend class X11TerminalWindow;
 
 		/** X11 display. */
-		static Display* XDisplay_;
-		static int XScreen_;
-        static XIM XIm_;
-		static Atom ClipboardFormat_;
-		static Atom ClipboardIncr_;
+	    Display* xDisplay_;
+		int xScreen_;
+        XIM xIm_;
+		Atom clipboardFormat_;
+		Atom clipboardIncr_;
 
 	}; // tpp::Application [linux]
 
