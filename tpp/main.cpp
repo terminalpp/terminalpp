@@ -79,21 +79,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout)));
 
 
-	vterm::Terminal* t = new vterm::Terminal(80, 25);
-
-	TerminalWindow* tw = new GDITerminalWindow(app, &ts);
-	tw->show();
-
-	tw->setTerminal(t);
-
 
 	vterm::VT100* vt100 = new vterm::VT100(
-		new vterm::LocalPTY(helpers::Command("wsl", {"-e", "bash"})),
+		new vterm::LocalPTY(helpers::Command("wsl", { "-e", "bash" })),
 		vterm::Palette::ColorsXTerm256(), 15, 0
 	);
 
-	vt100->setTerminal(t);
+	vterm::Terminal* t = new vterm::Terminal(80, 25, vt100);
 
+
+
+	TerminalWindow* tw = new GDITerminalWindow(app, &ts);
+
+	tw->setTerminal(t);
+
+	tw->show();
 
 
 
@@ -173,7 +173,8 @@ int main(int argc, char* argv[]) {
 			new vterm::LocalPTY(helpers::Command("bash", {})),
 			vterm::Palette::ColorsXTerm256(), 15, 0
 		);
-        vt100->setTerminal(t);
+		t->setBackend(vt100);
+        //vt100->setTerminal(t);
         //vt100->startThreadedReceiver();
 		std::thread tt([&]() {
 			while (vt100->waitForInput()) {

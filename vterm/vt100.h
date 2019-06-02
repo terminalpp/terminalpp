@@ -77,7 +77,7 @@ namespace vterm {
 
 
 	*/
-	class VT100 : public Terminal::PTYDecoder {
+	class VT100 : public Terminal::PTYBackend {
 	public:
 
 		static constexpr char const * const SEQ = "VT100";

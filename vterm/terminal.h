@@ -165,7 +165,7 @@ namespace vterm {
 		private:
 
 			friend class Terminal;
-            friend class Decoder;
+            friend class Backend;
 
 
 			/** Resizes the buffer.
@@ -306,18 +306,10 @@ namespace vterm {
 
 		};
 
-		class Decoder {
+		class Backend {
 		public:
 			Terminal* terminal() const {
 				return terminal_;
-			}
-
-			void setTerminal(Terminal* terminal) {
-				if (terminal_ != terminal) {
-					detachFromTerminal();
-					if (terminal != nullptr)
-						attachToTerminal(terminal);
-				}
 			}
 
 		protected:
@@ -326,7 +318,7 @@ namespace vterm {
                 buffer.resize(cols, rows);
             }
 
-			Decoder() :
+			Backend() :
 				terminal_(nullptr) {
 			}
 
@@ -365,7 +357,7 @@ namespace vterm {
 
 			virtual void paste(std::string const & what) = 0;
 
-			virtual ~Decoder() {
+			virtual ~Backend() {
 				detachFromTerminal();
 			}
 
@@ -393,9 +385,9 @@ namespace vterm {
 			Terminal* terminal_;
 		};
 
-		/** Decoder which defines API for reading from / writing to PTY like deviced (i.e. input and output streams). 
+		/** Backend which defines API for reading from / writing to PTY like deviced (i.e. input and output streams). 
 		 */
-		class PTYDecoder : public Decoder {
+		class PTYBackend : public Backend {
 		public:
 
 			/** Returns the pseudoterminal object associated with the backend. 
@@ -412,8 +404,9 @@ namespace vterm {
 			 */
 			void processInput();
 
-			~PTYDecoder() override {
+			~PTYBackend() override {
 				delete[] buffer_;
+				delete pty_;
 			}
 
 		protected:
@@ -422,7 +415,11 @@ namespace vterm {
 			 */
 			void resize(unsigned cols, unsigned rows) override;
 
-			PTYDecoder(PTY * pty, size_t bufferSize = 10240) :
+			/** Creates a PTY backend. 
+
+			    Note that the PTY is owned by the backend and when the backend will be deleted, so will the PTY. 
+			 */
+			PTYBackend(PTY * pty, size_t bufferSize = 10240) :
 				pty_(pty),
 				bufferSize_(bufferSize),
 				buffer_(new char[bufferSize]),
@@ -455,9 +452,15 @@ namespace vterm {
 			bool available_;
 		};
 
-		Terminal(unsigned cols, unsigned rows) :
+		Terminal(unsigned cols, unsigned rows, Backend * backend = nullptr) :
 			buffer_(cols, rows),
-			backend_(nullptr) {
+			backend_(backend) {
+			if (backend_ != nullptr)
+				backend_->attachToTerminal(this);
+		}
+
+		~Terminal() override {
+			delete backend_;
 		}
 
 		// events
@@ -474,6 +477,21 @@ namespace vterm {
 
 		unsigned rows() const {
 			return buffer_.rows_;
+		}
+
+		/** Backend associated with the terminal. 
+
+		    Note that if set, the backend is owned by the terminal, i.e. deleting the terminal will delete the backend as well. 
+		 */
+		Backend const * backend() const {
+			return backend_;
+		}
+
+		void setBackend(Backend* backend) {
+			if (backend_ != nullptr)
+				NOT_IMPLEMENTED;
+			backend_ = backend;
+			backend->attachToTerminal(this);
 		}
 
 		/** Returns the buffer associated with the terminal. 
@@ -583,9 +601,9 @@ namespace vterm {
 		 */
 		Buffer buffer_;
 
-		/** Decoder attached to the terminal. 
+		/** Backend attached to the terminal. 
 		 */
-		Decoder* backend_;
+		Backend* backend_;
 
 		/** Title of the terminal. 
 		 */

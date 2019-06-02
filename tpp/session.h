@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 #include "vterm/terminal.h"
 
 namespace tpp {
@@ -33,6 +35,32 @@ namespace tpp {
 			}
 		}
 
+		/** The command associated with the session. 
+
+		    This is the command to be displayed in the terminal. Most likely a shell name, or a script to connect to remote machine. 
+
+			TODO: Once more connection types are available, the command should change. 
+		 */
+		helpers::Commandconst& command() const {
+			return command_;
+		}
+
+		void setCommand(helpers::Commandconst& cmd) {
+			command_ = command;
+			// TODO update console? 
+		}
+
+		/** Starts the session. 
+
+		    
+		 */
+		void start() {
+			ASSERT(terminal_ == nullptr) << "Session " << name_ << " already started";
+			// create the terminal
+			terminal_ = new vterm::Terminal(windowProperties_.cols, windowProperties_.rows);
+			// create the VT100 decoder, and associated PTY backend
+		}
+
 
 
 
@@ -53,6 +81,10 @@ namespace tpp {
 		/** Properties of the attached window. 
 		 */
 		TerminalWindow::Properties windowProperties_;
+
+		/** Command to be executed for the terminal. 
+		 */
+		helpers::Command command_;
 
 
 	};
