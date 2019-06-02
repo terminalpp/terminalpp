@@ -165,7 +165,7 @@ namespace vterm {
 		private:
 
 			friend class Terminal;
-            friend class Backend;
+            friend class Decoder;
 
 
 			/** Resizes the buffer.
@@ -306,7 +306,7 @@ namespace vterm {
 
 		};
 
-		class Backend {
+		class Decoder {
 		public:
 			Terminal* terminal() const {
 				return terminal_;
@@ -326,7 +326,7 @@ namespace vterm {
                 buffer.resize(cols, rows);
             }
 
-			Backend() :
+			Decoder() :
 				terminal_(nullptr) {
 			}
 
@@ -365,7 +365,7 @@ namespace vterm {
 
 			virtual void paste(std::string const & what) = 0;
 
-			virtual ~Backend() {
+			virtual ~Decoder() {
 				detachFromTerminal();
 			}
 
@@ -393,9 +393,9 @@ namespace vterm {
 			Terminal* terminal_;
 		};
 
-		/** Backend which defines API for reading from / writing to PTY like deviced (i.e. input and output streams). 
+		/** Decoder which defines API for reading from / writing to PTY like deviced (i.e. input and output streams). 
 		 */
-		class PTYBackend : public Backend {
+		class PTYDecoder : public Decoder {
 		public:
 
 			/** Returns the pseudoterminal object associated with the backend. 
@@ -412,7 +412,7 @@ namespace vterm {
 			 */
 			void processInput();
 
-			~PTYBackend() override {
+			~PTYDecoder() override {
 				delete[] buffer_;
 			}
 
@@ -422,7 +422,7 @@ namespace vterm {
 			 */
 			void resize(unsigned cols, unsigned rows) override;
 
-			PTYBackend(PTY * pty, size_t bufferSize = 10240) :
+			PTYDecoder(PTY * pty, size_t bufferSize = 10240) :
 				pty_(pty),
 				bufferSize_(bufferSize),
 				buffer_(new char[bufferSize]),
@@ -583,9 +583,9 @@ namespace vterm {
 		 */
 		Buffer buffer_;
 
-		/** Backend attached to the terminal. 
+		/** Decoder attached to the terminal. 
 		 */
-		Backend* backend_;
+		Decoder* backend_;
 
 		/** Title of the terminal. 
 		 */

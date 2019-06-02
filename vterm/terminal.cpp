@@ -6,12 +6,12 @@
 
 namespace vterm {
 
-	void Terminal::PTYBackend::resize(unsigned cols, unsigned rows) {
+	void Terminal::PTYDecoder::resize(unsigned cols, unsigned rows) {
 		if (pty_ != nullptr)
 			pty_->resize(cols, rows);
 	}
 
-	bool Terminal::PTYBackend::waitForInput() {
+	bool Terminal::PTYDecoder::waitForInput() {
 		// if there is available data already, return
 		if (available_)
 			return true;
@@ -27,7 +27,7 @@ namespace vterm {
 		}
 	}
 
-	void Terminal::PTYBackend::processInput() {
+	void Terminal::PTYDecoder::processInput() {
 		if (!available_)
 			return;
 		// process the data received
@@ -40,12 +40,12 @@ namespace vterm {
 		available_ = false;
 	}
 
-	size_t Terminal::PTYBackend::sendData(char const * buffer, size_t size) {
+	size_t Terminal::PTYDecoder::sendData(char const * buffer, size_t size) {
 		ASSERT(pty_ != nullptr) << "Cannot send data when no PTY is attached";
 		return pty_->sendData(buffer, size);
 	}
 
-	void Terminal::PTYBackend::resizeComBuffer(size_t newSize) {
+	void Terminal::PTYDecoder::resizeComBuffer(size_t newSize) {
 		ASSERT(newSize >= static_cast<size_t>(writeStart_ - buffer_)) << "Not enough space for unprocessed data after resizing (unprocessed " << (writeStart_ - buffer_) << ", requested size " << newSize << ")";
 		char* nb = new char[newSize];
 		memcpy(nb, buffer_, writeStart_ - buffer_);

@@ -49,7 +49,7 @@ namespace vterm {
 		}
 
 	protected:
-		friend class Terminal::PTYBackend;
+		friend class Terminal::PTYDecoder;
 
 		PTY() :
 			terminated_(false) {

@@ -299,7 +299,7 @@ namespace vterm {
     // VT100
 
 	VT100::VT100(PTY * pty, Palette const & palette, unsigned defaultFg, unsigned defaultBg) :
-		PTYBackend(pty),
+		PTYDecoder(pty),
 		palette_(256),
 		defaultFg_(defaultFg),
 		defaultBg_(defaultBg),
@@ -441,7 +441,7 @@ namespace vterm {
 		// and resize its cells
         resizeBuffer(otherBuffer_,cols, rows);
 		// call the PTY backend's resize which propagates the change to the pty
-		PTYBackend::resize(cols, rows);
+		PTYDecoder::resize(cols, rows);
 		LOG(SEQ) << "terminal resized to " << cols << "," << rows;
 	}
 
