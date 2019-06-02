@@ -5,6 +5,7 @@
 #endif
 
 #include "pty.h"
+#include "helpers/process.h"
 
 namespace vterm {
 
@@ -13,7 +14,7 @@ namespace vterm {
 
 		/** Starts the local pseudoterminal for given command. 
 		 */
-		LocalPTY(std::string const& command, std::initializer_list<std::string> args);
+		LocalPTY(helpers::Command const & command);
 
 		~LocalPTY() override;
 
@@ -32,9 +33,7 @@ namespace vterm {
 
 
 	private:
-		std::string command_;
-
-		std::vector<std::string> args_;
+		helpers::Command command_;
 
 #ifdef WIN32
 

@@ -6,6 +6,18 @@
 
 namespace tpp {
 
+	// TerminalWindow::Properties
+
+	TerminalWindow::Properties::Properties(TerminalWindow const* tw) :
+		cols(tw->cols()),
+		rows(tw->rows()),
+	    fontWidth(tw->cellWidthPx_),
+	    fontHeight(tw->cellHeightPx_),
+	    zoom(tw->zoom_) {
+	}
+
+	// TerminalWindow
+
 	void TerminalWindow::keyChar(vterm::Char::UTF8 c) {
 		terminal()->keyChar(c);
 	}

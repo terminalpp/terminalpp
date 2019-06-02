@@ -14,9 +14,8 @@ namespace vterm {
 
 #ifdef WIN32
 
-	LocalPTY::LocalPTY(std::string const & command, std::initializer_list<std::string> args) :
-		command_{ command },
-		args_{ args },
+	LocalPTY::LocalPTY(helpers::Command const & command) :
+		command_(command),
 		startupInfo_{},
 		conPTY_{ INVALID_HANDLE_VALUE },
 		pipeIn_{ INVALID_HANDLE_VALUE },
@@ -121,9 +120,7 @@ namespace vterm {
 			nullptr
 		))
 			THROW(helpers::Win32Error("Unable to set pseudoconsole attribute"));
-		std::string cmd = command_;
-		for (auto i : args_)
-			cmd = command_ + " " + i;
+		std::string cmd = command_.toString();
 		// finally, create the process with given commandline
 		if (!CreateProcess(
 			nullptr,
@@ -137,14 +134,13 @@ namespace vterm {
 			&startupInfo.StartupInfo, // startup info
 			&pInfo_ // info about the process
 		))
-			THROW(helpers::Win32Error(STR("Unable to start process " << command_)));
+			THROW(helpers::Win32Error(STR("Unable to start process " << cmd)));
 	}
 
 #elif __linux__
 
-    LocalPTY::LocalPTY(std::string const& cmd, std::initializer_list<std::string> args) :
-	    command_(cmd),
-	    args_(args) {
+    LocalPTY::LocalPTY(helpers::Command const & command) :
+	    command_(command) {
         start();
 	}
 
@@ -218,14 +214,14 @@ namespace vterm {
 				signal(SIGALRM, SIG_DFL);
 
 
-				char** args = new char* [args_.size() + 2];
-				args[0] = const_cast<char*>(command_.c_str());
-				for (size_t i = 0; i < args_.size(); ++i)
-					args[i + 1] = const_cast<char*>(args_[i].c_str());
+				char** args = new char* [command_.args().size() + 2];
+				args[0] = const_cast<char*>(command_.command().c_str());
+				for (size_t i = 0; i < command_.args().size(); ++i)
+					args[i + 1] = const_cast<char*>(command_.args()[i].c_str());
 				
-				args[args_.size() + 1] = nullptr;
+				args[command_.args().size() + 1] = nullptr;
 				// execvp never returns
-				execvp(command_.c_str(), args);
+				execvp(command_.command().c_str(), args);
 				UNREACHABLE;
 			}
 			// continuing the terminal program 

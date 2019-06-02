@@ -95,6 +95,9 @@ The following is an example of how events can be used:
 	}; 
 
 
+## Process-related OS functions (`process.h`)
+
+Provides abstractions for generic OS features involving processes, such as the `Command` class which groups executable and its arguments. 
 
 
 

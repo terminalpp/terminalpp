@@ -108,6 +108,31 @@ namespace tpp {
 	class TerminalWindow : public vterm::Terminal::Renderer {
 	public:
 
+		/** Encapsulates the properties of the window so that they can be obtained and updated easily. 
+		 */
+		class Properties {
+		public:
+			unsigned cols;
+			unsigned rows;
+			unsigned fontWidth;
+			unsigned fontHeight;
+			double zoom;
+
+			/** Creates the properties object and fills in the values. 
+			 */
+			Properties(unsigned cols = 80, unsigned rows = 25, unsigned fontWidth = 0, unsigned fontHeight = 16, double zoom = 1) :
+				cols(cols),
+				rows(rows),
+				fontWidth(fontWidth),
+				fontHeight(fontHeight),
+				zoom(zoom) {
+			}
+
+			/** Creates the properties object and fills its values from given terminal window. 
+			 */
+			Properties(TerminalWindow const* tw);
+		}; // TerminalWindow::Properties
+
 		TerminalSettings * settings() const {
 			return settings_;
 		}

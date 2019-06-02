@@ -1,6 +1,6 @@
 # Terminal++
 
-*Terminal++*, or `tpp` should be a minimalistic, simple to use virtual terminal that allows basic `VT100` emulation, similar to that of the windows console, as well as much more complex `++` mode which allows things like graphics to be displayed as well. 
+*Terminal++*, or `tpp` is minimalistic, simple to use virtual terminal that allows basic `VT100` emulation, similar to that of the windows console, as well as much more complex `++` mode which allows things like graphics to be displayed as well. 
 
 > This looks like a good font: http://typeof.net/Iosevka/ - it is also part of nerdfonts, which is the same font, but augmented with many extra symbols. Iosevka is by default not truly monospace between regular and bold variants, but both can be downloaded and installed at the same time, which fixes the issue.
 

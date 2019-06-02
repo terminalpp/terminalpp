@@ -88,7 +88,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	vterm::VT100* vt100 = new vterm::VT100(
-		new vterm::LocalPTY("wsl", {"-e", "bash"}),
+		new vterm::LocalPTY(helpers::Command("wsl", {"-e", "bash"})),
 		vterm::Palette::ColorsXTerm256(), 15, 0
 	);
 
@@ -170,7 +170,7 @@ int main(int argc, char* argv[]) {
 
 
         vterm::VT100* vt100 = new vterm::VT100(
-			new vterm::LocalPTY("bash", {}),
+			new vterm::LocalPTY(helpers::Command("bash", {})),
 			vterm::Palette::ColorsXTerm256(), 15, 0
 		);
         vt100->setTerminal(t);
