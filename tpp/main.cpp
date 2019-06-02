@@ -5,8 +5,8 @@
 #include "vterm/local_pty.h"
 #include "vterm/vt100.h"
 
+#include "config.h"
 #include "session.h"
-
 
 #ifdef WIN32
 #include "gdi/gdi_application.h"
@@ -34,128 +34,36 @@ using namespace tpp;
 // https://github.com/Microsoft/node-pty/blob/master/src/win/conpty.cc
 
 
-/*
-void FixMissingSettings(TerminalSettings& ts) {
-	vterm::Font defaultFont;
-	X11TerminalWindow::Font* f = X11TerminalWindow::Font::GetOrCreate(defaultFont, ts.defaultFontHeight, 1);
-	ts.defaultFontWidth = f->widthPx();
-}
-*/
-
 
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
  */
 #ifdef WIN32
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	// create the application singleton
-	new GDIApplication(hInstance);
-
-	Session* s = new Session("wsl", helpers::Command("wsl", { "-e", "bash" }));
-	s->start();
-	s->show();
-
-	Application::MainLoop();
-
-	return EXIT_SUCCESS;
-
-}
-
+	try {
+	    // create the application singleton
+	    new GDIApplication(hInstance);
 #elif __linux__
-
 int main(int argc, char* argv[]) {
 	try {
+	    // create the application singleton
+	    new X11Application();
+#endif
 
-		// create the application singleton
-		new X11Application();
-
-		Session* s = new Session("bash", helpers::Command("bash", {}));
+		Session* s = new Session("t++", DEFAULT_SESSION_COMMAND);
 		s->start();
 		s->show();
 
-		Application::MainLoop();
+    	Application::MainLoop();
 
-		return EXIT_SUCCESS;
-
-
-		/*
-
-
-
-		X11Application* app = new X11Application();
-
-		TerminalSettings ts;
-		ts.defaultCols = 100;
-		ts.defaultRows = 40;
-		ts.defaultFontHeight = 18;
-		ts.defaultFontWidth = 0;
-		ts.defaultZoom = 1;
-
-		//helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ, std::cout)));
-		helpers::Log::RegisterLogger((new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout)));
-
-
-		FixMissingSettings(ts);
-
-
-		//TerminalWindow* tw = new TerminalWindow(app, &ts);
-		//tw->show();
-
-		//Terminal* t = new Terminal("./check-tty.sh", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		//Terminal* t = new Terminal("printenv", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		//Terminal* t = new Terminal("tput", { "colors" }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		//Terminal* t = new Terminal("ls", { "-la" }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		//Terminal* t = new Terminal("infocmp", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		//Terminal* t = new Terminal("screenfetch", {  }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		//Terminal* t = new Terminal("mc", { }, 100, 40, vterm::Palette::Colors16, 15, 0);
-		//Terminal* t = new Terminal("bash", { }, 100, 40, vterm::Palette::ColorsXTerm256(), 15, 0);
-
-		//tw->attachTerminal(t);
-
-		//t->execute();
-
-        vterm::Terminal * t = new vterm::Terminal(80, 25);
-
-        X11TerminalWindow * tw = new X11TerminalWindow(app, &ts);
-        tw->show();
-
-        tw->setTerminal(t);
-
-
-
-
-        vterm::VT100* vt100 = new vterm::VT100(
-			new vterm::LocalPTY(helpers::Command("bash", {})),
-			vterm::Palette::ColorsXTerm256(), 15, 0
-		);
-		t->setBackend(vt100);
-        //vt100->setTerminal(t);
-        //vt100->startThreadedReceiver();
-		std::thread tt([&]() {
-			while (vt100->waitForInput()) {
-				vt100->processInput();
-			}
-			LOG << "terminated";
-			});
-		tt.detach();
-
-
-		app->mainLoop();
-		return EXIT_SUCCESS;
-
-		*/
+	    return EXIT_SUCCESS;
 	} catch (helpers::Exception const& e) {
 		std::cout << e;
-	}
-	catch (std::exception const& e) {
+	} catch (std::exception const& e) {
 		std::cout << e.what();
-	} 
-	catch (...) {
+	} catch (...) {
 		std::cout << "unknown error";
 	}
 	return EXIT_FAILURE;
-} 
-
-#endif
+}

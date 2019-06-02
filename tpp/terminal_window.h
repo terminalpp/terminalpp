@@ -4,6 +4,9 @@
 
 #include "vterm/vt100.h"
 
+
+#include "config.h"
+
 namespace tpp {
 
 	class Application;
@@ -89,7 +92,7 @@ namespace tpp {
 
 			/** Creates the properties object and fills in the values. 
 			 */
-			Properties(unsigned cols = 80, unsigned rows = 25, unsigned fontWidth = 0, unsigned fontHeight = 18, double zoom = 1) :
+			Properties(unsigned cols = DEFAULT_TERMINAL_COLS, unsigned rows = DEFAULT_TERMINAL_ROWS, unsigned fontWidth = 0, unsigned fontHeight = DEFAULT_TERMINAL_FONT_HEIGHT, double zoom = 1) :
 				cols(cols),
 				rows(rows),
 				fontWidth(fontWidth),
