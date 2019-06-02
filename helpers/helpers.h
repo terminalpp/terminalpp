@@ -5,6 +5,10 @@
 
 #define STR(...) static_cast<std::stringstream &&>(std::stringstream() << __VA_ARGS__).str()
 
+/** Marks given argument as unused so that the compiler will stop giving warnings about it when extra warnings are enabled. 
+ */
+#define MARK_AS_UNUSED(ARG_NAME) (void)(ARG_NAME)
+
 #ifdef NDEBUG 
 #define THROW(...) do {  throw __VA_ARGS__; } while (false)
 #define ASSERT(...) if (false) std::stringstream()

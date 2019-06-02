@@ -369,6 +369,7 @@ namespace vterm {
 
 
             void resize(unsigned cols, unsigned rows) {
+				MARK_AS_UNUSED(cols);
                 scrollStart = 0;
                 scrollEnd = rows;
             }
