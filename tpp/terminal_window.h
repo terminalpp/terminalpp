@@ -180,6 +180,10 @@ namespace tpp {
             doInvalidate();
         }
 
+        void titleChange(vterm::Terminal::TitleChangeEvent & e) override {
+            title_ = *e;
+        }
+
 		/** Handles resize of the window's client area (in pixels). 
 
 		    Recalculates the number of columns and rows displayabe and calls the renderer's resize method which in turn updates the underlying terminal. When the terminal changes, it would trigger the repaint event on the window. 

@@ -75,7 +75,8 @@ namespace tpp {
 	}
 
 	void X11TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
-        // TODO implement
+		XSetStandardProperties(display_, window_, e->c_str(), nullptr, None, nullptr, 0, nullptr);
+        TerminalWindow::titleChange(e);
 	}
 
 	void X11TerminalWindow::clipboardPaste() {
