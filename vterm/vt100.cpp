@@ -335,7 +335,7 @@ namespace vterm {
                 case Key::Right:
                 case Key::Home:
                 case Key::End:
-                    if (applicationCursorMode_) {
+                    if (k.modifiers() == 0 && applicationCursorMode_) {
                         std::string sa(*seq);
                         sa[1] = 'O';
                         sendData(sa.c_str(), sa.size());
