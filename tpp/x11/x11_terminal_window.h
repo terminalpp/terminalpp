@@ -39,12 +39,16 @@ namespace tpp {
 
 		typedef FontSpec<XftFont*> Font;
 
-		X11TerminalWindow(Properties const & properties, std::string const & title);
+		X11TerminalWindow(Session * session, Properties const & properties, std::string const & title);
 
 
 		void show() override;
 
 		void hide() override {
+			NOT_IMPLEMENTED;
+		}
+
+		void close() override {
 			NOT_IMPLEMENTED;
 		}
 

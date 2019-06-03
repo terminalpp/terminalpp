@@ -2,6 +2,7 @@
 
 #include <cstring>
 
+#include "helpers/process.h"
 #include "helpers/object.h"
 
 #include "terminal.h"
@@ -12,14 +13,6 @@ namespace vterm {
 	 */
 	class PTY {
 	public:
-
-		/** Because different operating systems support different exit code types, we define the type exit code separately. 
-		 */
-#ifdef WIN32
-		typedef unsigned long ExitCode;
-#elif __linux__
-		typedef int ExitCode;
-#endif
 
 		/** Immediately terminates the attached process. 
 
@@ -35,7 +28,7 @@ namespace vterm {
 		
 		    When done, returns the exit code of the process. Waiting for process that is not running should immediately return the exit code. 
 		 */
-		ExitCode waitFor() {
+		helpers::ExitCode waitFor() {
 			if (!terminated_)
 				exitCode_ = doWaitFor();
 			return exitCode_;
@@ -52,7 +45,8 @@ namespace vterm {
 		friend class Terminal::PTYBackend;
 
 		PTY() :
-			terminated_(false) {
+			terminated_(false),
+		    exitCode_(0) {
 		}
 
 		/** Terminates the attached process. 
@@ -61,7 +55,7 @@ namespace vterm {
 
 		/** Waits for the attached process to terminate and then returns the exit code. 
 		 */
-		virtual ExitCode doWaitFor() = 0;
+		virtual helpers::ExitCode doWaitFor() = 0;
 
 		/** Called when data should be sent to the target process. 
 
@@ -88,7 +82,7 @@ namespace vterm {
 		}
 
 		bool terminated_;
-		ExitCode exitCode_;
+		helpers::ExitCode exitCode_;
 
 	}; // vterm::PTY
 

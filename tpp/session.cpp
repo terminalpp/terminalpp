@@ -8,18 +8,40 @@
 
 namespace tpp {
 
-	Session::Session(std::string const & name, helpers::Command const & command) :
+	std::unordered_set<Session*> Session::Sessions_;
+
+	Session::Session(std::string const& name, helpers::Command const& command) :
+		closing_(false),
 		name_(name),
 		command_(command),
 		pty_(nullptr),
 		windowProperties_(Application::Instance()->defaultTerminalWindowProperties()) {
+		Sessions_.insert(this);
 	}
 
+	Session::~Session() {
+		if (pty_ != nullptr) {
+			// terminate the pty
+			pty_->terminate();
+			ptyExitWait_.join();
+			// detach the window from the terminal
+			window_->setTerminal(nullptr);
+			// deleting the terminal deletes the terminal, backend and pty
+			delete terminal_;
+		}
+	}
 
 	void Session::start() {
 		ASSERT(pty_ == nullptr) << "Session " << name_ << " already started";
 		// create the VT100 decoder, and associated PTY backend
 		pty_ = new vterm::LocalPTY(command_);
+		// create the thread waiting for the PTY to terminate
+		ptyExitWait_ = std::thread([this]() {
+			helpers::ExitCode ec = pty_->waitFor();
+			onPTYTerminated(ec);
+		});
+
+
 		vterm::VT100 * vt = new vterm::VT100(
 			pty_,
 			vterm::Palette::ColorsXTerm256(), 
@@ -38,7 +60,7 @@ namespace tpp {
 		tt.detach();
 
 		// and create the terminal window
-		window_ = Application::Instance()->createTerminalWindow(windowProperties_, name_);
+		window_ = Application::Instance()->createTerminalWindow(this, windowProperties_, name_);
 		window_->setTerminal(terminal_);
 	}
 

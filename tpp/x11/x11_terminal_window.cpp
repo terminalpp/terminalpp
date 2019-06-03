@@ -18,8 +18,8 @@ namespace tpp {
 	// https://keithp.com/~keithp/render/Xft.tutorial
 
 
-	X11TerminalWindow::X11TerminalWindow(Properties const& properties, std::string const& title) :
-		TerminalWindow(properties, title),
+	X11TerminalWindow::X11TerminalWindow(Session * session, Properties const& properties, std::string const& title) :
+		TerminalWindow(session, properties, title),
 		display_(app()->xDisplay()),
 		screen_(app()->xScreen()),
 	    visual_(DefaultVisual(display_, screen_)),

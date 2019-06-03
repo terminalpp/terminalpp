@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
 	    new X11Application();
 #endif
 
-		Session* s = new Session("t++", DEFAULT_SESSION_COMMAND);
+		Session* s = Session::Create("t++", DEFAULT_SESSION_COMMAND);
 		s->start();
 		s->show();
 

@@ -1,8 +1,14 @@
 #pragma once
 
+#include <thread>
+#include <unordered_set>
 
+
+#include "helpers/log.h"
+#include "helpers/process.h"
 
 #include "vterm/terminal.h"
+#include "vterm/local_pty.h"
 
 #include "terminal_window.h"
 
@@ -17,9 +23,17 @@ namespace tpp {
 	class Session {
 	public:
 
-		/** Creates new session. 
-		 */
-		Session(std::string const& name, helpers::Command const& command);
+		static Session* Create(std::string const& name, helpers::Command const& command) {
+			return new Session(name, command);
+		}
+
+		static void Close(Session* session) {
+			if (!session->closing_) {
+				session->closing_ = true;
+				Sessions_.erase(session);
+				delete session;
+			}
+		}
 
 		/** Name of the session. 
 		
@@ -63,10 +77,28 @@ namespace tpp {
 		}
 
 
+	protected:
 
+		/** Creates new session.
+		 */
+		Session(std::string const& name, helpers::Command const& command);
+
+		/** Terminates the session.
+		 */
+		~Session();
+
+
+		/** Function called when the PTY attached to the session is terminated. 
+		 */
+		void onPTYTerminated(helpers::ExitCode ec) {
+			LOG << "PTY terminated " << ec;
+			window_->close();
+		}
 
 
 	private:
+
+		bool closing_;
 
 		/** Name of the session. */
 		std::string name_;
@@ -91,6 +123,10 @@ namespace tpp {
 		TerminalWindow::Properties windowProperties_;
 
 
+		std::thread ptyExitWait_;
+		std::thread ptyReadThread_;
+
+		static std::unordered_set<Session*> Sessions_;
 
 	};
 

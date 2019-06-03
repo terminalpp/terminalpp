@@ -50,8 +50,8 @@ namespace tpp {
 
 	}
 
-	TerminalWindow* GDIApplication::createTerminalWindow(TerminalWindow::Properties const& properties, std::string const & name) {
-		return new GDITerminalWindow(properties, name);
+	TerminalWindow* GDIApplication::createTerminalWindow(Session * session, TerminalWindow::Properties const& properties, std::string const & name) {
+		return new GDITerminalWindow(session, properties, name);
 	}
 
 	void GDIApplication::mainLoop() {

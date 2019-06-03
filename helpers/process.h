@@ -5,6 +5,14 @@
 
 namespace helpers {
 
+	/** Because different operating systems support different exit code types, we define the type exit code separately.
+	 */
+#ifdef WIN32
+	typedef unsigned long ExitCode;
+#elif __linux__
+	typedef int ExitCode;
+#endif
+
 	/** Encapsulation of a local command to be executed.
 
 		Local command consists of the name (path) to the command (most likely an executable, but depending on the shell used can also be a shell command) and a vector of its arguments.

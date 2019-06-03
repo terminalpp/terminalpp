@@ -2,6 +2,9 @@
 
 #include "helpers/strings.h"
 
+
+#include "../session.h"
+
 #include "gdi_application.h"
 
 #include "gdi_terminal_window.h"
@@ -12,8 +15,8 @@ namespace tpp {
 
 	std::unordered_map<HWND, GDITerminalWindow *> GDITerminalWindow::Windows_;
 
-	GDITerminalWindow::GDITerminalWindow(Properties const & properties, std::string const & title) :
-		TerminalWindow(properties, title),
+	GDITerminalWindow::GDITerminalWindow(Session * session, Properties const & properties, std::string const & title) :
+		TerminalWindow(session, properties, title),
 		bufferDC_(CreateCompatibleDC(nullptr)),
 		buffer_(nullptr),
 		wndPlacement_{sizeof(wndPlacement_)},
@@ -155,10 +158,11 @@ namespace tpp {
 		switch (msg) {
 			/** Closes the current window. */
 			case WM_CLOSE: {
-				DestroyWindow(hWnd);
+				ASSERT(tw != nullptr) << "Unknown window";
+				Session::Close(tw->session());
 				break;
 			}
-			/** Destroys the current window, if it is last window of the application, we quit for now. */
+			/** Destroys the window, if it is the last window, quits the app. */
 			case WM_DESTROY: {
 				ASSERT(tw != nullptr) << "Attempt to destroy unknown window";
 				// delete the window object

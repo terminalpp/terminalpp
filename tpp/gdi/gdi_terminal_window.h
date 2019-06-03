@@ -47,7 +47,7 @@ namespace tpp {
 	public:
 		typedef FontSpec<HFONT> Font;
 
-		GDITerminalWindow(Properties const & properties, std::string const & title);
+		GDITerminalWindow(Session * session, Properties const & properties, std::string const & title);
 
 		void show() override {
 			ShowWindow(hWnd_, SW_SHOWNORMAL);
@@ -55,6 +55,10 @@ namespace tpp {
 
 		void hide() override {
 			NOT_IMPLEMENTED;
+		}
+
+		void close() override {
+			PostMessage(hWnd_, WM_CLOSE, 0, 0);
 		}
 
 		void redraw() override {

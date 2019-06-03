@@ -10,6 +10,7 @@
 namespace tpp {
 
 	class Application;
+	class Session;
 
 	/** Stores and retrieves font objects so that they do not have to be created each time they are needed. 
 
@@ -105,6 +106,12 @@ namespace tpp {
 			Properties(TerminalWindow const* tw);
 		}; // TerminalWindow::Properties
 
+		/** Returns the session the window belongs to.
+		 */
+		Session* session() const {
+			return session_;
+		}
+
 		/** Returns the title of the window. 
 		 */
 		std::string const& title() {
@@ -144,6 +151,7 @@ namespace tpp {
 
 		virtual void show() = 0;
 		virtual void hide() = 0;
+		virtual void close() = 0;
 
 		/** Redraws the window completely from the attached vterm. 
 		 */
@@ -160,8 +168,9 @@ namespace tpp {
 			return font;
 		}
 		
-		TerminalWindow(Properties const & properties, std::string const & title) :
+		TerminalWindow(Session * session, Properties const & properties, std::string const & title) :
 			vterm::Terminal::Renderer(properties.cols, properties.rows),
+			session_(session),
 			widthPx_(properties.fontWidth * properties.cols),
 			heightPx_(properties.fontHeight * properties.rows),
 			title_(title),
@@ -275,7 +284,9 @@ namespace tpp {
 		 */
 		void doUpdateBuffer(bool forceDirty = false);
 
-		Application * application_;
+		/** Session the window belongs to. 
+		 */
+		Session* session_;
 
 		/** Width and height of the window client area in pixels. 
 		 */

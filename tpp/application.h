@@ -6,6 +6,8 @@
 
 namespace tpp {
 
+	class Session;
+
 	class Application {
 	public:
 
@@ -23,7 +25,7 @@ namespace tpp {
 
 		}
 
-		virtual TerminalWindow* createTerminalWindow(TerminalWindow::Properties const& properties, std::string const & name) = 0;
+		virtual TerminalWindow* createTerminalWindow(Session * session, TerminalWindow::Properties const& properties, std::string const & name) = 0;
 
 		TerminalWindow::Properties const& defaultTerminalWindowProperties() const {
 			return defaultTerminalWindowProperties_;

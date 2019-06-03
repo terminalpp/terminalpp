@@ -61,8 +61,8 @@ namespace tpp {
 		xDisplay_ = nullptr;
 	}
 
-	TerminalWindow* X11Application::createTerminalWindow(TerminalWindow::Properties const& properties, std::string const& name) {
-		return new X11TerminalWindow(properties, name);
+	TerminalWindow* X11Application::createTerminalWindow(Session * session, TerminalWindow::Properties const& properties, std::string const& name) {
+		return new X11TerminalWindow(session, properties, name);
 	}
 
 

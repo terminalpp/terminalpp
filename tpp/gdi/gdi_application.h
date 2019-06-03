@@ -12,7 +12,7 @@ namespace tpp {
 
 		~GDIApplication() override;
 
-		TerminalWindow * createTerminalWindow(TerminalWindow::Properties const& properties, std::string const & name);
+		TerminalWindow * createTerminalWindow(Session * session, TerminalWindow::Properties const& properties, std::string const & name);
 
 
 	protected:

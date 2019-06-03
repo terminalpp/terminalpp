@@ -43,11 +43,11 @@ namespace vterm {
 		TerminateProcess(pInfo_.hProcess, -1);
 	}
 
-	PTY::ExitCode LocalPTY::doWaitFor() {
+    helpers::ExitCode LocalPTY::doWaitFor() {
 		size_t result = WaitForSingleObject(pInfo_.hProcess, INFINITE);
 		if (result != 0)
 			NOT_IMPLEMENTED;
-		ExitCode ec;
+		helpers::ExitCode ec;
 		GetExitCodeProcess(pInfo_.hProcess, &ec);
 		return ec;
 	}
@@ -153,8 +153,8 @@ namespace vterm {
 		kill(pid_, SIGKILL);
 	}
 
-	PTY::ExitCode LocalPTY::doWaitFor() {
-		ExitCode ec;
+	helpers::ExitCode LocalPTY::doWaitFor() {
+		helpers::ExitCode ec;
 		pid_t x = waitpid(pid_, &ec, 0);
 		if (x != pid_)
 			NOT_IMPLEMENTED; // error
