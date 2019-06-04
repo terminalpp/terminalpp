@@ -49,7 +49,7 @@ namespace tpp {
 		}
 
 		void close() override {
-			NOT_IMPLEMENTED;
+			XDestroyWindow(display_, window_);
 		}
 
 	protected:

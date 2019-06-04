@@ -35,10 +35,13 @@ namespace tpp {
 	private:
 		friend class X11TerminalWindow;
 
+		class Terminate { };
+
 		/** X11 display. */
 	    Display* xDisplay_;
 		int xScreen_;
         XIM xIm_;
+		Atom wmDeleteMessage_;
 		Atom clipboardFormat_;
 		Atom clipboardIncr_;
 

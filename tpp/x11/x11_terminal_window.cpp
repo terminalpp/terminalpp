@@ -3,6 +3,8 @@
 #include "helpers/helpers.h"
 #include "helpers/log.h"
 
+#include "../session.h"
+
 #include "x11_application.h"
 
 #include "x11_terminal_window.h"
@@ -45,6 +47,8 @@ namespace tpp {
 		   the input.  see the appropriate section for details...
 		*/
 		XSelectInput(display_, window_, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask);
+
+		XSetWMProtocols(display_, window_, & app()->wmDeleteMessage_, 1);
 
         XGCValues gcv;
         memset(&gcv, 0, sizeof(XGCValues));
@@ -325,6 +329,20 @@ namespace tpp {
 					XFree(result);
                  }
 				 break;
+			case ClientMessage:
+				if (e.xclient.data.l[0] == tw->app()->wmDeleteMessage_) {
+					ASSERT(tw != nullptr) << "Attempt to destroy unknown window";
+					Session::Close(tw->session());
+					// delete the window object
+					delete i->second;
+					// remove the window from the list of windows
+					Windows_.erase(i);
+					if (Windows_.empty()) {
+						LOG << "Terminating...";
+						throw X11Application::Terminate();
+					}
+				}
+				break;
             default:
                 break;
         }

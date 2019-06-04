@@ -156,7 +156,7 @@ namespace vterm {
 	helpers::ExitCode LocalPTY::doWaitFor() {
 		helpers::ExitCode ec;
 		pid_t x = waitpid(pid_, &ec, 0);
-		if (x != pid_)
+		if (x < 0)
 			NOT_IMPLEMENTED; // error
 		return ec;
 	}

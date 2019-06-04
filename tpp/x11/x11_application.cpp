@@ -51,8 +51,11 @@ namespace tpp {
 
 		clipboardFormat_ = XInternAtom(xDisplay_, "UTF8_STRING", false);
 		clipboardIncr_ = XInternAtom(xDisplay_, "INCR", false);
+		wmDeleteMessage_ = XInternAtom(xDisplay_, "WM_DELETE_WINDOW", false);
+
 		ASSERT(clipboardFormat_ != None);
 		ASSERT(clipboardIncr_ != None);
+		ASSERT(wmDeleteMessage_ != None);
 
 	}
 
@@ -68,12 +71,17 @@ namespace tpp {
 
 	void X11Application::mainLoop() {
 		XEvent e;
-		while (true) {
-			XNextEvent(xDisplay_, &e);
-            if (XFilterEvent(&e, None))
-                continue;
-            X11TerminalWindow::EventHandler(e);
-       }
+		try {
+			while (true) {
+				XNextEvent(xDisplay_, &e);
+				if (XFilterEvent(&e, None))
+					continue;
+				X11TerminalWindow::EventHandler(e);
+			}
+		} catch (Terminate const& e) {
+			// do nothing
+			LOG << "Main loop terminated.";
+		}
 	}
 
 
