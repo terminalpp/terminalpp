@@ -5,6 +5,7 @@
 #include <pty.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <errno.h>
 #endif
 #include "helpers/log.h"
 
@@ -156,7 +157,8 @@ namespace vterm {
 	helpers::ExitCode LocalPTY::doWaitFor() {
 		helpers::ExitCode ec;
 		pid_t x = waitpid(pid_, &ec, 0);
-		if (x < 0)
+        // it is ok to see errno ECHILD, happens when process has already been terminated
+		if (x < 0 && errno != ECHILD) 
 			NOT_IMPLEMENTED; // error
 		return ec;
 	}
