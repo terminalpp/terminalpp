@@ -42,6 +42,7 @@ namespace tpp {
 	}
 
 	GDITerminalWindow::~GDITerminalWindow() {
+        Windows_.erase(hWnd_);
 		DeleteObject(buffer_);
 		DeleteObject(bufferDC_);
 	}
@@ -165,10 +166,8 @@ namespace tpp {
 			/** Destroys the window, if it is the last window, quits the app. */
 			case WM_DESTROY: {
 				ASSERT(tw != nullptr) << "Attempt to destroy unknown window";
-				// delete the window object
+				// delete the window object and remove it from the list of active windows
 				delete i->second;
-				// remove the window from the list of windows
-				Windows_.erase(i);
 				// if it was last window, terminate the application
 				if (Windows_.empty())
 					PostQuitMessage(0);

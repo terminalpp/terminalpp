@@ -329,18 +329,20 @@ namespace tpp {
 					XFree(result);
                  }
 				 break;
+            case DestroyNotify:
+                LOG << "Window destroyed...";
+                // delete the window object and remove it from the list of active windows
+                delete i->second;
+                // if it was last window, exit the terminal
+                if (Windows_.empty()) {
+                    LOG << "Terminating...";
+                    throw X11Application::Terminate();
+                }
+                break;
 			case ClientMessage:
 				if (e.xclient.data.l[0] == tw->app()->wmDeleteMessage_) {
 					ASSERT(tw != nullptr) << "Attempt to destroy unknown window";
 					Session::Close(tw->session());
-					// delete the window object
-					delete i->second;
-					// remove the window from the list of windows
-					Windows_.erase(i);
-					if (Windows_.empty()) {
-						LOG << "Terminating...";
-						throw X11Application::Terminate();
-					}
 				}
 				break;
             default:
