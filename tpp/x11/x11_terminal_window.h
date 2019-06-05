@@ -58,9 +58,9 @@ namespace tpp {
 			msg.type = ClientMessage;
 			msg.display = display_;
 			msg.window = window_;
+            msg.format = 32; // view the message as longs
 			msg.data.l[0] = app()->inputReadyMessage_;
 			XSendEvent(display_, window_, false, 0, (XEvent*)& msg);
-			LOG << "Input ready";
 		}
 
 	protected:
