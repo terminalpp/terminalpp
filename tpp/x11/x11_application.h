@@ -42,6 +42,7 @@ namespace tpp {
 		int xScreen_;
         XIM xIm_;
 		Atom wmDeleteMessage_;
+		Atom inputReadyMessage_;
 		Atom clipboardFormat_;
 		Atom clipboardIncr_;
 

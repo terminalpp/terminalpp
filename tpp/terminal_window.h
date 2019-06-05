@@ -153,6 +153,9 @@ namespace tpp {
 		virtual void hide() = 0;
 		virtual void close() = 0;
 
+
+		virtual void inputReady() = 0;
+
 		/** Redraws the window completely from the attached vterm. 
 		 */
 		virtual void redraw() {

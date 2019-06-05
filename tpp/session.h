@@ -1,6 +1,8 @@
 #pragma once
 
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 #include <unordered_set>
 
 
@@ -76,6 +78,14 @@ namespace tpp {
 			window_->show();
 		}
 
+		void processInput() {
+			std::lock_guard<std::mutex> g(mPty_);
+			if (dataReady_) {
+				vt_->processInput();
+				dataReady_ = false;
+				cvPty_.notify_one();
+			}
+		}
 
 	protected:
 
@@ -88,15 +98,18 @@ namespace tpp {
 		~Session();
 
 
-		/** Function called when the PTY attached to the session is terminated. 
-		 */
+
+	private:
+		friend class TerminalWindow;
+
+
+		/** Function called when the PTY attached to the session is terminated.
+         */
 		void onPTYTerminated(helpers::ExitCode ec) {
 			LOG << "PTY terminated " << ec;
 			window_->close();
 		}
 
-
-	private:
 
 		bool closing_;
 
@@ -107,8 +120,13 @@ namespace tpp {
 		 */
 		helpers::Command command_;
 
-		/** The PTY for the session. */
+		/** The PTY for the session. 
+		 */
 		vterm::LocalPTY* pty_;
+
+		/** The VT100 terminal backend. 
+		 */
+		vterm::VT100* vt_;
 
 		/** The associated terminal. 
 		 */
@@ -125,6 +143,10 @@ namespace tpp {
 
 		std::thread ptyExitWait_;
 		std::thread ptyReadThread_;
+
+		bool dataReady_;
+		std::mutex mPty_;
+		std::condition_variable cvPty_;
 
 		static std::unordered_set<Session*> Sessions_;
 

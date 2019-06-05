@@ -15,7 +15,8 @@ namespace tpp {
 		name_(name),
 		command_(command),
 		pty_(nullptr),
-		windowProperties_(Application::Instance()->defaultTerminalWindowProperties()) {
+		windowProperties_(Application::Instance()->defaultTerminalWindowProperties()),
+	    dataReady_(false) {
 		Sessions_.insert(this);
 	}
 
@@ -24,6 +25,7 @@ namespace tpp {
 			// terminate the pty
 			pty_->terminate();
 			ptyExitWait_.join();
+			ptyReadThread_.join();
 			// detach the window from the terminal
 			window_->setTerminal(nullptr);
 			// deleting the terminal deletes the terminal, backend and pty
@@ -40,17 +42,25 @@ namespace tpp {
 			helpers::ExitCode ec = pty_->waitFor();
 			onPTYTerminated(ec);
 		});
-
-
-		vterm::VT100 * vt = new vterm::VT100(
+		// create the terminal backend
+		vt_ = new vterm::VT100(
 			pty_,
 			vterm::Palette::ColorsXTerm256(), 
 			15,
 			0);
 		// create the terminal
-		terminal_ = new vterm::Terminal(windowProperties_.cols, windowProperties_.rows, vt);
+		terminal_ = new vterm::Terminal(windowProperties_.cols, windowProperties_.rows, vt_);
 		// start the thread feeding the results
-
+		ptyReadThread_ = std::thread([this]() {
+			std::unique_lock<std::mutex> l(mPty_);
+			while (vt_->waitForInput()) {
+				dataReady_ = true;
+				window_->inputReady();
+				while (dataReady_)
+					cvPty_.wait(l);
+			}
+		});
+/*
 		// TODO this is wrong and should actually use messages in Application
 		std::thread tt([vt]() {
 			while (vt->waitForInput()) {
@@ -58,7 +68,7 @@ namespace tpp {
 			}
 			});
 		tt.detach();
-
+		*/
 		// and create the terminal window
 		window_ = Application::Instance()->createTerminalWindow(this, windowProperties_, name_);
 		window_->setTerminal(terminal_);

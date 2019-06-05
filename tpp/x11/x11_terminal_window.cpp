@@ -48,6 +48,10 @@ namespace tpp {
 		*/
 		XSelectInput(display_, window_, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask);
 
+		/* X11 in itself does not deal with window close requests, but this enables sending of the WM_DELETE_WINDOW message when the close button is send and the application can decide what to do instead. 
+
+		   The message is received as a client message with the wmDeleteMessage_ atom in its first long payload.
+		 */
 		XSetWMProtocols(display_, window_, & app()->wmDeleteMessage_, 1);
 
         XGCValues gcv;
@@ -339,8 +343,12 @@ namespace tpp {
                     throw X11Application::Terminate();
                 }
                 break;
+			/* User-defined messages. 
+			 */
 			case ClientMessage:
-				if (e.xclient.data.l[0] == tw->app()->wmDeleteMessage_) {
+				if (e.xclient.data.l[0] == tw->app()->inputReadyMessage_) {
+					tw->session()->processInput();
+				} else if (e.xclient.data.l[0] == tw->app()->wmDeleteMessage_) {
 					ASSERT(tw != nullptr) << "Attempt to destroy unknown window";
 					Session::Close(tw->session());
 				}

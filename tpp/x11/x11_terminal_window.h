@@ -52,7 +52,19 @@ namespace tpp {
 			XDestroyWindow(display_, window_);
 		}
 
+		void inputReady() override {
+			XClientMessageEvent msg;
+			memset(&msg, 0, sizeof(XClientMessageEvent));
+			msg.type = ClientMessage;
+			msg.display = display_;
+			msg.window = window_;
+			msg.data.l[0] = app()->inputReadyMessage_;
+			XSendEvent(display_, window_, false, 0, (XEvent*)& msg);
+			LOG << "Input ready";
+		}
+
 	protected:
+		
 
 		/** Returns the application instance casted to X11 app. 
 		 */
@@ -117,7 +129,6 @@ namespace tpp {
 	private:
 
         friend class X11Application;
-
 
 		//void updateBuffer();
 

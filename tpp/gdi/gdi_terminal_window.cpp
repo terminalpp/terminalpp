@@ -307,6 +307,9 @@ namespace tpp {
 				case MSG_TITLE_CHANGE:
 					SetWindowTextA(hWnd, tw->terminal()->title().c_str());
 					break;
+				case MSG_INPUT_READY:
+					tw->session()->processInput();
+					break;
 				default:
 					LOG("Win32") << "Invalid user message " << wParam;
 				}

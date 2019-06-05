@@ -52,10 +52,12 @@ namespace tpp {
 		clipboardFormat_ = XInternAtom(xDisplay_, "UTF8_STRING", false);
 		clipboardIncr_ = XInternAtom(xDisplay_, "INCR", false);
 		wmDeleteMessage_ = XInternAtom(xDisplay_, "WM_DELETE_WINDOW", false);
+		inputReadyMessage_ = XInternAtom(xDisplay_, "TPP_INPUT_READY", false);
 
 		ASSERT(clipboardFormat_ != None);
 		ASSERT(clipboardIncr_ != None);
 		ASSERT(wmDeleteMessage_ != None);
+		ASSERT(inputReadyMessage_ != None);
 
 	}
 

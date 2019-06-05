@@ -61,6 +61,10 @@ namespace tpp {
 			PostMessage(hWnd_, WM_CLOSE, 0, 0);
 		}
 
+		void inputReady() override {
+			PostMessage(hWnd_, WM_USER, MSG_INPUT_READY, 0);
+		}
+
 		void redraw() override {
 			if (buffer_ != nullptr) {
 				DeleteObject(buffer_);
@@ -126,6 +130,10 @@ namespace tpp {
 	private:
 
 		static constexpr WPARAM MSG_TITLE_CHANGE = 0;
+
+		/** New input is available for the attached backend and should be processed in the main event loop. 
+		 */
+		static constexpr WPARAM MSG_INPUT_READY = 1;
 
 		friend class GDIApplication;
 
