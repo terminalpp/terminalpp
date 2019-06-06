@@ -29,14 +29,6 @@ namespace vterm {
 	LocalPTY::~LocalPTY() {
 		terminate();
 		waitFor();
-		CloseHandle(pInfo_.hProcess);
-		CloseHandle(pInfo_.hThread);
-		if (conPTY_ != INVALID_HANDLE_VALUE)
-			ClosePseudoConsole(conPTY_);
-		if (pipeIn_ != INVALID_HANDLE_VALUE)
-			CloseHandle(pipeIn_);
-		if (pipeOut_ != INVALID_HANDLE_VALUE)
-			CloseHandle(pipeOut_);
 		free(startupInfo_.lpAttributeList);
 	}
 
@@ -50,6 +42,15 @@ namespace vterm {
 			NOT_IMPLEMENTED;
 		helpers::ExitCode ec;
 		GetExitCodeProcess(pInfo_.hProcess, &ec);
+		// we must close the handles so that any pending reads will be interrupted
+		CloseHandle(pInfo_.hProcess);
+		CloseHandle(pInfo_.hThread);
+		if (conPTY_ != INVALID_HANDLE_VALUE)
+			ClosePseudoConsole(conPTY_);
+		if (pipeIn_ != INVALID_HANDLE_VALUE)
+			CloseHandle(pipeIn_);
+		if (pipeOut_ != INVALID_HANDLE_VALUE)
+			CloseHandle(pipeOut_);
 		return ec;
 	}
 

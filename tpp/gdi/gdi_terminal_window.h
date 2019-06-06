@@ -58,6 +58,7 @@ namespace tpp {
 		}
 
 		void close() override {
+			LOG << "Closing window " << title_;
 			PostMessage(hWnd_, WM_CLOSE, 0, 0);
 		}
 

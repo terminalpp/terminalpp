@@ -9,6 +9,10 @@
 
 namespace vterm {
 
+	/** Pseudoterminal to a local process.
+
+	    Implements a pseudoterminal API for local OS process. 
+	 */
 	class LocalPTY : public PTY {
 	public:
 

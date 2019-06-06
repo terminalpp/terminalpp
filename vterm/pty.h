@@ -9,7 +9,15 @@
 
 namespace vterm {
 
-	/** Pseudoterminal base api which specifies blocking send and receive methods. 
+	/** Pseudoterminal base api.
+
+	    The PTY defines the minimal viable API a pseudoterminal must support. All the supported actions are synchronous, i.e. it is up to their callers to determine whether asynchronous operation is to be emulated via multiple threads. While this is slightly less efficient than asynchronous operations, it creates much simpler interface common across operating systems and pseudoterminal target. 
+
+		A pseudoterminal is presumed to be attached to a process (this may be local process, a server, etc.) and must support terminating the attached process (where termination makes sense, or disconnecting from it), waiting for the process to terminate on its own, sending and receiving data and trigerring the resize event of the attached process.
+
+		PTY for locally running processes is implemented in the `local_pty.h` file. 
+
+		TODO to be on the safe side, implement using mutex and conditional variables where we will always wait for the thread to finish in a thread of our own that will then do the deletion. client wait fors will merely block on the conditional variable provided and notified by the observer. 
 	 */
 	class PTY {
 	public:
@@ -22,6 +30,7 @@ namespace vterm {
 			if (terminated_)
 				return;
 			doTerminate();
+			terminated_ = true;
 		}
 
 		/** Blocks the current thread, waiting for the attached process to terminate. 

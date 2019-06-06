@@ -23,3 +23,18 @@ Finally, the `LocalPTY` inherits from `PTY` and defines for each of the supporte
 # The VT100 Decoder
 
 The `VT100` class inherits from `Terminal::PTYDecoder` and implements much of the `xterm` & VT100 ansi codes. Detailed information about the escape sequences `VT100` backend understands can be found in a separate file.   
+
+
+
+
+
+# Implementation Details & Notes
+
+This section provides implementation details and other related information for the platforms supported. 
+
+## Windows 
+
+### LocalPTY
+
+The `receiveData` won't get interrupted if the attached process dies (the actual pipe must be explicitly closed). 
+     

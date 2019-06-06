@@ -73,9 +73,7 @@ namespace tpp {
 
 	X11TerminalWindow::~X11TerminalWindow() {
         Windows_.erase(window_);
-		doInvalidate();
 		XFreeGC(display_, gc_);
-		XDestroyWindow(display_, window_);
 	}
 
 	void X11TerminalWindow::doSetFullscreen(bool value) {

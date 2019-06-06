@@ -41,6 +41,7 @@ namespace tpp {
 		ptyExitWait_ = std::thread([this]() {
 			helpers::ExitCode ec = pty_->waitFor();
 			onPTYTerminated(ec);
+			LOG << "process exit monitor finished";
 		});
 		// create the terminal backend
 		vt_ = new vterm::VT100(
@@ -50,6 +51,9 @@ namespace tpp {
 			0);
 		// create the terminal
 		terminal_ = new vterm::Terminal(windowProperties_.cols, windowProperties_.rows, vt_);
+		// create the terminal window
+		window_ = Application::Instance()->createTerminalWindow(this, windowProperties_, name_);
+		window_->setTerminal(terminal_);
 		// start the thread feeding the results
 		ptyReadThread_ = std::thread([this]() {
 			std::unique_lock<std::mutex> l(mPty_);
@@ -59,19 +63,8 @@ namespace tpp {
 				while (dataReady_)
 					cvPty_.wait(l);
 			}
+			LOG << "process communications thread finished";
 		});
-/*
-		// TODO this is wrong and should actually use messages in Application
-		std::thread tt([vt]() {
-			while (vt->waitForInput()) {
-				vt->processInput();
-			}
-			});
-		tt.detach();
-		*/
-		// and create the terminal window
-		window_ = Application::Instance()->createTerminalWindow(this, windowProperties_, name_);
-		window_->setTerminal(terminal_);
 	}
 
 } // namespace tpp
