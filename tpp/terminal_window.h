@@ -184,6 +184,7 @@ namespace tpp {
 			cellWidthPx_(static_cast<unsigned>(properties.fontWidth * properties.zoom)),
 			cellHeightPx_(static_cast<unsigned>(properties.fontHeight * properties.zoom)),
 		    blink_(true),
+			invalidated_(false),
 		    mouseCol_(0),
 		    mouseRow_(0) {
 		}

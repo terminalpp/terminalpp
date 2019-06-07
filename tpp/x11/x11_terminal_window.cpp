@@ -77,7 +77,8 @@ namespace tpp {
 	}
 
 	void X11TerminalWindow::doSetFullscreen(bool value) {
-        // TODO Implement
+		MARK_AS_UNUSED(value);
+		NOT_IMPLEMENTED;
 	}
 
 	void X11TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
@@ -92,6 +93,7 @@ namespace tpp {
 	}
 
 	void X11TerminalWindow::clipboardCopy(std::string const& str) {
+		MARK_AS_UNUSED(str);
 		NOT_IMPLEMENTED;
 	}
 

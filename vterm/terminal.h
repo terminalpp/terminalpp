@@ -136,7 +136,7 @@ namespace vterm {
 				cells_(new Cell[cols_ * rows_]) {
 			}
 
-            Buffer(Buffer && other): 
+            Buffer(Buffer && other) noexcept: 
                 cols_(other.cols_),
                 rows_(other.rows_),
                 cells_(other.cells_) {
@@ -145,7 +145,7 @@ namespace vterm {
                     other.cells_ = nullptr;
                 }
 
-            Buffer & operator = (Buffer && other) {
+            Buffer & operator = (Buffer && other) noexcept {
                 if (this != & other) {
                     delete[] cells_;
                     cols_ = other.cols_;
