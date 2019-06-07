@@ -31,6 +31,7 @@ namespace vterm {
 		void doTerminate() override;
 
 		helpers::ExitCode doWaitFor() override;
+
 		size_t sendData(char const * buffer, size_t size) override;
 		size_t receiveData(char* buffer, size_t availableSize) override;
 

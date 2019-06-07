@@ -23,23 +23,35 @@ namespace vterm {
 		pipeOut_{ INVALID_HANDLE_VALUE } {
 		startupInfo_.lpAttributeList = nullptr; // just to be sure
 		createPseudoConsole();
+		// start the process
 		start();
+		// enable the monitoring of the process termination
+		monitor();
 	}
 
 	LocalPTY::~LocalPTY() {
 		terminate();
-		waitFor();
 		free(startupInfo_.lpAttributeList);
 	}
 
+	/** Terminates the attached process.
+	
+	    The termination is asynchronous. If there are any errors returned such as the process already beging terminated, we do not really care. 
+
+		TODO care about possible other errors?
+	 */
 	void LocalPTY::doTerminate() {
 		TerminateProcess(pInfo_.hProcess, -1);
 	}
 
+	/** Waits for the attached process to finish.
+	
+	    Cleans the handles so that any pendion IO operations are cancelled and we do not end up with hanging operations. 
+
+		TODO waiting on a process that has already terminated should produce error, which we can happily ignore, correct? 
+	 */
     helpers::ExitCode LocalPTY::doWaitFor() {
 		size_t result = WaitForSingleObject(pInfo_.hProcess, INFINITE);
-		if (result != 0)
-			NOT_IMPLEMENTED;
 		helpers::ExitCode ec;
 		GetExitCodeProcess(pInfo_.hProcess, &ec);
 		// we must close the handles so that any pending reads will be interrupted
@@ -144,6 +156,7 @@ namespace vterm {
     LocalPTY::LocalPTY(helpers::Command const & command) :
 	    command_(command) {
         start();
+		monitor();
 	}
 
 	LocalPTY::~LocalPTY() {

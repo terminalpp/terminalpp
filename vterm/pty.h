@@ -2,6 +2,9 @@
 
 #include <cstring>
 
+#include <mutex>
+#include <condition_variable>
+
 #include "helpers/process.h"
 #include "helpers/object.h"
 
@@ -16,8 +19,6 @@ namespace vterm {
 		A pseudoterminal is presumed to be attached to a process (this may be local process, a server, etc.) and must support terminating the attached process (where termination makes sense, or disconnecting from it), waiting for the process to terminate on its own, sending and receiving data and trigerring the resize event of the attached process.
 
 		PTY for locally running processes is implemented in the `local_pty.h` file. 
-
-		TODO to be on the safe side, implement using mutex and conditional variables where we will always wait for the thread to finish in a thread of our own that will then do the deletion. client wait fors will merely block on the conditional variable provided and notified by the observer. 
 	 */
 	class PTY {
 	public:
@@ -27,19 +28,22 @@ namespace vterm {
 		    Has no effect if the process has already terminated. 
 		 */
 		void terminate() {
-			if (terminated_)
-				return;
-			doTerminate();
-			terminated_ = true;
+			{
+				std::lock_guard<std::mutex> g(m_);
+				if (!terminated_)
+					doTerminate();
+			}
+			waitFor();
 		}
 
 		/** Blocks the current thread, waiting for the attached process to terminate. 
 		
-		    When done, returns the exit code of the process. Waiting for process that is not running should immediately return the exit code. 
+		    When done, returns the exit code of the process. If the process has already exited or was terminated, returns the exit code immediately.
 		 */
 		helpers::ExitCode waitFor() {
-			if (!terminated_)
-				exitCode_ = doWaitFor();
+			std::unique_lock<std::mutex> g(m_);
+			while (!terminated_)
+				cv_.wait(g);
 			return exitCode_;
 		}
 
@@ -58,7 +62,26 @@ namespace vterm {
 		    exitCode_(0) {
 		}
 
+		/** Monitors the attached process and manages the termination and exit code statuses. 
+		 */
+		void monitor() {
+			std::thread t([this]() {
+				helpers::ExitCode ec = doWaitFor();
+				{
+					std::lock_guard<std::mutex> g(m_);
+					terminated_ = true;
+					exitCode_ = ec;
+					cv_.notify_all();
+				}
+			});
+			t.detach();
+		}
+
 		/** Terminates the attached process. 
+
+		    Terminates the attached process. Should immediately return if the process has already finished on its own, or has been terminated.
+
+			Can block the calling thread, but this behavior is not required because the `terminate()` method from the public API blocks on the internal monitor to observe the termination of the process before returning.
 		 */
 		virtual void doTerminate() = 0;
 
@@ -93,6 +116,8 @@ namespace vterm {
 		bool terminated_;
 		helpers::ExitCode exitCode_;
 
+		std::mutex m_;
+		std::condition_variable cv_;
 	}; // vterm::PTY
 
 } // namespace vterm
