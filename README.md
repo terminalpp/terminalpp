@@ -9,17 +9,44 @@
 
 ## Windows
 
+To build under Windows, install [Visual Studio](https://visualstudio.microsoft.com), then open the folder and select `tpp.exe` from cmake targets. 
+
+> Tested with VS Community 2019. VS Code should work as well, as should command line tools (not tested). 
+
 ## Linux
 
-    sudo apt install libx11-dev libxft-dev
+A convenience script `linux.sh` installs the packages required to build `tpp` on the system as well as the required fonts. See the script for more details:
+
+    bash linux.sh
+
+When done, create the build directory and run `cmake`:
+
+    mkdir build
+    cmake ..
+    make -j8
+
+You can now execute the terminal by typing:
+
+    tpp/tpp
+
+> Tested on Ubuntu 18.04 LTS.
 
 ## WSL
 
-First follow the linux rules above, then make sure that X server, such as `vcxsrv` is running and add the following to `.bashrc` or so:
+`tpp` supports WSL and can be installed following the guide for Linux system above. 
+
+> If `tpp` source code is shared between Windows and Linux, it may happen that running `cmake` will produce weird looking errors if the build directory is in Windows filesystem. A workaround is to create a build tree elsewhere (on linux FS) and specify path to it, such as:
+
+    mkdir build
+    cd build
+    cmake /mnt/c/devel/tpp 
+    make -j8
+
+X server is obviously needed, [`vcxsrv`](https://sourceforge.net/projects/vcxsrv/) works fine so far. In order for it to work in WSL, add the following line to your profile:
 
     export DISPLAY=localhost:0.0
 
-> Using this allows also X11 tunelling when using `ssh`. 
+> Tested on WSL Ubuntu 18.04.
 
 ## Links to study:
 
