@@ -21,7 +21,13 @@ The `helpers::Exception` is intended to be base class for all exceptions used in
 
 To facilitate this, exceptions which inherit from `helpers::Exception` should not be thrown using `throw` keyword, but the provided `THROW` macro which also patches the exception with the source file and line, if appropriate:
 
-    THROW(helpers::Exception("An error"));
+    THROW(helpers::Exception()) << "An error";
+
+Note that the preferred way of specifying custom error messages is to use the `<<` operator after the `THROW` macro. 
+
+### `OSError`
+
+The `OSError` class implements the platform specific operating system error using either `errno` on Linux, or `GetLastError` on Windows to automatically obtain the exception cause. A convenience macro `OSCHECK` can be used to automatically check its condition and throw the `OSError` if it evaluates to `false`.
 
 #### `NOT_IMPLEMENTED` and `UNREACHABLE`
 

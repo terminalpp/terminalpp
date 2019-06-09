@@ -19,7 +19,7 @@
 #define MARK_AS_UNUSED(ARG_NAME) (void)(ARG_NAME)
 
 #ifdef NDEBUG 
-#define THROW(...) do {  throw __VA_ARGS__; } while (false)
+#define THROW(...) throw __VA_ARGS__ & ::helpers::Exception::ExceptionInfo()
 #define ASSERT(...) if (false) std::stringstream()
 #else
 #define THROW(...) throw __VA_ARGS__ & ::helpers::Exception::ExceptionInfo(__LINE__,__FILE__)
@@ -34,10 +34,6 @@
     Executes its arguments and if they evaluate to false, throw OSError. The message of the OS error can be provided after the OSCHECK using the `<<` notion. 
  */
 #define OSCHECK(...) if (! (__VA_ARGS__)) THROW(::helpers::OSError())
-
-
-
-#define T2(ENAME) throw ENAME() & ::helpers::Exception2::ExceptionInfo(__LINE__, __FILE__)
 
 namespace helpers {
 
