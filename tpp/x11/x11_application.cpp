@@ -38,7 +38,7 @@ namespace tpp {
 		FixDefaultTerminalWindowProperties(defaultTerminalWindowProperties_);
 
 
-		//XSetErrorHandler(X11ErrorHandler);
+		XSetErrorHandler(X11ErrorHandler);
         //XSynchronize(xDisplay_, true);
 
 
