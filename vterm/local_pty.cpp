@@ -1,6 +1,4 @@
-#ifdef WIN32
-#include "helpers/win32.h"
-#elif __linux__
+#ifdef __linux__
 #include <unistd.h>
 #include <pty.h>
 #include <signal.h>
@@ -95,8 +93,9 @@ namespace vterm {
 		HANDLE pipePTYIn{ INVALID_HANDLE_VALUE };
 		HANDLE pipePTYOut{ INVALID_HANDLE_VALUE };
 		// first create the pipes we need, no security arguments and we use default buffer size for now
-		if (!CreatePipe(&pipePTYIn, &pipeOut_, nullptr, 0) || !CreatePipe(&pipeIn_, &pipePTYOut, nullptr, 0))
-			THROW(helpers::Win32Error("Unable to create pipes for the subprocess"));
+		OSCHECK(
+			CreatePipe(&pipePTYIn, &pipeOut_, nullptr, 0) && CreatePipe(&pipeIn_, &pipePTYOut, nullptr, 0)
+		) << "Unable to create pipes for the subprocess";
 		// determine the console size from the terminal we have
 		COORD consoleSize{};
 		consoleSize.X = 80;
@@ -108,8 +107,7 @@ namespace vterm {
 			CloseHandle(pipePTYIn);
 		if (pipePTYOut != INVALID_HANDLE_VALUE)
 			CloseHandle(pipePTYOut);
-		if (result != S_OK)
-			THROW(helpers::Win32Error("Unable to open pseudo console"));
+		OSCHECK(result == S_OK) << "Unable to open pseudo console";
 	}
 
 	void LocalPTY::start() {
@@ -121,34 +119,37 @@ namespace vterm {
 		InitializeProcThreadAttributeList(nullptr, 1, 0, &attrListSize); // get size of list of 1 attribute
 		startupInfo.lpAttributeList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(malloc(attrListSize));
 		// initialize the attribute list
-		if (!InitializeProcThreadAttributeList(startupInfo.lpAttributeList, 1, 0, &attrListSize))
-			THROW(helpers::Win32Error("Unable to create attribute list"));
+		OSCHECK(
+			InitializeProcThreadAttributeList(startupInfo.lpAttributeList, 1, 0, &attrListSize)
+		) << "Unable to create attribute list";
 		// set the pseudoconsole attribute
-		if (!UpdateProcThreadAttribute(
-			startupInfo.lpAttributeList,
-			0,
-			PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
-			conPTY_,
-			sizeof(HPCON),
-			nullptr,
-			nullptr
-		))
-			THROW(helpers::Win32Error("Unable to set pseudoconsole attribute"));
+		OSCHECK(
+			UpdateProcThreadAttribute(
+				startupInfo.lpAttributeList,
+				0,
+				PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
+				conPTY_,
+				sizeof(HPCON),
+				nullptr,
+				nullptr
+			)
+		) << "Unable to set pseudoconsole attribute";
 		std::string cmd = command_.toString();
 		// finally, create the process with given commandline
-		if (!CreateProcess(
-			nullptr,
-			&cmd[0], // the command to execute
-			nullptr, // process handle cannot be inherited
-			nullptr, // thread handle cannot be inherited
-			false, // the new process does not inherit any handles
-			EXTENDED_STARTUPINFO_PRESENT, // we have extra info 
-			nullptr, // use parent's environment
-			nullptr, // use parent's directory
-			&startupInfo.StartupInfo, // startup info
-			&pInfo_ // info about the process
-		))
-			THROW(helpers::Win32Error(STR("Unable to start process " << cmd)));
+		OSCHECK(
+			CreateProcess(
+				nullptr,
+				&cmd[0], // the command to execute
+				nullptr, // process handle cannot be inherited
+				nullptr, // thread handle cannot be inherited
+				false, // the new process does not inherit any handles
+				EXTENDED_STARTUPINFO_PRESENT, // we have extra info 
+				nullptr, // use parent's environment
+				nullptr, // use parent's directory
+				&startupInfo.StartupInfo, // startup info
+				&pInfo_ // info about the process
+			)
+		) << "Unable to start process " << cmd;
 	}
 
 #elif __linux__

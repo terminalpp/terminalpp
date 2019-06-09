@@ -245,7 +245,7 @@ namespace vterm {
     // VT100::InvalidCSISequence
 
     VT100::InvalidCSISequence::InvalidCSISequence(VT100::CSISequence const & seq) {
-        what_ = "Invalid CSI sequence: ";
+        what_ = STR("Invalid CSI sequence: " << seq);
     }
     VT100::InvalidCSISequence::InvalidCSISequence(std::string const & msg, VT100::CSISequence const & seq) {
         what_ = STR(msg << seq);

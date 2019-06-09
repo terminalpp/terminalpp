@@ -2,9 +2,6 @@
 #include <iostream>
 
 #include <windows.h>
-
-#include "helpers/win32.h"
-
 #include "gdi_application.h"
 #include "gdi_terminal_window.h"
 
@@ -14,8 +11,9 @@ namespace tpp {
 		/** Attaches a console to the GDIApplication for debugging purposes. 
 		 */
 		void AttachConsole() {
-			if (AllocConsole() == 0)
-				THROW(helpers::Win32Error("Cannot allocate console"));
+			OSCHECK(
+				AllocConsole()
+			) << "Cannot allocate console";
 			// this is ok, console cannot be detached, so we are fine with keeping the file handles forewer,
 			// nor do we need to FreeConsole at any point
 			FILE *fpstdin = stdin, *fpstdout = stdout, *fpstderr = stderr;
