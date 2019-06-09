@@ -11,6 +11,7 @@ namespace tpp {
     namespace {
 
         int X11ErrorHandler(Display * display, XErrorEvent * e) {
+            MARK_AS_UNUSED(display);
             LOG << "X error: " << e->error_code;
             return 0;
         }
@@ -69,6 +70,12 @@ namespace tpp {
 	TerminalWindow* X11Application::createTerminalWindow(Session * session, TerminalWindow::Properties const& properties, std::string const& name) {
 		return new X11TerminalWindow(session, properties, name);
 	}
+
+    void X11Application::xSendEvent(X11TerminalWindow * window, XEvent & e, long mask) {
+        XSendEvent(xDisplay_, window->window_, false, mask, &e);
+        XFlush(xDisplay_);
+    }
+
 
 	void X11Application::mainLoop() {
         try {

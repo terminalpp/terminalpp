@@ -29,6 +29,12 @@ namespace tpp {
 
 
 
+        /** Sends given X event. 
+
+            Because Xlib is not great with multiple threads, XFlush must be called after each event being set programatically to the queue. 
+         */
+        void xSendEvent(X11TerminalWindow * window, XEvent & e, long mask = 0);
+
 		Display* xDisplay() {
 			return xDisplay_;
 		}

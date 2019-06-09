@@ -60,12 +60,10 @@ namespace tpp {
             e.xclient.window = window_;
             e.xclient.format = 32;
             e.xclient.data.l[0] = app()->inputReadyMessage_;
-            XSendEvent(display_,window_,false, 0, &e);
-            XFlush(display_);
+            app()->xSendEvent(this, e);
 		}
 
 	protected:
-		
 
 		/** Returns the application instance casted to X11 app. 
 		 */
@@ -83,13 +81,12 @@ namespace tpp {
             // set the flag
             TerminalWindow::doInvalidate(); 
             // trigger a refresh
-            XEvent msg;
-            memset(&msg, 0, sizeof(XEvent));
-            msg.xexpose.type = Expose;
-            msg.xexpose.display = display_;
-            msg.xexpose.window = window_;
-            XSendEvent(display_, window_, false, ExposureMask, & msg);
-            XFlush(display_);
+            XEvent e;
+            memset(&e, 0, sizeof(XEvent));
+            e.xexpose.type = Expose;
+            e.xexpose.display = display_;
+            e.xexpose.window = window_;
+            app()->xSendEvent(this, e, ExposureMask);
 		}
 
 		void clipboardPaste() override;
