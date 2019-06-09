@@ -31,7 +31,7 @@ namespace tpp {
         XInitThreads();
 		xDisplay_ = XOpenDisplay(nullptr);
 		if (xDisplay_ == nullptr)
-			THROW(helpers::Exception("Unable to open X display"));
+			THROW(helpers::Exception()) << "Unable to open X display";
 		xScreen_ = DefaultScreen(xDisplay_);
 
 		// this needs to be done *after* the display & screen are initialized

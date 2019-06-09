@@ -16,6 +16,12 @@ namespace vterm {
 	class LocalPTY : public PTY {
 	public:
 
+		size_t sendData(char const * buffer, size_t size) override;
+		size_t receiveData(char* buffer, size_t availableSize) override;
+
+		void resize(unsigned cols, unsigned rows) override;
+
+
 		/** Starts the local pseudoterminal for given command. 
 		 */
 		LocalPTY(helpers::Command const & command);
@@ -32,10 +38,6 @@ namespace vterm {
 
 		helpers::ExitCode doWaitFor() override;
 
-		size_t sendData(char const * buffer, size_t size) override;
-		size_t receiveData(char* buffer, size_t availableSize) override;
-
-		void resize(unsigned cols, unsigned rows) override;
 
 
 	private:
