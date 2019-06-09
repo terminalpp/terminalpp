@@ -31,6 +31,7 @@ namespace tpp {
 
 		static void Close(Session* session) {
 			if (!session->closing_) {
+                LOG << "Closing session...";
 				session->closing_ = true;
 				Sessions_.erase(session);
 				delete session;

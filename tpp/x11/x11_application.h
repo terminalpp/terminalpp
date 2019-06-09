@@ -1,6 +1,12 @@
 #pragma once
 #ifdef __linux__
 
+
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
@@ -12,6 +18,8 @@ namespace tpp {
 
 	class X11TerminalWindow;
 
+    /** https://www.student.cs.uwaterloo.ca/~cs349/f15/resources/X/xTutorialPart1.html
+     */
 	class X11Application : public Application {
 	public:
 		X11Application();

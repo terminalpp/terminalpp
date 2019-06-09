@@ -21,13 +21,14 @@ namespace tpp {
 	}
 
 	Session::~Session() {
-		if (pty_ != nullptr) {
+		if (pty_ != nullptr) { // when ptty is null the sesion did not even start and everyone else will be null as well
 			// terminate the pty
 			pty_->terminate();
 			ptyExitWait_.join();
 			ptyReadThread_.join();
 			// detach the window from the terminal
 			window_->setTerminal(nullptr);
+            LOG << "Window terminal set to null";
 			// deleting the terminal deletes the terminal, backend and pty
 			delete terminal_;
 		}
@@ -38,6 +39,7 @@ namespace tpp {
 		// create the VT100 decoder, and associated PTY backend
 		pty_ = new vterm::LocalPTY(command_);
 		// create the thread waiting for the PTY to terminate
+        // TODO no need for extra thread - attach the handler to PTY
 		ptyExitWait_ = std::thread([this]() {
 			helpers::ExitCode ec = pty_->waitFor();
 			onPTYTerminated(ec);

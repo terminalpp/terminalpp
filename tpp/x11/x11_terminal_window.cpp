@@ -237,6 +237,9 @@ namespace tpp {
             /* Handles repaint event when window is shown or a repaint was triggered. 
              */
             case Expose: 
+                if (e.xexpose.count != 0)
+                    break;
+                LOG << "expose received";
                 tw->doPaint();
                 break;
             /* Handles window resize, which should change the terminal size accordingly. 
@@ -347,6 +350,7 @@ namespace tpp {
 			 */
 			case ClientMessage:
 				if (e.xclient.data.l[0] == tw->app()->inputReadyMessage_) {
+                    LOG << "Process input received";
 					tw->session()->processInput();
 				} else if (e.xclient.data.l[0] == tw->app()->wmDeleteMessage_) {
 					ASSERT(tw != nullptr) << "Attempt to destroy unknown window";

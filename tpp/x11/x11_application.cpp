@@ -38,7 +38,7 @@ namespace tpp {
 
 
 		//XSetErrorHandler(X11ErrorHandler);
-        //XSynchronize(XDisplay_, true);
+        //XSynchronize(xDisplay_, true);
 
 
         // set the default machine locale instead of the "C" locale
@@ -70,16 +70,15 @@ namespace tpp {
 		return new X11TerminalWindow(session, properties, name);
 	}
 
-
 	void X11Application::mainLoop() {
-		XEvent e;
-		try {
-			while (true) {
-				XNextEvent(xDisplay_, &e);
-				if (XFilterEvent(&e, None))
-					continue;
-				X11TerminalWindow::EventHandler(e);
-			}
+        try {
+            XEvent e;
+            while (true) { // TODO while terminate
+                XNextEvent(xDisplay_, &e);
+                if (XFilterEvent(&e, None))
+                    continue;
+                X11TerminalWindow::EventHandler(e);
+            }
 		} catch (Terminate const& e) {
 			// do nothing
 			LOG << "Main loop terminated.";

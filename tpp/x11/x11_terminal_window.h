@@ -53,14 +53,15 @@ namespace tpp {
 		}
 
 		void inputReady() override {
-			XClientMessageEvent msg;
-			memset(&msg, 0, sizeof(XClientMessageEvent));
-			msg.type = ClientMessage;
-			msg.display = display_;
-			msg.window = window_;
-            msg.format = 32; // view the message as longs
-			msg.data.l[0] = app()->inputReadyMessage_;
-			XSendEvent(display_, window_, false, 0, (XEvent*)& msg);
+            XEvent e;
+            memset(&e, 0, sizeof(XEvent));
+            e.xclient.type = ClientMessage;
+            e.xclient.display = display_;
+            e.xclient.window = window_;
+            e.xclient.format = 32;
+            e.xclient.data.l[0] = app()->inputReadyMessage_;
+            XSendEvent(display_,window_,false, 0, &e);
+            XFlush(display_);
 		}
 
 	protected:
@@ -82,12 +83,12 @@ namespace tpp {
             // set the flag
             TerminalWindow::doInvalidate(); 
             // trigger a refresh
-            XExposeEvent msg;
-            memset(&msg, 0, sizeof(XExposeEvent));
-            msg.type = Expose;
-            msg.display = display_;
-            msg.window = window_;
-            XSendEvent(display_, window_, false, ExposureMask, (XEvent *) & msg);
+            XEvent msg;
+            memset(&msg, 0, sizeof(XEvent));
+            msg.xexpose.type = Expose;
+            msg.xexpose.display = display_;
+            msg.xexpose.window = window_;
+            XSendEvent(display_, window_, false, ExposureMask, & msg);
             XFlush(display_);
 		}
 
