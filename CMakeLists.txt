@@ -17,6 +17,5 @@ add_subdirectory("vterm")
 
 add_subdirectory("tpp")
 
-if(UNIX)
-    add_subdirectory("tserv")
-endif()
+add_subdirectory("asciienc")
+
