@@ -27,6 +27,16 @@ namespace helpers {
 			what - 'a' + 10;
 	}
 
+    /** Converts given number in range 0-15 to a hex digit (0..9a..f).
+     */
+    inline char ToHexDigit(unsigned what) {
+        ASSERT(what < 16) << "Value " << what << " too large for single hex digit";
+        if (what < 10)
+            return static_cast<char>('0' + what);
+        else 
+            return static_cast<char>('a' + what - 10);
+    }
+
 	/** Converts a null terminated wide string in UTF-16 encoding into an std::string encoded in UTF-8.
 	 */
 	inline std::string UTF16toUTF8(wchar_t const * str) {
