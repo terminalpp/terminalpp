@@ -140,6 +140,10 @@ private:
         }
     }
 
+    /** The process output arrives unencoded on the pty, must be encoded and sent to std out. 
+
+        Since the encoding is done on character by character basis, no state is necessary. 
+     */
     void encodeOutput(char * buffer, size_t numBytes) {
         while (numBytes-- > 0) {
             unsigned char c = static_cast<unsigned char>(*(buffer++));
@@ -156,7 +160,23 @@ private:
         std::cout << std::flush;
     }
 
-    void encodeInput(char * buffer, size_t numBytes) {
+    /** Input comes encoded and must be decoded and sent to the pty. 
+     
+        
+     */
+    size_t encodeInput(char * buffer, size_t numBytes) {
+        std::string decoded;
+        size_t i = 0;
+        while (i < numBytes) {
+            if (buffer[i] != '`') {
+                decoded += buffer[i];
+                ++i;
+            } else {
+                
+
+            }
+
+        }
         pty_.sendData(buffer, numBytes);
     }
 
