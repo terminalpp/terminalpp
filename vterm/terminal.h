@@ -433,7 +433,7 @@ namespace vterm {
 			    
 				Returns the number of bytes send which should be identical to the second argument (size) unless there was an I/O error while sending. 
 			 */
-			size_t sendData(char const * buffer, size_t size);
+			virtual size_t sendData(char const * buffer, size_t size);
 
 			/** Resizes the internal buffer. 
 			 */

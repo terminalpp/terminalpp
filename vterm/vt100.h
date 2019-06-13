@@ -92,7 +92,7 @@ namespace vterm {
 		 */
 		helpers::Event<TitleEvent> onTitleChange;
 
-		VT100(PTY * pty, Palette const & palette, unsigned defaultFg, unsigned defaulrBg);
+		VT100(PTY * pty, Palette const & palette, unsigned defaultFg, unsigned defaultBg);
 
 		Palette const & palette() const {
 			return palette_;

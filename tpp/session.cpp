@@ -1,5 +1,6 @@
 #include "vterm/local_pty.h"
 #include "vterm/vt100.h"
+#include "vterm/ascii_encoder.h"
 
 #include "application.h"
 
@@ -46,7 +47,7 @@ namespace tpp {
 			LOG << "process exit monitor finished";
 		});
 		// create the terminal backend
-		vt_ = new vterm::VT100(
+		vt_ = new vterm::ASCIIEncoder::VT100(
 			pty_,
 			vterm::Palette::ColorsXTerm256(), 
 			15,

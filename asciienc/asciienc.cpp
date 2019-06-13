@@ -10,6 +10,7 @@
 #include "helpers/strings.h"
 
 #include "vterm/local_pty.h"
+#include "vterm/ascii_encoder.h"
 
 size_t constexpr BUFFER_SIZE = 10240;
 
@@ -63,9 +64,9 @@ private:
     - backtick is encoded as two backticks
     - characters from 0x00 to 0x19 are encoded as backtick and character from  
  */
-class ASCIIEncoder {
+class PTYEncoder {
 public:
-    ASCIIEncoder(int argc, char * argv[]):
+    PTYEncoder(int argc, char * argv[]):
         command_(GetCommand(argc, argv)),
         pty_(command_) {
         Singleton() = this;
@@ -86,12 +87,20 @@ public:
         // start the cin reader and encoder thread
         std::thread inputEncoder([this]() {
             char * buffer = new char[BUFFER_SIZE];
+            char * bufferWrite = buffer;
             size_t numBytes;
             while (true) {
-                numBytes = read(STDIN_FILENO, (void *) buffer, BUFFER_SIZE);
+                numBytes = read(STDIN_FILENO, (void *) bufferWrite, BUFFER_SIZE - (bufferWrite - buffer));
                 if (numBytes == 0)
                     break;
-                encodeInput(buffer, numBytes);
+                numBytes += bufferWrite - buffer;
+                size_t processed = encodeInput(buffer, numBytes);
+                if (processed != numBytes) {
+                    memcpy(buffer, buffer + processed, numBytes - processed);
+                    bufferWrite = buffer + (numBytes - processed);
+                } else {
+                    bufferWrite = buffer;
+                }
             }
             delete [] buffer;
         });
@@ -99,7 +108,7 @@ public:
 
     }
 
-    ~ASCIIEncoder() {
+    ~PTYEncoder() {
         signal(SIGWINCH, SIG_DFL);
     }
 
@@ -112,12 +121,10 @@ public:
         return ec;
     }
 
-
-
 private:
 
-    static ASCIIEncoder * & Singleton() {
-        static ASCIIEncoder * instance;
+    static PTYEncoder * & Singleton() {
+        static PTYEncoder * instance;
         return instance;
     }
 
@@ -131,7 +138,8 @@ private:
     }
 
     static void SIGWINCH_handler(int signum) {
-        ASCIIEncoder * enc = Singleton();
+        MARK_AS_UNUSED(signum);
+        PTYEncoder * enc = Singleton();
         if (enc != nullptr) {
             struct winsize ws;
             if (ioctl(STDOUT_FILENO, TIOCGWINSZ, & ws) == -1 || ws.ws_col == 0)
@@ -145,18 +153,7 @@ private:
         Since the encoding is done on character by character basis, no state is necessary. 
      */
     void encodeOutput(char * buffer, size_t numBytes) {
-        while (numBytes-- > 0) {
-            unsigned char c = static_cast<unsigned char>(*(buffer++));
-            if (c == '`') {
-                std::cout << "``";
-            } else if (c >= ' ' && c <= '~') {
-                std::cout << c;
-            } else if (c < ' ') {
-                std::cout << '`' << (c + 'A');
-            } else {
-                std::cout << '`' << helpers::ToHexDigit(c >> 4) << helpers::ToHexDigit(c & 0xf);
-            }
-        }
+        vterm::ASCIIEncoder::Encode(std::cout, buffer, numBytes);
         std::cout << std::flush;
     }
 
@@ -165,19 +162,10 @@ private:
         
      */
     size_t encodeInput(char * buffer, size_t numBytes) {
-        std::string decoded;
-        size_t i = 0;
-        while (i < numBytes) {
-            if (buffer[i] != '`') {
-                decoded += buffer[i];
-                ++i;
-            } else {
-                
-
-            }
-
-        }
-        pty_.sendData(buffer, numBytes);
+        size_t decodedSize;
+        size_t result = vterm::ASCIIEncoder::Decode(buffer, numBytes, decodedSize);
+        pty_.sendData(buffer, decodedSize);
+        return result;
     }
 
     RawModeInput rmi_;
@@ -191,7 +179,7 @@ private:
 
 int main(int argc, char * argv[]) {
     try {
-        ASCIIEncoder enc(argc, argv);
+        PTYEncoder enc(argc, argv);
         return enc.waitForDone();
     } catch (helpers::Exception const & e) {
         std::cerr << "asciienc error: " << std::endl << e << std::endl;

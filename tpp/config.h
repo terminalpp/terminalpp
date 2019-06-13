@@ -8,6 +8,7 @@
 
 #elif __linux__
 
-#define DEFAULT_SESSION_COMMAND helpers::Command("bash", {})
+//#define DEFAULT_SESSION_COMMAND helpers::Command("bash", {})
+#define DEFAULT_SESSION_COMMAND helpers::Command("/home/peta/devel/terminalpp/build/asciienc/asciienc", {"emacs", "-nw"})
 
 #endif
