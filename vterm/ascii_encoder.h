@@ -60,28 +60,46 @@ namespace vterm {
             size_t i = 0;
             while (i < bufferSize) {
                 if (buffer[i] != '`') {
-                    buffer[decodedSize++] = buffer[i];
+					if (IsValidEncodedChar(buffer[i]))
+                        buffer[decodedSize++] = buffer[i];
                     ++i;
                 } else {
-                    // if there is not enough 
-                    if (i + 1 >= bufferSize)
-                        break;
-                    char c = buffer[i + 1];
+					size_t j = i + 1;
+					while (true) {
+						if (j >= bufferSize)
+							return i;
+						if (IsValidEncodedChar(buffer[j]))
+							break;
+						++j;
+					}
+                    char c = buffer[j];
                     if (c == '`') {
                         buffer[decodedSize++] = '`';
-                        i += 2;
+                        i = j + 1;
                     } else if (c >= '@' && c <= '`') {
                         buffer[decodedSize++] = static_cast<char>(c - '@');
-                        i += 2;
+                        i = j + 1;
                     } else {
-                        if (i + 2 >= bufferSize)
-                            break;
-                        buffer[decodedSize++] = static_cast<char>((helpers::HexCharToNumber(buffer[i + 1]) << 4) + helpers::HexCharToNumber(buffer[i + 2]));
-                        i += 3;
-                    }
+						unsigned x = helpers::HexCharToNumber(c) << 4;
+						++j;
+						while (true) {
+							if (j >= bufferSize)
+								return i;
+							if (IsValidEncodedChar(buffer[j]))
+								break;
+							++j;
+						}
+						x += helpers::HexCharToNumber(buffer[j]);
+						buffer[decodedSize++] = static_cast<char>(x);
+						i = j + 1;
+					}
                 }
             }
             return i;
         }
+
+		static bool IsValidEncodedChar(char c) {
+			return (c >= ' ' && c <= '~');
+		}
     };
 } // namespace vterm

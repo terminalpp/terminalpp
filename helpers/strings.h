@@ -18,6 +18,8 @@ namespace helpers {
 	/** Converts given character containing hexadecimal digit (upper and lower case variants of a-f are supported) to its value. 
 	 */
 	inline unsigned HexCharToNumber(char what) {
+		if (!(InRangeInclusive(what, '0', '9') || InRangeInclusive(what, 'A', 'F') || InRangeInclusive(what, 'a', 'f')))
+			ASSERT(false);
 		ASSERT(InRangeInclusive(what, '0', '9') || InRangeInclusive(what, 'A', 'F') || InRangeInclusive(what, 'a', 'f')) << "Not a hexadecimal number: " << what << " (ASCII: " << static_cast<unsigned>(what) << ")";
 		if (what <= '9')
 			return what - '0';

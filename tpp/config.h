@@ -4,7 +4,8 @@
 
 #ifdef WIN32
 
-#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "bash"})
+//#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "bash"})
+#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/asciienc/asciienc", "mc"})
 
 #elif __linux__
 
