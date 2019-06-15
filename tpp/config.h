@@ -5,11 +5,12 @@
 #ifdef WIN32
 
 //#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "bash"})
-#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/asciienc/asciienc", "mc"})
+#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/asciienc/asciienc", "bash"})
+//#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"--help"})
 
 #elif __linux__
 
 //#define DEFAULT_SESSION_COMMAND helpers::Command("bash", {})
-#define DEFAULT_SESSION_COMMAND helpers::Command("/home/peta/devel/terminalpp/build/asciienc/asciienc", {"emacs", "-nw"})
+#define DEFAULT_SESSION_COMMAND helpers::Command("/home/peta/devel/tpp-build/asciienc/asciienc", {"mc"})
 
 #endif

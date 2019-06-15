@@ -1,4 +1,5 @@
 #include "vterm/local_pty.h"
+#include "vterm/bypass_pty.h"
 #include "vterm/vt100.h"
 #include "vterm/ascii_encoder.h"
 
@@ -38,7 +39,7 @@ namespace tpp {
 	void Session::start() {
 		ASSERT(pty_ == nullptr) << "Session " << name_ << " already started";
 		// create the VT100 decoder, and associated PTY backend
-		pty_ = new vterm::LocalPTY(command_);
+		pty_ = new vterm::BypassPTY(command_);
 		// create the thread waiting for the PTY to terminate
         // TODO no need for extra thread - attach the handler to PTY
 		ptyExitWait_ = std::thread([this]() {

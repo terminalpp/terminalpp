@@ -73,6 +73,9 @@ namespace vterm {
 		 */
 		PROCESS_INFORMATION pInfo_;
 
+		HANDLE pipePTYIn;
+		HANDLE pipePTYOut;
+
 #elif __linux__
 
 		static constexpr pid_t IGNORE_TERMINATION = 0;

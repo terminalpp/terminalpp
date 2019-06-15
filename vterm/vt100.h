@@ -117,6 +117,12 @@ namespace vterm {
 		
 	protected:
 
+		/** Skips escape sequence in the provided buffer and advances the index to the first character after it.
+
+		    Returns true if the next character is valid, false otherwise. If whole escape sequence was matched, the index argument will be advanced accordingly, if there are characters missing from the input, the index will not be changed and remain pointing at the beginning of the sequence. This can be used by the caller to determine what data should be prefixed to the next input.
+		 */
+		static bool SkipEscapeSequence(char* buffer, size_t size, size_t& index);
+
 
         class CSISequence;
 

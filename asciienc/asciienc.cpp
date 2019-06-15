@@ -8,6 +8,7 @@
 
 #include "helpers/helpers.h"
 #include "helpers/strings.h"
+#include "helpers/log.h"
 
 #include "vterm/local_pty.h"
 #include "vterm/ascii_encoder.h"
@@ -64,7 +65,7 @@ private:
     - backtick is encoded as two backticks
     - characters from 0x00 to 0x19 are encoded as backtick and character from  
  */
-class PTYEncoder {
+class PTYEncoder : public vterm::ASCIIEncoder::CommandHandler {
 public:
     PTYEncoder(int argc, char * argv[]):
         command_(GetCommand(argc, argv)),
@@ -121,6 +122,10 @@ public:
         return ec;
     }
 
+	void resize(unsigned cols, unsigned rows) override {
+		pty_.resize(cols, rows);
+	}
+
 private:
 
     static PTYEncoder * & Singleton() {
@@ -163,12 +168,12 @@ private:
      */
     size_t encodeInput(char * buffer, size_t numBytes) {
         size_t decodedSize;
-        size_t result = vterm::ASCIIEncoder::Decode(buffer, numBytes, decodedSize);
+        size_t result = vterm::ASCIIEncoder::Decode(buffer, numBytes, decodedSize, this);
         pty_.sendData(buffer, decodedSize);
         return result;
     }
 
-    RawModeInput rmi_;
+    //RawModeInput rmi_;
     helpers::Command command_;
     vterm::LocalPTY pty_;
     std::thread outputEncoder_;

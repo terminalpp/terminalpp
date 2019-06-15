@@ -1,6 +1,9 @@
 
 #include <cstring>
 
+#include "helpers/log.h"
+
+
 #include "terminal.h"
 #include "pty.h"
 
@@ -30,12 +33,20 @@ namespace vterm {
 	void Terminal::PTYBackend::processInput() {
 		if (!available_)
 			return;
+		if (buffer_[0] == '\x1b' && buffer_[1] == '\x1b')
+			LOG << "Trouble detected";
 		// process the data received
 		size_t processed = dataReceived(buffer_, writeStart_ - buffer_);
 		// if not all data has been processed, copy the unprocessed data to the beginning of the buffer
-		if (buffer_ + processed != writeStart_)
+		if (buffer_ + processed != writeStart_) {
+			LOG << "Processed: " << processed << " out of " << (writeStart_ - buffer_);
+			LOG << std::string(buffer_ + processed, writeStart_ - (buffer_ + processed));
 			memcpy(buffer_, buffer_ + processed, writeStart_ - (buffer_ + processed));
+		}
+		LOG("ASCIIDEC") << "Input buffer size" << (writeStart_ - buffer_) << ", processed " << processed;
 		writeStart_ -= processed;
+
+		LOG("ASCIIDEC") << "WriteStart offset" << (writeStart_ - buffer_);
 		// finally set available to false so that next wait cycle can be initiated
 		available_ = false;
 	}

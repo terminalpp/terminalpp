@@ -206,6 +206,7 @@ namespace helpers {
 			printTime_(printTime),
 			printName_(printName),
 			printLocation_(printLocation),
+			raw_(false),
 			s_(&s) {
 		}
 
@@ -214,12 +215,17 @@ namespace helpers {
 			printTime_(printTime),
 			printName_(printName),
 			printLocation_(printLocation),
+			raw_(false),
 			s_(nullptr) {
 		}
 
 		void log(Log::Message const & m) override {
 			if (s_ != nullptr) {
 				std::lock_guard<std::mutex> g(m_);
+				if (raw_) {
+					(*s_) << m.text;
+					return;
+				}
 				// TODO actually print the message
 				if (printTime_) {
 					tm t;
@@ -254,6 +260,11 @@ namespace helpers {
 			return this;
 		}
 
+		StreamLogger* raw(bool value = true) {
+			raw_ = value;
+			return this;
+		}
+
 		StreamLogger * toFile(std::string const & name) {
 			f_.open(name);
 			if (!f_.good())
@@ -267,6 +278,7 @@ namespace helpers {
 		bool printTime_;
 		bool printName_;
 		bool printLocation_;
+		bool raw_;
 
 		std::mutex m_;
 		std::ostream * s_;

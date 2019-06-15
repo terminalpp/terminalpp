@@ -123,7 +123,7 @@ namespace tpp {
 
 		/** The PTY for the session. 
 		 */
-		vterm::LocalPTY* pty_;
+		vterm::PTY* pty_;
 
 		/** The VT100 terminal backend. 
 		 */

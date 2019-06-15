@@ -94,7 +94,7 @@ namespace vterm {
 		HANDLE pipePTYOut{ INVALID_HANDLE_VALUE };
 		// first create the pipes we need, no security arguments and we use default buffer size for now
 		OSCHECK(
-			CreatePipe(&pipePTYIn, &pipeOut_, nullptr, 0) && CreatePipe(&pipeIn_, &pipePTYOut, nullptr, 0)
+			CreatePipe(&pipePTYIn, &pipeOut_, NULL, 0) && CreatePipe(&pipeIn_, &pipePTYOut, NULL, 0)
 		) << "Unable to create pipes for the subprocess";
 		// determine the console size from the terminal we have
 		COORD consoleSize{};
@@ -134,7 +134,7 @@ namespace vterm {
 				nullptr
 			)
 		) << "Unable to set pseudoconsole attribute";
-		std::string cmd = command_.toString();
+		std::string cmd= command_.toString();
 		// finally, create the process with given commandline
 		OSCHECK(
 			CreateProcess(
