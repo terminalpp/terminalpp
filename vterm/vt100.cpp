@@ -539,40 +539,6 @@ namespace vterm {
 		return size;
 	}
 
-
-	bool VT100::SkipEscapeSequence(char* buffer, size_t size, size_t& index) {
-#define TOP (buffer[i])
-#define POP if (++i >= size) return false;
-		size_t i = index;
-		ASSERT(TOP == Char::ESC);
-		POP;
-		switch (TOP) {
-		case '[':
-			POP;
-			// parameter bytes
-			while (TOP >= 0x30 && TOP <= 0x3f)
-				POP;
-			// intermediate bytes
-			while (TOP >= 0x20 && TOP <= 0x2f)
-				POP;
-			// last byte
-			++i;
-			break;
-		case ']':
-			POP;
-			while (TOP != Char::BEL)
-				POP;
-			++i;
-			break;
-		default:
-			LOG << "Unknown escape sequence " << TOP << " (code: " << static_cast<unsigned>(TOP) << ")";
-		}
-		index = i;
-		return i < size;
-#undef TOP
-#undef POP
-	}
-
 	bool VT100::skipEscapeSequence() {
 		ASSERT(*buffer_ == Char::ESC);
 		pop();

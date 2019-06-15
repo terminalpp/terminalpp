@@ -230,7 +230,6 @@ namespace vterm {
 				signal(SIGTERM, SIG_DFL);
 				signal(SIGALRM, SIG_DFL);
 
-
 				char** args = new char* [command_.args().size() + 2];
 				args[0] = const_cast<char*>(command_.command().c_str());
 				for (size_t i = 0; i < command_.args().size(); ++i)
