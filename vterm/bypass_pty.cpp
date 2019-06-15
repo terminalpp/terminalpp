@@ -55,12 +55,8 @@ namespace vterm {
 		CloseHandle(pInfo_.hThread);
 		if (pipeIn_ != INVALID_HANDLE_VALUE)
 			CloseHandle(pipeIn_);
-		if (pipePTYOut_ != INVALID_HANDLE_VALUE)
-			CloseHandle(pipePTYOut_);
 		if (pipeOut_ != INVALID_HANDLE_VALUE)
 			CloseHandle(pipeOut_);
-		if (pipePTYIn_ != INVALID_HANDLE_VALUE)
-			CloseHandle(pipePTYIn_);
 		return ec;
 	}
 
@@ -97,6 +93,9 @@ namespace vterm {
 			NULL, // use parent's directory 
 			&sInfo,  // startup info
 			&pInfo_));  // info about the process
+		// we can close our handles to the other ends now
+		CloseHandle(pipePTYOut_);
+		CloseHandle(pipePTYIn_);
 	}
 
 #elif __linux__

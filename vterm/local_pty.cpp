@@ -238,7 +238,7 @@ namespace vterm {
 				
 				args[command_.args().size() + 1] = nullptr;
 				// execvp never returns
-				execvp(command_.command().c_str(), args);
+				OSCHECK(execvp(command_.command().c_str(), args) != -1) << "WTF WTF";
 				UNREACHABLE;
 			}
 			// continuing the terminal program 
