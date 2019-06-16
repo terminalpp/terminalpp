@@ -15,6 +15,7 @@ namespace tpp {
 	/** Stores and retrieves font objects so that they do not have to be created each time they are needed. 
 
 	    Templated by the actual font handle, which is platform dependent. 
+
 	 */
 	template<typename T>
 	class FontSpec {

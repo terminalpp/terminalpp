@@ -40,6 +40,10 @@ namespace vterm {
 			alpha(0) {
 		}
 
+		unsigned toNumber() const {
+			return (red << 16) + (green << 8) + blue;
+		}
+
 		bool operator == (Color const & other) const {
 			return red == other.red && green == other.green && blue == other.blue && alpha == other.alpha;
 		}

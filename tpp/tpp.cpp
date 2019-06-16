@@ -11,6 +11,8 @@
 #ifdef WIN32
 #include "gdi/gdi_application.h"
 #include "gdi/gdi_terminal_window.h"
+#include "directwrite/directwrite_application.h"
+#include "directwrite/directwrite_terminal_window.h"
 // link to directwrite
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
@@ -20,8 +22,6 @@
 #else
 #error "Unsupported platform"
 #endif
-
-
 
 using namespace tpp;
 
@@ -33,8 +33,6 @@ using namespace tpp;
 
 // https://github.com/Microsoft/node-pty/blob/master/src/win/conpty.cc
 
-
-
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
@@ -43,7 +41,7 @@ using namespace tpp;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	try {
 	    // create the application singleton
-	    new GDIApplication(hInstance);
+	    new DirectWriteApplication(hInstance);
 #elif __linux__
 int main(int argc, char* argv[]) {
 	try {
@@ -53,6 +51,7 @@ int main(int argc, char* argv[]) {
 		// create the application singleton
 	    new X11Application();
 #endif
+
 
 		Session* s = Session::Create("t++", DEFAULT_SESSION_COMMAND);
 		s->start();
