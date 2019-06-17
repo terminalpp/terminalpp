@@ -23,6 +23,8 @@
 #error "Unsupported platform"
 #endif
 
+#include "helpers/time.h"
+
 using namespace tpp;
 
 // https://www.codeguru.com/cpp/misc/misc/graphics/article.php/c16139/Introduction-to-DirectWrite.htm
@@ -41,7 +43,7 @@ using namespace tpp;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	try {
 	    // create the application singleton
-	    new DirectWriteApplication(hInstance);
+	    new GDIApplication(hInstance);
 #elif __linux__
 int main(int argc, char* argv[]) {
 	try {

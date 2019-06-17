@@ -16,7 +16,7 @@ namespace tpp {
 	class DirectWriteApplication;
 
 	template<>
-	inline FontSpec<IDWriteTextFormat*>* FontSpec<IDWriteTextFormat*>::Create(vterm::Font font, unsigned height) {
+	inline FontSpec<IDWriteTextFormat*>* FontSpec<IDWriteTextFormat*>::Create(vterm::Font font, unsigned baseHeight) {
 		IDWriteTextFormat* tf;
 		DirectWriteApplication* app = reinterpret_cast<DirectWriteApplication*>(Application::Instance());
 		// TODO figure dip 
@@ -26,12 +26,17 @@ namespace tpp {
 			font.bold() ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
 			font.italics() ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
 			DWRITE_FONT_STRETCH_NORMAL,
-			height * font.size() - 3,
+			baseHeight * font.size() - 3.6,
 			L"en-us",
 			&tf
 		))) << "Unable to create font";
-		// TODO figure the font width here
-		return new FontSpec<IDWriteTextFormat*>(font, 8, height, tf);
+		IDWriteTextLayout * tl;
+		app->dwFactory_->CreateTextLayout(L"M", 1, tf, 1000, 1000, &tl);
+		DWRITE_TEXT_METRICS tm;
+		tl->GetMetrics(&tm);
+		tl->Release();
+		// TODO the
+		return new FontSpec<IDWriteTextFormat*>(font, std::round(tm.width), std::round(tm.height), tf);
 	}
 
 	class DirectWriteTerminalWindow : public TerminalWindow {
@@ -57,16 +62,6 @@ namespace tpp {
 			PostMessage(hWnd_, WM_USER, MSG_INPUT_READY, 0);
 		}
 
-		void redraw() override {
-			/*
-			if (buffer_ != nullptr) {
-				DeleteObject(buffer_);
-				buffer_ = nullptr;
-			}
-			*/
-			InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
-		}
-
 	protected:
 
 		/** Returns the Application singleton, converted to GDIApplication.
@@ -83,11 +78,19 @@ namespace tpp {
 
 		void titleChange(vterm::Terminal::TitleChangeEvent& e) override;
 
+		void windowResized(unsigned widthPx, unsigned heightPx) override {
+			if (rt_ != nullptr) {
+				D2D1_SIZE_U size = D2D1::SizeU(widthPx, heightPx);
+				rt_->Resize(size);
+			}
+			TerminalWindow::windowResized(widthPx, heightPx);
+		}
+
 		/** Deletes the double buffer object.
 		 */
-		void doInvalidate() override {
+		void doInvalidate(bool forceRepaint) override {
 			// set the invalidate flag
-			TerminalWindow::doInvalidate();
+			TerminalWindow::doInvalidate(forceRepaint);
 			// repaint the window
 			InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 		}
@@ -95,7 +98,7 @@ namespace tpp {
 		void clipboardPaste() override;
 		void clipboardCopy(std::string const& str) override;
 
-		void doPaint() override;
+		unsigned doPaint() override;
 
 		void doSetForeground(vterm::Color const& fg) override {
 			fg_->SetColor(D2D1::ColorF(D2D1::ColorF(fg.toNumber(), 1.0f)));

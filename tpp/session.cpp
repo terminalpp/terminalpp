@@ -39,7 +39,7 @@ namespace tpp {
 	void Session::start() {
 		ASSERT(pty_ == nullptr) << "Session " << name_ << " already started";
 		// create the VT100 decoder, and associated PTY backend
-		pty_ = new vterm::BypassPTY(command_);
+		pty_ = new DEFAULT_SESSION_PTY(command_);
 		// create the thread waiting for the PTY to terminate
         // TODO no need for extra thread - attach the handler to PTY
 		ptyExitWait_ = std::thread([this]() {
@@ -48,7 +48,7 @@ namespace tpp {
 			LOG << "process exit monitor finished";
 		});
 		// create the terminal backend
-		vt_ = new vterm::ASCIIEncoder::VT100(
+		vt_ = new DEFAULT_SESSION_BACKEND(
 			pty_,
 			vterm::Palette::ColorsXTerm256(), 
 			15,

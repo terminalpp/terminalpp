@@ -66,14 +66,6 @@ namespace tpp {
 			PostMessage(hWnd_, WM_USER, MSG_INPUT_READY, 0);
 		}
 
-		void redraw() override {
-			if (buffer_ != nullptr) {
-				DeleteObject(buffer_);
-				buffer_ = nullptr;
-			}
-			InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
-		}
-
 	protected:
 
 		/** Returns the Application singleton, converted to GDIApplication. 
@@ -90,11 +82,19 @@ namespace tpp {
 
 		void titleChange(vterm::Terminal::TitleChangeEvent & e) override;
 
+		void windowResized(unsigned widthPx, unsigned heightPx) override {
+			if (buffer_ != nullptr) {
+				DeleteObject(buffer_);
+				buffer_ = nullptr;
+			}
+			TerminalWindow::windowResized(widthPx, heightPx);
+		}
+
 		/** Deletes the double buffer object. 
 		 */
-		void doInvalidate() override {
+		void doInvalidate(bool forceRepaint) override {
             // set the invalidate flag
-            TerminalWindow::doInvalidate(); 
+            TerminalWindow::doInvalidate(forceRepaint); 
             // repaint the window
     		InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 		}
@@ -102,7 +102,7 @@ namespace tpp {
 		void clipboardPaste() override;
 		void clipboardCopy(std::string const& str) override;
 
-		void doPaint() override;
+		unsigned doPaint() override;
 
 		void doSetForeground(vterm::Color const& fg) override {
 			SetTextColor(bufferDC_, RGB(fg.red, fg.green, fg.blue));

@@ -116,26 +116,22 @@ namespace tpp {
 	}
 
 
-	void GDITerminalWindow::doPaint() {
+	unsigned GDITerminalWindow::doPaint() {
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd_, &ps);
-		bool forceDirty = false;
-        if (invalidated_ && buffer_ != nullptr) {
-			DeleteObject(buffer_);
-			buffer_ = nullptr;
-        }
 		if (buffer_ == nullptr) {
 			buffer_ = CreateCompatibleBitmap(hdc, widthPx_, heightPx_);
 			SelectObject(bufferDC_, buffer_);
-			forceDirty = true;
-            invalidated_ = false;
+			forceRepaint_ = true;
 		}
 		SetBkMode(bufferDC_, OPAQUE);
 		// check if we ned to repaint any cells
-		doUpdateBuffer(forceDirty);
+		unsigned numCells = drawBuffer();
+		forceRepaint_ = false;
 		// copy the shadow image
 		BitBlt(hdc, 0, 0, widthPx_, heightPx_, bufferDC_, 0, 0, SRCCOPY);
 		EndPaint(hWnd_, &ps);
+		return numCells;
 	}
 
 	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
@@ -233,14 +229,14 @@ namespace tpp {
 				if (tw != nullptr) {
 					RECT rect;
 					GetClientRect(hWnd, &rect);
-					tw->resizeWindow(rect.right, rect.bottom);
+					tw->windowResized(rect.right, rect.bottom);
 				}
 				break;
 			}
 			/* Repaint of the window is requested. */
 			case WM_PAINT: {
 				ASSERT(tw != nullptr) << "Attempt to paint unknown window";
-				tw->doPaint();
+				tw->paint();
 				break;
         	}
 			/* TODO It would be nice to actually switch to unicode. */
@@ -296,7 +292,7 @@ namespace tpp {
 			case WM_TIMER: {
 				if (wParam == TIMERID_BLINK) {
 					tw->blink_ = !tw->blink_;
-					InvalidateRect(hWnd, nullptr, /* erase */ false);
+					tw->doInvalidate(false);
 				}
 				break;
 			}

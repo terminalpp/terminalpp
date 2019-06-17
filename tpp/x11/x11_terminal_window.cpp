@@ -97,23 +97,24 @@ namespace tpp {
 		NOT_IMPLEMENTED;
 	}
 
-	void X11TerminalWindow::doPaint() {
+	unsigned X11TerminalWindow::doPaint() {
         std::lock_guard<std::mutex> g(drawGuard_);
 		ASSERT(draw_ == nullptr);
-		bool forceDirty = false;
-        if (invalidated_ && buffer_ != 0) {
+		/*
+        if (buffer_ != 0) {
             XFreePixmap(display_, buffer_);
             buffer_ = 0;
-        }
+        } */
 		if (buffer_ == 0) {
 			buffer_ = XCreatePixmap(display_, window_, widthPx_, heightPx_, DefaultDepth(display_, screen_));
 			ASSERT(buffer_ != 0);
-			forceDirty = true;
-            invalidated_ = false;
+			forceRepaint_ = true;
 		}
+		//forceRepaint_ = true;
 		draw_ = XftDrawCreate(display_, buffer_, visual_, colorMap_);
-		doUpdateBuffer(forceDirty);
-        // first clear the borders that won't be used (don't clear the whole window to prevent flicker)
+		unsigned numCells = drawBuffer();
+		forceRepaint_ = false;
+		// first clear the borders that won't be used (don't clear the whole window to prevent flicker)
         unsigned marginRight = widthPx_ % cellWidthPx_;
         unsigned marginBottom = heightPx_ % cellHeightPx_;
         if (marginRight != 0) 
@@ -125,6 +126,7 @@ namespace tpp {
 		XftDrawDestroy(draw_);
 		draw_ = nullptr;
         XFlush(display_);
+		return numCells;
 	}
 
     vterm::Key X11TerminalWindow::GetKey(KeySym k, unsigned state) {
@@ -240,13 +242,13 @@ namespace tpp {
                 if (e.xexpose.count != 0)
                     break;
                 LOG << "expose received";
-                tw->doPaint();
+                tw->paint();
                 break;
             /* Handles window resize, which should change the terminal size accordingly. 
              */  
             case ConfigureNotify: {
                 if (tw->widthPx_ != static_cast<unsigned>(e.xconfigure.width) || tw->heightPx_ != static_cast<unsigned>(e.xconfigure.height))
-                    tw->resizeWindow(e.xconfigure.width, e.xconfigure.height);
+                    tw->windowResized(e.xconfigure.width, e.xconfigure.height);
                 break;
             }
             case MapNotify:

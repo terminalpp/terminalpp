@@ -77,9 +77,17 @@ namespace tpp {
 
 		void titleChange(vterm::Terminal::TitleChangeEvent & e) override;
 
-		void doInvalidate() override {
+		void windowResized(unsigned widthPx, unsigned heightPx) {
+			if (buffer_ != 0) {
+				XFreePixmap(display_, buffer_);
+				buffer_ = 0;
+			}
+			TerminalWindow::windowResized(widthPx, heightPx);
+		}
+
+		void doInvalidate(bool forceRepaint) override {
             // set the flag
-            TerminalWindow::doInvalidate(); 
+            TerminalWindow::doInvalidate(forceRepaint); 
             // trigger a refresh
             XEvent e;
             memset(&e, 0, sizeof(XEvent));
@@ -92,7 +100,7 @@ namespace tpp {
 		void clipboardPaste() override;
 		void clipboardCopy(std::string const& str) override;
 
-		void doPaint() override;
+		unsigned doPaint() override;
 
 		void doSetForeground(vterm::Color const& fg) override {
 			fg_ = toXftColor(fg);

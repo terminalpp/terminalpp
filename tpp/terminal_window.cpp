@@ -82,15 +82,16 @@ namespace tpp {
 	}
 
 
-	void TerminalWindow::doUpdateBuffer(bool forceDirty) {
+	unsigned TerminalWindow::drawBuffer() {
 		// don't do anything if terminal is not attached
 		if (terminal() == nullptr)
-			return;
+			return 0;
 		vterm::Terminal::Buffer & b = terminal()->buffer();
 		// initialize the first font and colors
 		vterm::Color fg;
 		vterm::Color bg;
 		vterm::Font font;
+		unsigned numCells = 0;
 		{
 			vterm::Terminal::Cell& c = b.at(0, 0);
 			fg = c.fg;
@@ -104,13 +105,14 @@ namespace tpp {
 		vterm::Terminal::Cursor cursor = terminal()->cursor();
 		// if cursor state changed, mark the cell containing it as dirty
 		bool cursorInRange = cursor.col < cols() && cursor.row < rows();
-		if (!forceDirty && cursorInRange)
+		if (!forceRepaint_ && cursorInRange)
 			b.at(cursor.col, cursor.row).dirty = true;
 		// now loop over the entire terminal and update the cells
 		for (unsigned r = 0, re = rows(); r < re; ++r) {
 			for (unsigned c = 0, ce = cols(); c < ce; ++c) {
 				vterm::Terminal::Cell& cell = b.at(c, r);
-				if (forceDirty || cell.dirty) {
+				if (forceRepaint_ || cell.dirty) {
+					++numCells;
 					cell.dirty = false;
 					if (fg != cell.fg) {
 						fg = cell.fg;
@@ -137,6 +139,7 @@ namespace tpp {
 			c.font = DropBlink(c.font);
 			doDrawCursor(cursor.col, cursor.row, c);
 		}
+		return numCells;
 	}
 
 } // namespace tpp

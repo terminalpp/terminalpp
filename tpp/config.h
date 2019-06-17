@@ -3,6 +3,8 @@
 #define DEFAULT_TERMINAL_FONT_HEIGHT 18
 
 #ifdef WIN32
+#define DEFAULT_SESSION_BACKEND vterm::ASCIIEncoder::VT100
+#define DEFAULT_SESSION_PTY vterm::BypassPTY
 
 //#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "bash"})
 #define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/asciienc/asciienc", "bash"})
@@ -10,7 +12,10 @@
 
 #elif __linux__
 
-//#define DEFAULT_SESSION_COMMAND helpers::Command("bash", {})
-#define DEFAULT_SESSION_COMMAND helpers::Command("/home/peta/devel/tpp-build/asciienc/asciienc", {"mc"})
+#define DEFAULT_SESSION_BACKEND vterm::VT100
+#define DEFAULT_SESSION_PTY vterm::LocalPTY
+
+#define DEFAULT_SESSION_COMMAND helpers::Command("bash", {})
+//#define DEFAULT_SESSION_COMMAND helpers::Command("/home/peta/devel/tpp-build/asciienc/asciienc", {"mc"})
 
 #endif

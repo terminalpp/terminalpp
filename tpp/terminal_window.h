@@ -2,6 +2,9 @@
 
 #include <cmath>
 
+#include "helpers/time.h"
+#include "helpers/log.h"
+
 #include "vterm/vt100.h"
 
 
@@ -65,7 +68,7 @@ namespace tpp {
 
 		/** This must be implemented in platform specific code. 
 		 */
-		static FontSpec * Create(vterm::Font font, unsigned height);
+		static FontSpec * Create(vterm::Font font, unsigned baseHeight);
 
 		static std::unordered_map<unsigned, FontSpec *> Fonts_;
 	};
@@ -154,14 +157,14 @@ namespace tpp {
 		virtual void hide() = 0;
 		virtual void close() = 0;
 
-
+		/** TODO can this be simplified and not dealt with in the TerminalWindow? 
+		 */
 		virtual void inputReady() = 0;
 
 		/** Redraws the window completely from the attached vterm. 
 		 */
-		virtual void redraw() {
-			doInvalidate();
-			//doPaint();
+		void redraw() {
+			doInvalidate(true);
 		}
 
 	protected:
@@ -185,13 +188,20 @@ namespace tpp {
 			cellWidthPx_(static_cast<unsigned>(properties.fontWidth * properties.zoom)),
 			cellHeightPx_(static_cast<unsigned>(properties.fontHeight * properties.zoom)),
 		    blink_(true),
-			invalidated_(false),
 		    mouseCol_(0),
 		    mouseRow_(0) {
 		}
 
+		void paint() {
+			helpers::Timer t;
+			t.start();
+			unsigned cells = doPaint();
+			double time = t.stop();
+			LOG << "Repaint event: cells: " << cells << ",  ms per cell: " << (time / cells * 1000);
+		}
+
         void repaint(vterm::Terminal::RepaintEvent &) override {
-            doInvalidate();
+            doInvalidate(false);
         }
 
         void titleChange(vterm::Terminal::TitleChangeEvent & e) override {
@@ -202,8 +212,7 @@ namespace tpp {
 
 		    Recalculates the number of columns and rows displayabe and calls the renderer's resize method which in turn updates the underlying terminal. When the terminal changes, it would trigger the repaint event on the window. 
 		 */
-		virtual void resizeWindow(unsigned widthPx, unsigned heightPx) {
-			doInvalidate();
+		virtual void windowResized(unsigned widthPx, unsigned heightPx) {
 			widthPx_ = widthPx;
 			heightPx_ = heightPx;
 			resize(widthPx / cellWidthPx_, heightPx / cellHeightPx_);
@@ -250,8 +259,8 @@ namespace tpp {
 
             The base window sets the invalidation flag and the implementations should provide the repaint trigger. 
 		 */
-		virtual void doInvalidate() {
-            invalidated_ = true;
+		virtual void doInvalidate(bool forceRepaint) {
+			forceRepaint_ = forceRepaint;
         }
 
 		virtual void clipboardPaste() = 0;
@@ -259,7 +268,7 @@ namespace tpp {
 
 		/** Paints the window.
 		 */
-		virtual void doPaint() = 0;
+		virtual unsigned doPaint() = 0;
 
 		/** Sets the foreground color for next cells or cursor to be drawn.  
 		 */
@@ -287,7 +296,7 @@ namespace tpp {
 
 		    Triggers repaint of all dirty terminal cells (or all cells if forceDirty is true) and the cursor. 
 		 */
-		void doUpdateBuffer(bool forceDirty = false);
+		unsigned drawBuffer();
 
 		/** Session the window belongs to. 
 		 */
@@ -329,11 +338,11 @@ namespace tpp {
 		 */
 	    bool blink_;
 
-        /** If true, the entire window contents has been invalidated and the window should be repainted.
-         
-            If the window contents is buffered, the flag also means that the buffer must be recreated (such as when window size changes).
-         */
-        bool invalidated_;
+		/** If true, the entire window contents has been invalidated and the window should be repainted.
+
+			If the window contents is buffered, the flag also means that the buffer must be recreated (such as when window size changes).
+		 */
+		bool forceRepaint_;
 
 
 
