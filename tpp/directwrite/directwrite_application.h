@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <dwrite_2.h> 
 #include <d2d1_2.h>
+#include <wrl.h>
 
 #include "../application.h"
 
@@ -33,8 +34,8 @@ namespace tpp {
 		HINSTANCE hInstance_;
 
 		// Direct write factories that can be used by all windows
-		IDWriteFactory* dwFactory_;
-		ID2D1Factory* d2dFactory_;
+		Microsoft::WRL::ComPtr<IDWriteFactory> dwFactory_;
+		Microsoft::WRL::ComPtr<ID2D1Factory> d2dFactory_;
 	}; // tpp::DirectWriteApplication 
 
 } // namespace tpp

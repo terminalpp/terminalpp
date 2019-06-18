@@ -43,7 +43,7 @@ using namespace tpp;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	try {
 	    // create the application singleton
-	    new GDIApplication(hInstance);
+	    new DirectWriteApplication(hInstance);
 #elif __linux__
 int main(int argc, char* argv[]) {
 	try {

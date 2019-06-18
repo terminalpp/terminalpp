@@ -13,6 +13,9 @@
 
 namespace tpp {
 
+	// GetSystemFontCollection -> GetFontFamily -> GetMatchingFont -> CreateFont face
+	// use the com pointers - see tutorial or so
+
 	class DirectWriteApplication;
 
 	template<>
@@ -82,6 +85,12 @@ namespace tpp {
 			if (rt_ != nullptr) {
 				D2D1_SIZE_U size = D2D1::SizeU(widthPx, heightPx);
 				rt_->Resize(size);
+				glyphRun_.glyphIndices = &glyphIndices_;
+				glyphRun_.glyphAdvances = &glyphAdvances_;
+				glyphRun_.glyphOffsets = &glyphOffsets_;
+				glyphAdvances_ = 0;
+				glyphOffsets_.advanceOffset = 0;
+				glyphOffsets_.ascenderOffset = 0;
 			}
 			TerminalWindow::windowResized(widthPx, heightPx);
 		}
@@ -113,21 +122,17 @@ namespace tpp {
 		}
 
 		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
-			wchar_t wc = c.c.toWChar();
 			D2D1_RECT_F rect = D2D1::RectF(
 				static_cast<FLOAT>(col * cellWidthPx_),
 				static_cast<FLOAT>(row * cellHeightPx_),
 				static_cast<FLOAT>((col + 1) * cellWidthPx_),
 				static_cast<FLOAT>((row + 1) * cellHeightPx_)
 			);
-			rt_->FillRectangle(rect, bg_);
-			rt_->DrawText(
-				&wc,
-				1,
-				font_->handle(),
-				rect,
-				fg_
-			);
+			UINT32 cp = c.c.codepoint();
+			fface_->GetGlyphIndicesA(&cp, 1, &glyphIndices_);
+			rt_->FillRectangle(rect, bg_.Get());
+			D2D1_POINT_2F origin = D2D1::Point2F((col + 1) * cellWidthPx_, (row + 1) * cellHeightPx_ - 4);
+			rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
 		}
 
 		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
@@ -137,6 +142,7 @@ namespace tpp {
 			doDrawCell(col, row, c);
 			bg_->SetOpacity(1);
 		}
+
 
 	private:
 
@@ -148,8 +154,6 @@ namespace tpp {
 
 		friend class DirectWriteApplication;
 
-		//void updateBuffer();
-
 		/** Maps win32 virtual keys to their vterm equivalents.
 		 */
 		static vterm::Key GetKey(WPARAM vk);
@@ -160,11 +164,16 @@ namespace tpp {
 
 		/** Direct X structures. 
 		 */
-		ID2D1HwndRenderTarget* rt_ = nullptr; // render target
+		Microsoft::WRL::ComPtr<ID2D1HwndRenderTarget> rt_;
+		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> fg_; // foreground (text) style
+		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> bg_; // background style
+		DWRITE_GLYPH_RUN glyphRun_;
+		UINT16 glyphIndices_;
+		FLOAT glyphAdvances_;
+		DWRITE_GLYPH_OFFSET glyphOffsets_;
+		Microsoft::WRL::ComPtr<IDWriteFontFace> fface_;
 
 		Font* font_;
-		ID2D1SolidColorBrush* fg_; // foreground (text) style
-		ID2D1SolidColorBrush* bg_; // background style
 
 		/** Placement of the window to which the window is restored after fullscreen toggle.
 		 */

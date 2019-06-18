@@ -37,14 +37,18 @@ namespace tpp {
 		// TODO this should be conditional on a debug flag
 		AttachConsole();
 		registerTerminalWindowClass();
+		D2D1_FACTORY_OPTIONS options;
+		ZeroMemory(&options, sizeof(D2D1_FACTORY_OPTIONS));
 		OSCHECK(SUCCEEDED(D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_MULTI_THREADED,
+			_uuidof(ID2D1Factory),
+			&options,
 			&d2dFactory_
 		))) << "Unable to create D2D factory";
 		OSCHECK(SUCCEEDED(DWriteCreateFactory(
 			DWRITE_FACTORY_TYPE_SHARED,
 			__uuidof(IDWriteFactory),
-			reinterpret_cast<IUnknown * *>(&dwFactory_)
+			&dwFactory_
 		))) << "Unable to create DW factory";
 		FixDefaultTerminalWindowProperties(defaultTerminalWindowProperties_);
 	}
