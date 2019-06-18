@@ -47,6 +47,7 @@ namespace tpp {
 			),
 			&rt_
 		)));
+		rt_->SetTransform(D2D1::IdentityMatrix());
 
 		OSCHECK(SUCCEEDED(rt_->CreateSolidColorBrush(
 			D2D1::ColorF(D2D1::ColorF::White),
@@ -71,7 +72,16 @@ namespace tpp {
 		glyphRun_.fontFace = fface_.Get();
 		glyphRun_.isSideways = 0;
 		glyphRun_.fontEmSize = 15;
-		glyphRun_.glyphCount = 1;
+		glyphRun_.glyphCount = 0;
+
+		glyphIndices_ = new UINT16[500];
+		glyphAdvances_ = new FLOAT[500];
+		glyphOffsets_ = new DWRITE_GLYPH_OFFSET[500];
+		ZeroMemory(glyphOffsets_, sizeof(DWRITE_GLYPH_OFFSET) * 500);
+		for (size_t i = 0; i < 500; ++i)
+			glyphAdvances_[i] = -7;
+
+
 
 		DWRITE_FONT_METRICS metrics;
 		fface_->GetMetrics(&metrics);
@@ -165,8 +175,8 @@ namespace tpp {
 	unsigned DirectWriteTerminalWindow::doPaint() {
 
 		rt_->BeginDraw();
-		rt_->SetTransform(D2D1::IdentityMatrix());
 		unsigned numCells = drawBuffer();
+		drawGlyphRun();
 		rt_->EndDraw();
 		forceRepaint_ = false;
 		return numCells;

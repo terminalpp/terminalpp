@@ -85,12 +85,9 @@ namespace tpp {
 			if (rt_ != nullptr) {
 				D2D1_SIZE_U size = D2D1::SizeU(widthPx, heightPx);
 				rt_->Resize(size);
-				glyphRun_.glyphIndices = &glyphIndices_;
-				glyphRun_.glyphAdvances = &glyphAdvances_;
-				glyphRun_.glyphOffsets = &glyphOffsets_;
-				glyphAdvances_ = 0;
-				glyphOffsets_.advanceOffset = 0;
-				glyphOffsets_.ascenderOffset = 0;
+				glyphRun_.glyphIndices = glyphIndices_;
+				glyphRun_.glyphAdvances = glyphAdvances_;
+				glyphRun_.glyphOffsets = glyphOffsets_;
 			}
 			TerminalWindow::windowResized(widthPx, heightPx);
 		}
@@ -110,18 +107,33 @@ namespace tpp {
 		unsigned doPaint() override;
 
 		void doSetForeground(vterm::Color const& fg) override {
+			drawGlyphRun();
 			fg_->SetColor(D2D1::ColorF(D2D1::ColorF(fg.toNumber(), 1.0f)));
 		}
 
 		void doSetBackground(vterm::Color const& bg) override {
+			drawGlyphRun();
 			bg_->SetColor(D2D1::ColorF(D2D1::ColorF(bg.toNumber(), 1.0f)));
 		}
 
 		void doSetFont(vterm::Font font) override {
+			drawGlyphRun();
 			font_ = Font::GetOrCreate(font, cellHeightPx_);
 		}
 
 		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
+			if (glyphRun_.glyphCount != 0 && (col != glyphRunCol_ + glyphRun_.glyphCount || row != glyphRunRow_)) {
+				drawGlyphRun();
+			}
+			if (glyphRun_.glyphCount == 0) {
+				glyphRunCol_ = col;
+				glyphRunRow_ = row;
+			} 
+			UINT32 cp = c.c.codepoint();
+			fface_->GetGlyphIndicesA(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
+			++glyphRun_.glyphCount;
+
+/*
 			D2D1_RECT_F rect = D2D1::RectF(
 				static_cast<FLOAT>(col * cellWidthPx_),
 				static_cast<FLOAT>(row * cellHeightPx_),
@@ -133,6 +145,7 @@ namespace tpp {
 			rt_->FillRectangle(rect, bg_.Get());
 			D2D1_POINT_2F origin = D2D1::Point2F((col + 1) * cellWidthPx_, (row + 1) * cellHeightPx_ - 4);
 			rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
+			*/
 		}
 
 		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
@@ -141,6 +154,21 @@ namespace tpp {
 			bg_->SetOpacity(0);
 			doDrawCell(col, row, c);
 			bg_->SetOpacity(1);
+		}
+
+		void drawGlyphRun() {
+			if (glyphRun_.glyphCount == 0)
+				return;
+			D2D1_RECT_F rect = D2D1::RectF(
+				static_cast<FLOAT>(glyphRunCol_ * cellWidthPx_),
+				static_cast<FLOAT>(glyphRunRow_ * cellHeightPx_),
+				static_cast<FLOAT>((glyphRunCol_ + glyphRun_.glyphCount) * cellWidthPx_),
+				static_cast<FLOAT>((glyphRunRow_ + 1) * cellHeightPx_)
+			);
+			rt_->FillRectangle(rect, bg_.Get());
+			D2D1_POINT_2F origin = D2D1::Point2F((glyphRunCol_ + 1) * cellWidthPx_, (glyphRunRow_ + 1) * cellHeightPx_ - 4);
+			rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
+			glyphRun_.glyphCount = 0;
 		}
 
 
@@ -168,9 +196,12 @@ namespace tpp {
 		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> fg_; // foreground (text) style
 		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> bg_; // background style
 		DWRITE_GLYPH_RUN glyphRun_;
-		UINT16 glyphIndices_;
-		FLOAT glyphAdvances_;
-		DWRITE_GLYPH_OFFSET glyphOffsets_;
+		UINT16 * glyphIndices_;
+		FLOAT * glyphAdvances_;
+		DWRITE_GLYPH_OFFSET * glyphOffsets_;
+		unsigned glyphRunCol_;
+		unsigned glyphRunRow_;
+
 		Microsoft::WRL::ComPtr<IDWriteFontFace> fface_;
 
 		Font* font_;
