@@ -138,6 +138,13 @@ namespace tpp {
 			c.c = cursor.character;
 			c.font = DropBlink(c.font);
 			doDrawCursor(cursor.col, cursor.row, c);
+			// mark the cursor location as dirty so that cursor is always repainted, because of subpixel renderings we also mark the next and previous cell as dirty so that the subpixel artefacts, if present will be deleted as well
+			b.at(cursor.col, cursor.row).dirty = true;
+			if (cursor.col > 0)
+				b.at(cursor.col - 1, cursor.row).dirty = true;
+			if (cursor.col < cols() - 1)
+				b.at(cursor.col + 1, cursor.row).dirty = true;
+
 		}
 		return numCells;
 	}

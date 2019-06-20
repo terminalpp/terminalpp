@@ -192,11 +192,14 @@ namespace tpp {
 		}
 
 		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
+			drawGlyphRun();
 			doSetForeground(c.fg);
 			doSetFont(c.font);
 			bg_->SetOpacity(0);
 			doDrawCell(col, row, c);
+			drawGlyphRun();
 			bg_->SetOpacity(1);
+			
 		}
 
 		void drawGlyphRun() {
