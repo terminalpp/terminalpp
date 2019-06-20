@@ -52,10 +52,6 @@ X server is obviously needed, [`vcxsrv`](https://sourceforge.net/projects/vcxsrv
 
 https://github.com/Microsoft/console/tree/master/samples/ConPTY/EchoCon
 
-## TODOs
-
-> When dealing with fonts, sometimes the bold font is thicker than normal font, which sounds rather bad. Also, nerd fornts do not behave like proper monospace fonts, which is bad too. 
-
 ## Architecture Overview
 
 To maximize cross-compatibility between various operating systems and rendering engines, `tpp` splits into different parts all briefly explained here:

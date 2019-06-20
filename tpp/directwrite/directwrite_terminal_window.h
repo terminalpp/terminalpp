@@ -11,40 +11,74 @@
 
 #include "../terminal_window.h"
 
-namespace tpp {
+#include "directwrite_application.h"
 
-	// GetSystemFontCollection -> GetFontFamily -> GetMatchingFont -> CreateFont face
-	// use the com pointers - see tutorial or so
+namespace tpp {
 
 	class DirectWriteApplication;
 
 	template<>
-	inline FontSpec<IDWriteTextFormat*>* FontSpec<IDWriteTextFormat*>::Create(vterm::Font font, unsigned baseHeight) {
-		IDWriteTextFormat* tf;
-		DirectWriteApplication* app = reinterpret_cast<DirectWriteApplication*>(Application::Instance());
-		// TODO figure dip 
-		OSCHECK(SUCCEEDED(app->dwFactory_->CreateTextFormat(
-			L"Iosevka Term",  // Font family name.
-			NULL, // Font collection (NULL sets it to use the system font collection).
+	inline FontSpec<DWriteFont> * FontSpec<DWriteFont>::Create(vterm::Font font, unsigned baseHeight) {
+		// get the system font collection		
+		Microsoft::WRL::ComPtr<IDWriteFontCollection> sfc;
+		Application::Instance<DirectWriteApplication>()->dwFactory_->GetSystemFontCollection(&sfc, false);
+		// find the required font family - first get the index then obtain the family by the index
+		UINT32 findex;
+		BOOL fexists;
+		sfc->FindFamilyName(L"Iosevka Term", &findex, &fexists);
+		Microsoft::WRL::ComPtr<IDWriteFontFamily> ff;
+		sfc->GetFontFamily(findex, &ff);
+		// now get the nearest font
+		Microsoft::WRL::ComPtr<IDWriteFont> drw;
+		ff->GetFirstMatchingFont(
 			font.bold() ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
-			font.italics() ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
 			DWRITE_FONT_STRETCH_NORMAL,
-			baseHeight * font.size() - 3.6,
-			L"en-us",
-			&tf
-		))) << "Unable to create font";
-		IDWriteTextLayout * tl;
-		app->dwFactory_->CreateTextLayout(L"M", 1, tf, 1000, 1000, &tl);
-		DWRITE_TEXT_METRICS tm;
-		tl->GetMetrics(&tm);
-		tl->Release();
-		// TODO the
-		return new FontSpec<IDWriteTextFormat*>(font, std::round(tm.width), std::round(tm.height), tf);
+			font.italics() ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
+			&drw);
+		// finally get the font face
+		Microsoft::WRL::ComPtr<IDWriteFontFace> fface;
+		drw->CreateFontFace(&fface);
+		// now we need to determine the dimensions of single character, which is relatively involved operation, so first we get the dpi and font metrics
+		FLOAT dpiX;
+		FLOAT dpiY;
+		Application::Instance<DirectWriteApplication>()->d2dFactory_->GetDesktopDpi(&dpiX, &dpiY);
+		DWRITE_FONT_METRICS metrics;
+		fface->GetMetrics(&metrics);
+		// the em size is size in pixels divided by (DPI / 96)
+		// https://docs.microsoft.com/en-us/windows/desktop/LearnWin32/dpi-and-device-independent-pixels
+		double emSize = (baseHeight * font.size()) / (dpiY / 96);
+		// we have to adjust this number for the actual font metrics
+		emSize = emSize * metrics.designUnitsPerEm / (metrics.ascent + metrics.descent + metrics.lineGap);
+		// now we have to determine the height of a character, which we can do via glyph metrics
+		DWRITE_GLYPH_METRICS glyphMetrics;
+		UINT16 glyph;
+		UINT32 codepoint = 'M';
+		fface->GetGlyphIndicesA(&codepoint, 1, &glyph);
+		fface->GetDesignGlyphMetrics(&glyph, 1, &glyphMetrics);
+
+		return new FontSpec<DWriteFont>(font,
+			std::round((static_cast<double>(glyphMetrics.advanceWidth) / glyphMetrics.advanceHeight) * baseHeight * font.size()),
+			baseHeight * font.size(),
+			DWriteFont(
+				fface,
+				emSize,
+				std::round(emSize * metrics.ascent / metrics.designUnitsPerEm)));
+	}
+
+	/** Since DirectWrite stores only the font face and the glyph run then keeps its own size. 
+	 */
+	template<>
+	inline vterm::Font FontSpec<DWriteFont>::StripEffects(vterm::Font const & font) {
+		vterm::Font result(font);
+		result.setBlink(false);
+		result.setStrikeout(false);
+		result.setUnderline(false);
+		return result;
 	}
 
 	class DirectWriteTerminalWindow : public TerminalWindow {
 	public:
-		typedef FontSpec<IDWriteTextFormat*> Font;
+		typedef FontSpec<DWriteFont> Font;
 
 		DirectWriteTerminalWindow(Session* session, Properties const& properties, std::string const& title);
 
@@ -85,11 +119,32 @@ namespace tpp {
 			if (rt_ != nullptr) {
 				D2D1_SIZE_U size = D2D1::SizeU(widthPx, heightPx);
 				rt_->Resize(size);
-				glyphRun_.glyphIndices = glyphIndices_;
-				glyphRun_.glyphAdvances = glyphAdvances_;
-				glyphRun_.glyphOffsets = glyphOffsets_;
+				updateGlyphRunStructures(widthPx, cellWidthPx_);
 			}
 			TerminalWindow::windowResized(widthPx, heightPx);
+		}
+
+		void doSetZoom(double value) override {
+			TerminalWindow::doSetZoom(value);
+			updateGlyphRunStructures(widthPx_, cellWidthPx_);
+		}
+
+		void updateGlyphRunStructures(unsigned width, unsigned fontWidth) {
+			delete[] glyphIndices_;
+			delete[] glyphAdvances_;
+			delete[] glyphOffsets_;
+			unsigned cols = width / fontWidth;
+			glyphIndices_ = new UINT16[cols];
+			glyphAdvances_ = new FLOAT[cols];
+			glyphOffsets_ = new DWRITE_GLYPH_OFFSET[cols];
+			glyphRun_.glyphIndices = glyphIndices_;
+			glyphRun_.glyphAdvances = glyphAdvances_;
+			glyphRun_.glyphOffsets = glyphOffsets_;
+			ZeroMemory(glyphOffsets_, sizeof(DWRITE_GLYPH_OFFSET) * cols);
+			for (size_t i = 0; i < cols; ++i)
+				glyphAdvances_[i] = fontWidth;
+			glyphRun_.glyphCount = 0;
+			doSetFont(vterm::Font());
 		}
 
 		/** Deletes the double buffer object.
@@ -118,7 +173,9 @@ namespace tpp {
 
 		void doSetFont(vterm::Font font) override {
 			drawGlyphRun();
-			font_ = Font::GetOrCreate(font, cellHeightPx_);
+			dwFont_ = Font::GetOrCreate(font, cellHeightPx_);
+			glyphRun_.fontFace = dwFont_->handle().fontFace.Get();
+			glyphRun_.fontEmSize = dwFont_->handle().sizeEm;
 		}
 
 		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
@@ -130,22 +187,8 @@ namespace tpp {
 				glyphRunRow_ = row;
 			} 
 			UINT32 cp = c.c.codepoint();
-			fface_->GetGlyphIndicesA(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
+			dwFont_->handle().fontFace->GetGlyphIndicesA(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
 			++glyphRun_.glyphCount;
-
-/*
-			D2D1_RECT_F rect = D2D1::RectF(
-				static_cast<FLOAT>(col * cellWidthPx_),
-				static_cast<FLOAT>(row * cellHeightPx_),
-				static_cast<FLOAT>((col + 1) * cellWidthPx_),
-				static_cast<FLOAT>((row + 1) * cellHeightPx_)
-			);
-			UINT32 cp = c.c.codepoint();
-			fface_->GetGlyphIndicesA(&cp, 1, &glyphIndices_);
-			rt_->FillRectangle(rect, bg_.Get());
-			D2D1_POINT_2F origin = D2D1::Point2F((col + 1) * cellWidthPx_, (row + 1) * cellHeightPx_ - 4);
-			rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
-			*/
 		}
 
 		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
@@ -166,11 +209,10 @@ namespace tpp {
 				static_cast<FLOAT>((glyphRunRow_ + 1) * cellHeightPx_)
 			);
 			rt_->FillRectangle(rect, bg_.Get());
-			D2D1_POINT_2F origin = D2D1::Point2F((glyphRunCol_ + 1) * cellWidthPx_, (glyphRunRow_ + 1) * cellHeightPx_ - 4);
+			D2D1_POINT_2F origin = D2D1::Point2F((glyphRunCol_) * cellWidthPx_, glyphRunRow_ * cellHeightPx_ + dwFont_->handle().ascent);
 			rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
 			glyphRun_.glyphCount = 0;
 		}
-
 
 	private:
 
@@ -202,9 +244,7 @@ namespace tpp {
 		unsigned glyphRunCol_;
 		unsigned glyphRunRow_;
 
-		Microsoft::WRL::ComPtr<IDWriteFontFace> fface_;
-
-		Font* font_;
+		Font* dwFont_;
 
 		/** Placement of the window to which the window is restored after fullscreen toggle.
 		 */

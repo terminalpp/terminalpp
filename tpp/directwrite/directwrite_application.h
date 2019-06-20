@@ -9,6 +9,19 @@
 #include "../application.h"
 
 namespace tpp {
+
+	class DWriteFont {
+	public:
+		Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace;
+		double sizeEm;
+		unsigned ascent;
+		DWriteFont(Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace, unsigned sizeEm, unsigned ascent) :
+			fontFace(fontFace),
+			sizeEm(sizeEm),
+			ascent(ascent) {
+		}
+	};
+
 	class DirectWriteApplication : public Application {
 	public:
 		DirectWriteApplication(HINSTANCE hInstance);
@@ -24,7 +37,7 @@ namespace tpp {
 
 	private:
 		friend class DirectWriteTerminalWindow;
-		friend class FontSpec<IDWriteTextFormat*>;
+		friend class FontSpec<DWriteFont>;
 
 		static char const* const TerminalWindowClassName_;
 

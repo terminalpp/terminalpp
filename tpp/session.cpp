@@ -17,7 +17,7 @@ namespace tpp {
 		name_(name),
 		command_(command),
 		pty_(nullptr),
-		windowProperties_(Application::Instance()->defaultTerminalWindowProperties()),
+		windowProperties_(Application::Instance<>()->defaultTerminalWindowProperties()),
 	    dataReady_(false) {
 		Sessions_.insert(this);
 	}

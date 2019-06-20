@@ -46,6 +46,11 @@ namespace vterm {
 			return bits_.blink;
 		}
 
+		void setSize(unsigned size) {
+			ASSERT(size >= 1 && size <= 8);
+			bits_.size = size - 1;
+		}
+
 		void setBold(bool value) {
 			bits_.bold = value;
 		}

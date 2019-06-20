@@ -17,6 +17,10 @@ namespace tpp {
 
 	DirectWriteTerminalWindow::DirectWriteTerminalWindow(Session* session, Properties const& properties, std::string const& title) :
 		TerminalWindow(session, properties, title),
+		glyphIndices_(nullptr),
+		glyphAdvances_(nullptr),
+		glyphOffsets_(nullptr),
+		dwFont_(nullptr),
 		wndPlacement_{ sizeof(wndPlacement_) },
 		frameWidth_{ 0 },
 		frameHeight_{ 0 } {
@@ -57,6 +61,10 @@ namespace tpp {
 			D2D1::ColorF(D2D1::ColorF::Black),
 			&bg_
 		)));
+		
+		/*
+		
+
 
 		Microsoft::WRL::ComPtr<IDWriteFontCollection> sfc;
 		app()->dwFactory_->GetSystemFontCollection(&sfc, false);
@@ -69,9 +77,11 @@ namespace tpp {
 		ff->GetFirstMatchingFont(DWRITE_FONT_WEIGHT_REGULAR, DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &drw);
 		drw->CreateFontFace(&fface_);
 
+
+		ZeroMemory(&glyphRun_, sizeof(DWRITE_GLYPH_RUN));
 		glyphRun_.fontFace = fface_.Get();
 		glyphRun_.isSideways = 0;
-		glyphRun_.fontEmSize = 15;
+		glyphRun_.fontEmSize = 14.41;
 		glyphRun_.glyphCount = 0;
 
 		glyphIndices_ = new UINT16[500];
@@ -79,12 +89,18 @@ namespace tpp {
 		glyphOffsets_ = new DWRITE_GLYPH_OFFSET[500];
 		ZeroMemory(glyphOffsets_, sizeof(DWRITE_GLYPH_OFFSET) * 500);
 		for (size_t i = 0; i < 500; ++i)
-			glyphAdvances_[i] = -7;
+			glyphAdvances_[i] = 7;
 
+		FLOAT dpiX;
+		FLOAT dpiY;
+		Application::Instance<DirectWriteApplication>()->d2dFactory_->GetDesktopDpi(&dpiX, &dpiY);
 
 
 		DWRITE_FONT_METRICS metrics;
 		fface_->GetMetrics(&metrics);
+		*/
+		ZeroMemory(&glyphRun_, sizeof(DWRITE_GLYPH_RUN));
+		updateGlyphRunStructures(widthPx_, cellWidthPx_);
 		/*
 
 		  From metrics, I need to subtract size in em * descend / units per em px for proper positioning
@@ -99,6 +115,9 @@ namespace tpp {
 
 	DirectWriteTerminalWindow::~DirectWriteTerminalWindow() {
 		Windows_.erase(hWnd_);
+		delete[] glyphIndices_;
+		delete[] glyphAdvances_;
+		delete[] glyphOffsets_;
 	}
 
 	/** Basically taken from:

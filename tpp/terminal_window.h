@@ -26,10 +26,9 @@ namespace tpp {
 
 		/** Return a font for given terminal font description and zoom. 
 		 */
-		static FontSpec * GetOrCreate(vterm::Font font, unsigned height) {
-			// disable blinking as it is not really important for font selection
-			font.setBlink(false);
-			unsigned id = (height << 8) + font.raw();
+		static FontSpec * GetOrCreate(vterm::Font const & font, unsigned height) {
+			vterm::Font f = StripEffects(font);
+			unsigned id = (height << 8) + f.raw();
 			auto i = Fonts_.find(id);
 			if (i == Fonts_.end())
 				i = Fonts_.insert(std::make_pair(id, Create(font, height))).first;
@@ -53,6 +52,16 @@ namespace tpp {
 		}
 
 	private:
+
+		/** Strips effects that does not alter the font selection on the given platform. 
+
+		    By default strips only the blinking attribute, implementations can override this to strip other font effects as well. 
+		 */
+		static vterm::Font StripEffects(vterm::Font const & font) {
+			vterm::Font result(font);
+			result.setBlink(false);
+			return result;
+		}
 
 		FontSpec(vterm::Font font, unsigned width, unsigned height, T const & handle) :
 			font_(font),
@@ -197,7 +206,7 @@ namespace tpp {
 			t.start();
 			unsigned cells = doPaint();
 			double time = t.stop();
-			LOG << "Repaint event: cells: " << cells << ",  ms per cell: " << (time / cells * 1000);
+			LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
 		}
 
         void repaint(vterm::Terminal::RepaintEvent &) override {

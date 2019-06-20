@@ -13,8 +13,14 @@ namespace tpp {
 
 		/** Returns the application singleton. 
 		 */
-		static Application * Instance() {
-			return instance_;
+		template<typename T = Application>
+		static T * Instance() {
+			static_assert(std::is_base_of<Application, T>::value, "Must be child of Application");
+#ifdef NDEBUG
+			return reinterpret_cast<T*>(instance_);
+#else
+			return dynamic_cast<T*>(instance_);
+#endif
 		}
 
 		static void MainLoop() {
