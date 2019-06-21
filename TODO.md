@@ -7,3 +7,6 @@
 - when terminal is resized, try to keep stuff in the buffer
 - improve logging
 - proper UTF8 and UTF32 conversion in helpers::strings
+- improve font sizes in X11
+- scrolling in tmux does not work properly (ps -aux in tmux is a repro)
+
