@@ -40,12 +40,23 @@ namespace helpers {
     }
 
 	/** Converts a null terminated wide string in UTF-16 encoding into an std::string encoded in UTF-8.
+
+	    TODO proper conversion
 	 */
 	inline std::string UTF16toUTF8(wchar_t const * str) {
 		std::stringstream result;
 		while (*str != 0) {
 			if (*str < 128)
 				result << static_cast<char>(*str);
+			++str;
+		}
+		return result.str();
+	}
+
+	inline std::wstring UTF8toUTF16(char const* str) {
+		std::wstringstream result;
+		while (*str != 0) {
+			result << static_cast<wchar_t>(*str);
 			++str;
 		}
 		return result.str();

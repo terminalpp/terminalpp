@@ -210,7 +210,7 @@ namespace tpp {
 			t.start();
 			unsigned cells = doPaint();
 			double time = t.stop();
-			LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
+			// LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
 		}
 
         void repaint(vterm::Terminal::RepaintEvent & e) override {
@@ -278,7 +278,6 @@ namespace tpp {
         }
 
 		virtual void clipboardPaste() = 0;
-		virtual void clipboardCopy(std::string const& str) = 0;
 
 		/** Paints the window.
 		 */

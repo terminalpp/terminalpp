@@ -4,6 +4,7 @@
 
 #include "helpers/strings.h"
 #include "helpers/log.h"
+#include "helpers/base64.h"
 
 #include "vt100.h"
 
@@ -1127,10 +1128,24 @@ namespace vterm {
             pop(); 
         }
         // we have now parsed the whole OSC - let's see if it is one we understand
-        if (buffer_[-1] == Char::BEL && start[0] == '0' && start[1] == ';') {
-            std::string title(start + 2, buffer_ - 1);
-            LOG(SEQ) << "Title change to " << title;
+		if (buffer_[-1] == Char::BEL && start[0] == '0' && start[1] == ';') {
+			std::string title(start + 2, buffer_ - 1);
+			LOG(SEQ) << "Title change to " << title;
 			terminal()->setTitle(title);
+		// set clipboard
+		} else 	if (buffer_[-1] == Char::BEL && start[0] == '5' && start[1] == '2' && start[2] == ';') { 
+			char* s = start + 3;
+			while (*s != ';') {
+				if (*s == Char::BEL) {
+					LOG(SEQ_UNKNOWN) << "Unknown OSC: " << std::string(start, buffer_ - start);
+					return true; // sequence matched, but unknown
+				}
+				++s;
+			}
+			++s; // the ';'
+			std::string clipboard = helpers::Base64Decode(s, buffer_ - 1);
+			LOG(SEQ) << "Setting clipboard to " << clipboard;
+			terminal()->setClipboard(clipboard);
         } else {
             // TODO ignore for now 112 == reset cursor color             
             LOG(SEQ_UNKNOWN) << "Unknown OSC: " << std::string(start, buffer_ - start);

@@ -86,15 +86,14 @@ namespace tpp {
         TerminalWindow::titleChange(e);
 	}
 
+	void X11TerminalWindow::clipboardUpdated(vterm::Terminal::ClipboardUpdateEvent& e) {
+		NOT_IMPLEMENTED;
+	}
+
 	void X11TerminalWindow::clipboardPaste() {
 		Atom clipboard;
 		clipboard = XInternAtom(display_, "CLIPBOARD", 0);
 		XConvertSelection(display_, clipboard, app()->clipboardFormat_, clipboard, window_, CurrentTime);
-	}
-
-	void X11TerminalWindow::clipboardCopy(std::string const& str) {
-		MARK_AS_UNUSED(str);
-		NOT_IMPLEMENTED;
 	}
 
 	unsigned X11TerminalWindow::doPaint() {

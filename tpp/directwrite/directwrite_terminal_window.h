@@ -115,6 +115,8 @@ namespace tpp {
 
 		void titleChange(vterm::Terminal::TitleChangeEvent& e) override;
 
+		void clipboardUpdated(vterm::Terminal::ClipboardUpdateEvent& e) override;
+
 		void windowResized(unsigned widthPx, unsigned heightPx) override {
 			if (rt_ != nullptr) {
 				D2D1_SIZE_U size = D2D1::SizeU(widthPx, heightPx);
@@ -157,7 +159,6 @@ namespace tpp {
 		}
 
 		void clipboardPaste() override;
-		void clipboardCopy(std::string const& str) override;
 
 		unsigned doPaint() override;
 

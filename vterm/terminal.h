@@ -38,6 +38,7 @@ namespace vterm {
 		typedef helpers::EventPayload<RepaintPayload, helpers::Object> RepaintEvent;
 		typedef helpers::EventPayload<std::string, helpers::Object> TitleChangeEvent;
 		typedef helpers::EventPayload<int, helpers::Object> TerminationEvent;
+		typedef helpers::EventPayload<std::string, helpers::Object> ClipboardUpdateEvent;
 
 		/** Cursor information. 
 		 */
@@ -230,6 +231,8 @@ namespace vterm {
 
 			virtual void titleChange(TitleChangeEvent& e) = 0;
 
+			virtual void clipboardUpdated(ClipboardUpdateEvent& e) = 0;
+
 			Renderer(unsigned cols, unsigned rows) :
 				terminal_(nullptr),
 				cols_(cols),
@@ -297,6 +300,7 @@ namespace vterm {
 					return;
 				terminal_->onRepaint -= HANDLER(Renderer::repaint);
 				terminal_->onTitleChange -= HANDLER(Renderer::titleChange);
+				terminal_->onClipboardUpdated -= HANDLER(Renderer::clipboardUpdated);
 				terminal_ = nullptr;
 			}
 
@@ -305,6 +309,7 @@ namespace vterm {
 				terminal->resize(cols_, rows_);
 				terminal_->onRepaint += HANDLER(Renderer::repaint);
 				terminal_->onTitleChange += HANDLER(Renderer::titleChange);
+				terminal_->onClipboardUpdated += HANDLER(Renderer::clipboardUpdated);
 			}
 
 			Terminal* terminal_;
@@ -472,6 +477,7 @@ namespace vterm {
 		helpers::Event<RepaintEvent> onRepaint;
 		helpers::Event<TitleChangeEvent> onTitleChange;
 		helpers::Event<TerminationEvent> onBackendTerminated;
+		helpers::Event<ClipboardUpdateEvent> onClipboardUpdated;
 
 		/** Returns the width and height of the terminal.
 		 */
@@ -521,6 +527,10 @@ namespace vterm {
 				title_ = value;
 				trigger(onTitleChange, value);
 			}
+		}
+
+		void setClipboard(std::string const& contents) {
+			trigger(onClipboardUpdated, contents);
 		}
 
 		void resize(unsigned cols, unsigned rows) {

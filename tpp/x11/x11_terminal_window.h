@@ -82,6 +82,8 @@ namespace tpp {
 
 		void titleChange(vterm::Terminal::TitleChangeEvent & e) override;
 
+		void clipboardUpdated(vterm::Terminal::ClipboardUpdateEvent& e) override;
+
 		void windowResized(unsigned widthPx, unsigned heightPx) {
 			if (buffer_ != 0) {
 				XFreePixmap(display_, buffer_);
@@ -103,7 +105,6 @@ namespace tpp {
 		}
 
 		void clipboardPaste() override;
-		void clipboardCopy(std::string const& str) override;
 
 		unsigned doPaint() override;
 
