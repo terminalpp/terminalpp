@@ -87,13 +87,12 @@ namespace tpp {
 	}
 
 	void X11TerminalWindow::clipboardUpdated(vterm::Terminal::ClipboardUpdateEvent& e) {
-		NOT_IMPLEMENTED;
+		Application::Instance<X11Application>()->clipboard_ = *e;
+		XSetSelectionOwner(display_, app()->clipboardName_, window_, CurrentTime);
 	}
 
 	void X11TerminalWindow::clipboardPaste() {
-		Atom clipboard;
-		clipboard = XInternAtom(display_, "CLIPBOARD", 0);
-		XConvertSelection(display_, clipboard, app()->clipboardFormat_, clipboard, window_, CurrentTime);
+		XConvertSelection(display_, app()->clipboardName_, app()->formatStringUTF8_, app()->clipboardName_, window_, CurrentTime);
 	}
 
 	unsigned X11TerminalWindow::doPaint() {
@@ -240,7 +239,6 @@ namespace tpp {
             case Expose: 
                 if (e.xexpose.count != 0)
                     break;
-                LOG << "expose received";
                 tw->paint();
                 break;
             /* Handles window resize, which should change the terminal size accordingly. 
@@ -320,6 +318,10 @@ namespace tpp {
             case MotionNotify:
                 tw->mouseMove(e.xmotion.x, e.xmotion.y);
                 break;
+			/** Called when we are notified that clipboard contents is available for previously requested paste.
+			
+			    Get the clipboard contents and call terminal's paste event. 
+			 */
 			case SelectionNotify:
 				if (e.xselection.property) {
 					char * result;
@@ -329,7 +331,7 @@ namespace tpp {
 					XGetWindowProperty(tw->display_, tw->window_, e.xselection.property, 0, LONG_MAX / 4, False, AnyPropertyType,
 						&type, &format, &ressize, &restail, (unsigned char**)& result);
 					if (type == tw->app()->clipboardIncr_)
-						// buffer too larger, incremental reads must be implemented
+						// buffer too large, incremental reads must be implemented
 						// https://stackoverflow.com/questions/27378318/c-get-string-from-clipboard-on-linux
 						NOT_IMPLEMENTED;
 					else
@@ -337,13 +339,66 @@ namespace tpp {
 					XFree(result);
                  }
 				 break;
+			/** Called when the clipboard contents is requested by an outside app. 
+			 */
+			case SelectionRequest: {
+				X11Application* app = Application::Instance<X11Application>();
+				XSelectionEvent response;
+				response.type = SelectionNotify;
+				response.requestor = e.xselectionrequest.requestor;
+				response.selection = e.xselectionrequest.selection;
+				response.target = e.xselectionrequest.target;
+				response.time = e.xselectionrequest.time;
+				// by default, the request is rejected
+				response.property = None; 
+				// if the target is TARGETS, then all supported formats should be sent, in our case this is simple, only UTF8_STRING is supported
+				if (response.target == app->formatTargets_) {
+					XChangeProperty(
+						tw->display_,
+						e.xselectionrequest.requestor,
+						e.xselectionrequest.property,
+						e.xselectionrequest.target,
+						32, // atoms are 4 bytes, so 32 bits
+						PropModeReplace,
+						reinterpret_cast<unsigned char const*>(&app->formatStringUTF8_),
+						1
+					);
+					response.property = e.xselectionrequest.property;
+				// otherwise, if UTF8_STRING, or a STRING is requested, we just send what we have 
+				} else if (response.target == app->formatString_ || response.target == app->formatStringUTF8_) {
+					XChangeProperty(
+						tw->display_,
+						e.xselectionrequest.requestor,
+						e.xselectionrequest.property,
+						e.xselectionrequest.target,
+						8, // utf-8 is encoded in chars, i.e. 8 bits
+						PropModeReplace,
+						reinterpret_cast<unsigned char const *>(app->clipboard_.c_str()),
+						app->clipboard_.size()
+					);
+					response.property = e.xselectionrequest.property;
+				}
+				// send the event to the requestor
+				if (!XSendEvent(
+					e.xselectionrequest.display,
+					e.xselectionrequest.requestor,
+					1, // propagate
+					0, // event mask
+					reinterpret_cast<XEvent*>(&response)
+				))
+					LOG << "Error sending selection notify";
+				break;
+			}
+			/** If we loose ownership, clear the clipboard contents with the application. 
+			 */
+			case SelectionClear:
+				Application::Instance<X11Application>()->clipboard_.clear();
+				break;
             case DestroyNotify:
-                LOG << "Window destroyed...";
                 // delete the window object and remove it from the list of active windows
                 delete i->second;
                 // if it was last window, exit the terminal
                 if (Windows_.empty()) {
-                    LOG << "Terminating...";
                     throw X11Application::Terminate();
                 }
                 break;
@@ -351,7 +406,6 @@ namespace tpp {
 			 */
 			case ClientMessage:
 				if (static_cast<unsigned long>(e.xclient.data.l[0]) == tw->app()->inputReadyMessage_) {
-                    LOG << "Process input received";
 					tw->session()->processInput();
 				} else if (static_cast<unsigned long>(e.xclient.data.l[0]) == tw->app()->wmDeleteMessage_) {
 					ASSERT(tw != nullptr) << "Attempt to destroy unknown window";

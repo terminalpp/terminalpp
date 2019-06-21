@@ -50,16 +50,21 @@ namespace tpp {
         xIm_ = XOpenIM(xDisplay_, nullptr, nullptr, nullptr);
         ASSERT(xIm_ != nullptr);
 
-		clipboardFormat_ = XInternAtom(xDisplay_, "UTF8_STRING", false);
+		clipboardName_ = XInternAtom(xDisplay_, "CLIPBOARD", false);
+		formatString_ = XInternAtom(xDisplay_, "STRING", false);
+		formatStringUTF8_ = XInternAtom(xDisplay_, "UTF8_STRING", false);
+		formatTargets_ = XInternAtom(xDisplay_, "TARGETS", false);
 		clipboardIncr_ = XInternAtom(xDisplay_, "INCR", false);
 		wmDeleteMessage_ = XInternAtom(xDisplay_, "WM_DELETE_WINDOW", false);
 		inputReadyMessage_ = XInternAtom(xDisplay_, "TPP_INPUT_READY", false);
 
-		ASSERT(clipboardFormat_ != None);
+		ASSERT(clipboardName_ != None);
+		ASSERT(formatString_ != None);
+		ASSERT(formatStringUTF8_ != None);
+		ASSERT(formatTargets_ != None);
 		ASSERT(clipboardIncr_ != None);
 		ASSERT(wmDeleteMessage_ != None);
 		ASSERT(inputReadyMessage_ != None);
-
 	}
 
 	X11Application::~X11Application() {

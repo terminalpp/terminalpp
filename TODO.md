@@ -1,6 +1,5 @@
 # TODOs
 
-- implement clipboard setting from the terminal
 - when mouse is not used, mouse selection should be possible
 - clearing the buffer does not seem to be enough, better still, last character in a row should always clear the stuff right off
 - when mc exists first key is swallowed
