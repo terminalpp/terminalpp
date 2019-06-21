@@ -51,6 +51,11 @@ namespace tpp {
 			return heightPx_;
 		}
 
+		/** Does nothing, but explicitly mentioned so that it can be specialized when necessary. 
+		 */
+		~FontSpec() {
+		}
+
 	private:
 
 		/** Strips effects that does not alter the font selection on the given platform. 

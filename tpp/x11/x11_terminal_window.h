@@ -34,6 +34,11 @@ namespace tpp {
 		return new FontSpec<XftFont*>(font, gi.width, handle->ascent + handle->descent, handle);
 	}
 
+	template<>
+	inline FontSpec<XftFont*>::~FontSpec<XftFont*>() {
+		XftFontClose(Application::Instance<X11Application>()->xDisplay(), handle_);
+	}
+
 	class X11TerminalWindow : public TerminalWindow {
 	public:
 
