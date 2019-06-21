@@ -7,7 +7,7 @@
 #define DEFAULT_SESSION_PTY vterm::BypassPTY
 
 //#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "bash"})
-#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/asciienc/asciienc", "bash"})
+#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/asciienc/asciienc", "-env", "SHELL=/bin/bash", "--", "bash"})
 //#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"--help"})
 
 #elif __linux__

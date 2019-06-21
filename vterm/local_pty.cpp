@@ -13,8 +13,23 @@ namespace vterm {
 
 #ifdef WIN32
 
-	LocalPTY::LocalPTY(helpers::Command const & command) :
+	LocalPTY::LocalPTY(helpers::Command const& command) :
 		command_(command),
+		startupInfo_{},
+		conPTY_{ INVALID_HANDLE_VALUE },
+		pipeIn_{ INVALID_HANDLE_VALUE },
+		pipeOut_{ INVALID_HANDLE_VALUE } {
+		startupInfo_.lpAttributeList = nullptr; // just to be sure
+		createPseudoConsole();
+		// start the process
+		start();
+		// enable the monitoring of the process termination
+		monitor();
+	}
+
+	LocalPTY::LocalPTY(helpers::Command const& command, helpers::Environment const & env) :
+		command_(command),
+		environment_(env),
 		startupInfo_{},
 		conPTY_{ INVALID_HANDLE_VALUE },
 		pipeIn_{ INVALID_HANDLE_VALUE },
@@ -154,9 +169,16 @@ namespace vterm {
 
 #elif __linux__
 
-    LocalPTY::LocalPTY(helpers::Command const & command) :
-	    command_(command) {
-        start();
+	LocalPTY::LocalPTY(helpers::Command const& command) :
+		command_(command) {
+		start();
+		monitor();
+	}
+
+	LocalPTY::LocalPTY(helpers::Command const& command, helpers::Environment const & env) :
+		command_(command),
+	    environment_(env) {
+		start();
 		monitor();
 	}
 
@@ -217,11 +239,19 @@ namespace vterm {
 				setsid();
 				if (ioctl(1, TIOCSCTTY, nullptr) < 0)
 					UNREACHABLE;
+				environment_.unsetIfUnspecified("COLUMNS");
+				environment_.unsetIfUnspecified("LINES");
+				environment_.unsetIfUnspecified("TERMCAP");
+				environment_.setIfUnspecified("TERM", "xterm-256color");
+				environment_.setIfUnspecified("COLORTERM", "truecolor");
+				environment_.apply();
+				/*
 				unsetenv("COLUMNS");
 				unsetenv("LINES");
 				unsetenv("TERMCAP");
-				setenv("TERM", "xterm-256color", /* overwrite */ true);
-				setenv("COLORTERM", "truecolor", /* overwrite */ true);
+				setenv("TERM", "xterm-256color", /* overwrite * / true);
+				setenv("COLORTERM", "truecolor", /* overwrite * / true);
+				*/
 
 				signal(SIGCHLD, SIG_DFL);
 				signal(SIGHUP, SIG_DFL);

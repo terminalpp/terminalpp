@@ -24,7 +24,8 @@ namespace vterm {
 
 		/** Starts the local pseudoterminal for given command. 
 		 */
-		LocalPTY(helpers::Command const & command);
+		LocalPTY(helpers::Command const& command);
+		LocalPTY(helpers::Command const& command, helpers::Environment const& env);
 
 		~LocalPTY() override;
 
@@ -42,6 +43,7 @@ namespace vterm {
 
 	private:
 		helpers::Command command_;
+		helpers::Environment environment_;
 
 #ifdef WIN32
 

@@ -2,6 +2,9 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
+
+#include "helpers.h"
 
 namespace helpers {
 
@@ -62,6 +65,13 @@ namespace helpers {
 			args_(args) {
 		}
 
+		Command(std::vector<std::string> const& command) {
+			auto i = command.begin(), e = command.end();
+			command_ = *i;
+			while (++i != e)
+				args_.push_back(*i);
+		}
+
 		Command& operator = (Command const& other) {
 			command_ = other.command_;
 			args_ = other.args_;
@@ -70,6 +80,57 @@ namespace helpers {
 	private:
 		std::string command_;
 		std::vector<std::string> args_;
+	};
+
+	/** Represents access to the environment variables of a process. 
+	 */
+	class Environment {
+	public:
+		std::string const& operator [] (std::string const& name) const {
+			auto i = map_.find(name);
+			ASSERT(i != map_.end()) << "Environment value " << name << " not found";
+			return i->second;
+		}
+
+		void unset(std::string const& name) {
+			map_[name] = "";
+	    }
+
+		void unsetIfUnspecified(std::string const& name) {
+			auto i = map_.find(name);
+			if (i == map_.end()) {
+				map_[name] = "";
+			}
+		}
+
+		void set(std::string const& name, std::string const& value) {
+			map_[name] = value;
+		}
+
+		void setIfUnspecified(std::string const& name, std::string const& value) {
+			auto i = map_.find(name);
+			if (i == map_.end()) {
+				map_[name] = value;
+			}
+		}
+
+		/** Applies the changes in the environment to the actual environment of the current process. 
+		 */
+		void apply() {
+#ifdef WIN32
+			NOT_IMPLEMENTED;
+#elif __linux__
+			for (auto i : map_) {
+				if (i.second.empty())
+					unsetenv(i.first.c_str());
+				else
+					setenv(i.first.c_str(), i.second.c_str(), /* overwrite */ true); 
+			}
+#endif
+		}
+
+	private:
+		std::unordered_map<std::string, std::string> map_;
 	};
 
 
