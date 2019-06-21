@@ -61,53 +61,8 @@ namespace tpp {
 			D2D1::ColorF(D2D1::ColorF::Black),
 			&bg_
 		)));
-		
-		/*
-		
-
-
-		Microsoft::WRL::ComPtr<IDWriteFontCollection> sfc;
-		app()->dwFactory_->GetSystemFontCollection(&sfc, false);
-		UINT32 findex;
-		BOOL fexists;
-		sfc->FindFamilyName(L"Iosevka Term", &findex, &fexists);
-		Microsoft::WRL::ComPtr<IDWriteFontFamily> ff;
-		sfc->GetFontFamily(findex, &ff);
-		Microsoft::WRL::ComPtr<IDWriteFont> drw;
-		ff->GetFirstMatchingFont(DWRITE_FONT_WEIGHT_REGULAR, DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &drw);
-		drw->CreateFontFace(&fface_);
-
-
-		ZeroMemory(&glyphRun_, sizeof(DWRITE_GLYPH_RUN));
-		glyphRun_.fontFace = fface_.Get();
-		glyphRun_.isSideways = 0;
-		glyphRun_.fontEmSize = 14.41;
-		glyphRun_.glyphCount = 0;
-
-		glyphIndices_ = new UINT16[500];
-		glyphAdvances_ = new FLOAT[500];
-		glyphOffsets_ = new DWRITE_GLYPH_OFFSET[500];
-		ZeroMemory(glyphOffsets_, sizeof(DWRITE_GLYPH_OFFSET) * 500);
-		for (size_t i = 0; i < 500; ++i)
-			glyphAdvances_[i] = 7;
-
-		FLOAT dpiX;
-		FLOAT dpiY;
-		Application::Instance<DirectWriteApplication>()->d2dFactory_->GetDesktopDpi(&dpiX, &dpiY);
-
-
-		DWRITE_FONT_METRICS metrics;
-		fface_->GetMetrics(&metrics);
-		*/
 		ZeroMemory(&glyphRun_, sizeof(DWRITE_GLYPH_RUN));
 		updateGlyphRunStructures(widthPx_, cellWidthPx_);
-		/*
-
-		  From metrics, I need to subtract size in em * descend / units per em px for proper positioning
-		
-		  and get glyph metrics can tell me the size of the characters to work with
-		
-		 */
 
 		SetTimer(hWnd_, TIMERID_BLINK, 500, nullptr);
 		Windows_.insert(std::make_pair(hWnd_, this));

@@ -310,6 +310,7 @@ namespace vterm {
         applicationCursorMode_(false),
 		alternateBuffer_(false),
         bracketedPaste_(false),
+		invalidateAll_(false),
 		mouseMode_(MouseMode::Off),
 		mouseEncoding_(MouseEncoding::Default),
 	    buffer_(nullptr),
@@ -446,6 +447,7 @@ namespace vterm {
 	}
 
 	size_t VT100::dataReceived(char * buffer, size_t size) {
+		invalidateAll_ = false;
 		buffer_ = buffer;
 		bufferEnd_ = buffer_ + size;
 		std::string text;
@@ -535,7 +537,7 @@ namespace vterm {
 			LOG(SEQ) << "text " << text;
 			text.clear();
 		}
-		terminal()->repaint();
+		terminal()->repaint(invalidateAll_);
 		return size;
 	}
 
@@ -1091,6 +1093,7 @@ namespace vterm {
                             loadCursorInfo();
                         }
                     }
+					invalidateAll_ = true;
                     continue;
                 /* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. */
                 case 2004:

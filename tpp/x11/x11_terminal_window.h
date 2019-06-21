@@ -123,6 +123,11 @@ namespace tpp {
 			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, (row + 1) * cellHeightPx_ - font_->handle()->descent, (XftChar8*)(c.c.rawBytes()), c.c.size());
 		}
 
+		void doClearWindow() {
+			XftColor bg = toXftColor(vterm::Color::Black());
+			XftDrawRect(draw_, &bg, 0, 0, widthPx_, heightPx_);
+		}
+
 		XftColor toXftColor(vterm::Color const& c) {
 			XftColor result;
 			result.color.red = c.red * 256;

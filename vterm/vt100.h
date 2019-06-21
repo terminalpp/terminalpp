@@ -407,10 +407,11 @@ namespace vterm {
          */
         bool bracketedPaste_;
 
+		/** When the terminal is repainted, should all cells be invalidated? 
 
-
-
-
+		    Such as when alternate buffer is switched, etc.
+		 */
+		bool invalidateAll_;
 
 		enum class MouseMode {
 			Off,

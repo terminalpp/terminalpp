@@ -27,7 +27,15 @@ namespace vterm {
 	class Terminal : public helpers::Object {
 	public:
 
-		typedef helpers::EventPayload<void, helpers::Object> RepaintEvent;
+		class RepaintPayload {
+		public:
+			bool invalidateAll;
+			RepaintPayload(bool invalidateAll) :
+				invalidateAll(invalidateAll) {
+			}
+		};
+
+		typedef helpers::EventPayload<RepaintPayload, helpers::Object> RepaintEvent;
 		typedef helpers::EventPayload<std::string, helpers::Object> TitleChangeEvent;
 		typedef helpers::EventPayload<int, helpers::Object> TerminationEvent;
 
@@ -577,8 +585,8 @@ namespace vterm {
 
 		/** When terminal repaint is requested, the onRepaint event is triggered. 
 		 */
-		void repaint() {
-			trigger(onRepaint);
+		void repaint(bool invalidateAll) {
+			trigger(onRepaint, RepaintPayload(invalidateAll));
 		}
 
 	protected:

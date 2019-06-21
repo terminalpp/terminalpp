@@ -199,7 +199,11 @@ namespace tpp {
 			doDrawCell(col, row, c);
 			drawGlyphRun();
 			bg_->SetOpacity(1);
-			
+		}
+
+		void doClearWindow() override {
+			bg_->SetColor(D2D1::ColorF(0, 1.0f));
+			rt_->Clear(D2D1::ColorF(D2D1::ColorF::Black));
 		}
 
 		void drawGlyphRun() {

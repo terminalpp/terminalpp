@@ -87,6 +87,11 @@ namespace tpp {
 		if (terminal() == nullptr)
 			return 0;
 		vterm::Terminal::Buffer & b = terminal()->buffer();
+		if (clearWindow_) {
+			forceRepaint_ = true;
+			doClearWindow();
+			clearWindow_ = false;
+		}
 		// initialize the first font and colors
 		vterm::Color fg;
 		vterm::Color bg;

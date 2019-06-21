@@ -1,4 +1,4 @@
 # TODOs
 
-- when switching buffers, all must be set dirty
-- rewrite DirectWrite for a nicer code
+- rewrite DirectWrite for a nicer code (? perhaps done)
+- when mc exists first key is swallowed

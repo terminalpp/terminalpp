@@ -209,8 +209,8 @@ namespace tpp {
 			LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
 		}
 
-        void repaint(vterm::Terminal::RepaintEvent &) override {
-            doInvalidate(false);
+        void repaint(vterm::Terminal::RepaintEvent & e) override {
+            doInvalidate(e->invalidateAll);
         }
 
         void titleChange(vterm::Terminal::TitleChangeEvent & e) override {
@@ -232,6 +232,7 @@ namespace tpp {
 		    Updates the cellWidthPx and cellHeightPx values based on the desired zoom level. 
 		 */
 		virtual void doSetZoom(double value) {
+			clearWindow_ = true;
 			// update width & height of the cell
 			cellWidthPx_ = static_cast<unsigned>(std::round(value * fontWidth_));
 			cellHeightPx_ = static_cast<unsigned>(std::round(value * fontHeight_));
@@ -301,6 +302,10 @@ namespace tpp {
 		 */
 		virtual void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) = 0;
 
+		/** Clears the entire window. 
+		 */
+		virtual void doClearWindow() = 0;
+
 		/** Updates the terminal buffer displayed. 
 
 		    Triggers repaint of all dirty terminal cells (or all cells if forceDirty is true) and the cursor. 
@@ -323,6 +328,12 @@ namespace tpp {
 		/** Zoom level of the window. 
 		 */
 		double zoom_;
+
+		/** If true, the paint method should clear the entire window first. 
+
+		    Such as when zoom is changed and there can be extra space around the visible columns. 
+		 */
+		bool clearWindow_;
 
 		/** Determines whether the window is fullscreen or not. 
 		 */

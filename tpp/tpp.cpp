@@ -9,8 +9,6 @@
 #include "session.h"
 
 #ifdef WIN32
-#include "gdi/gdi_application.h"
-#include "gdi/gdi_terminal_window.h"
 #include "directwrite/directwrite_application.h"
 #include "directwrite/directwrite_terminal_window.h"
 // link to directwrite
