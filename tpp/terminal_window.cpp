@@ -94,7 +94,7 @@ namespace tpp {
 				case vterm::MouseButton::Right:
 					if (!selecting_) {
 						vterm::Selection sel = selectedArea();
-						if (!sel.empty()) {
+						if (!sel.empty() && sel.contains(x, y)) {
 							vterm::Terminal::ClipboardUpdateEvent e(nullptr, terminal()->getText(sel));
 							clipboardUpdated(e);
 							clearSelection();
