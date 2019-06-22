@@ -61,4 +61,19 @@ namespace vterm {
 		buffer_ = nb;
 	}
 
+	std::string Terminal::getText(Selection const & selection) const	{
+		std::stringstream result;
+		unsigned col = selection.start.col;
+		unsigned row = selection.start.row;
+		while (selection.contains(col, row) && col < buffer_.cols_ && row < buffer_.rows_) {
+			result << buffer_.at(col, row).c;
+			if (++col == buffer_.cols_) {
+				++row;
+				col = 0;
+				result << '\n';
+			}
+		}
+		return result.str();
+	}
+
 } // namespace vterm

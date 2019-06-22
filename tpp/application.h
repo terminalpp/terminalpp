@@ -37,6 +37,12 @@ namespace tpp {
 			return defaultTerminalWindowProperties_;
 		}
 
+		/** Returns the selection color. 
+		 */
+		vterm::Color selectionBackgroundColor() {
+			return vterm::Color(0xc0, 0xc0, 0xff);
+		}
+
 	protected:
 
 		Application() {

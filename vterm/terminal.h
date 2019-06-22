@@ -20,6 +20,51 @@ namespace vterm {
 
 	class PTY;
 
+	// TODO this should go to UI when we have UI
+	class Selection {
+	public:
+		helpers::Point start;
+		helpers::Point end;
+
+		Selection() = default;
+
+		Selection(helpers::Point const& start, helpers::Point const& end) :
+			start(start),
+			end(end) {
+		}
+
+		Selection(unsigned left, unsigned top, unsigned right, unsigned bottom) :
+			start(left, top),
+			end(right, bottom) {
+		}
+
+		bool empty() const {
+			return start == end;
+		}
+
+		bool contains(unsigned col, unsigned row) const {
+			// if the row is outside the selectiomn boundaries, return false quickly
+			if (row < start.row || row >= end.row)
+				return false;
+			// if its the first row, check if it is after start of the selection
+			if (row == start.row) {
+				// or if the selection is single row after start and before end
+				if (end.row == start.row + 1)
+					return col >= start.col && col < end.col;
+				else
+					return col >= start.col;
+			}
+			// if it is last row, then if col is before end
+			if (row == end.row - 1)
+				return col < end.col;
+			// otherwise return true, one of the full rows
+			return true;
+		}
+
+	};
+
+
+
 	/** Implementation of the terminal. 
 
 	    The terminal provides encapsulation over the screen buffer and provides the communication between the frontend and backend. The terminal frontend is responsible for rendering the contents of the terminal to the user and sending the terminal the user input events. The backend of the terminal relays the user input events to the underlying process and reads from the process updates to the terminal state and stores them. 
@@ -534,6 +579,8 @@ namespace vterm {
 		std::string const& title() const {
 			return title_;
 		}
+
+		std::string getText(Selection const & selection) const;
 
 		void setTitle(std::string const& value) {
 			if (title_ != value) {

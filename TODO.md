@@ -1,5 +1,6 @@
 # TODOs
 
+- must use selection, not a rectangle actually (the flipping causes problems)
 - when mouse is not used, mouse selection should be possible
 - clearing the buffer does not seem to be enough, better still, last character in a row should always clear the stuff right off
 - when mc exists first key is swallowed
@@ -9,4 +10,4 @@
 - proper UTF8 and UTF32 conversion in helpers::strings
 - improve font sizes in X11
 - scrolling in tmux does not work properly (ps -aux in tmux is a repro)
-
+- switch char to unly use UTF8 and provide translations to other encodings

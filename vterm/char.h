@@ -139,6 +139,13 @@ namespace vterm {
 		}
 
 	private:
+
+		friend std::ostream& operator << (std::ostream& s, Char::Representation<Encoding::UTF8> const& c) {
+			for (size_t i = 0, e = c.size(); i != e; ++i)
+				s << c.bytes_[i];
+			return s;
+		}
+
 		/** Takes a UTF codepoint and encodes it in UTF8. 
 		 */
 		void fillFromCodepoint(unsigned cp) {

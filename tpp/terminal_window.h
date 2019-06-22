@@ -15,6 +15,7 @@ namespace tpp {
 	class Application;
 	class Session;
 
+
 	/** Stores and retrieves font objects so that they do not have to be created each time they are needed. 
 
 	    Templated by the actual font handle, which is platform dependent. 
@@ -123,6 +124,7 @@ namespace tpp {
 			Properties(TerminalWindow const* tw);
 		}; // TerminalWindow::Properties
 
+
 		/** Returns the session the window belongs to.
 		 */
 		Session* session() const {
@@ -202,7 +204,10 @@ namespace tpp {
 			cellHeightPx_(static_cast<unsigned>(properties.fontHeight * properties.zoom)),
 		    blink_(true),
 		    mouseCol_(0),
-		    mouseRow_(0) {
+		    mouseRow_(0),
+		    selectionStart_(0,0),
+			selectionEnd_(0,0),
+		    selecting_(false) {
 		}
 
 		void paint() {
@@ -210,7 +215,28 @@ namespace tpp {
 			t.start();
 			unsigned cells = doPaint();
 			double time = t.stop();
-			// LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
+			//LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
+		}
+
+		/** Returns the selected area. 
+		 */
+		vterm::Selection selectedArea() const {
+			if (selectionStart_.row < selectionEnd_.row) {
+				if (selectionStart_.row + 1 == selectionEnd_.row && selectionStart_.col > selectionEnd_.col)
+					return vterm::Selection(selectionEnd_.col, selectionStart_.row, selectionStart_.col, selectionEnd_.row);
+				else
+				    return vterm::Selection(selectionStart_, selectionEnd_);
+			} else {
+				return vterm::Selection(selectionEnd_.col, selectionEnd_.row - 1, selectionStart_.col, selectionStart_.row + 1);
+			}
+		}
+
+		void clearSelection() {
+			selectionStart_.col = 0;
+			selectionStart_.row = 0;
+			selectionEnd_.col = 0;
+			selectionEnd_.row = 0;
+			doInvalidate(false);
 		}
 
         void repaint(vterm::Terminal::RepaintEvent & e) override {
@@ -367,12 +393,16 @@ namespace tpp {
 		 */
 		bool forceRepaint_;
 
-
-
 		/** Last known mouse coordinates in terminal columns & rows (not in pixels).
 		 */
 		unsigned mouseCol_;
 		unsigned mouseRow_;
+
+		/** Mouse selected region of the terminal, if any. 
+		 */
+		helpers::Point selectionStart_;
+		helpers::Point selectionEnd_;
+		bool selecting_;
 
 	};
 

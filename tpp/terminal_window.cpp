@@ -54,11 +54,26 @@ namespace tpp {
 	}
 
 	void TerminalWindow::mouseMove(unsigned x, unsigned y) {
-		convertMouseCoordsToCells(x, y);
-		if (x != mouseCol_ || y != mouseRow_) {
-			mouseCol_ = x;
-			mouseRow_ = y;
-			terminal()->mouseMove(x, y);
+		unsigned col = x;
+		unsigned row = y;
+		convertMouseCoordsToCells(col, row);
+		// first deal with selection 
+		if (selecting_) {
+			if (row == selectionStart_.row && selectionStart_.col * cellWidthPx_ == x) {
+				selectionEnd_.col = col;
+				selectionEnd_.row = row + 1;
+				doInvalidate(false);
+			} else if (col != mouseCol_ || row != mouseRow_) {
+				selectionEnd_.col = col + 1;
+				selectionEnd_.row = row + 1;
+				doInvalidate(false);
+			}
+		}
+		// then deal with the event itself
+		if (col != mouseCol_ || row != mouseRow_) {
+			mouseCol_ = col;
+			mouseRow_ = row;
+			terminal()->mouseMove(col, row);
 		}
 	}
 
@@ -66,6 +81,32 @@ namespace tpp {
 		convertMouseCoordsToCells(x, y);
 		mouseCol_ = x;
 		mouseRow_ = y;
+		if (!terminal()->backend()->captureMouse()) {
+			switch (button) {
+				case vterm::MouseButton::Left:
+					selecting_ = true;
+					selectionStart_.col = mouseCol_;
+					selectionStart_.row = mouseRow_;
+					selectionEnd_.col = mouseCol_;
+					selectionEnd_.row = mouseRow_ + 1;
+					doInvalidate(false);
+					break;
+				case vterm::MouseButton::Right:
+					if (!selecting_) {
+						vterm::Selection sel = selectedArea();
+						if (!sel.empty()) {
+							vterm::Terminal::ClipboardUpdateEvent e(nullptr, terminal()->getText(sel));
+							clipboardUpdated(e);
+							clearSelection();
+						}
+					}
+					break;
+				default:
+					break;
+			}
+			if (button == vterm::MouseButton::Left && !selecting_) {
+			} 
+		}
 		terminal()->mouseDown(x, y, button);
 	}
 
@@ -73,6 +114,9 @@ namespace tpp {
 		convertMouseCoordsToCells(x, y);
 		mouseCol_ = x;
 		mouseRow_ = y;
+		if (selecting_ && button == vterm::MouseButton::Left) {
+			selecting_ = false;
+		}
 		terminal()->mouseUp(x, y, button);
 	}
 
@@ -112,18 +156,32 @@ namespace tpp {
 		bool cursorInRange = cursor.col < cols() && cursor.row < rows();
 		if (!forceRepaint_ && cursorInRange)
 			b.at(cursor.col, cursor.row).dirty = true;
+		// determine the selection boundary
+		bool inSelection = false;
+		vterm::Selection sel = selectedArea();
 		// now loop over the entire terminal and update the cells
 		for (unsigned r = 0, re = rows(); r < re; ++r) {
 			for (unsigned c = 0, ce = cols(); c < ce; ++c) {
+				// determine if selection should be enabled
+				if (!inSelection && sel.contains(c, r)) {
+					inSelection = true;
+					bg = Application::Instance<>()->selectionBackgroundColor();
+					doSetBackground(bg);
+				}
+				// and disabled
+				if (inSelection && ! sel.contains(c, r)) {
+					inSelection = false;
+				}
 				vterm::Terminal::Cell& cell = b.at(c, r);
-				if (forceRepaint_ || cell.dirty) {
+				if (forceRepaint_ || inSelection || cell.dirty) {
 					++numCells;
-					cell.dirty = false;
+					// if we are in selection, mark the cell as dirty, otherwise mark as clean
+					cell.dirty = inSelection;
 					if (fg != cell.fg) {
 						fg = cell.fg;
 						doSetForeground(fg);
 					}
-					if (bg != cell.bg) {
+					if (!inSelection && bg != cell.bg) {
 						bg = cell.bg;
 						doSetBackground(bg);
 					}

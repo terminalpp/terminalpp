@@ -97,8 +97,6 @@ namespace tpp {
 		}
 	}
 
-
-
 } // namespace tpp
 
 #endif
