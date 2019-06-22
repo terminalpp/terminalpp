@@ -38,31 +38,35 @@ namespace vterm {
 	}
 
     Palette Palette::ColorsXTerm256() {
-            Palette result(256);
-            // start with the 16 colors
-            result.fillFrom(Colors16());
-            // now do the xterm color cube
-            unsigned i = 16;
-            for (unsigned r = 0; r < 256; r += 40) {
-                for (unsigned g = 0; g < 256; g += 40) {
-                    for (unsigned b = 0; b < 256; b += 40) {
-                        result[i] = Color(r, g, b);
-                        ++i;
-                        if (b == 0)
-                            b = 55;
-                    }
-                    if (g == 0)
-                        g = 55;
+        Palette result(256);
+        // start with the 16 colors
+        result.fillFrom(Colors16());
+        // now do the xterm color cube
+        unsigned i = 16;
+        for (unsigned r = 0; r < 256; r += 40) {
+            for (unsigned g = 0; g < 256; g += 40) {
+                for (unsigned b = 0; b < 256; b += 40) {
+                    result[i] = Color(
+						static_cast<unsigned char>(r), 
+						static_cast<unsigned char>(g),
+						static_cast<unsigned char>(b)
+					);
+                    ++i;
+                    if (b == 0)
+                        b = 55;
                 }
-                if (r == 0)
-                    r = 55;
+                if (g == 0)
+                    g = 55;
             }
-            // and finally do the grayscale
-            for (unsigned x = 8; x <= 238; x +=10) {
-                result[i] = Color(x, x, x);
-                ++i;
-            }
-            return result;
+            if (r == 0)
+                r = 55;
+        }
+        // and finally do the grayscale
+        for (unsigned char x = 8; x <= 238; x +=10) {
+            result[i] = Color(x, x, x);
+            ++i;
+        }
+        return result;
     }
 
 
@@ -314,6 +318,7 @@ namespace vterm {
 		invalidateAll_(false),
 		mouseMode_(MouseMode::Off),
 		mouseEncoding_(MouseEncoding::Default),
+		mouseLastButton_(0),
 	    buffer_(nullptr),
 	    bufferEnd_(nullptr) {
 		palette_.fillFrom(palette);
@@ -1044,7 +1049,7 @@ namespace vterm {
 				/* Enable normal mouse mode, i.e. report button press & release events only.
 				 */
                 case 1000:
-					mouseMode_ = value ? MouseMode::Normal : MouseMode::Off;
+					setMouseMode(value ? MouseMode::Normal : MouseMode::Off);
      				LOG(SEQ) << "normal mouse tracking: " << value;
                     continue;
 				/* Mouse highlighting - will not support because it requires supporting application and may hang terminal if not used properly, which sounds rather dangerous. 
@@ -1055,13 +1060,13 @@ namespace vterm {
 				/* Mouse button events (report mouse button press & release and mouse movement if any of the buttons is down. 
 				 */
 				case 1002:
-					mouseMode_ = value ? MouseMode::ButtonEvent : MouseMode::Off;
+					setMouseMode(value ? MouseMode::ButtonEvent : MouseMode::Off);
 					LOG(SEQ) << "button-event mouse tracking: " << value;
 					continue;
 				/* Report all mouse events (i.e. report mouse move even when buttons are not pressed).
 				 */
                 case 1003:
-					mouseMode_ = value ? MouseMode::All : MouseMode::Off;
+					setMouseMode(value ? MouseMode::All : MouseMode::Off);
 					LOG(SEQ) << "all mouse tracking: " << value;
 					continue;
 				/* UTF8 encoded tracking.
@@ -1145,7 +1150,7 @@ namespace vterm {
 			++s; // the ';'
 			std::string clipboard = helpers::Base64Decode(s, buffer_ - 1);
 			LOG(SEQ) << "Setting clipboard to " << clipboard;
-			terminal()->setClipboard(clipboard);
+			setClipboard(clipboard);
         } else {
             // TODO ignore for now 112 == reset cursor color             
             LOG(SEQ_UNKNOWN) << "Unknown OSC: " << std::string(start, buffer_ - start);

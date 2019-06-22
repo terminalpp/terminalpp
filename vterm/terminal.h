@@ -325,11 +325,26 @@ namespace vterm {
 				return terminal_;
 			}
 
+			/** Returns true if the backend is interested in mouse events. 
+
+			    Note that the terminal will always relay all events to the backend regadrless of this value, but its value can be used by the renderers to determine whether they can react to mouse events or not. 
+			 */
+			virtual bool captureMouse() const {
+				return true;
+			}
+
 		protected:
+
+			friend class Terminal;
 
             void resizeBuffer(Buffer & buffer, unsigned cols, unsigned rows) {
                 buffer.resize(cols, rows);
             }
+
+			void setClipboard(std::string const& str) {
+				ASSERT(terminal_ != nullptr);
+				terminal_->setClipboard(str);
+			}
 
 			Backend() :
 				terminal_(nullptr) {
@@ -374,8 +389,6 @@ namespace vterm {
 				detachFromTerminal();
 			}
 
-		private:
-			friend class Terminal;
 
 			void detachFromTerminal() {
 				if (terminal_ == nullptr)
@@ -529,10 +542,6 @@ namespace vterm {
 			}
 		}
 
-		void setClipboard(std::string const& contents) {
-			trigger(onClipboardUpdated, contents);
-		}
-
 		void resize(unsigned cols, unsigned rows) {
 			if (buffer_.cols_ != cols || buffer_.rows_ != rows) {
 				buffer_.resize(cols, rows);
@@ -600,6 +609,10 @@ namespace vterm {
 		}
 
 	protected:
+
+		void setClipboard(std::string const& contents) {
+			trigger(onClipboardUpdated, contents);
+		}
 
 		/** Should be raised by the backend in case it is terminated. 
 		 */

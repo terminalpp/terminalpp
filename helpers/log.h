@@ -265,10 +265,10 @@ namespace helpers {
 			return this;
 		}
 
-		StreamLogger * toFile(std::string const & name) {
-			f_.open(name);
+		StreamLogger * toFile(std::string const & filename) {
+			f_.open(filename);
 			if (!f_.good())
-				THROW(IOError()) << "Unable to open file " << name << " for log level " << this->name;
+				THROW(IOError()) << "Unable to open file " << filename << " for log level " << name;
 			s_ = &f_;
 			return this;
 		}

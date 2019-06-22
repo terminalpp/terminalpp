@@ -49,7 +49,7 @@ namespace vterm {
 		}
 
 		Color & color(size_t index) {
-			ASSERT(index < size_);
+			ASSERT(index < size_) << index << " -- " <<  size_;
 			return colors_[index];
 		}
 
@@ -113,9 +113,19 @@ namespace vterm {
 
         void paste(std::string const & what) override;
 
-
+		bool captureMouse() const override {
+			return mouseMode_ != MouseMode::Off;
+		}
 		
 	protected:
+
+
+		enum class MouseMode {
+			Off,
+			Normal,
+			ButtonEvent,
+			All
+		};
 
         class CSISequence;
 
@@ -260,6 +270,11 @@ namespace vterm {
 
 		bool eof() {
 			return buffer_ == bufferEnd_;
+		}
+
+		void setMouseMode(MouseMode mode) {
+			mouseMode_ = mode;
+			// TODO event on mouse capture state change
 		}
 
 		size_t dataReceived(char * buffer, size_t size) override;
@@ -413,13 +428,6 @@ namespace vterm {
 		 */
 		bool invalidateAll_;
 
-		enum class MouseMode {
-			Off,
-			Normal,
-			ButtonEvent,
-			All
-		};
-
 		MouseMode mouseMode_;
 
 		/** Determines encoding used to send mouse information. 
@@ -435,10 +443,6 @@ namespace vterm {
 		/** When reporting mouse motion, the last button value is used. 
 		 */
 		unsigned mouseLastButton_;
-
-
-
-
 
 		class InputState {
 		public:
