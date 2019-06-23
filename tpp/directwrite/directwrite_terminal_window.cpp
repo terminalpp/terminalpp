@@ -66,7 +66,6 @@ namespace tpp {
 		ZeroMemory(&glyphRun_, sizeof(DWRITE_GLYPH_RUN));
 		updateGlyphRunStructures(widthPx_, cellWidthPx_);
 
-		SetTimer(hWnd_, TIMERID_BLINK, 500, nullptr);
 		Windows_.insert(std::make_pair(hWnd_, this));
 	}
 
@@ -109,7 +108,7 @@ namespace tpp {
 
 	void DirectWriteTerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent& e) {
 		title_ = *e;
-		PostMessage(hWnd_, WM_USER, MSG_TITLE_CHANGE, 0);
+		PostMessage(hWnd_, WM_USER, DirectWriteApplication::MSG_TITLE_CHANGE, 0);
 	}
 
 	void DirectWriteTerminalWindow::clipboardUpdated(vterm::Terminal::ClipboardUpdateEvent& e) {
@@ -330,23 +329,14 @@ namespace tpp {
 			case WM_MOUSEMOVE:
 				tw->mouseMove(lParam & 0xffff, lParam >> 16);
 				break;
-				/* Timer even for blink text and cursor.
-				 */
-			case WM_TIMER: {
-				if (wParam == TIMERID_BLINK) {
-					tw->blink_ = !tw->blink_;
-					tw->doInvalidate(false);
-				}
-				break;
-			}
 			/* User specified messages for various events that we want to be handled in the app thread.
 			 */
 			case WM_USER:
 				switch (wParam) {
-				case MSG_TITLE_CHANGE:
+				case DirectWriteApplication::MSG_TITLE_CHANGE:
 					SetWindowTextA(hWnd, tw->terminal()->title().c_str());
 					break;
-				case MSG_INPUT_READY:
+				case DirectWriteApplication::MSG_INPUT_READY:
 					tw->session()->processInput();
 					break;
 				default:

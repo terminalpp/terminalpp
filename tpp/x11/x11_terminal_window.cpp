@@ -244,7 +244,7 @@ namespace tpp {
 			/** Handles when the window gets focus. 
 			 */
 			case FocusIn:
-				if (e.xfocus.mode == NotifyGrab || e.xfocus == NotifyUngrab)
+				if (e.xfocus.mode == NotifyGrab || e.xfocus.mode == NotifyUngrab)
 					break;
 				ASSERT(tw != nullptr);
 				tw->focusChangeMessageReceived(true);
@@ -252,7 +252,7 @@ namespace tpp {
 			/** Handles when the window loses focus. 
 			 */
 			case FocusOut:
-				if (e.xfocus.mode == NotifyGrab || e.xfocus == NotifyUngrab)
+				if (e.xfocus.mode == NotifyGrab || e.xfocus.mode == NotifyUngrab)
 					break;
 				ASSERT(tw != nullptr);
 				tw->focusChangeMessageReceived(false);

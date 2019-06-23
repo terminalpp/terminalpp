@@ -45,12 +45,11 @@ namespace tpp {
 
 	protected:
 
-		Application() {
-			ASSERT(instance_ == nullptr) << "Application must be a singleton";
-			instance_ = this;
-		}
-
 		virtual void mainLoop() = 0;
+
+		virtual void sendBlinkTimerMessage() = 0;
+
+		Application();
 
 		TerminalWindow::Properties defaultTerminalWindowProperties_;
 

@@ -261,6 +261,11 @@ namespace tpp {
             title_ = *e;
         }
 
+		virtual void blinkTimer() {
+			blink_ = ! blink_;
+			doInvalidate(false);
+		}
+
 		/** Called when the window's focus changes. 
 
 		    The new value of the focus is the argument. 

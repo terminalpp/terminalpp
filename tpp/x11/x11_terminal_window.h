@@ -175,6 +175,12 @@ namespace tpp {
 
 		static std::unordered_map<Window, X11TerminalWindow *> Windows_;
 
+		static void BlinkTimer() {
+			for (auto i : Windows_)
+				i.second->blinkTimer();
+		}
+
+
 	}; // TerminalWinfdow [linux]
 
 } // namespace tpp

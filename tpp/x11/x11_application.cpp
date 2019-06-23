@@ -12,7 +12,7 @@ namespace tpp {
 
         int X11ErrorHandler(Display * display, XErrorEvent * e) {
             MARK_AS_UNUSED(display);
-            LOG << "X error: " << e->error_code;
+            LOG << "X error: " << static_cast<unsigned>(e->error_code);
             return 0;
         }
 
@@ -37,10 +37,7 @@ namespace tpp {
 		// this needs to be done *after* the display & screen are initialized
 		FixDefaultTerminalWindowProperties(defaultTerminalWindowProperties_);
 
-
 		XSetErrorHandler(X11ErrorHandler);
-        //XSynchronize(xDisplay_, true);
-
 
         // set the default machine locale instead of the "C" locale
         setlocale(LC_CTYPE, "");
@@ -57,6 +54,12 @@ namespace tpp {
 		clipboardIncr_ = XInternAtom(xDisplay_, "INCR", false);
 		wmDeleteMessage_ = XInternAtom(xDisplay_, "WM_DELETE_WINDOW", false);
 		inputReadyMessage_ = XInternAtom(xDisplay_, "TPP_INPUT_READY", false);
+		blinkTimerMessage_ = XInternAtom(xDisplay_, "TPP_BLINK_TIMER", false);
+
+		unsigned long black = BlackPixel(xDisplay_, xScreen_);	/* get color black */
+		unsigned long white = WhitePixel(xDisplay_, xScreen_);  /* get color white */
+		Window parent = RootWindow(xDisplay_, xScreen_);
+		broadcastWindow_ = XCreateSimpleWindow(xDisplay_, parent, 0, 0, 1, 1, 1, white, black);
 
 		ASSERT(clipboardName_ != None);
 		ASSERT(formatString_ != None);
@@ -65,6 +68,8 @@ namespace tpp {
 		ASSERT(clipboardIncr_ != None);
 		ASSERT(wmDeleteMessage_ != None);
 		ASSERT(inputReadyMessage_ != None);
+		ASSERT(blinkTimerMessage_ != None);
+		ASSERT(broadcastWindow_ != None);
 	}
 
 	X11Application::~X11Application() {
@@ -77,8 +82,11 @@ namespace tpp {
 	}
 
     void X11Application::xSendEvent(X11TerminalWindow * window, XEvent & e, long mask) {
-        XSendEvent(xDisplay_, window->window_, false, mask, &e);
-        XFlush(xDisplay_);
+		if (window != nullptr)
+            XSendEvent(xDisplay_, window->window_, false, mask, &e);
+		else 
+			XSendEvent(xDisplay_, broadcastWindow_, false, mask, &e);
+		XFlush(xDisplay_);
     }
 
 
@@ -87,9 +95,13 @@ namespace tpp {
             XEvent e;
             while (true) { // TODO while terminate
                 XNextEvent(xDisplay_, &e);
-                if (XFilterEvent(&e, None))
-                    continue;
-                X11TerminalWindow::EventHandler(e);
+				if (e.type == ClientMessage && static_cast<unsigned long>(e.xclient.data.l[0]) == blinkTimerMessage_) {
+					X11TerminalWindow::BlinkTimer();
+				} else {
+					if (XFilterEvent(&e, None))
+						continue;
+					X11TerminalWindow::EventHandler(e);
+				}
             }
 		} catch (Terminate const& e) {
 			// do nothing

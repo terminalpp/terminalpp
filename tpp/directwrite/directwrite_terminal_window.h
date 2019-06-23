@@ -96,7 +96,7 @@ namespace tpp {
 		}
 
 		void inputReady() override {
-			PostMessage(hWnd_, WM_USER, MSG_INPUT_READY, 0);
+			PostMessage(hWnd_, WM_USER, DirectWriteApplication::MSG_INPUT_READY, 0);
 		}
 
 	protected:
@@ -224,12 +224,6 @@ namespace tpp {
 
 	private:
 
-		static constexpr WPARAM MSG_TITLE_CHANGE = 0;
-
-		/** New input is available for the attached backend and should be processed in the main event loop.
-		 */
-		static constexpr WPARAM MSG_INPUT_READY = 1;
-
 		friend class DirectWriteApplication;
 
 		/** Maps win32 virtual keys to their vterm equivalents.
@@ -265,8 +259,10 @@ namespace tpp {
 
 		static std::unordered_map<HWND, DirectWriteTerminalWindow*> Windows_;
 
-		static constexpr UINT_PTR TIMERID_BLINK = 34;
-
+		static void BlinkTimer() {
+			for (auto i : Windows_)
+				i.second->blinkTimer();
+		}
 
 	};
 

@@ -63,10 +63,19 @@ namespace tpp {
 
 	void DirectWriteApplication::mainLoop() {
 		MSG msg;
+		mainLoopThreadId_ = GetCurrentThreadId();
 		while (GetMessage(&msg, nullptr, 0, 0) > 0) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			if (msg.message == WM_USER && msg.wParam == MSG_BLINK_TIMER) {
+				DirectWriteTerminalWindow::BlinkTimer();
+			} else {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
+	}
+
+	void DirectWriteApplication::sendBlinkTimerMessage() {
+		PostThreadMessage(mainLoopThreadId_, WM_USER, MSG_BLINK_TIMER, 0);
 	}
 
 	void DirectWriteApplication::registerTerminalWindowClass() {
