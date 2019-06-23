@@ -27,6 +27,8 @@ namespace tpp {
 			// terminate the pty
 			pty_->terminate();
 			ptyExitWait_.join();
+			// there can be unprocessed data left, which we happily ignore so we wake up the read thread with closing_ set to true, which should exit it immediately
+			cvPty_.notify_all();
 			ptyReadThread_.join();
 			// detach the window from the terminal
 			window_->setTerminal(nullptr);
@@ -64,10 +66,12 @@ namespace tpp {
 			while (vt_->waitForInput()) {
 				dataReady_ = true;
 				window_->inputReady();
-				while (dataReady_)
+				while (dataReady_) {
 					cvPty_.wait(l);
+					if (closing_)
+						return;
+				}
 			}
-			LOG << "process communications thread finished";
 		});
 	}
 

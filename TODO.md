@@ -1,6 +1,5 @@
 # TODOs
 
-- Windows: ALT+F4 hangs
 - add BEL notification
 - clearing the buffer does not seem to be enough, better still, last character in a row should always clear the stuff right off
 - cursor blinking in X11
