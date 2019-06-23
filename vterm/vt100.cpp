@@ -789,6 +789,12 @@ namespace vterm {
                     LOG(SEQ) << "DL: scrollDown " << seq[0]; 
                     deleteLine(seq[0], cursor().row);
                     return;
+				/* CSI <n> P -- Delete n charcters. (DCH) */
+				case 'P':
+					seq.setArgDefault(0, 1);
+					LOG(SEQ) << "DCH: deleteCharacter " << seq[0];
+					deleteCharacters(seq[0]);
+					return;
 				/* CSI <n> S -- Scroll up n lines 
 				 */
 				case 'S':
@@ -1188,7 +1194,6 @@ namespace vterm {
 	}
 
     void VT100::deleteLine(unsigned lines, unsigned from) {
-		LOG << "Deleting " << lines << " from " << from;
         // don't do any scrolling if origin is outside scrolling region
         if (from < state_.scrollStart || from >= state_.scrollEnd)
             return;
@@ -1215,7 +1220,6 @@ namespace vterm {
     }
 
     void VT100::insertLine(unsigned lines, unsigned from) {
-		LOG << "Inserting " << lines << " from " << from;
 		// don't do any scrolling if origin is outside scrolling region
         if (from < state_.scrollStart || from >= state_.scrollEnd)
             return;
@@ -1240,6 +1244,23 @@ namespace vterm {
 			}
         }
     }
+
+	void VT100::deleteCharacters(unsigned num) {
+		unsigned r = cursor().row;
+		for (unsigned c = cursor().col, e = cols() - num; c < e; ++c) {
+			Terminal::Cell& cell = buffer().at(c, r);
+			cell = buffer().at(c + num, r);
+			cell.dirty = true;
+		}
+		for (unsigned c = cols() - num, e = cols(); c < e; ++c) {
+			Terminal::Cell& cell = buffer().at(c, r);
+			cell.c = ' ';
+			cell.fg = state_.fg;
+			cell.bg = state_.bg;
+			cell.font = Font();
+			cell.dirty = true;
+		}
+	}
 
     void VT100::storeCursorInfo() {
         cursorStack_.push_back(cursor());

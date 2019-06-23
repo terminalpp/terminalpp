@@ -341,6 +341,8 @@ namespace vterm {
         void deleteLine(unsigned lines, unsigned from);
         void insertLine(unsigned lines, unsigned from);
 
+		void deleteCharacters(unsigned num);
+
 
         void storeCursorInfo();
 
