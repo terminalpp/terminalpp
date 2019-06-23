@@ -24,6 +24,8 @@ namespace tpp {
 		wndPlacement_{ sizeof(wndPlacement_) },
 		frameWidth_{ 0 },
 		frameHeight_{ 0 } {
+		// all win32 windows start focused since they receive the setfocus message first
+		focused_ = true;
 		hWnd_ = CreateWindowEx(
 			WS_EX_LEFT, // the default
 			app()->TerminalWindowClassName_, // window class
@@ -213,6 +215,20 @@ namespace tpp {
 				}
 				break;
 			}
+			/** Window gains focus. 
+
+			    TODO why do windows get the focused message when they are created???
+			 */
+			case WM_SETFOCUS:
+				if (tw != nullptr)
+    				tw->focusChangeMessageReceived(true);
+				break;
+			/** Window loses focus. 
+			 */
+			case WM_KILLFOCUS:
+				ASSERT(tw != nullptr);
+				tw->focusChangeMessageReceived(false);
+				break;
 			/* Called when the window is resized interactively by the user. Makes sure that the window size snaps to discrete terminal sizes. */
 			case WM_SIZING: {
 				RECT* winRect = reinterpret_cast<RECT*>(lParam);

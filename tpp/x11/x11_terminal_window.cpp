@@ -241,6 +241,22 @@ namespace tpp {
                     break;
                 tw->paint();
                 break;
+			/** Handles when the window gets focus. 
+			 */
+			case FocusIn:
+				if (e.xfocus.mode == NotifyGrab || e.xfocus == NotifyUngrab)
+					break;
+				ASSERT(tw != nullptr);
+				tw->focusChangeMessageReceived(true);
+				break;
+			/** Handles when the window loses focus. 
+			 */
+			case FocusOut:
+				if (e.xfocus.mode == NotifyGrab || e.xfocus == NotifyUngrab)
+					break;
+				ASSERT(tw != nullptr);
+				tw->focusChangeMessageReceived(false);
+				break;
             /* Handles window resize, which should change the terminal size accordingly. 
              */  
             case ConfigureNotify: {

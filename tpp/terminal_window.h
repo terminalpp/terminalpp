@@ -184,6 +184,8 @@ namespace tpp {
 
 	protected:
 
+		// TODO how much of the protected stuff should actually be private? 
+
 		/** Because the blink attribute has really nothing to do with the font itself, this simple functions strips its value from given font so that fonts excluding the blinking can be easily compared. */
 		static vterm::Font DropBlink(vterm::Font font) {
 			font.setBlink(false);
@@ -195,6 +197,7 @@ namespace tpp {
 			session_(session),
 			widthPx_(properties.fontWidth * properties.cols),
 			heightPx_(properties.fontHeight * properties.rows),
+			focused_(false),
 			title_(title),
 			zoom_(properties.zoom),
 			fullscreen_(false),
@@ -239,6 +242,17 @@ namespace tpp {
 			doInvalidate(false);
 		}
 
+		/** Called when appropriate events are received by the windows' event loop.
+
+			Since multiple events of same type may be received, we first check that the value ideed differs. If it does the focusChanged virtual method is called with the new value.
+		 */
+		void focusChangeMessageReceived(bool focus) {
+			if (focused_ != focus) {
+				focused_ = focus;
+				focusChanged(focused_);
+			}
+		}
+
         void repaint(vterm::Terminal::RepaintEvent & e) override {
             doInvalidate(e->invalidateAll);
         }
@@ -246,6 +260,14 @@ namespace tpp {
         void titleChange(vterm::Terminal::TitleChangeEvent & e) override {
             title_ = *e;
         }
+
+		/** Called when the window's focus changes. 
+
+		    The new value of the focus is the argument. 
+		 */
+		virtual void focusChanged(bool focused) {
+			LOG << "Focus changed: " << focused;
+		}
 
 		/** Handles resize of the window's client area (in pixels). 
 
@@ -349,6 +371,10 @@ namespace tpp {
 		 */
 		unsigned widthPx_;
 		unsigned heightPx_;
+
+		/** True if the window is focused, false otherwise. 
+		 */
+		bool focused_;
 
 		/** Title of the terminal window. 
 		 */
