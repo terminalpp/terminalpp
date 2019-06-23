@@ -1,7 +1,7 @@
 # TODOs
 
-- add BEL notification
 - clearing the buffer does not seem to be enough, better still, last character in a row should always clear the stuff right off
+- add focus / no focus
 - cursor blinking in X11
 - when terminal is resized, try to keep stuff in the buffer
 - improve logging

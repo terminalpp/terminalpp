@@ -475,7 +475,8 @@ namespace vterm {
                 */
             case Char::BEL:
                 pop();
-                LOG(SEQ_UNKNOWN) << "BEL charatcer received";
+				LOG(SEQ) << "BEL notification";
+				notify();
                 break;
             case Char::TAB:
                 // TODO tabstops and stuff

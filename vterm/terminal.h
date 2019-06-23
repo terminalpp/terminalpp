@@ -84,6 +84,7 @@ namespace vterm {
 		typedef helpers::EventPayload<std::string, helpers::Object> TitleChangeEvent;
 		typedef helpers::EventPayload<int, helpers::Object> TerminationEvent;
 		typedef helpers::EventPayload<std::string, helpers::Object> ClipboardUpdateEvent;
+		typedef helpers::EventPayload<void, helpers::Object> NotificationEvent;
 
 		/** Cursor information. 
 		 */
@@ -391,6 +392,11 @@ namespace vterm {
 				terminal_->setClipboard(str);
 			}
 
+			void notify() {
+				ASSERT(terminal_ != nullptr);
+				terminal_->notify();
+			}
+
 			Backend() :
 				terminal_(nullptr) {
 			}
@@ -537,6 +543,12 @@ namespace vterm {
 		helpers::Event<TerminationEvent> onBackendTerminated;
 		helpers::Event<ClipboardUpdateEvent> onClipboardUpdated;
 
+		/** Triggered when backend wants to notify the user. 
+
+		    For now, only BEL character terminal notification is supported, but in the future multiple notification types might be possible. 
+		 */
+		helpers::Event<NotificationEvent> onNotification;
+
 		/** Returns the width and height of the terminal.
 		 */
 		unsigned cols() const {
@@ -665,6 +677,10 @@ namespace vterm {
 		 */
 		void backendTerminated(int exitCode) {
 			trigger(onBackendTerminated, exitCode);
+		}
+
+		void notify() {
+			trigger(onNotification);
 		}
 
 		Cursor cursor_;
