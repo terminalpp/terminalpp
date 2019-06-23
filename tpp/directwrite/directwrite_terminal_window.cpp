@@ -265,6 +265,7 @@ namespace tpp {
 				UNREACHABLE;
 				break;
 			case WM_CHAR:
+				LOG << "WMCHAR: " << (char)(wParam);
 				if (wParam >= 0x20)
 					tw->keyChar(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
 				break;
@@ -272,9 +273,14 @@ namespace tpp {
 			/* Processes special key events.*/
 			case WM_SYSKEYDOWN:
 			case WM_KEYDOWN: {
+				LOG << "WMKEYDOWN: " << wParam;
 				vterm::Key k = GetKey(wParam);
 				if (k != vterm::Key::Invalid)
 					tw->keyDown(k);
+				// returning w/o calling the default window proc means that the OS will not interfere by interpreting own shortcuts
+				// TODO perhaps this should be expandable for more shortcuts as well? 
+				if (k == vterm::Key::F10)
+				    return 0;
 				break;
 			}
 			case WM_KEYUP: {
