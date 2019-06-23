@@ -1,6 +1,6 @@
 # TODOs
 
-- scrolling in tmux does not work properly (ps -aux in tmux is a repro)
+- backspace in the middle of text does not work properly (leaves last character there)
 - when mc exists first key is swallowed
 - clearing the buffer does not seem to be enough, better still, last character in a row should always clear the stuff right off
 - cursor blinking in X11

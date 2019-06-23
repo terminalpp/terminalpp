@@ -493,6 +493,7 @@ namespace vterm {
 				LOG(SEQ) << "LF";
 				pop();
 				++cursor().row;
+				updateCursorPosition();
 				break;
 			/* Carriage return sets cursor column to 0. 
 				*/
@@ -780,7 +781,6 @@ namespace vterm {
                     seq.setArgDefault(0, 1);
                     LOG(SEQ) << "IL: scrollUp " << seq[0]; 
                     insertLine(seq[0], cursor().row);
-                    //scrollUp(seq[0]);
                     return;
                 /* CSI <n> M -- Remove n lines. (DL)
                  */
@@ -788,13 +788,20 @@ namespace vterm {
                     seq.setArgDefault(0,1);
                     LOG(SEQ) << "DL: scrollDown " << seq[0]; 
                     deleteLine(seq[0], cursor().row);
-                    //scrollDown(seq[0]);
                     return;
-                /* CSI <n> T -- Scroll down n lines
+				/* CSI <n> S -- Scroll up n lines 
+				 */
+				case 'S':
+					seq.setArgDefault(0, 1);
+					LOG(SEQ) << "SU: scrollUp " << seq[0];
+					deleteLine(seq[0], state_.scrollStart);
+					return;
+					/* CSI <n> T -- Scroll down n lines
                  */
                 case 'T':
                     seq.setArgDefault(0, 1);
                     LOG(SEQ) << "SD: scrollDown " << seq[0];
+					// TODO should this be from cursor, or from scrollStart? 
                     insertLine(seq[0], cursor().row);
                     return;
                 /* CSI <n> X -- erase <n> characters from the current position 
@@ -873,8 +880,8 @@ namespace vterm {
                         break;
                     state_.scrollStart = std::min(seq[0] - 1, rows() - 1); // inclusive
                     state_.scrollEnd = std::min(seq[1] , rows()); // exclusive 
-                    LOG(SEQ) << "Scroll region set to " << state_.scrollStart << " - " << state_.scrollEnd;
-                    return;
+					LOG(SEQ) << "Scroll region set to " << state_.scrollStart << " - " << state_.scrollEnd;
+					return;
                 /* CSI <n> : <n> : <n> t -- window manipulation (xterm)
 
                    We do nothing for these at the moment, just recognize the few possibly interesting ones.
@@ -1181,6 +1188,7 @@ namespace vterm {
 	}
 
     void VT100::deleteLine(unsigned lines, unsigned from) {
+		LOG << "Deleting " << lines << " from " << from;
         // don't do any scrolling if origin is outside scrolling region
         if (from < state_.scrollStart || from >= state_.scrollEnd)
             return;
@@ -1207,7 +1215,8 @@ namespace vterm {
     }
 
     void VT100::insertLine(unsigned lines, unsigned from) {
-        // don't do any scrolling if origin is outside scrolling region
+		LOG << "Inserting " << lines << " from " << from;
+		// don't do any scrolling if origin is outside scrolling region
         if (from < state_.scrollStart || from >= state_.scrollEnd)
             return;
         // create space by moving the contents in scroll window appropriate amount of lines down
