@@ -188,8 +188,6 @@ namespace tpp {
 		vterm::Terminal::Cursor cursor = terminal()->cursor();
 		// if cursor state changed, mark the cell containing it as dirty
 		bool cursorInRange = cursor.col < cols() && cursor.row < rows();
-		if (!forceRepaint_ && cursorInRange)
-			b.at(cursor.col, cursor.row).dirty = true;
 		// determine the selection boundary
 		bool inSelection = false;
 		vterm::Selection sel = selectedArea();
@@ -228,7 +226,7 @@ namespace tpp {
 			}
 		}
 		// determine whether cursor should be display and display it if so
-		if (cursorInRange && cursor.visible && (blink_ || !cursor.blink)) {
+		if (focused_ && cursorInRange && cursor.visible && (blink_ || !cursor.blink)) {
 			vterm::Terminal::Cell c = b.at(cursor.col, cursor.row);
 			c.fg = cursor.color;
 			c.bg = vterm::Color::Black();
