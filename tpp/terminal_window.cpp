@@ -235,13 +235,10 @@ namespace tpp {
 			c.c = cursor.character;
 			c.font = DropBlink(c.font);
 			doDrawCursor(cursor.col, cursor.row, c);
-			// mark the cursor location as dirty so that cursor is always repainted, because of subpixel renderings we also mark the next and previous cell as dirty so that the subpixel artefacts, if present will be deleted as well
-			b.at(cursor.col, cursor.row).dirty = true;
-			if (cursor.col > 0)
-				b.at(cursor.col - 1, cursor.row).dirty = true;
-			if (cursor.col < cols() - 1)
-				b.at(cursor.col + 1, cursor.row).dirty = true;
-
+			// mark the cursor location as dirty so that cursor is always repainted, because of subpixel renderings we also the cells around cursor position as dirty so that ghosting will be removed if cursor moves. 
+			for (unsigned  x = (cursor.col == 0) ? 0 : cursor.col - 1, xe = std::min(cols(), cursor.col + 1); x <= xe; ++x)
+				for (unsigned y = (cursor.row == 0) ? 0 : cursor.row - 1, ye = std::min(rows(), cursor.row + 1); y <= ye; ++y)
+					b.at(x,y).dirty = true;
 		}
 		return numCells;
 	}

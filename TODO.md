@@ -2,7 +2,6 @@
 
 # all platforms
 
-- simpler font size selection (only height, calculate width from font)
 - ctrl-v capture means it is unusable
 - blinking text is not dirty for now
 - verify that bold, italics and underline works (as well as strikethrough) (underline and strikethrough won't imho for now)
@@ -12,8 +11,6 @@
 - when terminal is resized, try to keep stuff in the buffer
 
 # Win32
-
-- check font sizes when zoom active
 
 # X11
 
