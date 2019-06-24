@@ -11,12 +11,46 @@ namespace tpp {
 	TerminalWindow::Properties::Properties(TerminalWindow const* tw) :
 		cols(tw->cols()),
 		rows(tw->rows()),
-	    fontWidth(tw->cellWidthPx_ * tw->zoom_),
-	    fontHeight(tw->cellHeightPx_ * tw->zoom_),
+	    fontSize(tw->fontSize_),
 	    zoom(tw->zoom_) {
 	}
 
 	// TerminalWindow
+
+	TerminalWindow::TerminalWindow(Session* session, Properties const& properties, std::string const& title) :
+		vterm::Terminal::Renderer(properties.cols, properties.rows),
+		session_(session),
+		focused_(false),
+		title_(title),
+		zoom_(properties.zoom),
+		fullscreen_(false),
+		fontSize_(properties.fontSize),
+		blink_(true),
+		mouseCol_(0),
+		mouseRow_(0),
+		selectionStart_(0, 0),
+		selectionEnd_(0, 0),
+		selecting_(false) {
+		// get cell dimensions from the application and set cell and window sizes in pixels
+		std::pair<unsigned, unsigned> cellSize = Application::Instance<>()->terminalCellDimensions(fontSize_ * zoom_);
+		cellWidthPx_ = cellSize.first;
+		cellHeightPx_ = cellSize.second;
+		widthPx_ = properties.cols * cellWidthPx_;
+		heightPx_ = properties.rows * cellHeightPx_;
+	}
+
+	void TerminalWindow::doSetZoom(double value) {
+		clearWindow_ = true;
+		// get cell dimensions from the application and update cell sizes
+		std::pair<unsigned, unsigned> cellSize = Application::Instance<>()->terminalCellDimensions(fontSize_ * value);
+		cellWidthPx_ = cellSize.first;
+		cellHeightPx_ = cellSize.second;
+		// resize the terminal properly
+		resize(widthPx_ / cellWidthPx_, heightPx_ / cellHeightPx_);
+	}
+
+
+
 
 	void TerminalWindow::keyChar(vterm::Char::UTF8 c) {
 		terminal()->keyChar(c);

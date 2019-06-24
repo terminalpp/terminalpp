@@ -15,83 +15,6 @@ namespace tpp {
 	class Application;
 	class Session;
 
-
-	/** Stores and retrieves font objects so that they do not have to be created each time they are needed. 
-
-	    Templated by the actual font handle, which is platform dependent. 
-	 */
-	template<typename T>
-	class FontSpec {
-	public:
-
-		/** Return a font for given terminal font description and zoom. 
-		 */
-		static FontSpec * GetOrCreate(vterm::Font const & font, unsigned height) {
-			vterm::Font f = StripEffects(font);
-			unsigned id = (height << 8) + f.raw();
-			auto i = Fonts_.find(id);
-			if (i == Fonts_.end())
-				i = Fonts_.insert(std::make_pair(id, Create(font, height))).first;
-			return i->second;
-		}
-
-		vterm::Font font() const {
-			return font_;
-		}
-
-		T const & handle() const {
-			return handle_;
-		}
-
-		unsigned widthPx() const {
-			return widthPx_;
-		}
-
-		unsigned heightPx() const {
-			return heightPx_;
-		}
-
-		/** Does nothing, but explicitly mentioned so that it can be specialized when necessary. 
-		 */
-		~FontSpec() {
-		}
-
-	private:
-
-		/** Strips effects that does not alter the font selection on the given platform. 
-
-		    By default strips only the blinking attribute, implementations can override this to strip other font effects as well. 
-		 */
-		static vterm::Font StripEffects(vterm::Font const & font) {
-			vterm::Font result(font);
-			result.setBlink(false);
-			return result;
-		}
-
-		FontSpec(vterm::Font font, unsigned width, unsigned height, T const & handle) :
-			font_(font),
-			widthPx_(width),
-			heightPx_(height),
-			handle_(handle) {
-		}
-
-		vterm::Font font_;
-		unsigned widthPx_;
-		unsigned heightPx_;
-		T handle_;
-
-		/** This must be implemented in platform specific code. 
-		 */
-		static FontSpec * Create(vterm::Font font, unsigned baseHeight);
-
-		static std::unordered_map<unsigned, FontSpec *> Fonts_;
-	};
-
-
-	template<typename T>
-	std::unordered_map<unsigned, FontSpec<T> *> FontSpec<T>::Fonts_;
-
-
 	/** Single terminal window.
 
 	    The terminal window is a vterm renderer that can display the contents of the associated terminal. This class provides the common, platform independent functionality. 
@@ -105,17 +28,15 @@ namespace tpp {
 		public:
 			unsigned cols;
 			unsigned rows;
-			unsigned fontWidth;
-			unsigned fontHeight;
+			unsigned fontSize;
 			double zoom;
 
 			/** Creates the properties object and fills in the values. 
 			 */
-			Properties(unsigned cols = DEFAULT_TERMINAL_COLS, unsigned rows = DEFAULT_TERMINAL_ROWS, unsigned fontWidth = 0, unsigned fontHeight = DEFAULT_TERMINAL_FONT_HEIGHT, double zoom = 1) :
+			Properties(unsigned cols = DEFAULT_TERMINAL_COLS, unsigned rows = DEFAULT_TERMINAL_ROWS, unsigned fontSize = DEFAULT_TERMINAL_FONT_SIZE, double zoom = 1) :
 				cols(cols),
 				rows(rows),
-				fontWidth(fontWidth),
-				fontHeight(fontHeight),
+				fontSize(fontSize),
 				zoom(zoom) {
 			}
 
@@ -192,26 +113,8 @@ namespace tpp {
 			return font;
 		}
 		
-		TerminalWindow(Session * session, Properties const & properties, std::string const & title) :
-			vterm::Terminal::Renderer(properties.cols, properties.rows),
-			session_(session),
-			widthPx_(properties.fontWidth * properties.cols),
-			heightPx_(properties.fontHeight * properties.rows),
-			focused_(false),
-			title_(title),
-			zoom_(properties.zoom),
-			fullscreen_(false),
-			fontWidth_(properties.fontWidth),
-			fontHeight_(properties.fontHeight),
-			cellWidthPx_(static_cast<unsigned>(properties.fontWidth * properties.zoom)),
-			cellHeightPx_(static_cast<unsigned>(properties.fontHeight * properties.zoom)),
-		    blink_(true),
-		    mouseCol_(0),
-		    mouseRow_(0),
-		    selectionStart_(0,0),
-			selectionEnd_(0,0),
-		    selecting_(false) {
-		}
+
+		TerminalWindow(Session* session, Properties const& properties, std::string const& title);
 
 		void paint() {
 			helpers::Timer t;
@@ -288,14 +191,7 @@ namespace tpp {
 
 		    Updates the cellWidthPx and cellHeightPx values based on the desired zoom level. To make sure that the cells are rendered correctly, the cell height is updated via the zoom level, but the cell width is calculated from the font size of the given font.
 		 */
-		virtual void doSetZoom(double value) {
-			clearWindow_ = true;
-			// update width & height of the cell
-			cellWidthPx_ = static_cast<unsigned>(std::round(value * fontWidth_));
-			cellHeightPx_ = static_cast<unsigned>(std::round(value * fontHeight_));
-			// resize the terminal properly
-			resize(widthPx_ / cellWidthPx_, heightPx_ / cellHeightPx_);
-		}
+		virtual void doSetZoom(double value);
 
 		virtual void doSetFullscreen(bool value) = 0;
 
@@ -401,8 +297,7 @@ namespace tpp {
 
 		/** Font size at zoom level 1
 		 */
-		unsigned fontWidth_;
-		unsigned fontHeight_;
+		unsigned fontSize_;
 
 		/** Width of a single cell in pixels. 
 		 */

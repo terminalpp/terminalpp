@@ -16,12 +16,6 @@ namespace tpp {
             return 0;
         }
 
-		void FixDefaultTerminalWindowProperties(TerminalWindow::Properties & props) {
-			vterm::Font defaultFont;
-			X11TerminalWindow::Font* f = X11TerminalWindow::Font::GetOrCreate(defaultFont, props.fontHeight);
-			props.fontWidth = f->widthPx();
-		}
-
     } // anonymous namespace
 
 
@@ -33,9 +27,6 @@ namespace tpp {
 		if (xDisplay_ == nullptr)
 			THROW(helpers::Exception()) << "Unable to open X display";
 		xScreen_ = DefaultScreen(xDisplay_);
-
-		// this needs to be done *after* the display & screen are initialized
-		FixDefaultTerminalWindowProperties(defaultTerminalWindowProperties_);
 
 		XSetErrorHandler(X11ErrorHandler);
 
@@ -79,6 +70,11 @@ namespace tpp {
 
 	TerminalWindow* X11Application::createTerminalWindow(Session * session, TerminalWindow::Properties const& properties, std::string const& name) {
 		return new X11TerminalWindow(session, properties, name);
+	}
+
+	std::pair<unsigned, unsigned> X11Application::terminalCellDimensions(unsigned fontSize) {
+		FontSpec<XftFont*>* f = FontSpec<XftFont*>::GetOrCreate(vterm::Font(), fontSize);
+		return std::make_pair(f->widthPx(), f->heightPx());
 	}
 
     void X11Application::xSendEvent(X11TerminalWindow * window, XEvent & e, long mask) {

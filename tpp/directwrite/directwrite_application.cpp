@@ -23,11 +23,6 @@ namespace tpp {
 			std::cerr.clear();
 		}
 
-		void FixDefaultTerminalWindowProperties(TerminalWindow::Properties& props) {
-			vterm::Font defaultFont;
-			DirectWriteTerminalWindow::Font* f = DirectWriteTerminalWindow::Font::GetOrCreate(defaultFont, props.fontHeight);
-			props.fontWidth = f->widthPx();
-		}
 	}
 
 	char const* const DirectWriteApplication::TerminalWindowClassName_ = "TerminalWindowClass";
@@ -50,7 +45,6 @@ namespace tpp {
 			__uuidof(IDWriteFactory),
 			&dwFactory_
 		))) << "Unable to create DW factory";
-		FixDefaultTerminalWindowProperties(defaultTerminalWindowProperties_);
 	}
 
 	DirectWriteApplication::~DirectWriteApplication() {
@@ -59,6 +53,11 @@ namespace tpp {
 
 	TerminalWindow* DirectWriteApplication::createTerminalWindow(Session* session, TerminalWindow::Properties const& properties, std::string const& name) {
 		return new DirectWriteTerminalWindow(session, properties, name);
+	}
+
+	std::pair<unsigned, unsigned> DirectWriteApplication::terminalCellDimensions(unsigned fontSize) {
+		FontSpec<DWriteFont>* f = FontSpec<DWriteFont>::GetOrCreate(vterm::Font(), fontSize);
+		return std::make_pair(f->widthPx(), f->heightPx());
 	}
 
 	void DirectWriteApplication::mainLoop() {
