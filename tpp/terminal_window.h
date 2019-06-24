@@ -286,7 +286,7 @@ namespace tpp {
 
 		/** Sets zoom level for the window. 
 
-		    Updates the cellWidthPx and cellHeightPx values based on the desired zoom level. 
+		    Updates the cellWidthPx and cellHeightPx values based on the desired zoom level. To make sure that the cells are rendered correctly, the cell height is updated via the zoom level, but the cell width is calculated from the font size of the given font.
 		 */
 		virtual void doSetZoom(double value) {
 			clearWindow_ = true;

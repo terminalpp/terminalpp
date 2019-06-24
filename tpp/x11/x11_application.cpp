@@ -89,7 +89,6 @@ namespace tpp {
 		XFlush(xDisplay_);
     }
 
-
 	void X11Application::mainLoop() {
         try {
             XEvent e;
