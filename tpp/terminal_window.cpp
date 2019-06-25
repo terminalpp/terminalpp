@@ -59,9 +59,6 @@ namespace tpp {
 	void TerminalWindow::keyDown(vterm::Key key) {
 		if (key == vterm::Key::Enter + vterm::Key::Alt) {
 			setFullscreen(!fullscreen());
-		} else if (key == vterm::Key::F5) {
-			LOG << "redraw...";
-			redraw();
 		// zoom in
 		} else if (key == vterm::Key::Equals + vterm::Key::Ctrl) {
 			if (zoom() < 10)
@@ -70,13 +67,7 @@ namespace tpp {
 		} else if (key == vterm::Key::Minus + vterm::Key::Ctrl) {
 			if (zoom() > 1)
 			    setZoom(std::max(1.0, zoom() / 1.25));
-		}
-		else if (key == vterm::Key::F4) {
-			if (zoom() == 1)
-				setZoom(2);
-			else
-				setZoom(1);
-		} else if (key == vterm::Key::V + vterm::Key::Ctrl) {
+		} else if (key == vterm::Key::V + vterm::Key::Ctrl + vterm::Key::Shift) {
 			clipboardPaste();
 		} else if (key != vterm::Key::Invalid) {
 			terminal()->keyDown(key);

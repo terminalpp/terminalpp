@@ -5,6 +5,12 @@
 > This looks like a good font: http://typeof.net/Iosevka/ - it is also part of nerdfonts, which is the same font, but augmented with many extra symbols. Iosevka is by default not truly monospace between regular and bold variants, but both can be downloaded and installed at the same time, which fixes the issue.
 
 
+# Keybindings
+
+`Ctrl +` and `Ctrl -` to increase / decrease zoom. 
+`Ctrl Shift V` to paste from clipboard.
+`Alt Space` to toggle full-screen mode.
+
 # Platform Support
 
 ## Windows
