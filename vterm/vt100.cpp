@@ -970,11 +970,26 @@ namespace vterm {
                     state_.font.setBold(true);
                     LOG(SEQ) << "bold set";
                     break;
+				/* Italics */
+				case 3:
+					state_.font.setItalics(true);
+					LOG(SEQ) << "italics set";
+					break;
                 /* Underline */
                 case 4:
                     state_.font.setUnderline(true);
                     LOG(SEQ) << "underline set";
                     break;
+				/* Blinking text */
+				case 5:
+					state_.font.setBlink(true);
+					LOG(SEQ) << "blink set";
+					break;
+				/* Strikeout */
+				case 9:
+					state_.font.setStrikeout(true);
+					LOG(SEQ) << "strikeout";
+					break;
                 /* Normal - neither bold, nor faint. */
                 case 22:
                     state_.font.setBold(false);

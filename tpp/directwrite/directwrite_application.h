@@ -82,7 +82,7 @@ namespace tpp {
 		ff->GetFirstMatchingFont(
 			font.bold() ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
 			DWRITE_FONT_STRETCH_NORMAL,
-			font.italics() ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
+			font.italics() ? DWRITE_FONT_STYLE_OBLIQUE : DWRITE_FONT_STYLE_NORMAL,
 			&drw);
 		// finally get the font face
 		Microsoft::WRL::ComPtr<IDWriteFontFace> fface;
