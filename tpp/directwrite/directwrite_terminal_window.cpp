@@ -280,7 +280,6 @@ namespace tpp {
 				UNREACHABLE;
 				break;
 			case WM_CHAR:
-				LOG << "WMCHAR: " << (char)(wParam);
 				if (wParam >= 0x20)
 					tw->keyChar(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
 				break;
@@ -288,7 +287,6 @@ namespace tpp {
 			/* Processes special key events.*/
 			case WM_SYSKEYDOWN:
 			case WM_KEYDOWN: {
-				LOG << "WMKEYDOWN: " << wParam;
 				vterm::Key k = GetKey(wParam);
 				if (k != vterm::Key::Invalid)
 					tw->keyDown(k);

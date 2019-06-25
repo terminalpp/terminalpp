@@ -308,23 +308,14 @@ namespace vterm {
 		bool parseOSC();
 
 		void updateCursorPosition() {
-			while (cursor().col >= cols()) {
-				cursor().col -= cols();
-				++cursor().row;
-			}
 			ASSERT(cursor().col < cols());
 			if (cursor().row == state_.scrollEnd) {
 				deleteLine(1, state_.scrollStart);
 				--cursor().row;
 		    }
-#ifdef HAHA
-			if (cursor().row >= rows()) {
-                // TODO is this the correct behavior? i.e. scroll only when cursor in scroll window
-                //if (cursorPos_.row >= scrollStart_ && cursorPos_.row < scrollEnd_)
-                    deleteLine(cursor().row - rows() + 1, 0);
+			// if cursor row is not valid, just set it to the last row 
+			if (cursor().row >= rows())
 				cursor().row = rows() - 1;
-			}
-#endif
 		}
 
 		/** Updates the cursor position. 

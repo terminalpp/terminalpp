@@ -290,10 +290,14 @@ namespace vterm {
             term.pop();
             throwAtEnd = true;
         }
-        if (! IsFinalByte(term.top()))
-            return false;
-        // parse the final byte
-        finalByte_ = term.pop();
+		// if there is no final byte, that means we need more data, therefore return false
+		if (term.eof())
+			return false;
+		// parse the final byte, or if the next character is not valid, mark to throw an error
+		if (IsFinalByte(term.top()))
+			finalByte_ = term.pop();
+		else
+			throwAtEnd = true;
         end_ = term.buffer_;
         // if unsupported structure was encountered, throw the error
         if (throwAtEnd)
@@ -684,12 +688,14 @@ namespace vterm {
         } else if (seq.firstByte() == 0) {
             switch (seq.finalByte()) {
                 // CSI <n> A -- moves cursor n rows up (CUU)
-                case 'A':
-                    seq.setArgDefault(0, 1);
-                    ASSERT(seq.numArgs() == 1);
-                    LOG(SEQ) << "CUU: setCursor " << cursor().col << ", " << cursor().row - seq[0];
-                    setCursor(cursor().col, cursor().row - seq[0]);
-                    return;
+				case 'A': {
+					seq.setArgDefault(0, 1);
+					ASSERT(seq.numArgs() == 1);
+					unsigned r = cursor().row >= seq[0] ? cursor().row - seq[0] : 0;
+					LOG(SEQ) << "CUU: setCursor " << cursor().col << ", " << r;
+					setCursor(cursor().col, r);
+					return;
+				}
                 // CSI <n> B -- moves cursor n rows down (CUD)
                 case 'B':
                     seq.setArgDefault(0, 1);
@@ -705,12 +711,14 @@ namespace vterm {
                     setCursor(cursor().col + seq[0], cursor().row);
                     return;
                 // CSI <n> D -- moves cursor n columns back (left) (CUB)
-                case 'D': // cursor backward
-                    seq.setArgDefault(0, 1);
-                    ASSERT(seq.numArgs() == 1);
-                    LOG(SEQ) << "CUB: setCursor " << cursor().col - seq[0] << ", " << cursor().row;
-                    setCursor(cursor().col - seq[0], cursor().row);
-                    return;
+				case 'D': {// cursor backward
+					seq.setArgDefault(0, 1);
+					ASSERT(seq.numArgs() == 1);
+					unsigned c = cursor().col >= seq[0] ? cursor().col - seq[0] : 0;
+					LOG(SEQ) << "CUB: setCursor " << c << ", " << cursor().row;
+					setCursor(c, cursor().row);
+					return;
+				}
                 /* CSI <n> G -- set cursor character absolute
                  */
                 case 'G': // CHA
@@ -1174,6 +1182,11 @@ namespace vterm {
 
 
 	void VT100::setCursor(unsigned col, unsigned row) {
+		unsigned c = cols();
+		while (col >= c) {
+			col -= c;
+			++row;
+		}
 		cursor().col = col;
 		cursor().row = row;
 	}

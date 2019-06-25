@@ -2,7 +2,6 @@
 
 # all platforms
 
-- setting very large zoom on small window hits assertion
 - blinking text is not dirty for now
 - verify that bold, italics and underline works (as well as strikethrough) (underline and strikethrough won't imho for now)
 - clearing the buffer does not seem to be enough, better still, last character in a row should always clear the stuff right off

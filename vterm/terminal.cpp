@@ -2,6 +2,7 @@
 #include <cstring>
 
 #include "helpers/log.h"
+#include "helpers/strings.h"
 
 #include "terminal.h"
 #include "pty.h"
@@ -17,8 +18,13 @@ namespace vterm {
 		// if there is available data already, return
 		if (available_)
 			return true;
-		ASSERT(writeStart_ < (buffer_ + bufferSize_)) << "Buffer full";
 		// otherwise read from the attached pty 
+		if (writeStart_ >= buffer_ + bufferSize_) {
+			ASSERT(writeStart_ == buffer_ + bufferSize_);
+			writeStart_ = buffer_;
+			// TODO for now, should log an error in fact
+			ASSERT(false) << "Buffer full";
+        }
 		while (true) {
 			size_t size = pty_->receiveData(writeStart_, buffer_ + bufferSize_ - writeStart_);
 			if (size == 0)
