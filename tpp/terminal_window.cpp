@@ -57,10 +57,6 @@ namespace tpp {
 	}
 
 	void TerminalWindow::keyDown(vterm::Key key) {
-		if (key == vterm::Key::Delete)
-			LOG << "Delete";
-		else if (key == vterm::Key::Backspace)
-			LOG << "Backspace";
 		if (key == vterm::Key::Enter + vterm::Key::Alt) {
 			setFullscreen(!fullscreen());
 		// zoom in

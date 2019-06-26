@@ -687,6 +687,12 @@ namespace vterm {
             }
         } else if (seq.firstByte() == 0) {
             switch (seq.finalByte()) {
+				// CSI <n> @ -- insert blank characters (ICH)
+				case '@':
+					seq.setArgDefault(0, 1);
+					LOG(SEQ) << "ICH: deleteCharacter " << seq[0];
+					insertCharacters(seq[0]);
+					return;
                 // CSI <n> A -- moves cursor n rows up (CUU)
 				case 'A': {
 					seq.setArgDefault(0, 1);
@@ -1282,6 +1288,24 @@ namespace vterm {
 			cell.dirty = true;
 		}
 		for (unsigned c = cols() - num, e = cols(); c < e; ++c) {
+			Terminal::Cell& cell = buffer().at(c, r);
+			cell.c = ' ';
+			cell.fg = state_.fg;
+			cell.bg = state_.bg;
+			cell.font = Font();
+			cell.dirty = true;
+		}
+	}
+
+	void VT100::insertCharacters(unsigned num) {
+		unsigned r = cursor().row;
+		// first copy the characters
+		for (unsigned c = cols() - 1, e = cursor().col + num; c >= e; --c) {
+			Terminal::Cell& cell = buffer().at(c, r);
+			cell = buffer().at(c - num, r);
+			cell.dirty = true;
+		}
+		for (unsigned c = cursor().col, e = cursor().col + num; c < e; ++c) {
 			Terminal::Cell& cell = buffer().at(c, r);
 			cell.c = ' ';
 			cell.fg = state_.fg;

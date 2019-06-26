@@ -333,6 +333,7 @@ namespace vterm {
         void insertLine(unsigned lines, unsigned from);
 
 		void deleteCharacters(unsigned num);
+		void insertCharacters(unsigned num);
 
 
         void storeCursorInfo();
