@@ -38,7 +38,7 @@ namespace vterm {
 	}
 
 	void BypassPTY::resize(unsigned cols, unsigned rows) {
-		std::string s = STR("`xr" << cols << ':' << rows << ';');
+		std::string s = STR("`r" << cols << ':' << rows << ';');
 		sendData(s.c_str(), s.size());
 	}
 

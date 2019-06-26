@@ -11,7 +11,6 @@
 #include "helpers/log.h"
 
 #include "vterm/local_pty.h"
-#include "vterm/ascii_encoder.h"
 
 size_t constexpr BUFFER_SIZE = 10240;
 
@@ -57,15 +56,9 @@ private:
 };
 
 
-/** Executes given process and encodes its input & output into printable ASCII only.
-
-    The encoding is as follows:
-
-    - all printable characters (0x20 - 0x7e inclusive) with the exception of backtick ` (0x60) are encoded as themselves
-    - backtick is encoded as two backticks
-    - characters from 0x00 to 0x19 are encoded as backtick and character from  
+/** .
  */
-class PTYEncoder : public vterm::ASCIIEncoder::CommandHandler {
+class PTYEncoder {
 public:
     PTYEncoder(helpers::Command const & cmd, helpers::Environment const & env):
         command_(cmd),
@@ -79,11 +72,13 @@ public:
             size_t numBytes;
             while (true) {
                 numBytes = pty_.receiveData(buffer, BUFFER_SIZE);
+
                 // if nothing was read, the process has terminated and so should we
                 if (numBytes == 0)
                     break;
-                encodeOutput(buffer, numBytes);
-            }
+                //encodeOutput(buffer, numBytes);
+				write(STDOUT_FILENO, (void*)buffer, numBytes);
+			}
             delete [] buffer;
         });
         // start the cin reader and encoder thread
@@ -96,7 +91,7 @@ public:
                 if (numBytes == 0)
                     break;
                 numBytes += bufferWrite - buffer;
-                size_t processed = encodeInput(buffer, numBytes);
+                size_t processed = decodeInput(buffer, numBytes);
                 if (processed != numBytes) {
                     memcpy(buffer, buffer + processed, numBytes - processed);
                     bufferWrite = buffer + (numBytes - processed);
@@ -123,7 +118,7 @@ public:
         return ec;
     }
 
-	void resize(unsigned cols, unsigned rows) override {
+	void resize(unsigned cols, unsigned rows) {
 		pty_.resize(cols, rows);
 	}
 
@@ -145,25 +140,65 @@ private:
         }
     }
 
-    /** The process output arrives unencoded on the pty, must be encoded and sent to std out. 
-
-        Since the encoding is done on character by character basis, no state is necessary. 
-     */
-    void encodeOutput(char * buffer, size_t numBytes) {
-        vterm::ASCIIEncoder::Encode(std::cout, buffer, numBytes);
-        std::cout << std::flush;
-    }
-
     /** Input comes encoded and must be decoded and sent to the pty. 
-     
-        
      */
-    size_t encodeInput(char * buffer, size_t numBytes) {
+    size_t decodeInput(char * buffer, size_t bufferSize) {
         size_t decodedSize;
-        size_t result = vterm::ASCIIEncoder::Decode(buffer, numBytes, decodedSize, this);
+        size_t result = decodeCommands(buffer, bufferSize, decodedSize);
         pty_.sendData(buffer, decodedSize);
         return result;
     }
+
+	size_t decodeCommands(char* buffer, size_t bufferSize, size_t& decodedSize) {
+#define DECODE(WHAT) buffer[decodedSize++] = WHAT
+#define NEXT if (++i == bufferSize) return processed
+		decodedSize = 0;
+		size_t processed = 0;
+		size_t i = 0;
+		while (true) {
+			processed = i;
+			if (processed == bufferSize)
+				return processed;
+			// if current character is not a backtick, copy the character as it is
+			if (buffer[i] != '`') {
+				DECODE(buffer[i]);
+				// otherwise move to the next character and decide what are we dealing with
+			} else {
+				NEXT;
+				if (buffer[i] == '`') {
+					DECODE('`');
+				} if (buffer[i] == 'r') {
+					NEXT;
+					unsigned cols;
+					unsigned rows;
+					if (!ParseNumber(buffer, bufferSize, i, cols))
+						return processed;
+					ASSERT(buffer[i] == ':') << "expected :, found " << buffer[i];
+					NEXT;
+					if (!ParseNumber(buffer, bufferSize, i, rows))
+						return processed;
+					ASSERT(buffer[i] == ';') << "expected ;";
+					resize(cols, rows);
+				} else {
+					UNREACHABLE;
+				}
+			}
+			++i;
+		}
+#undef DECODE
+#undef NEXT
+	}
+
+	static bool ParseNumber(char* buffer, size_t bufferSize, size_t& i, unsigned& value) {
+		value = 0;
+		while (helpers::IsDecimalDigit(buffer[i])) {
+			value = value * 10 + (buffer[i] - '0');
+			if (++i == bufferSize)
+				return false;
+		}
+		return true;
+	}
+
 
     //RawModeInput rmi_;
     helpers::Command command_;

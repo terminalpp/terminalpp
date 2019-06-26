@@ -5,7 +5,8 @@
 #ifdef WIN32
 #define DEFAULT_TERMINAL_FONT L"Iosevka Term"
 
-#define DEFAULT_SESSION_BACKEND vterm::ASCIIEncoder::VT100
+//#define DEFAULT_SESSION_BACKEND vterm::ASCIIEncoder::VT100
+#define DEFAULT_SESSION_BACKEND vterm::VT100
 #define DEFAULT_SESSION_PTY vterm::BypassPTY
 
 
