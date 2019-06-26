@@ -995,6 +995,12 @@ namespace vterm {
 					state_.font.setBlink(true);
 					LOG(SEQ) << "blink set";
 					break;
+				/* Inverse and inverse off */
+				case 7:
+				case 27:
+					std::swap(state_.fg, state_.bg);
+					LOG(SEQ) << "toggle inverse mode";
+					break;
 				/* Strikethrough */
 				case 9:
 					state_.font.setStrikethrough(true);
