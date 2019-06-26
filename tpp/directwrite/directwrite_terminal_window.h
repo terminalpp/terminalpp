@@ -128,6 +128,9 @@ namespace tpp {
 				glyphRunRow_ = row;
 			} 
 			UINT32 cp = c.c.codepoint();
+			// if the text is blinking and blink is off, replace it with space
+			if (c.font.blink() && ! blink_)
+				cp = 32;
 			dwFont_->handle().fontFace->GetGlyphIndicesA(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
 			++glyphRun_.glyphCount;
 		}

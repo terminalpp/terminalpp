@@ -166,6 +166,7 @@ namespace tpp {
 
 		virtual void blinkTimer() {
 			blink_ = ! blink_;
+			blinkDirty_ = true;
 			doInvalidate(false);
 		}
 
@@ -312,6 +313,10 @@ namespace tpp {
 		    Should be toggled by the terminal window implementation in regular intervals. 
 		 */
 	    bool blink_;
+
+		/** True if blinking state changed, i.e. all cells with blinking text should be considered dirty. 
+		 */
+		bool blinkDirty_;
 
 		/** If true, the entire window contents has been invalidated and the window should be repainted.
 

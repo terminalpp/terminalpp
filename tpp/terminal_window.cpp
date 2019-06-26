@@ -26,6 +26,7 @@ namespace tpp {
 		fullscreen_(false),
 		fontSize_(properties.fontSize),
 		blink_(true),
+		blinkDirty_(false),
 		mouseCol_(0),
 		mouseRow_(0),
 		selectionStart_(0, 0),
@@ -196,7 +197,7 @@ namespace tpp {
 					inSelection = false;
 				}
 				vterm::Terminal::Cell& cell = b.at(c, r);
-				if (forceRepaint_ || inSelection || cell.dirty) {
+				if (forceRepaint_ || inSelection || cell.dirty || (cell.font.blink() && blinkDirty_)) {
 					++numCells;
 					// if we are in selection, mark the cell as dirty, otherwise mark as clean
 					cell.dirty = inSelection;
@@ -208,8 +209,8 @@ namespace tpp {
 						bg = cell.bg;
 						doSetBackground(bg);
 					}
-					if (font != DropBlink(cell.font)) {
-						font = DropBlink(cell.font);
+					if (font != cell.font) {
+						font = cell.font;
 						doSetFont(font);
 					}
 					doDrawCell(c, r, cell);
@@ -229,6 +230,7 @@ namespace tpp {
 				for (unsigned y = (cursor.row == 0) ? 0 : cursor.row - 1, ye = std::min(rows(), cursor.row + 2); y < ye; ++y)
 					b.at(x,y).dirty = true;
 		}
+		blinkDirty_ = false;
 		return numCells;
 	}
 

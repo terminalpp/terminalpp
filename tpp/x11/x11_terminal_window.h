@@ -100,7 +100,9 @@ namespace tpp {
 
 		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
 			XftDrawRect(draw_, &bg_, col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_, cellHeightPx_);
-			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c.rawBytes()), c.c.size());
+			// if the cell is blinking, only draw the text if blink is on
+			if (! c.font.blink() || blink_)
+				XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c.rawBytes()), c.c.size());
 		}
 
 		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {

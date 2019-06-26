@@ -2,11 +2,11 @@
 
 # all platforms
 
-- blinking text is not dirty for now
-- verify that bold, italics and underline works (as well as strikethrough) (underline and strikethrough won't imho for now)
+- underline and strikeout are not working
 - clearing the buffer does not seem to be enough, better still, last character in a row should always clear the stuff right off
 - proper UTF8 and UTF32 conversion in helpers::strings
 - when terminal is resized, try to keep stuff in the buffer
+- asciienc is useless honestly... there is no point in encoding, it is only the bypass PTY that we need on Windows. 
 
 # Win32
 
