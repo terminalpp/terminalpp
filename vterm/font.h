@@ -34,10 +34,10 @@ namespace vterm {
 			return bits_.underline;
 		}
 
-		/** Returns true if the font is striked out. 
+		/** Returns true if the font is striked through. 
 		 */
-		bool strikeout() const {
-			return bits_.strikeout;
+		bool strikethrough() const {
+			return bits_.strikethrough;
 		}
 
 		/** Returns true if the font should blink. 
@@ -63,8 +63,8 @@ namespace vterm {
 			bits_.underline = value;
 		}
 
-		void setStrikeout(bool value) {
-			bits_.strikeout = value;
+		void setStrikethrough(bool value) {
+			bits_.strikethrough = value;
 		}
 
 		void setBlink(bool value) {
@@ -79,12 +79,12 @@ namespace vterm {
 			raw_ = 0;
 		}
 
-		Font(unsigned size, bool bold, bool italics, bool underline, bool strikeout, bool blink) {
+		Font(unsigned size, bool bold, bool italics, bool underline, bool strikethrough, bool blink) {
 			bits_.size = size;
 			bits_.bold = bold;
 			bits_.italics = italics;
 			bits_.underline = underline;
-			bits_.strikeout = strikeout;
+			bits_.strikethrough = strikethrough;
 			bits_.blink = blink;
 		}
 
@@ -104,7 +104,7 @@ namespace vterm {
 			unsigned bold : 1;
 			unsigned italics : 1;
 			unsigned underline : 1;
-			unsigned strikeout : 1;
+			unsigned strikethrough : 1;
 			unsigned blink : 1;
 		} ;
 

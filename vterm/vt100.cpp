@@ -991,10 +991,10 @@ namespace vterm {
 					state_.font.setBlink(true);
 					LOG(SEQ) << "blink set";
 					break;
-				/* Strikeout */
+				/* Strikethrough */
 				case 9:
-					state_.font.setStrikeout(true);
-					LOG(SEQ) << "strikeout";
+					state_.font.setStrikethrough(true);
+					LOG(SEQ) << "strikethrough";
 					break;
                 /* Normal - neither bold, nor faint. */
                 case 22:

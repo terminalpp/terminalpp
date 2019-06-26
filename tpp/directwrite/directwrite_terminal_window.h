@@ -117,6 +117,9 @@ namespace tpp {
 			dwFont_ = Font::GetOrCreate(font, cellHeightPx_);
 			glyphRun_.fontFace = dwFont_->handle().fontFace.Get();
 			glyphRun_.fontEmSize = dwFont_->handle().sizeEm;
+			grBlink_ = font.blink();
+			grUnderline_ = font.underline();
+			grStrikethrough_ = font.strikethrough();
 		}
 
 		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
@@ -128,9 +131,6 @@ namespace tpp {
 				glyphRunRow_ = row;
 			} 
 			UINT32 cp = c.c.codepoint();
-			// if the text is blinking and blink is off, replace it with space
-			if (c.font.blink() && ! blink_)
-				cp = 32;
 			dwFont_->handle().fontFace->GetGlyphIndicesA(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
 			++glyphRun_.glyphCount;
 		}
@@ -160,8 +160,24 @@ namespace tpp {
 				static_cast<FLOAT>((glyphRunRow_ + 1) * cellHeightPx_)
 			);
 			rt_->FillRectangle(rect, bg_.Get());
-			D2D1_POINT_2F origin = D2D1::Point2F((glyphRunCol_) * cellWidthPx_, glyphRunRow_ * cellHeightPx_ + dwFont_->handle().ascent);
-			rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
+			if (!grBlink_ || blink_) {
+				D2D1_POINT_2F origin = D2D1::Point2F((glyphRunCol_)* cellWidthPx_, glyphRunRow_ * cellHeightPx_ + dwFont_->handle().ascent);
+				rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
+				if (grUnderline_) {
+					D2D1_POINT_2F start = origin;
+					start.y -= dwFont_->handle().underlineOffset;
+					D2D1_POINT_2F end = start;
+					end.x += glyphRun_.glyphCount * cellWidthPx_;
+					rt_->DrawLine(start, end, fg_.Get(), dwFont_->handle().underlineThickness);
+				}
+				if (grStrikethrough_) {
+					D2D1_POINT_2F start = origin;
+					start.y -= dwFont_->handle().strikethroughOffset;
+					D2D1_POINT_2F end = start;
+					end.x += glyphRun_.glyphCount * cellWidthPx_;
+					rt_->DrawLine(start, end, fg_.Get(), dwFont_->handle().strikethroughThickness);
+				}
+			}
 			glyphRun_.glyphCount = 0;
 		}
 
@@ -199,6 +215,13 @@ namespace tpp {
 		 */
 		unsigned frameWidth_;
 		unsigned frameHeight_;
+
+		/** Determines the font properties of current glyph run. 
+		 */
+		bool grBlink_;
+		bool grUnderline_;
+		bool grStrikethrough_;
+
 
 		static std::unordered_map<HWND, DirectWriteTerminalWindow*> Windows_;
 

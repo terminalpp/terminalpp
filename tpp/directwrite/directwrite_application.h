@@ -58,10 +58,18 @@ namespace tpp {
 	public:
 		Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace;
 		double sizeEm;
+		double underlineOffset;
+		double underlineThickness;
+		double strikethroughOffset;
+		double strikethroughThickness;
 		unsigned ascent;
-		DWriteFont(Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace, unsigned sizeEm, unsigned ascent) :
+		DWriteFont(Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace, double sizeEm, double underlineOffset, double underlineThickness, double strikethroughOffset, double strikethroughThickness,unsigned ascent) :
 			fontFace(fontFace),
 			sizeEm(sizeEm),
+			underlineOffset(underlineOffset),
+			underlineThickness(underlineThickness),
+			strikethroughOffset(strikethroughOffset),
+			strikethroughThickness(strikethroughThickness),
 			ascent(ascent) {
 		}
 	};
@@ -104,13 +112,16 @@ namespace tpp {
 		UINT32 codepoint = 'M';
 		fface->GetGlyphIndicesA(&codepoint, 1, &glyph);
 		fface->GetDesignGlyphMetrics(&glyph, 1, &glyphMetrics);
-
 		return new FontSpec<DWriteFont>(font,
 			std::round((static_cast<double>(glyphMetrics.advanceWidth) / glyphMetrics.advanceHeight) * baseHeight * font.size()),
 			baseHeight * font.size(),
 			DWriteFont(
 				fface,
 				emSize,
+				(emSize * metrics.underlinePosition / metrics.designUnitsPerEm),
+				(emSize * metrics.underlineThickness / metrics.designUnitsPerEm),
+				(emSize * metrics.strikethroughPosition / metrics.designUnitsPerEm),
+				(emSize * metrics.strikethroughThickness / metrics.designUnitsPerEm),
 				std::round(emSize * metrics.ascent / metrics.designUnitsPerEm)));
 	}
 
@@ -120,7 +131,7 @@ namespace tpp {
 	inline vterm::Font FontSpec<DWriteFont>::StripEffects(vterm::Font const& font) {
 		vterm::Font result(font);
 		result.setBlink(false);
-		result.setStrikeout(false);
+		result.setStrikethrough(false);
 		result.setUnderline(false);
 		return result;
 	}

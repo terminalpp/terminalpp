@@ -23,7 +23,10 @@ namespace tpp {
 		dwFont_(nullptr),
 		wndPlacement_{ sizeof(wndPlacement_) },
 		frameWidth_{ 0 },
-		frameHeight_{ 0 } {
+		frameHeight_{ 0 },
+        grBlink_(false),
+	    grUnderline_(false),
+	    grStrikethrough_(false) {
 		// all win32 windows start focused since they receive the setfocus message first
 		focused_ = true;
 		hWnd_ = CreateWindowEx(
