@@ -160,9 +160,11 @@ namespace tpp {
 				static_cast<FLOAT>((glyphRunRow_ + 1) * cellHeightPx_)
 			);
 			rt_->FillRectangle(rect, bg_.Get());
+			// if blinking, only draw when blink is on
 			if (!grBlink_ || blink_) {
 				D2D1_POINT_2F origin = D2D1::Point2F((glyphRunCol_)* cellWidthPx_, glyphRunRow_ * cellHeightPx_ + dwFont_->handle().ascent);
 				rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
+				// add underline and strikethrough if selected, the position and thickness is obtained from the font metrics generated when the font is created (directwrite_application.h)
 				if (grUnderline_) {
 					D2D1_POINT_2F start = origin;
 					start.y -= dwFont_->handle().underlineOffset;

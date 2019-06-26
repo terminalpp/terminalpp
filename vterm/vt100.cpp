@@ -976,6 +976,10 @@ namespace vterm {
                     state_.font.setBold(true);
                     LOG(SEQ) << "bold set";
                     break;
+				/* faint font (light) - won't support for now, though in theory we easily can. */
+				case 2:
+					LOG(SEQ_WONT_SUPPORT) << "faint font";
+					break;
 				/* Italics */
 				case 3:
 					state_.font.setItalics(true);
@@ -996,16 +1000,36 @@ namespace vterm {
 					state_.font.setStrikethrough(true);
 					LOG(SEQ) << "strikethrough";
 					break;
+				/* Bold off */
+				case 21:
+					state_.font.setBold(false);
+					LOG(SEQ) << "bold off";
+					break;
                 /* Normal - neither bold, nor faint. */
                 case 22:
                     state_.font.setBold(false);
                     LOG(SEQ) << "normal font set";
                     break;
+				/* Italics off. */
+				case 23:
+					state_.font.setItalics(false);
+					LOG(SEQ) << "italics off";
+					break;
                 /* Disable underline. */
                 case 24:
                     state_.font.setUnderline(false);
-                    LOG(SEQ) << "undeline unset";
+                    LOG(SEQ) << "undeline off";
                     break;
+				/* Disable blinking. */
+				case 25:
+					state_.font.setBlink(false);
+					LOG(SEQ) << "blink off";
+					break;
+				/* Disable strikethrough. */
+				case 29:
+					state_.font.setStrikethrough(false);
+					LOG(SEQ) << "Strikethrough off";
+					break;
     			/* 30 - 37 are dark foreground colors, handled in the default case. */
     			/* 38 - extended foreground color */
                 case 38:
