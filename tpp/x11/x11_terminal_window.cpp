@@ -274,7 +274,8 @@ namespace tpp {
                 Status status;
                 int strLen = Xutf8LookupString(tw->ic_, & e.xkey, str, sizeof str, &kSym, &status);
                 // if it is printable character and there were no modifiers other than shift pressed, we are dealing with printable character (backspace is not printable character)
-                if (strLen > 0 && str[0] >= 0x20 && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
+                // TODO this better be more robust
+                if (strLen > 0 && (str[0] < 0 || str[0] >= 0x20) && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
                     vterm::Char::UTF8 c;
                     char * x = reinterpret_cast<char*>(& str);
                     if (c.readFromStream(x, x+32)) {
