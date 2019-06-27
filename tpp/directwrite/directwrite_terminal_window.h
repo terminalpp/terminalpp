@@ -1,5 +1,5 @@
 #pragma once
-#ifdef WIN32
+#ifdef _WIN64
 
 #include <unordered_map>
 
@@ -131,7 +131,7 @@ namespace tpp {
 				glyphRunRow_ = row;
 			} 
 			UINT32 cp = c.c.codepoint();
-			dwFont_->handle().fontFace->GetGlyphIndicesA(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
+			dwFont_->handle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
 			++glyphRun_.glyphCount;
 		}
 

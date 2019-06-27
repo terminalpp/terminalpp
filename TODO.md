@@ -1,4 +1,4 @@
-# TODOs
+﻿# TODOs
 
 # all platforms
 
@@ -12,6 +12,10 @@
 # X11
 
 - fullscreen does not work
+
+# Long Term Goals
+
+- non-english double width characters don't work properly (at all)
 
 # Code Improvements 
 

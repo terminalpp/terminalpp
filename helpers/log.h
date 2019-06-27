@@ -229,7 +229,7 @@ namespace helpers {
 				// TODO actually print the message
 				if (printTime_) {
 					tm t;
-#ifdef WIN32
+#ifdef _WIN64
 					localtime_s(&t, &m.time);
 #elif __linux__
 					localtime_r(&m.time, &t);

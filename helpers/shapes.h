@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <ostream>
 
-#ifdef WIN32
+#ifdef _WIN64
 #undef min
 #undef max
 #endif

@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef WIN32
+#ifdef _WIN64
 #include <windows.h>
 #endif
 
@@ -37,7 +37,7 @@ namespace vterm {
 	private:
 		helpers::Command command_;
 
-#ifdef WIN32
+#ifdef _WIN64
 
 		/** Starts the process with the specified command.
 		 */

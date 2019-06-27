@@ -1,5 +1,5 @@
 #pragma once
-#ifdef WIN32
+#ifdef _WIN64
 
 #include <windows.h>
 #include <dwrite_2.h> 
@@ -41,7 +41,7 @@ namespace tpp {
 		friend class DirectWriteTerminalWindow;
 		friend class FontSpec<DWriteFont>;
 
-		static char const* const TerminalWindowClassName_;
+		static wchar_t const* const TerminalWindowClassName_;
 
 		void registerTerminalWindowClass();
 
@@ -110,7 +110,7 @@ namespace tpp {
 		DWRITE_GLYPH_METRICS glyphMetrics;
 		UINT16 glyph;
 		UINT32 codepoint = 'M';
-		fface->GetGlyphIndicesA(&codepoint, 1, &glyph);
+		fface->GetGlyphIndices(&codepoint, 1, &glyph);
 		fface->GetDesignGlyphMetrics(&glyph, 1, &glyphMetrics);
 		return new FontSpec<DWriteFont>(font,
 			std::round((static_cast<double>(glyphMetrics.advanceWidth) / glyphMetrics.advanceHeight) * baseHeight * font.size()),

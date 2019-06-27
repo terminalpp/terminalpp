@@ -1,4 +1,4 @@
-#ifdef WIN32
+#ifdef _WIN64
 #include "directwrite_application.h"
 #include "directwrite_terminal_window.h"
 
@@ -25,7 +25,7 @@ namespace tpp {
 
 	}
 
-	char const* const DirectWriteApplication::TerminalWindowClassName_ = "TerminalWindowClass";
+	wchar_t const* const DirectWriteApplication::TerminalWindowClassName_ = L"TerminalWindowClass";
 
 	DirectWriteApplication::DirectWriteApplication(HINSTANCE hInstance) :
 		hInstance_(hInstance) {
@@ -78,7 +78,7 @@ namespace tpp {
 	}
 
 	void DirectWriteApplication::registerTerminalWindowClass() {
-		WNDCLASSEX wClass = { 0 };
+		WNDCLASSEXW wClass = { 0 };
 		wClass.cbSize = sizeof(WNDCLASSEX); // size of the class info
 		wClass.hInstance = hInstance_;
 		wClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -92,7 +92,7 @@ namespace tpp {
 		wClass.hCursor = LoadCursor(nullptr, IDC_IBEAM); // mouse pointer icon
 		wClass.hbrBackground = nullptr; // do not display background - the terminal window does it itself
 		// register the class
-		ATOM result = RegisterClassEx(&wClass);
+		ATOM result = RegisterClassExW(&wClass);
 		ASSERT(result != 0) << "Unable to register window class";
 	}
 

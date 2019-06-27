@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef WIN32
+#ifdef _WIN64
 #include <windows.h>
 #endif
 
@@ -45,7 +45,7 @@ namespace vterm {
 		helpers::Command command_;
 		helpers::Environment environment_;
 
-#ifdef WIN32
+#ifdef _WIN64
 
 		/** Opens the pipes and creates a new pseudoconsole. 
 		 */

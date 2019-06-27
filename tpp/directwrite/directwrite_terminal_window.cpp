@@ -1,7 +1,6 @@
-#ifdef WIN32
+#ifdef _WIN64
 
 #include "helpers/strings.h"
-
 
 #include "../session.h"
 
@@ -29,10 +28,11 @@ namespace tpp {
 	    grStrikethrough_(false) {
 		// all win32 windows start focused since they receive the setfocus message first
 		focused_ = true;
-		hWnd_ = CreateWindowEx(
+		std::wstring t = vterm::UTF8StringToUCS2(title_);
+		hWnd_ = CreateWindowExW(
 			WS_EX_LEFT, // the default
 			app()->TerminalWindowClassName_, // window class
-			title_.c_str(), // window name (all start as terminal++)
+			t.c_str(), // window name (all start as terminal++)
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, // x position
 			CW_USEDEFAULT, // y position
@@ -278,7 +278,7 @@ namespace tpp {
 				tw->paint();
 				break;
 			}
-			/* TODO It would be nice to actually switch to unicode. */
+			/* No need to use WM_UNICHAR since WM_CHAR is already unicode aware */
 			case WM_UNICHAR:
 				UNREACHABLE;
 				break;
@@ -334,9 +334,11 @@ namespace tpp {
 			 */
 			case WM_USER:
 				switch (wParam) {
-				case DirectWriteApplication::MSG_TITLE_CHANGE:
-					SetWindowTextA(hWnd, tw->terminal()->title().c_str());
+				case DirectWriteApplication::MSG_TITLE_CHANGE: {
+					std::wstring t = vterm::UTF8StringToUCS2(tw->terminal()->title());
+					SetWindowTextW(hWnd, t.c_str());
 					break;
+				}
 				case DirectWriteApplication::MSG_INPUT_READY:
 					tw->session()->processInput();
 					break;

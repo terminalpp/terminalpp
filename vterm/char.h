@@ -221,6 +221,22 @@ namespace vterm {
 
 	};
 
+
+
+	inline std::wstring UTF8StringToUCS2(std::string const& from) {
+		std::wstringstream result;
+		for (size_t i = 0, e = from.size(); i < e; ) {
+			Char::UTF8 const * c = reinterpret_cast<Char::UTF8 const *>(from.c_str() + i);
+			i += c->size();
+			unsigned cp = c->codepoint();
+			if (cp < 65536)
+				result << static_cast<wchar_t>(cp);
+			else
+				result << '?';
+		}
+		return result.str();
+	}
+
 } // namespace vterm
 
 

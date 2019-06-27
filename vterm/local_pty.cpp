@@ -11,7 +11,7 @@
 
 namespace vterm {
 
-#ifdef WIN32
+#ifdef _WIN64
 
 	LocalPTY::LocalPTY(helpers::Command const& command) :
 		command_(command),

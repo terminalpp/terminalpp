@@ -8,7 +8,7 @@
 #include "config.h"
 #include "session.h"
 
-#ifdef WIN32
+#ifdef _WIN64
 #include "directwrite/directwrite_application.h"
 #include "directwrite/directwrite_terminal_window.h"
 // link to directwrite
@@ -37,7 +37,7 @@ using namespace tpp;
 
     For now creates single terminal window and one virtual terminal. 
  */
-#ifdef WIN32
+#ifdef _WIN64
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	try {
 	    // create the application singleton

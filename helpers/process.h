@@ -10,7 +10,7 @@ namespace helpers {
 
 	/** Because different operating systems support different exit code types, we define the type exit code separately.
 	 */
-#ifdef WIN32
+#ifdef _WIN64
 	typedef unsigned long ExitCode;
 #elif __linux__
 	typedef int ExitCode;
@@ -117,7 +117,7 @@ namespace helpers {
 		/** Applies the changes in the environment to the actual environment of the current process. 
 		 */
 		void apply() {
-#ifdef WIN32
+#ifdef _WIN64
 			NOT_IMPLEMENTED;
 #elif __linux__
 			for (auto i : map_) {

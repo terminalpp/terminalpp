@@ -2,7 +2,7 @@
 
 namespace vterm {
 
-#ifdef WIN32
+#ifdef _WIN64
 
 	/** Starts the local pseudoterminal for given command.
 	 */

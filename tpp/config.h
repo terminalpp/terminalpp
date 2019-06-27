@@ -2,10 +2,9 @@
 #define DEFAULT_TERMINAL_ROWS 25
 #define DEFAULT_TERMINAL_FONT_SIZE 18
 
-#ifdef WIN32
+#ifdef _WIN64
 #define DEFAULT_TERMINAL_FONT L"Iosevka Term"
 
-//#define DEFAULT_SESSION_BACKEND vterm::ASCIIEncoder::VT100
 #define DEFAULT_SESSION_BACKEND vterm::VT100
 #define DEFAULT_SESSION_PTY vterm::BypassPTY
 

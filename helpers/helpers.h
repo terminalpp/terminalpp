@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 
-#ifdef WIN32
+#ifdef _WIN64
     #include <windows.h>
 #elif __linux__
     #include <cstring>
@@ -137,7 +137,7 @@ namespace helpers {
     class OSError : public Exception {
     public:
         OSError() {
-            #ifdef WIN32
+            #ifdef _WIN64
                 what_ = STR("ErrorCode: " << GetLastError());
             #elif __linux__
                 what_ = STR(strerror(errno) << ": ");
