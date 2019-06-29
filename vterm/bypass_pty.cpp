@@ -21,7 +21,7 @@ namespace vterm {
 		terminate();
 	}
 
-	size_t BypassPTY::sendData(char const* buffer, size_t size) {
+	size_t BypassPTY::write(char const* buffer, size_t size) {
 		DWORD bytesWritten = 0;
 		WriteFile(pipeOut_, buffer, static_cast<DWORD>(size), &bytesWritten, nullptr);
 		// TODO check this properly for errors
@@ -29,7 +29,7 @@ namespace vterm {
 		return bytesWritten;
 	}
 
-	size_t BypassPTY::receiveData(char* buffer, size_t availableSize) {
+	size_t BypassPTY::read(char* buffer, size_t availableSize) {
 		DWORD bytesRead = 0;
 		bool readOk = ReadFile(pipeIn_, buffer, static_cast<DWORD>(availableSize), &bytesRead, nullptr);
 		// make sure that if readOk is false nothing was read
@@ -39,7 +39,7 @@ namespace vterm {
 
 	void BypassPTY::resize(unsigned cols, unsigned rows) {
 		std::string s = STR("`r" << cols << ':' << rows << ';');
-		sendData(s.c_str(), s.size());
+		write(s.c_str(), s.size());
 	}
 
 	void BypassPTY::doTerminate() {
@@ -108,11 +108,11 @@ namespace vterm {
 		terminate();
 	}
 
-	size_t BypassPTY::sendData(char const* buffer, size_t size) {
+	size_t BypassPTY::write(char const* buffer, size_t size) {
 		NOT_IMPLEMENTED;
 	}
 
-	size_t BypassPTY::receiveData(char* buffer, size_t availableSize) {
+	size_t BypassPTY::read(char* buffer, size_t availableSize) {
 		NOT_IMPLEMENTED;
 	}
 

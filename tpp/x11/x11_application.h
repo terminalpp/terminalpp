@@ -70,7 +70,6 @@ namespace tpp {
 		Window broadcastWindow_;
         XIM xIm_;
 		Atom wmDeleteMessage_;
-		Atom inputReadyMessage_;
 		Atom blinkTimerMessage_;
 		Atom clipboardName_;
 		Atom formatString_;

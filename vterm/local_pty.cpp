@@ -79,7 +79,7 @@ namespace vterm {
 		return ec;
 	}
 
-	size_t LocalPTY::sendData(char const * buffer, size_t size) {
+	size_t LocalPTY::write(char const * buffer, size_t size) {
 		DWORD bytesWritten = 0;
 		WriteFile(pipeOut_, buffer, static_cast<DWORD>(size), &bytesWritten, nullptr);
 		// TODO check this properly for errors
@@ -87,7 +87,7 @@ namespace vterm {
 		return bytesWritten;
 	}
 
-	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) {
+	size_t LocalPTY::read(char* buffer, size_t availableSize) {
 		DWORD bytesRead = 0;
 		bool readOk = ReadFile(pipeIn_, buffer, static_cast<DWORD>(availableSize), &bytesRead, nullptr);
 		// make sure that if readOk is false nothing was read
@@ -200,17 +200,17 @@ namespace vterm {
 		return ec;
 	}
 
-	size_t LocalPTY::sendData(char const* buffer, size_t size) {
+	size_t LocalPTY::write(char const* buffer, size_t size) {
 		ASSERT(!terminated_) << "Terminated PTY cannot send data";
-        int nw = write(pipe_, (void*) buffer, size);
+        int nw = ::write(pipe_, (void*) buffer, size);
         ASSERT(nw >= 0 && static_cast<unsigned>(nw) == size);
 		return size;
     }
 
-	size_t LocalPTY::receiveData(char* buffer, size_t availableSize) {
+	size_t LocalPTY::read(char* buffer, size_t availableSize) {
 		if (terminated_)
 			return 0;
-		int cnt = read(pipe_, (void*)buffer, availableSize);
+		int cnt = ::read(pipe_, (void*)buffer, availableSize);
 		// if there is an error while reading, just return it as reading 0 bytes, let the termination handling deal with the cause for the error
 		if (cnt < 0)
 			return 0;
@@ -245,13 +245,6 @@ namespace vterm {
 				environment_.setIfUnspecified("TERM", "xterm-256color");
 				environment_.setIfUnspecified("COLORTERM", "truecolor");
 				environment_.apply();
-				/*
-				unsetenv("COLUMNS");
-				unsetenv("LINES");
-				unsetenv("TERMCAP");
-				setenv("TERM", "xterm-256color", /* overwrite * / true);
-				setenv("COLORTERM", "truecolor", /* overwrite * / true);
-				*/
 
 				signal(SIGCHLD, SIG_DFL);
 				signal(SIGHUP, SIG_DFL);

@@ -4,7 +4,7 @@
 #include <sstream>
 
 #ifdef _WIN64
-    #include <windows.h>
+    #include "windows.h"
 #elif __linux__
     #include <cstring>
     #include <errno.h>

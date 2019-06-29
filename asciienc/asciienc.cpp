@@ -71,7 +71,7 @@ public:
             char * buffer = new char[BUFFER_SIZE];
             size_t numBytes;
             while (true) {
-                numBytes = pty_.receiveData(buffer, BUFFER_SIZE);
+                numBytes = pty_.read(buffer, BUFFER_SIZE);
 
                 // if nothing was read, the process has terminated and so should we
                 if (numBytes == 0)
@@ -145,7 +145,7 @@ private:
     size_t decodeInput(char * buffer, size_t bufferSize) {
         size_t decodedSize;
         size_t result = decodeCommands(buffer, bufferSize, decodedSize);
-        pty_.sendData(buffer, decodedSize);
+        pty_.write(buffer, decodedSize);
         return result;
     }
 

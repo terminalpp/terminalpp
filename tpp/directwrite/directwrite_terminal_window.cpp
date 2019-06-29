@@ -339,9 +339,6 @@ namespace tpp {
 					SetWindowTextW(hWnd, t.c_str());
 					break;
 				}
-				case DirectWriteApplication::MSG_INPUT_READY:
-					tw->session()->processInput();
-					break;
 				default:
 					LOG("Win32") << "Invalid user message " << wParam;
 				}

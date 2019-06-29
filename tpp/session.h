@@ -22,7 +22,7 @@ namespace tpp {
 	    TODO: This should be the main hub for managing and persisting the session properties in tpp. 
 
 	 */
-	class Session {
+	class Session : public helpers::Object {
 	public:
 
 		static Session* Create(std::string const& name, helpers::Command const& command) {
@@ -79,15 +79,6 @@ namespace tpp {
 			window_->show();
 		}
 
-		void processInput() {
-			std::lock_guard<std::mutex> g(mPty_);
-			if (dataReady_) {
-				vt_->processInput();
-				dataReady_ = false;
-				cvPty_.notify_one();
-			}
-		}
-
 	protected:
 
 		/** Creates new session.
@@ -106,8 +97,8 @@ namespace tpp {
 
 		/** Function called when the PTY attached to the session is terminated.
          */
-		void onPTYTerminated(helpers::ExitCode ec) {
-			LOG << "PTY terminated " << ec;
+		void onPTYTerminated(vterm::PTY::TerminatedEvent & e) {
+			LOG << "PTY terminated " << *e;
 			window_->close();
 		}
 
@@ -127,10 +118,6 @@ namespace tpp {
 
 		/** The VT100 terminal backend. 
 		 */
-		vterm::VT100* vt_;
-
-		/** The associated terminal. 
-		 */
 		vterm::Terminal * terminal_;
 
 		/** Window associated with the terminal. 
@@ -140,14 +127,6 @@ namespace tpp {
 		/** Properties of the attached window. 
 		 */
 		TerminalWindow::Properties windowProperties_;
-
-
-		std::thread ptyExitWait_;
-		std::thread ptyReadThread_;
-
-		bool dataReady_;
-		std::mutex mPty_;
-		std::condition_variable cvPty_;
 
 		static std::unordered_set<Session*> Sessions_;
 

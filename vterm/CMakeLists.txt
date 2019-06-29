@@ -9,6 +9,7 @@ file(GLOB_RECURSE SRC "*.cpp" "*.h")
 
 if(WIN32)
     add_definitions()
+    add_compile_definitions(NOMINMAX)
     add_library(libvterm ${SRC})
 elseif(UNIX)
 	find_library(LUTIL util)

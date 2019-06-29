@@ -93,10 +93,6 @@ namespace tpp {
 		virtual void hide() = 0;
 		virtual void close() = 0;
 
-		/** TODO can this be simplified and not dealt with in the TerminalWindow? 
-		 */
-		virtual void inputReady() = 0;
-
 		/** Redraws the window completely from the attached vterm. 
 		 */
 		void redraw() {
@@ -121,7 +117,8 @@ namespace tpp {
 			t.start();
 			unsigned cells = doPaint();
 			double time = t.stop();
-			//LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
+			if (cells > 200)
+			    LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
 		}
 
 		/** Returns the selected area. 
@@ -157,7 +154,8 @@ namespace tpp {
 		}
 
         void repaint(vterm::Terminal::RepaintEvent & e) override {
-            doInvalidate(e->invalidateAll);
+			MARK_AS_UNUSED(e);
+            doInvalidate(false);
         }
 
         void titleChange(vterm::Terminal::TitleChangeEvent & e) override {

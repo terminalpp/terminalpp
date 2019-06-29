@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef _WIN64
-#include <windows.h>
+#include "windows.h"
 #endif
 
 #include "pty.h"
@@ -16,8 +16,8 @@ namespace vterm {
 	class LocalPTY : public PTY {
 	public:
 
-		size_t sendData(char const * buffer, size_t size) override;
-		size_t receiveData(char* buffer, size_t availableSize) override;
+		size_t write(char const * buffer, size_t size) override;
+		size_t read(char* buffer, size_t availableSize) override;
 
 		void resize(unsigned cols, unsigned rows) override;
 

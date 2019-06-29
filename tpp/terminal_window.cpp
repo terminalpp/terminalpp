@@ -107,7 +107,7 @@ namespace tpp {
 		convertMouseCoordsToCells(x, y);
 		mouseCol_ = x;
 		mouseRow_ = y;
-		if (!terminal()->backend()->captureMouse()) {
+		if (!terminal()->captureMouse()) {
 			switch (button) {
 				case vterm::MouseButton::Left:
 					selecting_ = true;
@@ -156,7 +156,7 @@ namespace tpp {
 		// don't do anything if terminal is not attached
 		if (terminal() == nullptr)
 			return 0;
-		vterm::Terminal::Buffer & b = terminal()->buffer();
+		vterm::Terminal::ScreenLock sl = terminal()->lockScreen(true);
 		if (clearWindow_) {
 			forceRepaint_ = true;
 			doClearWindow();
@@ -168,7 +168,7 @@ namespace tpp {
 		vterm::Font font;
 		unsigned numCells = 0;
 		{
-			vterm::Terminal::Cell& c = b.at(0, 0);
+			vterm::Terminal::Cell& c = sl->at(0, 0);
 			fg = c.fg;
 			bg = c.bg;
 			font = DropBlink(c.font);
@@ -176,8 +176,7 @@ namespace tpp {
 		doSetForeground(fg);
 		doSetBackground(bg);
 		doSetFont(font);
-		// TODO -- we are taking a copy in case the cursor is moved while the print happens - this should not happen though and needs some investigation on how it could be achieved, or if simpler synchronization should be implemented in backends... 
-		vterm::Terminal::Cursor cursor = terminal()->cursor();
+		vterm::Terminal::Cursor const & cursor = sl->cursor();
 		// if cursor state changed, mark the cell containing it as dirty
 		bool cursorInRange = cursor.col < cols() && cursor.row < rows();
 		// determine the selection boundary
@@ -196,7 +195,7 @@ namespace tpp {
 				if (inSelection && ! sel.contains(c, r)) {
 					inSelection = false;
 				}
-				vterm::Terminal::Cell& cell = b.at(c, r);
+				vterm::Terminal::Cell& cell = sl->at(c, r);
 				if (forceRepaint_ || inSelection || cell.dirty || (cell.font.blink() && blinkDirty_)) {
 					++numCells;
 					// if we are in selection, mark the cell as dirty, otherwise mark as clean
@@ -219,7 +218,7 @@ namespace tpp {
 		}
 		// determine whether cursor should be display and display it if so
 		if (focused_ && cursorInRange && cursor.visible && (blink_ || !cursor.blink)) {
-			vterm::Terminal::Cell c = b.at(cursor.col, cursor.row);
+			vterm::Terminal::Cell c = sl->at(cursor.col, cursor.row);
 			c.fg = cursor.color;
 			c.bg = vterm::Color::Black();
 			c.c = cursor.character;
@@ -228,7 +227,7 @@ namespace tpp {
 			// mark the cursor location as dirty so that cursor is always repainted, because of subpixel renderings we also the cells around cursor position as dirty so that ghosting will be removed if cursor moves. 
 			for (unsigned  x = (cursor.col == 0) ? 0 : cursor.col - 1, xe = std::min(cols(), cursor.col + 2); x < xe; ++x)
 				for (unsigned y = (cursor.row == 0) ? 0 : cursor.row - 1, ye = std::min(rows(), cursor.row + 2); y < ye; ++y)
-					b.at(x,y).dirty = true;
+					sl->at(x,y).dirty = true;
 		}
 		blinkDirty_ = false;
 		return numCells;

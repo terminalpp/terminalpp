@@ -422,9 +422,7 @@ namespace tpp {
 			/* User-defined messages. 
 			 */
 			case ClientMessage:
-				if (static_cast<unsigned long>(e.xclient.data.l[0]) == tw->app()->inputReadyMessage_) {
-					tw->session()->processInput();
-				} else if (static_cast<unsigned long>(e.xclient.data.l[0]) == tw->app()->wmDeleteMessage_) {
+			    if (static_cast<unsigned long>(e.xclient.data.l[0]) == tw->app()->wmDeleteMessage_) {
 					ASSERT(tw != nullptr) << "Attempt to destroy unknown window";
 					Session::Close(tw->session());
 				}

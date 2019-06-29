@@ -1,5 +1,9 @@
 #pragma once
 
+#include <ostream>
+
+#include "helpers/helpers.h"
+
 namespace vterm {
 
 	/** Color specification (8bit true color with alpha channel)
@@ -78,5 +82,60 @@ namespace vterm {
 		s << static_cast<unsigned>(c.red) << ";" << static_cast<unsigned>(c.green) << ";" << static_cast<unsigned>(c.blue);
 		return s;
 	}
+
+	/** Palette of colors.
+
+		Although vterm fully supports the true color rendering, for compatibility and shorter escape codes, the 256 color palette as defined for xterm is supported via this class.
+
+		The separation of the palette and the terminal allows very simple theming in the future, should this feature be implemented.
+	 */
+	class Palette {
+	public:
+		Palette(size_t size) :
+			size_(size),
+			colors_(new Color[size]) {
+		}
+
+		Palette(std::initializer_list<Color> colors);
+
+		Palette(Palette const& from);
+
+		Palette(Palette&& from);
+
+		~Palette() {
+			delete colors_;
+		}
+
+		void fillFrom(Palette const& from);
+
+		size_t size() const {
+			return size_;
+		}
+
+		Color const& operator [] (size_t index) const {
+			return color(index);
+		}
+
+		Color& operator [] (size_t index) {
+			return color(index);
+		}
+
+		Color const& color(size_t index) const {
+			ASSERT(index < size_);
+			return colors_[index];
+		}
+
+		Color& color(size_t index) {
+			ASSERT(index < size_) << index << " -- " << size_;
+			return colors_[index];
+		}
+
+		static Palette Colors16();
+
+	private:
+		size_t size_;
+		Color* colors_;
+	};
+
 
 } // namespace vterm

@@ -8,12 +8,15 @@
 
 #include "helpers/object.h"
 #include "helpers/shapes.h"
+#include "helpers/time.h"
+#include "helpers/log.h"
 
 #include "color.h"
 #include "font.h"
 #include "char.h"
 #include "key.h"
 #include "mouse.h"
+#include "pty.h"
 
 
 namespace vterm {
@@ -72,15 +75,8 @@ namespace vterm {
 	class Terminal : public helpers::Object {
 	public:
 
-		class RepaintPayload {
-		public:
-			bool invalidateAll;
-			RepaintPayload(bool invalidateAll) :
-				invalidateAll(invalidateAll) {
-			}
-		};
 
-		typedef helpers::EventPayload<RepaintPayload, helpers::Object> RepaintEvent;
+		typedef helpers::EventPayload<void, helpers::Object> RepaintEvent;
 		typedef helpers::EventPayload<std::string, helpers::Object> TitleChangeEvent;
 		typedef helpers::EventPayload<int, helpers::Object> TerminationEvent;
 		typedef helpers::EventPayload<std::string, helpers::Object> ClipboardUpdateEvent;
@@ -160,11 +156,39 @@ namespace vterm {
 			}
 		};
 
-		class Buffer {
+		class Screen {
 		public:
 
-			/** Returns the columns and rows of the buffer.
-			 */
+			Screen(unsigned cols, unsigned rows) :
+				cols_(cols),
+				rows_(rows),
+				cells_(new Cell[cols * rows]) {
+			}
+
+			Screen(Screen const& from) :
+				cols_(from.cols_),
+				rows_(from.rows_),
+				cursor_(from.cursor_),
+				cells_(new Cell[from.cols_ * from.rows_]) {
+				memcpy(cells_, from.cells_, sizeof(Cell) * cols_ * rows_);
+			}
+
+			Screen& operator = (Screen const& other) {
+				if (cols_ != other.cols_ || rows_ != other.rows_) {
+					cols_ = other.cols_;
+					rows_ = other.rows_;
+					delete[] cells_;
+					cells_ = new Cell[cols_ * rows_];
+				}
+				cursor_ = other.cursor_;
+				memcpy(cells_, other.cells_, sizeof(Cell) * cols_ * rows_);
+				return *this;
+			}
+
+			~Screen() {
+				delete[] cells_;
+			}
+
 			unsigned cols() const {
 				return cols_;
 			}
@@ -173,73 +197,123 @@ namespace vterm {
 				return rows_;
 			}
 
-			/** Returns the given cell of the terminal's buffer.
+			Cursor const& cursor() const {
+				return cursor_;
+			}
+
+			Cursor & cursor() {
+				return cursor_;
+			}
+
+			Cell const& at(unsigned col, unsigned row) const {
+				ASSERT(col < cols_ && row < rows_) << "Cell out of range";
+				return cells_[row * cols_ + col];
+			}
+
+			Cell & at(unsigned col, unsigned row) {
+				ASSERT(col < cols_ && row < rows_) << "Cell out of range";
+				return cells_[row * cols_ + col];
+			}
+
+			/** Resizes the screen to given number of columns and rows. 
+
+			    TODO The resize resets cursor to the top left corner. This is probably wrong and should be done differently
 			 */
-			Terminal::Cell& at(unsigned col, unsigned row) {
-				ASSERT(col < cols_ && row < rows_);
-				return cells_[row * cols_ + col];
+			void resize(unsigned cols, unsigned rows) {
+				if (cols_ != cols || rows_ != rows) {
+					// resize the actual cells
+					resizeCells(cols, rows);
+					// update the size
+					cols_ = cols;
+					rows_ = rows;
+					// update cursor position
+					cursor_.col = 0;
+					cursor_.row = 1;
+				}
 			}
 
-			Terminal::Cell const& at(unsigned col, unsigned row) const {
-				ASSERT(col < cols_ && row < rows_);
-				return cells_[row * cols_ + col];
+			/** Marks the entire screen dirty. 
+			 */
+			void markDirty() {
+				for (size_t i = 0, e = static_cast<size_t>(cols_ * rows_); i < e; ++i)
+					cells_[i].dirty = true;
 			}
 
-			Buffer(unsigned cols, unsigned rows) :
-                cols_(cols),
-                rows_(rows),
-				cells_(new Cell[cols_ * rows_]) {
-			}
 
-            Buffer(Buffer && other) noexcept: 
-                cols_(other.cols_),
-                rows_(other.rows_),
-                cells_(other.cells_) {
-                    other.cols_ = 0;
-                    other.rows_ = 0;
-                    other.cells_ = nullptr;
-                }
+		private:
 
-            Buffer & operator = (Buffer && other) noexcept {
-                if (this != & other) {
-                    delete[] cells_;
-                    cols_ = other.cols_;
-                    rows_ = other.rows_;
-                    cells_ = other.cells_;
-                    other.cols_ = 0;
-                    other.rows_ = 0;
-                    other.cells_ = nullptr;
-                }
-                return *this;
-            }
+			friend class Terminal;
 
-            ~Buffer() {
+			/** Resizes the cell buffer. 
+
+			    TODO in the future this should preserve the contents of the old buffer where possible. 
+			 */
+			void resizeCells(unsigned newCols, unsigned newRows) {
 				delete[] cells_;
+				cells_ = new Cell[newCols * newRows];
+			}
+
+			unsigned cols_;
+			unsigned rows_;
+			Cursor cursor_;
+			Cell* cells_;
+		};
+
+		/** 
+
+		    TODO This is perhaps very stupid name. 
+		 */
+		class ScreenLock {
+		public:
+
+			ScreenLock(ScreenLock&& from) noexcept :
+				terminal_(from.terminal_) {
+				from.terminal_ = nullptr;
+			}
+
+			~ScreenLock() {
+				if (terminal_ != nullptr)
+					terminal_->releaseScreenLock();
+			}
+
+			/** Returns the copy of the screen. 
+			 */
+			Screen getScreenCopy() const {
+				ASSERT(terminal_ != nullptr);
+				return Screen(terminal_->screen_);
+			}
+
+			Screen const& operator * () const {
+				ASSERT(terminal_ != nullptr);
+				return terminal_->screen_;
+			}
+
+			Screen& operator * () {
+				ASSERT(terminal_ != nullptr);
+				return terminal_->screen_;
+			}
+
+			Screen const* operator -> () const {
+				ASSERT(terminal_ != nullptr);
+				return & terminal_->screen_;
+			}
+
+			Screen * operator -> () {
+				ASSERT(terminal_ != nullptr);
+				return &terminal_->screen_;
 			}
 
 		private:
 
 			friend class Terminal;
-            friend class Backend;
 
-
-			/** Resizes the buffer.
-			 */
-			void resize(unsigned cols, unsigned rows) {
-				// TODO resizing the terminal should preserve some of the original context, if applicable
-				delete[] cells_;
-                cols_ = cols;
-                rows_ = rows;
-				cells_ = new Cell[cols_ * rows_];
+			ScreenLock(Terminal* terminal, bool priorityRequest) :
+				terminal_(terminal) {
+				terminal_->acquireScreenLock(priorityRequest);
 			}
 
-            unsigned cols_;
 
-            unsigned rows_;
-
-			/** The underlying array of cells.
-			 */
-			Cell* cells_;
+			Terminal* terminal_;
 		};
 
 		class Renderer : public helpers::Object {
@@ -289,7 +363,7 @@ namespace vterm {
 				cols_ = cols;
 				rows_ = rows;
 				if (terminal_)
-					terminal_->resize(cols, rows);
+					terminal_->lockScreen()->resize(cols, rows);
 			}
 
 			// keyboard events
@@ -352,10 +426,10 @@ namespace vterm {
 
 			virtual void attachToTerminal(Terminal* terminal) {
 				terminal_ = terminal;
-				terminal->resize(cols_, rows_);
 				terminal_->onRepaint += HANDLER(Renderer::repaint);
 				terminal_->onTitleChange += HANDLER(Renderer::titleChange);
 				terminal_->onClipboardUpdated += HANDLER(Renderer::clipboardUpdated);
+				terminal_->lockScreen()->resize(cols_, rows_);
 			}
 
 			Terminal* terminal_;
@@ -365,182 +439,22 @@ namespace vterm {
 
 		};
 
-		class Backend {
-		public:
-			Terminal* terminal() const {
-				return terminal_;
-			}
-
-			/** Returns true if the backend is interested in mouse events. 
-
-			    Note that the terminal will always relay all events to the backend regadrless of this value, but its value can be used by the renderers to determine whether they can react to mouse events or not. 
-			 */
-			virtual bool captureMouse() const {
-				return true;
-			}
-
-		protected:
-
-			friend class Terminal;
-
-            void resizeBuffer(Buffer & buffer, unsigned cols, unsigned rows) {
-                buffer.resize(cols, rows);
-            }
-
-			void setClipboard(std::string const& str) {
-				ASSERT(terminal_ != nullptr);
-				terminal_->setClipboard(str);
-			}
-
-			void notify() {
-				ASSERT(terminal_ != nullptr);
-				terminal_->notify();
-			}
-
-			Backend() :
-				terminal_(nullptr) {
-			}
-
-			/** Returns the current cursor information for the attached terminal so that it can be modified by the backend. 
-			 */
-			Cursor & cursor() {
-				ASSERT(terminal_ != nullptr);
-				return terminal_->cursor_;
-			}
-
-			unsigned cols() {
-				ASSERT(terminal_ != nullptr);
-				return terminal_->buffer().cols();
-			}
-
-			unsigned rows() {
-				ASSERT(terminal_ != nullptr);
-				return terminal_->buffer().rows();
-			}
-
-			Terminal::Buffer& buffer() {
-				ASSERT(terminal_ != nullptr);
-				return terminal_->buffer();
-			}
-
-			virtual void resize(unsigned cols, unsigned rows) = 0;
-
-			virtual void keyDown(Key k) = 0;
-			virtual void keyUp(Key k) = 0;
-			virtual void keyChar(Char::UTF8 c) = 0;
-
-			virtual void mouseDown(unsigned col, unsigned row, MouseButton button) = 0;
-			virtual void mouseUp(unsigned col, unsigned row, MouseButton button) = 0;
-			virtual void mouseWheel(unsigned col, unsigned row, int by) = 0;
-			virtual void mouseMove(unsigned col, unsigned row) = 0;
-
-			virtual void paste(std::string const & what) = 0;
-
-			virtual ~Backend() {
-				detachFromTerminal();
-			}
-
-
-			void detachFromTerminal() {
-				if (terminal_ == nullptr)
-					return;
-				terminal_->backend_ = nullptr;
-				terminal_ = nullptr;
-			}
-
-			/** Attaches the backend to specified terminal. 
-
-			    Verifies that the terminal is unattached, links the terminal to the backend and then calls the resize function with the new terminal's size. 
-			 */
-			void attachToTerminal(Terminal* terminal) {
-				terminal->backend_ = this;
-				terminal_ = terminal;
-				resize(terminal->cols(), terminal->rows());
-			}
-
-			Terminal* terminal_;
-		};
-
-		/** Backend which defines API for reading from / writing to PTY like deviced (i.e. input and output streams). 
-		 */
-		class PTYBackend : public Backend {
-		public:
-
-			/** Returns the pseudoterminal object associated with the backend. 
-			 */
-			PTY * pty() const {
-				return pty_;
-			}
-
-			/** Waits for input to become available for processing, but does not process it right away. 
-			 */
-			bool waitForInput();
-
-			/** If input is available, processes it, otherwise does nothing.  
-			 */
-			void processInput();
-
-			~PTYBackend() override;
-
-		protected:
-
-			/** When the backend is resized, propagates the resize information to the underlying PTY, if present. 
-			 */
-			void resize(unsigned cols, unsigned rows) override;
-
-			/** Creates a PTY backend. 
-
-			    Note that the PTY is owned by the backend and when the backend will be deleted, so will the PTY. 
-			 */
-			PTYBackend(PTY * pty, size_t bufferSize = 10240) :
-				pty_(pty),
-				bufferSize_(bufferSize),
-				buffer_(new char[bufferSize]),
-				writeStart_(buffer_),
-			    available_(false) {
-			}
-
-			/** Called when data is received.
-
-				The first argument is the buffer containing the received data. The second argument is the size of available data from the buffer start. The function must return the number of bytes from the input actually processed. The remaining bytes will be prefetched to the next call to the dataReceived when more data has been sent by the client.
-			 */
-			virtual size_t dataReceived(char * buffer, size_t size) = 0;
-
-			/** Sends given data using the attached PTY. 
-			    
-				Returns the number of bytes send which should be identical to the second argument (size) unless there was an I/O error while sending. 
-			 */
-			virtual size_t sendData(char const * buffer, size_t size);
-
-			/** Resizes the internal buffer. 
-			 */
-			void resizeComBuffer(size_t newSize);
-
-		private:
-			PTY * pty_;
-
-			size_t bufferSize_;
-			char * buffer_;
-			char * writeStart_;
-			bool available_;
-		};
-
-		Terminal(unsigned cols, unsigned rows, Backend * backend = nullptr) :
-			buffer_(cols, rows),
-			backend_(backend) {
-			if (backend_ != nullptr)
-				backend_->attachToTerminal(this);
+		Terminal(unsigned cols, unsigned rows) :
+			priorityRequests_(0),
+			oldCols_(0),
+			oldRows_(0),
+			screen_(cols, rows) {
 		}
 
 		~Terminal() override {
-			delete backend_;
 		}
 
 		// events
 
+		// TODO rename to onClipboardUpdate
+
 		helpers::Event<RepaintEvent> onRepaint;
 		helpers::Event<TitleChangeEvent> onTitleChange;
-		helpers::Event<TerminationEvent> onBackendTerminated;
 		helpers::Event<ClipboardUpdateEvent> onClipboardUpdated;
 
 		/** Triggered when backend wants to notify the user. 
@@ -549,50 +463,23 @@ namespace vterm {
 		 */
 		helpers::Event<NotificationEvent> onNotification;
 
-		/** Returns the width and height of the terminal.
+		/** Returns true if the terminal is interested in mouse events.
 		 */
-		unsigned cols() const {
-			return buffer_.cols_;
+		virtual bool captureMouse() const {
+			return true;
 		}
 
-		unsigned rows() const {
-			return buffer_.rows_;
-		}
+		/** Acquires the lock on the screen via which the screen contents can be read or updated. 
 
-		/** Backend associated with the terminal. 
-
-		    Note that if set, the backend is owned by the terminal, i.e. deleting the terminal will delete the backend as well. 
+		    If there is a priority request pending, then non-priority requests which did not acquire the lock yet are required to yield so that the priority request can be satisfied as soon as possible. 
 		 */
-		Backend const * backend() const {
-			return backend_;
-		}
-
-		void setBackend(Backend* backend) {
-			if (backend_ != nullptr)
-				NOT_IMPLEMENTED;
-			backend_ = backend;
-			backend->attachToTerminal(this);
-		}
-
-		/** Returns the buffer associated with the terminal. 
-		 */
-		Buffer const& buffer() const {
-			return buffer_;
-		}
-
-		Buffer& buffer() {
-			return buffer_;
-		}
-
-		Cursor const& cursor() const {
-			return cursor_;
+		ScreenLock lockScreen(bool priorityRequest = false) {
+			return ScreenLock(this, priorityRequest);
 		}
 
 		std::string const& title() const {
 			return title_;
 		}
-
-		std::string getText(Selection const & selection) const;
 
 		void setTitle(std::string const& value) {
 			if (title_ != value) {
@@ -601,104 +488,178 @@ namespace vterm {
 			}
 		}
 
-		void resize(unsigned cols, unsigned rows) {
-			if (buffer_.cols_ != cols || buffer_.rows_ != rows) {
-				buffer_.resize(cols, rows);
-				// update cursor position
-				if (cursor_.col >= buffer_.cols_)
-					cursor_.col = buffer_.cols_ - 1;
-				if (cursor_.row >= buffer_.rows_)
-					cursor_.row = buffer_.rows_ - 1;
-				// pass to the backend
-				if (backend_)
-					backend_->resize(cols, rows);
-			}
-		}
+		std::string getText(Selection const& selection) const;
 
 		// keyboard events
 
-		void keyDown(Key k) {
-			if (backend_)
-				backend_->keyDown(k);
-		}
+		virtual void keyDown(Key k) = 0;
 
-		void keyUp(Key k) {
-			if (backend_)
-				backend_->keyUp(k);
-		}
+		virtual void keyUp(Key k) = 0;
 
-		void keyChar(Char::UTF8 c) {
-			if (backend_)
-				backend_->keyChar(c);
-		}
+		virtual void keyChar(Char::UTF8 c) = 0;
 
 		// mouse events
 
-		void mouseDown(unsigned col, unsigned row, MouseButton button) {
-			if (backend_)
-				backend_->mouseDown(col, row, button);
-		}
+		virtual void mouseDown(unsigned col, unsigned row, MouseButton button) = 0;
 
-		void mouseUp(unsigned col, unsigned row, MouseButton button) {
-			if (backend_)
-				backend_->mouseUp(col, row, button);
-		}
+		virtual void mouseUp(unsigned col, unsigned row, MouseButton button) = 0;
 
-		void mouseWheel(unsigned col, unsigned row, int by) {
-			if (backend_)
-				backend_->mouseWheel(col, row, by);
-		}
+		virtual void mouseWheel(unsigned col, unsigned row, int by) = 0;
 
-		void mouseMove(unsigned col, unsigned row) {
-			if (backend_)
-				backend_->mouseMove(col, row);
-		}
+		virtual void mouseMove(unsigned col, unsigned row) = 0;
 
 		// clipboard events
 
-		void paste(std::string const& what) {
-			if (backend_)
-				backend_->paste(what);
-		}
-
-		/** When terminal repaint is requested, the onRepaint event is triggered. 
-		 */
-		void repaint(bool invalidateAll) {
-			trigger(onRepaint, RepaintPayload(invalidateAll));
-		}
+		virtual void paste(std::string const& what) = 0;
 
 	protected:
 
-		void setClipboard(std::string const& contents) {
-			trigger(onClipboardUpdated, contents);
+		/** Invoked by the terminal after screen lock release if the lock resized the terminal. 
+		 */
+		virtual void doOnResize(unsigned cols, unsigned rows) = 0;
+
+		/** Acquires the screen lock 
+		 */
+		void acquireScreenLock(bool priorityRequest) {
+			if (priorityRequest) {
+				++priorityRequests_;
+				m_.lock();
+				--priorityRequests_;
+			} else {
+				while (true) {
+					while (priorityRequests_ > 0)
+						std::this_thread::yield();
+					m_.lock();
+					if (priorityRequests_ > 0) {
+						m_.unlock();
+						continue;
+					}
+					break;
+				}
+			}
+			// we are locked now, store the 
+			oldCols_ = screen_.cols_;
+			oldRows_ = screen_.rows_;
 		}
 
-		/** Should be raised by the backend in case it is terminated. 
+		/** Releases the screen lock. 
+
+		    Checks whether during the lock the screen was resized and if so notifies the backend. 
 		 */
-		void backendTerminated(int exitCode) {
-			trigger(onBackendTerminated, exitCode);
+		void releaseScreenLock() {
+			bool resized = (oldCols_ != screen_.cols_) || (oldRows_ != screen_.rows_);
+			oldCols_ = screen_.cols_;
+			oldRows_ = screen_.rows_;
+			m_.unlock();
+			// make sure that we are calling the event *after* the lock is released
+			if (resized)
+				doOnResize(oldCols_, oldRows_);
 		}
 
-		void notify() {
-			trigger(onNotification);
+		/** Can be called by the non-priority threads in a stable state in the middle of their processing to check whether a priority request is pending, and if so, yields the screen lock to it. 
+		 */
+		void yieldToPriorityRequest() {
+			if (priorityRequests_ > 0) {
+				releaseScreenLock();
+				std::this_thread::yield();
+				acquireScreenLock(false);
+			} 
 		}
 
-		Cursor cursor_;
-
-	private:
-
-		/** The buffer containing rendering information for all the cells. 
+		/** Guard for accessing the terminal buffer. 
 		 */
-		Buffer buffer_;
+		std::mutex m_;
 
-		/** Backend attached to the terminal. 
+		/** Determines whether there is a priority request for the lock. 
 		 */
-		Backend* backend_;
+		std::atomic<unsigned> priorityRequests_;
+
+		/** Backup cols and rows to detect resize event when screen lock is released. 
+		 */
+		unsigned oldCols_;
+		unsigned oldRows_;
+		
+		/** The actual screen and its properties. 
+		 */
+		Screen screen_;
 
 		/** Title of the terminal. 
 		 */
 		std::string title_;
 
-	};
+	}; // vterm::Terminal
+
+	class PTYTerminal : public Terminal {
+	public:
+		PTYTerminal(unsigned cols, unsigned rows, PTY* pty, size_t bufferSize) :
+			Terminal(cols, rows),
+			pty_(pty),
+		    bufferSize_(bufferSize),
+		    buffer_(new char[bufferSize]),
+		    writeStart_(buffer_) {
+			readerThread_ = std::thread([this]() {
+				while (true) {
+					size_t read = pty_->read(writeStart_, bufferSize_ - (writeStart_ - buffer_));
+					// if 0 bytes were read, terminate the thread
+					if (read == 0)
+						break;
+					// otherwise add any pending data from previous cycle
+					read += (writeStart_ - buffer_);
+					size_t processed = doProcessInput(buffer_, read);
+					// if not everything was processed, copy the unprocessed part at the beginning and set writeStart_ accordingly
+					if (processed != read) {
+						memcpy(buffer_, buffer_ + processed, read - processed);
+						writeStart_ = buffer_ + read - processed;
+					} else {
+						writeStart_ = buffer_;
+					}
+				}
+			});
+		}
+
+		~PTYTerminal() override {
+			pty_->terminate();
+			readerThread_.join();
+			delete pty_;
+			delete [] buffer_;
+		}
+
+		PTY const& pty() const {
+			return *pty_;
+		}
+
+		PTY & pty() {
+			return *pty_;
+		}
+
+	protected:
+
+		void ptyWrite(char const* bytes, size_t size) {
+			size_t sent = pty_->write(bytes, size);
+			// TODO some better error
+			ASSERT(sent == size);
+		}
+
+		/** When the terminal is resized, calls the PTY's resize method so that the client is notified of the size change. 
+		 */
+		void doOnResize(unsigned cols, unsigned rows) override {
+			pty_->resize(cols, rows);
+		}
+
+		virtual size_t doProcessInput(char * buffer, size_t size) = 0;
+
+
+
+
+	private:
+
+		PTY * pty_;
+		size_t bufferSize_;
+		char * buffer_;
+		char * writeStart_;
+		std::thread readerThread_;
+
+	}; //vterm::PTYTerminal
+
 
 } // namespace vterm

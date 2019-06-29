@@ -4,8 +4,9 @@
 #include <unordered_map>
 
 #include <windows.h>
+#include <dwrite_2.h> 
 #include <d2d1_2.h>
-#include <dwrite_2.h>
+#include <wrl.h>
 
 #include "helpers/log.h"
 
@@ -33,10 +34,6 @@ namespace tpp {
 		void close() override {
 			LOG << "Closing window " << title_;
 			PostMessage(hWnd_, WM_CLOSE, 0, 0);
-		}
-
-		void inputReady() override {
-			PostMessage(hWnd_, WM_USER, DirectWriteApplication::MSG_INPUT_READY, 0);
 		}
 
 	protected:

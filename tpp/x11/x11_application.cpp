@@ -44,7 +44,6 @@ namespace tpp {
 		formatTargets_ = XInternAtom(xDisplay_, "TARGETS", false);
 		clipboardIncr_ = XInternAtom(xDisplay_, "INCR", false);
 		wmDeleteMessage_ = XInternAtom(xDisplay_, "WM_DELETE_WINDOW", false);
-		inputReadyMessage_ = XInternAtom(xDisplay_, "TPP_INPUT_READY", false);
 		blinkTimerMessage_ = XInternAtom(xDisplay_, "TPP_BLINK_TIMER", false);
 
 		unsigned long black = BlackPixel(xDisplay_, xScreen_);	/* get color black */
@@ -58,7 +57,6 @@ namespace tpp {
 		ASSERT(formatTargets_ != None);
 		ASSERT(clipboardIncr_ != None);
 		ASSERT(wmDeleteMessage_ != None);
-		ASSERT(inputReadyMessage_ != None);
 		ASSERT(blinkTimerMessage_ != None);
 		ASSERT(broadcastWindow_ != None);
 	}

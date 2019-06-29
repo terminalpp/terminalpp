@@ -25,11 +25,7 @@ namespace tpp {
 	protected:
 		static constexpr WPARAM MSG_TITLE_CHANGE = 0;
 
-		/** New input is available for the attached backend and should be processed in the main event loop.
-		 */
-		static constexpr WPARAM MSG_INPUT_READY = 1;
-
-		static constexpr WPARAM MSG_BLINK_TIMER = 2;
+		static constexpr WPARAM MSG_BLINK_TIMER = 1;
 
 
 		void mainLoop() override;

@@ -1,14 +1,12 @@
 #pragma once
 
 #include <cstring>
-
+#include <thread>
 #include <mutex>
 #include <condition_variable>
 
 #include "helpers/process.h"
 #include "helpers/object.h"
-
-#include "terminal.h"
 
 namespace vterm {
 
@@ -20,8 +18,12 @@ namespace vterm {
 
 		PTY for locally running processes is implemented in the `local_pty.h` file. 
 	 */
-	class PTY {
+	class PTY : public helpers::Object {
 	public:
+
+		typedef helpers::EventPayload<helpers::ExitCode, helpers::Object> TerminatedEvent;
+
+		helpers::Event<TerminatedEvent> onTerminated;
 
 		/** Immediately terminates the attached process. 
 
@@ -47,18 +49,17 @@ namespace vterm {
 			return exitCode_;
 		}
 
-		/** Called when data should be sent to the target process. 
+		/** Called when data should be sent to the target process.
 
-		    Sends the buffer of given size to the target process. Returns the number of bytes sent, which is identical to the size of the buffer given unless there was a failure. 
+			Sends the buffer of given size to the target process. Returns the number of bytes sent, which is identical to the size of the buffer given unless there was a failure.
 		 */
-		virtual size_t sendData(char const * buffer, size_t size) = 0;
+		virtual size_t write(char const* buffer, size_t size) = 0;
 
 		/** Waits for the target process to send data and populates the given buffer.
 
-		    Up to availableSize bytes can be read at once, but the actual number of bytes received is to be returned by the function. 
+			Up to availableSize bytes can be read at once, but the actual number of bytes received is to be returned by the function.
 		 */
-		virtual size_t receiveData(char * buffer, size_t availableSize) = 0;
-
+		virtual size_t read(char* bufferStart, size_t availableSize) = 0;
 
 		/** Notifies the underlying terminal process that the terminal size has changed to given values. 
 		 */
@@ -84,6 +85,7 @@ namespace vterm {
 		void monitor() {
 			std::thread t([this]() {
 				helpers::ExitCode ec = doWaitFor();
+				trigger(onTerminated, ec);
 				{
 					std::lock_guard<std::mutex> g(m_);
 					terminated_ = true;

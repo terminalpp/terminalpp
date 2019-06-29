@@ -35,17 +35,6 @@ namespace tpp {
 			XDestroyWindow(display_, window_);
 		}
 
-		void inputReady() override {
-            XEvent e;
-            memset(&e, 0, sizeof(XEvent));
-            e.xclient.type = ClientMessage;
-            e.xclient.display = display_;
-            e.xclient.window = window_;
-            e.xclient.format = 32;
-            e.xclient.data.l[0] = app()->inputReadyMessage_;
-            app()->xSendEvent(this, e);
-		}
-
 	protected:
 
 		/** Returns the application instance casted to X11 app. 
