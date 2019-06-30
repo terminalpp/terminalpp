@@ -18,6 +18,6 @@ add_subdirectory("vterm")
 add_subdirectory("tpp")
 
 if(UNIX)
-    add_subdirectory("asciienc")
+    add_subdirectory("bypass")
 endif()
 

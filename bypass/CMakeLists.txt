@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.5)
 
-project(asciienc)
+project(bypass)
 
 #if(UNIX)
 	find_package(Threads REQUIRED)
@@ -11,10 +11,10 @@ include_directories(".")
 
 file(GLOB_RECURSE SRC "*.cpp" "*.h")
 
-add_executable(asciienc ${SRC})
+add_executable(bypass ${SRC})
 
-target_link_libraries(asciienc libvterm)
+target_link_libraries(bypass libvterm)
 
 #if(UNIX)
-	target_link_libraries(asciienc ${CMAKE_THREAD_LIBS_INIT})
+	target_link_libraries(bypass ${CMAKE_THREAD_LIBS_INIT})
 #endif

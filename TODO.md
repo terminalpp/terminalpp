@@ -19,8 +19,7 @@
 
 > These are important and should be done before release
 
-- asciienc should quickly scan for ` and only do stuff if found, because most of the time it won't be
-- it should be renamed and code documented properly
+- bypass should quickly scan for ` and only do stuff if found, because most of the time it won't be
 
 
 # Code Improvements 
