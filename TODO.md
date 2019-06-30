@@ -5,8 +5,6 @@
 
 ## Bugs and missing features
 
-- when terminal is resized, try to keep stuff in the buffer
-
 - switch char to unly use UTF8 and provide translations to other encodings
 - proper UTF8 and UTF32 conversion in helpers::strings
 

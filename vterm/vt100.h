@@ -84,6 +84,7 @@ namespace vterm {
 		/** TODO should this happen here, or when the buffer is actually flipped? 
 		 */
 		void doOnResize(unsigned cols, unsigned rows) override {
+			invalidateLastCharPosition();
 			// the actual screen has been resized already
 			// reset scroll regions
 			state_.resize(cols, rows);
@@ -233,6 +234,10 @@ namespace vterm {
 			 */
 			unsigned scrollEnd = 0;
 
+			unsigned lastCharCol = 0;
+			unsigned lastCharRow = 0;
+
+
 
 			void resize(unsigned cols, unsigned rows) {
 				MARK_AS_UNUSED(cols);
@@ -348,6 +353,20 @@ namespace vterm {
 		void setMouseMode(MouseMode mode) {
 			mouseMode_ = mode;
 			// TODO event on mouse capture state change
+		}
+
+		void invalidateLastCharPosition() {
+			state_.lastCharCol = std::numeric_limits<unsigned>::max();
+		}
+
+		void markLastCharPosition() {
+			if (state_.lastCharCol < screen_.cols() && state_.lastCharRow < screen_.rows())
+				screen_.at(state_.lastCharCol, state_.lastCharRow).markAsLineEnd();
+		}
+
+		void setLastCharPosition() {
+			state_.lastCharCol = screen_.cursor().col;
+			state_.lastCharRow = screen_.cursor().row;
 		}
 
 		

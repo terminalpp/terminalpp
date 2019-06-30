@@ -383,14 +383,17 @@ namespace vterm {
 				 */
 				case Char::LF:
 					LOG(SEQ) << "LF";
+					markLastCharPosition();
 					++x;
 					++screen_.cursor().row;
 					updateCursorPosition();
+					setLastCharPosition();
 					break;
 				/* Carriage return sets cursor column to 0.
 				 */
 				case Char::CR:
 					LOG(SEQ) << "CR";
+					markLastCharPosition();
 					++x;
 					screen_.cursor().col = 0;
 					break;
@@ -416,15 +419,17 @@ namespace vterm {
 					Char::UTF8 c8;
 					if (!c8.readFromStream(x, bufferEnd))
 						return x - buffer;
-					LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
+					//LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
 					// get the cell and update its contents
 					Terminal::Cell& cell = screen_.at(screen_.cursor().col, screen_.cursor().row);
 					cell.setFg(state_.fg);
 					cell.setBg(state_.bg);
 					cell.setFont(state_.font);
 					cell.setC(c8);
+					// store the last character position
+					setLastCharPosition();
 					// move to next column
-					setCursor(screen_.cursor().col + 1, screen_.cursor().row);
+					++screen_.cursor().col;
 				}
 				}
 			}
@@ -1147,6 +1152,8 @@ namespace vterm {
 	void VT100::setCursor(unsigned col, unsigned row) {
 		screen_.cursor().col = col;
 		screen_.cursor().row = row;
+		// invalidate the last character position
+		invalidateLastCharPosition();
 	}
 
 	void VT100::fillRect(helpers::Rect const& rect, Char::UTF8 c, Color fg, Color bg, Font font) {

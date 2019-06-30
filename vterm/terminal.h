@@ -167,6 +167,7 @@ namespace vterm {
 			void setC(Char::UTF8 value) {
 				c_ = value;
 				dirty_ = true;
+				lineEnd_ = false;
 			}
 
 			/** Determines if the cell is dirty, i.e. it should be redrawn.
@@ -179,13 +180,22 @@ namespace vterm {
 				dirty_ = value;
 			}
 
+			bool isLineEnd() const {
+				return lineEnd_;
+			}
+
+			void markAsLineEnd(bool value = true) {
+				lineEnd_ = value;
+			}
+
 			/** Default constructor for a cell created white space on a black background.
 			 */
 			Cell() :
 				fg_(Color::White()),
 				bg_(Color::Black()),
 				c_(' '),
-				dirty_(0) {
+				dirty_(0),
+			    lineEnd_(0) {
 			}
 
 			Cell& operator = (Cell const& other) {
@@ -202,7 +212,10 @@ namespace vterm {
 			Color bg_;
 			Char::UTF8 c_;
 			struct {
+				// when dirty, the cell should be redrawn
 				unsigned dirty_ : 1;
+				// indicates last character of a line
+				unsigned lineEnd_ : 1;
 			};
 		};
 
@@ -276,9 +289,6 @@ namespace vterm {
 					// update the size
 					cols_ = cols;
 					rows_ = rows;
-					// update cursor position
-					cursor_.col = 0;
-					cursor_.row = 1;
 				}
 			}
 
@@ -295,11 +305,57 @@ namespace vterm {
 
 			/** Resizes the cell buffer. 
 
-			    TODO in the future this should preserve the contents of the old buffer where possible. 
+			    First creates the new buffer and clears it. Then we determine the latest line to be copied (since the client app is supposed to rewrite the current line). We also calculate the offset of this line to the current cursor line, which is important if the last line spans multiple terminal lines since we must adjust the cursor position accordingly then. 
+
+				The line is the copied. 
 			 */
 			void resizeCells(unsigned newCols, unsigned newRows) {
-				delete[] cells_;
-				cells_ = new Cell[newCols * newRows];
+				unsigned x = cursor_.row * cols_ + cursor_.col + 1;
+				unsigned stopRow = 0;
+				while (x-- > 0) {
+					if (cells_[x].isLineEnd()) {
+						// update new col & row
+						stopRow = (x / cols_) + 1;
+						break;
+					}
+				}
+				// copy the contents
+				unsigned rowOffset = cursor_.row - stopRow;
+				cursor_.col = 0;
+				cursor_.row = 0;
+				Cell* newCells = new Cell[newCols * newRows];
+				for (unsigned y = 0; y < rows_; ++y) {
+					for (unsigned x = 0; x < cols_; ++x) {
+						if (y == stopRow) {
+							delete[] cells_;
+							cells_ = newCells;
+							cursor_.row += rowOffset;
+							return;
+						}
+						Cell& cell = at(x, y);
+						newCells[cursor_.row * newCols + cursor_.col] = cell;
+						// if the cell is new line, or if moving to next character would be a new line, increase cursor row
+						if (cell.isLineEnd() || (++cursor_.col == newCols)) {
+							++cursor_.row;
+							cursor_.col = 0;
+						}
+						// if we are past the new buffer, move all up
+						if (cursor_.row == newRows) {
+							// scroll up
+							memmove(
+								newCells,
+								newCells + newCols,
+								(sizeof(Cell) * newCols) * (newRows - 1));
+							--cursor_.row;
+							// clear the line
+							for (unsigned c = 0; c < newCols; ++c)
+								newCells[cursor_.row * newCols + c] = Cell();
+						}
+						// if we hit new line in the old buffer, skip the rest of the line
+						if (cell.isLineEnd())
+							break;
+					}
+				}
 			}
 
 			unsigned cols_;

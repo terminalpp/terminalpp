@@ -146,8 +146,7 @@ namespace tpp {
 		 */
 		void focusChangeMessageReceived(bool focus) {
 			if (focused_ != focus) {
-				focused_ = focus;
-				focusChanged(focused_);
+				focusChanged(focus);
 			}
 		}
 
@@ -176,7 +175,7 @@ namespace tpp {
 		    The new value of the focus is the argument. 
 		 */
 		virtual void focusChanged(bool focused) {
-			LOG << "Focus changed: " << focused;
+			focused_ = focused;
 		}
 
 		/** Handles resize of the window's client area (in pixels). 
