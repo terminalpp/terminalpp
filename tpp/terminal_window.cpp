@@ -29,6 +29,7 @@ namespace tpp {
 		blinkDirty_(false),
 		blinkCounter_(DEFAULT_FPS / 2),
 		dirty_(true),
+		clearWindow_(true),
 		mouseCol_(0),
 		mouseRow_(0),
 		selectionStart_(0, 0),

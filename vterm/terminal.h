@@ -276,9 +276,9 @@ namespace vterm {
 
 			/** Returns the copy of the screen. 
 			 */
-			Screen getScreenCopy() const {
+			void getScreenCopy(Screen & into) const {
 				ASSERT(terminal_ != nullptr);
-				return Screen(terminal_->screen_);
+				into = terminal_->screen_;
 			}
 
 			Screen const& operator * () const {
@@ -554,16 +554,6 @@ namespace vterm {
 				doOnResize(oldCols_, oldRows_);
 		}
 
-		/** Can be called by the non-priority threads in a stable state in the middle of their processing to check whether a priority request is pending, and if so, yields the screen lock to it. 
-		 */
-		void yieldToPriorityRequest() {
-			if (priorityRequests_ > 0) {
-				releaseScreenLock();
-				std::this_thread::yield();
-				acquireScreenLock(false);
-			} 
-		}
-
 		/** Guard for accessing the terminal buffer. 
 		 */
 		std::mutex m_;
@@ -655,6 +645,5 @@ namespace vterm {
 		std::thread readerThread_;
 
 	}; //vterm::PTYTerminal
-
 
 } // namespace vterm

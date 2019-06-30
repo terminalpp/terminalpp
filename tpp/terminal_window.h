@@ -287,12 +287,6 @@ namespace tpp {
 		 */
 		double zoom_;
 
-		/** If true, the paint method should clear the entire window first. 
-
-		    Such as when zoom is changed and there can be extra space around the visible columns. 
-		 */
-		bool clearWindow_;
-
 		/** Determines whether the window is fullscreen or not. 
 		 */
 		bool fullscreen_;
@@ -323,6 +317,12 @@ namespace tpp {
 
 		bool dirty_;
 
+		/** If true, the paint method should clear the entire window first.
+
+			Such as when zoom is changed and there can be extra space around the visible columns.
+		 */
+		bool clearWindow_;
+
 		/** Last known mouse coordinates in terminal columns & rows (not in pixels).
 		 */
 		unsigned mouseCol_;
@@ -333,7 +333,6 @@ namespace tpp {
 		helpers::Point selectionStart_;
 		helpers::Point selectionEnd_;
 		bool selecting_;
-
 	};
 
 

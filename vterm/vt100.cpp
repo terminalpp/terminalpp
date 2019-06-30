@@ -355,7 +355,6 @@ namespace vterm {
 			char* x = buffer;
 			CSISequence seq;
 			while (x != bufferEnd) {
-				yieldToPriorityRequest();
 				switch (*x) {
 				case Char::ESC: {
 					if (!parseEscapeSequence(x, bufferEnd))
