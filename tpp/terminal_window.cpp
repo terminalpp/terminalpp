@@ -29,7 +29,6 @@ namespace tpp {
 		blinkDirty_(false),
 		blinkCounter_(DEFAULT_FPS / 2),
 		dirty_(true),
-		clearWindow_(true),
 		mouseCol_(0),
 		mouseRow_(0),
 		selectionStart_(0, 0),
@@ -44,7 +43,6 @@ namespace tpp {
 	}
 
 	void TerminalWindow::doSetZoom(double value) {
-		clearWindow_ = true;
 		// get cell dimensions from the application and update cell sizes
 		std::pair<unsigned, unsigned> cellSize = Application::Instance<>()->terminalCellDimensions(fontSize_ * value);
 		cellWidthPx_ = cellSize.first;
@@ -152,18 +150,12 @@ namespace tpp {
 	}
 
 
-	unsigned TerminalWindow::drawBuffer() {
+	unsigned TerminalWindow::drawBuffer(bool forceDirty) {
 		dirty_ = false;
 		// don't do anything if terminal is not attached
 		if (terminal() == nullptr)
 			return 0;
-		bool forceRepaint = false;
 		vterm::Terminal::ScreenLock sl = terminal()->lockScreen(true);
-		if (clearWindow_) {
-			forceRepaint = true;
-			doClearWindow();
-			clearWindow_ = false;
-		}
 		// initialize the first font and colors
 		vterm::Color fg;
 		vterm::Color bg;
@@ -198,7 +190,7 @@ namespace tpp {
 					inSelection = false;
 				}
 				vterm::Terminal::Cell& cell = sl->at(c, r);
-				if (forceRepaint || inSelection || cell.dirty || (cell.font.blink() && blinkDirty_)) {
+				if (forceDirty || inSelection || cell.dirty || (cell.font.blink() && blinkDirty_)) {
 					++numCells;
 					// if we are in selection, mark the cell as dirty, otherwise mark as clean
 					cell.dirty = inSelection;

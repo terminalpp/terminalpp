@@ -461,10 +461,24 @@ namespace vterm {
 		 */
 		helpers::Event<NotificationEvent> onNotification;
 
+		// TODO : or should the next 3 functions be abstract? 
+
 		/** Returns true if the terminal is interested in mouse events.
 		 */
 		virtual bool captureMouse() const {
 			return true;
+		}
+
+		/** Returns the default background color of the terminal.
+		 */
+		virtual vterm::Color defaultBackgroundColor() const {
+			return vterm::Color::Black();
+		}
+
+		/** Returns the default foreground color of the terminal.
+		 */
+		virtual vterm::Color defaultForegroundColor() const {
+			return vterm::Color::White();
 		}
 
 		/** Acquires the lock on the screen via which the screen contents can be read or updated. 

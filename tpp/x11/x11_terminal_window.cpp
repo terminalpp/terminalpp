@@ -98,19 +98,14 @@ namespace tpp {
 	unsigned X11TerminalWindow::doPaint() {
         std::lock_guard<std::mutex> g(drawGuard_);
 		ASSERT(draw_ == nullptr);
-		/*
-        if (buffer_ != 0) {
-            XFreePixmap(display_, buffer_);
-            buffer_ = 0;
-        } */
+		bool forceDirty = false;
 		if (buffer_ == 0) {
 			buffer_ = XCreatePixmap(display_, window_, widthPx_, heightPx_, DefaultDepth(display_, screen_));
 			ASSERT(buffer_ != 0);
-			clearWindow_ = true;
+			forceDirty = true;
 		}
-		//forceRepaint_ = true;
 		draw_ = XftDrawCreate(display_, buffer_, visual_, colorMap_);
-		unsigned numCells = drawBuffer();
+		unsigned numCells = drawBuffer(forceDirty);
 		// first clear the borders that won't be used (don't clear the whole window to prevent flicker)
         unsigned marginRight = widthPx_ % cellWidthPx_;
         unsigned marginBottom = heightPx_ % cellHeightPx_;

@@ -142,11 +142,6 @@ namespace tpp {
 			bg_->SetOpacity(1);
 		}
 
-		void doClearWindow() override {
-			bg_->SetColor(D2D1::ColorF(0, 1.0f));
-			rt_->Clear(D2D1::ColorF(D2D1::ColorF::Black));
-		}
-
 		void drawGlyphRun() {
 			if (glyphRun_.glyphCount == 0)
 				return;
@@ -156,6 +151,17 @@ namespace tpp {
 				static_cast<FLOAT>((glyphRunCol_ + glyphRun_.glyphCount) * cellWidthPx_),
 				static_cast<FLOAT>((glyphRunRow_ + 1) * cellHeightPx_)
 			);
+			if (rect.right + cellWidthPx_ > widthPx_ || rect.bottom + cellHeightPx_ > heightPx_) {
+				D2D1_COLOR_F bgColor = bg_->GetColor();
+				bg_->SetColor(D2D1::ColorF(terminal()->defaultBackgroundColor().toNumber(), 1.0f));
+				D2D1_RECT_F rClear = rect;
+				if (rect.right + cellWidthPx_ > widthPx_)
+					rClear.right = widthPx_;
+				if (rect.bottom + cellHeightPx_ > heightPx_)
+					rClear.bottom = heightPx_;
+				rt_->FillRectangle(rClear, bg_.Get());
+				bg_->SetColor(bgColor);
+			}
 			rt_->FillRectangle(rect, bg_.Get());
 			// if blinking, only draw when blink is on
 			if (!grBlink_ || blink_) {
@@ -178,6 +184,7 @@ namespace tpp {
 				}
 			}
 			glyphRun_.glyphCount = 0;
+
 		}
 
 	private:

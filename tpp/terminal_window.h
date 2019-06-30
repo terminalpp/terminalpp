@@ -256,15 +256,11 @@ namespace tpp {
 		 */
 		virtual void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) = 0;
 
-		/** Clears the entire window. 
-		 */
-		virtual void doClearWindow() = 0;
-
 		/** Updates the terminal buffer displayed. 
 
 		    Triggers repaint of all dirty terminal cells (or all cells if forceDirty is true) and the cursor. 
 		 */
-		unsigned drawBuffer();
+		unsigned drawBuffer(bool forceDirty);
 
 		/** Session the window belongs to. 
 		 */
@@ -316,12 +312,6 @@ namespace tpp {
 		unsigned blinkCounter_;
 
 		bool dirty_;
-
-		/** If true, the paint method should clear the entire window first.
-
-			Such as when zoom is changed and there can be extra space around the visible columns.
-		 */
-		bool clearWindow_;
 
 		/** Last known mouse coordinates in terminal columns & rows (not in pixels).
 		 */

@@ -152,7 +152,7 @@ namespace tpp {
 
 	unsigned DirectWriteTerminalWindow::doPaint() {
 		rt_->BeginDraw();
-		unsigned numCells = drawBuffer();
+		unsigned numCells = drawBuffer(false);
 		drawGlyphRun();
 		rt_->EndDraw();
 		return numCells;

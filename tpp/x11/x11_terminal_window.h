@@ -88,6 +88,12 @@ namespace tpp {
 		}
 
 		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
+			if (col == cols() - 1 || row == rows() - 1) {
+				unsigned width = (col == cols() - 1) ? widthPx_ - (cols() - 1) * cellWidthPx_ : cellWidthPx_;
+				unsigned height = (row == rows() - 1) ? heightPx_ - (cols() - 1) * cellHeightPx_ : cellHeightPx_;
+				XftColor bg = toXftColor(terminal()->defaultBackgroundColor());
+				XftDrawRect(draw_, &bg, col * cellWidthPx_, row * cellHeightPx_, width, height);
+			}
 			XftDrawRect(draw_, &bg_, col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_, cellHeightPx_);
 			// if the cell is blinking, only draw the text if blink is on
 			if (!c.font.blink() || blink_) {
@@ -105,11 +111,6 @@ namespace tpp {
 			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c.rawBytes()), c.c.size());
 		}
 
-		void doClearWindow() {
-			XftColor bg = toXftColor(vterm::Color::Black());
-			XftDrawRect(draw_, &bg, 0, 0, widthPx_, heightPx_);
-		}
-
 		XftColor toXftColor(vterm::Color const& c) {
 			XftColor result;
 			result.color.red = c.red * 256;
@@ -122,8 +123,6 @@ namespace tpp {
 	private:
 
         friend class X11Application;
-
-		//void updateBuffer();
 
         /** Converts the KeySym and state as reported by X11 to vterm's Key. 
          */

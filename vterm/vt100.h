@@ -43,6 +43,18 @@ namespace vterm {
 			return mouseMode_ != MouseMode::Off;
 		}
 
+		/** Returns the default background color of the terminal.
+		 */
+		vterm::Color defaultBackgroundColor() const override {
+			return palette_[defaultBg_];
+		}
+
+		/** Returns the default foreground color of the terminal.
+		 */
+		vterm::Color defaultForegroundColor() const override {
+			return palette_[defaultFg_];
+		}
+
 
 
 		// Terminal key actions
