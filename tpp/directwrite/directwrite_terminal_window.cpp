@@ -155,7 +155,6 @@ namespace tpp {
 		unsigned numCells = drawBuffer();
 		drawGlyphRun();
 		rt_->EndDraw();
-		forceRepaint_ = false;
 		return numCells;
 	}
 

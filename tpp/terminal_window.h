@@ -95,9 +95,9 @@ namespace tpp {
 
 		/** Redraws the window completely from the attached vterm. 
 		 */
-		void redraw() {
+		/*void redraw() {
 			doInvalidate(true);
-		}
+		} */
 
 	protected:
 
@@ -108,7 +108,6 @@ namespace tpp {
 			font.setBlink(false);
 			return font;
 		}
-		
 
 		TerminalWindow(Session* session, Properties const& properties, std::string const& title);
 
@@ -117,8 +116,8 @@ namespace tpp {
 			t.start();
 			unsigned cells = doPaint();
 			double time = t.stop();
-			if (cells > 200)
-			    LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
+//			if (cells > 200)
+//			    LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
 		}
 
 		/** Returns the selected area. 
@@ -139,7 +138,6 @@ namespace tpp {
 			selectionStart_.row = 0;
 			selectionEnd_.col = 0;
 			selectionEnd_.row = 0;
-			doInvalidate(false);
 		}
 
 		/** Called when appropriate events are received by the windows' event loop.
@@ -155,17 +153,22 @@ namespace tpp {
 
         void repaint(vterm::Terminal::RepaintEvent & e) override {
 			MARK_AS_UNUSED(e);
-            doInvalidate(false);
+			dirty_ = true;
         }
 
         void titleChange(vterm::Terminal::TitleChangeEvent & e) override {
             title_ = *e;
         }
 
-		virtual void blinkTimer() {
-			blink_ = ! blink_;
-			blinkDirty_ = true;
-			doInvalidate(false);
+		virtual void fpsTimer() {
+			if (--blinkCounter_ == 0) {
+				blinkCounter_ = DEFAULT_FPS / 2;
+				blink_ = !blink_;
+				blinkDirty_ = true;
+				doInvalidate();
+			} else if (dirty_) {
+				doInvalidate();
+			}
 		}
 
 		/** Called when the window's focus changes. 
@@ -221,8 +224,8 @@ namespace tpp {
 
             The base window sets the invalidation flag and the implementations should provide the repaint trigger. 
 		 */
-		virtual void doInvalidate(bool forceRepaint) {
-			forceRepaint_ = forceRepaint;
+		virtual void doInvalidate() {
+			dirty_ = true;
         }
 
 		virtual void clipboardPaste() = 0;
@@ -316,11 +319,9 @@ namespace tpp {
 		 */
 		bool blinkDirty_;
 
-		/** If true, the entire window contents has been invalidated and the window should be repainted.
+		unsigned blinkCounter_;
 
-			If the window contents is buffered, the flag also means that the buffer must be recreated (such as when window size changes).
-		 */
-		bool forceRepaint_;
+		bool dirty_;
 
 		/** Last known mouse coordinates in terminal columns & rows (not in pixels).
 		 */

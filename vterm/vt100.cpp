@@ -858,12 +858,12 @@ namespace vterm {
 					screen_.cursor().visible = value;
 					LOG(SEQ) << "cursor visible: " << value;
 					continue;
-					/* Mouse tracking movement & buttons.
+				/* Mouse tracking movement & buttons.
 
-					https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
+				https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
+				*/
+				/* Enable normal mouse mode, i.e. report button press & release events only.
 					*/
-					/* Enable normal mouse mode, i.e. report button press & release events only.
-					 */
 				case 1000:
 					setMouseMode(value ? MouseMode::Normal : MouseMode::Off);
 					LOG(SEQ) << "normal mouse tracking: " << value;
@@ -898,8 +898,6 @@ namespace vterm {
 					LOG(SEQ) << "UTF8 mouse encoding: " << value;
 					continue;
 				/* Enable or disable the alternate screen buffer.
-
-				   TODO what is the difference between the two
 				 */
 				case 47:
 				case 1049:
@@ -1075,7 +1073,7 @@ namespace vterm {
 					if (seq_[i] > 255) // invalid color spec
 						break;
 					return palette_[seq_[i]];
-					/* true color rgb */
+				/* true color rgb */
 				case 2:
 					i += 2;
 					if (i >= seq_.numArgs()) // not enough args
@@ -1083,7 +1081,7 @@ namespace vterm {
 					if (seq_[i - 2] > 255 || seq_[i - 1] > 255 || seq_[i] > 255) // invalid color spec
 						break;
 					return Color(seq_[i - 2], seq_[i - 1], seq_[i]);
-					/* everything else is an error */
+				/* everything else is an error */
 				default:
 					break;
 			}
@@ -1092,23 +1090,20 @@ namespace vterm {
 		return Color::White();
 	}
 
-
-
-
 	unsigned VT100::encodeMouseButton(MouseButton btn) {
 		unsigned result =
 			(inputState_.shift ? 4 : 0) +
 			(inputState_.alt ? 8 : 0) +
 			(inputState_.ctrl ? 16 : 0);
 		switch (btn) {
-		case MouseButton::Left:
-			return result;
-		case MouseButton::Right:
-			return result + 1;
-		case MouseButton::Wheel:
-			return result + 2;
-		default:
-			UNREACHABLE;
+			case MouseButton::Left:
+				return result;
+			case MouseButton::Right:
+				return result + 1;
+			case MouseButton::Wheel:
+				return result + 2;
+			default:
+				UNREACHABLE;
 		}
 	}
 
@@ -1151,13 +1146,6 @@ namespace vterm {
 		}
 	}
 
-
-
-
-
-
-
-
 	void VT100::setCursor(unsigned col, unsigned row) {
 		unsigned c = screen_.cols();
 		while (col >= c) {
@@ -1167,7 +1155,6 @@ namespace vterm {
 		screen_.cursor().col = col;
 		screen_.cursor().row = row;
 	}
-
 
 	void VT100::fillRect(helpers::Rect const& rect, Char::UTF8 c, Color fg, Color bg, Font font) {
 		LOG(SEQ) << "fillRect (" << rect.left << "," << rect.top << "," << rect.right << "," << rect.bottom << ")  fg: " << fg << ", bg: " << bg;

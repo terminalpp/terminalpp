@@ -59,9 +59,9 @@ namespace tpp {
 			TerminalWindow::windowResized(widthPx, heightPx);
 		}
 
-		void doInvalidate(bool forceRepaint) override {
+		void doInvalidate() override {
             // set the flag
-            TerminalWindow::doInvalidate(forceRepaint); 
+            TerminalWindow::doInvalidate(); 
             // trigger a refresh
             XEvent e;
             memset(&e, 0, sizeof(XEvent));
@@ -151,9 +151,9 @@ namespace tpp {
 
 		static std::unordered_map<Window, X11TerminalWindow *> Windows_;
 
-		static void BlinkTimer() {
+		static void FPSTimer() {
 			for (auto i : Windows_)
-				i.second->blinkTimer();
+				i.second->fpsTimer();
 		}
 
 

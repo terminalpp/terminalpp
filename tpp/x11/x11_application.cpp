@@ -44,7 +44,7 @@ namespace tpp {
 		formatTargets_ = XInternAtom(xDisplay_, "TARGETS", false);
 		clipboardIncr_ = XInternAtom(xDisplay_, "INCR", false);
 		wmDeleteMessage_ = XInternAtom(xDisplay_, "WM_DELETE_WINDOW", false);
-		blinkTimerMessage_ = XInternAtom(xDisplay_, "TPP_BLINK_TIMER", false);
+		fpsTimerMessage_ = XInternAtom(xDisplay_, "TPP_BLINK_TIMER", false);
 
 		unsigned long black = BlackPixel(xDisplay_, xScreen_);	/* get color black */
 		unsigned long white = WhitePixel(xDisplay_, xScreen_);  /* get color white */
@@ -57,8 +57,10 @@ namespace tpp {
 		ASSERT(formatTargets_ != None);
 		ASSERT(clipboardIncr_ != None);
 		ASSERT(wmDeleteMessage_ != None);
-		ASSERT(blinkTimerMessage_ != None);
+		ASSERT(fpsTimerMessage_ != None);
 		ASSERT(broadcastWindow_ != None);
+
+		start();
 	}
 
 	X11Application::~X11Application() {
@@ -88,8 +90,8 @@ namespace tpp {
             XEvent e;
             while (true) { // TODO while terminate
                 XNextEvent(xDisplay_, &e);
-				if (e.type == ClientMessage && static_cast<unsigned long>(e.xclient.data.l[0]) == blinkTimerMessage_) {
-					X11TerminalWindow::BlinkTimer();
+				if (e.type == ClientMessage && static_cast<unsigned long>(e.xclient.data.l[0]) == fpsTimerMessage_) {
+					X11TerminalWindow::FPSTimer();
 				} else {
 					if (XFilterEvent(&e, None))
 						continue;

@@ -49,10 +49,11 @@ namespace tpp {
 	protected:
 
 
+		virtual void start();
 
 		virtual void mainLoop() = 0;
 
-		virtual void sendBlinkTimerMessage() = 0;
+		virtual void sendFPSTimerMessage() = 0;
 
 	
 		Application();

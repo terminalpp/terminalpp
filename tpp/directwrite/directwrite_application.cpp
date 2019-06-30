@@ -45,6 +45,7 @@ namespace tpp {
 			__uuidof(IDWriteFactory),
 			&dwFactory_
 		))) << "Unable to create DW factory";
+		start();
 	}
 
 	DirectWriteApplication::~DirectWriteApplication() {
@@ -64,8 +65,8 @@ namespace tpp {
 		MSG msg;
 		mainLoopThreadId_ = GetCurrentThreadId();
 		while (GetMessage(&msg, nullptr, 0, 0) > 0) {
-			if (msg.message == WM_USER && msg.wParam == MSG_BLINK_TIMER) {
-				DirectWriteTerminalWindow::BlinkTimer();
+			if (msg.message == WM_USER && msg.wParam == MSG_FPS_TIMER) {
+				DirectWriteTerminalWindow::FPSTimer();
 			} else {
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
@@ -73,8 +74,8 @@ namespace tpp {
 		}
 	}
 
-	void DirectWriteApplication::sendBlinkTimerMessage() {
-		PostThreadMessage(mainLoopThreadId_, WM_USER, MSG_BLINK_TIMER, 0);
+	void DirectWriteApplication::sendFPSTimerMessage() {
+		PostThreadMessage(mainLoopThreadId_, WM_USER, MSG_FPS_TIMER, 0);
 	}
 
 	void DirectWriteApplication::registerTerminalWindowClass() {

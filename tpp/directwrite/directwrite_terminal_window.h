@@ -88,9 +88,9 @@ namespace tpp {
 
 		/** Deletes the double buffer object.
 		 */
-		void doInvalidate(bool forceRepaint) override {
+		void doInvalidate() override {
 			// set the invalidate flag
-			TerminalWindow::doInvalidate(forceRepaint);
+			TerminalWindow::doInvalidate();
 			// repaint the window
 			InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
 		}
@@ -224,9 +224,9 @@ namespace tpp {
 
 		static std::unordered_map<HWND, DirectWriteTerminalWindow*> Windows_;
 
-		static void BlinkTimer() {
+		static void FPSTimer() {
 			for (auto i : Windows_)
-				i.second->blinkTimer();
+				i.second->fpsTimer();
 		}
 
 	};

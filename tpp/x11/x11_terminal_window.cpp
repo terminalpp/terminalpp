@@ -106,12 +106,11 @@ namespace tpp {
 		if (buffer_ == 0) {
 			buffer_ = XCreatePixmap(display_, window_, widthPx_, heightPx_, DefaultDepth(display_, screen_));
 			ASSERT(buffer_ != 0);
-			forceRepaint_ = true;
+			clearWindow_ = true;
 		}
 		//forceRepaint_ = true;
 		draw_ = XftDrawCreate(display_, buffer_, visual_, colorMap_);
 		unsigned numCells = drawBuffer();
-		forceRepaint_ = false;
 		// first clear the borders that won't be used (don't clear the whole window to prevent flicker)
         unsigned marginRight = widthPx_ % cellWidthPx_;
         unsigned marginBottom = heightPx_ % cellHeightPx_;

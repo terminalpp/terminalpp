@@ -47,14 +47,14 @@ namespace tpp {
 
 		void mainLoop() override;
 
-		void sendBlinkTimerMessage() override {
+		void sendFPSTimerMessage() override {
 			XEvent e;
 			memset(&e, 0, sizeof(XEvent));
 			e.xclient.type = ClientMessage;
 			e.xclient.display = xDisplay_;
 			e.xclient.window = None;
 			e.xclient.format = 32;
-			e.xclient.data.l[0] = blinkTimerMessage_;
+			e.xclient.data.l[0] = fpsTimerMessage_;
 			xSendEvent(nullptr, e);
 		}
 	private:
@@ -70,7 +70,7 @@ namespace tpp {
 		Window broadcastWindow_;
         XIM xIm_;
 		Atom wmDeleteMessage_;
-		Atom blinkTimerMessage_;
+		Atom fpsTimerMessage_;
 		Atom clipboardName_;
 		Atom formatString_;
 		Atom formatStringUTF8_;

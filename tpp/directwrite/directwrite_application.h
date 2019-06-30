@@ -25,12 +25,12 @@ namespace tpp {
 	protected:
 		static constexpr WPARAM MSG_TITLE_CHANGE = 0;
 
-		static constexpr WPARAM MSG_BLINK_TIMER = 1;
+		static constexpr WPARAM MSG_FPS_TIMER = 1;
 
 
 		void mainLoop() override;
 
-		void sendBlinkTimerMessage() override;
+		void sendFPSTimerMessage() override;
 
 
 	private:

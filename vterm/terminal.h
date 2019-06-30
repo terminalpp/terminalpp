@@ -78,7 +78,6 @@ namespace vterm {
 
 		typedef helpers::EventPayload<void, helpers::Object> RepaintEvent;
 		typedef helpers::EventPayload<std::string, helpers::Object> TitleChangeEvent;
-		typedef helpers::EventPayload<int, helpers::Object> TerminationEvent;
 		typedef helpers::EventPayload<std::string, helpers::Object> ClipboardUpdateEvent;
 		typedef helpers::EventPayload<void, helpers::Object> NotificationEvent;
 
@@ -235,10 +234,9 @@ namespace vterm {
 			/** Marks the entire screen dirty. 
 			 */
 			void markDirty() {
-				for (size_t i = 0, e = static_cast<size_t>(cols_ * rows_); i < e; ++i)
+				for (size_t i = 0, e = static_cast<size_t>(cols_) * rows_; i < e; ++i)
 					cells_[i].dirty = true;
 			}
-
 
 		private:
 
@@ -647,9 +645,6 @@ namespace vterm {
 		}
 
 		virtual size_t doProcessInput(char * buffer, size_t size) = 0;
-
-
-
 
 	private:
 

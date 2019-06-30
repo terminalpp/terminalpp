@@ -27,6 +27,8 @@ namespace tpp {
 		fontSize_(properties.fontSize),
 		blink_(true),
 		blinkDirty_(false),
+		blinkCounter_(DEFAULT_FPS / 2),
+		dirty_(true),
 		mouseCol_(0),
 		mouseRow_(0),
 		selectionStart_(0, 0),
@@ -49,9 +51,6 @@ namespace tpp {
 		// resize the terminal properly
 		resize(widthPx_ / cellWidthPx_, heightPx_ / cellHeightPx_);
 	}
-
-
-
 
 	void TerminalWindow::keyChar(vterm::Char::UTF8 c) {
 		terminal()->keyChar(c);
@@ -88,11 +87,11 @@ namespace tpp {
 			if (row == selectionStart_.row && selectionStart_.col * cellWidthPx_ == x) {
 				selectionEnd_.col = col;
 				selectionEnd_.row = row + 1;
-				doInvalidate(false);
+				doInvalidate();
 			} else if (col != mouseCol_ || row != mouseRow_) {
 				selectionEnd_.col = col + 1;
 				selectionEnd_.row = row + 1;
-				doInvalidate(false);
+				doInvalidate();
 			}
 		}
 		// then deal with the event itself
@@ -115,7 +114,7 @@ namespace tpp {
 					selectionStart_.row = mouseRow_;
 					selectionEnd_.col = mouseCol_;
 					selectionEnd_.row = mouseRow_ + 1;
-					doInvalidate(false);
+					doInvalidate();
 					break;
 				case vterm::MouseButton::Right:
 					if (!selecting_) {
@@ -153,12 +152,14 @@ namespace tpp {
 
 
 	unsigned TerminalWindow::drawBuffer() {
+		dirty_ = false;
 		// don't do anything if terminal is not attached
 		if (terminal() == nullptr)
 			return 0;
+		bool forceRepaint = false;
 		vterm::Terminal::ScreenLock sl = terminal()->lockScreen(true);
 		if (clearWindow_) {
-			forceRepaint_ = true;
+			forceRepaint = true;
 			doClearWindow();
 			clearWindow_ = false;
 		}
@@ -196,7 +197,7 @@ namespace tpp {
 					inSelection = false;
 				}
 				vterm::Terminal::Cell& cell = sl->at(c, r);
-				if (forceRepaint_ || inSelection || cell.dirty || (cell.font.blink() && blinkDirty_)) {
+				if (forceRepaint || inSelection || cell.dirty || (cell.font.blink() && blinkDirty_)) {
 					++numCells;
 					// if we are in selection, mark the cell as dirty, otherwise mark as clean
 					cell.dirty = inSelection;
