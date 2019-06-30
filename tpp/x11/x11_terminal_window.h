@@ -96,19 +96,20 @@ namespace tpp {
 			}
 			XftDrawRect(draw_, &bg_, col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_, cellHeightPx_);
 			// if the cell is blinking, only draw the text if blink is on
-			if (!c.font.blink() || blink_) {
-				XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c.rawBytes()), c.c.size());
+			if (!c.font().blink() || blink_) {
+				XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c().rawBytes()), c.c().size());
 				// renders underline and strikethrough lines
 				// TODO for now, this is just approximate values of just below and 2/3 of the font, which is blatantly copied from st and is most likely not typographically correct (see issue 12)
-				if (c.font.underline())
+				if (c.font().underline())
 					XftDrawRect(draw_, &fg_, col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent + 1, cellWidthPx_, 1);
-				if (c.font.strikethrough())
+				if (c.font().strikethrough())
 					XftDrawRect(draw_, &fg_, col * cellWidthPx_, row * cellHeightPx_ + (2 * font_->handle()->ascent / 3), cellWidthPx_, 1);
 			}
 		}
 
 		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
-			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c.rawBytes()), c.c.size());
+			fg_ = toXftColor(c.fg());
+			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c().rawBytes()), c.c().size());
 		}
 
 		XftColor toXftColor(vterm::Color const& c) {

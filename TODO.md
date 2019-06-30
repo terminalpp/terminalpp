@@ -27,6 +27,7 @@
 
 # Code Improvements 
 
+- screen should have scrolling functions in itself (?) - I guess yes...
 - improve logging - the logging overhead is gigantic, find a way to lower it
 - add tests & CI
 

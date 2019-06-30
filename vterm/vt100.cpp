@@ -419,11 +419,10 @@ namespace vterm {
 					LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
 					// get the cell and update its contents
 					Terminal::Cell& cell = screen_.at(screen_.cursor().col, screen_.cursor().row);
-					cell.fg = state_.fg;
-					cell.bg = state_.bg;
-					cell.font = state_.font;
-					cell.c = c8;
-					cell.dirty = true;
+					cell.setFg(state_.fg);
+					cell.setBg(state_.bg);
+					cell.setFont(state_.font);
+					cell.setC(c8);
 					// move to next column
 					setCursor(screen_.cursor().col + 1, screen_.cursor().row);
 				}
@@ -1156,11 +1155,10 @@ namespace vterm {
 		for (unsigned row = rect.top; row < rect.bottom; ++row) {
 			for (unsigned col = rect.left; col < rect.right; ++col) {
 				Terminal::Cell& cell = screen_.at(col, row);
-				cell.fg = fg;
-				cell.bg = bg;
-				cell.font = font;
-				cell.c = c;
-				cell.dirty = true;
+				cell.setFg(fg);
+				cell.setBg(bg);
+				cell.setFont(font);
+				cell.setC(c);
 			}
 		}
 	}
@@ -1175,18 +1173,16 @@ namespace vterm {
 			for (unsigned c = 0; c < screen_.cols(); ++c) {
 				Terminal::Cell& cell = screen_.at(c, r);
 				cell = screen_.at(c, r + lines);
-				cell.dirty = true;
 			}
 		}
 		// now make the lines at the bottom empty
 		for (unsigned r = state_.scrollEnd - lines; r < state_.scrollEnd; ++r) {
 			for (unsigned c = 0; c < screen_.cols(); ++c) {
 				Terminal::Cell& cell = screen_.at(c, r);
-				cell.c = ' ';
-				cell.fg = state_.fg;
-				cell.bg = state_.bg;
-				cell.font = Font();
-				cell.dirty = true;
+				cell.setC(' ');
+				cell.setFg(state_.fg);
+				cell.setBg(state_.bg);
+				cell.setFont(Font());
 			}
 		}
 	}
@@ -1201,18 +1197,16 @@ namespace vterm {
 			for (unsigned c = 0; c < screen_.cols(); ++c) {
 				Terminal::Cell& cell = screen_.at(c, r);
 				cell = screen_.at(c, r - lines);
-				cell.dirty = true;
 			}
 		}
 		// now clear the top n lines
 		for (unsigned r = from, re = from + lines; r < re; ++r) {
 			for (unsigned c = 0; c < screen_.cols(); ++c) {
 				Terminal::Cell& cell = screen_.at(c, r);
-				cell.c = ' ';
-				cell.fg = state_.fg;
-				cell.bg = state_.bg;
-				cell.font = Font();
-				cell.dirty = true;
+				cell.setC(' ');
+				cell.setFg(state_.fg);
+				cell.setBg(state_.bg);
+				cell.setFont(Font());
 			}
 		}
 	}
@@ -1222,15 +1216,13 @@ namespace vterm {
 		for (unsigned c = screen_.cursor().col, e = screen_.cols() - num; c < e; ++c) {
 			Terminal::Cell& cell = screen_.at(c, r);
 			cell = screen_.at(c + num, r);
-			cell.dirty = true;
 		}
 		for (unsigned c = screen_.cols() - num, e = screen_.cols(); c < e; ++c) {
 			Terminal::Cell& cell = screen_.at(c, r);
-			cell.c = ' ';
-			cell.fg = state_.fg;
-			cell.bg = state_.bg;
-			cell.font = Font();
-			cell.dirty = true;
+			cell.setC(' ');
+			cell.setFg(state_.fg);
+			cell.setBg(state_.bg);
+			cell.setFont(Font());
 		}
 	}
 
@@ -1240,15 +1232,13 @@ namespace vterm {
 		for (unsigned c = screen_.cols() - 1, e = screen_.cursor().col + num; c >= e; --c) {
 			Terminal::Cell& cell = screen_.at(c, r);
 			cell = screen_.at(c - num, r);
-			cell.dirty = true;
 		}
 		for (unsigned c = screen_.cursor().col, e = screen_.cursor().col + num; c < e; ++c) {
 			Terminal::Cell& cell = screen_.at(c, r);
-			cell.c = ' ';
-			cell.fg = state_.fg;
-			cell.bg = state_.bg;
-			cell.font = Font();
-			cell.dirty = true;
+			cell.setC(' ');
+			cell.setFg(state_.fg);
+			cell.setBg(state_.bg);
+			cell.setFont(Font());
 		}
 	}
 

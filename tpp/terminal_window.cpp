@@ -163,9 +163,9 @@ namespace tpp {
 		unsigned numCells = 0;
 		{
 			vterm::Terminal::Cell& c = sl->at(0, 0);
-			fg = c.fg;
-			bg = c.bg;
-			font = DropBlink(c.font);
+			fg = c.fg();
+			bg = c.bg();
+			font = DropBlink(c.font());
 		}
 		doSetForeground(fg);
 		doSetBackground(bg);
@@ -190,20 +190,20 @@ namespace tpp {
 					inSelection = false;
 				}
 				vterm::Terminal::Cell& cell = sl->at(c, r);
-				if (forceDirty || inSelection || cell.dirty || (cell.font.blink() && blinkDirty_)) {
+				if (forceDirty || inSelection || cell.dirty() || (cell.font().blink() && blinkDirty_)) {
 					++numCells;
 					// if we are in selection, mark the cell as dirty, otherwise mark as clean
-					cell.dirty = inSelection;
-					if (fg != cell.fg) {
-						fg = cell.fg;
+					cell.markDirty(inSelection);
+					if (fg != cell.fg()) {
+						fg = cell.fg();
 						doSetForeground(fg);
 					}
-					if (!inSelection && bg != cell.bg) {
-						bg = cell.bg;
+					if (!inSelection && bg != cell.bg()) {
+						bg = cell.bg();
 						doSetBackground(bg);
 					}
-					if (font != cell.font) {
-						font = cell.font;
+					if (font != cell.font()) {
+						font = cell.font();
 						doSetFont(font);
 					}
 					doDrawCell(c, r, cell);
@@ -213,15 +213,15 @@ namespace tpp {
 		// determine whether cursor should be display and display it if so
 		if (focused_ && cursorInRange && cursor.visible && (blink_ || !cursor.blink)) {
 			vterm::Terminal::Cell c = sl->at(cursor.col, cursor.row);
-			c.fg = cursor.color;
-			c.bg = vterm::Color::Black();
-			c.c = cursor.character;
-			c.font = DropBlink(c.font);
+			c.setFg(cursor.color);
+			c.setBg(vterm::Color::Black());
+			c.setC(cursor.character);
+			c.setFont(DropBlink(c.font()));
 			doDrawCursor(cursor.col, cursor.row, c);
 			// mark the cursor location as dirty so that cursor is always repainted, because of subpixel renderings we also the cells around cursor position as dirty so that ghosting will be removed if cursor moves. 
 			for (unsigned  x = (cursor.col == 0) ? 0 : cursor.col - 1, xe = std::min(cols(), cursor.col + 2); x < xe; ++x)
 				for (unsigned y = (cursor.row == 0) ? 0 : cursor.row - 1, ye = std::min(rows(), cursor.row + 2); y < ye; ++y)
-					sl->at(x,y).dirty = true;
+					sl->at(x,y).markDirty();
 		}
 		blinkDirty_ = false;
 		return numCells;

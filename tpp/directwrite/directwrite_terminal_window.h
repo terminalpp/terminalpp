@@ -127,15 +127,15 @@ namespace tpp {
 				glyphRunCol_ = col;
 				glyphRunRow_ = row;
 			} 
-			UINT32 cp = c.c.codepoint();
+			UINT32 cp = c.c().codepoint();
 			dwFont_->handle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
 			++glyphRun_.glyphCount;
 		}
 
 		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
 			drawGlyphRun();
-			doSetForeground(c.fg);
-			doSetFont(c.font);
+			doSetForeground(c.fg());
+			doSetFont(c.font());
 			bg_->SetOpacity(0);
 			doDrawCell(col, row, c);
 			drawGlyphRun();

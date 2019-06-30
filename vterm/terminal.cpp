@@ -27,7 +27,7 @@ namespace vterm {
 		// TODO this is ugly
 		ScreenLock sl = const_cast<Terminal*>(this)->lockScreen();
 		while (selection.contains(col, row) && col < sl->cols() && row < sl->rows()) {
-			result << sl->at(col, row).c;
+			result << sl->at(col, row).c();
 			if (++col == sl->cols()) {
 				++row;
 				col = 0;

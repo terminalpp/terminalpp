@@ -127,32 +127,83 @@ namespace vterm {
 		public:
 			/** The font to be used to render the cell.
 			 */
-			Font font;
+			Font font() const {
+				return font_;
+			}
+
+			void setFont(Font const& value) {
+				font_ = value;
+				dirty_ = true;
+			}
 
 			/** Text color.
 			 */
-			Color fg;
+			Color fg() const {
+				return fg_;
+			}
+
+			void setFg(Color value) {
+				fg_ = value;
+				dirty_ = true;
+			}
 
 			/** Background color.
 			 */
-			Color bg;
+			Color bg() const {
+				return bg_;
+			}
+
+			void setBg(Color value) {
+				bg_ = value;
+				dirty_ = true;
+			}
 
 			/** Character to be displayed (utf8).
 			 */
-			Char::UTF8 c;
+			Char::UTF8 c() const {
+				return c_;
+			}
+
+			void setC(Char::UTF8 value) {
+				c_ = value;
+				dirty_ = true;
+			}
 
 			/** Determines if the cell is dirty, i.e. it should be redrawn.
 			 */
-			bool dirty;
+			bool dirty() const {
+				return dirty_;
+			}
+
+			void markDirty(bool value = true) {
+				dirty_ = value;
+			}
 
 			/** Default constructor for a cell created white space on a black background.
 			 */
 			Cell() :
-				fg(Color::White()),
-				bg(Color::Black()),
-				c(' '),
-				dirty(false) {
+				fg_(Color::White()),
+				bg_(Color::Black()),
+				c_(' '),
+				dirty_(0) {
 			}
+
+			Cell& operator = (Cell const& other) {
+				if (this != &other) {
+					memcpy(this, &other, sizeof(Cell));
+					dirty_ = true;
+				}
+				return *this;
+			}
+
+		private:
+			Font font_;
+			Color fg_;
+			Color bg_;
+			Char::UTF8 c_;
+			struct {
+				unsigned dirty_ : 1;
+			};
 		};
 
 		class Screen {
@@ -235,7 +286,7 @@ namespace vterm {
 			 */
 			void markDirty() {
 				for (size_t i = 0, e = static_cast<size_t>(cols_) * rows_; i < e; ++i)
-					cells_[i].dirty = true;
+					cells_[i].markDirty(true);
 			}
 
 		private:
