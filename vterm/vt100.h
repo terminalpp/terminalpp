@@ -330,6 +330,11 @@ namespace vterm {
 		};
 
 		void updateCursorPosition() {
+			unsigned c = screen_.cols();
+			while (screen_.cursor().col >= c) {
+				screen_.cursor().col -= c;
+				++screen_.cursor().row;
+			}
 			ASSERT(screen_.cursor().col < screen_.cols());
 			if (screen_.cursor().row == state_.scrollEnd) {
 				deleteLine(1, state_.scrollStart);

@@ -7,14 +7,16 @@
 #define DEFAULT_TERMINAL_FONT L"Iosevka Term"
 
 #define DEFAULT_SESSION_BACKEND vterm::VT100
+
+
 #define DEFAULT_SESSION_PTY vterm::BypassPTY
+//#define DEFAULT_SESSION_PTY vterm::LocalPTY
 
 
 
-
-//#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "bash"})
+//#define DEFAULT_SESSION_COMMAND helpers::Command("powershell", {})
 #define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/asciienc/asciienc", "-env", "SHELL=/bin/bash", "--", "bash"})
-//#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"--help"})
+//#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "bash"})
 
 #elif __linux__
 #define DEFAULT_TERMINAL_FONT "Iosevka Term"

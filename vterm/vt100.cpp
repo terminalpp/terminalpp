@@ -379,16 +379,16 @@ namespace vterm {
 						screen_.cursor().col += 8 - (screen_.cursor().col % 8);
 					LOG(SEQ) << "Tab: cursor col is " << screen_.cursor().col;
 					break;
-					/* New line simply moves to next line.
-					 */
+				/* New line simply moves to next line.
+				 */
 				case Char::LF:
 					LOG(SEQ) << "LF";
 					++x;
 					++screen_.cursor().row;
 					updateCursorPosition();
 					break;
-					/* Carriage return sets cursor column to 0.
-					 */
+				/* Carriage return sets cursor column to 0.
+				 */
 				case Char::CR:
 					LOG(SEQ) << "CR";
 					++x;
@@ -1146,11 +1146,6 @@ namespace vterm {
 	}
 
 	void VT100::setCursor(unsigned col, unsigned row) {
-		unsigned c = screen_.cols();
-		while (col >= c) {
-			col -= c;
-			++row;
-		}
 		screen_.cursor().col = col;
 		screen_.cursor().row = row;
 	}
