@@ -14,52 +14,13 @@
 
 size_t constexpr BUFFER_SIZE = 10240;
 
-/** RAII raw mode terminal switch.
- */
-class RawModeInput {
-public:
-    RawModeInput() {
-        OSCHECK(tcgetattr(STDIN_FILENO, & backup_) != -1) << "Unable to read terminal attributes";
-        termios raw = backup_;
-        // disable echo mode
-        raw.c_lflag &= ~(ECHO);
-        // disable canonical mode
-        raw.c_lflag &= ~(ICANON);
-        // disable C-c and C-z signals
-        raw.c_lflag &= ~(ISIG);
-        // disable C-s and C-q signals
-        raw.c_iflag &= ~(IXON);
-        // disable C-v
-        raw.c_lflag &= ~(IEXTEN);
-        // disable CR newline conversion
-        raw.c_iflag &= ~(ICRNL);
-        // turn off output processing
-        raw.c_oflag &= ~(OPOST);
-        // ignore break condition
-        raw.c_iflag &= ~(BRKINT);
-        // disable parity checking
-        raw.c_iflag &= ~(INPCK);
-        // disable 8th bit stripping
-        raw.c_iflag &= ~(ISTRIP);
-        // set character size to 8 bits
-        raw.c_cflag |= (CS8);
-        // set the terminal properties
-        OSCHECK(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) != -1) << "Unable to enter raw mode";
-    }
-
-    ~RawModeInput() noexcept(false) {
-        OSCHECK(tcsetattr(STDIN_FILENO, TCSAFLUSH, & backup_) != -1) << "Cannot restore terminal settings";
-    }
-
-private:
-    termios backup_;
-};
-
-
 /** .
  */
 class PTYEncoder {
 public:
+
+	static constexpr char const * PTYENC = "PYENC";
+
     PTYEncoder(helpers::Command const & cmd, helpers::Environment const & env):
         command_(cmd),
 		environment_(env),
@@ -72,7 +33,6 @@ public:
             size_t numBytes;
             while (true) {
                 numBytes = pty_.read(buffer, BUFFER_SIZE);
-
                 // if nothing was read, the process has terminated and so should we
                 if (numBytes == 0)
                     break;
@@ -143,51 +103,51 @@ private:
     /** Input comes encoded and must be decoded and sent to the pty. 
      */
     size_t decodeInput(char * buffer, size_t bufferSize) {
-        size_t decodedSize;
-        size_t result = decodeCommands(buffer, bufferSize, decodedSize);
-        pty_.write(buffer, decodedSize);
-        return result;
-    }
-
-	size_t decodeCommands(char* buffer, size_t bufferSize, size_t& decodedSize) {
-#define DECODE(WHAT) buffer[decodedSize++] = WHAT
+#define WRITE(FROM, TO) if (FROM != TO) { pty_.write(buffer + FROM, TO - FROM); FROM = TO; }
 #define NEXT if (++i == bufferSize) return processed
-		decodedSize = 0;
+#define NUMBER(VAR) if (!ParseNumber(buffer, bufferSize, i, VAR)) return processed
+#define POP(WHAT) if (buffer[i++] != WHAT) { LOG(PTYENC) << "Expected " << WHAT << " but " << buffer[i] << " found"; processed = i; continue; }
 		size_t processed = 0;
-		size_t i = 0;
-		while (true) {
-			processed = i;
-			if (processed == bufferSize)
-				return processed;
-			// if current character is not a backtick, copy the character as it is
-			if (buffer[i] != '`') {
-				DECODE(buffer[i]);
-				// otherwise move to the next character and decide what are we dealing with
-			} else {
+		size_t start = 0;
+		while (processed < bufferSize) {
+			if (buffer[processed] == '`') {
+				WRITE(start, processed);
+				size_t i = processed;
 				NEXT;
-				if (buffer[i] == '`') {
-					DECODE('`');
-				} if (buffer[i] == 'r') {
-					NEXT;
-					unsigned cols;
-					unsigned rows;
-					if (!ParseNumber(buffer, bufferSize, i, cols))
-						return processed;
-					ASSERT(buffer[i] == ':') << "expected :, found " << buffer[i];
-					NEXT;
-					if (!ParseNumber(buffer, bufferSize, i, rows))
-						return processed;
-					ASSERT(buffer[i] == ';') << "expected ;";
-					resize(cols, rows);
-				} else {
-					UNREACHABLE;
+				switch (buffer[i]) {
+					// if the character after backtick is backtick, the second backtick will be the beginning of next batch
+					case '`':
+						start = i;
+						processed = i + 1;
+						continue;
+					// the resize command (`r COLS : ROWS ;)
+					case 'r': {
+						unsigned cols;
+						unsigned rows;
+						NEXT;
+						NUMBER(cols);
+						POP(':');
+						NUMBER(rows);
+						POP(';');
+						resize(cols, rows);
+						continue;
+					// otherwise (unrecognized command) skip what we have and move on
+					default:
+						LOG(PTYENC) << "Unrecognized command " << buffer[i];
+						processed = i + 1;
+						continue;
+					}
 				}
-			}
-			++i;
+			} 
+			++processed;
 		}
-#undef DECODE
+		WRITE(start, processed);
+		return processed;
+#undef WRITE
 #undef NEXT
-	}
+#undef NUMBER
+#undef POP
+    }
 
 	static bool ParseNumber(char* buffer, size_t bufferSize, size_t& i, unsigned& value) {
 		value = 0;
@@ -196,18 +156,17 @@ private:
 			if (++i == bufferSize)
 				return false;
 		}
-		return true;
+		return i != bufferSize; // at least one valid character must be present after the number
 	}
 
 
-    //RawModeInput rmi_;
     helpers::Command command_;
 	helpers::Environment environment_;
     vterm::LocalPTY pty_;
     std::thread outputEncoder_;
 
 
-}; // ASCIIEncoder
+}; // PTYEncoder
 
 
 std::pair<helpers::Command, helpers::Environment> ParseArguments(int argc, char* argv[]) {
@@ -245,7 +204,7 @@ int main(int argc, char * argv[]) {
         PTYEncoder enc(args.first, args.second);
         return enc.waitForDone();
     } catch (helpers::Exception const & e) {
-        std::cerr << "asciienc error: " << std::endl << e << std::endl;
+        std::cerr << "ptyencoder error: " << std::endl << e << std::endl;
     }
     return EXIT_FAILURE;
 }
