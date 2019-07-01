@@ -5,9 +5,10 @@
 
 ## Bugs and missing features
 
+- in less scroll up does not work and does weird things
+
 - switch char to unly use UTF8 and provide translations to other encodings
 - proper UTF8 and UTF32 conversion in helpers::strings
-
 
 ### Win32 Bugs
 

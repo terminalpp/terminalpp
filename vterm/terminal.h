@@ -194,8 +194,8 @@ namespace vterm {
 				fg_(Color::White()),
 				bg_(Color::Black()),
 				c_(' '),
-				dirty_(0),
-			    lineEnd_(0) {
+				dirty_(true),
+			    lineEnd_(false) {
 			}
 
 			Cell& operator = (Cell const& other) {
