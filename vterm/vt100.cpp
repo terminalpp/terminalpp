@@ -254,7 +254,9 @@ namespace vterm {
 		palette_(ColorsXTerm256()),
 		defaultFg_(15),
 		defaultBg_(0),
-		otherScreen_(screen_),
+		state_(cols, rows),
+		otherState_(cols, rows),
+		otherScreen_(cols, rows),
 		mouseMode_(MouseMode::Off),
 		mouseEncoding_(MouseEncoding::Default),
 		mouseLastButton_(0),
@@ -262,7 +264,6 @@ namespace vterm {
 		bracketedPaste_(false),
 	    applicationCursorMode_(false),
 	    applicationKeypadMode_(false) {
-		state_.scrollEnd = rows;
 	}
 
 	// Terminal input actions
@@ -448,58 +449,62 @@ namespace vterm {
 		switch (*x++) {
 			/* Reverse line feed - move up 1 row, same column.
 			 */
-		case 'M':
-			LOG(SEQ) << "RI: move cursor 1 line up";
-			setCursor(screen_.cursor().row - 1, screen_.cursor().col);
-			break;
-			/* Operating system command. */
-		case ']':
-			if (!parseOSCSequence(x, bufferEnd))
-				return false;
-			break;
-		    /* CSI Sequence - parse using the CSISequence class. */
-		case '[': {
-			switch (seq_.parse(x, bufferEnd)) {
-			case CSISequence::ParseResult::Valid:
-				processCSISequence();
-			case CSISequence::ParseResult::Invalid:
+			case 'M':
+				LOG(SEQ) << "RI: move cursor 1 line up";
+				if (screen_.cursor().row == 0) {
+					insertLine(1, 0);
+				} else {
+					setCursor(screen_.cursor().col, screen_.cursor().row - 1);
+				}
 				break;
-			case CSISequence::ParseResult::Incomplete:
-				return false;
+			/* Operating system command. */
+			case ']':
+				if (!parseOSCSequence(x, bufferEnd))
+					return false;
+				break;
+		    /* CSI Sequence - parse using the CSISequence class. */
+			case '[': {
+				switch (seq_.parse(x, bufferEnd)) {
+				case CSISequence::ParseResult::Valid:
+					processCSISequence();
+				case CSISequence::ParseResult::Invalid:
+					break;
+				case CSISequence::ParseResult::Incomplete:
+					return false;
+				}
+				break;
 			}
-			break;
-		}
-		/* Character set specification - ignored, we just have to parse it. */
-		case '(':
-		case ')':
-		case '*':
-		case '+':
-			// missing character set specification
-			if (x == bufferEnd)
-				return false;
-			if (*x == 'B') { // US
+    		/* Character set specification - ignored, we just have to parse it. */
+			case '(':
+			case ')':
+			case '*':
+			case '+':
+				// missing character set specification
+				if (x == bufferEnd)
+					return false;
+				if (*x == 'B') { // US
+					++x;
+					break;
+				}
+				LOG(SEQ_WONT_SUPPORT) << "Unknown (possibly mismatched) character set final char " << *x;
 				++x;
 				break;
-			}
-			LOG(SEQ_WONT_SUPPORT) << "Unknown (possibly mismatched) character set final char " << *x;
-			++x;
-			break;
-		/* ESC = -- Application keypad */
-		case '=':
-			LOG(SEQ) << "Application keypad mode enabled";
-			applicationKeypadMode_ = true;
-			break;
-		/* ESC > -- Normal keypad */
-		case '>':
-			LOG(SEQ) << "Normal keypad mode enabled";
-			applicationKeypadMode_ = false;
-			break;
-		/* Otherwise we have unknown escape sequence. This is an issue since we do not know when it ends and therefore may break the parsing.
-		 */
-		default:
-			LOG(SEQ_UNKNOWN) << "Unknown (possibly mismatched) char after ESC " << *x;
-			++x;
-			break;
+			/* ESC = -- Application keypad */
+			case '=':
+				LOG(SEQ) << "Application keypad mode enabled";
+				applicationKeypadMode_ = true;
+				break;
+			/* ESC > -- Normal keypad */
+			case '>':
+				LOG(SEQ) << "Normal keypad mode enabled";
+				applicationKeypadMode_ = false;
+				break;
+			/* Otherwise we have unknown escape sequence. This is an issue since we do not know when it ends and therefore may break the parsing.
+			 */
+			default:
+				LOG(SEQ_UNKNOWN) << "Unknown (possibly mismatched) char after ESC " << *x;
+				++x;
+				break;
 		}
 		buffer = x;
 		return true;
@@ -924,6 +929,7 @@ namespace vterm {
 						}
 					}
 					alternateBuffer_ = value;
+					invalidateLastCharPosition();
 					continue;
 				/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. 
 				 */

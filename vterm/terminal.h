@@ -706,6 +706,8 @@ namespace vterm {
 		    bufferSize_(bufferSize),
 		    buffer_(new char[bufferSize]),
 		    writeStart_(buffer_) {
+			// let the pty know the proper size
+			pty_->resize(cols, rows);
 			readerThread_ = std::thread([this]() {
 				while (true) {
 					size_t read = pty_->read(writeStart_, bufferSize_ - (writeStart_ - buffer_));

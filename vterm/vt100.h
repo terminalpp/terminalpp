@@ -228,16 +228,21 @@ namespace vterm {
 			Font font;
 			/** Start of the scrolling region (inclusive row).
 			 */
-			unsigned scrollStart = 0;
+			unsigned scrollStart;
 
 			/** End of the scrolling region (exclusive row).
 			 */
-			unsigned scrollEnd = 0;
+			unsigned scrollEnd;
 
-			unsigned lastCharCol = 0;
-			unsigned lastCharRow = 0;
+			unsigned lastCharCol;
+			unsigned lastCharRow;
 
-
+			State(unsigned cols, unsigned rows) :
+				scrollStart(0),
+				scrollEnd(rows),
+				lastCharCol(std::numeric_limits<unsigned>::max()),
+				lastCharRow(0) {
+			}
 
 			void resize(unsigned cols, unsigned rows) {
 				MARK_AS_UNUSED(cols);
