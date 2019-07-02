@@ -270,11 +270,11 @@ namespace tpp {
                 // if it is printable character and there were no modifiers other than shift pressed, we are dealing with printable character (backspace is not printable character)
                 // TODO this better be more robust
                 if (strLen > 0 && (str[0] < 0 || str[0] >= 0x20) && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
-                    vterm::Char::UTF8 c;
                     char * x = reinterpret_cast<char*>(& str);
-                    if (c.readFromStream(x, x+32)) {
-                        tw->keyChar(c);
-                        break;
+					helpers::Char const* c = helpers::Char::At(x, x + 32);
+					if (c != nullptr) {
+						tw->keyChar(*c);
+					    break;
                     }
                 }
                 // otherwise if the keysym was recognized, it is a keyDown event

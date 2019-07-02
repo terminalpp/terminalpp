@@ -51,7 +51,7 @@ namespace tpp {
 		resize(widthPx_ / cellWidthPx_, heightPx_ / cellHeightPx_);
 	}
 
-	void TerminalWindow::keyChar(vterm::Char::UTF8 c) {
+	void TerminalWindow::keyChar(helpers::Char c) {
 		terminal()->keyChar(c);
 	}
 

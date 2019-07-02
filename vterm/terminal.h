@@ -8,12 +8,13 @@
 
 #include "helpers/object.h"
 #include "helpers/shapes.h"
+#include "helpers/char.h"
 #include "helpers/time.h"
 #include "helpers/log.h"
 
+
 #include "color.h"
 #include "font.h"
-#include "char.h"
 #include "key.h"
 #include "mouse.h"
 #include "pty.h"
@@ -95,7 +96,7 @@ namespace vterm {
 
 			/** Character of the cursor. 
 			 */
-			Char::UTF8 character;
+			helpers::Char character;
 
 			/** Color of the cursor (foreground)
 			 */
@@ -112,7 +113,7 @@ namespace vterm {
 			Cursor() :
 				col(0),
 				row(0),
-				character(0x2581), // underscore character
+				character(helpers::Char::FromCodepoint(0x2581)), // underscore character
 				color(Color::White()),
 				blink(true),
 				visible(true) {
@@ -160,11 +161,11 @@ namespace vterm {
 
 			/** Character to be displayed (utf8).
 			 */
-			Char::UTF8 c() const {
+			helpers::Char c() const {
 				return c_;
 			}
 
-			void setC(Char::UTF8 value) {
+			void setC(helpers::Char value) {
 				c_ = value;
 				dirty_ = true;
 				lineEnd_ = false;
@@ -193,7 +194,7 @@ namespace vterm {
 			Cell() :
 				fg_(Color::White()),
 				bg_(Color::Black()),
-				c_(' '),
+				c_(helpers::Char::FromASCII(' ')),
 				dirty_(true),
 			    lineEnd_(false) {
 			}
@@ -210,7 +211,7 @@ namespace vterm {
 			Font font_;
 			Color fg_;
 			Color bg_;
-			Char::UTF8 c_;
+			helpers::Char c_;
 			struct {
 				// when dirty, the cell should be redrawn
 				unsigned dirty_ : 1;
@@ -483,7 +484,7 @@ namespace vterm {
 					terminal_->keyDown(k);
 			}
 
-			virtual void keyChar(Char::UTF8 c) {
+			virtual void keyChar(helpers::Char c) {
 				if (terminal_)
 					terminal_->keyChar(c);
 			}
@@ -615,7 +616,7 @@ namespace vterm {
 
 		virtual void keyUp(Key k) = 0;
 
-		virtual void keyChar(Char::UTF8 c) = 0;
+		virtual void keyChar(helpers::Char c) = 0;
 
 		// mouse events
 

@@ -198,7 +198,7 @@ namespace tpp {
 
         /** Sends given character to the attached terminal. 
          */  
-        virtual void keyChar(vterm::Char::UTF8 c);
+        virtual void keyChar(helpers::Char c);
 
         /** Handles the key press event. 
          */ 

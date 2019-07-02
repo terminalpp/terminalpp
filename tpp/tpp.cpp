@@ -8,6 +8,8 @@
 #include "config.h"
 #include "session.h"
 
+#include "helpers/char.h"
+
 #ifdef _WIN64
 #include "directwrite/directwrite_application.h"
 #include "directwrite/directwrite_terminal_window.h"

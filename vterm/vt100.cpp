@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-#include "helpers/strings.h"
+#include "helpers/char.h"
 #include "helpers/log.h"
 #include "helpers/base64.h"
 
@@ -297,9 +297,9 @@ namespace vterm {
 		inputState_.keyUpdate(k, false);
 	}
 
-	void VT100::keyChar(Char::UTF8 c) {
+	void VT100::keyChar(helpers::Char c) {
 		// TODO make sure that the character is within acceptable range, i.e. it does not clash with ctrl+ stuff, etc. 
-		ptyWrite(c.rawBytes(), c.size());
+		ptyWrite(c.toCharPtr(), c.size());
 	}
 
 	void VT100::mouseDown(unsigned col, unsigned row, MouseButton button) {
@@ -357,81 +357,87 @@ namespace vterm {
 			CSISequence seq;
 			while (x != bufferEnd) {
 				switch (*x) {
-				case Char::ESC: {
-					if (!parseEscapeSequence(x, bufferEnd))
-						return x - buffer;
-					break;
-				}
-				/* BEL is sent if user should be notified, i.e. play a notification sound or so.
-				 */
-				case Char::BEL:
-					++x;
-					LOG(SEQ) << "BEL notification";
-					// TODO should the lock be released here? 
-					trigger(onNotification);
-					break;
-				case Char::TAB:
-					// TODO tabstops and stuff
-					++x;
-					updateCursorPosition();
-					if (screen_.cursor().col % 8 == 0)
-						screen_.cursor().col += 8;
-					else
-						screen_.cursor().col += 8 - (screen_.cursor().col % 8);
-					LOG(SEQ) << "Tab: cursor col is " << screen_.cursor().col;
-					break;
-				/* New line simply moves to next line.
-				 */
-				case Char::LF:
-					LOG(SEQ) << "LF";
-					markLastCharPosition();
-					++x;
-					++screen_.cursor().row;
-					updateCursorPosition();
-					setLastCharPosition();
-					break;
-				/* Carriage return sets cursor column to 0.
-				 */
-				case Char::CR:
-					LOG(SEQ) << "CR";
-					markLastCharPosition();
-					++x;
-					screen_.cursor().col = 0;
-					break;
-				case Char::BACKSPACE: {
-					LOG(SEQ) << "BACKSPACE";
-					++x;
-					if (screen_.cursor().col == 0) {
-						if (screen_.cursor().row > 0)
-							--screen_.cursor().row;
-						screen_.cursor().col = screen_.cols() - 1;
+					case helpers::Char::ESC: {
+						if (!parseEscapeSequence(x, bufferEnd))
+							return x - buffer;
+						break;
 					}
-					else {
-						--screen_.cursor().col;
+					/* BEL is sent if user should be notified, i.e. play a notification sound or so.
+					 */
+					case helpers::Char::BEL:
+						++x;
+						LOG(SEQ) << "BEL notification";
+						// TODO should the lock be released here? 
+						trigger(onNotification);
+						break;
+					case helpers::Char::TAB:
+						// TODO tabstops and stuff
+						++x;
+						updateCursorPosition();
+						if (screen_.cursor().col % 8 == 0)
+							screen_.cursor().col += 8;
+						else
+							screen_.cursor().col += 8 - (screen_.cursor().col % 8);
+						LOG(SEQ) << "Tab: cursor col is " << screen_.cursor().col;
+						break;
+					/* New line simply moves to next line.
+					 */
+					case helpers::Char::LF:
+						LOG(SEQ) << "LF";
+						markLastCharPosition();
+						++x;
+						++screen_.cursor().row;
+						updateCursorPosition();
+						setLastCharPosition();
+						break;
+					/* Carriage return sets cursor column to 0.
+					 */
+					case helpers::Char::CR:
+						LOG(SEQ) << "CR";
+						markLastCharPosition();
+						++x;
+						screen_.cursor().col = 0;
+						break;
+					case helpers::Char::BACKSPACE: {
+						LOG(SEQ) << "BACKSPACE";
+						++x;
+						if (screen_.cursor().col == 0) {
+							if (screen_.cursor().row > 0)
+								--screen_.cursor().row;
+							screen_.cursor().col = screen_.cols() - 1;
+						}
+						else {
+							--screen_.cursor().col;
+						}
+						break;
 					}
-					break;
-				}
-  			    /* default variant is to print the character received to current cell.
-				 */
-				default: {
-					// make sure that the cursor is in visible part of the screen
-					updateCursorPosition();
-					// it could be we are dealing with unicode
-					Char::UTF8 c8;
-					if (!c8.readFromStream(x, bufferEnd))
-						return x - buffer;
-					//LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
-					// get the cell and update its contents
-					Terminal::Cell& cell = screen_.at(screen_.cursor().col, screen_.cursor().row);
-					cell.setFg(state_.fg);
-					cell.setBg(state_.bg);
-					cell.setFont(state_.font);
-					cell.setC(c8);
-					// store the last character position
-					setLastCharPosition();
-					// move to next column
-					++screen_.cursor().col;
-				}
+  					/* default variant is to print the character received to current cell.
+					 */
+					default: {
+						// make sure that the cursor is in visible part of the screen
+						updateCursorPosition();
+						/*
+						helpers::Char c8;
+						if (!c8.readFromStream(x, bufferEnd))
+							return x - buffer;
+							*/
+
+						// it could be we are dealing with unicode
+						helpers::Char const * c8 = helpers::Char::At(x, bufferEnd);
+						if (c8 == nullptr)
+							return x - buffer;
+						//LOG << "codepoint " << std::hex << c8->codepoint() << " " << static_cast<char>(c8->codepoint() & 0xff);
+						// get the cell and update its contents
+						Terminal::Cell& cell = screen_.at(screen_.cursor().col, screen_.cursor().row);
+						cell.setFg(state_.fg);
+						cell.setBg(state_.bg);
+						cell.setFont(state_.font);
+						cell.setC(*c8);
+						// store the last character position
+						setLastCharPosition();
+						// move to next column
+						++screen_.cursor().col;
+					}
 				}
 			}
 		}
@@ -440,7 +446,7 @@ namespace vterm {
 	}
 
 	bool VT100::parseEscapeSequence(char*& buffer, char* bufferEnd) {
-		ASSERT(*buffer == Char::ESC);
+		ASSERT(*buffer == helpers::Char::ESC);
 		char* x = buffer;
 		++x;
 		// if at eof now, we need to read more so that we know what to escape
@@ -518,9 +524,9 @@ namespace vterm {
 			if (x == end)
 				return false;
 			// by default, the OSC ends with BEL character
-			if (*x == Char::BEL)
+			if (*x == helpers::Char::BEL)
 				break;
-			if (*x == Char::ESC) {
+			if (*x == helpers::Char::ESC) {
 				++x;
 				if (x == end)
 					return false;
@@ -534,16 +540,16 @@ namespace vterm {
 		char* start = buffer;
 		buffer = x;
 		// we have now parsed the whole OSC - let's see if it is one we understand
-		if (x[-1] == Char::BEL && start[0] == '0' && start[1] == ';') {
+		if (x[-1] == helpers::Char::BEL && start[0] == '0' && start[1] == ';') {
 			std::string title(start + 2, x - 1);
 			LOG(SEQ) << "Title change to " << title;
 			// TODO release the lock? 
 			setTitle(title);
 		// set clipboard
-		} else if (x[-1] == Char::BEL && start[0] == '5' && start[1] == '2' && start[2] == ';') {
+		} else if (x[-1] == helpers::Char::BEL && start[0] == '5' && start[1] == '2' && start[2] == ';') {
 			char* s = buffer + 3;
 			while (*s != ';') {
-				if (*s == Char::BEL) {
+				if (*s == helpers::Char::BEL) {
 					LOG(SEQ_UNKNOWN) << "Unknown OSC: " << std::string(start, x - start);
 					return true; // sequence matched, but unknown
 				}
@@ -1162,7 +1168,7 @@ namespace vterm {
 		invalidateLastCharPosition();
 	}
 
-	void VT100::fillRect(helpers::Rect const& rect, Char::UTF8 c, Color fg, Color bg, Font font) {
+	void VT100::fillRect(helpers::Rect const& rect, helpers::Char c, Color fg, Color bg, Font font) {
 		LOG(SEQ) << "fillRect (" << rect.left << "," << rect.top << "," << rect.right << "," << rect.bottom << ")  fg: " << fg << ", bg: " << bg;
 		// TODO add print of the char as well
 		for (unsigned row = rect.top; row < rect.bottom; ++row) {

@@ -5,7 +5,6 @@
 
 ## Bugs and missing features
 
-- switch char to unly use UTF8 and provide translations to other encodings
 - proper UTF8 and UTF32 conversion in helpers::strings
 
 ### Win32 Bugs

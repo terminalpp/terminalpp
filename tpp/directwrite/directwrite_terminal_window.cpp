@@ -1,6 +1,6 @@
 #ifdef _WIN64
 
-#include "helpers/strings.h"
+#include "helpers/string.h"
 
 #include "../session.h"
 
@@ -28,7 +28,7 @@ namespace tpp {
 	    grStrikethrough_(false) {
 		// all win32 windows start focused since they receive the setfocus message first
 		focused_ = true;
-		std::wstring t = vterm::UTF8StringToUCS2(title_);
+		std::wstring t = helpers::UTF8toUCS2(title_);
 		hWnd_ = CreateWindowExW(
 			WS_EX_LEFT, // the default
 			app()->TerminalWindowClassName_, // window class
@@ -283,7 +283,7 @@ namespace tpp {
 				break;
 			case WM_CHAR:
 				if (wParam >= 0x20)
-					tw->keyChar(vterm::Char::UTF8(static_cast<unsigned>(wParam)));
+					tw->keyChar(helpers::Char::FromCodepoint(static_cast<unsigned>(wParam)));
 				break;
 			/* DEBUG - debugging events hooked to keypresses now: */
 			/* Processes special key events.*/
@@ -334,7 +334,8 @@ namespace tpp {
 			case WM_USER:
 				switch (wParam) {
 				case DirectWriteApplication::MSG_TITLE_CHANGE: {
-					std::wstring t = vterm::UTF8StringToUCS2(tw->terminal()->title());
+					std::wstring t = helpers::UTF8toUCS2(tw->terminal()->title().c_str());
+					//std::wstring t = vterm::UTF8StringToUCS2(tw->terminal()->title());
 					SetWindowTextW(hWnd, t.c_str());
 					break;
 				}

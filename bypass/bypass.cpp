@@ -7,7 +7,7 @@
 #include <signal.h>
 
 #include "helpers/helpers.h"
-#include "helpers/strings.h"
+#include "helpers/char.h"
 #include "helpers/log.h"
 
 #include "vterm/local_pty.h"

@@ -63,7 +63,7 @@ namespace vterm {
 
 		void keyUp(Key k) override;
 
-		void keyChar(Char::UTF8 c) override;
+		void keyChar(helpers::Char c) override;
 
 		// terminal mouse actions
 
@@ -393,8 +393,8 @@ namespace vterm {
 
 		/** Fills the given rectangle with character, colors and font.
 		 */
-		void fillRect(helpers::Rect const& rect, Char::UTF8 c, Color fg, Color bg, Font font = Font());
-		void fillRect(helpers::Rect const& rect, Char::UTF8 c, Font font = Font()) {
+		void fillRect(helpers::Rect const& rect, helpers::Char c, Color fg, Color bg, Font font = Font());
+		void fillRect(helpers::Rect const& rect, helpers::Char c, Font font = Font()) {
 			fillRect(rect, c, state_.fg, state_.bg, font);
 		}
 
