@@ -28,11 +28,12 @@ namespace tpp {
 	    grStrikethrough_(false) {
 		// all win32 windows start focused since they receive the setfocus message first
 		focused_ = true;
-		std::wstring t = helpers::UTF8toUCS2(title_);
+		std::u16string t = helpers::UTF8toUTF16(title_.c_str());
 		hWnd_ = CreateWindowExW(
 			WS_EX_LEFT, // the default
 			app()->TerminalWindowClassName_, // window class
-			t.c_str(), // window name (all start as terminal++)
+			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+			reinterpret_cast<wchar_t const *>(t.c_str()), // window name (all start as terminal++)
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, // x position
 			CW_USEDEFAULT, // y position
@@ -118,7 +119,8 @@ namespace tpp {
 		if (OpenClipboard(nullptr)) {
 			EmptyClipboard();
 			// encode the string into UTF16 and get the size of the data we need
-			std::wstring str = helpers::UTF8toUTF16(e->c_str());
+			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+			std::u16string str = helpers::UTF8toUTF16(e->c_str());
 			// the str is null-terminated
 			size_t size = (str.size() + 1) * 2;
 			HGLOBAL clipboard = GlobalAlloc(0, size);
@@ -138,7 +140,8 @@ namespace tpp {
 		if (OpenClipboard(nullptr)) {
 			HANDLE clipboard = GetClipboardData(CF_UNICODETEXT);
 			if (clipboard) {
-				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clipboard));
+				// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+				char16_t* data = reinterpret_cast<char16_t*>(GlobalLock(clipboard));
 				if (data) {
 					std::string str(helpers::UTF16toUTF8(data));
 					GlobalUnlock(clipboard);
@@ -334,9 +337,9 @@ namespace tpp {
 			case WM_USER:
 				switch (wParam) {
 				case DirectWriteApplication::MSG_TITLE_CHANGE: {
-					std::wstring t = helpers::UTF8toUCS2(tw->terminal()->title().c_str());
-					//std::wstring t = vterm::UTF8StringToUCS2(tw->terminal()->title());
-					SetWindowTextW(hWnd, t.c_str());
+					std::u16string t = helpers::UTF8toUTF16(tw->terminal()->title().c_str());
+					// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+					SetWindowTextW(hWnd, reinterpret_cast<wchar_t const *>(t.c_str()));
 					break;
 				}
 				default:

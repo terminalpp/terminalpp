@@ -44,32 +44,25 @@ namespace helpers {
 
 
 	/** Converts a null terminated wide string in UTF-16 encoding into an std::string encoded in UTF-8.
-
-		 TODO proper conversion
 	  */
-	inline std::string UTF16toUTF8(wchar_t const* str) {
+	inline std::string UTF16toUTF8(char16_t const* str) {
 		std::stringstream result;
 		while (*str != 0) {
-			if (*str < 128)
-				result << static_cast<char>(*str);
-			++str;
+			result << Char::FromUTF16(str, str + 2); // null terminated so we assume there is enough space
 		}
 		return result.str();
 	}
 
-	inline std::wstring UTF8toUTF16(char const* str) {
-		std::wstringstream result;
+	inline std::u16string UTF8toUTF16(char const* str) {
+		utf16_stringstream result;
 		while (*str != 0) {
-			result << static_cast<wchar_t>(*str);
-			++str;
+			Char const * c = Char::At(str, str + 4); // null terminated, so we assume there is enough space
+			// just stop if the character looks invalid
+			if (c == nullptr)
+				break;
+			c->toUTF16(result);
 		}
 		return result.str();
 	}
-
-	inline std::wstring UTF8toUCS2(std::string const& what) {
-		return UTF8toUTF16(what.c_str());
-	}
-
-
 
 } // namespace helpers

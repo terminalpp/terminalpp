@@ -4,7 +4,15 @@
 
 #include "helpers.h"
 
+#ifdef _WIN64
+static_assert(sizeof(wchar_t) == sizeof(char16_t), "wchar_t and char16_t must have the same size or the conversions would break");
+#endif
+
+
 namespace helpers {
+
+	typedef std::basic_stringstream<char> utf8_stringstream;
+	typedef std::basic_stringstream<char16_t> utf16_stringstream;
 
 	class CharError : public IOError {
 	};
@@ -31,12 +39,6 @@ namespace helpers {
 		/** Creates the character from given ASCII character. 
 		 */
 		static Char FromASCII(char x) {
-			return FromCodepoint(x);
-		}
-
-		/** Creates the character from given UCS2 character. 
-		 */
-		static Char FromUCS2(char16_t x) {
 			return FromCodepoint(x);
 		}
 
@@ -70,10 +72,14 @@ namespace helpers {
 			return result;
 		}
 
+		static Char const* At(char*& buffer, char const* bufferEnd) {
+			return At(const_cast<char const*&>(buffer), bufferEnd);
+		}
+
 		/** Given a pointer to valid UTF8 character encoded in char array, returns a Char around it. 
 		
 		 */
-		static Char const * At(char * & buffer, char const * bufferEnd) {
+		static Char const * At(char const * & buffer, char const * bufferEnd) {
 			if (buffer == bufferEnd)
 				return nullptr;
 			unsigned char const * start = reinterpret_cast<unsigned char const *>(buffer);
@@ -123,15 +129,18 @@ namespace helpers {
 				return ((bytes_[0] & 0x07) << 18) + ((bytes_[1] & 0x3f) << 12) + ((bytes_[2] & 0x3f) << 6) + (bytes_[3] & 0x3f);
 		}
 
-		/** Converts the character to an UCS2 value. 
-
-		    If the character stored does not fit in UCS2 character, throws CharError. 
-		 */
-		char16_t toUCS2() const {
-			char32_t cp = codepoint();
-			if (cp >= 0x10000)
-				THROW(CharError()) << "Unable to convert codepoint " << cp << " to UCS2";
-			return (cp & 0xffff);
+		void toUTF16(utf16_stringstream& s) const {
+			unsigned cp = codepoint();
+			if (cp < 0x10000) {
+				ASSERT(cp < 0xd800 || cp >= 0xe000) << "Invalid UTF16 codepoint";
+				s << static_cast<char16_t>(cp);
+			} else {
+				cp -= 0x10000;
+				unsigned high = cp >> 10; // upper 10 bits
+				unsigned low = cp & 0x3ff; // lower 10 bits
+				s << static_cast<char16_t>(high + 0xd800);
+				s << static_cast<char16_t>(low + 0xdc00);
+			}
 		}
 
 		char const* toCharPtr() const {

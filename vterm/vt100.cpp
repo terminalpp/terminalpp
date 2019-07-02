@@ -416,12 +416,6 @@ namespace vterm {
 					default: {
 						// make sure that the cursor is in visible part of the screen
 						updateCursorPosition();
-						/*
-						helpers::Char c8;
-						if (!c8.readFromStream(x, bufferEnd))
-							return x - buffer;
-							*/
-
 						// it could be we are dealing with unicode
 						helpers::Char const * c8 = helpers::Char::At(x, bufferEnd);
 						if (c8 == nullptr)

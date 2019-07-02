@@ -5,13 +5,13 @@
 
 ## Bugs and missing features
 
-- proper UTF8 and UTF32 conversion in helpers::strings
-
 ### Win32 Bugs
 
 ### X11 Bugs
 
 - fullscreen does not work
+- the rendering speed is not the best. It works for work just fine though. Althoiugh on WSL + vcxsrv the speed is actually quite good
+- text in clipboard does not stay after the app dies
 
 # Code Fixes
 
