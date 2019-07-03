@@ -56,17 +56,17 @@ namespace tpp {
 	}
 
 	void TerminalWindow::keyDown(vterm::Key key) {
-		if (key == vterm::Key::Enter + vterm::Key::Alt) {
+		if (key == SHORTCUT_FULLSCREEN) {
 			setFullscreen(!fullscreen());
 		// zoom in
-		} else if (key == vterm::Key::Equals + vterm::Key::Ctrl) {
+		} else if (key == SHORTCUT_ZOOM_IN) {
 			if (zoom() < 10)
 				setZoom(zoom() * 1.25);
 		// zoom out
-		} else if (key == vterm::Key::Minus + vterm::Key::Ctrl) {
+		} else if (key == SHORTCUT_ZOOM_OUT) {
 			if (zoom() > 1)
 			    setZoom(std::max(1.0, zoom() / 1.25));
-		} else if (key == vterm::Key::V + vterm::Key::Ctrl + vterm::Key::Shift) {
+		} else if (key == SHORTCUT_PASTE) {
 			clipboardPaste();
 		} else if (key != vterm::Key::Invalid) {
 			terminal()->keyDown(key);

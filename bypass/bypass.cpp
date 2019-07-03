@@ -130,11 +130,14 @@ private:
 						NUMBER(rows);
 						POP(';');
 						resize(cols, rows);
+						processed = i;
+						start = processed;
 						continue;
 					// otherwise (unrecognized command) skip what we have and move on
 					default:
 						LOG(PTYENC) << "Unrecognized command " << buffer[i];
 						processed = i + 1;
+						start = processed;
 						continue;
 					}
 				}

@@ -914,12 +914,14 @@ namespace vterm {
 						if (!alternateBuffer_) {
 							otherScreen_ = screen_;
 							std::swap(state_, otherState_);
+							invalidateLastCharPosition();
 						}
 						state_.fg = palette_[defaultFg_];
 						state_.bg = palette_[defaultBg_];
 						state_.font = Font();
 						fillRect(helpers::Rect(screen_.cols(), screen_.rows()), ' ');
 						screen_.cursor() = Terminal::Cursor();
+						LOG(SEQ) << "Alternate screen on";
 					} else {
 						// go back from alternate buffer
 						if (alternateBuffer_) {
@@ -927,9 +929,9 @@ namespace vterm {
 							std::swap(state_, otherState_);
 							screen_.markDirty();
 						}
+						LOG(SEQ) << "Alternate screen off";
 					}
 					alternateBuffer_ = value;
-					invalidateLastCharPosition();
 					continue;
 				/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. 
 				 */

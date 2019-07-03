@@ -6,6 +6,8 @@
 #include <d2d1_2.h>
 #include <wrl.h>
 
+#include "helpers/string.h"
+
 #include "../application.h"
 
 namespace tpp {
@@ -78,7 +80,9 @@ namespace tpp {
 		// find the required font family - first get the index then obtain the family by the index
 		UINT32 findex;
 		BOOL fexists;
-		sfc->FindFamilyName(DEFAULT_TERMINAL_FONT, &findex, &fexists);
+		// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+		std::u16string fname = helpers::UTF8toUTF16(DEFAULT_TERMINAL_FONT);
+		sfc->FindFamilyName(reinterpret_cast<wchar_t const *>(fname.c_str()), &findex, &fexists);
 		Microsoft::WRL::ComPtr<IDWriteFontFamily> ff;
 		sfc->GetFontFamily(findex, &ff);
 		// now get the nearest font

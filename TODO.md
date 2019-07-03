@@ -4,9 +4,7 @@
 
 ## Bugs and missing features
 
-- configuration entirely via macros in config.h
 - selection + middle button is paste (via primary selection in X11)
-- screen buffer not properly preserved over resized on empty lines (like time of a command)
 
 ### Win32 Bugs
 

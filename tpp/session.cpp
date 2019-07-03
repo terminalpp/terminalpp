@@ -41,7 +41,7 @@ namespace tpp {
 		pty_ = new DEFAULT_SESSION_PTY(command_);
 		pty_->onTerminated += HANDLER(Session::onPTYTerminated);
 		// create the terminal backend
-		terminal_ = new DEFAULT_SESSION_BACKEND(window_->cols(), window_->rows(), pty_);
+		terminal_ = new DEFAULT_SESSION_TERMINAL(window_->cols(), window_->rows(), pty_);
 		/*
 			pty_,
 			vterm::Palette::ColorsXTerm256(), 
