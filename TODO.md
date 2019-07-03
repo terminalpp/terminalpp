@@ -1,13 +1,12 @@
 ﻿# TODOs
 
 - look at all TODOs and fix as many as possible, or convert to issues
-- priority synchronization should be done by condition variable instead of busy waiting
-- and cruicially, is the priority locking even necessary? 
 
 ## Bugs and missing features
 
 - configuration entirely via macros in config.h
 - selection + middle button is paste (via primary selection in X11)
+- screen buffer not properly preserved over resized on empty lines (like time of a command)
 
 ### Win32 Bugs
 

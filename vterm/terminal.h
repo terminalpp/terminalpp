@@ -646,16 +646,10 @@ namespace vterm {
 				m_.lock();
 				--priorityRequests_;
 			} else {
-				while (true) {
-					while (priorityRequests_ > 0)
-						std::this_thread::yield();
-					m_.lock();
-					if (priorityRequests_ > 0) {
-						m_.unlock();
-						continue;
-					}
-					break;
-				}
+				std::unique_lock<std::mutex> g(m_);
+				while (priorityRequests_ > 0)
+					cv_.wait(g);
+				g.release();
 			}
 			// we are locked now, store the 
 			oldCols_ = screen_.cols_;
@@ -670,6 +664,7 @@ namespace vterm {
 			bool resized = (oldCols_ != screen_.cols_) || (oldRows_ != screen_.rows_);
 			oldCols_ = screen_.cols_;
 			oldRows_ = screen_.rows_;
+			cv_.notify_all();
 			m_.unlock();
 			// make sure that we are calling the event *after* the lock is released
 			if (resized)
@@ -679,6 +674,7 @@ namespace vterm {
 		/** Guard for accessing the terminal buffer. 
 		 */
 		std::mutex m_;
+		std::condition_variable cv_;
 
 		/** Determines whether there is a priority request for the lock. 
 		 */
