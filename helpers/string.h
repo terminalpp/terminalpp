@@ -42,7 +42,6 @@ namespace helpers {
 		return str.str();
 	}
 
-
 	/** Converts a null terminated wide string in UTF-16 encoding into an std::string encoded in UTF-8.
 	  */
 	inline std::string UTF16toUTF8(char16_t const* str) {

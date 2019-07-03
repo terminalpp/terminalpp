@@ -1,9 +1,13 @@
 ﻿# TODOs
 
+- look at all TODOs and fix as many as possible, or convert to issues
 - priority synchronization should be done by condition variable instead of busy waiting
 - and cruicially, is the priority locking even necessary? 
 
 ## Bugs and missing features
+
+- configuration entirely via macros in config.h
+- selection + middle button is paste (via primary selection in X11)
 
 ### Win32 Bugs
 
@@ -11,7 +15,6 @@
 
 - fullscreen does not work
 - the rendering speed is not the best. It works for work just fine though. Althoiugh on WSL + vcxsrv the speed is actually quite good
-- text in clipboard does not stay after the app dies
 
 # Code Fixes
 
