@@ -125,6 +125,16 @@ namespace tpp {
 
         friend class X11Application;
 
+		class MotifHints {
+		public:
+			unsigned long   flags;
+			unsigned long   functions;
+			unsigned long   decorations;
+			long            inputMode;
+			unsigned long   status;
+		};
+
+
         /** Converts the KeySym and state as reported by X11 to vterm's Key. 
          */
         static vterm::Key GetKey(KeySym k, unsigned state);
@@ -148,6 +158,10 @@ namespace tpp {
 
         std::mutex drawGuard_;
         std::atomic<bool> invalidate_;
+
+		/** Info about the window state before fullscreen was triggered. 
+		 */
+        XWindowChanges fullscreenRestore_;
 
 		static std::unordered_map<Window, X11TerminalWindow *> Windows_;
 

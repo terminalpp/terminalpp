@@ -76,6 +76,7 @@ namespace tpp {
 		Atom formatStringUTF8_;
 		Atom formatTargets_;
 		Atom clipboardIncr_;
+		Atom motifWmHints_;
 		std::string clipboard_;
 
 	}; // tpp::X11Application

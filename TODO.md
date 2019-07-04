@@ -1,5 +1,6 @@
 ﻿# TODOs
 
+- get rid of warnings on windows and linux
 - look at all TODOs and fix as many as possible, or convert to issues
 
 ## Bugs and missing features
@@ -10,7 +11,6 @@
 
 ### X11 Bugs
 
-- fullscreen does not work
 - the rendering speed is not the best. It works for work just fine though. Althoiugh on WSL + vcxsrv the speed is actually quite good
 
 # Code Fixes

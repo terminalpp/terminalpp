@@ -76,9 +76,40 @@ namespace tpp {
 		XFreeGC(display_, gc_);
 	}
 
+    /* From: https://www.tonyobryan.com//index.php?article=9
+     */
 	void X11TerminalWindow::doSetFullscreen(bool value) {
-		MARK_AS_UNUSED(value);
-		NOT_IMPLEMENTED;
+		MotifHints hints;
+		hints.flags = 2;
+		if (value == true) {
+            // get window size & position
+            XWindowAttributes attrs;
+            Window childW; 
+			XGetWindowAttributes(display_, window_, & attrs);
+            XTranslateCoordinates(display_, window_, DefaultRootWindow(display_), 0, 0, & fullscreenRestore_.x, & fullscreenRestore_.y, &childW);
+			hints.decorations = 0;
+            fullscreenRestore_.width = attrs.width;
+            fullscreenRestore_.height = attrs.height;
+            fullscreenRestore_.x -= attrs.x;
+            fullscreenRestore_.y -= attrs.y;
+            // remove the decorations
+            XChangeProperty(display_, window_, app()->motifWmHints_, app()->motifWmHints_, 32, PropModeReplace, (unsigned char*)& hints, 5);
+            // update window size and position
+            Screen * screen = XScreenOfDisplay(display_, XDefaultScreen(display_));
+    		XMoveResizeWindow(display_, window_, 0, 0, XWidthOfScreen(screen), XHeightOfScreen(screen));
+		} else {
+			hints.decorations = 1;
+            XChangeProperty(display_, window_, app()->motifWmHints_, app()->motifWmHints_, 32, PropModeReplace, (unsigned char*)& hints, 5);
+    		XMoveResizeWindow(
+                display_,
+                window_,
+                fullscreenRestore_.x,
+                fullscreenRestore_.y,
+                fullscreenRestore_.width,
+                fullscreenRestore_.height
+            );
+		}
+		XMapWindow(display_, window_);
 	}
 
 	void X11TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {

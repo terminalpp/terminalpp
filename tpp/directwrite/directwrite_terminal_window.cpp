@@ -94,14 +94,12 @@ namespace tpp {
 				int width = mInfo.rcMonitor.right - mInfo.rcMonitor.left;
 				int height = mInfo.rcMonitor.bottom - mInfo.rcMonitor.top;
 				SetWindowPos(hWnd_, HWND_TOP, mInfo.rcMonitor.left, mInfo.rcMonitor.top, width, height, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-			}
-			else {
+			} else {
 				// we are not actually fullscreen
 				fullscreen_ = false;
 				LOG("Win32") << "Unable to enter fullscreen mode";
 			}
-		}
-		else {
+		} else {
 			SetWindowLong(hWnd_, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
 			SetWindowPlacement(hWnd_, &wndPlacement_);
 			SetWindowPos(hWnd_, nullptr, 0, 0, 0, 0,
