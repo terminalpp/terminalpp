@@ -40,7 +40,7 @@ namespace tpp {
 			widthPx_,
 			heightPx_,
 			nullptr, // handle to parent
-			nullptr, // handle to menu - TODO I should actually create a menu
+			nullptr, // handle to menu 
 			app()->hInstance_, // module handle
 			this // lParam for WM_CREATE message
 		);
@@ -294,7 +294,7 @@ namespace tpp {
 				if (k != vterm::Key::Invalid)
 					tw->keyDown(k);
 				// returning w/o calling the default window proc means that the OS will not interfere by interpreting own shortcuts
-				// TODO perhaps this should be expandable for more shortcuts as well? 
+				// NOTE add other interfering shortcuts as necessary
 				if (k == vterm::Key::F10)
 				    return 0;
 				break;

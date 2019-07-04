@@ -90,7 +90,7 @@ namespace tpp {
 	void X11Application::mainLoop() {
         try {
             XEvent e;
-            while (true) { // TODO while terminate
+            while (true) { 
                 XNextEvent(xDisplay_, &e);
 				if (e.type == ClientMessage && static_cast<unsigned long>(e.xclient.data.l[0]) == fpsTimerMessage_) {
 					X11TerminalWindow::FPSTimer();

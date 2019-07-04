@@ -60,8 +60,6 @@ namespace vterm {
 	/** Waits for the attached process to finish.
 	
 	    Cleans the handles so that any pendion IO operations are cancelled and we do not end up with hanging operations. 
-
-		TODO waiting on a process that has already terminated should produce error, which we can happily ignore, correct? 
 	 */
     helpers::ExitCode LocalPTY::doWaitFor() {
 		size_t result = WaitForSingleObject(pInfo_.hProcess, INFINITE);

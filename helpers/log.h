@@ -223,7 +223,7 @@ namespace helpers {
 					(*s_) << m.text;
 					return;
 				}
-				// TODO actually print the message
+				// actually print the message
 				if (printTime_) {
 					tm t;
 #ifdef _WIN64

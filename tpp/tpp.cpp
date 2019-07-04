@@ -47,7 +47,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #elif __linux__
 int main(int argc, char* argv[]) {
 	try {
-		// TODO add command line options parsing
 		MARK_AS_UNUSED(argc);
 		MARK_AS_UNUSED(argv);
 		// create the application singleton

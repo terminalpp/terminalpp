@@ -81,8 +81,6 @@ namespace vterm {
 
 	protected:
 
-		/** TODO should this happen here, or when the buffer is actually flipped? 
-		 */
 		void doOnResize(unsigned cols, unsigned rows) override {
 			invalidateLastCharPosition();
 			// the actual screen has been resized already

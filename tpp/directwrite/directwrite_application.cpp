@@ -29,8 +29,9 @@ namespace tpp {
 
 	DirectWriteApplication::DirectWriteApplication(HINSTANCE hInstance) :
 		hInstance_(hInstance) {
-		// TODO this should be conditional on a debug flag
+#ifndef NDEBUG
 		AttachConsole();
+#endif
 		registerTerminalWindowClass();
 		D2D1_FACTORY_OPTIONS options;
 		ZeroMemory(&options, sizeof(D2D1_FACTORY_OPTIONS));
@@ -49,7 +50,7 @@ namespace tpp {
 	}
 
 	DirectWriteApplication::~DirectWriteApplication() {
-		// TODO how to release the DirectX factories?
+		// DirectX factories are release via their WRL COM pointers
 	}
 
 	TerminalWindow* DirectWriteApplication::createTerminalWindow(Session* session, TerminalWindow::Properties const& properties, std::string const& name) {

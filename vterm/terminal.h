@@ -366,8 +366,6 @@ namespace vterm {
 		};
 
 		/** 
-
-		    TODO This is perhaps very stupid name. 
 		 */
 		class ScreenLock {
 		public:

@@ -1165,8 +1165,7 @@ namespace vterm {
 	}
 
 	void VT100::fillRect(helpers::Rect const& rect, helpers::Char c, Color fg, Color bg, Font font) {
-		LOG(SEQ) << "fillRect (" << rect.left << "," << rect.top << "," << rect.right << "," << rect.bottom << ")  fg: " << fg << ", bg: " << bg;
-		// TODO add print of the char as well
+		LOG(SEQ) << "fillRect (" << rect.left << "," << rect.top << "," << rect.right << "," << rect.bottom << ")  fg: " << fg << ", bg: " << bg << ", character: " << c;
 		for (unsigned row = rect.top; row < rect.bottom; ++row) {
 			for (unsigned col = rect.left; col < rect.right; ++col) {
 				Terminal::Cell& cell = screen_.at(col, row);

@@ -19,8 +19,6 @@ namespace tpp {
 
 	/** Encapsulates a single session in the terminal. 
 
-	    TODO: This should be the main hub for managing and persisting the session properties in tpp. 
-
 	 */
 	class Session : public helpers::Object {
 	public:
