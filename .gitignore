@@ -262,3 +262,4 @@ __pycache__/
 
 #my own build dir
 build/
+build-release/

@@ -56,8 +56,19 @@ namespace tpp {
 				XFreePixmap(display_, buffer_);
 				buffer_ = 0;
 			}
+            updateTextStructures(widthPx, cellWidthPx_);
 			TerminalWindow::windowResized(widthPx, heightPx);
 		}
+
+        void doSetZoom(double value) override {
+            TerminalWindow::doSetZoom(value);
+            updateTextStructures(widthPx_, cellWidthPx_);
+        }
+
+        void updateTextStructures(unsigned width, unsigned fontWidth) {
+            delete text_;
+            text_ = new XftCharSpec[width / fontWidth];
+        }
 
 		void doInvalidate() override {
             // set the flag
@@ -76,41 +87,61 @@ namespace tpp {
 		unsigned doPaint() override;
 
 		void doSetForeground(vterm::Color const& fg) override {
+            drawText();
 			fg_ = toXftColor(fg);
 		}
 
 		void doSetBackground(vterm::Color const& bg) override {
+            drawText();
 			bg_ = toXftColor(bg);
 		}
 
 		void doSetFont(vterm::Font font) override {
+            drawText();
 			font_ = Font::GetOrCreate(font, cellHeightPx_);
+            textBlink_ = font.blink();
+            textUnderline_ = font.underline();
+            textStrikethrough_ = font.strikethrough();
 		}
 
 		void doDrawCell(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
-			if (col == cols() - 1 || row == rows() - 1) {
-				unsigned width = (col == cols() - 1) ? widthPx_ - (cols() - 1) * cellWidthPx_ : cellWidthPx_;
-				unsigned height = (row == rows() - 1) ? heightPx_ - (cols() - 1) * cellHeightPx_ : cellHeightPx_;
-				XftColor bg = toXftColor(terminal()->defaultBackgroundColor());
-				XftDrawRect(draw_, &bg, col * cellWidthPx_, row * cellHeightPx_, width, height);
-			}
-			XftDrawRect(draw_, &bg_, col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_, cellHeightPx_);
-			// if the cell is blinking, only draw the text if blink is on
-			if (!c.font().blink() || blink_) {
-				XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c().toCharPtr()), c.c().size());
-				// renders underline and strikethrough lines
-				// TODO for now, this is just approximate values of just below and 2/3 of the font, which is blatantly copied from st and is most likely not typographically correct (see issue 12)
-				if (c.font().underline())
-					XftDrawRect(draw_, &fg_, col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent + 1, cellWidthPx_, 1);
-				if (c.font().strikethrough())
-					XftDrawRect(draw_, &fg_, col * cellWidthPx_, row * cellHeightPx_ + (2 * font_->handle()->ascent / 3), cellWidthPx_, 1);
-			}
+            if (textSize_ != 0 && (col != textCol_ + textSize_ || row != textRow_))
+                drawText();
+            if (textSize_ == 0) {
+                textCol_ = col;
+                textRow_ = row;
+                text_[0].x = col * cellWidthPx_;
+                text_[0].y = row * cellHeightPx_ + font_->handle()->ascent;
+            } else {
+                text_[textSize_].x = text_[textSize_ - 1].x + cellWidthPx_;
+                text_[textSize_].y = text_[textSize_ - 1].y;
+            }
+            text_[textSize_].ucs4 = c.c().codepoint();
+            ++textSize_;
 		}
 
 		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
 			fg_ = toXftColor(c.fg());
 			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c().toCharPtr()), c.c().size());
 		}
+
+        void drawText() {
+            // TODO draw larger rectangle if we are at the end of the screen
+            if (textSize_ == 0)
+                return;
+			XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_, textSize_ * cellWidthPx_, cellHeightPx_);
+			// if the cell is blinking, only draw the text if blink is on
+			if (!textBlink_ || blink_) {
+                XftDrawCharSpec(draw_, &fg_, font_->handle(), text_, textSize_);
+				// renders underline and strikethrough lines
+				// TODO for now, this is just approximate values of just below and 2/3 of the font, which is blatantly copied from st and is most likely not typographically correct (see issue 12)
+				if (textUnderline_)
+					XftDrawRect(draw_, &fg_,textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->handle()->ascent + 1, cellWidthPx_ * textSize_, 1);
+				if (textStrikethrough_)
+					XftDrawRect(draw_, &fg_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + (2 * font_->handle()->ascent / 3), cellWidthPx_ * textSize_, 1);
+			}
+            textSize_ = 0;
+        }
 
 		XftColor toXftColor(vterm::Color const& c) {
 			XftColor result;
@@ -155,6 +186,19 @@ namespace tpp {
 		XftColor fg_;
 		XftColor bg_;
 		Font * font_;
+
+
+        XftCharSpec * text_;
+
+        /** Text buffer rendering data.
+         */
+        unsigned textCol_;
+        unsigned textRow_;
+        unsigned textSize_;
+        bool textBlink_;
+        bool textUnderline_;
+        bool textStrikethrough_;
+
 
         std::mutex drawGuard_;
         std::atomic<bool> invalidate_;

@@ -27,7 +27,12 @@ namespace tpp {
 	    visual_(DefaultVisual(display_, screen_)),
 	    colorMap_(DefaultColormap(display_, screen_)),
 	    buffer_(0),
-	    draw_(nullptr) {
+	    draw_(nullptr),
+        text_(nullptr),
+        textSize_(0),
+        textBlink_(false),
+        textUnderline_(false),
+        textStrikethrough_(false) {
 		unsigned long black = BlackPixel(display_, screen_);	/* get color black */
 		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
         Window parent = RootWindow(display_, screen_);
@@ -62,6 +67,8 @@ namespace tpp {
         // create input context for the window... The extra arguments to the XCreateIC are c-c c-v from the internet and for now are a mystery to me
     	ic_ = XCreateIC(app()->xIm_, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
     				XNClientWindow, window_, XNFocusWindow, window_, nullptr);
+
+        updateTextStructures(widthPx_, cellWidthPx_);
 
         Windows_[window_] = this;
 	}
