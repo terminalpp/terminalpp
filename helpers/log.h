@@ -14,8 +14,11 @@
 
 #include "helpers.h"
 
-//#define LOG ::helpers::Log::CreateWriter(__FILE__, __LINE__)
+#ifdef NDEBUG
 #define LOG if (false) ::helpers::Log::CreateWriter(__FILE__, __LINE__)
+#else 
+#define LOG ::helpers::Log::CreateWriter(__FILE__, __LINE__)
+#endif
 
 namespace helpers {
 

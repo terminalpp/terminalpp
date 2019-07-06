@@ -11,8 +11,6 @@
 
 ### X11 Bugs
 
-- the rendering speed is not the best. It works for work just fine though. Althoiugh on WSL + vcxsrv the speed is actually quite good
-
 # Code Fixes
 
 # Code Improvements 

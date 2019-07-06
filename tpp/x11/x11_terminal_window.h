@@ -126,9 +126,15 @@ namespace tpp {
 		}
 
         void drawText() {
-            // TODO draw larger rectangle if we are at the end of the screen
             if (textSize_ == 0)
                 return;
+			// if we are drawing the last col, or row, clear remaining border as well
+			if (textCol_ + textSize_ == cols() || textRow_ == rows() - 1) {
+				unsigned clearW = (textCol_ + textSize_ == cols()) ? (widthPx_ - (textCol_ * cellWidthPx_)) : (textSize_ * cellWidthPx_);
+				unsigned clearH = (textRow_ == rows() - 1) ? (heightPx_ - (textRow_ * cellHeightPx_)) : (cellHeightPx_);
+				XftColor clearC = toXftColor(terminal()->defaultBackgroundColor());
+				XftDrawRect(draw_, &clearC, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_, clearW, clearH);
+			}
 			XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_, textSize_ * cellWidthPx_, cellHeightPx_);
 			// if the cell is blinking, only draw the text if blink is on
 			if (!textBlink_ || blink_) {
