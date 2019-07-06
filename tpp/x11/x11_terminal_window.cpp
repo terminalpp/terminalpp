@@ -144,6 +144,8 @@ namespace tpp {
 		}
 		draw_ = XftDrawCreate(display_, buffer_, visual_, colorMap_);
 		unsigned numCells = drawBuffer(forceDirty);
+        // draw any remaining cells
+        drawText();
 		// first clear the borders that won't be used (don't clear the whole window to prevent flicker)
         unsigned marginRight = widthPx_ % cellWidthPx_;
         unsigned marginBottom = heightPx_ % cellHeightPx_;
