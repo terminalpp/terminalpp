@@ -1,8 +1,9 @@
+#ifdef _WIN64
+
 #include "bypass_pty.h"
 
 namespace vterm {
 
-#ifdef _WIN64
 
 	/** Starts the local pseudoterminal for given command.
 	 */
@@ -98,36 +99,6 @@ namespace vterm {
 		CloseHandle(pipePTYIn_);
 	}
 
-#elif __linux__
-	BypassPTY::BypassPTY(helpers::Command const& command) :
-		command_(command) {
-		NOT_IMPLEMENTED;
-	}
-
-	BypassPTY::~BypassPTY() {
-		terminate();
-	}
-
-	size_t BypassPTY::write(char const* buffer, size_t size) {
-		NOT_IMPLEMENTED;
-	}
-
-	size_t BypassPTY::read(char* buffer, size_t availableSize) {
-		NOT_IMPLEMENTED;
-	}
-
-	void BypassPTY::resize(unsigned cols, unsigned rows) {
-		NOT_IMPLEMENTED;
-	}
-
-	void BypassPTY::doTerminate() {
-		NOT_IMPLEMENTED;
-	}
-
-	helpers::ExitCode BypassPTY::doWaitFor() {
-		NOT_IMPLEMENTED;
-	}
-
-#endif
-
 } // namespace vterm
+
+#endif // _WIN64

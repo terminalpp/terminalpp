@@ -112,12 +112,7 @@ namespace tpp {
 		TerminalWindow(Session* session, Properties const& properties, std::string const& title);
 
 		void paint() {
-			helpers::Timer t;
-			t.start();
-			unsigned cells = doPaint();
-			double time = t.stop();
-//			if (cells > 200)
-//			    LOG << "Repaint event: cells: " << cells << ",  ms: " << (time * 1000);
+			doPaint();
 		}
 
 		/** Returns the selected area. 
@@ -141,6 +136,7 @@ namespace tpp {
             Setting the manual flag to false indicates that the selection is to be cleared due to other things than direct user interaction with the window. 
          */
 		virtual void selectionClear(bool manual = true) {
+            MARK_AS_UNUSED(manual);
 			selectionStart_.col = 0;
 			selectionStart_.row = 0;
 			selectionEnd_.col = 0;

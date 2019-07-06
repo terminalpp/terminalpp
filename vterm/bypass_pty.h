@@ -1,8 +1,7 @@
+#ifdef _WIN64
 #pragma once
 
-#ifdef _WIN64
 #include "windows.h"
-#endif
 
 #include "pty.h"
 #include "helpers/process.h"
@@ -37,8 +36,6 @@ namespace vterm {
 	private:
 		helpers::Command command_;
 
-#ifdef _WIN64
-
 		/** Starts the process with the specified command.
 		 */
 		void start();
@@ -61,9 +58,8 @@ namespace vterm {
 		 */
 		PROCESS_INFORMATION pInfo_;
 
-#endif
-
 	};
 
-
 } // namespace vterm
+
+#endif // _WIN64

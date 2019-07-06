@@ -144,8 +144,9 @@ namespace tpp {
 
     bool X11TerminalWindow::selectionPaste() {
         // if the selection belongs to the current window, there is no need to consult X, otherwise obtain the PRIMARY selection from the X server
-        if (! TerminalWindow::selectionPaste())
+        if (! TerminalWindow::selectionPaste()) 
             XConvertSelection(display_, app()->primaryName_, app()->formatStringUTF8_, app()->primaryName_, window_, CurrentTime);
+        return true;
     }
 
 	void X11TerminalWindow::clipboardPaste() {
