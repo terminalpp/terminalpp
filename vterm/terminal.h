@@ -226,31 +226,50 @@ namespace vterm {
 			Screen(unsigned cols, unsigned rows) :
 				cols_(cols),
 				rows_(rows),
-				cells_(new Cell[cols * rows]) {
+				cells_(new Cell*[rows]),
+                dirtyRows_(new bool[rows]) {
+                for (size_t i = 0; i < rows; ++i)
+                    cells_[i] = new Cell[cols];
 			}
 
 			Screen(Screen const& from) :
 				cols_(from.cols_),
 				rows_(from.rows_),
 				cursor_(from.cursor_),
-				cells_(new Cell[from.cols_ * from.rows_]) {
-				memcpy(cells_, from.cells_, sizeof(Cell) * cols_ * rows_);
+				cells_(new Cell*[from.rows_]),
+                dirtyRows_(new bool[from.rows_]) {
+                for (size_t i = 0; i < rows_; ++i) {
+                    cells_[i] = new Cell[cols_];
+                    memcpy(cells_[i], from.cells_[i], sizeof(Cell) * cols_);
+                }
+				//memcpy(cells_, from.cells_, sizeof(Cell) * cols_ * rows_);
 			}
 
 			Screen& operator = (Screen const& other) {
 				if (cols_ != other.cols_ || rows_ != other.rows_) {
+                    for (size_t i = 0; i < rows_; ++i)
+                        delete [] cells_[i];
+					delete[] cells_;
 					cols_ = other.cols_;
 					rows_ = other.rows_;
-					delete[] cells_;
-					cells_ = new Cell[cols_ * rows_];
+					cells_ = new Cell*[rows_];
+                    for (size_t i = 0; i < rows_; ++i) 
+                        cells_[i] = new Cell[cols_];
+                    delete [] dirtyRows_;
+                    dirtyRows_ = new bool[rows_];
 				}
 				cursor_ = other.cursor_;
-				memcpy(cells_, other.cells_, sizeof(Cell) * cols_ * rows_);
+                for (size_t i = 0; i < rows_; ++i) 
+                    memcpy(cells_[i], other.cells_[i], sizeof(Cell) * cols_);
+				//memcpy(cells_, other.cells_, sizeof(Cell) * cols_ * rows_);
 				return *this;
 			}
 
 			~Screen() {
+                for (size_t i = 0; i < rows_; ++i)
+                    delete [] cells_[i];
 				delete[] cells_;
+                delete[] dirtyRows_;
 			}
 
 			unsigned cols() const {
@@ -260,6 +279,17 @@ namespace vterm {
 			unsigned rows() const {
 				return rows_;
 			}
+
+            bool isRowDirty(unsigned row) const {
+                ASSERT(row < rows_);
+                return dirtyRows_[row];
+            }
+
+            void markRowDirty(unsigned row, bool value = true) {
+                ASSERT(row < rows_);
+                dirtyRows_[row] = value;
+            }
+
 
 			Cursor const& cursor() const {
 				return cursor_;
@@ -271,17 +301,15 @@ namespace vterm {
 
 			Cell const& at(unsigned col, unsigned row) const {
 				ASSERT(col < cols_ && row < rows_) << "Cell out of range";
-				return cells_[row * cols_ + col];
+				return cells_[row][col];
 			}
 
 			Cell & at(unsigned col, unsigned row) {
 				ASSERT(col < cols_ && row < rows_) << "Cell out of range";
-				return cells_[row * cols_ + col];
+				return cells_[row][col];
 			}
 
 			/** Resizes the screen to given number of columns and rows. 
-
-			    TODO The resize resets cursor to the top left corner. This is probably wrong and should be done differently
 			 */
 			void resize(unsigned cols, unsigned rows) {
 				if (cols_ != cols || rows_ != rows) {
@@ -296,13 +324,31 @@ namespace vterm {
 			/** Marks the entire screen dirty. 
 			 */
 			void markDirty() {
-				for (size_t i = 0, e = static_cast<size_t>(cols_) * rows_; i < e; ++i)
-					cells_[i].markDirty(true);
+                for (size_t y = 0; y < rows_; ++y)
+                    dirtyRows_[y] = true;
 			}
+
+            /** Inserts given number of lines at given top row.
+                
+                Scrolls down all lines between top and bottom accordingly. Fills the new lines with the provided cell.
+             */
+            void insertLines(unsigned lines, unsigned top, unsigned bottom, Cell fill);
+
+            /** Deletes given number of lines at given top row.
+                
+                Scrolls up all lines between top and bottom accordingly. Fills the new lines at the bottom with the provided cell.
+             */
+            void deleteLines(unsigned lines, unsigned top, unsigned bottom, Cell fill);
 
 		private:
 
 			friend class Terminal;
+
+            /** Fills the specified row with given character. 
+
+                Copies larger and larger number of cells at once to be more efficient than simple linear copy. 
+             */
+            void fillRow(Cell * row, Cell const & fill);
 
 			/** Resizes the cell buffer. 
 
@@ -311,6 +357,16 @@ namespace vterm {
 				The line is the copied. 
 			 */
 			void resizeCells(unsigned newCols, unsigned newRows) {
+                for (size_t i = 0; i < rows_; ++i)
+                    delete [] cells_[i];
+                delete[] cells_;
+                cells_ = new Cell*[newRows];
+                for (size_t i = 0; i < newRows; ++i) 
+                    cells_[i] = new Cell[newCols];
+                delete [] dirtyRows_;
+                dirtyRows_ = new bool[newRows];
+
+                #ifdef HAHA
 				unsigned i = cursor_.row * cols_ + cursor_.col + 1;
 				unsigned stopRow = 0;
 				while (i-- > 0) {
@@ -357,12 +413,14 @@ namespace vterm {
 							break;
 					}
 				}
+                #endif 
 			}
 
 			unsigned cols_;
 			unsigned rows_;
 			Cursor cursor_;
-			Cell* cells_;
+			Cell** cells_;
+            bool * dirtyRows_;
 		};
 
 		/** 

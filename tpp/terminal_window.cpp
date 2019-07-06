@@ -192,6 +192,8 @@ namespace tpp {
 		vterm::Selection sel = selectedArea();
 		// now loop over the entire terminal and update the cells
 		for (unsigned r = 0, re = rows(); r < re; ++r) {
+            bool rowDirty = sl->isRowDirty(r) || forceDirty;
+            sl->markRowDirty(r, false);
 			for (unsigned c = 0, ce = cols(); c < ce; ++c) {
 				// determine if selection should be enabled
 				if (!inSelection && sel.contains(c, r)) {
@@ -204,7 +206,7 @@ namespace tpp {
 					inSelection = false;
 				}
 				vterm::Terminal::Cell& cell = sl->at(c, r);
-				if (forceDirty || inSelection || cell.dirty() || (cell.font().blink() && blinkDirty_)) {
+				if (rowDirty || inSelection || cell.dirty() || (cell.font().blink() && blinkDirty_)) {
 					++numCells;
 					// if we are in selection, mark the cell as dirty, otherwise mark as clean
 					cell.markDirty(inSelection);

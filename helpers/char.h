@@ -36,6 +36,20 @@ namespace helpers {
 
 		Char(Char const& from) = default;
 
+        bool operator == (Char const & other) const {
+            for (size_t i = 0; i < 4; ++i)
+                if (bytes_[i] != other.bytes_[i])
+                    return false;
+            return true;
+        }
+
+        bool operator != (Char const & other) {
+            for (size_t i = 0; i < 4; ++i)
+                if (bytes_[i] != other.bytes_[i])
+                    return true;
+            return false;
+        }
+
 		/** Creates the character from given ASCII character. 
 		 */
 		static Char FromASCII(char x) {

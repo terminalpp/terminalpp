@@ -5,10 +5,14 @@
 
 ## Bugs and missing features
 
+- rewrite buffer resize into the new by row cell arrangement
+- add Cell constructor and remove vt100 delete and insert lines, call screen directly
 - add command line arguments so that terminal can be proper terminal emulator replacement in Linux
 - add zoom out? and default zoom? 
 
 ### Win32 Bugs
+
+- create console window conditionally on NDEBUG flag
 
 ### X11 Bugs
 
@@ -16,7 +20,6 @@
 
 # Code Improvements 
 
-- screen should have scrolling functions in itself (?) - I guess yes...
 - improve logging - the logging overhead is gigantic, find a way to lower it
 - add tests & CI
 - add size selection to PTY? or not really, since it can always be resized. 

@@ -1178,51 +1178,21 @@ namespace vterm {
 	}
 
 	void VT100::deleteLine(unsigned lines, unsigned from) {
-		// don't do any scrolling if origin is outside scrolling region
-		if (from < state_.scrollStart || from >= state_.scrollEnd)
-			return;
-		// delete the n lines by moving the lines below them up, be defensive on arguments
-		lines = std::min(lines, state_.scrollEnd - from);
-		for (unsigned r = from, re = state_.scrollEnd - lines; r < re; ++r) {
-			for (unsigned c = 0; c < screen_.cols(); ++c) {
-				Terminal::Cell& cell = screen_.at(c, r);
-				cell = screen_.at(c, r + lines);
-			}
-		}
-		// now make the lines at the bottom empty
-		for (unsigned r = state_.scrollEnd - lines; r < state_.scrollEnd; ++r) {
-			for (unsigned c = 0; c < screen_.cols(); ++c) {
-				Terminal::Cell& cell = screen_.at(c, r);
-				cell.setC(' ');
-				cell.setFg(state_.fg);
-				cell.setBg(state_.bg);
-				cell.setFont(Font());
-			}
-		}
+        Cell c;
+        c.setFg(state_.fg);
+        c.setBg(state_.bg);
+        c.setFont(Font());
+        c.setC(' ');
+        screen_.deleteLines(lines, from, state_.scrollEnd, c);
 	}
 
 	void VT100::insertLine(unsigned lines, unsigned from) {
-		// don't do any scrolling if origin is outside scrolling region
-		if (from < state_.scrollStart || from >= state_.scrollEnd)
-			return;
-		// create space by moving the contents in scroll window appropriate amount of lines down
-		lines = std::min(lines, state_.scrollEnd - from);
-		for (unsigned r = state_.scrollEnd - 1, rs = from + lines; r >= rs; --r) {
-			for (unsigned c = 0; c < screen_.cols(); ++c) {
-				Terminal::Cell& cell = screen_.at(c, r);
-				cell = screen_.at(c, r - lines);
-			}
-		}
-		// now clear the top n lines
-		for (unsigned r = from, re = from + lines; r < re; ++r) {
-			for (unsigned c = 0; c < screen_.cols(); ++c) {
-				Terminal::Cell& cell = screen_.at(c, r);
-				cell.setC(' ');
-				cell.setFg(state_.fg);
-				cell.setBg(state_.bg);
-				cell.setFont(Font());
-			}
-		}
+        Cell c;
+        c.setFg(state_.fg);
+        c.setBg(state_.bg);
+        c.setFont(Font());
+        c.setC(' ');
+        screen_.insertLines(lines, from, state_.scrollEnd, c);
 	}
 
 	void VT100::deleteCharacters(unsigned num) {
