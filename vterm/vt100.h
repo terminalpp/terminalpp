@@ -240,6 +240,7 @@ namespace vterm {
 				scrollEnd(rows),
 				lastCharCol(std::numeric_limits<unsigned>::max()),
 				lastCharRow(0) {
+				MARK_AS_UNUSED(cols);
 			}
 
 			void resize(unsigned cols, unsigned rows) {

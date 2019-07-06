@@ -134,7 +134,7 @@ namespace vterm {
 
 			void setFont(Font const& value) {
 				font_ = value;
-				dirty_ = true;
+				bits.dirty_ = true;
 			}
 
 			/** Text color.
@@ -145,7 +145,7 @@ namespace vterm {
 
 			void setFg(Color value) {
 				fg_ = value;
-				dirty_ = true;
+				bits.dirty_ = true;
 			}
 
 			/** Background color.
@@ -156,7 +156,7 @@ namespace vterm {
 
 			void setBg(Color value) {
 				bg_ = value;
-				dirty_ = true;
+				bits.dirty_ = true;
 			}
 
 			/** Character to be displayed (utf8).
@@ -167,26 +167,26 @@ namespace vterm {
 
 			void setC(helpers::Char value) {
 				c_ = value;
-				dirty_ = true;
-				lineEnd_ = false;
+				bits.dirty_ = true;
+				bits.lineEnd_ = false;
 			}
 
 			/** Determines if the cell is dirty, i.e. it should be redrawn.
 			 */
 			bool dirty() const {
-				return dirty_;
+				return bits.dirty_;
 			}
 
 			void markDirty(bool value = true) {
-				dirty_ = value;
+				bits.dirty_ = value;
 			}
 
 			bool isLineEnd() const {
-				return lineEnd_;
+				return bits.lineEnd_;
 			}
 
 			void markAsLineEnd(bool value = true) {
-				lineEnd_ = value;
+				bits.lineEnd_ = value;
 			}
 
 			/** Default constructor for a cell created white space on a black background.
@@ -194,15 +194,15 @@ namespace vterm {
 			Cell() :
 				fg_(Color::White()),
 				bg_(Color::Black()),
-				c_(helpers::Char::FromASCII(' ')),
-				dirty_(true),
-			    lineEnd_(false) {
+				c_(helpers::Char::FromASCII(' ')) {
+				bits.dirty_ = true;
+				bits.lineEnd_ = false;
 			}
 
 			Cell& operator = (Cell const& other) {
 				if (this != &other) {
 					memcpy(this, &other, sizeof(Cell));
-					dirty_ = true;
+					bits.dirty_ = true;
 				}
 				return *this;
 			}
@@ -217,7 +217,7 @@ namespace vterm {
 				unsigned dirty_ : 1;
 				// indicates last character of a line
 				unsigned lineEnd_ : 1;
-			};
+			} bits;
 		};
 
 		class Screen {
@@ -311,12 +311,12 @@ namespace vterm {
 				The line is the copied. 
 			 */
 			void resizeCells(unsigned newCols, unsigned newRows) {
-				unsigned x = cursor_.row * cols_ + cursor_.col + 1;
+				unsigned i = cursor_.row * cols_ + cursor_.col + 1;
 				unsigned stopRow = 0;
-				while (x-- > 0) {
-					if (cells_[x].isLineEnd()) {
+				while (i-- > 0) {
+					if (cells_[i].isLineEnd()) {
 						// update new col & row
-						stopRow = (x / cols_) + 1;
+						stopRow = (i / cols_) + 1;
 						break;
 					}
 				}
