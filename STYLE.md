@@ -1,4 +1,3 @@
 # Style Guide
 
-- functions which start with `do...` are private or protected and must have public function with same name w/o the `do` prefix
-
+There is no definitive code guide. If you want to contribute respect the code style used in the code around and make sure you document the code properly. 

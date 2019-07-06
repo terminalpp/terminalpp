@@ -5,10 +5,10 @@
 
 ## Bugs and missing features
 
-### Win32 Bugs
+- add command line arguments so that terminal can be proper terminal emulator replacement in Linux
+- add zoom out? and default zoom? 
 
-- verify that middle button selection works
-- verify that selection blinking does not change fg color
+### Win32 Bugs
 
 ### X11 Bugs
 
