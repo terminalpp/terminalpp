@@ -142,7 +142,6 @@ namespace tpp {
         XSetSelectionOwner(display_, app()->primaryName_, window_, CurrentTime);
     }
 
-
     bool X11TerminalWindow::selectionPaste() {
         // if the selection belongs to the current window, there is no need to consult X, otherwise obtain the PRIMARY selection from the X server
         if (! TerminalWindow::selectionPaste())
@@ -437,6 +436,7 @@ namespace tpp {
 					response.property = e.xselectionrequest.property;
 				// otherwise, if UTF8_STRING, or a STRING is requested, we just send what we have 
 				} else if (response.target == app->formatString_ || response.target == app->formatStringUTF8_) {
+                    std::string clipboard = (response.selection == app->clipboardName_) ? app->clipboard_ : tw->terminal()->getText(tw->selectedArea());
 					XChangeProperty(
 						tw->display_,
 						e.xselectionrequest.requestor,
@@ -444,8 +444,8 @@ namespace tpp {
 						e.xselectionrequest.target,
 						8, // utf-8 is encoded in chars, i.e. 8 bits
 						PropModeReplace,
-						reinterpret_cast<unsigned char const *>(app->clipboard_.c_str()),
-						app->clipboard_.size()
+						reinterpret_cast<unsigned char const *>(clipboard.c_str()),
+						clipboard.size()
 					);
 					response.property = e.xselectionrequest.property;
 				}

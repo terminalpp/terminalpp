@@ -8,10 +8,9 @@
 ### Win32 Bugs
 
 - verify that middle button selection works
+- verify that selection blinking does not change fg color
 
 ### X11 Bugs
-
-- selection fg color is wrong - seems to depend on blinking (can be in Windows too)
 
 # Code Fixes
 

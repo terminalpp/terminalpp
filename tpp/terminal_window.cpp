@@ -164,7 +164,6 @@ namespace tpp {
         return false;
     }
 
-
 	unsigned TerminalWindow::drawBuffer(bool forceDirty) {
 		dirty_ = false;
 		// don't do anything if terminal is not attached

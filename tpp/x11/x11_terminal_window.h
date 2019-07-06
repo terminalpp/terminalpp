@@ -128,8 +128,8 @@ namespace tpp {
 		}
 
 		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
-			fg_ = toXftColor(c.fg());
-			XftDrawStringUtf8(draw_, &fg_, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c().toCharPtr()), c.c().size());
+            XftColor cColor = toXftColor(c.fg());
+			XftDrawStringUtf8(draw_, &cColor, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c().toCharPtr()), c.c().size());
 		}
 
         void drawText() {
