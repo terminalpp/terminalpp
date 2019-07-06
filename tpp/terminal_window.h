@@ -129,16 +129,36 @@ namespace tpp {
 				else
 				    return vterm::Selection(selectionStart_, selectionEnd_);
 			} else {
+                // check if the selection is actually empty
+                if (selectionStart_ == selectionEnd_ && selectionStart_.col == 0 && selectionEnd_.row == 0)
+                    return vterm::Selection(selectionStart_, selectionEnd_);
 				return vterm::Selection(selectionEnd_.col, selectionEnd_.row - 1, selectionStart_.col, selectionStart_.row + 1);
 			}
 		}
 
-		void clearSelection() {
+        /** Called when the selection should be cleared. 
+
+            Setting the manual flag to false indicates that the selection is to be cleared due to other things than direct user interaction with the window. 
+         */
+		virtual void selectionClear(bool manual = true) {
 			selectionStart_.col = 0;
 			selectionStart_.row = 0;
 			selectionEnd_.col = 0;
 			selectionEnd_.row = 0;
 		}
+
+        virtual void selectionSet() {
+            // do nothing, but children can 
+        }
+
+        /** Selection paste
+         
+            Pastes selection without going through the clipboard. This is the implementation of the X11 PRIMARY selection. Returns true if the request was serviced. The implementation should override the function and first call the parent to see if the selection can be obtained simply from the current window. If the call returns true it should then use whatever means available to determine the primary selection on the given architecture. 
+         */
+        virtual bool selectionPaste();
+
+		virtual void clipboardPaste() = 0;
+
 
 		/** Called when appropriate events are received by the windows' event loop.
 
@@ -226,8 +246,6 @@ namespace tpp {
 		virtual void doInvalidate() {
 			dirty_ = true;
         }
-
-		virtual void clipboardPaste() = 0;
 
 		/** Paints the window.
 		 */

@@ -129,6 +129,26 @@ namespace tpp {
 		XSetSelectionOwner(display_, app()->clipboardName_, window_, CurrentTime);
 	}
 
+    void X11TerminalWindow::selectionClear(bool manual) {
+        TerminalWindow::selectionClear();
+        // only set selection owner to none if the selection is cleared manually
+        if (manual)
+            XSetSelectionOwner(display_, app()->primaryName_, None, CurrentTime);
+    }
+
+    void X11TerminalWindow::selectionSet() {
+        TerminalWindow::selectionSet();
+        // notify X server that we hold primary selection now
+        XSetSelectionOwner(display_, app()->primaryName_, window_, CurrentTime);
+    }
+
+
+    bool X11TerminalWindow::selectionPaste() {
+        // if the selection belongs to the current window, there is no need to consult X, otherwise obtain the PRIMARY selection from the X server
+        if (! TerminalWindow::selectionPaste())
+            XConvertSelection(display_, app()->primaryName_, app()->formatStringUTF8_, app()->primaryName_, window_, CurrentTime);
+    }
+
 	void X11TerminalWindow::clipboardPaste() {
 		XConvertSelection(display_, app()->clipboardName_, app()->formatStringUTF8_, app()->clipboardName_, window_, CurrentTime);
 	}
@@ -376,17 +396,17 @@ namespace tpp {
 			case SelectionNotify:
 				if (e.xselection.property) {
 					char * result;
-					unsigned long ressize, restail;
+					unsigned long resSize, resTail;
 					Atom type = None;
 					int format = 0;
 					XGetWindowProperty(tw->display_, tw->window_, e.xselection.property, 0, LONG_MAX / 4, False, AnyPropertyType,
-						&type, &format, &ressize, &restail, (unsigned char**)& result);
+						&type, &format, &resSize, &resTail, (unsigned char**)& result);
 					if (type == tw->app()->clipboardIncr_)
 						// buffer too large, incremental reads must be implemented
 						// https://stackoverflow.com/questions/27378318/c-get-string-from-clipboard-on-linux
 						NOT_IMPLEMENTED;
 					else
-						tw->terminal()->paste(std::string(result, ressize));
+						tw->terminal()->paste(std::string(result, resSize));
 					XFree(result);
                  }
 				 break;
@@ -440,11 +460,16 @@ namespace tpp {
 					LOG << "Error sending selection notify";
 				break;
 			}
-			/** If we loose ownership, clear the clipboard contents with the application. 
+			/** If we lose ownership, clear the clipboard contents with the application, or if we lose primary ownership, just clear the selection.   
 			 */
-			case SelectionClear:
-				Application::Instance<X11Application>()->clipboard_.clear();
+			case SelectionClear: {
+                X11Application * app = Application::Instance<X11Application>();
+                if (e.xselectionclear.selection == app->clipboardName_)
+    				app->clipboard_.clear();
+                else 
+                    tw->selectionClear(false);
 				break;
+            }
             case DestroyNotify:
                 // delete the window object and remove it from the list of active windows
                 delete i->second;

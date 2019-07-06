@@ -38,6 +38,7 @@ namespace tpp {
         xIm_ = XOpenIM(xDisplay_, nullptr, nullptr, nullptr);
         ASSERT(xIm_ != nullptr);
 
+		primaryName_ = XInternAtom(xDisplay_, "PRIMARY", false);
 		clipboardName_ = XInternAtom(xDisplay_, "CLIPBOARD", false);
 		formatString_ = XInternAtom(xDisplay_, "STRING", false);
 		formatStringUTF8_ = XInternAtom(xDisplay_, "UTF8_STRING", false);
@@ -52,6 +53,7 @@ namespace tpp {
 		Window parent = RootWindow(xDisplay_, xScreen_);
 		broadcastWindow_ = XCreateSimpleWindow(xDisplay_, parent, 0, 0, 1, 1, 1, white, black);
 
+		ASSERT(primaryName_ != None);
 		ASSERT(clipboardName_ != None);
 		ASSERT(formatString_ != None);
 		ASSERT(formatStringUTF8_ != None);

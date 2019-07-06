@@ -115,13 +115,16 @@ namespace tpp {
 					selectionEnd_.row = mouseRow_ + 1;
 					doInvalidate();
 					break;
+                case vterm::MouseButton::Wheel:
+                    selectionPaste();
+                    break;
 				case vterm::MouseButton::Right:
 					if (!selecting_) {
 						vterm::Selection sel = selectedArea();
 						if (!sel.empty() && sel.contains(x, y)) {
 							vterm::Terminal::ClipboardUpdateEvent e(nullptr, terminal()->getText(sel));
 							clipboardUpdated(e);
-							clearSelection();
+							selectionClear();
 						}
 					}
 					break;
@@ -140,6 +143,7 @@ namespace tpp {
 		mouseRow_ = y;
 		if (selecting_ && button == vterm::MouseButton::Left) {
 			selecting_ = false;
+            selectionSet();
 		}
 		terminal()->mouseUp(x, y, button);
 	}
@@ -148,6 +152,17 @@ namespace tpp {
 		convertMouseCoordsToCells(x, y);
 		terminal()->mouseWheel(x, y, offset);
 	}
+
+    bool TerminalWindow::selectionPaste() {
+        if (!selecting_) {
+            vterm::Selection sel = selectedArea();
+            if (!sel.empty()) {
+                terminal()->paste(terminal()->getText(sel));
+                return true;
+            }
+        }        
+        return false;
+    }
 
 
 	unsigned TerminalWindow::drawBuffer(bool forceDirty) {

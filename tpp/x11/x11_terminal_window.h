@@ -82,6 +82,13 @@ namespace tpp {
             app()->xSendEvent(this, e, ExposureMask);
 		}
 
+		void selectionClear(bool manual = true) override;
+        void selectionSet() override;
+
+        bool selectionPaste() override;
+
+        /** Pastes the selection's contents into the window.
+         */
 		void clipboardPaste() override;
 
 		unsigned doPaint() override;

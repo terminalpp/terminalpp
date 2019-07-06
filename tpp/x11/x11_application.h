@@ -71,6 +71,7 @@ namespace tpp {
         XIM xIm_;
 		Atom wmDeleteMessage_;
 		Atom fpsTimerMessage_;
+        Atom primaryName_;
 		Atom clipboardName_;
 		Atom formatString_;
 		Atom formatStringUTF8_;

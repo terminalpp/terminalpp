@@ -5,11 +5,13 @@
 
 ## Bugs and missing features
 
-- selection + middle button is paste (via primary selection in X11)
-
 ### Win32 Bugs
 
+- verify that middle button selection works
+
 ### X11 Bugs
+
+- selection fg color is wrong - seems to depend on blinking (can be in Windows too)
 
 # Code Fixes
 
