@@ -119,7 +119,7 @@ scrolling               | win term        |             |
 scrolling-in-region     | alacritty       |             | 
 scrolling-in-region     | tpp             |             |
 scrolling-in-region     | tpp (bypass)    | 22.3        | **11.6**
-scrolling-in-region     | wsl console     |             |
+scrolling-in-region     | wsl console     | **0.8**     | 1362
 scrolling-in-region     | win term        |             |
 
 > Windows 10 Home 1903, i7-8550u, 16GB RAM, NVMe disk. `alacritty` version 0.3.3, win term version 

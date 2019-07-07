@@ -1,3 +1,5 @@
+#pragma once
+
 /** Maximum number of frames per second the renderer is allowed to render. 
 
     There is very little point in setting this higher than the screen's v-sync rate. 30 fps seems to be just fine, 60 fps means more updated and greater stress on the terminal. 

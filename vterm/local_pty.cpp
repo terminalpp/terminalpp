@@ -52,7 +52,7 @@ namespace vterm {
 	    The termination is asynchronous. If there are any errors returned such as the process already beging terminated, we do not really care. 
 	 */
 	void LocalPTY::doTerminate() {
-		TerminateProcess(pInfo_.hProcess, -1);
+		OSCHECK(TerminateProcess(pInfo_.hProcess, std::numeric_limits<unsigned>::max()) != 0);
 	}
 
 	/** Waits for the attached process to finish.
@@ -60,7 +60,7 @@ namespace vterm {
 	    Cleans the handles so that any pendion IO operations are cancelled and we do not end up with hanging operations. 
 	 */
     helpers::ExitCode LocalPTY::doWaitFor() {
-		size_t result = WaitForSingleObject(pInfo_.hProcess, INFINITE);
+		OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) != WAIT_FAILED);
 		helpers::ExitCode ec;
 		GetExitCodeProcess(pInfo_.hProcess, &ec);
 		// we must close the handles so that any pending reads will be interrupted
@@ -94,8 +94,8 @@ namespace vterm {
 	void LocalPTY::resize(unsigned cols, unsigned rows) {
 		// resize the underlying ConPTY
 		COORD size;
-		size.X = cols;
-		size.Y = rows;
+		size.X = cols & 0xffff;
+		size.Y = rows & 0xffff;
 		ResizePseudoConsole(conPTY_, size);
 	}
 

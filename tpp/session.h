@@ -60,7 +60,6 @@ namespace tpp {
 		}
 
 		/** Starts the session. 
-
 		    
 		 */
 		void start();

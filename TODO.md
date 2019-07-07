@@ -1,8 +1,4 @@
-﻿# TODOs
-
-- get rid of warnings on windows and linux
-
-## Bugs and missing features
+﻿## Bugs and missing features
 
 - add command line arguments so that terminal can be proper terminal emulator replacement in Linux
 - add zoom out? and default zoom? 

@@ -44,11 +44,11 @@ namespace vterm {
 	}
 
 	void BypassPTY::doTerminate() {
-		TerminateProcess(pInfo_.hProcess, -1);
+		OSCHECK(TerminateProcess(pInfo_.hProcess, std::numeric_limits<unsigned>::max()) != 0);
 	}
 
 	helpers::ExitCode BypassPTY::doWaitFor() {
-		size_t result = WaitForSingleObject(pInfo_.hProcess, INFINITE);
+		OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) != WAIT_FAILED);
 		helpers::ExitCode ec;
 		GetExitCodeProcess(pInfo_.hProcess, &ec);
 		// we must close the handles so that any pending reads will be interrupted
