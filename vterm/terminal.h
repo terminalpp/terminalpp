@@ -346,7 +346,7 @@ namespace vterm {
 					Cell* row = cells_[bottom];
 					memmove(cells_ + 1, cells_, sizeof(Cell*) * (bottom - top - 1));
 					cells_[top] = row;
-					fillRow(row, fill);
+					fillRow(row, fill, cols_);
 				}
 				for (size_t i = top; i < bottom; ++i)
 					markRowDirty(i);
@@ -362,7 +362,7 @@ namespace vterm {
 					Cell* row = cells_[top];
 					memmove(cells_, cells_ + 1, sizeof(Cell*) * (bottom - top - 1));
 					cells_[bottom - 1] = row;
-					fillRow(row, fill);
+					fillRow(row, fill, cols_);
 				}
 				for (size_t i = top; i < bottom; ++i)
 					markRowDirty(i);
@@ -376,16 +376,16 @@ namespace vterm {
 
                 Copies larger and larger number of cells at once to be more efficient than simple linear copy. 
              */
-			void fillRow(Cell* row, Cell const& fill) {
+			void fillRow(Cell* row, Cell const& fill, unsigned cols) {
 				row[0] = fill;
 				size_t i = 1;
 				size_t next = 2;
-				while (next < cols_) {
+				while (next < cols) {
 					memcpy(row + i, row, sizeof(Cell) * i);
 					i = next;
 					next *= 2;
 				}
-				memcpy(row + i, row, sizeof(Cell) * (cols_ - i));
+				memcpy(row + i, row, sizeof(Cell) * (cols - i));
 			}
 
 			/** Resizes the cell buffer. 
@@ -394,65 +394,7 @@ namespace vterm {
 
 				The line is the copied. 
 			 */
-			void resizeCells(unsigned newCols, unsigned newRows) {
-                for (size_t i = 0; i < rows_; ++i)
-                    delete [] cells_[i];
-                delete[] cells_;
-                cells_ = new Cell*[newRows];
-                for (size_t i = 0; i < newRows; ++i) 
-                    cells_[i] = new Cell[newCols];
-                delete [] dirtyRows_;
-                dirtyRows_ = new bool[newRows];
-
-                #ifdef HAHA
-				unsigned i = cursor_.row * cols_ + cursor_.col + 1;
-				unsigned stopRow = 0;
-				while (i-- > 0) {
-					if (cells_[i].isLineEnd()) {
-						// update new col & row
-						stopRow = (i / cols_) + 1;
-						break;
-					}
-				}
-				// copy the contents
-				unsigned rowOffset = cursor_.row - stopRow;
-				cursor_.col = 0;
-				cursor_.row = 0;
-				Cell* newCells = new Cell[newCols * newRows];
-				for (unsigned y = 0; y < rows_; ++y) {
-					for (unsigned x = 0; x < cols_; ++x) {
-						if (y == stopRow) {
-							delete[] cells_;
-							cells_ = newCells;
-							cursor_.row += rowOffset;
-							return;
-						}
-						Cell& cell = at(x, y);
-						newCells[cursor_.row * newCols + cursor_.col] = cell;
-						// if the cell is new line, or if moving to next character would be a new line, increase cursor row
-						if (cell.isLineEnd() || (++cursor_.col == newCols)) {
-							++cursor_.row;
-							cursor_.col = 0;
-						}
-						// if we are past the new buffer, move all up
-						if (cursor_.row == newRows) {
-							// scroll up
-							memmove(
-								newCells,
-								newCells + newCols,
-								(sizeof(Cell) * newCols) * (newRows - 1));
-							--cursor_.row;
-							// clear the line
-							for (unsigned c = 0; c < newCols; ++c)
-								newCells[cursor_.row * newCols + c] = Cell();
-						}
-						// if we hit new line in the old buffer, skip the rest of the line
-						if (cell.isLineEnd())
-							break;
-					}
-				}
-                #endif 
-			}
+			void resizeCells(unsigned newCols, unsigned newRows);
 
 			unsigned cols_;
 			unsigned rows_;

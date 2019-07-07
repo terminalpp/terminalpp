@@ -5,7 +5,6 @@
 
 ## Bugs and missing features
 
-- rewrite buffer resize into the new by row cell arrangement
 - add command line arguments so that terminal can be proper terminal emulator replacement in Linux
 - add zoom out? and default zoom? 
 
@@ -21,6 +20,7 @@
 - add tests & CI
 - add size selection to PTY? or not really, since it can always be resized. 
 - add comments to bypass
+- maek bypass record the stream for more realistic benchmark (but maybe this is useless)
 
 # Long Term Goals
 

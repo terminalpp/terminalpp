@@ -103,11 +103,32 @@ alt-screen-random-write | Ubuntu 18.04 LTS | tpp             |
 alt-screen-random-write | Ubuntu 18.04 LTS | sakura (libvte) | 
 alt-screen-random-write | Ubuntu 18.04 LTS | xterm           | 
 alt-screen-random-write | Ubuntu 18.04 LTS | st              | 
-alt-screen-random-write | Windows 10       | alacritty       | 
+alt-screen-random-write | Windows 10       | alacritty       | 24.69
 alt-screen-random-write | Windows 10       | tpp             | 
-alt-screen-random-write | Windows 10       | tpp (bypass)    |
+alt-screen-random-write | Windows 10       | tpp (bypass)    | 1.15
 alt-screen-random-write | Windows 10       | wsl console     |
 alt-screen-random-write | Windows 10       | win term        |
+scrolling               | Ubuntu 18.04 LTS | alacritty       | 
+scrolling               | Ubuntu 18.04 LTS | tpp             | 
+scrolling               | Ubuntu 18.04 LTS | sakura (libvte) | 
+scrolling               | Ubuntu 18.04 LTS | xterm           | 
+scrolling               | Ubuntu 18.04 LTS | st              | 
+scrolling               | Windows 10       | alacritty       | 952
+scrolling               | Windows 10       | tpp             | 
+scrolling               | Windows 10       | tpp (bypass)    | 8.77
+scrolling               | Windows 10       | wsl console     |
+scrolling               | Windows 10       | win term        |
+scrolling-in-region     | Ubuntu 18.04 LTS | alacritty       | 
+scrolling-in-region     | Ubuntu 18.04 LTS | tpp             | 
+scrolling-in-region     | Ubuntu 18.04 LTS | sakura (libvte) | 
+scrolling-in-region     | Ubuntu 18.04 LTS | xterm           | 
+scrolling-in-region     | Ubuntu 18.04 LTS | st              | 
+scrolling-in-region     | Windows 10       | alacritty       | 
+scrolling-in-region     | Windows 10       | tpp             | 
+scrolling-in-region     | Windows 10       | tpp (bypass)    | 8.6
+scrolling-in-region     | Windows 10       | wsl console     |
+scrolling-in-region     | Windows 10       | win term        |
 
+All the benchmarks were created using `vtebench` at resolution `320x60`, running on i7-8550u, 15GB RAM & 512GB NVMe. Allacritty version `0.3.3`
 
 
