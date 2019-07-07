@@ -81,7 +81,7 @@ namespace tpp {
 			glyphRun_.glyphOffsets = glyphOffsets_;
 			ZeroMemory(glyphOffsets_, sizeof(DWRITE_GLYPH_OFFSET) * cols);
 			for (size_t i = 0; i < cols; ++i)
-				glyphAdvances_[i] = fontWidth;
+				glyphAdvances_[i] = static_cast<float>(fontWidth);
 			glyphRun_.glyphCount = 0;
 			doSetFont(vterm::Font());
 		}
@@ -156,16 +156,18 @@ namespace tpp {
 				bg_->SetColor(D2D1::ColorF(terminal()->defaultBackgroundColor().toNumber(), 1.0f));
 				D2D1_RECT_F rClear = rect;
 				if (rect.right + cellWidthPx_ > widthPx_)
-					rClear.right = widthPx_;
+					rClear.right = static_cast<float>(widthPx_);
 				if (rect.bottom + cellHeightPx_ > heightPx_)
-					rClear.bottom = heightPx_;
+					rClear.bottom = static_cast<float>(heightPx_);
 				rt_->FillRectangle(rClear, bg_.Get());
 				bg_->SetColor(bgColor);
 			}
 			rt_->FillRectangle(rect, bg_.Get());
 			// if blinking, only draw when blink is on
 			if (!grBlink_ || blink_) {
-				D2D1_POINT_2F origin = D2D1::Point2F((glyphRunCol_)* cellWidthPx_, glyphRunRow_ * cellHeightPx_ + dwFont_->handle().ascent);
+				D2D1_POINT_2F origin = D2D1::Point2F(
+					static_cast<float>(glyphRunCol_* cellWidthPx_),
+					static_cast<float>(glyphRunRow_ * cellHeightPx_ + dwFont_->handle().ascent));
 				rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
 				// add underline and strikethrough if selected, the position and thickness is obtained from the font metrics generated when the font is created (directwrite_application.h)
 				if (grUnderline_) {
@@ -193,7 +195,7 @@ namespace tpp {
 
 		/** Maps win32 virtual keys to their vterm equivalents.
 		 */
-		static vterm::Key GetKey(WPARAM vk);
+		static vterm::Key GetKey(unsigned vk);
 
 		static LRESULT CALLBACK EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

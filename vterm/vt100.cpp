@@ -1094,7 +1094,7 @@ namespace vterm {
 						break;
 					if (seq_[i - 2] > 255 || seq_[i - 1] > 255 || seq_[i] > 255) // invalid color spec
 						break;
-					return Color(seq_[i - 2], seq_[i - 1], seq_[i]);
+					return Color(seq_[i - 2] & 0xff, seq_[i - 1] & 0xff, seq_[i] & 0xff);
 				/* everything else is an error */
 				default:
 					break;

@@ -41,6 +41,9 @@ using namespace tpp;
  */
 #ifdef _WIN64
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+	MARK_AS_UNUSED(hPrevInstance);
+	MARK_AS_UNUSED(lpCmdLine);
+	MARK_AS_UNUSED(nCmdShow);
 	try {
 	    // create the application singleton
 	    new DirectWriteApplication(hInstance);

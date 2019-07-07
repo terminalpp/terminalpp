@@ -46,8 +46,6 @@ namespace tpp {
 		);
 		ASSERT(hWnd_ != 0) << "Cannot create window : " << GetLastError();
 
-		RECT rc;
-
 		D2D1_SIZE_U size = D2D1::SizeU(widthPx_, heightPx_);
 		OSCHECK(SUCCEEDED(app()->d2dFactory_->CreateHwndRenderTarget(
 			D2D1::RenderTargetProperties(),
@@ -160,7 +158,7 @@ namespace tpp {
 	}
 
 	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
-	vterm::Key DirectWriteTerminalWindow::GetKey(WPARAM vk) {
+	vterm::Key DirectWriteTerminalWindow::GetKey(unsigned vk) {
 		if (!vterm::Key::IsValidCode(vk))
 			return vterm::Key(vterm::Key::Invalid);
 		// MSB == pressed, LSB state since last time
@@ -284,11 +282,10 @@ namespace tpp {
 				if (wParam >= 0x20)
 					tw->keyChar(helpers::Char::FromCodepoint(static_cast<unsigned>(wParam)));
 				break;
-			/* DEBUG - debugging events hooked to keypresses now: */
 			/* Processes special key events.*/
 			case WM_SYSKEYDOWN:
 			case WM_KEYDOWN: {
-				vterm::Key k = GetKey(wParam);
+				vterm::Key k = GetKey(static_cast<unsigned>(wParam));
 				if (k != vterm::Key::Invalid)
 					tw->keyDown(k);
 				// returning w/o calling the default window proc means that the OS will not interfere by interpreting own shortcuts
@@ -298,35 +295,37 @@ namespace tpp {
 				break;
 			}
 			case WM_KEYUP: {
-				vterm::Key k = GetKey(wParam);
+				vterm::Key k = GetKey(static_cast<unsigned>(wParam));
 				tw->keyUp(k);
 				break;
 			}
 			/* Mouse events which simply obtain the mouse coordinates, convert the buttons and wheel values to vterm standards and then calls the DirectWriteTerminalWindow's events, which perform the pixels to cols & rows translation and then call the terminal itself.
 			 */
+#define MOUSE_X static_cast<unsigned>(lParam & 0xffff)
+#define MOUSE_Y static_cast<unsigned>(lParam >> 16)
 			case WM_LBUTTONDOWN:
-				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Left);
+				tw->mouseDown(MOUSE_X, MOUSE_Y, vterm::MouseButton::Left);
 				break;
 			case WM_LBUTTONUP:
-				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Left);
+				tw->mouseUp(MOUSE_X, MOUSE_Y, vterm::MouseButton::Left);
 				break;
 			case WM_RBUTTONDOWN:
-				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Right);
+				tw->mouseDown(MOUSE_X, MOUSE_Y, vterm::MouseButton::Right);
 				break;
 			case WM_RBUTTONUP:
-				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Right);
+				tw->mouseUp(MOUSE_X, MOUSE_Y, vterm::MouseButton::Right);
 				break;
 			case WM_MBUTTONDOWN:
-				tw->mouseDown(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Wheel);
+				tw->mouseDown(MOUSE_X, MOUSE_Y, vterm::MouseButton::Wheel);
 				break;
 			case WM_MBUTTONUP:
-				tw->mouseUp(lParam & 0xffff, lParam >> 16, vterm::MouseButton::Wheel);
+				tw->mouseUp(MOUSE_X, MOUSE_Y, vterm::MouseButton::Wheel);
 				break;
 			case WM_MOUSEWHEEL:
-				tw->mouseWheel(lParam & 0xffff, lParam >> 16, GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+				tw->mouseWheel(MOUSE_X, MOUSE_Y, GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 				break;
 			case WM_MOUSEMOVE:
-				tw->mouseMove(lParam & 0xffff, lParam >> 16);
+				tw->mouseMove(MOUSE_X, MOUSE_Y);
 				break;
 			/* User specified messages for various events that we want to be handled in the app thread.
 			 */

@@ -355,7 +355,7 @@ namespace vterm {
 					cells_[top] = row;
 					fillRow(row, fill, cols_);
 				}
-				for (size_t i = top; i < bottom; ++i)
+				for (unsigned i = top; i < bottom; ++i)
 					markRowDirty(i);
 			}
 
@@ -372,7 +372,7 @@ namespace vterm {
 					cells_[bottom - 1] = row;
 					fillRow(row, fill, cols_);
 				}
-				for (size_t i = top; i < bottom; ++i)
+				for (unsigned i = top; i < bottom; ++i)
 					markRowDirty(i);
 			}
 

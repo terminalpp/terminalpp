@@ -35,7 +35,7 @@ namespace tpp {
 		selectionEnd_(0, 0),
 		selecting_(false) {
 		// get cell dimensions from the application and set cell and window sizes in pixels
-		std::pair<unsigned, unsigned> cellSize = Application::Instance<>()->terminalCellDimensions(fontSize_ * zoom_);
+		std::pair<unsigned, unsigned> cellSize = Application::Instance<>()->terminalCellDimensions(static_cast<unsigned>(fontSize_ * zoom_));
 		cellWidthPx_ = cellSize.first;
 		cellHeightPx_ = cellSize.second;
 		widthPx_ = properties.cols * cellWidthPx_;
@@ -44,7 +44,7 @@ namespace tpp {
 
 	void TerminalWindow::doSetZoom(double value) {
 		// get cell dimensions from the application and update cell sizes
-		std::pair<unsigned, unsigned> cellSize = Application::Instance<>()->terminalCellDimensions(fontSize_ * value);
+		std::pair<unsigned, unsigned> cellSize = Application::Instance<>()->terminalCellDimensions(static_cast<unsigned>(fontSize_ * value));
 		cellWidthPx_ = cellSize.first;
 		cellHeightPx_ = cellSize.second;
 		// resize the terminal properly

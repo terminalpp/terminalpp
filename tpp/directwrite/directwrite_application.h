@@ -55,13 +55,13 @@ namespace tpp {
 	class DWriteFont {
 	public:
 		Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace;
-		double sizeEm;
-		double underlineOffset;
-		double underlineThickness;
-		double strikethroughOffset;
-		double strikethroughThickness;
+		float sizeEm;
+		float underlineOffset;
+		float underlineThickness;
+		float strikethroughOffset;
+		float strikethroughThickness;
 		unsigned ascent;
-		DWriteFont(Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace, double sizeEm, double underlineOffset, double underlineThickness, double strikethroughOffset, double strikethroughThickness,unsigned ascent) :
+		DWriteFont(Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace, float sizeEm, float underlineOffset,  float underlineThickness, float strikethroughOffset, float strikethroughThickness,unsigned ascent) :
 			fontFace(fontFace),
 			sizeEm(sizeEm),
 			underlineOffset(underlineOffset),
@@ -103,7 +103,7 @@ namespace tpp {
 		fface->GetMetrics(&metrics);
 		// the em size is size in pixels divided by (DPI / 96)
 		// https://docs.microsoft.com/en-us/windows/desktop/LearnWin32/dpi-and-device-independent-pixels
-		double emSize = (baseHeight * font.size()) / (dpiY / 96);
+		float emSize = (baseHeight * font.size()) / (dpiY / 96);
 		// we have to adjust this number for the actual font metrics
 		emSize = emSize * metrics.designUnitsPerEm / (metrics.ascent + metrics.descent + metrics.lineGap);
 		// now we have to determine the height of a character, which we can do via glyph metrics
@@ -113,7 +113,7 @@ namespace tpp {
 		fface->GetGlyphIndices(&codepoint, 1, &glyph);
 		fface->GetDesignGlyphMetrics(&glyph, 1, &glyphMetrics);
 		return new FontSpec<DWriteFont>(font,
-			std::round((static_cast<double>(glyphMetrics.advanceWidth) / glyphMetrics.advanceHeight) * baseHeight * font.size()),
+			static_cast<unsigned>(std::round((static_cast<float>(glyphMetrics.advanceWidth) / glyphMetrics.advanceHeight) * baseHeight * font.size())),
 			baseHeight * font.size(),
 			DWriteFont(
 				fface,
@@ -122,7 +122,7 @@ namespace tpp {
 				(emSize * metrics.underlineThickness / metrics.designUnitsPerEm),
 				(emSize * metrics.strikethroughPosition / metrics.designUnitsPerEm),
 				(emSize * metrics.strikethroughThickness / metrics.designUnitsPerEm),
-				std::round(emSize * metrics.ascent / metrics.designUnitsPerEm)));
+				static_cast<unsigned>(std::round(emSize * metrics.ascent / metrics.designUnitsPerEm))));
 	}
 
 	/** Since DirectWrite stores only the font face and the glyph run then keeps its own size.

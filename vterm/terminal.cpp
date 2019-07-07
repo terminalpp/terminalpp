@@ -48,10 +48,10 @@ namespace vterm {
 				}
 				// scroll the new lines if necessary
 				if (cursor_.row == newRows) {
-					Cell* x = newCells[0];
+					Cell* r = newCells[0];
 					memmove(newCells, newCells + 1, sizeof(Cell*) * (newRows - 1));
-					newCells[newRows - 1] = x;
-					fillRow(x, Cell(), newCols);
+					newCells[newRows - 1] = r;
+					fillRow(r, Cell(), newCols);
 					--cursor_.row;
 				}
 				// if it was new line, skip whatever was afterwards

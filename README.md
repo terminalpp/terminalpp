@@ -110,9 +110,9 @@ alt-screen-random-write | tpp (bypass)    | 22.3        | **1.1**
 alt-screen-random-write | wsl console     | **7.5**     | 39.15
 alt-screen-random-write | win term        | 26.5        | 110.24
 scrolling               | alacritty       | 78.2        | 1125
-scrolling               | tpp             |             |
+scrolling               | tpp             | 23.8        | 1209.49
 scrolling               | tpp (bypass)    | 22.3        | **11.8**
-scrolling               | wsl console     |             |
+scrolling               | wsl console     | **4.7**     | 977.08
 scrolling               | win term        |             |
 scrolling-in-region     | alacritty       |             | 
 scrolling-in-region     | tpp             |             |
