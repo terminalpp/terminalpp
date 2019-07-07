@@ -16,7 +16,7 @@
 /** Name of the font to be used and its size in pixels for zoom 1. 
  */
 #define DEFAULT_TERMINAL_FONT "Iosevka Term"
-#define DEFAULT_TERMINAL_FONT_SIZE 15
+#define DEFAULT_TERMINAL_FONT_SIZE 14
 
 /** Keyboard shortcuts for various actions. 
  */
