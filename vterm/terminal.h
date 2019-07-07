@@ -343,7 +343,7 @@ namespace vterm {
 			void insertLines(unsigned lines, unsigned top, unsigned bottom, Cell const & fill) {
 				ASSERT(bottom <= rows_);
 				for (size_t i = 0; i < lines; ++i) {
-					Cell* row = cells_[bottom];
+					Cell* row = cells_[bottom - 1];
 					memmove(cells_ + 1, cells_, sizeof(Cell*) * (bottom - top - 1));
 					cells_[top] = row;
 					fillRow(row, fill, cols_);
