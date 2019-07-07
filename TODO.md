@@ -6,13 +6,10 @@
 ## Bugs and missing features
 
 - rewrite buffer resize into the new by row cell arrangement
-- add Cell constructor and remove vt100 delete and insert lines, call screen directly
 - add command line arguments so that terminal can be proper terminal emulator replacement in Linux
 - add zoom out? and default zoom? 
 
 ### Win32 Bugs
-
-- create console window conditionally on NDEBUG flag
 
 ### X11 Bugs
 

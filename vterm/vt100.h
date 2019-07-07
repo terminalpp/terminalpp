@@ -346,7 +346,7 @@ namespace vterm {
 			}
 			ASSERT(screen_.cursor().col < screen_.cols());
 			if (screen_.cursor().row == state_.scrollEnd) {
-				deleteLine(1, state_.scrollStart);
+				screen_.deleteLines(1, state_.scrollStart, state_.scrollEnd, Cell(' ', state_.fg, state_.bg));
 				--screen_.cursor().row;
 			}
 			// if cursor row is not valid, just set it to the last row 
@@ -397,13 +397,8 @@ namespace vterm {
 			fillRect(rect, c, state_.fg, state_.bg, font);
 		}
 
-		void deleteLine(unsigned lines, unsigned from);
-		void insertLine(unsigned lines, unsigned from);
-
 		void deleteCharacters(unsigned num);
 		void insertCharacters(unsigned num);
-
-
 
 		/** Current palette used by the terminal.
 

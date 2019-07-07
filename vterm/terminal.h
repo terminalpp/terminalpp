@@ -134,7 +134,7 @@ namespace vterm {
 
 			void setFont(Font const& value) {
 				font_ = value;
-				bits.dirty_ = true;
+				bits_.dirty = true;
 			}
 
 			/** Text color.
@@ -145,7 +145,7 @@ namespace vterm {
 
 			void setFg(Color value) {
 				fg_ = value;
-				bits.dirty_ = true;
+				bits_.dirty = true;
 			}
 
 			/** Background color.
@@ -156,7 +156,7 @@ namespace vterm {
 
 			void setBg(Color value) {
 				bg_ = value;
-				bits.dirty_ = true;
+				bits_.dirty = true;
 			}
 
 			/** Character to be displayed (utf8).
@@ -167,57 +167,65 @@ namespace vterm {
 
 			void setC(helpers::Char value) {
 				c_ = value;
-				bits.dirty_ = true;
-				bits.lineEnd_ = false;
+				bits_.dirty = true;
+				bits_.lineEnd = false;
 			}
 
 			/** Determines if the cell is dirty, i.e. it should be redrawn.
 			 */
 			bool dirty() const {
-				return bits.dirty_;
+				return bits_.dirty;
 			}
 
 			void markDirty(bool value = true) {
-				bits.dirty_ = value;
+				bits_.dirty = value;
 			}
 
 			bool isLineEnd() const {
-				return bits.lineEnd_;
+				return bits_.lineEnd;
 			}
 
 			void markAsLineEnd(bool value = true) {
-				bits.lineEnd_ = value;
+				bits_.lineEnd = value;
 			}
 
 			/** Default constructor for a cell created white space on a black background.
 			 */
 			Cell() :
+				c_(helpers::Char::FromASCII(' ')),
 				fg_(Color::White()),
-				bg_(Color::Black()),
-				c_(helpers::Char::FromASCII(' ')) {
-				bits.dirty_ = true;
-				bits.lineEnd_ = false;
+				bg_(Color::Black()) {
+				bits_.dirty = true;
+				bits_.lineEnd = false;
+			}
+
+			Cell(char c, Color fg, Color bg) :
+				c_(c),
+				fg_(fg),
+				bg_(bg) {
+				bits_.dirty = true;
+				bits_.lineEnd = false;
 			}
 
 			Cell& operator = (Cell const& other) {
 				if (this != &other) {
 					memcpy(this, &other, sizeof(Cell));
-					bits.dirty_ = true;
+					bits_.dirty = true;
 				}
 				return *this;
 			}
 
 		private:
-			Font font_;
+			helpers::Char c_;
 			Color fg_;
 			Color bg_;
-			helpers::Char c_;
+			Font font_;
 			struct {
 				// when dirty, the cell should be redrawn
-				unsigned dirty_ : 1;
+				unsigned dirty : 1;
 				// indicates last character of a line
-				unsigned lineEnd_ : 1;
-			} bits;
+				unsigned lineEnd : 1;
+			} bits_;
 		};
 
 		class Screen {
@@ -332,13 +340,33 @@ namespace vterm {
                 
                 Scrolls down all lines between top and bottom accordingly. Fills the new lines with the provided cell.
              */
-            void insertLines(unsigned lines, unsigned top, unsigned bottom, Cell fill);
+			void insertLines(unsigned lines, unsigned top, unsigned bottom, Cell const & fill) {
+				ASSERT(bottom <= rows_);
+				for (size_t i = 0; i < lines; ++i) {
+					Cell* row = cells_[bottom];
+					memmove(cells_ + 1, cells_, sizeof(Cell*) * (bottom - top - 1));
+					cells_[top] = row;
+					fillRow(row, fill);
+				}
+				for (size_t i = top; i < bottom; ++i)
+					markRowDirty(i);
+			}
 
             /** Deletes given number of lines at given top row.
                 
                 Scrolls up all lines between top and bottom accordingly. Fills the new lines at the bottom with the provided cell.
              */
-            void deleteLines(unsigned lines, unsigned top, unsigned bottom, Cell fill);
+			void deleteLines(unsigned lines, unsigned top, unsigned bottom, Cell const & fill) {
+				ASSERT(bottom <= rows_);
+				for (size_t i = 0; i < lines; ++i) {
+					Cell* row = cells_[top];
+					memmove(cells_, cells_ + 1, sizeof(Cell*) * (bottom - top - 1));
+					cells_[bottom - 1] = row;
+					fillRow(row, fill);
+				}
+				for (size_t i = top; i < bottom; ++i)
+					markRowDirty(i);
+			}
 
 		private:
 
@@ -348,7 +376,17 @@ namespace vterm {
 
                 Copies larger and larger number of cells at once to be more efficient than simple linear copy. 
              */
-            void fillRow(Cell * row, Cell const & fill);
+			void fillRow(Cell* row, Cell const& fill) {
+				row[0] = fill;
+				size_t i = 1;
+				size_t next = 2;
+				while (next < cols_) {
+					memcpy(row + i, row, sizeof(Cell) * i);
+					i = next;
+					next *= 2;
+				}
+				memcpy(row + i, row, sizeof(Cell) * (cols_ - i));
+			}
 
 			/** Resizes the cell buffer. 
 

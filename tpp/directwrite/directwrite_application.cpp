@@ -6,11 +6,16 @@ namespace tpp {
 	namespace {
 
 		/** Attaches a console to the GDIApplication for debugging purposes.
+
+		    However, launching the bypass pty inside wsl would start its own console unless we allocate console at all times. The trick is to create the console, but then hide the window immediately if we are in a release mode.
 		 */
 		void AttachConsole() {
 			OSCHECK(
 				AllocConsole()
 			) << "Cannot allocate console";
+#ifdef NDEBUG
+			ShowWindow(GetConsoleWindow(), SW_HIDE);
+#endif
 			// this is ok, console cannot be detached, so we are fine with keeping the file handles forewer,
 			// nor do we need to FreeConsole at any point
 			FILE* fpstdin = stdin, * fpstdout = stdout, * fpstderr = stderr;
@@ -29,9 +34,7 @@ namespace tpp {
 
 	DirectWriteApplication::DirectWriteApplication(HINSTANCE hInstance) :
 		hInstance_(hInstance) {
-#ifndef NDEBUG
 		AttachConsole();
-#endif
 		registerTerminalWindowClass();
 		D2D1_FACTORY_OPTIONS options;
 		ZeroMemory(&options, sizeof(D2D1_FACTORY_OPTIONS));

@@ -452,7 +452,7 @@ namespace vterm {
 			case 'M':
 				LOG(SEQ) << "RI: move cursor 1 line up";
 				if (screen_.cursor().row == 0) {
-					insertLine(1, 0);
+					screen_.insertLines(1, 0, state_.scrollEnd, Cell(' ', state_.fg, state_.bg));
 				} else {
 					setCursor(screen_.cursor().col, screen_.cursor().row - 1);
 				}
@@ -698,14 +698,14 @@ namespace vterm {
 				case 'L':
 					seq_.setArgDefault(0, 1);
 					LOG(SEQ) << "IL: scrollUp " << seq_[0];
-					insertLine(seq_[0], screen_.cursor().row);
+					screen_.insertLines(seq_[0], screen_.cursor().row, state_.scrollEnd, Cell(' ', state_.fg, state_.bg));
 					return;
 				/* CSI <n> M -- Remove n lines. (DL)
 				 */
 				case 'M':
 					seq_.setArgDefault(0, 1);
 					LOG(SEQ) << "DL: scrollDown " << seq_[0];
-					deleteLine(seq_[0], screen_.cursor().row);
+					screen_.deleteLines(seq_[0], screen_.cursor().row, state_.scrollEnd, Cell(' ', state_.fg, state_.bg));
 					return;
 				/* CSI <n> P -- Delete n charcters. (DCH) */
 				case 'P':
@@ -718,7 +718,7 @@ namespace vterm {
 				case 'S':
 					seq_.setArgDefault(0, 1);
 					LOG(SEQ) << "SU: scrollUp " << seq_[0];
-					deleteLine(seq_[0], state_.scrollStart);
+					screen_.deleteLines(seq_[0], state_.scrollStart, state_.scrollEnd, Cell(' ', state_.fg, state_.bg));
 					return;
 				/* CSI <n> T -- Scroll down n lines
 				 */
@@ -726,7 +726,7 @@ namespace vterm {
 					seq_.setArgDefault(0, 1);
 					LOG(SEQ) << "SD: scrollDown " << seq_[0];
 					// TODO should this be from cursor, or from scrollStart? 
-					insertLine(seq_[0], screen_.cursor().row);
+					screen_.insertLines(seq_[0], screen_.cursor().row, state_.scrollEnd, Cell(' ', state_.fg, state_.bg));
 					return;
 				/* CSI <n> X -- erase <n> characters from the current position
 				*/
@@ -1175,24 +1175,6 @@ namespace vterm {
 				cell.setC(c);
 			}
 		}
-	}
-
-	void VT100::deleteLine(unsigned lines, unsigned from) {
-        Cell c;
-        c.setFg(state_.fg);
-        c.setBg(state_.bg);
-        c.setFont(Font());
-        c.setC(' ');
-        screen_.deleteLines(lines, from, state_.scrollEnd, c);
-	}
-
-	void VT100::insertLine(unsigned lines, unsigned from) {
-        Cell c;
-        c.setFg(state_.fg);
-        c.setBg(state_.bg);
-        c.setFont(Font());
-        c.setC(' ');
-        screen_.insertLines(lines, from, state_.scrollEnd, c);
 	}
 
 	void VT100::deleteCharacters(unsigned num) {

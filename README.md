@@ -94,4 +94,20 @@ Although raw peformance is not the main design goal of `tpp`, it is reasonably p
 
 Both seem to be more than efficient for daily operations.
 
-TODO  [`vtebench`](https://github.com/jwilm/vtebench)
+For lack of proper benchmarks, the [`vtebench`](https://github.com/jwilm/vtebench) from `alacritty` was used to test the basic performance. 
+
+Benchmark               | Platform         | Terminal        | Time [s]
+------------------------|------------------|-----------------|---------
+alt-screen-random-write | Ubuntu 18.04 LTS | alacritty       | 
+alt-screen-random-write | Ubuntu 18.04 LTS | tpp             | 
+alt-screen-random-write | Ubuntu 18.04 LTS | sakura (libvte) | 
+alt-screen-random-write | Ubuntu 18.04 LTS | xterm           | 
+alt-screen-random-write | Ubuntu 18.04 LTS | st              | 
+alt-screen-random-write | Windows 10       | alacritty       | 
+alt-screen-random-write | Windows 10       | tpp             | 
+alt-screen-random-write | Windows 10       | tpp (bypass)    |
+alt-screen-random-write | Windows 10       | wsl console     |
+alt-screen-random-write | Windows 10       | win term        |
+
+
+
