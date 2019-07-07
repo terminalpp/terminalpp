@@ -113,7 +113,7 @@ namespace tpp {
 		PostMessage(hWnd_, WM_USER, DirectWriteApplication::MSG_TITLE_CHANGE, 0);
 	}
 
-	void DirectWriteTerminalWindow::clipboardUpdated(vterm::Terminal::ClipboardUpdateEvent& e) {
+	void DirectWriteTerminalWindow::clipboardUpdate(vterm::Terminal::ClipboardUpdateEvent& e) {
 		if (OpenClipboard(nullptr)) {
 			EmptyClipboard();
 			// encode the string into UTF16 and get the size of the data we need
@@ -218,8 +218,6 @@ namespace tpp {
 				break;
 			}
 			/** Window gains focus. 
-
-			    TODO why do windows get the focused message when they are created???
 			 */
 			case WM_SETFOCUS:
 				if (tw != nullptr)

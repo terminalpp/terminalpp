@@ -123,7 +123,7 @@ namespace tpp {
 						vterm::Selection sel = selectedArea();
 						if (!sel.empty() && sel.contains(x, y)) {
 							vterm::Terminal::ClipboardUpdateEvent e(nullptr, terminal()->getText(sel));
-							clipboardUpdated(e);
+							clipboardUpdate(e);
 							selectionClear();
 						}
 					}

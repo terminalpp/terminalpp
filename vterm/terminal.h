@@ -22,17 +22,20 @@
 
 namespace vterm {
 
+	typedef helpers::Point<unsigned> Point;
+	typedef helpers::Rect<unsigned> Rect;
+
 	class PTY;
 
 	// TODO this should go to UI when we have UI
 	class Selection {
 	public:
-		helpers::Point start;
-		helpers::Point end;
+		Point start;
+		Point end;
 
 		Selection() = default;
 
-		Selection(helpers::Point const& start, helpers::Point const& end) :
+		Selection(Point const& start, Point const& end) :
 			start(start),
 			end(end) {
 		}
@@ -81,6 +84,12 @@ namespace vterm {
 		typedef helpers::EventPayload<std::string, helpers::Object> TitleChangeEvent;
 		typedef helpers::EventPayload<std::string, helpers::Object> ClipboardUpdateEvent;
 		typedef helpers::EventPayload<void, helpers::Object> NotificationEvent;
+
+		/** Triggered when certain input device capture state in the terminal changes. 
+
+		    Payload determines the current capture state. 
+		 */
+		typedef helpers::EventPayload<bool, helpers::Object> InputCaptureChangeEvent;
 
 		/** Cursor information. 
 		 */
@@ -492,7 +501,7 @@ namespace vterm {
 
 			virtual void titleChange(TitleChangeEvent& e) = 0;
 
-			virtual void clipboardUpdated(ClipboardUpdateEvent& e) = 0;
+			virtual void clipboardUpdate(ClipboardUpdateEvent& e) = 0;
 
 			Renderer(unsigned cols, unsigned rows) :
 				terminal_(nullptr),
@@ -561,7 +570,7 @@ namespace vterm {
 					return;
 				terminal_->onRepaint -= HANDLER(Renderer::repaint);
 				terminal_->onTitleChange -= HANDLER(Renderer::titleChange);
-				terminal_->onClipboardUpdated -= HANDLER(Renderer::clipboardUpdated);
+				terminal_->onClipboardUpdate -= HANDLER(Renderer::clipboardUpdate);
 				terminal_ = nullptr;
 			}
 
@@ -569,7 +578,7 @@ namespace vterm {
 				terminal_ = terminal;
 				terminal_->onRepaint += HANDLER(Renderer::repaint);
 				terminal_->onTitleChange += HANDLER(Renderer::titleChange);
-				terminal_->onClipboardUpdated += HANDLER(Renderer::clipboardUpdated);
+				terminal_->onClipboardUpdate += HANDLER(Renderer::clipboardUpdate);
 				terminal_->lockScreen()->resize(cols_, rows_);
 			}
 
@@ -592,19 +601,16 @@ namespace vterm {
 
 		// events
 
-		// TODO rename to onClipboardUpdate
-
 		helpers::Event<RepaintEvent> onRepaint;
 		helpers::Event<TitleChangeEvent> onTitleChange;
-		helpers::Event<ClipboardUpdateEvent> onClipboardUpdated;
+		helpers::Event<ClipboardUpdateEvent> onClipboardUpdate;
+		helpers::Event<InputCaptureChangeEvent> onMouseCaptureChange;
 
 		/** Triggered when backend wants to notify the user. 
 
 		    For now, only BEL character terminal notification is supported, but in the future multiple notification types might be possible. 
 		 */
 		helpers::Event<NotificationEvent> onNotification;
-
-		// TODO : or should the next 3 functions be abstract? 
 
 		/** Returns true if the terminal is interested in mouse events.
 		 */

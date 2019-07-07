@@ -11,21 +11,20 @@
 namespace helpers {
 	
 
-	// TODO this should move to vterm because the shapes are very much terminal oriented only
-
 	/** Point definition. 
 	 */
+	template<typename COORD>
 	class Point {
 	public:
-		unsigned col;
-		unsigned row;
+		COORD col;
+		COORD row;
 
 		Point() :
 			col(0),
 			row(0) {
 		}
 
-		Point(unsigned col, unsigned row) :
+		Point(COORD col, COORD row) :
 			col(col),
 			row(row) {
 		}
@@ -42,48 +41,47 @@ namespace helpers {
 			s << "[" << p.col << "," << p.row << "]";
 			return s;
 		}
+		//static_assert(sizeof(Point) == sizeof(COORD) * 2, "Point is supposed to be two numbers only");
 	};
-
-	static_assert(sizeof(Point) == sizeof(unsigned) * 2, "Point is supposed to be two unsigned numbers only");
-
 
 	/** Rectangle definition.
 
 	    The rectange is assumed to be inclusive of its left and top coordinates and exclusive for its bottom and right coordinates. 
 	 */
+	template<typename COORD>
 	class Rect {
 	public:
-		unsigned left;
-		unsigned top;
-		unsigned right;
-		unsigned bottom;
+		COORD left;
+		COORD top;
+		COORD right;
+		COORD bottom;
 
-		Point const& topLeft() const {
-			return reinterpret_cast<Point const*>(this)[0];
+		Point<COORD> const& topLeft() const {
+			return reinterpret_cast<Point<COORD> const*>(this)[0];
 		}
 
-		Point const& bottomRight() const {
-			return reinterpret_cast<Point const*>(this)[1];
+		Point<COORD> const& bottomRight() const {
+			return reinterpret_cast<Point<COORD> const*>(this)[1];
 		}
 
-		Point & topLeft() {
-			return reinterpret_cast<Point*>(this)[0];
+		Point<COORD> & topLeft() {
+			return reinterpret_cast<Point<COORD>*>(this)[0];
 		}
 
-		Point & bottomRight() {
-			return reinterpret_cast<Point*>(this)[1];
+		Point<COORD> & bottomRight() {
+			return reinterpret_cast<Point<COORD>*>(this)[1];
 		}
 
-		unsigned cols() const {
+		COORD width() const {
 			return right - left;
 		}
 
-		unsigned rows() const {
+		COORD height() const {
 			return bottom - top;
 		}
 
 		bool empty() const {
-			return cols() == 0 && rows() == 0;
+			return width() == 0 && height() == 0;
 		}
 
 		bool operator == (Rect const & other) const {
@@ -101,14 +99,14 @@ namespace helpers {
 			bottom(0) {
 		}
 
-		Rect(unsigned width, unsigned height) :
+		Rect(COORD width, COORD height) :
 			left(0),
 			top(0),
 			right(width),
 			bottom(height) {
 		}
 
-		Rect(unsigned left, unsigned top, unsigned right, unsigned bottom) :
+		Rect(COORD left, COORD top, COORD right, COORD bottom) :
 			left(left),
 			top(top),
 			right(right),
@@ -119,7 +117,7 @@ namespace helpers {
 				std::swap(bottom, top);
 		}
 
-		Rect(Point const& topLeft, Point const& bottomRight) :
+		Rect(Point<COORD> const& topLeft, Point<COORD> const& bottomRight) :
 			left(topLeft.col),
 			top(topLeft.row),
 			right(bottomRight.col),
@@ -161,9 +159,9 @@ namespace helpers {
 					std::min(first.bottom, second.bottom)
 			    };
 		}
+		//static_assert(sizeof(Rect) == sizeof(Point) * 2, "Point & rect size mismatch, topLeft and bottomRight won't work");
 
 	}; // helpers::Rect
 
-	static_assert(sizeof(Rect) == sizeof(Point) * 2, "Point & rect size mismatch, topLeft and bottomRight won't work");
 
 } // namespace helpers

@@ -93,15 +93,7 @@ namespace tpp {
 		virtual void hide() = 0;
 		virtual void close() = 0;
 
-		/** Redraws the window completely from the attached vterm. 
-		 */
-		/*void redraw() {
-			doInvalidate(true);
-		} */
-
 	protected:
-
-		// TODO how much of the protected stuff should actually be private? 
 
 		/** Because the blink attribute has really nothing to do with the font itself, this simple functions strips its value from given font so that fonts excluding the blinking can be easily compared. */
 		static vterm::Font DropBlink(vterm::Font font) {
@@ -333,8 +325,8 @@ namespace tpp {
 
 		/** Mouse selected region of the terminal, if any. 
 		 */
-		helpers::Point selectionStart_;
-		helpers::Point selectionEnd_;
+		vterm::Point selectionStart_;
+		vterm::Point selectionEnd_;
 		bool selecting_;
 	};
 

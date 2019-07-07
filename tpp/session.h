@@ -54,16 +54,9 @@ namespace tpp {
 		/** The command associated with the session. 
 
 		    This is the command to be displayed in the terminal. Most likely a shell name, or a script to connect to remote machine. 
-
-			TODO: Once more connection types are available, the command should change. 
 		 */
 		helpers::Command const& command() const {
 			return command_;
-		}
-
-		void setCommand(helpers::Command const& command) {
-			command_ = command;
-			// TODO update console? 
 		}
 
 		/** Starts the session. 

@@ -124,7 +124,7 @@ namespace tpp {
         TerminalWindow::titleChange(e);
 	}
 
-	void X11TerminalWindow::clipboardUpdated(vterm::Terminal::ClipboardUpdateEvent& e) {
+	void X11TerminalWindow::clipboardUpdate(vterm::Terminal::ClipboardUpdateEvent& e) {
 		Application::Instance<X11Application>()->clipboard_ = *e;
 		XSetSelectionOwner(display_, app()->clipboardName_, window_, CurrentTime);
 	}
@@ -328,7 +328,6 @@ namespace tpp {
                 Status status;
                 int strLen = Xutf8LookupString(tw->ic_, & e.xkey, str, sizeof str, &kSym, &status);
                 // if it is printable character and there were no modifiers other than shift pressed, we are dealing with printable character (backspace is not printable character)
-                // TODO this better be more robust
                 if (strLen > 0 && (str[0] < 0 || str[0] >= 0x20) && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
                     char * x = reinterpret_cast<char*>(& str);
 					helpers::Char const* c = helpers::Char::At(x, x + 32);

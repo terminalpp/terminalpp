@@ -50,8 +50,6 @@ namespace vterm {
 	/** Terminates the attached process.
 	
 	    The termination is asynchronous. If there are any errors returned such as the process already beging terminated, we do not really care. 
-
-		TODO care about possible other errors?
 	 */
 	void LocalPTY::doTerminate() {
 		TerminateProcess(pInfo_.hProcess, -1);

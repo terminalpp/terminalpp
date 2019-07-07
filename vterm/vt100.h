@@ -102,8 +102,6 @@ namespace vterm {
 		bool parseEscapeSequence(char*& buffer, char* end);
 
 		/** Operating System Commands end with either an ST (ESC \), or with BEL. For now, only setting the terminal window command is supported.
-
-		    TODO make the parser nicer if more OSC sequences are necessary? 
 		 */
 		bool parseOSCSequence(char*& buffer, char* end);
 		void processCSISequence();
@@ -356,7 +354,9 @@ namespace vterm {
 
 		void setMouseMode(MouseMode mode) {
 			mouseMode_ = mode;
-			// TODO event on mouse capture state change
+			releaseScreenLock();
+			trigger(onMouseCaptureChange, mode != MouseMode::Off);
+			acquireScreenLock(false);
 		}
 
 		void invalidateLastCharPosition() {
@@ -392,8 +392,8 @@ namespace vterm {
 
 		/** Fills the given rectangle with character, colors and font.
 		 */
-		void fillRect(helpers::Rect const& rect, helpers::Char c, Color fg, Color bg, Font font = Font());
-		void fillRect(helpers::Rect const& rect, helpers::Char c, Font font = Font()) {
+		void fillRect(Rect const& rect, helpers::Char c, Color fg, Color bg, Font font = Font());
+		void fillRect(Rect const& rect, helpers::Char c, Font font = Font()) {
 			fillRect(rect, c, state_.fg, state_.bg, font);
 		}
 

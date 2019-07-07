@@ -45,13 +45,11 @@ namespace helpers {
 		}
 
 		/** Converts the command into a single string. 
-
-		    TODO quote arguments where necessary, etc. 
 		 */
 		std::string toString() const {
 			std::string result = command_;
 			for (auto i : args_)
-				result = result + ' ' + i;
+				result = result + ' ' + Quote(i);
 			return result;
 		}
 
@@ -77,7 +75,40 @@ namespace helpers {
 			args_ = other.args_;
 			return *this;
 		}
+
+		/** Quotes the given string for shell purposes. 
+
+		    Space and quotes are quoted, everything else stays as is. If there are no characters that need to be quoted in the string, returns the unchanged argument, otherwise returns the quoted argument in double quotes. 
+		 */
+		static std::string Quote(std::string const& arg) {
+			std::stringstream result;
+			bool quoted = false;
+			for (size_t i = 0, e = arg.size(); i != e; ++i) {
+				switch (arg[i]) {
+					case ' ':
+						quoted = true;
+						result << ' ';
+						break;
+					case '"':
+					case '\'':
+						quoted = true;
+						result << '\\' << arg[i];
+						break;
+					default:
+						result << arg[i];
+				}
+			}
+			if (quoted) {
+				result << '"';
+				return std::string("\"") + result.str();
+			} else {
+				return result.str();
+			}
+		}
+
 	private:
+
+
 		std::string command_;
 		std::vector<std::string> args_;
 	};

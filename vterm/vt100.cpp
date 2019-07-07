@@ -298,7 +298,7 @@ namespace vterm {
 	}
 
 	void VT100::keyChar(helpers::Char c) {
-		// TODO make sure that the character is within acceptable range, i.e. it does not clash with ctrl+ stuff, etc. 
+		ASSERT(c.codepoint() >= 32);
 		ptyWrite(c.toCharPtr(), c.size());
 	}
 
@@ -367,11 +367,11 @@ namespace vterm {
 					case helpers::Char::BEL:
 						++x;
 						LOG(SEQ) << "BEL notification";
-						// TODO should the lock be released here? 
+						releaseScreenLock();
 						trigger(onNotification);
+						acquireScreenLock(false);
 						break;
 					case helpers::Char::TAB:
-						// TODO tabstops and stuff
 						++x;
 						updateCursorPosition();
 						if (screen_.cursor().col % 8 == 0)
@@ -537,8 +537,10 @@ namespace vterm {
 		if (x[-1] == helpers::Char::BEL && start[0] == '0' && start[1] == ';') {
 			std::string title(start + 2, x - 1);
 			LOG(SEQ) << "Title change to " << title;
-			// TODO release the lock? 
+			// release the screen lock before calling the event which is non-critical
+			releaseScreenLock();
 			setTitle(title);
+			acquireScreenLock(false);
 		// set clipboard
 		} else if (x[-1] == helpers::Char::BEL && start[0] == '5' && start[1] == '2' && start[2] == ';') {
 			char* s = buffer + 3;
@@ -552,8 +554,10 @@ namespace vterm {
 			++s; // the ';'
 			std::string clipboard = helpers::Base64Decode(s, x - 1);
 			LOG(SEQ) << "Setting clipboard to " << clipboard;
-			// TODO release the lock? 
-			trigger(onClipboardUpdated, clipboard);
+			// release the screen lock before calling the event which is non-critical
+			releaseScreenLock();
+			trigger(onClipboardUpdate, clipboard);
+			acquireScreenLock(false);
 		} else {
 			// TODO ignore for now 112 == reset cursor color             
 			LOG(SEQ_UNKNOWN) << "Unknown OSC: " << std::string(start, x - start);
@@ -654,16 +658,16 @@ namespace vterm {
 					switch (seq_[0]) {
 						case 0:
 							updateCursorPosition();
-							fillRect(helpers::Rect(screen_.cursor().col, screen_.cursor().row, screen_.cols(), screen_.cursor().row + 1), ' ');
-							fillRect(helpers::Rect(0, screen_.cursor().row + 1, screen_.cols(), screen_.rows()), ' ');
+							fillRect(Rect(screen_.cursor().col, screen_.cursor().row, screen_.cols(), screen_.cursor().row + 1), ' ');
+							fillRect(Rect(0, screen_.cursor().row + 1, screen_.cols(), screen_.rows()), ' ');
 							return;
 						case 1:
 							updateCursorPosition();
-							fillRect(helpers::Rect(0, 0, screen_.cols(), screen_.cursor().row), ' ');
-							fillRect(helpers::Rect(0, screen_.cursor().row, screen_.cursor().col + 1, screen_.cursor().row + 1), ' ');
+							fillRect(Rect(0, 0, screen_.cols(), screen_.cursor().row), ' ');
+							fillRect(Rect(0, screen_.cursor().row, screen_.cursor().col + 1, screen_.cursor().row + 1), ' ');
 							return;
 						case 2:
-							fillRect(helpers::Rect(screen_.cols(), screen_.rows()), ' ');
+							fillRect(Rect(screen_.cols(), screen_.rows()), ' ');
 							return;
 						default:
 							break;
@@ -679,15 +683,15 @@ namespace vterm {
 					switch (seq_[0]) {
 						case 0:
 							updateCursorPosition();
-							fillRect(helpers::Rect(screen_.cursor().col, screen_.cursor().row, screen_.cols(), screen_.cursor().row + 1), ' ');
+							fillRect(Rect(screen_.cursor().col, screen_.cursor().row, screen_.cols(), screen_.cursor().row + 1), ' ');
 							return;
 						case 1:
 							updateCursorPosition();
-							fillRect(helpers::Rect(0, screen_.cursor().row, screen_.cursor().col + 1, screen_.cursor().row + 1), ' ');
+							fillRect(Rect(0, screen_.cursor().row, screen_.cursor().col + 1, screen_.cursor().row + 1), ' ');
 							return;
 						case 2:
 							updateCursorPosition();
-							fillRect(helpers::Rect(0, screen_.cursor().row, screen_.cols(), screen_.cursor().row + 1), ' ');
+							fillRect(Rect(0, screen_.cursor().row, screen_.cols(), screen_.cursor().row + 1), ' ');
 							return;
 						default:
 							break;
@@ -725,7 +729,6 @@ namespace vterm {
 				case 'T':
 					seq_.setArgDefault(0, 1);
 					LOG(SEQ) << "SD: scrollDown " << seq_[0];
-					// TODO should this be from cursor, or from scrollStart? 
 					screen_.insertLines(seq_[0], screen_.cursor().row, state_.scrollEnd, Cell(' ', state_.fg, state_.bg));
 					return;
 				/* CSI <n> X -- erase <n> characters from the current position
@@ -737,18 +740,18 @@ namespace vterm {
 					// erase from first line
 					unsigned n = static_cast<unsigned>(seq_[0]);
 					unsigned l = std::min(screen_.cols() - screen_.cursor().col, n);
-					fillRect(helpers::Rect(screen_.cursor().col, screen_.cursor().row, screen_.cursor().col + l, screen_.cursor().row + 1), ' ');
+					fillRect(Rect(screen_.cursor().col, screen_.cursor().row, screen_.cursor().col + l, screen_.cursor().row + 1), ' ');
 					n -= l;
 					// while there is enough stuff left to be larger than a line, erase entire line
 					l = screen_.cursor().row + 1;
 					while (n >= screen_.cols() && l < screen_.rows()) {
-						fillRect(helpers::Rect(0, l, screen_.cols(), l + 1), ' ');
+						fillRect(Rect(0, l, screen_.cols(), l + 1), ' ');
 						++l;
 						n -= screen_.cols();
 					}
 					// if there is still something to erase, erase from the beginning
 					if (n != 0 && l < screen_.rows())
-						fillRect(helpers::Rect(0, l, n, l + 1), ' ');
+						fillRect(Rect(0, l, n, l + 1), ' ');
 					return;
 				}
   			    /* CSI <n> c - primary device attributes.
@@ -919,7 +922,7 @@ namespace vterm {
 						state_.fg = palette_[defaultFg_];
 						state_.bg = palette_[defaultBg_];
 						state_.font = Font();
-						fillRect(helpers::Rect(screen_.cols(), screen_.rows()), ' ');
+						fillRect(Rect(screen_.cols(), screen_.rows()), ' ');
 						screen_.cursor() = Terminal::Cursor();
 						LOG(SEQ) << "Alternate screen on";
 					} else {
@@ -1146,7 +1149,7 @@ namespace vterm {
 				break;
 			}
 			case MouseEncoding::UTF8: {
-				NOT_IMPLEMENTED;
+				LOG(SEQ_WONT_SUPPORT) << "utf8 mouse encoding";
 				break;
 			}
 			case MouseEncoding::SGR: {
@@ -1164,7 +1167,7 @@ namespace vterm {
 		invalidateLastCharPosition();
 	}
 
-	void VT100::fillRect(helpers::Rect const& rect, helpers::Char c, Color fg, Color bg, Font font) {
+	void VT100::fillRect(Rect const& rect, helpers::Char c, Color fg, Color bg, Font font) {
 		LOG(SEQ) << "fillRect (" << rect.left << "," << rect.top << "," << rect.right << "," << rect.bottom << ")  fg: " << fg << ", bg: " << bg << ", character: " << c;
 		for (unsigned row = rect.top; row < rect.bottom; ++row) {
 			for (unsigned col = rect.left; col < rect.right; ++col) {

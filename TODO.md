@@ -1,7 +1,6 @@
 ﻿# TODOs
 
 - get rid of warnings on windows and linux
-- look at all TODOs and fix as many as possible, or convert to issues
 
 ## Bugs and missing features
 

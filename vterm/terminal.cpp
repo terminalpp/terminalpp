@@ -74,7 +74,7 @@ namespace vterm {
 		std::stringstream result;
 		unsigned col = selection.start.col;
 		unsigned row = selection.start.row;
-		// TODO this is ugly
+		// obtain the screenlock and get the selected text
 		ScreenLock sl = const_cast<Terminal*>(this)->lockScreen();
 		while (selection.contains(col, row) && col < sl->cols() && row < sl->rows()) {
 			result << sl->at(col, row).c();

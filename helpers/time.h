@@ -6,9 +6,7 @@
 
 namespace helpers {
 
-	/** Simple timer class. 
-
-	    TODO not sure if RAII is really a good thing here (i.e. LOG the timer)
+	/** Simple timer class which encapsulates the std::chrono.
 	 */
 	class Timer {
 	public:

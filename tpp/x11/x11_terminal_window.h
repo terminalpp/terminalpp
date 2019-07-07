@@ -49,7 +49,7 @@ namespace tpp {
 
 		void titleChange(vterm::Terminal::TitleChangeEvent & e) override;
 
-		void clipboardUpdated(vterm::Terminal::ClipboardUpdateEvent& e) override;
+		void clipboardUpdate(vterm::Terminal::ClipboardUpdateEvent& e) override;
 
 		void windowResized(unsigned widthPx, unsigned heightPx) {
 			if (buffer_ != 0) {

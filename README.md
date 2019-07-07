@@ -94,40 +94,53 @@ Although raw peformance is not the main design goal of `tpp`, it is reasonably p
 
 Both seem to be more than efficient for daily operations.
 
-For lack of proper benchmarks, the [`vtebench`](https://github.com/jwilm/vtebench) from `alacritty` was used to test the basic performance. 
+For lack of proper benchmarks, the [`vtebench`](https://github.com/jwilm/vtebench) from `alacritty` was used to test the basic performance. The `alt-screen-random-write`, `scrolling` and `scrolling-in-region` benchmarks are used because `tpp` does not support wide unicode characters yet. All the benchmarks were created at resolution `320x60` and the terminals rendered the `Iosevka Term` font at comparable sizes. 
 
-Benchmark               | Platform         | Terminal        | Time [s]
-------------------------|------------------|-----------------|---------
-alt-screen-random-write | Ubuntu 18.04 LTS | alacritty       | 
-alt-screen-random-write | Ubuntu 18.04 LTS | tpp             | 
-alt-screen-random-write | Ubuntu 18.04 LTS | sakura (libvte) | 
-alt-screen-random-write | Ubuntu 18.04 LTS | xterm           | 
-alt-screen-random-write | Ubuntu 18.04 LTS | st              | 
-alt-screen-random-write | Windows 10       | alacritty       | 24.69
-alt-screen-random-write | Windows 10       | tpp             | 
-alt-screen-random-write | Windows 10       | tpp (bypass)    | 1.15
-alt-screen-random-write | Windows 10       | wsl console     |
-alt-screen-random-write | Windows 10       | win term        |
-scrolling               | Ubuntu 18.04 LTS | alacritty       | 
-scrolling               | Ubuntu 18.04 LTS | tpp             | 
-scrolling               | Ubuntu 18.04 LTS | sakura (libvte) | 
-scrolling               | Ubuntu 18.04 LTS | xterm           | 
-scrolling               | Ubuntu 18.04 LTS | st              | 
-scrolling               | Windows 10       | alacritty       | 952
-scrolling               | Windows 10       | tpp             | 
-scrolling               | Windows 10       | tpp (bypass)    | 8.77
-scrolling               | Windows 10       | wsl console     |
-scrolling               | Windows 10       | win term        |
-scrolling-in-region     | Ubuntu 18.04 LTS | alacritty       | 
-scrolling-in-region     | Ubuntu 18.04 LTS | tpp             | 
-scrolling-in-region     | Ubuntu 18.04 LTS | sakura (libvte) | 
-scrolling-in-region     | Ubuntu 18.04 LTS | xterm           | 
-scrolling-in-region     | Ubuntu 18.04 LTS | st              | 
-scrolling-in-region     | Windows 10       | alacritty       | 
-scrolling-in-region     | Windows 10       | tpp             | 
-scrolling-in-region     | Windows 10       | tpp (bypass)    | 8.6
-scrolling-in-region     | Windows 10       | wsl console     |
-scrolling-in-region     | Windows 10       | win term        |
+> Take the following numbers with a grain of salt since the `vtbench` provides extremely artificial benchmarks which only stress raw parser performance under certain conditions and full-screen rendering pauses at capped intervals (60 FPS to my understanding). Neither of these characteristics should really affect the day-to-day performance feeling for a terminal.  
+
+## Windows 
+
+On Windows, its main platform, `tpp` signifficantly outperforms the competition. This is partially due to reasonably efficient internal storage, reasonably fast rendering and most importantly due to complete bypass of the `ConPTY` console giving it "unfair" performance boost compared to others. If the bypass pty is disabled, `tpp` is as fast as the `ConPTY` lets it be, i.e. roughly on par with the windows console. 
+
+Benchmark               | Terminal        | Memory [MB] | Time [s]
+------------------------|-----------------|-------------|---------
+alt-screen-random-write | alacritty       | 72.6        | 26.69
+alt-screen-random-write | tpp             | 23.8        | 40.9 
+alt-screen-random-write | tpp (bypass)    | 22.3        | **1.1**
+alt-screen-random-write | wsl console     | **7.5**     | 39.15
+alt-screen-random-write | win term        | 26.5        | 110.24
+scrolling               | alacritty       | 78.2        | 1125
+scrolling               | tpp             |             |
+scrolling               | tpp (bypass)    | 22.3        | **11.8**
+scrolling               | wsl console     |             |
+scrolling               | win term        |             |
+scrolling-in-region     | alacritty       |             | 
+scrolling-in-region     | tpp             |             |
+scrolling-in-region     | tpp (bypass)    | 22.3        | **11.6**
+scrolling-in-region     | wsl console     |             |
+scrolling-in-region     | win term        |             |
+
+> Windows 10 Home 1903, i7-8550u, 16GB RAM, NVMe disk
+
+## Linux
+
+Benchmark               | Terminal        | Memory [MB] | Time [s]
+------------------------|-----------------|-------------|---------
+alt-screen-random-write | alacritty       |             |
+alt-screen-random-write | tpp             |             |
+alt-screen-random-write | sakura (libvte) |             |
+alt-screen-random-write | xterm           |             |
+alt-screen-random-write | st              |             |
+scrolling               | alacritty       |             |
+scrolling               | tpp             |             |
+scrolling               | sakura (libvte) |             |
+scrolling               | xterm           |             |
+scrolling               | st              |             |
+scrolling-in-region     | alacritty       |             |
+scrolling-in-region     | tpp             |             |
+scrolling-in-region     | sakura (libvte) |             |
+scrolling-in-region     | xterm           |             |
+scrolling-in-region     | st              |             |
 
 All the benchmarks were created using `vtebench` at resolution `320x60`, running on i7-8550u, 15GB RAM & 512GB NVMe. Allacritty version `0.3.3`
 
