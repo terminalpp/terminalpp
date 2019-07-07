@@ -250,7 +250,6 @@ namespace vterm {
                     cells_[i] = new Cell[cols_];
                     memcpy(cells_[i], from.cells_[i], sizeof(Cell) * cols_);
                 }
-				//memcpy(cells_, from.cells_, sizeof(Cell) * cols_ * rows_);
 			}
 
 			Screen& operator = (Screen const& other) {
@@ -269,7 +268,6 @@ namespace vterm {
 				cursor_ = other.cursor_;
                 for (size_t i = 0; i < rows_; ++i) 
                     memcpy(cells_[i], other.cells_[i], sizeof(Cell) * cols_);
-				//memcpy(cells_, other.cells_, sizeof(Cell) * cols_ * rows_);
 				return *this;
 			}
 
@@ -344,7 +342,7 @@ namespace vterm {
 				ASSERT(bottom <= rows_);
 				for (size_t i = 0; i < lines; ++i) {
 					Cell* row = cells_[bottom - 1];
-					memmove(cells_ + 1, cells_, sizeof(Cell*) * (bottom - top - 1));
+					memmove(cells_ + top + 1, cells_ + top, sizeof(Cell*) * (bottom - top - 1));
 					cells_[top] = row;
 					fillRow(row, fill, cols_);
 				}
@@ -358,9 +356,10 @@ namespace vterm {
              */
 			void deleteLines(unsigned lines, unsigned top, unsigned bottom, Cell const & fill) {
 				ASSERT(bottom <= rows_);
+				ASSERT(lines <= bottom - top);
 				for (size_t i = 0; i < lines; ++i) {
 					Cell* row = cells_[top];
-					memmove(cells_, cells_ + 1, sizeof(Cell*) * (bottom - top - 1));
+					memmove(cells_ + top, cells_ + top + 1, sizeof(Cell*) * (bottom - top - 1));
 					cells_[bottom - 1] = row;
 					fillRow(row, fill, cols_);
 				}
