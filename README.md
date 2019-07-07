@@ -2,6 +2,8 @@
 
 *Terminal++* or `tpp` is a minimalistic crossplatform terminal emulator that is capable of emulating much of the commonly used `xterm` supported control sequences. 
 
+> `tpp` is very much in an alpha state. I have just recently switched to using it as my default terminal and there are rough edges pretty much everywhere. 
+
 # Configuration
 
 Configuration for now is very spartan. All configuration is done by changing macros in the `config.h` file. The option names should be fairly self explanatory. 
@@ -94,7 +96,7 @@ Although raw peformance is not the main design goal of `tpp`, it is reasonably p
 
 Both seem to be more than efficient for daily operations. On Windows with bypass, `tpp` is way faster than all others, while on linux `tpp` is definitely one of faster terminals.
 
-For lack of proper benchmarks, the [`vtebench`](https://github.com/jwilm/vtebench) from `alacritty` was used to test the basic performance. The `alt-screen-random-write`, `scrolling` and `scrolling-in-region` benchmarks are used because `tpp` does not support wide unicode characters yet. All the benchmarks were created at resolution `320x60` and the terminals rendered the `Iosevka Term` font at comparable sizes. 
+For lack of proper benchmarks, the [`vtebench`](https://github.com/jwilm/vtebench) from `alacritty` was used to test the basic performance. The `alt-screen-random-write`, `scrolling` and `scrolling-in-region` benchmarks are used because `tpp` does not support wide unicode characters yet. All the benchmarks were created at resolution `320x60` and the terminals rendered the `Iosevka Term` font at comparable sizes. The `alt-screen-random-write` benchmark size was 200MB, the two scrolling benchmarks were 20MB each. 
 
 > Take the following numbers with a big grain of salt since the `vtbench` provides extremely artificial benchmarks which only stress raw parser performance under certain conditions and full-screen rendering pauses at capped intervals (60 FPS to my understanding). Neither of these characteristics should really affect the day-to-day performance feeling for a terminal.  
 

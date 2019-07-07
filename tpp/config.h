@@ -8,8 +8,8 @@
 
 /** Initial size of the terminal window and the underlying terminal in text columns an rows. 
  */
-#define DEFAULT_TERMINAL_COLS 320
-#define DEFAULT_TERMINAL_ROWS 60
+#define DEFAULT_TERMINAL_COLS 80
+#define DEFAULT_TERMINAL_ROWS 25
 
 //#define DEFAULT_TERMINAL_COLS 80
 //#define DEFAULT_TERMINAL_ROWS 25
@@ -18,7 +18,7 @@
 /** Name of the font to be used and its size in pixels for zoom 1. 
  */
 #define DEFAULT_TERMINAL_FONT "Iosevka Term"
-#define DEFAULT_TERMINAL_FONT_SIZE 14
+#define DEFAULT_TERMINAL_FONT_SIZE 18
 
 /** Keyboard shortcuts for various actions. 
  */
