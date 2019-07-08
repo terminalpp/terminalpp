@@ -92,8 +92,8 @@ namespace tpp {
 		wClass.cbWndExtra = 0; // extra memory to be allocated for each window
 		wClass.lpszClassName = TerminalWindowClassName_; // class name
 		wClass.lpszMenuName = nullptr; // menu name
-		wClass.hIcon = LoadIcon(nullptr, IDI_APPLICATION); // big icon (alt-tab)
-		wClass.hIconSm = LoadIcon(nullptr, IDI_APPLICATION); // small icon (taskbar)
+		wClass.hIcon = LoadIcon(hInstance_, L"IDI_ICON1"); // big icon (alt-tab)
+		wClass.hIconSm = LoadIcon(hInstance_, L"IDI_ICON1"); // small icon (taskbar)
 		wClass.hCursor = LoadCursor(nullptr, IDC_IBEAM); // mouse pointer icon
 		wClass.hbrBackground = nullptr; // do not display background - the terminal window does it itself
 		// register the class
