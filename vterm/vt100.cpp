@@ -386,7 +386,11 @@ namespace vterm {
 						LOG(SEQ) << "LF";
 						markLastCharPosition();
 						++x;
-						++screen_.cursor().row;
+						// determine if region should be scrolled
+						if (++screen_.cursor().row == state_.scrollEnd) {
+							screen_.deleteLines(1, state_.scrollStart, state_.scrollEnd, Cell(' ', state_.fg, state_.bg));
+							--screen_.cursor().row;
+						}
 						updateCursorPosition();
 						setLastCharPosition();
 						break;
@@ -420,7 +424,7 @@ namespace vterm {
 						helpers::Char const * c8 = helpers::Char::At(x, bufferEnd);
 						if (c8 == nullptr)
 							return x - buffer;
-						//LOG << "codepoint " << std::hex << c8->codepoint() << " " << static_cast<char>(c8->codepoint() & 0xff);
+						LOG << "codepoint " << std::hex << c8->codepoint() << " " << static_cast<char>(c8->codepoint() & 0xff);
 						// get the cell and update its contents
 						Terminal::Cell& cell = screen_.at(screen_.cursor().col, screen_.cursor().row);
 						cell.setFg(state_.fg);
@@ -447,6 +451,22 @@ namespace vterm {
 		if (x == bufferEnd)
 			return false;
 		switch (*x++) {
+			/* Save Cursor. */
+			case '7':
+				state_.cursorStack.push_back(std::make_pair(screen_.cursor().col, screen_.cursor().row));
+				LOG(SEQ) << "DECSC: Cursor position saved";
+				break;
+			/* Restore Cursor. */
+			case '8':
+				if (!state_.cursorStack.empty()) {
+					auto i = state_.cursorStack.back();
+					setCursor(i.first, i.second);
+					state_.cursorStack.pop_back();
+					LOG(SEQ) << "DECRC: Cursor position restored";
+				} else {
+					LOG(SEQ_UNKNOWN) << "No cursor position to restore (DECRC)";
+				}
+				break;
 			/* Reverse line feed - move up 1 row, same column.
 			 */
 			case 'M':
@@ -644,7 +664,10 @@ namespace vterm {
 				case 'f': // HVP
 					seq_.setArgDefault(0, 1);
 					seq_.setArgDefault(1, 1);
-					ASSERT(seq_.numArgs() == 2);
+					if (seq_.numArgs() != 2)
+						break;
+					seq_.conditionalReplace(0, 0, 1);
+					seq_.conditionalReplace(1, 0, 1);
 					LOG(SEQ) << "CUP: setCursor " << seq_[1] - 1 << ", " << seq_[0] - 1;
 					setCursor(seq_[1] - 1, seq_[0] - 1);
 					return;
@@ -796,15 +819,23 @@ namespace vterm {
 				 */
 				case 'm':
 					return processSGR();
-				/* CSI <n> ; <n> r -- Set scrolling region (default is the whole window)
+				/* CSI <n> ; <n> r -- Set scrolling region (default is the whole window) (DECSTBM)
 				 */
 				case 'r':
 					seq_.setArgDefault(0, 1); // inclusive
-					seq_.setArgDefault(1, screen_.rows()); // inclusive
+					seq_.setArgDefault(1, screen_.cursor().row); // inclusive
 					if (seq_.numArgs() != 2)
+						break;
+					// This is not proper 
+					seq_.conditionalReplace(0, 0, 1);
+					seq_.conditionalReplace(1, 0, 1);
+					if (seq_[0] > screen_.rows())
+						break;
+					if (seq_[1] > screen_.rows())
 						break;
 					state_.scrollStart = std::min(seq_[0] - 1, screen_.rows() - 1); // inclusive
 					state_.scrollEnd = std::min(seq_[1], screen_.rows()); // exclusive 
+					setCursor(0, 0);
 					LOG(SEQ) << "Scroll region set to " << state_.scrollStart << " - " << state_.scrollEnd;
 					return;
 				/* CSI <n> : <n> : <n> t -- window manipulation (xterm)

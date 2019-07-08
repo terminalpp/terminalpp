@@ -140,16 +140,23 @@ namespace vterm {
 
 				If such argument was not parsed or explicitly set to default value, returns the default default value, which is 0.
 			 */
-			unsigned arg(size_t index) const {
+			unsigned operator [] (size_t index) const {
 				if (index >= args_.size())
 					return 0;
 				return args_[index].first;
 			}
 
-			unsigned operator [] (size_t index) const {
+			/** If the given argument has the specified value, it is replaced with the new value given. 
+
+			    Returns true if the replace occured, false otherwise. 
+			 */
+			bool conditionalReplace(size_t index, unsigned value, unsigned newValue) {
 				if (index >= args_.size())
-					return 0;
-				return args_[index].first;
+					return false;
+				if (args_[index].first != value)
+					return false;
+				args_[index].first = newValue;
+				return true;
 			}
 
 			/** Sets the default value of given argument.
@@ -232,6 +239,10 @@ namespace vterm {
 
 			unsigned lastCharCol;
 			unsigned lastCharRow;
+
+			/** Stack of cursor positions saved. 
+			 */
+			std::vector<std::pair<unsigned, unsigned>> cursorStack;
 
 			State(unsigned cols, unsigned rows) :
 				scrollStart(0),
@@ -340,13 +351,12 @@ namespace vterm {
 			unsigned c = screen_.cols();
 			while (screen_.cursor().col >= c) {
 				screen_.cursor().col -= c;
-				++screen_.cursor().row;
+				if (++screen_.cursor().row == state_.scrollEnd) {
+					screen_.deleteLines(1, state_.scrollStart, state_.scrollEnd, Cell(' ', state_.fg, state_.bg));
+					--screen_.cursor().row;
+				}
 			}
 			ASSERT(screen_.cursor().col < screen_.cols());
-			if (screen_.cursor().row == state_.scrollEnd) {
-				screen_.deleteLines(1, state_.scrollStart, state_.scrollEnd, Cell(' ', state_.fg, state_.bg));
-				--screen_.cursor().row;
-			}
 			// if cursor row is not valid, just set it to the last row 
 			if (screen_.cursor().row >= screen_.rows())
 				screen_.cursor().row = screen_.rows() - 1;

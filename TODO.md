@@ -1,9 +1,6 @@
 ﻿## Bugs and missing features
 
-- ESC 7 and 8 (cursor save, cursor restore is missing)
-- sudo apt install or apt remove sends weird scroll levels, which trigger the asserts 
-
-
+- VT100 should be fault tolerant and not assert everything, just do nothing upon failure in release
 - add command line arguments so that terminal can be proper terminal emulator replacement in Linux
 - add zoom out? and default zoom? 
 
