@@ -118,13 +118,13 @@ scrolling               | tpp             | 23.8        | 1209.49
 scrolling               | tpp (bypass)    | 22.3        | **11.8**
 scrolling               | wsl console     | **4.7**     | 876.08
 scrolling               | win term        |             | 
-scrolling-in-region     | alacritty       |             | 
+scrolling-in-region     | alacritty       |             | >1 hour
 scrolling-in-region     | tpp             |             |
 scrolling-in-region     | tpp (bypass)    | 22.3        | **11.6**
 scrolling-in-region     | wsl console     | **0.8**     | 1362
 scrolling-in-region     | win term        |             |
 
-> Windows 10 Home 1903, i7-8550u, 16GB RAM, NVMe disk. `alacritty` version 0.3.3, win term version 
+> Windows 10 Home 1903, i7-8550u, 16GB RAM, NVMe disk. `alacritty` version 0.3.3, win term version (early preview). Not all times are in because some just took too long to wait for.
 
 ## Linux
 
