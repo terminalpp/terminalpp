@@ -502,8 +502,8 @@ namespace vterm {
 			/* Otherwise we have unknown escape sequence. This is an issue since we do not know when it ends and therefore may break the parsing.
 			 */
 			default:
-				LOG(SEQ_UNKNOWN) << "Unknown (possibly mismatched) char after ESC " << *x;
-				++x;
+				LOG(SEQ_UNKNOWN) << "Unknown (possibly mismatched) char after ESC " << *(x-1);
+				//++x;
 				break;
 		}
 		buffer = x;
