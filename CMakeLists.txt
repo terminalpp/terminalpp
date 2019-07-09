@@ -19,5 +19,6 @@ add_subdirectory("tpp")
 
 if(UNIX)
     add_subdirectory("bypass")
+    add_subdirectory("tools")
 endif()
 
