@@ -9,6 +9,8 @@ namespace vterm {
 
 	/** IO terminal with VT100 escape sequences decoder. 
 
+        https://vt100.net/docs/vt510-rm/contents.html
+
 	    Support at least the following escape sequences :
 
         https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
