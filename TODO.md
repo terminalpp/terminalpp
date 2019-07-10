@@ -6,9 +6,6 @@
 
 ### Win32 Bugs
 
-- fix the resources builder to read the icon from images, not from the tpp source file
-- move the resource to directwrite folder
-
 ### X11 Bugs
 
 - app icon, kinda works, clean the code
