@@ -1,4 +1,5 @@
-[![Build status](https://dev.azure.com/petamaj82/terminalpp/_apis/build/status/terminalpp-windows)](https://dev.azure.com/petamaj82/terminalpp/_build/latest?definitionId=4)
+[![Windows](https://dev.azure.com/petamaj82/terminalpp/_apis/build/status/4)](https://dev.azure.com/petamaj82/terminalpp/_build/latest?definitionId=4)
+[![Linux](https://dev.azure.com/petamaj82/terminalpp/_apis/build/status/5)](https://dev.azure.com/petamaj82/terminalpp/_build/latest?definitionId=5)
 
 # Terminal++
 
