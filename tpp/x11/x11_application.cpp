@@ -28,7 +28,7 @@ namespace tpp {
 			THROW(helpers::Exception()) << "Unable to open X display";
 		xScreen_ = DefaultScreen(xDisplay_);
 
-		XSetErrorHandler(X11ErrorHandler);
+		//XSetErrorHandler(X11ErrorHandler);
 
         // set the default machine locale instead of the "C" locale
         setlocale(LC_CTYPE, "");

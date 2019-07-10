@@ -6,6 +6,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
+#include <X11/Xatom.h>
 #include <X11/Xft/Xft.h>
 
 
@@ -128,6 +129,7 @@ namespace tpp {
 		}
 
 		void doDrawCursor(unsigned col, unsigned row, vterm::Terminal::Cell const& c) override {
+			drawText();
             XftColor cColor = toXftColor(c.fg());
 			XftDrawStringUtf8(draw_, &cColor, font_->handle(), col * cellWidthPx_, row * cellHeightPx_ + font_->handle()->ascent, (XftChar8*)(c.c().toCharPtr()), c.c().size());
 		}

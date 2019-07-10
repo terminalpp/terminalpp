@@ -13,6 +13,7 @@ namespace tpp {
 
     std::unordered_map<Window, X11TerminalWindow *> X11TerminalWindow::Windows_;
 
+    extern  unsigned long tppIcon[];
 
 	// http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
 	// https://keithp.com/~keithp/talks/xtc2001/paper/
@@ -69,6 +70,12 @@ namespace tpp {
     				XNClientWindow, window_, XNFocusWindow, window_, nullptr);
 
         updateTextStructures(widthPx_, cellWidthPx_);
+
+        // set the icon
+        // TODO move this to X11Application as the other atoms
+        Atom NET_WM_ICON = XInternAtom(display_, "_NET_WM_ICON", false);
+
+        XChangeProperty(display_, window_, NET_WM_ICON, XA_CARDINAL, 32, PropModeReplace, reinterpret_cast<unsigned char*>(&tppIcon[1]), tppIcon[0]);
 
         Windows_[window_] = this;
 	}
