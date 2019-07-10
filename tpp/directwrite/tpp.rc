@@ -1,4 +1,4 @@
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON                    "..\\..\\images\\tpp.ico"
+IDI_ICON1               ICON                    "..\\..\\resources\images\\tpp.ico"
 

@@ -1,3 +1,5 @@
+[![Build status](https://dev.azure.com/petamaj82/terminalpp/_apis/build/status/terminalpp-windows)](https://dev.azure.com/petamaj82/terminalpp/_build/latest?definitionId=4)
+
 # Terminal++
 
 *Terminal++* or `tpp` is a minimalistic crossplatform terminal emulator that is capable of emulating much of the commonly used `xterm` supported control sequences. 
