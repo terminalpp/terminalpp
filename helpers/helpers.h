@@ -5,10 +5,7 @@
 
 #ifdef _WIN64
     #include "windows.h"
-#elif __linux__
-    #include <cstring>
-    #include <errno.h>
-#elif __APPLE__
+#elif (defined __linux__) || (defined __APPLE__)
     #include <cstring>
     #include <errno.h>
 #else

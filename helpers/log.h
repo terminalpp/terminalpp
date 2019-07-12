@@ -231,7 +231,7 @@ namespace helpers {
 					tm t;
 #ifdef _WIN64
 					localtime_s(&t, &m.time);
-#elif __linux__
+#elif (defined __linux__) || (defined __APPLE__)
 					localtime_r(&m.time, &t);
 #endif
 					(*s_) << std::put_time(&t, "%c") << " ";

@@ -1,10 +1,11 @@
-#ifdef __linux__
+#if (defined __linux__) || (defined __APPLE__)
 #include <unistd.h>
 #include <pty.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <errno.h>
 #endif
+
 #include "helpers/log.h"
 
 #include "local_pty.h"

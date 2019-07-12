@@ -61,7 +61,7 @@
 //#define DEFAULT_SESSION_PTY vterm::LocalPTY
 //#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "bash"})
 
-#elif __linux__
+#elif (defined __linux__) || (defined __APPLE__)
 
 #define DEFAULT_SESSION_TERMINAL vterm::VT100
 #define DEFAULT_SESSION_PTY vterm::LocalPTY

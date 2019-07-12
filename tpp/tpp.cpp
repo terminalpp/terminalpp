@@ -11,14 +11,18 @@
 #include "helpers/char.h"
 
 #ifdef _WIN64
+
 #include "directwrite/directwrite_application.h"
 #include "directwrite/directwrite_terminal_window.h"
 // link to directwrite
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
-#elif __linux__
+
+#elif (defined __linux__) || (defined __APPLE__)
+
 #include "x11/x11_application.h"
 #include "x11/x11_terminal_window.h"
+
 #else
 #error "Unsupported platform"
 #endif
@@ -47,7 +51,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	try {
 	    // create the application singleton
 	    new DirectWriteApplication(hInstance);
-#elif __linux__
+#elif (defined __linux__) || (defined __APPLE__)
 int main(int argc, char* argv[]) {
 	try {
 		MARK_AS_UNUSED(argc);

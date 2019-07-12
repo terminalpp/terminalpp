@@ -150,7 +150,7 @@ namespace helpers {
 		void apply() {
 #ifdef _WIN64
 			NOT_IMPLEMENTED;
-#elif __linux__
+#elif (defined __linux__) || (defined __APPLE__)
 			for (auto i : map_) {
 				if (i.second.empty())
 					unsetenv(i.first.c_str());
