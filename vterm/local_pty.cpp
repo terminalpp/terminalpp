@@ -3,6 +3,7 @@
 #include <pty.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
 #include <errno.h>
 #endif
 
@@ -12,6 +13,7 @@
 #include <util.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
 #include <errno.h>
 #endif
 
