@@ -1,6 +1,15 @@
-#if (defined __linux__) || (defined __APPLE__)
+#if (defined __linux__)
 #include <unistd.h>
 #include <pty.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <errno.h>
+#endif
+
+#if (defined __APPLE__)  
+// - and other BSD like systems too, if we support them? 
+#include <unistd.h>
+#include <util.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <errno.h>
