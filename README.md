@@ -1,8 +1,11 @@
 
 Platform | Build Status
 ----------|----------
-Windows | [![Windows](https://dev.azure.com/petamaj82/terminalpp/_apis/build/status/4)](https://dev.azure.com/petamaj82/terminalpp/_build/latest?definitionId=4) 
-Linux | [![Linux](https://dev.azure.com/petamaj82/terminalpp/_apis/build/status/5)](https://dev.azure.com/petamaj82/terminalpp/_build/latest?definitionId=5)
+Windows | [![Build status](https://dev.azure.com/terminalpp/tpp/_apis/build/status/build%20-%20win)](https://dev.azure.com/terminalpp/tpp/_build/latest?definitionId=1) 
+Linux | [![Build status](https://dev.azure.com/terminalpp/tpp/_apis/build/status/build%20-%20linux)](https://dev.azure.com/terminalpp/tpp/_build/latest?definitionId=2)
+macOS * | [![Build status](https://dev.azure.com/terminalpp/tpp/_apis/build/status/build%20-%20macOS)](https://dev.azure.com/terminalpp/tpp/_build/latest?definitionId=3) 
+
+> * macOS is not supported yet.
 
 # Terminal++
 
