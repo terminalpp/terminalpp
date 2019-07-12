@@ -103,7 +103,7 @@ namespace vterm {
 		Palette(Palette&& from);
 
 		~Palette() {
-			delete colors_;
+			delete [] colors_;
 		}
 
 		void fillFrom(Palette const& from);

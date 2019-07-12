@@ -1,4 +1,4 @@
-#ifdef __linux__
+#if (defined __linux__) || (defined __APPLE__)
 
 #include "helpers/helpers.h"
 #include "helpers/log.h"
@@ -28,7 +28,7 @@ namespace tpp {
 			THROW(helpers::Exception()) << "Unable to open X display";
 		xScreen_ = DefaultScreen(xDisplay_);
 
-		//XSetErrorHandler(X11ErrorHandler);
+		XSetErrorHandler(X11ErrorHandler);
 
         // set the default machine locale instead of the "C" locale
         setlocale(LC_CTYPE, "");

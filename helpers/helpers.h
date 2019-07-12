@@ -8,6 +8,9 @@
 #elif __linux__
     #include <cstring>
     #include <errno.h>
+#elif __APPLE__
+    #include <cstring>
+    #include <errno.h>
 #else
     #error "Unsupported platfrom, only Win32 and Linux are supported by helpers."
 #endif

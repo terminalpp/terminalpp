@@ -75,7 +75,7 @@ namespace vterm {
 		 */
 		PROCESS_INFORMATION pInfo_;
 
-#elif __linux__
+#elif (defined __linux__) || (defined __APPLE__)
 
 		static constexpr pid_t IGNORE_TERMINATION = 0;
 

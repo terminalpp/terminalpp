@@ -163,7 +163,7 @@ namespace vterm {
 		) << "Unable to start process " << cmd;
 	}
 
-#elif __linux__
+#elif (defined __linux__) || (defined __APPLE__)
 
 	LocalPTY::LocalPTY(helpers::Command const& command) :
 		command_(command) {
