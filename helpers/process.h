@@ -12,7 +12,7 @@ namespace helpers {
 	 */
 #ifdef _WIN64
 	typedef unsigned long ExitCode;
-#elif __linux__
+#elif (defined __linux__) || (defined __APPLE__)
 	typedef int ExitCode;
 #endif
 
