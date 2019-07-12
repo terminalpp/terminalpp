@@ -6,16 +6,16 @@
 
 ### Win32 Bugs
 
-### X11 Bugs
+- mouse buttons seem to not work after while, restarting the terminal helps
 
-- app icon, kinda works, clean the code
+### X11 Bugs
 
 # Code Fixes
 
 # Code Improvements 
 
 - improve logging - the logging overhead is gigantic, find a way to lower it
-- add tests & CI
+- add tests
 - add size selection to PTY? or not really, since it can always be resized. 
 - add comments to bypass
 - maek bypass record the stream for more realistic benchmark (but maybe this is useless)

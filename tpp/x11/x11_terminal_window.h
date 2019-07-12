@@ -52,7 +52,7 @@ namespace tpp {
 
 		void clipboardUpdate(vterm::Terminal::ClipboardUpdateEvent& e) override;
 
-		void windowResized(unsigned widthPx, unsigned heightPx) {
+		void windowResized(unsigned widthPx, unsigned heightPx) override {
 			if (buffer_ != 0) {
 				XFreePixmap(display_, buffer_);
 				buffer_ = 0;
@@ -166,6 +166,12 @@ namespace tpp {
 			result.color.alpha = 65535;
 			return result;
 		}
+
+		/** Sets the window icon. 
+
+		    The window icon must be an array of BGRA colors for the different icon sizes where the first element is the total size of the array followed by arbitrary icon sizes encoded by first 2 items representing the icon width and height followed by the actual pixels. 
+		 */
+		void setIcon(unsigned long * icon);
 
 	private:
 

@@ -11,9 +11,13 @@
 
 namespace tpp {
 
-    std::unordered_map<Window, X11TerminalWindow *> X11TerminalWindow::Windows_;
+	/** The statically generated icon description stored in an array so that in can be part of the executable. 
+	
+	    To change its contents, run the `icons` build target. 
+	 */
+	extern unsigned long tppIcon[];
 
-    extern  unsigned long tppIcon[];
+    std::unordered_map<Window, X11TerminalWindow *> X11TerminalWindow::Windows_;
 
 	// http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
 	// https://keithp.com/~keithp/talks/xtc2001/paper/
@@ -72,11 +76,9 @@ namespace tpp {
         updateTextStructures(widthPx_, cellWidthPx_);
 
         // set the icon
-        // TODO move this to X11Application as the other atoms
-        Atom NET_WM_ICON = XInternAtom(display_, "_NET_WM_ICON", false);
+		setIcon(tppIcon);
 
-        XChangeProperty(display_, window_, NET_WM_ICON, XA_CARDINAL, 32, PropModeReplace, reinterpret_cast<unsigned char*>(&tppIcon[1]), tppIcon[0]);
-
+		// register the window
         Windows_[window_] = this;
 	}
 
@@ -186,6 +188,19 @@ namespace tpp {
 		draw_ = nullptr;
         XFlush(display_);
 		return numCells;
+	}
+
+	void X11TerminalWindow::setIcon(unsigned long* icon) {
+		XChangeProperty(
+			display_,
+			window_,
+			Application::Instance<X11Application>()->netWmIcon_,
+			XA_CARDINAL,
+			32,
+			PropModeReplace,
+			reinterpret_cast<unsigned char*>(&icon[1]),
+			icon[0]
+		);
 	}
 
     vterm::Key X11TerminalWindow::GetKey(KeySym k, unsigned state) {

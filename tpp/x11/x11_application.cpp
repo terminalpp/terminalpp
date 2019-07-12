@@ -47,6 +47,7 @@ namespace tpp {
 		wmDeleteMessage_ = XInternAtom(xDisplay_, "WM_DELETE_WINDOW", false);
 		fpsTimerMessage_ = XInternAtom(xDisplay_, "TPP_BLINK_TIMER", false);
 		motifWmHints_ = XInternAtom(xDisplay_, "_MOTIF_WM_HINTS", false);
+		netWmIcon_ = XInternAtom(xDisplay_, "_NET_WM_ICON", false);
 
 		unsigned long black = BlackPixel(xDisplay_, xScreen_);	/* get color black */
 		unsigned long white = WhitePixel(xDisplay_, xScreen_);  /* get color white */
@@ -63,6 +64,7 @@ namespace tpp {
 		ASSERT(fpsTimerMessage_ != None);
 		ASSERT(broadcastWindow_ != None);
 		ASSERT(motifWmHints_ != None);
+		ASSERT(netWmIcon_ != None);
 
 		start();
 	}

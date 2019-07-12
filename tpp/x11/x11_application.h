@@ -77,6 +77,7 @@ namespace tpp {
 		Atom formatTargets_;
 		Atom clipboardIncr_;
 		Atom motifWmHints_;
+		Atom netWmIcon_;
 		std::string clipboard_;
 
 	}; // tpp::X11Application
