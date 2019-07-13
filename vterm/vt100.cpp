@@ -424,7 +424,7 @@ namespace vterm {
 						helpers::Char const * c8 = helpers::Char::At(x, bufferEnd);
 						if (c8 == nullptr)
 							return x - buffer;
-						LOG << "codepoint " << std::hex << c8->codepoint() << " " << static_cast<char>(c8->codepoint() & 0xff);
+						LOG(SEQ) << "codepoint " << std::hex << c8->codepoint() << " " << static_cast<char>(c8->codepoint() & 0xff);
 						// get the cell and update its contents
 						Terminal::Cell& cell = screen_.at(screen_.cursor().col, screen_.cursor().row);
 						cell.setFg(state_.fg);

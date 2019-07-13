@@ -105,6 +105,11 @@ The following is an example of how events can be used:
 
 Provides abstractions for generic OS features involving processes, such as the `Command` class which groups executable and its arguments. 
 
+## Command line arguments (`args.h`)
+
+Contains the `Arguments` static class capable of parsing command line arguments in various forms and `BaseArg` and templated `Arg` classes for representing command line arguments of different types. 
+
+TODO add more information here
 
 
 

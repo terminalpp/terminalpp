@@ -6,7 +6,7 @@
 
 ### Win32 Bugs
 
-- mouse buttons seem to not work after while, restarting the terminal helps
+- mouse buttons seem to not work after while, restarting the terminal helps - check how alt, shift and ctrl key up and key down events work, particularly alt seems weird...
 
 ### X11 Bugs
 

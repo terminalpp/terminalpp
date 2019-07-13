@@ -53,6 +53,16 @@ namespace helpers {
 	}
 
 #ifdef _WIN64
+	/** On windows, the UTF16 can be expressed in wchar_t array as well because of the same size. 
+	 */
+	inline std::string UTF16toUTF8(wchar_t const* str) {
+		static_assert(sizeof(wchar_t) == sizeof(char16_t), "wchar_t on windows assumed to be same size as char16_t");
+		return UTF16toUTF8(reinterpret_cast<char16_t const*>(str));
+	}
+#endif
+
+// macOS does not really support the C++ standard wrt char16_t. Fportunately we only need it on Windows for now
+#ifndef __APPLE__
 	inline std::u16string UTF8toUTF16(char const* str) {
 		utf16_stringstream result;
 		while (*str != 0) {

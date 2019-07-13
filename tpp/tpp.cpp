@@ -9,6 +9,7 @@
 #include "session.h"
 
 #include "helpers/char.h"
+#include "helpers/args.h"
 
 #ifdef _WIN64
 
@@ -39,6 +40,10 @@ using namespace tpp;
 
 // https://github.com/Microsoft/node-pty/blob/master/src/win/conpty.cc
 
+// TODO add real arguments
+helpers::Arg<std::string> SessionPTY("session pty", { "-pty" }, "local", false, "Determines which pty to use");
+helpers::Arg<std::vector<std::string>> SessionCommand("command", { "-e" }, { "bash" }, false, "Determines the command to be executed in the terminal", true);
+
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
@@ -49,20 +54,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MARK_AS_UNUSED(lpCmdLine);
 	MARK_AS_UNUSED(nCmdShow);
 	try {
+		helpers::Arguments::Parse(helpers::UTF16toUTF8(GetCommandLineW()).c_str());
 	    // create the application singleton
 	    new DirectWriteApplication(hInstance);
 #elif (defined __linux__) || (defined __APPLE__)
 int main(int argc, char* argv[]) {
 	try {
-		MARK_AS_UNUSED(argc);
-		MARK_AS_UNUSED(argv);
+		helpers::Arguments::Parse(argc, argv);
 		// create the application singleton
 	    new X11Application();
 #endif
 
-		helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
+		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
 		helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
-		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
+		helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
 
 		Session* s = Session::Create("t++", DEFAULT_SESSION_COMMAND);
 		s->start();
