@@ -52,6 +52,7 @@ namespace helpers {
 		return result.str();
 	}
 
+#ifdef _WIN64
 	inline std::u16string UTF8toUTF16(char const* str) {
 		utf16_stringstream result;
 		while (*str != 0) {
@@ -63,5 +64,6 @@ namespace helpers {
 		}
 		return result.str();
 	}
+#endif
 
 } // namespace helpers

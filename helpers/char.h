@@ -143,6 +143,7 @@ namespace helpers {
 				return ((bytes_[0] & 0x07) << 18) + ((bytes_[1] & 0x3f) << 12) + ((bytes_[2] & 0x3f) << 6) + (bytes_[3] & 0x3f);
 		}
 
+#ifdef _WIN64
 		void toUTF16(utf16_stringstream& s) const {
 			unsigned cp = codepoint();
 			if (cp < 0x10000) {
@@ -156,6 +157,7 @@ namespace helpers {
 				s << static_cast<char16_t>(low + 0xdc00);
 			}
 		}
+#endif
 
 		char const* toCharPtr() const {
 			return reinterpret_cast<char const*>(&bytes_);
