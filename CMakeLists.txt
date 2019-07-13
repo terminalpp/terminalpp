@@ -17,7 +17,7 @@ add_subdirectory("vterm")
 
 add_subdirectory("tpp")
 
-if(UNIX)
+if(UNIX AND NOT APPLE)
     add_subdirectory("bypass")
     add_subdirectory("tools")
 endif()
