@@ -51,7 +51,7 @@
 
 	This particular command starts the bypass in wsl, overrides the SHELL envvar to bash (default) and then instructs the bypass to run bash. 
  */
-#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/bypass/bypass", "-env", "SHELL=/bin/bash", "--", "bash"})
+#define DEFAULT_SESSION_COMMAND helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "bash"})
 
 
 /* Use these definitions in you want to use the Windows native pseudoterminal implementation instead. 

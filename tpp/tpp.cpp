@@ -54,13 +54,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MARK_AS_UNUSED(lpCmdLine);
 	MARK_AS_UNUSED(nCmdShow);
 	try {
-		helpers::Arguments::Parse(__argc, __argv);
+		//helpers::Arguments::Parse(__argc, __argv);
 	    // create the application singleton
 	    new DirectWriteApplication(hInstance);
 #elif (defined __linux__) || (defined __APPLE__)
 int main(int argc, char* argv[]) {
 	try {
-		helpers::Arguments::Parse(argc, argv);
+		//helpers::Arguments::Parse(argc, argv);
 		// create the application singleton
 	    new X11Application();
 #endif
