@@ -160,6 +160,17 @@ namespace helpers {
 #endif
 		}
 
+		/** Creates an empty environment. 
+		 */
+		Environment() = default;
+
+		/** Creates an environment from given string map. 
+		 */
+		Environment(std::unordered_map<std::string, std::string> const& from) {
+			for (auto i : from)
+				map_[i.first] = i.second;
+		}
+
 	private:
 		std::unordered_map<std::string, std::string> map_;
 	};

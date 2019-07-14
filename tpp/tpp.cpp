@@ -41,8 +41,8 @@ using namespace tpp;
 // https://github.com/Microsoft/node-pty/blob/master/src/win/conpty.cc
 
 // TODO add real arguments
-helpers::Arg<std::string> SessionPTY("session pty", { "-pty" }, "local", false, "Determines which pty to use");
-helpers::Arg<std::vector<std::string>> SessionCommand("command", { "-e" }, { "bash" }, false, "Determines the command to be executed in the terminal", true);
+helpers::Arg<std::string> SessionPTY({ "-pty" }, "local", false, "Determines which pty to use");
+helpers::Arg<std::vector<std::string>> SessionCommand({ "-e" }, { "bash" }, false, "Determines the command to be executed in the terminal", true);
 
 /** Terminal++ App Entry Point
 
@@ -54,7 +54,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MARK_AS_UNUSED(lpCmdLine);
 	MARK_AS_UNUSED(nCmdShow);
 	try {
-		helpers::Arguments::Parse(helpers::UTF16toUTF8(GetCommandLineW()).c_str());
+		helpers::Arguments::Parse(__argc, __argv);
 	    // create the application singleton
 	    new DirectWriteApplication(hInstance);
 #elif (defined __linux__) || (defined __APPLE__)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <unordered_set>
 #include <unordered_map>
 
 #include "helpers.h"
@@ -63,13 +64,17 @@ namespace helpers {
 
 	protected:
 
+		friend std::ostream& operator << (std::ostream& s, BaseArg const& arg) {
+			arg.print(s);
+			return s;
+		}
+
 		friend class Arguments;
 
 		/** Creates an argument. 
 
 		    An argument has the following properties:
 
-			name - used to determine the argument name when refering to it
 			aliases - prefixes which enable setting the value of the argument on the commandline
 			position - either NOT_POSITIONAL if the argument does not have fixed position, or the position at which the argument is to be found in the command line.
 			required - if true, the argument must be provided, if false it may be skipped. All positional arguments but the last one must be required.
@@ -78,7 +83,7 @@ namespace helpers {
 
 			TODO make this nicer
 		 */
-		BaseArg(std::string const & name, std::initializer_list<char const*> aliases, int position, bool required, bool last, std::string const& description);
+		BaseArg(std::initializer_list<char const*> aliases, int position, bool required, bool last, std::string const& description);
 
 		/** Called by the arguments managed with the value intended for the argument. 
 
@@ -90,6 +95,17 @@ namespace helpers {
 			MARK_AS_UNUSED(value);
 			if (specified_)
 				THROW(ArgumentError()) << "Argument " << name_ << " already specified.";
+		}
+
+		virtual void print(std::ostream& s) const {
+			s << name_;
+			for (auto i : aliases_)
+				if (i != name_)
+					s << ", " << i;
+			if (required_)
+				s << " [required]";
+			s << std::endl;
+			s << "    " << description_;
 		}
 
 		/** Determines whether the argument expects value, or whether the mere presence of the argument on the commandline is enough for its value specification. 
@@ -112,8 +128,8 @@ namespace helpers {
 	template<typename T>
 	class Arg : public BaseArg {
 	public:
-		Arg(std::string const & name, std::initializer_list<char const*> aliases, T const& value, bool required = false, std::string const& description = "", bool isLast = false, int position = BaseArg::NOT_POSITIONAL) :
-			BaseArg(name, aliases, position, required, isLast, description),
+		Arg(std::initializer_list<char const*> aliases, T const& value, bool required = false, std::string const& description = "", bool isLast = false, int position = BaseArg::NOT_POSITIONAL) :
+			BaseArg(aliases, position, required, isLast, description),
 			value_(value) {
 		}
 
@@ -133,6 +149,11 @@ namespace helpers {
 		 */
 		void parse(char const* value) override;
 
+		void print(std::ostream& s) const override {
+			BaseArg::print(s);
+			s << std::endl << "    Value: " << value_;
+		}
+
 		/** By default, value is expected for all arguments. 
 		
 		    Types which do not require the value may specialize the method for themselves. 
@@ -151,18 +172,24 @@ namespace helpers {
 	class Arguments {
 	public:
 
+		/** Determines whether unknown arguments are supported or not.
+		 */
+		static void AllowUnknownArguments(bool value = true) {
+			ArgumentsList().allowUnknownArgs = value;
+		}
+
+		/** Returns a map of unknown arguments and their values in case unknown arguments are allowed by the implementation. 
+		 */
+		static std::unordered_map<std::string, std::string> const& UnknownArguments() {
+			return ArgumentsList().unknownArgs;
+		}
+
 		/** Returns the command line used to run the application.
 
 		    This is the first argument given to the app. 
 		 */
 		static std::string const& CommandLine() {
 			return ArgumentsList().commandLine;
-		}
-
-		/** Parses given command line expressed as utf8 string. 
-		 */
-		static void Parse(char const * arguments) {
-
 		}
 
 		/** Parses the given commandline. 
@@ -184,9 +211,8 @@ namespace helpers {
 				ParsePositionalArguments(x, i, argc, argv);
 				ParseNamedArguments(x, i, argc, argv);
 			} catch (ArgumentError const& e) {
-				// TODO and do some error ofc
-				std::cerr << e << std::endl;
 				Help(std::cerr);
+				std::cerr << "ERROR: " << e << std::endl;
 				std::exit(-1);
 			}
 		}
@@ -194,7 +220,23 @@ namespace helpers {
 		/** Prints the usage help. 
 		 */
 		static void Help(std::ostream& s) {
-			s << "This is help, but there is not much to see here yet. TODO";
+			Impl& x = ArgumentsList();
+			if (!x.description.empty())
+				s << x.description << std::endl;
+			if (!x.usage.empty())
+				s << "Usage: " << std::endl << x.usage;
+			s << "" << std::endl << "Argument Details:" << std::endl << std::endl;
+			for (auto i : x.byName)
+				s << (*i.second) << std::endl;
+			s << std::endl;
+		}
+
+		static void SetDescription(std::string const& description) {
+			ArgumentsList().description = description;
+		}
+
+		static void SetUsage(std::string const& usage) {
+			ArgumentsList().usage = usage;
 		}
 
 	private:
@@ -202,10 +244,14 @@ namespace helpers {
 
 		class Impl {
 		public:
+			std::string description;
+			std::string usage;
 			std::string commandLine;
 			std::unordered_map<std::string, BaseArg*> byAlias;
 			std::unordered_map<std::string, BaseArg*> byName;
 			std::vector<BaseArg*> byPosition;
+			std::unordered_map<std::string, std::string> unknownArgs;
+			bool allowUnknownArgs = false;
 		}; // Arguments::Impl
 
 		static Impl& ArgumentsList() {
@@ -253,8 +299,15 @@ namespace helpers {
 							break;
 						}
 					arg = args.byAlias.find(argName);
-					if (arg == args.byAlias.end())
-						THROW(ArgumentError()) << "Unrecognized argument " << argName;
+					if (arg == args.byAlias.end()) {
+						if (! args.allowUnknownArgs)
+							THROW(ArgumentError()) << "Unrecognized argument " << argName;
+						// if unknown arguments are allowed, we have one
+						args.unknownArgs.insert(std::make_pair(argName, (argValue == nullptr) ? std::string() : std::string(argValue)));
+						// and move to next argument
+						++i;
+						continue;
+					}
 				} 
 				// ok, we now have argument and its name. If value is nullptr, we must determine if value is next argument or not
 				if (argValue == nullptr && arg->second->expectsValue()) {
@@ -282,8 +335,8 @@ namespace helpers {
 
 	}; // helpers::Arguments
 
-	inline BaseArg::BaseArg(std::string const& name, std::initializer_list<char const*> aliases, int position, bool required, bool last, std::string const& description) :
-	    name_(name),
+	inline BaseArg::BaseArg(std::initializer_list<char const*> aliases, int position, bool required, bool last, std::string const& description) :
+	    name_(*aliases.begin()),
 		aliases_(),
 		description_(description),
 		required_(required),
@@ -303,11 +356,11 @@ namespace helpers {
 		}
 		// if the argument is positional, add it to the positional vectors and make sure the index matches
 		if (position != NOT_POSITIONAL) {
-			ASSERT(required || last) << "All but last positional arguments must be required for argument " << name;
+			ASSERT(required || last) << "All but last positional arguments must be required for argument " << name_;
 			if (static_cast<size_t>(position) >= x.byPosition.size())
 				x.byPosition.resize(position + 1, nullptr);
-			ASSERT(x.byPosition[position] == nullptr) << "Expected position " << position << " already taken by argument " << x.byPosition[position]->name() <<  " for argument " << name;
-			ASSERT(position == 0 || x.byPosition[position - 1]->last_ == false) << "Only last positional argument can be designated as last argument (argument " << name << ")";
+			ASSERT(x.byPosition[position] == nullptr) << "Expected position " << position << " already taken by argument " << x.byPosition[position]->name() <<  " for argument " << name_;
+			ASSERT(position == 0 || x.byPosition[position - 1]->last_ == false) << "Only last positional argument can be designated as last argument (argument " << name_ << ")";
 			x.byPosition[position] = this;
 		}
 	}
@@ -316,14 +369,41 @@ namespace helpers {
 	 */
 	template<>
 	inline void Arg<std::string>::parse(char const* value) {
-		value_ = std::string(value);
 		BaseArg::parse(value);
+		value_ = std::string(value);
+	}
+
+	template<>
+	inline void Arg<unsigned>::parse(char const* value) {
+		try {
+			BaseArg::parse(value);
+			size_t pos;
+			std::string val(value);
+		    unsigned long x = std::stoul(val, & pos);
+			if (pos < val.size())
+				throw std::invalid_argument("");
+			if (x > std::numeric_limits<unsigned>::max())
+				throw std::out_of_range("");
+			value_ = static_cast<unsigned>(x);
+		} catch (std::invalid_argument) {
+			THROW(ArgumentError()) << "Invalid value given for argument " << name_ << ", expected positive number but " << value << " found.";
+		} catch (std::out_of_range) {
+			THROW(ArgumentError()) << "Value for argument " << name_ << " too large";
+		}
 	}
 
 	template<>
 	inline void Arg<std::vector<std::string>>::parse(char const* value) {
 		value_.push_back(value);
 		specified_ = true;
+	}
+
+	template<>
+	inline void Arg<std::vector<std::string>>::print(std::ostream& s) const {
+		BaseArg::print(s);
+		s << std::endl << "    Value:";
+		for (auto i : value_)
+			s << " " << i;
 	}
 
 

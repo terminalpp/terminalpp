@@ -9,10 +9,17 @@
 #include "helpers/helpers.h"
 #include "helpers/char.h"
 #include "helpers/log.h"
+#include "helpers/args.h"
 
 #include "vterm/local_pty.h"
 
-size_t constexpr BUFFER_SIZE = 10240;
+/** Size of the communications buffer. 
+ */
+helpers::Arg<unsigned> BufferSize({ "--buffer-size" }, 10240, false, "Size of the communications buffer");
+
+/** The command to be executed. 
+ */
+helpers::Arg<std::vector<std::string>> Command({ "-e" }, {}, true, "Command to be executed in the opened PTY and its arguments", true);
 
 /** .
  */
@@ -29,10 +36,10 @@ public:
         signal(SIGWINCH, SIGWINCH_handler);
         // start the pty reader and encoder thread
         outputEncoder_ = std::thread([this]() {
-            char * buffer = new char[BUFFER_SIZE];
+            char * buffer = new char[* BufferSize];
             size_t numBytes;
             while (true) {
-                numBytes = pty_.read(buffer, BUFFER_SIZE);
+                numBytes = pty_.read(buffer, * BufferSize);
                 // if nothing was read, the process has terminated and so should we
                 if (numBytes == 0)
                     break;
@@ -43,11 +50,11 @@ public:
         });
         // start the cin reader and encoder thread
         std::thread inputEncoder([this]() {
-            char * buffer = new char[BUFFER_SIZE];
+            char * buffer = new char[* BufferSize];
             char * bufferWrite = buffer;
             size_t numBytes;
             while (true) {
-                numBytes = read(STDIN_FILENO, (void *) bufferWrite, BUFFER_SIZE - (bufferWrite - buffer));
+                numBytes = read(STDIN_FILENO, (void *) bufferWrite, *BufferSize - (bufferWrite - buffer));
                 if (numBytes == 0)
                     break;
                 numBytes += bufferWrite - buffer;
@@ -171,40 +178,23 @@ private:
 
 }; // PTYEncoder
 
-
-std::pair<helpers::Command, helpers::Environment> ParseArguments(int argc, char* argv[]) {
-	helpers::Environment env;
-	std::vector<std::string> cmdArgs;
-	if (argc < 2)
-		THROW(helpers::Exception()) << "Invalid number of arguments - at least the command to execute must be specified";
-	int i = 1;
-	if (std::string(argv[i]) == "-env") {
-		++i;
-		while (true) {
-			if (i == argc)
-				break;
-			std::string a = argv[i++];
-			if (a == "--")
-				break;
-			auto pos = a.find('=');
-			if (pos == std::string::npos)
-				THROW(helpers::Exception()) << "Invalid environment variable definition (missing =): " << a;
-			env.set(a.substr(0, pos), a.substr(pos + 1));
-		}
-	}
-	while (i < argc) {
-		cmdArgs.push_back(argv[i]);
-		++i;
-	}
-	if (cmdArgs.empty())
-	    THROW(helpers::Exception()) << "No command to execute given";
-	return std::make_pair(helpers::Command(cmdArgs), env);
-}
-
 int main(int argc, char * argv[]) {
+	helpers::Arguments::SetDescription(R"xxx(
+ConPTY Bypass for WSL
+
+Simple program which creates a linux pseudoterminal and executes in it the given command, redirecting its output to own output. Passes own input to the created pseudoterminal unless the input contains specific sequences upon which the bypass updates the pseudoterminal accordingly. 
+)xxx");
+	helpers::Arguments::SetUsage(R"xxx(
+bypass [--buffer-size=<n>] { envVar=value } -e ...
+
+Where the envVar=value are key-value pairs to be set in the environment of the process specified by argument -e.
+)xxx");
+	helpers::Arguments::AllowUnknownArguments();
+	helpers::Arguments::Parse(argc, argv);
     try {
-		std::pair<helpers::Command, helpers::Environment> args = ParseArguments(argc, argv);
-        PTYEncoder enc(args.first, args.second);
+		helpers::Command cmd(*Command);
+		helpers::Environment env(helpers::Arguments::UnknownArguments());
+        PTYEncoder enc(cmd, env);
         return enc.waitForDone();
     } catch (helpers::Exception const & e) {
         std::cerr << "ptyencoder error: " << std::endl << e << std::endl;
