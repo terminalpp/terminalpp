@@ -1,6 +1,16 @@
 cmake_minimum_required (VERSION 3.5)
 
-if(UNIX)
+# Simple target that just executes the gitstamp from helpers so that the terminal can automatically have its version set. 
+add_executable(
+    stamp
+	stamp.cpp
+)
+
+add_custom_target(tpp-create-stamp
+    COMMAND stamp ${CMAKE_SOURCE_DIR} ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} tpp/stamp.h
+)
+
+if(UNIX AND NOT APPLE)
     add_custom_target(install-packages
 	    COMMAND sudo apt install libx11-dev libxft-dev
 	)

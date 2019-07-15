@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "helpers.h"
 
 #include "char.h"
@@ -40,6 +42,40 @@ namespace helpers {
 			}
 		}
 		return str.str();
+	}
+
+	/** Removes any whitespace characters from the beginning and end of the given string. 
+
+	    Uses the `IsWhitespace` function from `char.h`.
+	 */
+	inline std::string Trim(std::string const& from) {
+		if (from.empty())
+			return from;
+		size_t start = 0;
+		while (IsWhitespace(from[start]))
+			++start;
+		// if we got to the end of the string, the string is empty
+		if (start == from.size() - 1)
+			return "";
+		// otherwise there is at least one non-whitespace character in the string
+		size_t end = from.size() - 1;
+		while (IsWhitespace(from[end]))
+			--end;
+		return from.substr(start, end - start + 1);
+	}
+
+	/** Splits the given string by given delimiter. 
+	 */
+	inline std::vector<std::string> Split(std::string const& what, std::string const& delimiter) {
+		std::vector<std::string> result;
+		for (size_t start = 0, e = what.size(); start < e; ) {
+			size_t next = what.find(delimiter, start);
+			if (next == std::string::npos)
+				next = what.size();
+			result.push_back(what.substr(start, next - start));
+			start = next + delimiter.size();
+		}
+		return result;
 	}
 
 	/** Converts a null terminated wide string in UTF-16 encoding into an std::string encoded in UTF-8.

@@ -87,7 +87,7 @@ namespace tpp {
 	inline FontSpec<XftFont*>* FontSpec<XftFont*>::Create(vterm::Font font, unsigned height) {
 		X11Application* app = reinterpret_cast<X11Application*>(Application::Instance());
 		// get the name of the font we want w/o the actual height
-		std::string fName = DEFAULT_TERMINAL_FONT;
+		std::string fName = *config::FontFamily;
 		if (font.bold())
 			fName += ":bold";
 		if (font.italics())

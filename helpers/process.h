@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 #include "helpers.h"
 
@@ -108,6 +108,10 @@ namespace helpers {
 
 	private:
 
+		friend std::ostream& operator << (std::ostream& s, Command const& cmd) {
+			s << cmd.toString();
+			return s;
+		}
 
 		std::string command_;
 		std::vector<std::string> args_;
@@ -174,6 +178,86 @@ namespace helpers {
 	private:
 		std::unordered_map<std::string, std::string> map_;
 	};
+
+	/** Executes the given command and returns its output as a string. 
+	 */
+	inline std::string Exec(Command const& command, std::string const & path, helpers::ExitCode * exitCode = nullptr) {
+#ifdef _WIN64
+		// create the pipes
+		SECURITY_ATTRIBUTES attrs;
+		attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
+		attrs.bInheritHandle = TRUE;
+		attrs.lpSecurityDescriptor = NULL;
+		Win32Handle pipeIn;
+		Win32Handle pipeOut;
+		Win32Handle pipeTheirIn;
+		Win32Handle pipeTheirOut;
+		// create the pipes
+		if (!CreatePipe(pipeTheirIn, pipeOut, &attrs, 0) || !CreatePipe(pipeIn, pipeTheirOut, &attrs, 0))
+			THROW(Exception()) << "Unable to open pipes for " << command;
+		// make sure the pipes are not inherited
+		if (!SetHandleInformation(pipeIn, HANDLE_FLAG_INHERIT, 0) || !SetHandleInformation(pipeOut, HANDLE_FLAG_INHERIT, 0))
+			THROW(Exception()) << "Unable to open pipes for " << command;
+		// create the process
+		PROCESS_INFORMATION pi;
+		ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+		STARTUPINFOA sInfo;
+		ZeroMemory(&sInfo, sizeof(STARTUPINFOA));
+		sInfo.cb = sizeof(STARTUPINFO);
+		sInfo.hStdError = pipeTheirOut;
+		sInfo.hStdOutput = pipeTheirOut;
+		sInfo.hStdInput = pipeTheirIn;
+		sInfo.dwFlags |= STARTF_USESTDHANDLES;
+		std::string cmd = command.toString();
+		if (!CreateProcessA(NULL,
+			&cmd[0], // the command to execute
+			NULL, // process security attributes 
+			NULL, // primary thread security attributes 
+			true, // handles are inherited 
+			0, // creation flags 
+			NULL, // use parent's environment 
+			path.c_str(), // current directory
+			&sInfo,  // startup info
+			&pi)  // info about the process
+			)
+			THROW(Exception()) << "Unable to create process for " << command;
+		// we can close our handles to the other ends now
+		pipeTheirOut.close();
+		pipeTheirIn.close();
+		// read the output
+		std::stringstream result;
+		char buffer[128];
+		DWORD bytesRead;
+		while (ReadFile(pipeIn, & buffer, 128, &bytesRead, nullptr)) {
+			if (bytesRead != 0)
+				result << std::string(&buffer[0], &buffer[0] + bytesRead);
+		}
+		helpers::ExitCode ec;
+		GetExitCodeProcess(pi.hProcess, &ec);
+		// close the handles to created process & thread since we do not need them
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		if (exitCode != nullptr) 
+			*exitCode = ec;
+		else if (ec != EXIT_SUCCESS)
+			THROW(Exception()) << "Command " << command << " exited with code " << ec << ", output:\n" << result.str();
+		return result.str();
+#else
+		// TODO does not return exit code now!!!!
+		char buffer[128];
+		std::string result = "";
+		std::string cmd = STR("cd \"" << path << "\" && " << command << " 2>&1");
+		std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
+		if (not pipe)
+			throw std::runtime_error(STR("Unable to execute command " << cmd));
+		while (not feof(pipe.get())) {
+			if (fgets(buffer, 128, pipe.get()) != nullptr)
+				result += buffer;
+		}
+		return result;
+#endif
+
+	}
 
 
 } // namespace helpers

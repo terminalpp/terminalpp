@@ -13,12 +13,11 @@ include_directories(".")
 
 # Include sub-projects.
 
+add_subdirectory("tools")
+
 add_subdirectory("vterm")
 
 add_subdirectory("tpp")
 
-if(UNIX AND NOT APPLE)
-    add_subdirectory("bypass")
-    add_subdirectory("tools")
-endif()
+add_subdirectory("bypass")
 

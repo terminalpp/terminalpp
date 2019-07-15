@@ -38,10 +38,17 @@ namespace tpp {
 		// create the terminal window
 		window_ = Application::Instance()->createTerminalWindow(this, windowProperties_, name_);
 		// create the PTY and the terminal
-		pty_ = new DEFAULT_SESSION_PTY(command_);
+#ifdef _WIN64
+		if (*config::UseConPTY)
+			pty_ = new vterm::LocalPTY(command_);
+		else
+			pty_ = new vterm::BypassPTY(command_);
+#else 
+		pty_ = new vterm::LocalPTY(command_);
+#endif
 		pty_->onTerminated += HANDLER(Session::onPTYTerminated);
 		// create the terminal backend
-		terminal_ = new DEFAULT_SESSION_TERMINAL(window_->cols(), window_->rows(), pty_);
+		terminal_ = new vterm::VT100(window_->cols(), window_->rows(), pty_);
 		/*
 			pty_,
 			vterm::Palette::ColorsXTerm256(), 

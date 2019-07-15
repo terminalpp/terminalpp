@@ -1,14 +1,17 @@
 ﻿## Bugs and missing features
 
 - VT100 should be fault tolerant and not assert everything, just do nothing upon failure in release
+- not just VT, all asserts should be checked and become OSerrors instead
 - add command line arguments so that terminal can be proper terminal emulator replacement in Linux
 - add zoom out? and default zoom? 
+- args should by default parse version and help requests, version should be stamped from the git repo, I guess by creating simple c program that generates the header file appropriately
+- platform macros should be set in helpers
 
 ### Win32 Bugs
 
-- mouse buttons seem to not work after while, restarting the terminal helps - check how alt, shift and ctrl key up and key down events work, particularly alt seems weird...
-
 ### X11 Bugs
+
+- broken start, need to debug
 
 # Code Fixes
 

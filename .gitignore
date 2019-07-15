@@ -264,3 +264,4 @@ __pycache__/
 build/
 build-release/
 build-win/
+/tpp/stamp.h

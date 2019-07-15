@@ -1,10 +1,19 @@
 #pragma once
 
 #include <chrono>
+#include <ctime>
 
 #include "helpers.h"
 
 namespace helpers {
+
+	inline std::string TimeInISO8601() {
+		time_t now;
+		time(&now);
+		std::string result("2011-10-08T07:07:09Z");
+		strftime(& result[0], result.size() + 1, "%FT%TZ", gmtime(&now));
+		return result;
+	}
 
 	/** Simple timer class which encapsulates the std::chrono.
 	 */

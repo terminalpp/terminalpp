@@ -2,9 +2,13 @@
 #error "KEY macro must be defined before including keys.inc.h"
 #endif
 
+
 KEY(Backspace, 8)
 KEY(Tab,9)
 KEY(Enter,13)
+KEY(ShiftKey, 16)
+KEY(CtrlKey, 17)
+KEY(AltKey, 18)
 KEY(CapsLock,20)
 KEY(Esc,27)
 KEY(Space,32)

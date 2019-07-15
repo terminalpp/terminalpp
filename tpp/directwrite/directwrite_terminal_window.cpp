@@ -290,7 +290,7 @@ namespace tpp {
 					tw->keyDown(k);
 				// returning w/o calling the default window proc means that the OS will not interfere by interpreting own shortcuts
 				// NOTE add other interfering shortcuts as necessary
-				if (k == vterm::Key::F10)
+				if (k == vterm::Key::F10 || k.code() == vterm::Key::AltKey)
 				    return 0;
 				break;
 			}

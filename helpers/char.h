@@ -203,6 +203,14 @@ namespace helpers {
 		return InRangeInclusive(what, '0', '9');
 	}
 
+	/** Determines whether given character whitespace or not. 
+
+	    New line, carriage return, space and tab are considered whitespace characters. 
+	 */
+	inline bool IsWhitespace(char what) {
+		return what == ' ' || what == '\t' || what == '\r' || what == '\n';
+	}
+
 	/** Converts given character containing a decimal digit to its value.
 	 */
 	inline unsigned DecCharToNumber(char what) {

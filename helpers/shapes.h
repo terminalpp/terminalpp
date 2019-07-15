@@ -3,11 +3,6 @@
 #include <algorithm>
 #include <ostream>
 
-#ifdef _WIN64
-#undef min
-#undef max
-#endif
-
 namespace helpers {
 	
 

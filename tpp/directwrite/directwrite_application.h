@@ -81,7 +81,7 @@ namespace tpp {
 		UINT32 findex;
 		BOOL fexists;
 		// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-		std::u16string fname = helpers::UTF8toUTF16(DEFAULT_TERMINAL_FONT);
+		std::u16string fname = helpers::UTF8toUTF16(config::FontFamily->c_str());
 		sfc->FindFamilyName(reinterpret_cast<wchar_t const *>(fname.c_str()), &findex, &fexists);
 		Microsoft::WRL::ComPtr<IDWriteFontFamily> ff;
 		sfc->GetFontFamily(findex, &ff);

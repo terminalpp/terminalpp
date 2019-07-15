@@ -33,7 +33,7 @@ namespace tpp {
 
 			/** Creates the properties object and fills in the values. 
 			 */
-			Properties(unsigned cols = DEFAULT_TERMINAL_COLS, unsigned rows = DEFAULT_TERMINAL_ROWS, unsigned fontSize = DEFAULT_TERMINAL_FONT_SIZE, double zoom = 1) :
+			Properties(unsigned cols, unsigned rows, unsigned fontSize, double zoom = 1) :
 				cols(cols),
 				rows(rows),
 				fontSize(fontSize),
@@ -169,7 +169,7 @@ namespace tpp {
 
 		virtual void fpsTimer() {
 			if (--blinkCounter_ == 0) {
-				blinkCounter_ = DEFAULT_FPS / 2;
+				blinkCounter_ = (*config::FPS) / 2;
 				blink_ = !blink_;
 				blinkDirty_ = true;
 				doInvalidate();

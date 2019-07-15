@@ -27,7 +27,7 @@ namespace tpp {
 		fontSize_(properties.fontSize),
 		blink_(true),
 		blinkDirty_(false),
-		blinkCounter_(DEFAULT_FPS / 2),
+		blinkCounter_((*config::FPS) / 2),
 		dirty_(true),
 		mouseCol_(0),
 		mouseRow_(0),

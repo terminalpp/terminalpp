@@ -5,6 +5,8 @@
 
 #ifdef _WIN64
     #include "windows.h"
+    #undef min
+    #undef max
 #elif (defined __linux__) || (defined __APPLE__)
     #include <cstring>
     #include <errno.h>
@@ -152,7 +154,53 @@ namespace helpers {
 
 
 
+#ifdef _WIN64
+	/** 
+	 */
+	class Win32Handle {
+	public:
 
+		HANDLE& operator * () {
+			return h_;
+		}
+
+		HANDLE* operator -> () {
+			return &h_;
+		}
+
+		Win32Handle() :
+			h_(INVALID_HANDLE_VALUE) {
+		}
+
+		Win32Handle(HANDLE h) :
+			h_(h) {
+		}
+
+		~Win32Handle() {
+			close();
+		}
+
+		void close() {
+			if (h_ != INVALID_HANDLE_VALUE) {
+				CloseHandle(h_);
+				h_ = INVALID_HANDLE_VALUE;
+			}
+		}
+
+		operator HANDLE () {
+			return h_;
+		}
+
+		operator HANDLE* () {
+			return &h_;
+		}
+	private:
+		HANDLE h_;
+	};
+
+
+
+#endif
 
 
 

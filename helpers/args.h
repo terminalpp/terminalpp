@@ -3,6 +3,8 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include <limits>
+#include <stdexcept>
 
 #include "helpers.h"
 #include "string.h"
@@ -151,7 +153,8 @@ namespace helpers {
 
 		void print(std::ostream& s) const override {
 			BaseArg::print(s);
-			s << std::endl << "    Value: " << value_;
+			if (!required_)
+			    s << std::endl << "    Value: " << value_;
 		}
 
 		/** By default, value is expected for all arguments. 
@@ -191,6 +194,17 @@ namespace helpers {
 		static std::string const& CommandLine() {
 			return ArgumentsList().commandLine;
 		}
+
+		static std::string Print(int argc, char* argv[]) {
+			std::stringstream result;
+			for (int i = 0; i < argc; ++i) {
+				if (i != 0)
+					result << " ";
+				result << argv[i++];
+			}
+			return result.str();
+		}
+		
 
 		/** Parses the given commandline. 
 		 */
@@ -365,7 +379,7 @@ namespace helpers {
 		}
 	}
 
-	/** Parses a string argument. 
+	/** String argument. 
 	 */
 	template<>
 	inline void Arg<std::string>::parse(char const* value) {
@@ -373,6 +387,27 @@ namespace helpers {
 		value_ = std::string(value);
 	}
 
+	/** Boolean argument. 
+
+	    Together with disabled expected value setter. 
+	 */
+	template<>
+	inline void Arg<bool>::parse(char const* value) {
+		// when no value is provided, the default value is negated. 
+		if (value == nullptr) {
+			value_ = ! value_;
+		} else {
+			THROW(ArgumentError()) << "Value cannot be specified for argument " << name_;
+		}
+	}
+
+	template<>
+	inline bool Arg<bool>::expectsValue() const {
+		return required_;
+	}
+
+	/** Unsigned argument. 
+	 */
 	template<>
 	inline void Arg<unsigned>::parse(char const* value) {
 		try {
@@ -392,6 +427,11 @@ namespace helpers {
 		}
 	}
 
+
+	/** Multiple string argument.
+
+	    Together with a print method. 
+	 */
 	template<>
 	inline void Arg<std::vector<std::string>>::parse(char const* value) {
 		value_.push_back(value);
@@ -401,9 +441,11 @@ namespace helpers {
 	template<>
 	inline void Arg<std::vector<std::string>>::print(std::ostream& s) const {
 		BaseArg::print(s);
-		s << std::endl << "    Value:";
-		for (auto i : value_)
-			s << " " << i;
+		if (!required_) {
+			s << std::endl << "    Value:";
+			for (auto i : value_)
+				s << " " << i;
+		}
 	}
 
 

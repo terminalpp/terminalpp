@@ -1,6 +1,9 @@
 ﻿#include <iostream>
 
 #include "helpers/log.h"
+#include "helpers/char.h"
+#include "helpers/args.h"
+#include "helpers/time.h"
 
 #include "vterm/local_pty.h"
 #include "vterm/vt100.h"
@@ -8,8 +11,6 @@
 #include "config.h"
 #include "session.h"
 
-#include "helpers/char.h"
-#include "helpers/args.h"
 
 #ifdef _WIN64
 
@@ -28,7 +29,62 @@
 #error "Unsupported platform"
 #endif
 
-#include "helpers/time.h"
+
+#include "stamp.h"
+#include "helpers/stamp.h"
+
+
+
+namespace tpp {
+	namespace config {
+#ifdef _WIN64
+		helpers::Arg<bool> UseConPTY(
+			{ "--use-conpty" },
+			false,
+			false,
+			"Uses the Win32 ConPTY pseudoterminal instead of the WSL bypass"
+		);
+#endif
+		helpers::Arg<unsigned> FPS(
+			{ "--fps" },
+			DEFAULT_TERMINAL_FPS,
+			false,
+			"Maximum number of fps the terminal will display"
+		);
+		helpers::Arg<unsigned> Cols(
+			{ "--cols", "-c" },
+			DEFAULT_TERMINAL_COLS,
+			false,
+			"Number of columns of the terminal window"
+		);
+		helpers::Arg<unsigned> Rows(
+			{ "--rows", "-r" },
+			DEFAULT_TERMINAL_ROWS,
+			false,
+			"Number of rows of the terminal window"
+		);
+		helpers::Arg<std::string> FontFamily(
+			{ "--font" }, 
+			DEFAULT_TERMINAL_FONT_FAMILY, 
+			false, 
+			"Font to render the terminal with"
+		);
+		helpers::Arg<unsigned> FontSize(
+			{ "--font-size" }, 
+			DEFAULT_TERMINAL_FONT_SIZE,
+			false,
+			"Size of the font in pixels at no zoom."
+		);
+		helpers::Arg<std::vector<std::string>> Command(
+			{ "-e" }, 
+			{ DEFAULT_TERMINAL_COMMAND },
+			false,
+			"Determines the command to be executed in the terminal",
+			true
+		);
+	}
+}
+
 
 using namespace tpp;
 
@@ -40,10 +96,6 @@ using namespace tpp;
 
 // https://github.com/Microsoft/node-pty/blob/master/src/win/conpty.cc
 
-// TODO add real arguments
-helpers::Arg<std::string> SessionPTY({ "-pty" }, "local", false, "Determines which pty to use");
-helpers::Arg<std::vector<std::string>> SessionCommand({ "-e" }, { "bash" }, false, "Determines the command to be executed in the terminal", true);
-
 /** Terminal++ App Entry Point
 
     For now creates single terminal window and one virtual terminal. 
@@ -54,22 +106,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MARK_AS_UNUSED(lpCmdLine);
 	MARK_AS_UNUSED(nCmdShow);
 	try {
-		//helpers::Arguments::Parse(__argc, __argv);
+		helpers::Arguments::Parse(__argc, __argv);
 	    // create the application singleton
 	    new DirectWriteApplication(hInstance);
 #elif (defined __linux__) || (defined __APPLE__)
 int main(int argc, char* argv[]) {
 	try {
-		//helpers::Arguments::Parse(argc, argv);
+		helpers::Arguments::Parse(argc, argv);
 		// create the application singleton
 	    new X11Application();
 #endif
+		helpers::Stamp stamp = helpers::Stamp::Stored();
 
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
 		helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
 		helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
 
-		Session* s = Session::Create("t++", DEFAULT_SESSION_COMMAND);
+		Session* s = Session::Create("t++", helpers::Command(*config::Command));
 		s->start();
 		s->show();
 

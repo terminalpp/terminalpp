@@ -37,3 +37,4 @@ else()
 endif() 
 
 target_link_libraries(tpp libvterm)
+add_dependencies(tpp tpp-create-stamp)
