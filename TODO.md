@@ -11,8 +11,6 @@
 
 ### X11 Bugs
 
-- broken start, need to debug
-
 # Code Fixes
 
 # Code Improvements 
