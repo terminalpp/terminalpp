@@ -80,7 +80,7 @@ namespace helpers {
 
 	/** Converts a null terminated wide string in UTF-16 encoding into an std::string encoded in UTF-8.
 	  */
-	inline std::string UTF16toUTF8(char16_t const* str) {
+	inline std::string UTF16toUTF8(utf16_char const* str) {
 		std::stringstream result;
 		while (*str != 0) {
 			result << Char::FromUTF16(str, str + 2); // null terminated so we assume there is enough space
@@ -88,18 +88,9 @@ namespace helpers {
 		return result.str();
 	}
 
-#ifdef _WIN64
-	/** On windows, the UTF16 can be expressed in wchar_t array as well because of the same size. 
-	 */
-	inline std::string UTF16toUTF8(wchar_t const* str) {
-		static_assert(sizeof(wchar_t) == sizeof(char16_t), "wchar_t on windows assumed to be same size as char16_t");
-		return UTF16toUTF8(reinterpret_cast<char16_t const*>(str));
-	}
-#endif
-
 // macOS does not really support the C++ standard wrt char16_t. Fportunately we only need it on Windows for now
 #ifndef __APPLE__
-	inline std::u16string UTF8toUTF16(char const* str) {
+	inline utf16_string UTF8toUTF16(char const* str) {
 		utf16_stringstream result;
 		while (*str != 0) {
 			Char const * c = Char::At(str, str + 4); // null terminated, so we assume there is enough space
@@ -109,6 +100,10 @@ namespace helpers {
 			c->toUTF16(result);
 		}
 		return result.str();
+	}
+
+	inline utf16_string UTF8toUTF16(std::string const& from) {
+		return UTF8toUTF16(from.c_str());
 	}
 #endif
 

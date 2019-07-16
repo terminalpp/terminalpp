@@ -81,8 +81,8 @@ namespace tpp {
 		UINT32 findex;
 		BOOL fexists;
 		// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-		std::u16string fname = helpers::UTF8toUTF16(config::FontFamily->c_str());
-		sfc->FindFamilyName(reinterpret_cast<wchar_t const *>(fname.c_str()), &findex, &fexists);
+		helpers::utf16_string fname = helpers::UTF8toUTF16(*config::FontFamily);
+		sfc->FindFamilyName(fname.c_str(), &findex, &fexists);
 		Microsoft::WRL::ComPtr<IDWriteFontFamily> ff;
 		sfc->GetFontFamily(findex, &ff);
 		// now get the nearest font

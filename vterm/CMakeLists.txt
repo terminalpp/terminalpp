@@ -8,14 +8,9 @@ project(libvterm)
 file(GLOB_RECURSE SRC "*.cpp" "*.h")
 
 if(WIN32)
-    add_definitions()
-    add_compile_definitions(NOMINMAX)
     add_library(libvterm ${SRC})
 elseif(UNIX)
 	find_library(LUTIL util)
-	add_definitions(
-		-std=c++11 -g -Wall
-	)
     add_library(libvterm ${SRC})
 	target_link_libraries(libvterm PUBLIC ${LUTIL})
 else()

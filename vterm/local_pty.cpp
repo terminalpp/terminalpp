@@ -18,6 +18,7 @@
 #endif
 
 #include "helpers/log.h"
+#include "helpers/string.h"
 
 #include "local_pty.h"
 
@@ -157,8 +158,8 @@ namespace vterm {
 				nullptr
 			)
 		) << "Unable to set pseudoconsole attribute";
-		std::string cmd= command_.toString();
 		// finally, create the process with given commandline
+		helpers::utf16_string cmd = helpers::UTF8toUTF16(command_.toString());
 		OSCHECK(
 			CreateProcess(
 				nullptr,
@@ -172,7 +173,7 @@ namespace vterm {
 				&startupInfo.StartupInfo, // startup info
 				&pInfo_ // info about the process
 			)
-		) << "Unable to start process " << cmd;
+		) << "Unable to start process " << command_;
 	}
 
 #elif (defined __linux__) || (defined __APPLE__)

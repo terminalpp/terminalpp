@@ -25,7 +25,7 @@ if(UNIX AND NOT APPLE)
     add_custom_target(icons 
         COMMAND convert -background transparent logo.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 tpp.ico
         COMMAND convert tpp.ico -depth 8 tpp.rgba
-        COMMAND ${CMAKE_BINARY_DIR}/tools/xIconCpp tppIcon ../tpp/x11/tppIcon.cpp tpp.rgba 16 24 32 64
+        COMMAND xIconCpp tppIcon ../tpp/x11/tppIcon.cpp tpp.rgba 16 24 32 64
         COMMAND rm tpp.rgba
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/images
     )

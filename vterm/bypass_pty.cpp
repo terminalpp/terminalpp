@@ -1,5 +1,7 @@
 #ifdef _WIN64
 
+#include "helpers/string.h"
+
 #include "bypass_pty.h"
 
 namespace vterm {
@@ -83,7 +85,7 @@ namespace vterm {
 		sInfo.hStdOutput = pipePTYOut_;
 		sInfo.hStdInput = pipePTYIn_;
 		sInfo.dwFlags |= STARTF_USESTDHANDLES;
-		std::string cmd = command_.toString();
+		helpers::utf16_string cmd = helpers::UTF8toUTF16(command_.toString());
 		OSCHECK(CreateProcess(NULL,
 			&cmd[0], // the command to execute
 			NULL, // process security attributes 

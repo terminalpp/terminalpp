@@ -5,8 +5,11 @@ cmake_minimum_required (VERSION 3.5)
 
 if(MSVC)
   add_compile_options(/W4)
+  add_compile_definitions(NOMINMAX)
+  add_compile_definitions(_UNICODE)
+  add_compile_definitions(UNICODE)
 else()
-  add_compile_options(-Wall -Wextra -pedantic)
+  add_compile_options(-std=c++11 -Wall -Wextra -pedantic)
 endif()
 
 include_directories(".")

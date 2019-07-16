@@ -28,12 +28,12 @@ namespace tpp {
 	    grStrikethrough_(false) {
 		// all win32 windows start focused since they receive the setfocus message first
 		focused_ = true;
-		std::u16string t = helpers::UTF8toUTF16(title_.c_str());
+		helpers::utf16_string t = helpers::UTF8toUTF16(title_);
 		hWnd_ = CreateWindowExW(
 			WS_EX_LEFT, // the default
 			app()->TerminalWindowClassName_, // window class
 			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-			reinterpret_cast<wchar_t const *>(t.c_str()), // window name (all start as terminal++)
+			t.c_str(), // window name (all start as terminal++)
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, // x position
 			CW_USEDEFAULT, // y position
@@ -116,7 +116,7 @@ namespace tpp {
 			EmptyClipboard();
 			// encode the string into UTF16 and get the size of the data we need
 			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-			std::u16string str = helpers::UTF8toUTF16(e->c_str());
+			helpers::utf16_string str = helpers::UTF8toUTF16(*e);
 			// the str is null-terminated
 			size_t size = (str.size() + 1) * 2;
 			HGLOBAL clipboard = GlobalAlloc(0, size);
@@ -137,7 +137,7 @@ namespace tpp {
 			HANDLE clipboard = GetClipboardData(CF_UNICODETEXT);
 			if (clipboard) {
 				// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-				char16_t* data = reinterpret_cast<char16_t*>(GlobalLock(clipboard));
+				helpers::utf16_char* data = reinterpret_cast<helpers::utf16_char*>(GlobalLock(clipboard));
 				if (data) {
 					std::string str(helpers::UTF16toUTF8(data));
 					GlobalUnlock(clipboard);
@@ -336,9 +336,9 @@ namespace tpp {
 			case WM_USER:
 				switch (wParam) {
 				case DirectWriteApplication::MSG_TITLE_CHANGE: {
-					std::u16string t = helpers::UTF8toUTF16(tw->terminal()->title().c_str());
+					helpers::utf16_string t = helpers::UTF8toUTF16(tw->terminal()->title());
 					// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-					SetWindowTextW(hWnd, reinterpret_cast<wchar_t const *>(t.c_str()));
+					SetWindowTextW(hWnd, t.c_str());
 					break;
 				}
 				default:

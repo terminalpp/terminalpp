@@ -11,8 +11,18 @@ static_assert(sizeof(wchar_t) == sizeof(char16_t), "wchar_t and char16_t must ha
 
 namespace helpers {
 
+// TODO add and use utf8_string and utf32 string and chars?
+
 	typedef std::basic_stringstream<char> utf8_stringstream;
+#ifdef _WIN64
+	typedef wchar_t utf16_char;
+	typedef std::wstring utf16_string;
+	typedef std::wstringstream utf16_stringstream;
+#else
+	typedef char16_t utf16_char;
+	typedef std::u16string utf16_string;
 	typedef std::basic_stringstream<char16_t> utf16_stringstream;
+#endif
 
 	class CharError : public IOError {
 	};
@@ -60,7 +70,7 @@ namespace helpers {
 
 		    Surrogate pairs and unpaired surrogates are supported. 
 		 */
-		static Char FromUTF16(char16_t const *& x, char16_t const * end) {
+		static Char FromUTF16(utf16_char const *& x, utf16_char const * end) {
 			if (x >= end)
 				THROW(CharError()) << "Cannot read character, buffer overflow";
 			// range < 0xd800 and >= 0xe000 are the codepoints themselves, single byte
@@ -149,16 +159,17 @@ namespace helpers {
 			unsigned cp = codepoint();
 			if (cp < 0x10000) {
 				ASSERT(cp < 0xd800 || cp >= 0xe000) << "Invalid UTF16 codepoint";
-				s << static_cast<char16_t>(cp);
+				s << static_cast<utf16_char>(cp);
 			} else {
 				cp -= 0x10000;
 				unsigned high = cp >> 10; // upper 10 bits
 				unsigned low = cp & 0x3ff; // lower 10 bits
-				s << static_cast<char16_t>(high + 0xd800);
-				s << static_cast<char16_t>(low + 0xdc00);
+				s << static_cast<utf16_char>(high + 0xd800);
+				s << static_cast<utf16_char>(low + 0xdc00);
 			}
 		}
 #endif
+
 
 		char const* toCharPtr() const {
 			return reinterpret_cast<char const*>(&bytes_);
