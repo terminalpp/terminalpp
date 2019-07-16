@@ -7,7 +7,7 @@
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <errno.h>
-#elif (defined ARCH_APPLE)
+#elif (defined ARCH_MACOS)
 // - and other BSD like systems too, if we support them? 
 #include <unistd.h>
 #include <util.h>

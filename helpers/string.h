@@ -89,7 +89,7 @@ namespace helpers {
 	}
 
 // macOS does not really support the C++ standard wrt char16_t. Fportunately we only need it on Windows for now
-#ifndef ARCH_APPLE
+#ifndef ARCH_MACOS
 	inline utf16_string UTF8toUTF16(char const* str) {
 		utf16_stringstream result;
 		while (*str != 0) {

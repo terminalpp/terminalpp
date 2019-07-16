@@ -12,15 +12,18 @@
 #elif (defined __linux__)
 	#include <cstring>
 	#include <errno.h>
-	#if (defined __APPLE__)
-		#define ARCHITECTURE "macOS"
-		#define ARCH_MACOS
-		#define ARCH_UNIX
-	#else
-		#define ARCHITECTURE "Linux"
-		#define ARCH_LINUX
-		#define ARCH_UNIX
+	#define ARCHITECTURE "Linux"
+	#define ARCH_LINUX
+	#define ARCH_UNIX
+    #if (defined __APPLE__)
+        #error "Supposedly __linux__ and __APPLE__ should not be defined together"
 	#endif
+#elif (defined __APPLE__)
+	#include <cstring>
+	#include <errno.h>
+	#define ARCHITECTURE "macOS"
+	#define ARCH_MACOS
+	#define ARCH_UNIX
 #else
     #error "Unsupported platfrom, only Win32 and Linux are supported by helpers."
 #endif
