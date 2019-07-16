@@ -38,7 +38,7 @@ namespace tpp {
 		// create the terminal window
 		window_ = Application::Instance()->createTerminalWindow(this, windowProperties_, name_);
 		// create the PTY and the terminal
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 		if (*config::UseConPTY)
 			pty_ = new vterm::LocalPTY(command_);
 		else

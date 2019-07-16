@@ -1,4 +1,4 @@
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 #pragma once
 
 #include "windows.h"
@@ -62,4 +62,4 @@ namespace vterm {
 
 } // namespace vterm
 
-#endif // _WIN64
+#endif 

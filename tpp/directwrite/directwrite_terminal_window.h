@@ -1,5 +1,5 @@
 #pragma once
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 
 #include <unordered_map>
 

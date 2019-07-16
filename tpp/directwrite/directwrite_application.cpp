@@ -1,4 +1,5 @@
-#ifdef _WIN64
+#include "helpers/helpers.h"
+#ifdef ARCH_WINDOWS
 #include "directwrite_application.h"
 #include "directwrite_terminal_window.h"
 

@@ -1,5 +1,5 @@
 #pragma once
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 
 #include <windows.h>
 #include <dwrite_2.h> 

@@ -10,10 +10,12 @@ namespace helpers {
 
 	/** Because different operating systems support different exit code types, we define the type exit code separately.
 	 */
-#ifdef _WIN64
+#if (defined ARCH_WINDOWS)
 	typedef unsigned long ExitCode;
-#elif (defined __linux__) || (defined __APPLE__)
+#elif (defined ARCH_UNIX)
 	typedef int ExitCode;
+#else
+#error "Unsupported platform"
 #endif
 
 	/** Encapsulation of a local command to be executed.
@@ -152,9 +154,9 @@ namespace helpers {
 		/** Applies the changes in the environment to the actual environment of the current process. 
 		 */
 		void apply() {
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 			NOT_IMPLEMENTED;
-#elif (defined __linux__) || (defined __APPLE__)
+#else
 			for (auto i : map_) {
 				if (i.second.empty())
 					unsetenv(i.first.c_str());
@@ -182,7 +184,7 @@ namespace helpers {
 	/** Executes the given command and returns its output as a string. 
 	 */
 	inline std::string Exec(Command const& command, std::string const & path, helpers::ExitCode * exitCode = nullptr) {
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 		// create the pipes
 		SECURITY_ATTRIBUTES attrs;
 		attrs.nLength = sizeof(SECURITY_ATTRIBUTES);

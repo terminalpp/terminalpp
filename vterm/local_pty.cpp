@@ -1,13 +1,13 @@
-#if (defined __linux__)
+#include "helpers/helpers.h"
+
+#if (defined ARCH_LINUX)
 #include <unistd.h>
 #include <pty.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <errno.h>
-#endif
-
-#if (defined __APPLE__)  
+#elif (defined ARCH_APPLE)
 // - and other BSD like systems too, if we support them? 
 #include <unistd.h>
 #include <util.h>
@@ -24,7 +24,7 @@
 
 namespace vterm {
 
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 
 	LocalPTY::LocalPTY(helpers::Command const& command) :
 		command_(command),
@@ -176,7 +176,7 @@ namespace vterm {
 		) << "Unable to start process " << command_;
 	}
 
-#elif (defined __linux__) || (defined __APPLE__)
+#else
 
 	LocalPTY::LocalPTY(helpers::Command const& command) :
 		command_(command) {
@@ -278,11 +278,6 @@ namespace vterm {
 		}
     }
 
-#else
-#error "Unsupported platform"
 #endif
-
-
-
 
 } // namespace vterm

@@ -212,6 +212,16 @@ namespace helpers {
 			int i = 0;
 			try {
 				Impl& x = ArgumentsList();
+				if (argc == 2) {
+					if (strncmp(argv[1], "--version", 9) == 0 && !x.version.empty()) {
+						std::cout << x.version << std::endl;
+						exit(EXIT_SUCCESS);
+					}
+					if (strncmp(argv[1], "--help", 6) == 0) {
+						Help(std::cout);
+						exit(EXIT_SUCCESS);
+					}
+				}
 				// verify that all positional arguments are specified and there are no holes
 				for (size_t j = 0, je = x.byPosition.size(); j < je; ++j)
 					ASSERT(x.byPosition[j] != nullptr) << "Unspecified argument position " << j;
@@ -225,9 +235,9 @@ namespace helpers {
 				ParsePositionalArguments(x, i, argc, argv);
 				ParseNamedArguments(x, i, argc, argv);
 			} catch (ArgumentError const& e) {
-				Help(std::cerr);
+				Help(std::cout);
 				std::cerr << "ERROR: " << e << std::endl;
-				std::exit(-1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 
@@ -253,11 +263,16 @@ namespace helpers {
 			ArgumentsList().usage = usage;
 		}
 
+		static void SetVersion(std::string const& version) {
+			ArgumentsList().version = version;
+		}
+
 	private:
 		friend class BaseArg;
 
 		class Impl {
 		public:
+			std::string version;
 			std::string description;
 			std::string usage;
 			std::string commandLine;

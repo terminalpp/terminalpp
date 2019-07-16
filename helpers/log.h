@@ -229,9 +229,9 @@ namespace helpers {
 				// actually print the message
 				if (printTime_) {
 					tm t;
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 					localtime_s(&t, &m.time);
-#elif (defined __linux__) || (defined __APPLE__)
+#else
 					localtime_r(&m.time, &t);
 #endif
 					(*s_) << std::put_time(&t, "%c") << " ";

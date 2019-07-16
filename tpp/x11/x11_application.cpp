@@ -1,4 +1,5 @@
-#if (defined __linux__) || (defined __APPLE__)
+#include "helpers/helpers.h"
+#ifdef ARCH_UNIX
 
 #include "helpers/helpers.h"
 #include "helpers/log.h"

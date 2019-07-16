@@ -3,13 +3,24 @@
 #include <string>
 #include <sstream>
 
-#ifdef _WIN64
+#if (defined _WIN64)
     #include "windows.h"
     #undef min
     #undef max
-#elif (defined __linux__) || (defined __APPLE__)
-    #include <cstring>
-    #include <errno.h>
+    #define ARCHITECTURE "Windows"
+    #define ARCH_WINDOWS
+#elif (defined __linux__)
+	#include <cstring>
+	#include <errno.h>
+	#if (defined __APPLE__)
+		#define ARCHITECTURE "macOS"
+		#define ARCH_MACOS
+		#define ARCH_UNIX
+	#else
+		#define ARCHITECTURE "Linux"
+		#define ARCH_LINUX
+		#define ARCH_UNIX
+	#endif
 #else
     #error "Unsupported platfrom, only Win32 and Linux are supported by helpers."
 #endif
@@ -139,11 +150,13 @@ namespace helpers {
     class OSError : public Exception {
     public:
         OSError() {
-            #ifdef _WIN64
-                what_ = STR("ErrorCode: " << GetLastError());
-            #elif __linux__
-                what_ = STR(strerror(errno) << ": ");
-            #endif
+#if (defined ARCH_WINDOWS)
+            what_ = STR("ErrorCode: " << GetLastError());
+#elif (defined ARCH_UNIX)
+            what_ = STR(strerror(errno) << ": ");
+#else
+    	    what_ = "OS Error";
+#endif
         }
     }; // helpers::OSError
 
@@ -151,10 +164,7 @@ namespace helpers {
 	class IOError : public Exception {
 	};
 
-
-
-
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 	/** 
 	 */
 	class Win32Handle {

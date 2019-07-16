@@ -39,13 +39,13 @@ namespace tpp {
 			This particular command starts the bypass in wsl, overrides the SHELL envvar to bash (default) and then instructs the bypass to run bash.
 		 */
 		extern helpers::Arg<std::vector<std::string>> Command;
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 		#define DEFAULT_TERMINAL_COMMAND "wsl", "-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "bash"
 #else
         #define DEFAULT_TERMINAL_COMMAND "bash"
 #endif
 
-#ifdef _WIN64 
+#ifdef ARCH_WINDOWS
 		/** Specifies the pseudoterminal interface to be used.
 
 			The default pseudoterminal on the given platform is `vterm::LocalPTY`. However on windows this terminal performs its own destructive operations on the I/O. A `BypassPTY` was created, which in a simple program running in the wsl which translates the terminal communication and events over simple process I/O, thus bypassing the system pseudoterminal.

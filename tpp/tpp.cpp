@@ -12,7 +12,7 @@
 #include "session.h"
 
 
-#ifdef _WIN64
+#if (defined ARCH_WINDOWS)
 
 #include "directwrite/directwrite_application.h"
 #include "directwrite/directwrite_terminal_window.h"
@@ -20,7 +20,7 @@
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
 
-#elif (defined __linux__) || (defined __APPLE__)
+#elif (defined ARCH_UNIX)
 
 #include "x11/x11_application.h"
 #include "x11/x11_terminal_window.h"
@@ -37,7 +37,7 @@
 
 namespace tpp {
 	namespace config {
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 		helpers::Arg<bool> UseConPTY(
 			{ "--use-conpty" },
 			false,
@@ -100,24 +100,25 @@ using namespace tpp;
 
     For now creates single terminal window and one virtual terminal. 
  */
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	MARK_AS_UNUSED(hPrevInstance);
 	MARK_AS_UNUSED(lpCmdLine);
 	MARK_AS_UNUSED(nCmdShow);
-	try {
-		helpers::Arguments::Parse(__argc, __argv);
-	    // create the application singleton
-	    new DirectWriteApplication(hInstance);
-#elif (defined __linux__) || (defined __APPLE__)
+	int argc = __argc;
+	char** argv = __argv;
+#else
 int main(int argc, char* argv[]) {
+#endif
+	helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored() << ARCHITECTURE));
+	helpers::Arguments::Parse(argc, argv);
 	try {
-		helpers::Arguments::Parse(argc, argv);
-		// create the application singleton
+	    // create the application singleton
+#ifdef ARCH_WINDOWS
+	    new DirectWriteApplication(hInstance);
+#else
 	    new X11Application();
 #endif
-		helpers::Stamp stamp = helpers::Stamp::Stored();
-
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
 		helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
 		helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));

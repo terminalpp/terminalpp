@@ -7,8 +7,6 @@
 - not just VT, all asserts should be checked and become OSerrors instead
 - add command line arguments so that terminal can be proper terminal emulator replacement in Linux
 - add zoom out? and default zoom? 
-- args should by default parse version and help requests, version should be stamped from the git repo, I guess by creating simple c program that generates the header file appropriately
-- platform macros should be set in helpers
 
 ### Win32 Bugs
 

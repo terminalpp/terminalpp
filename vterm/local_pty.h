@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 #include "windows.h"
 #endif
 
@@ -45,7 +45,7 @@ namespace vterm {
 		helpers::Command command_;
 		helpers::Environment environment_;
 
-#ifdef _WIN64
+#if (defined ARCH_WINDOWS)
 
 		/** Opens the pipes and creates a new pseudoconsole. 
 		 */
@@ -75,7 +75,7 @@ namespace vterm {
 		 */
 		PROCESS_INFORMATION pInfo_;
 
-#elif (defined __linux__) || (defined __APPLE__)
+#elif (defined ARCH_UNIX)
 
 		static constexpr pid_t IGNORE_TERMINATION = 0;
 

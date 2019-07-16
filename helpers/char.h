@@ -4,7 +4,7 @@
 
 #include "helpers.h"
 
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 static_assert(sizeof(wchar_t) == sizeof(char16_t), "wchar_t and char16_t must have the same size or the conversions would break");
 #endif
 
@@ -14,7 +14,7 @@ namespace helpers {
 // TODO add and use utf8_string and utf32 string and chars?
 
 	typedef std::basic_stringstream<char> utf8_stringstream;
-#ifdef _WIN64
+#ifdef ARCH_WINDOWS
 	typedef wchar_t utf16_char;
 	typedef std::wstring utf16_string;
 	typedef std::wstringstream utf16_stringstream;
@@ -154,7 +154,7 @@ namespace helpers {
 		}
 
 // macOS does not really support the C++ standard wrt char16_t. Fportunately we only need it on Windows for now
-#ifndef __APPLE__
+#ifndef ARCH_MACOS
 		void toUTF16(utf16_stringstream& s) const {
 			unsigned cp = codepoint();
 			if (cp < 0x10000) {
