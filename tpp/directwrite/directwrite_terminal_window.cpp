@@ -282,7 +282,10 @@ namespace tpp {
 				if (wParam >= 0x20)
 					tw->keyChar(helpers::Char::FromCodepoint(static_cast<unsigned>(wParam)));
 				break;
-			/* Processes special key events.*/
+			/* Processes special key events.
+			
+			   TODO perhaps all the syskeydown & syskeyup events should be stopped? 
+			 */
 			case WM_SYSKEYDOWN:
 			case WM_KEYDOWN: {
 				vterm::Key k = GetKey(static_cast<unsigned>(wParam));
@@ -294,6 +297,7 @@ namespace tpp {
 				    return 0;
 				break;
 			}
+			case WM_SYSKEYUP:
 			case WM_KEYUP: {
 				vterm::Key k = GetKey(static_cast<unsigned>(wParam));
 				tw->keyUp(k);

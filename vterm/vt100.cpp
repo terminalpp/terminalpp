@@ -269,7 +269,7 @@ namespace vterm {
 	// Terminal input actions
 
 	void VT100::keyDown(Key k) {
-		inputState_.keyUpdate(k, true);
+		inputState_.keyUpdate(k);
 		std::string const* seq = KeyMap_.getSequence(k);
 		if (seq != nullptr) {
 			switch (k.code()) {
@@ -294,7 +294,7 @@ namespace vterm {
 	}
 
 	void VT100::keyUp(Key k) {
-		inputState_.keyUpdate(k, false);
+		inputState_.keyUpdate(k);
 	}
 
 	void VT100::keyChar(helpers::Char c) {

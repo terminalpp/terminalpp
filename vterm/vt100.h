@@ -320,15 +320,11 @@ namespace vterm {
 				mouseWheel(false) {
 			}
 
-			void keyUpdate(Key k, bool value) {
-				if (k | Key::Shift)
-					shift = value;
-				if (k | Key::Ctrl)
-					ctrl = value;
-				if (k | Key::Alt)
-					alt = value;
-				if (k | Key::Win)
-					win = value;
+			void keyUpdate(Key k) {
+				shift = (k | Key::Shift);
+				ctrl = (k | Key::Ctrl);
+				alt = (k | Key::Alt);
+				win = (k | Key::Win);
 			}
 
 			void buttonUpdate(MouseButton button, bool value) {

@@ -1,5 +1,8 @@
 ﻿## Bugs and missing features
 
+- when windows loses focus, the key state may change, perhaps the modifiers key state should be added to mouse events as well and that way vt100 does not have to keep the state in itself, but instead the app will? 
+- or it must be notified by the app about input state change
+
 - VT100 should be fault tolerant and not assert everything, just do nothing upon failure in release
 - not just VT, all asserts should be checked and become OSerrors instead
 - add command line arguments so that terminal can be proper terminal emulator replacement in Linux
