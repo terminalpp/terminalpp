@@ -269,7 +269,6 @@ namespace vterm {
 	// Terminal input actions
 
 	void VT100::keyDown(Key k) {
-		inputState_.keyUpdate(k);
 		std::string const* seq = KeyMap_.getSequence(k);
 		if (seq != nullptr) {
 			switch (k.code()) {
@@ -293,43 +292,39 @@ namespace vterm {
 		}
 	}
 
-	void VT100::keyUp(Key k) {
-		inputState_.keyUpdate(k);
-	}
-
 	void VT100::keyChar(helpers::Char c) {
 		ASSERT(c.codepoint() >= 32);
 		ptyWrite(c.toCharPtr(), c.size());
 	}
 
-	void VT100::mouseDown(unsigned col, unsigned row, MouseButton button) {
+	void VT100::mouseDown(unsigned col, unsigned row, MouseButton button, Key modifiers) {
 		inputState_.buttonUpdate(button, true);
 		if (mouseMode_ == MouseMode::Off)
 			return;
-		mouseLastButton_ = encodeMouseButton(button);
+		mouseLastButton_ = encodeMouseButton(button, modifiers);
 		sendMouseEvent(mouseLastButton_, col, row, 'M');
 		LOG(SEQ) << "Button " << button << " down at " << col << ";" << row;
 	}
 
-	void VT100::mouseUp(unsigned col, unsigned row, MouseButton button) {
+	void VT100::mouseUp(unsigned col, unsigned row, MouseButton button, Key modifiers) {
 		inputState_.buttonUpdate(button, false);
 		if (mouseMode_ == MouseMode::Off)
 			return;
-		mouseLastButton_ = encodeMouseButton(button);
+		mouseLastButton_ = encodeMouseButton(button, modifiers);
 		sendMouseEvent(mouseLastButton_, col, row, 'm');
 		LOG(SEQ) << "Button " << button << " up at " << col << ";" << row;
 	}
 
-	void VT100::mouseWheel(unsigned col, unsigned row, int by) {
+	void VT100::mouseWheel(unsigned col, unsigned row, int by, Key modifiers) {
 		if (mouseMode_ == MouseMode::Off)
 			return;
 		// mouse wheel adds 64 to the value
-		mouseLastButton_ = encodeMouseButton((by > 0) ? MouseButton::Left : MouseButton::Right) + 64;
+		mouseLastButton_ = encodeMouseButton((by > 0) ? MouseButton::Left : MouseButton::Right, modifiers) + 64;
 		sendMouseEvent(mouseLastButton_, col, row, 'M');
 		LOG(SEQ) << "Wheel offset " << by << " at " << col << ";" << row;
 	}
 
-	void VT100::mouseMove(unsigned col, unsigned row) {
+	void VT100::mouseMove(unsigned col, unsigned row, Key modifiers) {
 		if (mouseMode_ == MouseMode::Off)
 			return;
 		if (mouseMode_ == MouseMode::ButtonEvent && !inputState_.mouseLeft && !inputState_.mouseRight && !inputState_.mouseWheel)
@@ -1135,11 +1130,11 @@ namespace vterm {
 		return Color::White();
 	}
 
-	unsigned VT100::encodeMouseButton(MouseButton btn) {
+	unsigned VT100::encodeMouseButton(MouseButton btn, Key modifiers) {
 		unsigned result =
-			(inputState_.shift ? 4 : 0) +
-			(inputState_.alt ? 8 : 0) +
-			(inputState_.ctrl ? 16 : 0);
+			((modifiers | vterm::Key::Shift) ? 4 : 0) +
+			((modifiers | vterm::Key::Alt) ? 8 : 0) +
+			((modifiers | vterm::Key::Ctrl) ? 16 : 0);
 		switch (btn) {
 			case MouseButton::Left:
 				return result;

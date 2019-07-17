@@ -56,6 +56,7 @@ namespace tpp {
 	}
 
 	void TerminalWindow::keyDown(vterm::Key key) {
+		activeModifiers_ = vterm::Key(vterm::Key::Invalid, key.modifiers());
 		if (key == SHORTCUT_FULLSCREEN) {
 			setFullscreen(!fullscreen());
 		// zoom in
@@ -74,6 +75,7 @@ namespace tpp {
 	}
 
 	void TerminalWindow::keyUp(vterm::Key key) {
+		activeModifiers_ = vterm::Key(vterm::Key::Invalid, key.modifiers());
 		terminal()->keyUp(key);
 	}
 
@@ -97,7 +99,7 @@ namespace tpp {
 		if (col != mouseCol_ || row != mouseRow_) {
 			mouseCol_ = col;
 			mouseRow_ = row;
-			terminal()->mouseMove(col, row);
+			terminal()->mouseMove(col, row, activeModifiers_);
 		}
 	}
 
@@ -134,7 +136,7 @@ namespace tpp {
 			if (button == vterm::MouseButton::Left && !selecting_) {
 			} 
 		}
-		terminal()->mouseDown(x, y, button);
+		terminal()->mouseDown(x, y, button, activeModifiers_);
 	}
 
 	void TerminalWindow::mouseUp(unsigned x, unsigned y, vterm::MouseButton button) {
@@ -145,12 +147,12 @@ namespace tpp {
 			selecting_ = false;
             selectionSet();
 		}
-		terminal()->mouseUp(x, y, button);
+		terminal()->mouseUp(x, y, button, activeModifiers_);
 	}
 
 	void TerminalWindow::mouseWheel(unsigned x, unsigned y, int offset) {
 		convertMouseCoordsToCells(x, y);
-		terminal()->mouseWheel(x, y, offset);
+		terminal()->mouseWheel(x, y, offset, activeModifiers_);
 	}
 
     bool TerminalWindow::selectionPaste() {

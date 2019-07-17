@@ -4,63 +4,63 @@
 
 
 KEY(Backspace, 8)
-KEY(Tab,9)
-KEY(Enter,13)
+KEY(Tab, 9)
+KEY(Enter, 13)
 KEY(ShiftKey, 16)
 KEY(CtrlKey, 17)
 KEY(AltKey, 18)
-KEY(CapsLock,20)
-KEY(Esc,27)
-KEY(Space,32)
-KEY(PageUp,33)
-KEY(PageDown,34)
-KEY(End,35)
-KEY(Home,36)
-KEY(Left,37)
-KEY(Up,38)
-KEY(Right,39)
-KEY(Down,40)
+KEY(CapsLock, 20)
+KEY(Esc, 27)
+KEY(Space, 32)
+KEY(PageUp, 33)
+KEY(PageDown, 34)
+KEY(End, 35)
+KEY(Home, 36)
+KEY(Left, 37)
+KEY(Up, 38)
+KEY(Right, 39)
+KEY(Down, 40)
 // not supported in X11 
 //KEY(PrintScreen,44)
-KEY(Insert,45)
-KEY(Delete,46)
-KEY(Num0,'0') // 48
-KEY(Num1,'1') // 49
-KEY(Num2,'2') // 50
-KEY(Num3,'3') // 51
-KEY(Num4,'4') // 52
-KEY(Num5,'5') // 53
-KEY(Num6,'6') // 54
-KEY(Num7,'7') // 55
-KEY(Num8,'8') // 56
-KEY(Num9,'9') // 57
-KEY(A,'A') // 65
-KEY(B,'B') // 66
-KEY(C,'C') // 67
-KEY(D,'D') // 68
-KEY(E,'E') // 69
-KEY(F,'F') // 70
-KEY(G,'G') // 71
-KEY(H,'H') // 72
-KEY(I,'I') // 73
-KEY(J,'J') // 74
-KEY(K,'K') // 75
-KEY(L,'L') // 76
-KEY(M,'M') // 77
-KEY(N,'N') // 78
-KEY(O,'O') // 79
-KEY(P,'P') // 80
-KEY(Q,'Q') // 81
-KEY(R,'R') // 82
-KEY(S,'S') // 83
-KEY(T,'T') // 84
-KEY(U,'U') // 85
-KEY(V,'V') // 86
-KEY(W,'W') // 87
-KEY(X,'X') // 88
-KEY(Y,'Y') // 89
-KEY(Z,'Z') // 90
-
+KEY(Insert, 45)
+KEY(Delete, 46)
+KEY(Num0, '0') // 48
+KEY(Num1, '1') // 49
+KEY(Num2, '2') // 50
+KEY(Num3, '3') // 51
+KEY(Num4, '4') // 52
+KEY(Num5, '5') // 53
+KEY(Num6, '6') // 54
+KEY(Num7, '7') // 55
+KEY(Num8, '8') // 56
+KEY(Num9, '9') // 57
+KEY(A, 'A') // 65
+KEY(B, 'B') // 66
+KEY(C, 'C') // 67
+KEY(D, 'D') // 68
+KEY(E, 'E') // 69
+KEY(F, 'F') // 70
+KEY(G, 'G') // 71
+KEY(H, 'H') // 72
+KEY(I, 'I') // 73
+KEY(J, 'J') // 74
+KEY(K, 'K') // 75
+KEY(L, 'L') // 76
+KEY(M, 'M') // 77
+KEY(N, 'N') // 78
+KEY(O, 'O') // 79
+KEY(P, 'P') // 80
+KEY(Q, 'Q') // 81
+KEY(R, 'R') // 82
+KEY(S, 'S') // 83
+KEY(T, 'T') // 84
+KEY(U, 'U') // 85
+KEY(V, 'V') // 86
+KEY(W, 'W') // 87
+KEY(X, 'X') // 88
+KEY(Y, 'Y') // 89
+KEY(Z, 'Z') // 90
+KEY(WinKey, 0x5b) // left windows key in windows
 KEY(Menu,0x5d)
 
 KEY(Numpad0,0x60)

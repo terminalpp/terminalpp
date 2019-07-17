@@ -63,19 +63,22 @@ namespace vterm {
 
 		void keyDown(Key k) override;
 
-		void keyUp(Key k) override;
+		void keyUp(Key k) override {
+			MARK_AS_UNUSED(k);
+			// do nothing...
+		}
 
 		void keyChar(helpers::Char c) override;
 
 		// terminal mouse actions
 
-		void mouseDown(unsigned col, unsigned row, MouseButton button) override;
+		void mouseDown(unsigned col, unsigned row, MouseButton button, Key modifiers) override;
 
-		void mouseUp(unsigned col, unsigned row, MouseButton button) override;
+		void mouseUp(unsigned col, unsigned row, MouseButton button, Key modifiers) override;
 
-		void mouseWheel(unsigned col, unsigned row, int by) override;
+		void mouseWheel(unsigned col, unsigned row, int by, Key modifiers) override;
 
-		void mouseMove(unsigned col, unsigned row) override;
+		void mouseMove(unsigned col, unsigned row, Key modifiers) override;
 
 		// terminal clipboard actions
 
@@ -259,7 +262,6 @@ namespace vterm {
 				scrollStart = 0;
 				scrollEnd = rows;
 			}
-
 		};
 
 		/** Describes the keys understood by the VT100 and the sequences to be sent when the keys are emited.
@@ -302,29 +304,14 @@ namespace vterm {
 		 */
 		class InputState {
 		public:
-			bool shift;
-			bool ctrl;
-			bool alt;
-			bool win;
 			bool mouseLeft;
 			bool mouseRight;
 			bool mouseWheel;
 
 			InputState() :
-				shift(false),
-				ctrl(false),
-				alt(false),
-				win(false),
 				mouseLeft(false),
 				mouseRight(false),
 				mouseWheel(false) {
-			}
-
-			void keyUpdate(Key k) {
-				shift = (k | Key::Shift);
-				ctrl = (k | Key::Ctrl);
-				alt = (k | Key::Alt);
-				win = (k | Key::Win);
 			}
 
 			void buttonUpdate(MouseButton button, bool value) {
@@ -342,7 +329,6 @@ namespace vterm {
 						UNREACHABLE;
 				}
 			}
-
 		};
 
 		void updateCursorPosition() {
@@ -383,7 +369,7 @@ namespace vterm {
 
 		
 		
-		unsigned encodeMouseButton(MouseButton btn);
+		unsigned encodeMouseButton(MouseButton btn, Key modifiers);
 
 		void sendMouseEvent(unsigned button, unsigned col, unsigned row, char end);
 

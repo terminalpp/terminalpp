@@ -134,7 +134,7 @@ namespace tpp {
         TerminalWindow::titleChange(e);
 	}
 
-	void X11TerminalWindow::clipboardUpdate(vterm::Terminal::ClipboardUpdateEvent& e) {
+    void X11TerminalWindow::clipboardUpdate(vterm::Terminal::ClipboardUpdateEvent& e) {
 		Application::Instance<X11Application>()->clipboard_ = *e;
 		XSetSelectionOwner(display_, app()->clipboardName_, window_, CurrentTime);
 	}
@@ -204,16 +204,20 @@ namespace tpp {
 		);
 	}
 
-    vterm::Key X11TerminalWindow::GetKey(KeySym k, unsigned state) {
-        unsigned modifiers = 0;
-        if (state & 1)
-            modifiers += vterm::Key::Shift;
-        if (state & 4)
-            modifiers += vterm::Key::Ctrl;
-        if (state & 8)
-            modifiers += vterm::Key::Alt;
-        if (state & 64)
-            modifiers += vterm::Key::Win;
+	unsigned X11TerminalWindow::GetStateModifiers(int state) {
+		unsigned modifiers = 0;
+		if (state & 1)
+			modifiers += vterm::Key::Shift;
+		if (state & 4)
+			modifiers += vterm::Key::Ctrl;
+		if (state & 8)
+			modifiers += vterm::Key::Alt;
+		if (state & 64)
+			modifiers += vterm::Key::Win;
+		return modifiers;
+	}
+	
+	vterm::Key X11TerminalWindow::GetKey(KeySym k, unsigned modifiers, bool pressed) {
         if (k >= 'a' && k <= 'z') 
             return vterm::Key(k - 32, modifiers);
         if (k >= 'A' && k <= 'Z')
@@ -300,7 +304,35 @@ namespace tpp {
                 return vterm::Key(vterm::Key::SquareClose, modifiers);
             case XK_apostrophe: // '
                 return vterm::Key(vterm::Key::Quote, modifiers);
-            default:
+			case XK_Shift_L:
+			case XK_Shift_R:
+				if (pressed)
+					modifiers |= vterm::Key::Shift;
+				else
+					modifiers &= ~vterm::Key::Shift;
+				return vterm::Key(vterm::Key::ShiftKey, modifiers);
+			case XK_Control_L:
+			case XK_Control_R:
+				if (pressed)
+					modifiers |= vterm::Key::Ctrl;
+				else
+					modifiers &= ~vterm::Key::Ctrl;
+				return vterm::Key(vterm::Key::CtrlKey, modifiers);
+			case XK_Alt_L:
+			case XK_Alt_R:
+				if (pressed)
+					modifiers |= vterm::Key::Alt;
+				else
+					modifiers &= ~vterm::Key::Alt;
+				return vterm::Key(vterm::Key::AltKey, modifiers);
+			case XK_Meta_L:
+			case XK_Meta_R:
+				if (pressed)
+					modifiers |= vterm::Key::Win;
+				else
+					modifiers &= ~vterm::Key::Win;
+				return vterm::Key(vterm::Key::WinKey, modifiers);
+			default:
                 return vterm::Key(vterm::Key::Invalid, 0);
         }
     }
@@ -346,7 +378,9 @@ namespace tpp {
             /* Unlike Win32 we have to determine whether we are dealing with sendChar, or keyDown. 
              */
             case KeyPress: {
-                KeySym kSym;
+				unsigned modifiers = GetStateModifiers(e.xkey.state);
+				tw->activeModifiers_ = vterm::Key(vterm::Key::Invalid, modifiers);
+				KeySym kSym;
                 char str[32];
                 Status status;
                 int strLen = Xutf8LookupString(tw->ic_, & e.xkey, str, sizeof str, &kSym, &status);
@@ -360,20 +394,29 @@ namespace tpp {
                     }
                 }
                 // otherwise if the keysym was recognized, it is a keyDown event
-                vterm::Key key = GetKey(kSym, e.xkey.state);
-                if (key != vterm::Key::Invalid)
+                vterm::Key key = GetKey(kSym, modifiers, true);
+				// if the modifiers were updated (i.e. the key is Shift, Ctrl, Alt or Win, updated active modifiers
+				if (modifiers != key.modifiers())
+					tw->activeModifiers_ = vterm::Key(vterm::Key::Invalid, modifiers);
+				if (key != vterm::Key::Invalid)
                     tw->keyDown(key);
                 break;
             }
             case KeyRelease: {
-                KeySym kSym = XLookupKeysym(& e.xkey, 0);
-                vterm::Key key = GetKey(kSym, e.xkey.state);
-                if (key != vterm::Key::Invalid)
+				unsigned modifiers = GetStateModifiers(e.xkey.state);
+				tw->activeModifiers_ = vterm::Key(vterm::Key::Invalid, modifiers);
+				KeySym kSym = XLookupKeysym(& e.xkey, 0);
+                vterm::Key key = GetKey(kSym, modifiers, false);
+				// if the modifiers were updated (i.e. the key is Shift, Ctrl, Alt or Win, updated active modifiers
+				if (modifiers != key.modifiers())
+					tw->activeModifiers_ = vterm::Key(vterm::Key::Invalid, modifiers);
+				if (key != vterm::Key::Invalid)
                     tw->keyUp(key);
                 break;
             }
             case ButtonPress: 
-                switch (e.xbutton.button) {
+				tw->activeModifiers_ = vterm::Key(vterm::Key::Invalid, GetStateModifiers(e.xbutton.state));
+				switch (e.xbutton.button) {
                     case 1:
                         tw->mouseDown(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Left);
                         break;
@@ -394,7 +437,8 @@ namespace tpp {
                 }
                 break;
             case ButtonRelease: 
-                switch (e.xbutton.button) {
+				tw->activeModifiers_ = vterm::Key(vterm::Key::Invalid, GetStateModifiers(e.xbutton.state));
+				switch (e.xbutton.button) {
                     case 1:
                         tw->mouseUp(e.xbutton.x, e.xbutton.y, vterm::MouseButton::Left);
                         break;
@@ -409,7 +453,8 @@ namespace tpp {
                 }
                 break;
             case MotionNotify:
-                tw->mouseMove(e.xmotion.x, e.xmotion.y);
+				tw->activeModifiers_ = vterm::Key(vterm::Key::Invalid, GetStateModifiers(e.xbutton.state));
+				tw->mouseMove(e.xmotion.x, e.xmotion.y);
                 break;
 			/** Called when we are notified that clipboard contents is available for previously requested paste.
 			

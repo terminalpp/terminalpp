@@ -216,7 +216,6 @@ namespace tpp {
          */
         virtual void keyDown(vterm::Key key);
 
-
 		void convertMouseCoordsToCells(unsigned & x, unsigned & y) {
 			x = x / cellWidthPx_;
 			y = y / cellHeightPx_;
@@ -317,6 +316,10 @@ namespace tpp {
 		unsigned blinkCounter_;
 
 		bool dirty_;
+
+		/** Current state of shift, ctrl, alt and win keys. 
+		 */
+	    vterm::Key activeModifiers_;
 
 		/** Last known mouse coordinates in terminal columns & rows (not in pixels).
 		 */

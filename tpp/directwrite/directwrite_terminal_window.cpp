@@ -112,6 +112,19 @@ namespace tpp {
 		PostMessage(hWnd_, WM_USER, DirectWriteApplication::MSG_TITLE_CHANGE, 0);
 	}
 
+	void DirectWriteTerminalWindow::focusChanged(bool focused) {
+		// if the window has been focused, we need to update the activeModifiers. 
+		if (focused) {
+			unsigned shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? vterm::Key::Shift : 0;
+			unsigned ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) ? vterm::Key::Ctrl : 0;
+			unsigned alt = (GetAsyncKeyState(VK_MENU) & 0x8000) ? vterm::Key::Alt : 0;
+			unsigned win = (GetAsyncKeyState(VK_LWIN) & 0x8000) || (GetAsyncKeyState(VK_RWIN) & 0x8000) ? vterm::Key::Win : 0;
+			activeModifiers_ = vterm::Key(vterm::Key::Invalid, shift | ctrl | alt | win);
+		}
+		TerminalWindow::focusChanged(focused);
+	}
+
+
 	void DirectWriteTerminalWindow::clipboardUpdate(vterm::Terminal::ClipboardUpdateEvent& e) {
 		if (OpenClipboard(nullptr)) {
 			EmptyClipboard();
@@ -160,6 +173,9 @@ namespace tpp {
 
 	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
 	vterm::Key DirectWriteTerminalWindow::GetKey(unsigned vk) {
+		// we don't distinguish between left and right win keys
+		if (vk == VK_RWIN)
+			vk = VK_LWIN;
 		if (!vterm::Key::IsValidCode(vk))
 			return vterm::Key(vterm::Key::Invalid);
 		// MSB == pressed, LSB state since last time

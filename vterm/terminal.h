@@ -508,62 +508,14 @@ namespace vterm {
 				cols_(cols),
 				rows_(rows) {
 			}
-
 			virtual void resize(unsigned cols, unsigned rows) {
 				cols_ = cols;
 				rows_ = rows;
 				if (terminal_)
 					terminal_->lockScreen()->resize(cols, rows);
-			}
-
-			// keyboard events
-
-			virtual void keyDown(Key k) {
-				if (terminal_)
-					terminal_->keyDown(k);
-			}
-
-			virtual void keyUp(Key k) {
-				if (terminal_)
-					terminal_->keyDown(k);
-			}
-
-			virtual void keyChar(helpers::Char c) {
-				if (terminal_)
-					terminal_->keyChar(c);
-			}
-
-			// mouse events
-
-			virtual void mouseDown(unsigned col, unsigned row, MouseButton button) {
-				if (terminal_)
-					terminal_->mouseDown(col, row, button);
-			}
-
-			virtual void mouseUp(unsigned col, unsigned row, MouseButton button) {
-				if (terminal_)
-					terminal_->mouseUp(col, row, button);
-			}
-
-			virtual void mouseWheel(unsigned col, unsigned row, int by) {
-				if (terminal_)
-					terminal_->mouseWheel(col, row, by);
-			}
-
-			virtual void mouseMove(unsigned col, unsigned row) {
-				if (terminal_)
-					terminal_->mouseMove(col, row);
-			}
-
-			// clipboard events
-
-			virtual void paste(std::string const& what) {
-				if (terminal_)
-					terminal_->paste(what);
-			}
+			} 
 
 		private:
-
 
 			virtual void detachFromTerminal() {
 				if (terminal_ == nullptr)
@@ -586,7 +538,6 @@ namespace vterm {
 
 			unsigned cols_;
 			unsigned rows_;
-
 		};
 
 		Terminal(unsigned cols, unsigned rows) :
@@ -661,13 +612,13 @@ namespace vterm {
 
 		// mouse events
 
-		virtual void mouseDown(unsigned col, unsigned row, MouseButton button) = 0;
+		virtual void mouseDown(unsigned col, unsigned row, MouseButton button, Key modifiers) = 0;
 
-		virtual void mouseUp(unsigned col, unsigned row, MouseButton button) = 0;
+		virtual void mouseUp(unsigned col, unsigned row, MouseButton button, Key modifiers) = 0;
 
-		virtual void mouseWheel(unsigned col, unsigned row, int by) = 0;
+		virtual void mouseWheel(unsigned col, unsigned row, int by, Key modifiers) = 0;
 
-		virtual void mouseMove(unsigned col, unsigned row) = 0;
+		virtual void mouseMove(unsigned col, unsigned row, Key modifiers) = 0;
 
 		// clipboard events
 

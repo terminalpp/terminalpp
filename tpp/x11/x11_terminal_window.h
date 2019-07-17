@@ -18,6 +18,10 @@
 namespace tpp {
 
 
+	/**
+
+	    Note that due to the fact that all input events contain the input state, we just update the state modifiers right there when the input happens instead of updating it when focus is set back to the window as does the Windows version. 
+	 */
 	class X11TerminalWindow : public TerminalWindow {
 	public:
 
@@ -167,6 +171,7 @@ namespace tpp {
 			return result;
 		}
 
+
 		/** Sets the window icon. 
 
 		    The window icon must be an array of BGRA colors for the different icon sizes where the first element is the total size of the array followed by arbitrary icon sizes encoded by first 2 items representing the icon width and height followed by the actual pixels. 
@@ -186,10 +191,15 @@ namespace tpp {
 			unsigned long   status;
 		};
 
+		/** Given current state as reported from X11, translates it to vterm::Key modifiers
+		 */
+		static unsigned GetStateModifiers(int state);
 
-        /** Converts the KeySym and state as reported by X11 to vterm's Key. 
+        /** Converts the KeySym and preexisting modifiers as reported by X11 into key. 
+
+		    Because the modifiers are preexisting, but the terminal requires post-state, Shift, Ctrl, Alt and Win keys also update the modifiers based on whether they key was pressed, or released
          */
-        static vterm::Key GetKey(KeySym k, unsigned state);
+        static vterm::Key GetKey(KeySym k, unsigned modifiers, bool pressed);
 
         static void EventHandler(XEvent & e);
 
