@@ -32,6 +32,7 @@ namespace tpp {
 		screen_(app()->xScreen()),
 	    visual_(DefaultVisual(display_, screen_)),
 	    colorMap_(DefaultColormap(display_, screen_)),
+		ic_(nullptr),
 	    buffer_(0),
 	    draw_(nullptr),
         text_(nullptr),
@@ -70,9 +71,12 @@ namespace tpp {
     	gcv.graphics_exposures = False;
         gc_ = XCreateGC(display_, parent, GCGraphicsExposures, &gcv);
 
-        // create input context for the window... The extra arguments to the XCreateIC are c-c c-v from the internet and for now are a mystery to me
-    	ic_ = XCreateIC(app()->xIm_, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-    				XNClientWindow, window_, XNFocusWindow, window_, nullptr);
+		// only create input context if XIM is present
+		if (app()->xIm_ != nullptr) {
+			// create input context for the window... The extra arguments to the XCreateIC are c-c c-v from the internet and for now are a mystery to me
+			ic_ = XCreateIC(app()->xIm_, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+				XNClientWindow, window_, XNFocusWindow, window_, nullptr);
+		}
 
         updateTextStructures(widthPx_, cellWidthPx_);
 
@@ -383,7 +387,11 @@ namespace tpp {
 				KeySym kSym;
                 char str[32];
                 Status status;
-                int strLen = Xutf8LookupString(tw->ic_, & e.xkey, str, sizeof str, &kSym, &status);
+				int strLen = 0;
+				if (tw->ic_ != nullptr)
+					strLen = Xutf8LookupString(tw->ic_, &e.xkey, str, sizeof str, &kSym, &status);
+				else
+					strLen = XLookupString(&e.xkey, str, sizeof str, &kSym, nullptr);
                 // if it is printable character and there were no modifiers other than shift pressed, we are dealing with printable character (backspace is not printable character)
                 if (strLen > 0 && (str[0] < 0 || str[0] >= 0x20) && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
                     char * x = reinterpret_cast<char*>(& str);

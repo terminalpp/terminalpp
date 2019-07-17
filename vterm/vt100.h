@@ -366,19 +366,10 @@ namespace vterm {
 			state_.lastCharCol = screen_.cursor().col;
 			state_.lastCharRow = screen_.cursor().row;
 		}
-
-		
 		
 		unsigned encodeMouseButton(MouseButton btn, Key modifiers);
 
 		void sendMouseEvent(unsigned button, unsigned col, unsigned row, char end);
-
-
-
-
-
-
-
 
 		/** Updates the cursor position.
 		 */
@@ -408,7 +399,6 @@ namespace vterm {
 		 */
 		unsigned defaultBg_;
 
-
 		State state_;
 		InputState inputState_;
 
@@ -425,18 +415,13 @@ namespace vterm {
 		 */
 		unsigned mouseLastButton_;
 
-
 		bool alternateBuffer_;
 
 		bool bracketedPaste_;
 		bool applicationCursorMode_;
 		bool applicationKeypadMode_;
 
-
-
-
 		CSISequence seq_;
-
 	};
 
 } // namespace vterm

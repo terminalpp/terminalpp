@@ -22,7 +22,8 @@ namespace tpp {
 
 	X11Application::X11Application():
 		xDisplay_(nullptr),
-		xScreen_(0) {
+		xScreen_(0),
+	    xIm_(nullptr) {
         XInitThreads();
 		xDisplay_ = XOpenDisplay(nullptr);
 		if (xDisplay_ == nullptr)
@@ -30,10 +31,6 @@ namespace tpp {
 		xScreen_ = DefaultScreen(xDisplay_);
 
 		XSetErrorHandler(X11ErrorHandler);
-
-        // set the default machine locale instead of the "C" locale
-        setlocale(LC_CTYPE, "");
-        XSetLocaleModifiers("");
 
         // create X Input Method, each window then has its own context
 		openInputMethod();
@@ -92,6 +89,9 @@ namespace tpp {
     }
 
 	void X11Application::openInputMethod() {
+		// set the default machine locale instead of the "C" locale
+		setlocale(LC_CTYPE, "");
+		XSetLocaleModifiers("");
 		// create X Input Method, each window then has its own context
 		xIm_ = XOpenIM(xDisplay_, nullptr, nullptr, nullptr);
 		if (xIm_ != nullptr)
@@ -104,7 +104,7 @@ namespace tpp {
 		xIm_ = XOpenIM(xDisplay_, nullptr, nullptr, nullptr);
 		if (xIm_ != nullptr)
 			return;
-		OSCHECK(false) << "Cannot open input device (XOpenIM failed)";
+		//OSCHECK(false) << "Cannot open input device (XOpenIM failed)";
 	}
 
 	void X11Application::mainLoop() {
