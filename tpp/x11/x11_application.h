@@ -44,6 +44,8 @@ namespace tpp {
 
 	protected:
 
+		void openInputMethod();
+
 		void mainLoop() override;
 
 		void sendFPSTimerMessage() override {
@@ -59,6 +61,8 @@ namespace tpp {
 	private:
 		friend class X11TerminalWindow;
 
+		/** An exception to be thrown when the program should terminate. 
+		 */
 		class Terminate { };
 
 		/** X11 display. */

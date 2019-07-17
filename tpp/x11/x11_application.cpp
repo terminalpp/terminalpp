@@ -36,8 +36,7 @@ namespace tpp {
         XSetLocaleModifiers("");
 
         // create X Input Method, each window then has its own context
-        xIm_ = XOpenIM(xDisplay_, nullptr, nullptr, nullptr);
-        ASSERT(xIm_ != nullptr);
+		openInputMethod();
 
 		primaryName_ = XInternAtom(xDisplay_, "PRIMARY", false);
 		clipboardName_ = XInternAtom(xDisplay_, "CLIPBOARD", false);
@@ -91,6 +90,22 @@ namespace tpp {
 			XSendEvent(xDisplay_, broadcastWindow_, false, mask, &e);
 		XFlush(xDisplay_);
     }
+
+	void X11Application::openInputMethod() {
+		// create X Input Method, each window then has its own context
+		xIm_ = XOpenIM(xDisplay_, nullptr, nullptr, nullptr);
+		if (xIm_ != nullptr)
+			return;
+		XSetLocaleModifiers("@im=local");
+		xIm_ = XOpenIM(xDisplay_, nullptr, nullptr, nullptr);
+		if (xIm_ != nullptr)
+			return;
+		XSetLocaleModifiers("@im=");
+		xIm_ = XOpenIM(xDisplay_, nullptr, nullptr, nullptr);
+		if (xIm_ != nullptr)
+			return;
+		OSCHECK(false) << "Cannot open input device (XOpenIM failed)";
+	}
 
 	void X11Application::mainLoop() {
         try {

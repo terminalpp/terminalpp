@@ -27,9 +27,17 @@ namespace vterm {
 
 	size_t BypassPTY::write(char const* buffer, size_t size) {
 		DWORD bytesWritten = 0;
-		WriteFile(pipeOut_, buffer, static_cast<DWORD>(size), &bytesWritten, nullptr);
-		// TODO check this properly for errors
-		ASSERT(bytesWritten == size);
+		size_t start = 0;
+		size_t i = 0;
+		while (i < size) {
+			if (buffer[i] == '`') {
+				WriteFile(pipeOut_, buffer + start, static_cast<DWORD>(i + 1 - start), &bytesWritten, nullptr);
+				start = i;
+			}
+			++i;
+		}
+		WriteFile(pipeOut_, buffer + start, i - start, &bytesWritten, nullptr);
+		// TODO check properly how stuff was written and error in an appropriate way
 		return bytesWritten;
 	}
 
@@ -42,8 +50,10 @@ namespace vterm {
 	}
 
 	void BypassPTY::resize(unsigned cols, unsigned rows) {
+		DWORD bytesWritten = 0;
 		std::string s = STR("`r" << cols << ':' << rows << ';');
-		write(s.c_str(), s.size());
+		WriteFile(pipeOut_, s.c_str(), static_cast<DWORD>(s.size()), &bytesWritten, nullptr);
+		// TODO check properly how stuff was written and error in an appropriate way
 	}
 
 	void BypassPTY::doTerminate() {
