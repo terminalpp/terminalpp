@@ -1,31 +1,14 @@
 #pragma once
-
 #include <string>
 #include <sstream>
 
-#if (defined _WIN64)
+#if (defined ARCH_WINDOWS)
     #include "windows.h"
-    #undef min
-    #undef max
-    #define ARCHITECTURE "Windows"
-    #define ARCH_WINDOWS
-#elif (defined __linux__)
+#elif (defined ARCH_UNIX)
 	#include <cstring>
 	#include <errno.h>
-	#define ARCHITECTURE "Linux"
-	#define ARCH_LINUX
-	#define ARCH_UNIX
-    #if (defined __APPLE__)
-        #error "Supposedly __linux__ and __APPLE__ should not be defined together"
-	#endif
-#elif (defined __APPLE__)
-	#include <cstring>
-	#include <errno.h>
-	#define ARCHITECTURE "macOS"
-	#define ARCH_MACOS
-	#define ARCH_UNIX
 #else
-    #error "Unsupported platfrom, only Win32 and Linux are supported by helpers."
+    #error "Unsupported platfrom, only Windows and UNIX like systems supported by helpers"
 #endif
 
 #define STR(...) static_cast<std::stringstream &&>(std::stringstream() << __VA_ARGS__).str()

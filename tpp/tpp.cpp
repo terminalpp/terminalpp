@@ -110,7 +110,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #else
 int main(int argc, char* argv[]) {
 #endif
-	helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored() << ARCHITECTURE));
+	helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored() << ARCH));
 	helpers::Arguments::Parse(argc, argv);
 	try {
 	    // create the application singleton

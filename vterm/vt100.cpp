@@ -254,8 +254,8 @@ namespace vterm {
 		palette_(ColorsXTerm256()),
 		defaultFg_(15),
 		defaultBg_(0),
-		state_(cols, rows),
-		otherState_(cols, rows),
+		state_(cols, rows, palette_[defaultFg_], palette_[defaultBg_]),
+		otherState_(cols, rows, palette_[defaultFg_], palette_[defaultBg_]),
 		otherScreen_(cols, rows),
 		mouseMode_(MouseMode::Off),
 		mouseEncoding_(MouseEncoding::Default),
@@ -325,6 +325,7 @@ namespace vterm {
 	}
 
 	void VT100::mouseMove(unsigned col, unsigned row, Key modifiers) {
+		MARK_AS_UNUSED(modifiers);
 		if (mouseMode_ == MouseMode::Off)
 			return;
 		if (mouseMode_ == MouseMode::ButtonEvent && !inputState_.mouseLeft && !inputState_.mouseRight && !inputState_.mouseWheel)

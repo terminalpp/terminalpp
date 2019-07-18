@@ -8,17 +8,14 @@
 
 int main(int argc, char* argv[]) {
 	try {
-		if (argc != 5)
+		if (argc != 3)
 			THROW(helpers::Exception()) << "Invalid number of arguments";
 		std::string path = argv[1];
-		std::string compiler = argv[2];
-		std::string compilerVersion = argv[3];
-		std::string stampFile = path + "/" + argv[4];
+		std::string stampFile = path + "/" + argv[2];
 
-		helpers::Stamp stamp = helpers::Stamp::FromGit(path, compiler, compilerVersion);
+		helpers::Stamp stamp = helpers::Stamp::FromGit(path);
 
-		std::cout << "Created stamp:" << std::endl << std::endl;
-		std::cout << stamp << std::endl << std::endl;
+		std::cout << "Created stamp: " << stamp << std::endl;
 		std::cout << "Writing to " << stampFile << std::endl;
 
 		std::ofstream f(stampFile);

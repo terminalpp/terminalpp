@@ -1,6 +1,6 @@
-#include "helpers/helpers.h"
 #ifdef ARCH_WINDOWS
 
+#include "helpers/helpers.h"
 #include "helpers/string.h"
 
 #include "bypass_pty.h"
@@ -36,7 +36,7 @@ namespace vterm {
 			}
 			++i;
 		}
-		WriteFile(pipeOut_, buffer + start, i - start, &bytesWritten, nullptr);
+		WriteFile(pipeOut_, buffer + start, static_cast<DWORD>(i - start), &bytesWritten, nullptr);
 		// TODO check properly how stuff was written and error in an appropriate way
 		return bytesWritten;
 	}

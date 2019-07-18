@@ -21,14 +21,6 @@ namespace helpers {
 			return clean_;
 		}
 
-		std::string const& compiler() const {
-			return compiler_;
-		}
-
-		std::string const& compilerVersion() const {
-			return compilerVersion_;
-		}
-
 		std::string const& time() const {
 			return time_;
 		}
@@ -40,17 +32,13 @@ namespace helpers {
 				<< '"' << version_ << "\", "
 				<< '"' << commit_ << "\", "
 				<< (clean_ ? "true," : "false,")
-				<< '"' << compiler_ << "\", "
-				<< '"' << compilerVersion_ << "\", "
 				<< '"' << time_ << "\")";
 		}
 
-		Stamp(std::string const& version, std::string const& commit, bool clean, std::string const compiler, std::string const & compilerVersion, std::string const & time) :
+		Stamp(std::string const& version, std::string const& commit, bool clean, std::string const & time) :
 			version_(version),
 			commit_(commit),
 			clean_(clean),
-			compiler_(compiler),
-			compilerVersion_(compilerVersion),
 		    time_(time) {
 		}
 
@@ -58,22 +46,24 @@ namespace helpers {
 #ifdef STAMP
 			return STAMP;
 #else
-			return Stamp("", "?", false, "?", "?", "?");
+			return Stamp("", "?", false, "?");
 #endif
 		}
 
-		static Stamp FromGit(std::string const& path, std::string const & compiler, std::string const & compilerVersion) {
+		static Stamp FromGit(std::string const& path) {
 			GitRepo repo(path);
-			std::string commit = repo.currentCommit();
-			bool changed = repo.hasPendingChanges();
+			std::string commit;
+			bool changed;
 			std::string version;
+			commit = repo.currentCommit();
+			changed = repo.hasPendingChanges();
 			for (std::string const& tag : repo.currentTags()) {
 				if (tag[0] == 'v' && tag.size() > 1 && IsDecimalDigit(tag[1])) {
 					version = tag.substr(1);
 					break;
 				}
 			}
-			return Stamp(version, commit, !changed, compiler, compilerVersion, TimeInISO8601());
+			return Stamp(version, commit, !changed, TimeInISO8601());
 		}
 
 	private:
@@ -88,7 +78,12 @@ namespace helpers {
 				s << "-" << stamp.commit_;
 			if (!stamp.clean_)
 				s << "*";
-			s << " [" << stamp.compiler_ << " " << stamp.compilerVersion_ << "]";
+#ifdef NDEBUG
+			s << " release";
+#else
+			s << " debug";
+#endif
+			s << " [" << ARCH << " " << ARCH_SIZE << "bit, " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << "]";
 			s << " " << stamp.time_;
 			return s;
 		}

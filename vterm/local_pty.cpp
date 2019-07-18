@@ -1,5 +1,3 @@
-#include "helpers/helpers.h"
-
 #if (defined ARCH_LINUX)
 #include <unistd.h>
 #include <pty.h>
@@ -17,6 +15,7 @@
 #include <errno.h>
 #endif
 
+#include "helpers/helpers.h"
 #include "helpers/log.h"
 #include "helpers/string.h"
 
@@ -203,6 +202,7 @@ namespace vterm {
 	helpers::ExitCode LocalPTY::doWaitFor() {
 		helpers::ExitCode ec;
 		pid_t x = waitpid(pid_, &ec, 0);
+		ec = WEXITSTATUS(ec);
         // it is ok to see errno ECHILD, happens when process has already been terminated
 		if (x < 0 && errno != ECHILD) 
 			NOT_IMPLEMENTED; // error
@@ -212,6 +212,7 @@ namespace vterm {
 	size_t LocalPTY::write(char const* buffer, size_t size) {
 		ASSERT(!terminated_) << "Terminated PTY cannot send data";
         int nw = ::write(pipe_, (void*) buffer, size);
+		// TODO check errors properly 
         ASSERT(nw >= 0 && static_cast<unsigned>(nw) == size);
 		return size;
     }
@@ -219,10 +220,17 @@ namespace vterm {
 	size_t LocalPTY::read(char* buffer, size_t availableSize) {
 		if (terminated_)
 			return 0;
-		int cnt = ::read(pipe_, (void*)buffer, availableSize);
-		// if there is an error while reading, just return it as reading 0 bytes, let the termination handling deal with the cause for the error
-		if (cnt < 0)
-			return 0;
+		int cnt = 0;
+		while (true) {
+			cnt = ::read(pipe_, (void*)buffer, availableSize);
+			if (cnt == -1) {
+				if (errno == EINTR || errno == EAGAIN)
+					continue;
+				// the pipe is broken, which is direct action of the process terminating, return eof
+				return 0;
+			}
+			break;
+		}
         return cnt;
     }
 
@@ -262,14 +270,9 @@ namespace vterm {
 				signal(SIGTERM, SIG_DFL);
 				signal(SIGALRM, SIG_DFL);
 
-				char** args = new char* [command_.args().size() + 2];
-				args[0] = const_cast<char*>(command_.command().c_str());
-				for (size_t i = 0; i < command_.args().size(); ++i)
-					args[i + 1] = const_cast<char*>(command_.args()[i].c_str());
-				
-				args[command_.args().size() + 1] = nullptr;
+				char** argv = command_.toArgv();
 				// execvp never returns
-				OSCHECK(execvp(command_.command().c_str(), args) != -1) << "WTF WTF";
+				OSCHECK(execvp(command_.command().c_str(), argv) != -1) << "Unable to execute command " << command_;
 				UNREACHABLE;
 			}
 			// continuing the terminal program 

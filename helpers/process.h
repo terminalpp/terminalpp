@@ -1,10 +1,18 @@
 #pragma once
+#if (defined ARCH_UNIX)
+#include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <sys/ioctl.h>
+#include <errno.h>
+#endif
 
 #include <vector>
 #include <unordered_map>
 #include <memory>
 
 #include "helpers.h"
+
 
 namespace helpers {
 
@@ -53,6 +61,22 @@ namespace helpers {
 			for (auto i : args_)
 				result = result + ' ' + Quote(i);
 			return result;
+		}
+
+		/** Returns the command as an argv array. 
+
+		    If the array is not used in a fork() call, it must be disposed of properly, but its elements should not be deleted themselvs as they are pointers to the c string stored in the command itself. 
+
+			The length of the array is number of arguments of the command + 2, where the first argument is the command itself, and the last argument is nullptr, as the standard requires. 
+		 */
+		char** toArgv() const {
+			char** args = new char* [args_.size() + 2];
+			args[0] = const_cast<char*>(command_.c_str());
+			for (size_t i = 0; i < args_.size(); ++i)
+				args[i + 1] = const_cast<char*>(args_[i].c_str());
+
+			args[args_.size() + 1] = nullptr;
+			return args;
 		}
 
 		Command(std::string const& command, std::initializer_list<char const*> args) :
@@ -183,7 +207,7 @@ namespace helpers {
 
 	/** Executes the given command and returns its output as a string. 
 	 */
-	inline std::string Exec(Command const& command, std::string const & path, helpers::ExitCode * exitCode = nullptr) {
+	inline std::string Exec(Command const& command, std::string const& path, helpers::ExitCode* exitCode = nullptr) {
 #ifdef ARCH_WINDOWS
 		// create the pipes
 		SECURITY_ATTRIBUTES attrs;
@@ -230,7 +254,7 @@ namespace helpers {
 		std::stringstream result;
 		char buffer[128];
 		DWORD bytesRead;
-		while (ReadFile(pipeIn, & buffer, 128, &bytesRead, nullptr)) {
+		while (ReadFile(pipeIn, &buffer, 128, &bytesRead, nullptr)) {
 			if (bytesRead != 0)
 				result << std::string(&buffer[0], &buffer[0] + bytesRead);
 		}
@@ -239,27 +263,74 @@ namespace helpers {
 		// close the handles to created process & thread since we do not need them
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
-		if (exitCode != nullptr) 
-			*exitCode = ec;
+		if (exitCode != nullptr)
+			* exitCode = ec;
 		else if (ec != EXIT_SUCCESS)
 			THROW(Exception()) << "Command " << command << " exited with code " << ec << ", output:\n" << result.str();
 		return result.str();
 #else
-		// TODO does not return exit code now!!!!
-		char buffer[128];
-		std::string result = "";
-		std::string cmd = STR("cd \"" << path << "\" && " << command << " 2>&1");
-		std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
-		if (not pipe)
-			throw std::runtime_error(STR("Unable to execute command " << cmd));
-		while (not feof(pipe.get())) {
-			if (fgets(buffer, 128, pipe.get()) != nullptr)
-				result += buffer;
+		// create the pipes
+		int       toCmd[2];
+		int       fromCmd[2];
+		OSCHECK(pipe(toCmd) == 0 && pipe(fromCmd) == 0) << "Cannot create pipes for command " << command;
+		// fork, create process and split between process and us (the reading)
+		pid_t     pid;
+		switch (pid = fork()) {
+			case -1:
+				OSCHECK(false) << "Cannot fork for command " << command;
+				/* The child patches the pipe to the standatd input and output and then executes the command.
+				 */
+			case 0: {
+				// TODO perhaps no reason to do OSCHECK here since failure is in different process anyways? 
+				OSCHECK(
+					dup2(toCmd[0], STDIN_FILENO) != -1 &&
+					dup2(fromCmd[1], STDOUT_FILENO) != -1 &&
+					dup2(fromCmd[1], STDERR_FILENO) != -1 &&
+					close(toCmd[1]) == 0 &&
+					close(fromCmd[0]) == 0
+				) << "Unable to change standard output for process " << command;
+				OSCHECK(chdir(path.c_str()) == 0) << "Cannot change dir to " << path << " for command " << command;
+				char** argv = command.toArgv();
+				// execvp never returns
+				OSCHECK(execvp(command.command().c_str(), argv) != -1) << "Unable to execute command" << command;
+				UNREACHABLE;
+				break;
+			}
+			// parent is after the switch
+			default: 
+				break;
 		}
-		return result;
+		/** If we are the parrent still, close our excess handles to the pipes and read the output.
+		 */
+		OSCHECK(
+			close(toCmd[0]) == 0 &&
+			close(fromCmd[1]) == 0
+		) << "Unable to close pipes for command " << command;
+		// now read the file
+		std::stringstream result;
+		char buffer[128];
+		while (true) {
+			int numBytes = ::read(fromCmd[0], buffer, 128);
+			// end of file
+			if (numBytes == 0)
+				break;
+			if (numBytes == -1) {
+				if (errno == EINTR || errno == EAGAIN)
+					continue;
+				OSCHECK(false) << "Cannot read output of command " << command;
+			}
+			// otherwise add the read data to the result
+			result << std::string(buffer, numBytes);
+		}
+		// now get the exit code
+		helpers::ExitCode ec;
+		OSCHECK(waitpid(pid, &ec, 0) == pid);
+		if (exitCode != nullptr)
+			* exitCode = WEXITSTATUS(ec);
+		else if (ec != EXIT_SUCCESS)
+			THROW(Exception()) << "Command " << command << " exited with code " << ec << ", output:\n" << result.str();
+		return result.str();
 #endif
-
 	}
-
 
 } // namespace helpers

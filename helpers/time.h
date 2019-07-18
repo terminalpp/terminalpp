@@ -1,4 +1,5 @@
 #pragma once
+#define __STDC_WANT_LIB_EXT1__ 1
 
 #include <chrono>
 #include <ctime>
@@ -11,7 +12,13 @@ namespace helpers {
 		time_t now;
 		time(&now);
 		std::string result("2011-10-08T07:07:09Z");
-		strftime(& result[0], result.size() + 1, "%FT%TZ", gmtime(&now));
+#ifdef __STDC_SECURE_LIB__
+		struct tm buf;
+		OSCHECK(gmtime_s(&buf, &now) == 0);
+		strftime(& result[0], result.size() + 1, "%FT%TZ", &buf);
+#else
+		strftime(&result[0], result.size() + 1, "%FT%TZ", gmtime(&now));
+#endif
 		return result;
 	}
 

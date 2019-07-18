@@ -249,7 +249,9 @@ namespace vterm {
 			 */
 			std::vector<std::pair<unsigned, unsigned>> cursorStack;
 
-			State(unsigned cols, unsigned rows) :
+			State(unsigned cols, unsigned rows, Color fg, Color bg) :
+				fg(fg),
+				bg(bg),
 				scrollStart(0),
 				scrollEnd(rows),
 				lastCharCol(std::numeric_limits<unsigned>::max()),

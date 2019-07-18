@@ -24,7 +24,7 @@ namespace tpp {
 		X11Application();
 		~X11Application() override;
 
-		TerminalWindow * createTerminalWindow(Session * session, TerminalWindow::Properties const& properties, std::string const& name);
+		TerminalWindow * createTerminalWindow(Session * session, TerminalWindow::Properties const& properties, std::string const& name) override;
 
 		std::pair<unsigned, unsigned> terminalCellDimensions(unsigned fontSize) override;
 

@@ -41,15 +41,9 @@ namespace helpers {
 			return Split(Trim(Exec(Command("git", { "tag", "--points-at", "HEAD" }), path_)), "\n");
 		}
 
-		
-
-
 	private:
 		std::string path_;
 
-
 	};
-
-
 
 } // namespace helpers

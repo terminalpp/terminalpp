@@ -7,7 +7,7 @@ add_executable(
 )
 
 add_custom_target(tpp-create-stamp
-    COMMAND stamp ${CMAKE_SOURCE_DIR} ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} tpp/stamp.h
+    COMMAND stamp ${CMAKE_SOURCE_DIR} tpp/stamp.h
 )
 
 if(UNIX AND NOT APPLE)
