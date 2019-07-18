@@ -619,7 +619,8 @@ namespace vterm {
 				// CSI <n> A -- moves cursor n rows up (CUU)
 				case 'A': {
 					seq_.setArgDefault(0, 1);
-					ASSERT(seq_.numArgs() == 1);
+					if (seq_.numArgs() != 1)
+						break;
 					unsigned r = screen_.cursor().row >= seq_[0] ? screen_.cursor().row - seq_[0] : 0;
 					LOG(SEQ) << "CUU: setCursor " << screen_.cursor().col << ", " << r;
 					setCursor(screen_.cursor().col, r);
@@ -628,21 +629,24 @@ namespace vterm {
 				// CSI <n> B -- moves cursor n rows down (CUD)
 				case 'B':
 					seq_.setArgDefault(0, 1);
-					ASSERT(seq_.numArgs() == 1);
+					if (seq_.numArgs() != 1)
+						break;
 					LOG(SEQ) << "CUD: setCursor " << screen_.cursor().col << ", " << screen_.cursor().row + seq_[0];
 					setCursor(screen_.cursor().col, screen_.cursor().row + seq_[0]);
 					return;
 				// CSI <n> C -- moves cursor n columns forward (right) (CUF)
 				case 'C':
 					seq_.setArgDefault(0, 1);
-					ASSERT(seq_.numArgs() == 1);
+					if (seq_.numArgs() != 1)
+						break;
 					LOG(SEQ) << "CUF: setCursor " << screen_.cursor().col + seq_[0] << ", " << screen_.cursor().row;
 					setCursor(screen_.cursor().col + seq_[0], screen_.cursor().row);
 					return;
 				// CSI <n> D -- moves cursor n columns back (left) (CUB)
 				case 'D': {// cursor backward
 					seq_.setArgDefault(0, 1);
-					ASSERT(seq_.numArgs() == 1);
+					if (seq_.numArgs() != 1)
+						break;
 					unsigned c = screen_.cursor().col >= seq_[0] ? screen_.cursor().col - seq_[0] : 0;
 					LOG(SEQ) << "CUB: setCursor " << c << ", " << screen_.cursor().row;
 					setCursor(c, screen_.cursor().row);
@@ -673,7 +677,8 @@ namespace vterm {
 					2 = erase entire display
 				*/
 				case 'J':
-					ASSERT(seq_.numArgs() <= 1);
+					if (seq_.numArgs() <= 1)
+						break;
 					switch (seq_[0]) {
 						case 0:
 							updateCursorPosition();
@@ -698,7 +703,8 @@ namespace vterm {
 		    		2 = Erase entire line
 				*/
 				case 'K':
-					ASSERT(seq_.numArgs() <= 1);
+					if (seq_.numArgs() <= 1)
+						break;
 					switch (seq_[0]) {
 						case 0:
 							updateCursorPosition();
@@ -754,7 +760,8 @@ namespace vterm {
 				*/
 				case 'X': {
 					seq_.setArgDefault(0, 1);
-					ASSERT(seq_.numArgs() == 1);
+					if (seq_.numArgs() != 1)
+						break;
 					updateCursorPosition();
 					// erase from first line
 					unsigned n = static_cast<unsigned>(seq_[0]);

@@ -1,7 +1,6 @@
 ﻿## Bugs and missing features
 
-- VT100 should be fault tolerant and not assert everything, just do nothing upon failure in release
-- not just VT, all asserts should be checked and become OSerrors instead
+- check asserts, some should actually be OSCHECKS
 - add zoom out? and default zoom? 
 
 ### Win32 Bugs
