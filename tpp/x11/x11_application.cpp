@@ -50,17 +50,19 @@ namespace tpp {
 		Window parent = RootWindow(xDisplay_, xScreen_);
 		broadcastWindow_ = XCreateSimpleWindow(xDisplay_, parent, 0, 0, 1, 1, 1, white, black);
 
-		ASSERT(primaryName_ != None);
-		ASSERT(clipboardName_ != None);
-		ASSERT(formatString_ != None);
-		ASSERT(formatStringUTF8_ != None);
-		ASSERT(formatTargets_ != None);
-		ASSERT(clipboardIncr_ != None);
-		ASSERT(wmDeleteMessage_ != None);
-		ASSERT(fpsTimerMessage_ != None);
-		ASSERT(broadcastWindow_ != None);
-		ASSERT(motifWmHints_ != None);
-		ASSERT(netWmIcon_ != None);
+		if (
+			primaryName_ == None ||
+			clipboardName_ == None ||
+			formatString_ == None ||
+			formatStringUTF8_ == None ||
+			formatTargets_ == None ||
+			clipboardIncr_ == None ||
+			wmDeleteMessage_ == None ||
+			fpsTimerMessage_ == None ||
+			broadcastWindow_ == None ||
+			motifWmHints_ == None ||
+			netWmIcon_ == None
+		) << THROW(helpers::Exception()) << "X11 Atoms instantiation failed";
 
 		start();
 	}

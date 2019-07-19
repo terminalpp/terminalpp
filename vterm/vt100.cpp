@@ -677,7 +677,7 @@ namespace vterm {
 					2 = erase entire display
 				*/
 				case 'J':
-					if (seq_.numArgs() <= 1)
+					if (seq_.numArgs() > 1)
 						break;
 					switch (seq_[0]) {
 						case 0:
@@ -703,7 +703,7 @@ namespace vterm {
 		    		2 = Erase entire line
 				*/
 				case 'K':
-					if (seq_.numArgs() <= 1)
+					if (seq_.numArgs() > 1)
 						break;
 					switch (seq_[0]) {
 						case 0:

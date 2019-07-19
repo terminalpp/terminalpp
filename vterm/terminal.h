@@ -600,6 +600,10 @@ namespace vterm {
 			}
 		}
 
+		/** Returns the text in given selection range. 
+
+		    Returns a UTF-8 string containing the characters on the screen within the specified range. If there is a new line, assumes that characters after it are spaces and will ignore them till the end of the row, unless at least one of the characters is not a space, which case all will be retunred. 
+		 */
 		std::string getText(Selection const& selection) const;
 
 		// keyboard events
