@@ -62,7 +62,7 @@ namespace tpp {
 			broadcastWindow_ == None ||
 			motifWmHints_ == None ||
 			netWmIcon_ == None
-		) << THROW(helpers::Exception()) << "X11 Atoms instantiation failed";
+		) THROW(helpers::Exception()) << "X11 Atoms instantiation failed";
 
 		start();
 	}
