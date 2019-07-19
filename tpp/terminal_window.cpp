@@ -90,7 +90,10 @@ namespace tpp {
 				selectionEnd_.row = row + 1;
 				doInvalidate();
 			} else if (col != mouseCol_ || row != mouseRow_) {
-				selectionEnd_.col = col + 1;
+				if (row < selectionStart_.row || (row == selectionStart_.row && col < selectionStart_.col))
+    				selectionEnd_.col = col;
+				else
+					selectionEnd_.col = col + 1;
 				selectionEnd_.row = row + 1;
 				doInvalidate();
 			}
