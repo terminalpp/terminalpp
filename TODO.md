@@ -7,8 +7,6 @@
 
 ### X11 Bugs
 
-- xim is wrong, it works on linux, but fails on mac
-
 # Code Fixes
 
 # Code Improvements 
@@ -22,3 +20,4 @@
 
 - non-english double width characters don't work properly (at all)
 - vt100 should have palette access ready
+- xim is wrong, it works on linux, but fails on mac

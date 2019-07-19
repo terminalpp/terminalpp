@@ -30,5 +30,5 @@ else()
     message(FATAL_ERROR "Only Windows and Linux are supported for now")
 endif() 
 
-target_link_libraries(tpp libvterm)
+target_link_libraries(tpp libvterm libui)
 add_dependencies(tpp tpp-create-stamp)

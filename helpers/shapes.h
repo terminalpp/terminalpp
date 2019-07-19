@@ -92,6 +92,7 @@ namespace helpers {
 			top(0),
 			right(0),
 			bottom(0) {
+			static_assert(sizeof(Rect<COORD>) == sizeof(Point<COORD>) * 2, "Point & rect size mismatch, topLeft and bottomRight won't work");
 		}
 
 		Rect(COORD width, COORD height) :
@@ -154,9 +155,8 @@ namespace helpers {
 					std::min(first.bottom, second.bottom)
 			    };
 		}
-		//static_assert(sizeof(Rect) == sizeof(Point) * 2, "Point & rect size mismatch, topLeft and bottomRight won't work");
+
 
 	}; // helpers::Rect
-
 
 } // namespace helpers
