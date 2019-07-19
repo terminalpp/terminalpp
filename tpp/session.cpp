@@ -16,6 +16,7 @@ namespace tpp {
 		name_(name),
 		command_(command),
 		pty_(nullptr),
+		terminal_(nullptr),
 		windowProperties_(Application::Instance<>()->defaultTerminalWindowProperties()) {
 		Sessions_.insert(this);
 	}
@@ -47,6 +48,10 @@ namespace tpp {
 		pty_ = new vterm::LocalPTY(command_);
 #endif
 		pty_->onTerminated += HANDLER(Session::onPTYTerminated);
+		if (config::RecordSession.specified()) {
+			pty_->recordInput(*config::RecordSession);
+			LOG << "Session input recorded to " << *config::RecordSession;
+		}
 		// create the terminal backend
 		terminal_ = new vterm::VT100(window_->cols(), window_->rows(), pty_);
 		/*

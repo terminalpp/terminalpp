@@ -52,5 +52,11 @@ namespace tpp {
 		 */
 		extern helpers::Arg<bool> UseConPTY;
 #endif
+
+		/** Optional argument that specifies file in which all incomming data will be stored. 
+
+		    This essentially logs all the text and escape sequences that were sent to the terminal during a session. 
+		 */
+		extern helpers::Arg<std::string> RecordSession;
 	}
 }

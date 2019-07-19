@@ -92,7 +92,8 @@ namespace tpp {
 			window_->close();
 		}
 
-
+		/** Flag that determines whether the session is in the process of closing to supress multiple close requests crashing each other. 
+		 */
 		bool closing_;
 
 		/** Name of the session. */

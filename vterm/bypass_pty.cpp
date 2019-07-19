@@ -25,7 +25,7 @@ namespace vterm {
 		terminate();
 	}
 
-	size_t BypassPTY::write(char const* buffer, size_t size) {
+	size_t BypassPTY::doWrite(char const* buffer, size_t size) {
 		DWORD bytesWritten = 0;
 		size_t start = 0;
 		size_t i = 0;
@@ -41,7 +41,7 @@ namespace vterm {
 		return bytesWritten;
 	}
 
-	size_t BypassPTY::read(char* buffer, size_t availableSize) {
+	size_t BypassPTY::doRead(char* buffer, size_t availableSize) {
 		DWORD bytesRead = 0;
 		bool readOk = ReadFile(pipeIn_, buffer, static_cast<DWORD>(availableSize), &bytesRead, nullptr);
 		// make sure that if readOk is false nothing was read

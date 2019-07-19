@@ -82,6 +82,12 @@ namespace tpp {
 			"Determines the command to be executed in the terminal",
 			true
 		);
+		helpers::Arg<std::string> RecordSession(
+			{ "--record" },
+			"",
+			false,
+			"File to which the session input (output of the attached process) should be recorded"
+		);
 	}
 }
 

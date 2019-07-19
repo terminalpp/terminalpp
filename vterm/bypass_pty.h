@@ -18,8 +18,6 @@ namespace vterm {
 
 		~BypassPTY() override;
 
-		size_t write(char const* buffer, size_t size) override;
-		size_t read(char* buffer, size_t availableSize) override;
 
 		void resize(unsigned cols, unsigned rows) override;
 
@@ -27,10 +25,9 @@ namespace vterm {
 
 		// PTY interface implementation
 
-		/** Terminates the process immediately.
-		 */
+		size_t doWrite(char const* buffer, size_t size) override;
+		size_t doRead(char* buffer, size_t availableSize) override;
 		void doTerminate() override;
-
 		helpers::ExitCode doWaitFor() override;
 
 	private:

@@ -59,6 +59,22 @@ namespace vterm {
 		free(startupInfo_.lpAttributeList);
 	}
 
+	size_t LocalPTY::doWrite(char const* buffer, size_t size) {
+		DWORD bytesWritten = 0;
+		WriteFile(pipeOut_, buffer, static_cast<DWORD>(size), &bytesWritten, nullptr);
+		// TODO check this properly for errors
+		ASSERT(bytesWritten == size);
+		return bytesWritten;
+	}
+
+	size_t LocalPTY::doRead(char* buffer, size_t availableSize) {
+		DWORD bytesRead = 0;
+		bool readOk = ReadFile(pipeIn_, buffer, static_cast<DWORD>(availableSize), &bytesRead, nullptr);
+		// make sure that if readOk is false nothing was read
+		ASSERT(readOk || bytesRead == 0);
+		return bytesRead;
+	}
+
 	/** Terminates the attached process.
 	
 	    The termination is asynchronous. If there are any errors returned such as the process already beging terminated, we do not really care. 
@@ -85,22 +101,6 @@ namespace vterm {
 		if (pipeOut_ != INVALID_HANDLE_VALUE)
 			CloseHandle(pipeOut_);
 		return ec;
-	}
-
-	size_t LocalPTY::write(char const * buffer, size_t size) {
-		DWORD bytesWritten = 0;
-		WriteFile(pipeOut_, buffer, static_cast<DWORD>(size), &bytesWritten, nullptr);
-		// TODO check this properly for errors
-		ASSERT(bytesWritten == size);
-		return bytesWritten;
-	}
-
-	size_t LocalPTY::read(char* buffer, size_t availableSize) {
-		DWORD bytesRead = 0;
-		bool readOk = ReadFile(pipeIn_, buffer, static_cast<DWORD>(availableSize), &bytesRead, nullptr);
-		// make sure that if readOk is false nothing was read
-		ASSERT(readOk || bytesRead == 0);
-		return bytesRead;
 	}
 
 	void LocalPTY::resize(unsigned cols, unsigned rows) {
@@ -195,29 +195,15 @@ namespace vterm {
 		waitFor();
 	}
 
-	void LocalPTY::doTerminate() {
-		kill(pid_, SIGKILL);
-	}
-
-	helpers::ExitCode LocalPTY::doWaitFor() {
-		helpers::ExitCode ec;
-		pid_t x = waitpid(pid_, &ec, 0);
-		ec = WEXITSTATUS(ec);
-        // it is ok to see errno ECHILD, happens when process has already been terminated
-		if (x < 0 && errno != ECHILD) 
-			NOT_IMPLEMENTED; // error
-		return ec;
-	}
-
-	size_t LocalPTY::write(char const* buffer, size_t size) {
+	size_t LocalPTY::doWrite(char const* buffer, size_t size) {
 		ASSERT(!terminated_) << "Terminated PTY cannot send data";
-        int nw = ::write(pipe_, (void*) buffer, size);
+		int nw = ::write(pipe_, (void*)buffer, size);
 		// TODO check errors properly 
-        ASSERT(nw >= 0 && static_cast<unsigned>(nw) == size);
+		ASSERT(nw >= 0 && static_cast<unsigned>(nw) == size);
 		return size;
-    }
+	}
 
-	size_t LocalPTY::read(char* buffer, size_t availableSize) {
+	size_t LocalPTY::doRead(char* buffer, size_t availableSize) {
 		if (terminated_)
 			return 0;
 		int cnt = 0;
@@ -231,8 +217,22 @@ namespace vterm {
 			}
 			break;
 		}
-        return cnt;
-    }
+		return cnt;
+	}
+
+	void LocalPTY::doTerminate() {
+		kill(pid_, SIGKILL);
+	}
+
+	helpers::ExitCode LocalPTY::doWaitFor() {
+		helpers::ExitCode ec;
+		pid_t x = waitpid(pid_, &ec, 0);
+		ec = WEXITSTATUS(ec);
+        // it is ok to see errno ECHILD, happens when process has already been terminated
+		if (x < 0 && errno != ECHILD) 
+			NOT_IMPLEMENTED; // error
+		return ec;
+	}
 
 	void LocalPTY::resize(unsigned cols, unsigned rows) {
         struct winsize s;

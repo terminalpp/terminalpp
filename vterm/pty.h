@@ -4,6 +4,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <fstream>
 
 #include "helpers/process.h"
 #include "helpers/object.h"
@@ -24,6 +25,21 @@ namespace vterm {
 		typedef helpers::EventPayload<helpers::ExitCode, helpers::Object> TerminatedEvent;
 
 		helpers::Event<TerminatedEvent> onTerminated;
+
+		/** Enables recording of the input (i.e. the output of the attached process) to a given file. 
+		 */
+		void recordInput(std::string const& filename) {
+			log_.open(filename, std::ios::binary);
+			if (!log_.good())
+				THROW(helpers::IOError()) << "Unable to open file " << filename << " for PTY input recording";
+		}
+
+		/** Stops the recording of terminal input. 
+		 */
+		void recordStop() {
+			ASSERT(log_.is_open()) << "Recording not on";
+			log_.close();
+		}
 
 		/** Immediately terminates the attached process. 
 
@@ -53,13 +69,20 @@ namespace vterm {
 
 			Sends the buffer of given size to the target process. Returns the number of bytes sent, which is identical to the size of the buffer given unless there was a failure.
 		 */
-		virtual size_t write(char const* buffer, size_t size) = 0;
+		size_t write(char const* buffer, size_t size) {
+			return doWrite(buffer, size);
+		}
 
 		/** Waits for the target process to send data and populates the given buffer.
 
 			Up to availableSize bytes can be read at once, but the actual number of bytes received is to be returned by the function.
 		 */
-		virtual size_t read(char* bufferStart, size_t availableSize) = 0;
+		size_t read(char* buffer, size_t availableSize) {
+			size_t result = doRead(buffer, availableSize);
+			if (log_.is_open())
+				log_.write(buffer, result);
+			return result;
+		}
 
 		/** Notifies the underlying terminal process that the terminal size has changed to given values. 
 		 */
@@ -96,7 +119,19 @@ namespace vterm {
 			t.detach();
 		}
 
-		/** Terminates the attached process. 
+		/** Reads up to availableSize bytes from the attached process and returns the number of bytes read.
+
+			Must be implemented in subclasses.
+		 */
+		virtual size_t doRead(char* buffer, size_t availableSize) = 0;
+
+		/** Writes the given data to the attached process.
+
+			Must be implemented in subclasses.
+		 */
+		virtual size_t doWrite(char const* buffer, size_t size) = 0;
+
+		/** Terminates the attached process.
 
 		    Terminates the attached process. Should immediately return if the process has already finished on its own, or has been terminated.
 
@@ -108,13 +143,14 @@ namespace vterm {
 		 */
 		virtual helpers::ExitCode doWaitFor() = 0;
 
-
-
 		void markAsTerminated(int exitCode) {
 			ASSERT(! terminated_);
 			terminated_ = true;
 			exitCode_ = exitCode;
 		}
+
+
+		std::ofstream log_;
 
 		bool terminated_;
 		helpers::ExitCode exitCode_;

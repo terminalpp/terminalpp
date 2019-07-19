@@ -691,6 +691,8 @@ namespace vterm {
 
 	}; // vterm::Terminal
 
+	/** Virtual terminal that uses a pseudoterminal as its backend. 
+	 */
 	class PTYTerminal : public Terminal {
 	public:
 		PTYTerminal(unsigned cols, unsigned rows, PTY* pty, size_t bufferSize) :

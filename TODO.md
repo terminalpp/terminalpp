@@ -17,7 +17,6 @@
 - add tests
 - add size selection to PTY? or not really, since it can always be resized. 
 - add comments to bypass
-- make bypass record the stream for more realistic benchmark (but maybe this is useless)
 
 # Long Term Goals
 
