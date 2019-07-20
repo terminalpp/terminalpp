@@ -17,7 +17,7 @@ namespace ui {
 	class RootWindow : public vterm::Terminal, public Container {
 	public:
 
-		RootWindow(Coord width, Coord height) :
+		RootWindow(unsigned width, unsigned height) :
 			Terminal(width, height),
 			Container(width, height) {
 		}

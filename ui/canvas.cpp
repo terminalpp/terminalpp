@@ -10,18 +10,20 @@ namespace ui {
 		    region = Rect(root->width(), root->height());
 	}
 
-	Canvas::VisibleRegion::VisibleRegion(VisibleRegion const& from, Coord left, Coord top, Coord width, Coord height) :
-		root(root),
+	Canvas::VisibleRegion::VisibleRegion(VisibleRegion const& from, int left, int top, unsigned width, unsigned height) :
+		root(from.root),
 	    region(Rect::Intersection(from.region, Rect(left, top, left + width, top + height))) {
-		// if the new visible region is not empty, update the offset, otherwise the offset's value does not matter
-		if (!region.empty())
+		// if the new visible region is not empty, update the intersection by the control start and update the offset, otherwise the offset's value does not matter
+		if (!region.empty()) {
+			region = region - Point(left, top);
 			windowOffset = Point(
-				from.windowOffset.col + (region.left - from.region.left),
-				from.windowOffset.row + (region.top - from.region.top)
+				from.windowOffset.col + (left + region.left - from.region.left),
+				from.windowOffset.row + (top + region.top - from.region.top)
 			);
+		}
 	}
 
-	Canvas::Canvas(Canvas const& from, Coord left, Coord top, Coord width, Coord height) :
+	Canvas::Canvas(Canvas const& from, int left, int top, unsigned width, unsigned height) :
 		visibleRegion_(from.visibleRegion_, left, top, width, height),
 		screen_(from.screen_),
 		width_(width),
@@ -36,6 +38,20 @@ namespace ui {
 				if (c != nullptr)
 					*c = Cell(fill, fg, bg, font);
 			}
+	}
+
+	void Canvas::textOut(Point start, std::string const& text) {
+		char const* i = text.c_str();
+		char const* e = i + text.size();
+		while (i < e) {
+			if (start.col >= width_) // don't draw past first line
+				break;
+			Char const* c = Char::At(i, e);
+			Cell* cell = at(start);
+			if (cell != nullptr)
+				cell->setC(*c);
+			++start.col;
+		}
 	}
 
 } // namespace ui

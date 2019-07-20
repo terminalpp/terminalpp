@@ -149,17 +149,24 @@ namespace helpers {
 		/** Returns the intersection of the two rectangles.
 		 */
 		static Rect Intersection(Rect const & first, Rect const & second) {
-			if (first.empty())
-				return first;
-			else if (second.empty())
-				return second;
-			else
-				return Rect{
-					std::max(first.left, second.left),
-					std::max(first.top, second.top),
-					std::min(first.right, second.right),
-					std::min(first.bottom, second.bottom)
-			    };
+			if (first.empty() || second.empty()) {
+				return Rect(0, 0);
+			} else {
+				COORD left = std::max(first.left, second.left);
+				COORD top = std::max(first.top, second.top);
+				COORD right = std::min(first.right, second.right);
+				COORD bottom = std::min(first.bottom, second.bottom);
+				if (left < right && top < bottom)
+					return Rect(left, top, right, bottom);
+				else
+					return Rect(0, 0);
+			}
+		}
+
+		/** Moves the rectangle by coordinates given by the point. 
+		 */
+		friend Rect operator - (Rect const& rect, Point<COORD> const& p) {
+			return Rect(rect.left - p.col, rect.top - p.row, rect.right - p.col, rect.bottom - p.row);
 		}
 
 

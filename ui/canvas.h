@@ -9,30 +9,31 @@ namespace ui {
 	/* Forward declarations */
 	class RootWindow;
 
-	/** Describes a coordinate in the UI framework.
-	 */
-	typedef unsigned Coord;
-
 	/* For simplicity, bring existing types to the ui namespace where appropriate
 	 */
 
-	typedef helpers::Point<Coord> Point;
-	typedef helpers::Rect<Coord> Rect;
+	typedef helpers::Point<int> Point;
+	typedef helpers::Rect<int> Rect;
 	typedef vterm::Color Color;
 	typedef vterm::Font Font;
 	typedef helpers::Char Char;
 
-	class Brush {
-	public:
-		Color color;
-		Char fill;
 
-		Brush(Color color = Color::Black(), Char fill = ' ') :
-			color(color),
-			fill(fill) {
-		}
+	/** Horizontal align. 
+	 */
+	enum class HAlign {
+		Left,
+		Center,
+		Right
 	};
 
+	/** Vertical Align 
+	 */
+	enum class VAlign {
+		Top,
+		Middle,
+		Bottom
+	};
 
 
 
@@ -48,19 +49,26 @@ namespace ui {
 
 		/** Returns the width of the canvas in cells.
 		 */
-		Coord width() const {
+		unsigned width() const {
 			return width_;
 		}
 
 		/** Returns the height of the canvas in cells. 
 		 */
-		Coord height() const {
+		unsigned height() const {
 			return height_;
 		}
 
 		/** Fills the given rectangle of the canvas with given attributes. 
 		 */
 		void fill(Rect rect, Color bg, Color fg, Char fill, Font font);
+
+
+		/** Displays the given text. 
+
+		    TODO this is stupid api, should change
+		 */
+		void textOut(Point start, std::string const& text);
 
 	private:
 		friend class Control;
@@ -77,7 +85,7 @@ namespace ui {
 
 			/** Creates a new visible region within existing visible region. 
 			 */
-			VisibleRegion(VisibleRegion const& from, Coord left, Coord top, Coord width, Coord height);
+			VisibleRegion(VisibleRegion const& from, int left, int top, unsigned width, unsigned height);
 
 			bool isValid() const {
 				return root != nullptr;
@@ -89,11 +97,11 @@ namespace ui {
 
 			/** Returns the given point in canvas coordinates translated to the screen coordinates. 
 			 */
-			Point translate(Point what) {
+			helpers::Point<unsigned> translate(Point what) {
 				ASSERT(region.contains(what));
-				return Point(
-					what.col - region.left + windowOffset.col,
-					what.row - region.top + windowOffset.row
+				return helpers::Point<unsigned>(
+					static_cast<unsigned>(what.col - region.left + windowOffset.col),
+					static_cast<unsigned>(what.row - region.top + windowOffset.row)
 				);
 			}
 
@@ -110,7 +118,7 @@ namespace ui {
 
 		/** Creates the canvas from given valid visible region, underlying screen and width & height. 
 		 */
-		Canvas(VisibleRegion const& from, vterm::Terminal::Screen& screen, Coord width, Coord height) :
+		Canvas(VisibleRegion const& from, vterm::Terminal::Screen& screen, unsigned width, unsigned height) :
 			visibleRegion_(from),
 			screen_(screen),
 			width_(width),
@@ -122,7 +130,7 @@ namespace ui {
 
 		    Reuses the screen from the existing canvas and recalculates the visible region to reflect the child selected rectangle's position and dimension. 
 		 */
-		Canvas(Canvas const& from, Coord left, Coord top, Coord width, Coord height);
+		Canvas(Canvas const& from, int left, int top, unsigned width, unsigned height);
 
 		/** Returns the cell at given canvas coordinates if visible, or nullptr if the cell is outside the visible region. 
 		 */
@@ -138,8 +146,8 @@ namespace ui {
 
 		vterm::Terminal::Screen& screen_;
 
-		Coord width_;
-		Coord height_;
+		unsigned width_;
+		unsigned height_;
 
 	}; // ui::Canvas
 

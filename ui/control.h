@@ -4,6 +4,7 @@
 #include "helpers/shapes.h"
 
 #include "canvas.h"
+#include "layout.h"
 
 namespace ui {
 
@@ -17,23 +18,35 @@ namespace ui {
 	 */
 	class Control : virtual public helpers::Object {
 	public:
+
+		Control(Control* parent, int left, int top, unsigned width, unsigned height) :
+			parent_(parent),
+			visibleRegion_(nullptr),
+			left_(left),
+			top_(top),
+			width_(width),
+			height_(height) {
+			if (parent_ != nullptr)
+				parent_->doRegisterChild(this);
+		}
+
 		Control* parent() const {
 			return parent_;
 		}
 
-		Coord top() const {
+		int top() const {
 			return top_;
 		}
 
-		Coord left() const {
+		int left() const {
 			return left_;
 		}
 
-		Coord width() const {
+		unsigned width() const {
 			return width_;
 		}
 
-		Coord height() const {
+		unsigned height() const {
 			return height_;
 		}
 
@@ -43,7 +56,7 @@ namespace ui {
 
 	protected:
 
-		Control(Coord width, Coord height) :
+		Control(unsigned width, unsigned height) :
 			parent_(nullptr),
 			visibleRegion_(nullptr),
 			left_(0),
@@ -54,6 +67,16 @@ namespace ui {
 
 		void invalidate() {
 			visibleRegion_.invalidate();
+		}
+
+		virtual void doRegisterChild(Control* child) {
+			MARK_AS_UNUSED(child);
+		}
+
+		/** Returns the layout used for children controls, which is None by default. 
+		 */
+		virtual Layout * doGetLayout() const {
+			return Layout::None();
 		}
 
 		/** Obtains the visible region. 
@@ -93,13 +116,13 @@ namespace ui {
 
 		/** Position of the control, relative to the parent control.
 		 */
-		Coord top_;
-		Coord left_;
+		int top_;
+		int left_;
 
 		/** Dimensions of the control.
 		 */
-		Coord width_;
-		Coord height_;
+		unsigned width_;
+		unsigned height_;
 
 
 

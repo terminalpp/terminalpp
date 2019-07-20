@@ -7,6 +7,7 @@
 #include "session.h"
 
 #include "ui/root_window.h"
+#include "ui/label.h"
 
 
 namespace tpp {
@@ -54,21 +55,23 @@ namespace tpp {
 			pty_->recordInput(*config::RecordSession);
 			LOG << "Session input recorded to " << *config::RecordSession;
 		}
-		//terminal_ = new ui::RootWindow(window_->cols(), window_->rows());
 
+//#define UI
+#ifdef UI
 
+		ui::RootWindow * rw = new ui::RootWindow(window_->cols(), window_->rows());
+
+		ui::Label* l = new ui::Label(rw, 10, 10, 30, 3);
+
+		window_->setTerminal(rw);
+		terminal_ = rw;
+		rw->repaint();
+
+#else
 		// create the terminal backend
 		terminal_ = new vterm::VT100(window_->cols(), window_->rows(), pty_);
-		/*
-			pty_,
-			vterm::Palette::ColorsXTerm256(), 
-			15,
-			0);
-
-			*/
-		// create the terminal
-		//terminal_ = new vterm::Terminal(windowProperties_.cols, windowProperties_.rows, vt_);
 		window_->setTerminal(terminal_);
+#endif
 	}
 
 } // namespace tpp
