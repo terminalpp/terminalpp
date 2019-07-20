@@ -2,16 +2,29 @@
 
 #include "vterm/terminal.h"
 
-#include "control.h"
+#include "container.h"
 
-namespace vterm {
+namespace ui {
+
+	typedef vterm::Key Key;
+
+	typedef vterm::MouseButton MouseButton;
 
 	/** The UI window, which is a virtual terminal on which the UI elements are drawn. 
 
+	
 	 */
-	class UIWindow : public Terminal {
-
+	class RootWindow : public vterm::Terminal, public Container {
 	public:
+
+		RootWindow(Coord width, Coord height) :
+			Terminal(width, height),
+			Container(width, height) {
+		}
+
+
+
+
 
 		void keyDown(Key k) override;
 		void keyUp(Key k) override;
@@ -26,10 +39,19 @@ namespace vterm {
 
 	protected:
 
+		// container's interface
+
+		/** If the valid region of the root window is invalidated, we must update it with the entrety of the terminal. Once the visible region is set, calls the repaint method again, which will now create the appropriate canvas and trigger the doRepaint() method. 
+		 */
+		void doGetVisibleRegion() {
+			visibleRegion_ = Canvas::VisibleRegion(this);
+			repaint();
+		}
+
 		void doOnResize(unsigned cols, unsigned rows) override;
 
 
 	};
 
 
-} // namespace vterm
+} // namespace uissss

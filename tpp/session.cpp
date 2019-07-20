@@ -6,6 +6,8 @@
 
 #include "session.h"
 
+#include "ui/root_window.h"
+
 
 namespace tpp {
 
@@ -52,6 +54,9 @@ namespace tpp {
 			pty_->recordInput(*config::RecordSession);
 			LOG << "Session input recorded to " << *config::RecordSession;
 		}
+		//terminal_ = new ui::RootWindow(window_->cols(), window_->rows());
+
+
 		// create the terminal backend
 		terminal_ = new vterm::VT100(window_->cols(), window_->rows(), pty_);
 		/*

@@ -22,6 +22,7 @@ namespace helpers {
 		Point(COORD col, COORD row) :
 			col(col),
 			row(row) {
+			static_assert(sizeof(Point) == sizeof(COORD) * 2, "Point is supposed to be two numbers only");
 		}
 
 		bool operator == (Point const& other) const {
@@ -36,7 +37,6 @@ namespace helpers {
 			s << "[" << p.col << "," << p.row << "]";
 			return s;
 		}
-		//static_assert(sizeof(Point) == sizeof(COORD) * 2, "Point is supposed to be two numbers only");
 	};
 
 	/** Rectangle definition.
@@ -73,6 +73,12 @@ namespace helpers {
 
 		COORD height() const {
 			return bottom - top;
+		}
+
+		/** Returns true if the rectangle contains given point. 
+		 */
+		bool contains(Point<COORD> point) const {
+			return (point.col >= left) && (point.row >= top) && (point.col < right) && (point.row < bottom);
 		}
 
 		bool empty() const {

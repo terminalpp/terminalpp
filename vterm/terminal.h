@@ -76,7 +76,7 @@ namespace vterm {
 
 	    The terminal provides encapsulation over the screen buffer and provides the communication between the frontend and backend. The terminal frontend is responsible for rendering the contents of the terminal to the user and sending the terminal the user input events. The backend of the terminal relays the user input events to the underlying process and reads from the process updates to the terminal state and stores them. 
 	 */
-	class Terminal : public helpers::Object {
+	class Terminal : virtual public helpers::Object {
 	public:
 
 
@@ -208,13 +208,23 @@ namespace vterm {
 				bits_.lineEnd = false;
 			}
 
-			Cell(char c, Color fg, Color bg) :
+			Cell(helpers::Char c, Color fg, Color bg) :
 				c_(c),
 				fg_(fg),
 				bg_(bg) {
 				bits_.dirty = true;
 				bits_.lineEnd = false;
 			}
+
+			Cell(helpers::Char c, Color fg, Color bg, Font font) :
+				c_(c),
+				fg_(fg),
+				bg_(bg),
+			    font_(font) {
+				bits_.dirty = true;
+				bits_.lineEnd = false;
+			}
+
 
 			Cell& operator = (Cell const& other) {
 				if (this != &other) {
@@ -322,6 +332,16 @@ namespace vterm {
 			Cell & at(unsigned col, unsigned row) {
 				ASSERT(col < cols_ && row < rows_) << "Cell out of range";
 				return cells_[row][col];
+			}
+
+			Cell const& at(helpers::Point<unsigned> p) const {
+				ASSERT(p.col < cols_ && p.row < rows_) << "Cell out of range";
+				return cells_[p.row][p.col];
+			}
+
+			Cell & at(helpers::Point<unsigned> p) {
+				ASSERT(p.col < cols_ && p.row < rows_) << "Cell out of range";
+				return cells_[p.row][p.col];
 			}
 
 			/** Resizes the screen to given number of columns and rows. 

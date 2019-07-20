@@ -11,7 +11,6 @@
 #include "config.h"
 #include "session.h"
 
-
 #if (defined ARCH_WINDOWS)
 
 #include "directwrite/directwrite_application.h"
