@@ -4,7 +4,6 @@
 #include "helpers/shapes.h"
 
 #include "canvas.h"
-#include "layout.h"
 
 namespace ui {
 
@@ -19,15 +18,13 @@ namespace ui {
 	class Control : virtual public helpers::Object {
 	public:
 
-		Control(Control* parent, int left, int top, unsigned width, unsigned height) :
-			parent_(parent),
+		Control(int left, int top, unsigned width, unsigned height) :
+			parent_(nullptr),
 			visibleRegion_(nullptr),
 			left_(left),
 			top_(top),
 			width_(width),
 			height_(height) {
-			if (parent_ != nullptr)
-				parent_->doRegisterChild(this);
 		}
 
 		Control* parent() const {
@@ -50,20 +47,27 @@ namespace ui {
 			return height_;
 		}
 
+		/** Resizes the control. 
+		 */
+		void resize(unsigned width, unsigned height) {
+			if (width_ != width || height_ != height) {
+				doResize(width, height);
+				invalidate();
+				if (parent_ != nullptr)
+					parent_->doChildGeometryChanged(this);
+				repaint();
+			}
+		}
+
+		void reposition(int left, int top) {
+			NOT_IMPLEMENTED;
+		}
+
 		/** Triggers the repaint event. 
 		 */
 		void repaint();
 
 	protected:
-
-		Control(unsigned width, unsigned height) :
-			parent_(nullptr),
-			visibleRegion_(nullptr),
-			left_(0),
-			top_(0),
-			width_(width),
-			height_(height) {
-		}
 
 		void invalidate() {
 			visibleRegion_.invalidate();
@@ -71,12 +75,6 @@ namespace ui {
 
 		virtual void doRegisterChild(Control* child) {
 			MARK_AS_UNUSED(child);
-		}
-
-		/** Returns the layout used for children controls, which is None by default. 
-		 */
-		virtual Layout * doGetLayout() const {
-			return Layout::None();
 		}
 
 		/** Obtains the visible region. 
@@ -88,6 +86,11 @@ namespace ui {
 		virtual void doGetVisibleRegion() {
 			if (parent_ != nullptr)
 				parent_->repaint();
+		}
+
+		virtual void doResize(unsigned width, unsigned height) {
+			width_ = width;
+			height_ = height;
 		}
 
 		virtual void doPaint(Canvas& canvas) = 0;
@@ -106,9 +109,26 @@ namespace ui {
 			child->doPaint(childCanvas);
 		}
 
+		/** Whenever child's position or size changes, it informs its parent using this method. 
+		 */
+		virtual void doChildGeometryChanged(Control* child) {
+			// do nothing in control
+		}
+
 	private:
 
 		friend class RootWindow;
+		friend class Container;
+		friend class Layout;
+
+		/** TODO perhaps trigger the resize and position events? 
+		 */
+		void forceGeometry(int left, int top, unsigned width, unsigned height) {
+			left_ = left;
+			top_ = top;
+			width_ = width;
+			height_ = height;
+		}
 
 		Control * parent_;
 
@@ -123,8 +143,6 @@ namespace ui {
 		 */
 		unsigned width_;
 		unsigned height_;
-
-
 
 	};
 } // namespace ui

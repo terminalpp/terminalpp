@@ -7,8 +7,8 @@ namespace ui {
 	class Label : public Control {
 	public:
 
-		Label(Control* parent, int left, int top, unsigned width, unsigned height) :
-			Control(parent, left, top, width, height),
+		Label(int left, int top, unsigned width, unsigned height) :
+			Control(left, top, width, height),
 			text_("Label"),
 			textColor_(Color::White()),
 			font_(Font()),

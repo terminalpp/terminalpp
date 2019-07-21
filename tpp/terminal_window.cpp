@@ -175,6 +175,9 @@ namespace tpp {
 		if (terminal() == nullptr)
 			return 0;
 		vterm::Terminal::ScreenLock sl = terminal()->lockScreen(true);
+		// if there is nothing to disply, there is nothing to display
+		if (sl->rows() == 0 || sl->cols() == 0)
+			return 0;
 		// initialize the first font and colors
 		vterm::Color fg;
 		vterm::Color bg;

@@ -19,7 +19,7 @@ namespace ui {
 
 		RootWindow(unsigned width, unsigned height) :
 			Terminal(width, height),
-			Container(width, height) {
+			Container(0, 0, width, height) {
 		}
 
 

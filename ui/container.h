@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "control.h"
+#include "layout.h"
 
 namespace ui {
 
@@ -10,6 +11,34 @@ namespace ui {
 	 */
 	class Container : public Control {
 	public:
+
+		Container(int left, int top, unsigned width, unsigned height) :
+			Control(left, top, width, height),
+		    layout_(Layout::None()) {
+		}
+
+		/** Container deletes all its children as well.
+		 */
+		~Container() override {
+			for (auto i : children_)
+				delete i;
+		}
+
+		void addChild(Control* child) {
+			if (child->parent_ != nullptr) {
+				Container* p = dynamic_cast<Container*>(child->parent_);
+				if (p != nullptr)
+					p->removeChild(child);
+			}
+			child->parent_ = this;
+			children_.push_back(child);
+			doChildGeometryChanged(child);
+			repaint();
+		}
+
+		void removeChild(Control* child) {
+			NOT_IMPLEMENTED;
+		}
 
 		/** Returns the layout used for children. 
 		 */
@@ -26,25 +55,12 @@ namespace ui {
 			}
 		}
 
-		Container(Control* parent, int left, int top, unsigned width, unsigned height) :
-			Control(parent, left, top, width, height) {
-		}
-
-		/** Container deletes all its children as well. 
-		 */
-		~Container() {
-			for (auto i : children_)
-				delete i;
-		}
 	protected:
 
-		Container(unsigned width, unsigned height) :
-			Control(width, height),
-		    layout_(Layout::None()) {
-		}
-
-		void doRegisterChild(Control* child) override {
-			children_.push_back(child);
+		void doResize(unsigned width, unsigned height) override {
+			width_ = width;
+			height_ = height;
+			layout_->resized(this);
 		}
 
 		/** Calls the paint method of all its children. 
@@ -55,7 +71,16 @@ namespace ui {
 				doUpdateChild(canvas, child);
 		}
 
+		/** When container's child geometry changes, the contrainer consults its layout to determine whether such update is allowed. 
+	 	 */
+		void doChildGeometryChanged(Control* child) override {
+			layout_->childChanged(this, child);
+		}
+
 	private:
+
+		friend class Layout;
+
 		std::vector<Control*> children_;
 
 		Layout * layout_;

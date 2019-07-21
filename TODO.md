@@ -21,3 +21,13 @@
 - non-english double width characters don't work properly (at all)
 - vt100 should have palette access ready
 - xim is wrong, it works on linux, but fails on mac
+
+# UI
+
+- horizontal and vertical layouts
+- size hints in controls
+- client area in container, i.e. a possibility of a border around the container
+- add events
+- propagate events through windows
+- hide properties not meant to be public immediately
+- make canvas do more

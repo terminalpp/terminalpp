@@ -29,10 +29,7 @@ namespace ui {
 	}
 
 	void RootWindow::doOnResize(unsigned cols, unsigned rows) {
-		width_ = cols;
-		height_ = rows;
-		invalidate();
-		repaint();
+		resize(cols, rows);
 	}
 
 

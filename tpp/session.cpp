@@ -61,11 +61,20 @@ namespace tpp {
 
 		ui::RootWindow * rw = new ui::RootWindow(window_->cols(), window_->rows());
 
-		ui::Label* l = new ui::Label(rw, 10, 10, 30, 3);
+		rw->setLayout(ui::Layout::Horizontal());
+
+		ui::Label* l1 = new ui::Label(10, 10, 30, 3);
+		ui::Label* l2 = new ui::Label(20, 11, 30, 3);
+		l2->setBackground(ui::Color::Magenta());
+
+		rw->addChild(l1);
+		rw->addChild(l2);
 
 		window_->setTerminal(rw);
 		terminal_ = rw;
 		rw->repaint();
+		l1->setText("Hello world!");
+		l2->setText("And hello too!");
 
 #else
 		// create the terminal backend
