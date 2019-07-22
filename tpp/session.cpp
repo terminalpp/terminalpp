@@ -72,6 +72,7 @@ namespace tpp {
 		rw->addChild(l1);
 		rw->addChild(l2);
 		rw->addChild(l3);
+		l2->hide();
 
 		window_->setTerminal(rw);
 		terminal_ = rw;

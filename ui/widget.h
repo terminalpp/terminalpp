@@ -114,25 +114,21 @@ namespace ui {
 		/** Marks the widget as visible and repaints. 
 		 */
 		void show() {
-			/*
 			if (visible_ == false) {
-				doShow();
+				visible_ = true;
+				parent_->childInvalidated(this);
 				trigger(onShow);
-				repaintParent();
 			}
-			*/
 		}
 
 		void hide() {
-			/*
 			if (visible_ == true) {
-				doHide();
+				visible_ = false;
+				if (parent_)
+					parent_->childInvalidated(this);
 				trigger(onHide);
-				repaintParent();
 			}
-			*/
 		}
-
 
 		/** Repaints the widget. 
 
@@ -204,11 +200,7 @@ namespace ui {
 		virtual void paint(Canvas& canvas) = 0;
 
 
-		// updated trigger functions working with Widget instead of object for cleaner code
-
-		/** Triggers given event with itself as a sender.
-
-    		SFINAE makes sure that this method is used only for events with void payloads.
+		/** Updated trigger function for events which takes the Widget as base class for event sender. 
 		 */
 		template<typename EVENT>
 		void trigger(EVENT& e) {
@@ -217,9 +209,7 @@ namespace ui {
 			e.trigger(p);
 		}
 
-		/** Triggers given event with itself as a sender.
-
-			SFINAE makes sure that this method is used only for events with void payloads.
+		/** Updated trigger function for events which takes the Widget as base class for event sender.
 		 */
 		template<typename EVENT>
 		void trigger(EVENT& e, typename EVENT::Payload::Payload const& payload) {

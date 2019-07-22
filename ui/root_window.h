@@ -23,9 +23,7 @@ namespace ui {
 			visibleRegion_ = Canvas::VisibleRegion(this);
 		}
 
-
-
-
+		// terminal interface
 
 		void keyDown(Key k) override;
 		void keyUp(Key k) override;
@@ -38,9 +36,18 @@ namespace ui {
 
 		void paste(std::string const& what) override;
 
+		// widget interface
+
+		using Container::addChild;
+		using Container::removeChild;
+
 	protected:
 
+		// terminal interface
+
 		void doOnResize(unsigned cols, unsigned rows) override;
+
+		// widget interface
 
 	};
 

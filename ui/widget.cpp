@@ -14,6 +14,8 @@ namespace ui {
 	}
 
 	void Widget::paintChild(Widget * child, Canvas& canvas) {
+		if (!child->visible_)
+			return;
 		if (!child->visibleRegion_.isValid()) {
 			Canvas childCanvas(canvas, child->x_, child->y_, child->width_, child->height_);
 			child->visibleRegion_ = childCanvas.visibleRegion_;

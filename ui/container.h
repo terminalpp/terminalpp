@@ -9,14 +9,17 @@ namespace ui {
 	class Container : public Widget {
 	public:
 
-		Container(int x = 0, int y = 0, unsigned width = 1, unsigned height = 0) :
-			Widget(x, y, width, height),
-			relayout_(true) {
-		}
 
 		~Container() override {
 			for (Widget* child : children_)
 				delete child;
+		}
+
+	protected:
+
+		Container(int x = 0, int y = 0, unsigned width = 1, unsigned height = 0) :
+			Widget(x, y, width, height),
+			relayout_(true) {
 		}
 
 		void addChild(Widget * child) {
@@ -44,8 +47,6 @@ namespace ui {
 			repaint();
 			return child;
 		}
-
-	protected:
 
 		void invalidateContents() override {
 			Widget::invalidateContents();
@@ -85,9 +86,10 @@ namespace ui {
 
 	private:
 		bool relayout_;
+
 		std::vector<Widget*> children_;
 
 
-	}; // ui::ContainerWidget
+	}; // ui::Container
 
 } // namespace ui
