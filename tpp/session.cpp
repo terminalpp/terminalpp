@@ -56,7 +56,7 @@ namespace tpp {
 			LOG << "Session input recorded to " << *config::RecordSession;
 		}
 
-#define UI
+//#define UI
 #ifdef UI
 
 		ui::RootWindow * rw = new ui::RootWindow(window_->cols(), window_->rows());
