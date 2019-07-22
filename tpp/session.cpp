@@ -72,13 +72,15 @@ namespace tpp {
 		rw->addChild(l1);
 		rw->addChild(l2);
 		rw->addChild(l3);
-		l2->hide();
+		l2->resize(10,10);
+		l2->move(5, 5);
 
 		window_->setTerminal(rw);
 		terminal_ = rw;
 		rw->repaint();
-		l1->setText("Hello world!");
-		l2->setText("And hello too!");
+		l1->setText("First");
+		l2->setText("Second");
+		l3->setText("Third");
 
 #else
 		// create the terminal backend

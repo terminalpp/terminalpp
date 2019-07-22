@@ -111,7 +111,11 @@ namespace ui {
 			return height_;
 		}
 
-		/** Marks the widget as visible and repaints. 
+		// all this should be protected and should then be enabled in respective subclasses, such as control
+
+		/** Sets the widget as visible and repaints it. 
+
+		    Also triggers the repaint of entire parent, because the widget may interfere with other children of its own parent.
 		 */
 		void show() {
 			if (visible_ == false) {
@@ -121,6 +125,8 @@ namespace ui {
 			}
 		}
 
+		/** Hides the widget and triggers parent repaint as the widget could have prevented other children from being visible. 
+		 */
 		void hide() {
 			if (visible_ == true) {
 				visible_ = false;
@@ -128,6 +134,20 @@ namespace ui {
 					parent_->childInvalidated(this);
 				trigger(onHide);
 			}
+		}
+
+		/** Moves the widget to the given coordinates relative to its parent.
+		 */
+		void move(int x, int y) {
+			if (x_ != x || y_ != y)
+				updatePosition(x, y);
+		}
+
+		/** Resizes the widget. 
+		 */
+		void resize(unsigned width, unsigned height) {
+			if (width_ != width || height_ != height)
+				updateSize(width, height);
 		}
 
 		/** Repaints the widget. 
@@ -143,16 +163,6 @@ namespace ui {
 		 */
 		void paintChild(Widget * child, Canvas& canvas);
 
-
-		/** Updates the geometry.
-		 */
-		void updateGeometry(int x, int y, unsigned width, unsigned height) {
-			if (x_ != x || y_ != y)
-				updatePosition(x, y);
-			if (width_ != width || height_ != height)
-				updateSize(width, height);
-		}
-
 		/** Invalidates the widget and request its parent repaint,
 
 		    If the widget is valid, invalidates its visible region and informs its parent that a child was invalidated. If the widget is already not valid, does nothing because the parent has already been notified. 
@@ -166,6 +176,10 @@ namespace ui {
 			}
 		}
 
+		/** Invalidates the contents of the widget. 
+		
+		    For simple widgets this only means invalidating the widget's visible region, for more complex widgets all their children must be invalidated too. 
+		 */
 		virtual void invalidateContents() {
 			visibleRegion_.invalidate();
 		}
@@ -179,16 +193,22 @@ namespace ui {
 			repaint();
 		}
 
+		/** Updates the position of the widget. 
+		
+		    Already assumes that the new position is different from the current position. However, in case the requested position is invalid, the widget may adjust the size before setting it. After the size is updated, the control is invalidated and onMove event triggered. 
+		 */
 		virtual void updatePosition(int x, int y) {
-			ASSERT(x_ != x || y_ != y) << "Should only be called if there is real change in position";
 			x_ = x;
 			y_ = y;
 			invalidate();
 			trigger(onMove);
 		}
 
+		/** Updates the size of the widget. 
+		
+		    Assumes the size is different that current size. However, if the size is invalid, the widget may choose to update the requested width and height accordingly. Invalidates the widget and triggers the onResize event. 
+		 */
 		virtual void updateSize(unsigned width, unsigned height) {
-			ASSERT(width_ != width || height_ != height) << "Should only be called if there is real change in size";
 			width_ = width;
 			height_ = height;
 			invalidate();
@@ -198,7 +218,6 @@ namespace ui {
 		/** Paints the widget's contents on the provided canvas. 
 		 */
 		virtual void paint(Canvas& canvas) = 0;
-
 
 		/** Updated trigger function for events which takes the Widget as base class for event sender. 
 		 */
