@@ -10,6 +10,8 @@ namespace ui {
 		    region = Rect(root->width(), root->height());
 	}
 
+
+
 	Canvas::VisibleRegion::VisibleRegion(VisibleRegion const& from, int left, int top, unsigned width, unsigned height) :
 		root(from.root),
 	    region(Rect::Intersection(from.region, Rect(left, top, left + width, top + height))) {
@@ -22,6 +24,8 @@ namespace ui {
 			);
 		}
 	}
+
+
 
 	Canvas::Canvas(Canvas const& from, int left, int top, unsigned width, unsigned height) :
 		visibleRegion_(from.visibleRegion_, left, top, width, height),

@@ -1,4 +1,5 @@
 #pragma once
+#ifdef FOO
 
 #include "control.h"
 
@@ -100,3 +101,4 @@ namespace ui {
 
 
 } // namespace ui
+#endif

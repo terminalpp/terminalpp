@@ -1,3 +1,4 @@
+#ifdef FOO
 #include "control.h"
 #include "root_window.h"
 
@@ -17,3 +18,4 @@ namespace ui {
 	}
 
 } // namespace ui
+#endif

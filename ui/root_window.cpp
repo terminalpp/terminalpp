@@ -29,7 +29,12 @@ namespace ui {
 	}
 
 	void RootWindow::doOnResize(unsigned cols, unsigned rows) {
-		resize(cols, rows);
+		// resize
+		updateSize(cols, rows);
+		// update the visible region to the new size
+		visibleRegion_ = Canvas::VisibleRegion(this);
+		// repaint the container
+		repaint();
 	}
 
 

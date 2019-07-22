@@ -56,19 +56,22 @@ namespace tpp {
 			LOG << "Session input recorded to " << *config::RecordSession;
 		}
 
-//#define UI
+#define UI
 #ifdef UI
 
 		ui::RootWindow * rw = new ui::RootWindow(window_->cols(), window_->rows());
 
-		rw->setLayout(ui::Layout::Horizontal());
+		//rw->setLayout(ui::Layout::Horizontal());
 
-		ui::Label* l1 = new ui::Label(10, 10, 30, 3);
+		ui::Label* l1 = new ui::Label(10, 10, 30, 1);
+		//l1->setHeightHint(ui::SizeHint::Fixed());
 		ui::Label* l2 = new ui::Label(20, 11, 30, 3);
 		l2->setBackground(ui::Color::Magenta());
-
+		ui::Label* l3 = new ui::Label(10, 5, 30, 1);
+		//l3->setHeightHint(ui::SizeHint::Fixed());
 		rw->addChild(l1);
 		rw->addChild(l2);
+		rw->addChild(l3);
 
 		window_->setTerminal(rw);
 		terminal_ = rw;

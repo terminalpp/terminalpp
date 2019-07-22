@@ -71,6 +71,7 @@ namespace ui {
 		void textOut(Point start, std::string const& text);
 
 	private:
+		friend class Widget;
 		friend class Control;
 		friend class RootWindow;
 

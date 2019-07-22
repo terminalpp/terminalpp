@@ -20,6 +20,7 @@ namespace ui {
 		RootWindow(unsigned width, unsigned height) :
 			Terminal(width, height),
 			Container(0, 0, width, height) {
+			visibleRegion_ = Canvas::VisibleRegion(this);
 		}
 
 
@@ -39,17 +40,7 @@ namespace ui {
 
 	protected:
 
-		// container's interface
-
-		/** If the valid region of the root window is invalidated, we must update it with the entrety of the terminal. Once the visible region is set, calls the repaint method again, which will now create the appropriate canvas and trigger the doRepaint() method. 
-		 */
-		void doGetVisibleRegion() {
-			visibleRegion_ = Canvas::VisibleRegion(this);
-			repaint();
-		}
-
 		void doOnResize(unsigned cols, unsigned rows) override;
-
 
 	};
 

@@ -2,91 +2,92 @@
 
 #include <vector>
 
-#include "control.h"
-#include "layout.h"
+#include "widget.h"
 
 namespace ui {
 
-	/** Container of controls. 
-	 */
-	class Container : public Control {
+	class Container : public Widget {
 	public:
 
-		Container(int left, int top, unsigned width, unsigned height) :
-			Control(left, top, width, height),
-		    layout_(Layout::None()) {
+		Container(int x = 0, int y = 0, unsigned width = 1, unsigned height = 0) :
+			Widget(x, y, width, height),
+			relayout_(true) {
 		}
 
-		/** Container deletes all its children as well.
-		 */
 		~Container() override {
-			for (auto i : children_)
-				delete i;
+			for (Widget* child : children_)
+				delete child;
 		}
 
-		void addChild(Control* child) {
+		void addChild(Widget * child) {
+			ASSERT(child->parent_ != this) << "Already a child";
 			if (child->parent_ != nullptr) {
-				Container* p = dynamic_cast<Container*>(child->parent_);
-				if (p != nullptr)
-					p->removeChild(child);
+				Container* oldParent = dynamic_cast<Container*>(child->parent_);
+				ASSERT(oldParent != nullptr) << "Moving only works between containers";
+				oldParent->removeChild(child);
 			}
-			child->parent_ = this;
 			children_.push_back(child);
-			doChildGeometryChanged(child);
+			child->parent_ = this;
+			relayout_ = true;
 			repaint();
 		}
 
-		void removeChild(Control* child) {
-			NOT_IMPLEMENTED;
-		}
-
-		/** Returns the layout used for children. 
-		 */
-		Layout * layout() const {
-			return layout_;
-		}
-
-		/** Sets the layout used for children. 
-		 */
-		void setLayout(Layout * value) {
-			if (layout_ != value) {
-				layout_ = value;
-				// TODO resize the children, figure out how
-			}
+		Widget* removeChild(Widget* child) {
+			ASSERT(child->parent_ == this) << "Not a child";
+			child->parent_ = nullptr;
+			for(auto i = children_.begin(), e = children_.end(); i != e; ++i)
+				if (*i == child) {
+					children_.erase(i);
+					break;
+				}
+			relayout_ = true;
+			repaint();
+			return child;
 		}
 
 	protected:
 
-		void doResize(unsigned width, unsigned height) override {
-			width_ = width;
-			height_ = height;
-			layout_->resized(this);
+		void invalidateContents() override {
+			Widget::invalidateContents();
+			relayout_ = true;
+			for (Widget* child : children_)
+				child->invalidateContents();
 		}
 
-		/** Calls the paint method of all its children. 
+		void childInvalidated(Widget* child) override {
+			relayout_ = true;
+			Widget::childInvalidated(child);
+		}
+
+		void updatePosition(int x, int y) override {
+			relayout_ = true;
+			Widget::updatePosition(x, y);
+		}
+
+		void updateSize(unsigned width, unsigned height) override {
+			relayout_ = true;
+			Widget::updateSize(width, height);
+		}
+
+		/** The container assumes that its children will be responsible for painting the container itself in the paint method, while the container's paint method draws the children themselves. 
 		 */
-		void doPaint(Canvas& canvas) override {
+		void paint(Canvas& canvas) override {
 			canvas.fill(Rect(canvas.width(), canvas.height()), Color::Red(), Color::White(), 'x', Font());
-			for (Control* child : children_)
-				doUpdateChild(canvas, child);
-		}
+			if (relayout_) {
+				// TODO deal with layout
 
-		/** When container's child geometry changes, the contrainer consults its layout to determine whether such update is allowed. 
-	 	 */
-		void doChildGeometryChanged(Control* child) override {
-			layout_->childChanged(this, child);
+				relayout_ = false;
+			}
+			// display the children
+			for (Widget* child : children_)
+				paintChild(child, canvas);
 		}
 
 	private:
-
-		friend class Layout;
-
-		std::vector<Control*> children_;
-
-		Layout * layout_;
+		bool relayout_;
+		std::vector<Widget*> children_;
 
 
-	};
-
+	}; // ui::ContainerWidget
 
 } // namespace ui

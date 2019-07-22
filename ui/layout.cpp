@@ -1,3 +1,4 @@
+#ifdef FOO
 #include "layout.h"
 
 #include "control.h"
@@ -34,12 +35,55 @@ namespace ui {
 
 	void Layout::HorizontalImplementation::resized(Container* container) {
 		std::vector<Control*> & children = childrenOf(container);
-		unsigned h = container->height() / children.size();
+		unsigned totalHeight = container->height();
+		unsigned totalPct = 0;
+		unsigned fixedHeight = 0;
+		unsigned autoControls = 0;
+		for (Control* child : children) {
+			switch (child->heightHint()) {
+				case SizeHint::Kind::Fixed:
+					fixedHeight += child->height();
+					break;
+				case SizeHint::Kind::Auto:
+					++autoControls;
+					break;
+				case SizeHint::Kind::Percentage:
+					totalPct += child->heightHint().value();
+					break;
+				default:
+					UNREACHABLE;
+			}
+		}
+		// this is the height available for percentage based controls
+		totalHeight -= fixedHeight;
+		unsigned percentageHeight = totalHeight;
+		if (totalPct > 0) {
+			for (Control* child : children)
+				if (child->heightHint() == SizeHint::Kind::Percentage)
+					totalHeight -= percentageHeight * child->heightHint().value() / 100;
+		}
+		// height of auto sized control
+		unsigned h = totalHeight / ((autoControls == 0) ? 1 : autoControls);
 		unsigned top = 0;
-		for (size_t i = 0, e = children.size() - 1; i <= e; ++i) {
-			unsigned ch = (i < e) ? h : container->height() - top;
-			forceGeometry(children[i], 0, top, container->width(), ch);
-			top += ch;
+		// we are now ready to update the geometries
+		for (Control* child : children) {
+			unsigned width = child->widthHint().calculate(
+				child->width(), 
+				container->width(), 
+				container->width()
+			);
+			unsigned height = child->heightHint().calculate(
+				child->height(),
+				h,
+				percentageHeight
+			);
+			forceGeometry(child, 0, top, width, height);
+			top += height;
+			if (child->heightHint() == SizeHint::Kind::Auto) {
+				totalHeight -= h;
+				if (--autoControls == 1)
+					h = totalHeight;
+			}
 		}
 	}
 
@@ -48,3 +92,4 @@ namespace ui {
 	}
 
 } // namespace ui
+#endif

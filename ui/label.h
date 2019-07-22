@@ -1,14 +1,14 @@
 #pragma once
 
-#include "control.h"
+#include "widget.h"
 
 namespace ui {
 
-	class Label : public Control {
+	class Label : public Widget {
 	public:
 
-		Label(int left, int top, unsigned width, unsigned height) :
-			Control(left, top, width, height),
+		Label(int left = 0, int top = 0, unsigned width = 10, unsigned height = 1) :
+			Widget(left, top, width, height),
 			text_("Label"),
 			textColor_(Color::White()),
 			font_(Font()),
@@ -65,7 +65,7 @@ namespace ui {
 
 	protected:
 
-		void doPaint(Canvas& canvas) {
+		void paint(Canvas& canvas) {
 			canvas.fill(Rect(width(), height()), background_, textColor_, ' ', Font());
 			canvas.textOut(Point(0, 0), text_);
 		}
