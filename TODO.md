@@ -14,7 +14,6 @@
 - improve logging - the logging overhead is gigantic, find a way to lower it
 - add tests
 - add size selection to PTY? or not really, since it can always be resized. 
-- add comments to bypass
 
 # Long Term Goals
 

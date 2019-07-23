@@ -21,19 +21,24 @@ helpers::Arg<unsigned> BufferSize({ "--buffer-size" }, 10240, false, "Size of th
  */
 helpers::Arg<std::vector<std::string>> Command({ "-e" }, {}, true, "Command to be executed in the opened PTY and its arguments", true);
 
-/** .
+/** Executes the process and translates its input and output into the bypass protocol. 
+
+    The protocol is rather simple, the oitput of the process is sent completely unaltered to the stdout. The stdin of the bypass process has to be translated as it may contain either the input to the process, or commands to the bypass. The commands are prefaced with a backtick character, so backtick character has to be escaped into ``. 
  */
-class PTYEncoder {
+class Bypass {
 public:
 
-	static constexpr char const * PTYENC = "PYENC";
+	/** Bypass log level. 
+	 */
+	static constexpr char const * BYPASS = "BYPASS";
 
-    PTYEncoder(helpers::Command const & cmd, helpers::Environment const & env):
+	/** Creates the bypass pseudoterminal for given target process. 
+	 */
+    Bypass(helpers::Command const & cmd, helpers::Environment const & env):
         command_(cmd),
 		environment_(env),
         pty_(command_, environment_) {
         Singleton() = this;
-        signal(SIGWINCH, SIGWINCH_handler);
         // start the pty reader and encoder thread
         outputEncoder_ = std::thread([this]() {
             char * buffer = new char[* BufferSize];
@@ -43,7 +48,6 @@ public:
                 // if nothing was read, the process has terminated and so should we
                 if (numBytes == 0)
                     break;
-                //encodeOutput(buffer, numBytes);
 				write(STDOUT_FILENO, (void*)buffer, numBytes);
 			}
             delete [] buffer;
@@ -68,43 +72,29 @@ public:
             }
             delete [] buffer;
         });
+		// detach the input encoder, it may die when the bypass is going to die itself and we don't care about exact timing
         inputEncoder.detach();
-
     }
 
-    ~PTYEncoder() {
-        signal(SIGWINCH, SIG_DFL);
-    }
-
+	/** Waits for the attached process to exit, then returns its exit code. 
+	 */
     helpers::ExitCode waitForDone() {
         helpers::ExitCode ec = pty_.waitFor();
-        // close stdin so that the inputEncoder will stop
-        //close(STDIN_FILENO);
         outputEncoder_.join();
-        //inputEncoder.join();
         return ec;
     }
 
+	/** Resizes the pseudoterminal for the tareget process. 
+	 */
 	void resize(unsigned cols, unsigned rows) {
 		pty_.resize(cols, rows);
 	}
 
 private:
 
-    static PTYEncoder * & Singleton() {
-        static PTYEncoder * instance;
+    static Bypass * & Singleton() {
+        static Bypass * instance;
         return instance;
-    }
-
-    static void SIGWINCH_handler(int signum) {
-        MARK_AS_UNUSED(signum);
-        PTYEncoder * enc = Singleton();
-        if (enc != nullptr) {
-            struct winsize ws;
-            if (ioctl(STDOUT_FILENO, TIOCGWINSZ, & ws) == -1 || ws.ws_col == 0)
-                UNREACHABLE;
-            enc->pty_.resize(ws.ws_col, ws.ws_row);
-        }
     }
 
     /** Input comes encoded and must be decoded and sent to the pty. 
@@ -113,7 +103,7 @@ private:
 #define WRITE(FROM, TO) if (FROM != TO) { pty_.write(buffer + FROM, TO - FROM); FROM = TO; }
 #define NEXT if (++i == bufferSize) return processed
 #define NUMBER(VAR) if (!ParseNumber(buffer, bufferSize, i, VAR)) return processed
-#define POP(WHAT) if (buffer[i++] != WHAT) { LOG(PTYENC) << "Expected " << WHAT << " but " << buffer[i] << " found"; processed = i; continue; }
+#define POP(WHAT) if (buffer[i++] != WHAT) { LOG(BYPASS) << "Expected " << WHAT << " but " << buffer[i] << " found"; processed = i; continue; }
 		size_t processed = 0;
 		size_t start = 0;
 		while (processed < bufferSize) {
@@ -142,7 +132,7 @@ private:
 						continue;
 					// otherwise (unrecognized command) skip what we have and move on
 					default:
-						LOG(PTYENC) << "Unrecognized command " << buffer[i];
+						LOG(BYPASS) << "Unrecognized command " << buffer[i];
 						processed = i + 1;
 						start = processed;
 						continue;
@@ -169,14 +159,12 @@ private:
 		return i != bufferSize; // at least one valid character must be present after the number
 	}
 
-
     helpers::Command command_;
 	helpers::Environment environment_;
     vterm::LocalPTY pty_;
     std::thread outputEncoder_;
 
-
-}; // PTYEncoder
+}; // Bypass
 
 int main(int argc, char * argv[]) {
 	helpers::Arguments::SetDescription(R"xxx(
@@ -194,7 +182,7 @@ Where the envVar=value are key-value pairs to be set in the environment of the p
     try {
 		helpers::Command cmd(*Command);
 		helpers::Environment env(helpers::Arguments::UnknownArguments());
-        PTYEncoder enc(cmd, env);
+        Bypass enc(cmd, env);
         return enc.waitForDone();
     } catch (helpers::Exception const & e) {
         std::cerr << "ptyencoder error: " << std::endl << e << std::endl;

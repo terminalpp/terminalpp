@@ -254,8 +254,8 @@ namespace ui {
 		bool visible_;
 
 		/* Position */
-		unsigned x_;
-		unsigned y_;
+		int x_;
+		int y_;
 
 		/* Size */
 		unsigned width_;

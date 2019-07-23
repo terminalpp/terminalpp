@@ -20,7 +20,7 @@
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
       "cmakeCommandArgs": "-D CMAKE_CXX_FLAGS=/DUI=1",
-      "buildCommandArgs": "-v ",
+      "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
       "variables": []
     }
