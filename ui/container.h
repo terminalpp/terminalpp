@@ -6,9 +6,12 @@
 
 namespace ui {
 
+	class Layout;
+
+	/** Container is a widget capable of managing its children at runtime. 
+	 */
 	class Container : public Widget {
 	public:
-
 
 		~Container() override {
 			for (Widget* child : children_)
@@ -17,27 +20,24 @@ namespace ui {
 
 	protected:
 
-		Container(int x = 0, int y = 0, unsigned width = 1, unsigned height = 0) :
-			Widget(x, y, width, height),
-			relayout_(true) {
-		}
+		Container(int x = 0, int y = 0, unsigned width = 1, unsigned height = 0);
 
 		void addChild(Widget * child) {
-			ASSERT(child->parent_ != this) << "Already a child";
-			if (child->parent_ != nullptr) {
-				Container* oldParent = dynamic_cast<Container*>(child->parent_);
+			ASSERT(child->parent() != this) << "Already a child";
+			if (child->parent() != nullptr) {
+				Container* oldParent = dynamic_cast<Container*>(child->parent());
 				ASSERT(oldParent != nullptr) << "Moving only works between containers";
 				oldParent->removeChild(child);
 			}
 			children_.push_back(child);
-			child->parent_ = this;
+			child->updateParent(this);
 			relayout_ = true;
 			repaint();
 		}
 
 		Widget* removeChild(Widget* child) {
-			ASSERT(child->parent_ == this) << "Not a child";
-			child->parent_ = nullptr;
+			ASSERT(child->parent() == this) << "Not a child";
+			child->updateParent(nullptr);
 			for(auto i = children_.begin(), e = children_.end(); i != e; ++i)
 				if (*i == child) {
 					children_.erase(i);
@@ -72,22 +72,19 @@ namespace ui {
 
 		/** The container assumes that its children will be responsible for painting the container itself in the paint method, while the container's paint method draws the children themselves. 
 		 */
-		void paint(Canvas& canvas) override {
-			canvas.fill(Rect(canvas.width(), canvas.height()), Color::Red(), Color::White(), 'x', Font());
-			if (relayout_) {
-				// TODO deal with layout
+		void paint(Canvas& canvas) override;
 
-				relayout_ = false;
-			}
-			// display the children
-			for (Widget* child : children_)
-				paintChild(child, canvas);
-		}
+		void updateOverlay(bool value) override;
 
 	private:
-		bool relayout_;
+
+		friend class Layout;
 
 		std::vector<Widget*> children_;
+
+		Layout* layout_;
+		bool relayout_;
+
 
 
 	}; // ui::Container

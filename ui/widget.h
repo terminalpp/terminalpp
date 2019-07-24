@@ -82,11 +82,16 @@ namespace ui {
 		Widget(int x = 0, int y = 0, unsigned width = 1, unsigned height = 1):
 			parent_(nullptr),
 			visibleRegion_(nullptr),
+			overlay_(false),
 			visible_(true),
 			x_(x),
 			y_(y),
 			width_(width),
 			height_(height) {
+		}
+
+		Widget* parent() const {
+			return parent_;
 		}
 
 		bool visible() const {
@@ -109,6 +114,10 @@ namespace ui {
 
 		unsigned height() const {
 			return height_;
+		}
+
+		Rect rect() const {
+			return Rect(x_, y_, x_ + width_, y_ + height_);
 		}
 
 		// all this should be protected and should then be enabled in respective subclasses, such as control
@@ -155,6 +164,11 @@ namespace ui {
 		    Only repaints the widget if the visibleRegion is valid. If the visible region is invalid, does nothing because when the region was invalidated, the repaint was automatically triggered, so there is either repaint pending, or in progress. 
 		 */
 		void repaint();
+
+		void setOverlay(bool value) {
+			if (value != overlay_)
+				updateOverlay(value);
+		}
 
 
 	protected:
@@ -237,8 +251,25 @@ namespace ui {
 			e.trigger(p);
 		}
 
+		virtual void updateParent(Widget* parent) {
+			if (parent == nullptr) {
+				parent_ = nullptr;
+				if (overlay_ != false)
+				    updateOverlay(false);
+			} else {
+				ASSERT(parent_ == nullptr);
+				parent_ = parent;
+				// parent's repaint will eventually trigger the overlay update
+			}
+		}
+
+		virtual void updateOverlay(bool value) {
+			overlay_ = value;
+		}
+
 	private:
 
+		friend class Layout;
 		friend class Container;
 		friend class RootWindow;
 
@@ -249,6 +280,9 @@ namespace ui {
 		/* Visible region of the canvas. 
 		 */
 		Canvas::VisibleRegion visibleRegion_;
+
+		/* If true, the rectangle of the widget is shared with other widgets, i.e. when the widget is to be repainted, its parent must be repainted instead. */
+		bool overlay_;
 
 		/* Visibility */
 		bool visible_;

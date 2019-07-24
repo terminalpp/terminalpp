@@ -7,9 +7,16 @@ namespace ui {
 	void Widget::repaint() {
 		// only repaint the control if it is visible
 		if (visible_ && visibleRegion_.isValid()) {
-			vterm::Terminal::ScreenLock screenLock = visibleRegion_.root->lockScreen();
-			Canvas canvas(visibleRegion_, *screenLock, width_, height_);
-			paint(canvas);
+			// if the widget is overlaid, the parent must be repainted
+			if (overlay_) {
+				ASSERT(parent_ != nullptr);
+				parent_->repaint();
+			// otherwise repainting the widget is enough
+			} else {
+				vterm::Terminal::ScreenLock screenLock = visibleRegion_.root->lockScreen();
+				Canvas canvas(visibleRegion_, *screenLock, width_, height_);
+				paint(canvas);
+			}
 		} 
 	}
 

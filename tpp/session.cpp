@@ -78,9 +78,9 @@ namespace tpp {
 		window_->setTerminal(rw);
 		terminal_ = rw;
 		rw->repaint();
-		l1->setText("First");
-		l2->setText("Second");
 		l3->setText("Third");
+		l2->setText("Second");
+		l1->setText("First of his name");
 
 #else
 		// create the terminal backend
