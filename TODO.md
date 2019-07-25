@@ -30,3 +30,5 @@
 - propagate events through windows
 - hide properties not meant to be public immediately
 - make canvas do more
+
+- mouseFocus, should it disapper when mouse moves from parent to child? 

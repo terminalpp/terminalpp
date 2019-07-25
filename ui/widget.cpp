@@ -13,9 +13,13 @@ namespace ui {
 				parent_->repaint();
 			// otherwise repainting the widget is enough
 			} else {
-				vterm::Terminal::ScreenLock screenLock = visibleRegion_.root->lockScreen();
-				Canvas canvas(visibleRegion_, *screenLock, width_, height_);
-				paint(canvas);
+				{
+					vterm::Terminal::ScreenLock screenLock = visibleRegion_.root->lockScreen();
+					Canvas canvas(visibleRegion_, *screenLock, width_, height_);
+					paint(canvas);
+				}
+				// trigger repaint
+				visibleRegion_.root->terminalRepaint();
 			}
 		} 
 	}
@@ -31,6 +35,8 @@ namespace ui {
 			Canvas childCanvas(child->visibleRegion_, canvas.screen_, child->width_, child->height_);
 			child->paint(childCanvas);
 		}
+		// trigger repaint
+		visibleRegion_.root->terminalRepaint();
 	}
 
 } // namespace ui

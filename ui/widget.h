@@ -34,6 +34,9 @@ namespace ui {
 	template<typename T>
 	using Event = helpers::Event<T>;
 
+	typedef vterm::MouseButton MouseButton;
+	typedef vterm::Key Key;
+
 	class Widget;
 
 	typedef helpers::EventPayload<void, ui::Widget> ShowEvent;
@@ -172,6 +175,30 @@ namespace ui {
 
 	protected:
 
+		virtual void mouseDown(unsigned col, unsigned row, MouseButton button, Key modifiers) {
+		}
+
+		virtual void mouseUp(unsigned col, unsigned row, MouseButton button, Key modifiers) {
+
+		}
+
+		virtual void mouseWheel(unsigned col, unsigned row, int by, Key modifiers) {
+
+		}
+
+		virtual void mouseMove(unsigned col, unsigned row, Key modifiers) {
+
+		}
+
+		virtual void mouseEnter() {
+
+		}
+
+		virtual void mouseLeave() {
+
+		}
+
+
 		/** Paints given child. 
 		 */
 		void paintChild(Widget * child, Canvas& canvas);
@@ -246,6 +273,11 @@ namespace ui {
 
 		virtual void updateOverlay(bool value) {
 			overlay_ = value;
+		}
+
+		virtual Widget* getMouseTarget(unsigned col, unsigned row) {
+			ASSERT(visibleRegion_.contains(col, row));
+			return this;
 		}
 
 		/** Updated trigger function for events which takes the Widget as base class for event sender.

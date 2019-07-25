@@ -43,6 +43,7 @@ namespace ui {
 	 */
 	class Canvas {
 	public:
+
 		/** A cell of the canvas is the same as the cell of a terminal's screen. 
 		 */
 		typedef vterm::Terminal::Cell Cell;
@@ -104,6 +105,18 @@ namespace ui {
 					static_cast<unsigned>(what.col - region.left + windowOffset.col),
 					static_cast<unsigned>(what.row - region.top + windowOffset.row)
 				);
+			}
+
+			/** Determines whether the visible region contains given screen column and row. 
+			 */
+			bool contains(unsigned col, unsigned row) {
+				if (root == nullptr)
+					return false;
+				if (col < windowOffset.col || row < windowOffset.row)
+					return false;
+				if (col >= windowOffset.col + region.width() || row >= windowOffset.row + region.height())
+					return false;
+				return true;
 			}
 
 			RootWindow* root;

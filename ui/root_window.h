@@ -19,7 +19,8 @@ namespace ui {
 
 		RootWindow(unsigned width, unsigned height) :
 			Terminal(width, height),
-			Container(0, 0, width, height) {
+			Container(0, 0, width, height),
+		    mouseFocus_(nullptr) {
 			visibleRegion_ = Canvas::VisibleRegion(this);
 		}
 
@@ -31,7 +32,7 @@ namespace ui {
 
 		void mouseDown(unsigned col, unsigned row, MouseButton button, Key modifiers) override;
 		void mouseUp(unsigned col, unsigned row, MouseButton button, Key modifiers) override;
-		void mouseWheel(unsigned col, unsigned row, int by, Key modfiers) override;
+		void mouseWheel(unsigned col, unsigned row, int by, Key modifiers) override;
 		void mouseMove(unsigned col, unsigned row, Key modifiers) override;
 
 		void paste(std::string const& what) override;
@@ -44,11 +45,29 @@ namespace ui {
 
 	protected:
 
+		friend class Widget;
+
 		// terminal interface
 
 		void doOnResize(unsigned cols, unsigned rows) override;
 
+		/** Triggers the repaint of the terminal by triggering the terminal's onRepaint event to which the renderers subscribe. 
+		 */
+		void terminalRepaint() {
+			helpers::Object::trigger(onRepaint);
+		}
+
 		// widget interface
+
+
+
+	private:
+
+		Widget* mouseFocusWidget(unsigned col, unsigned row);
+
+		unsigned mouseCol_;
+		unsigned mouseRow_;
+		Widget* mouseFocus_;
 
 	};
 

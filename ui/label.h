@@ -66,9 +66,19 @@ namespace ui {
 	protected:
 
 		void paint(Canvas& canvas) {
-			canvas.fill(Rect(width(), height()), background_, textColor_, ' ', Font());
+			canvas.fill(Rect(width(), height()), background_, textColor_, ' ', font_);
 			canvas.textOut(Point(0, 0), text_);
 		}
+
+		void mouseEnter() override {
+			font_.setUnderline(true);
+			repaint();
+		}
+		void mouseLeave() override {
+			font_.setUnderline(false);
+			repaint();
+		}
+
 
 	private:
 

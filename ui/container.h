@@ -99,6 +99,14 @@ namespace ui {
 
 		void updateOverlay(bool value) override;
 
+		Widget* getMouseTarget(unsigned col, unsigned row) override {
+			ASSERT(visibleRegion_.contains(col, row));
+			for (auto i = children_.rbegin(), e = children_.rend(); i != e; ++i)
+				if ((*i)->visibleRegion_.contains(col, row))
+					return (*i)->getMouseTarget(col, row);
+			return this;
+		}
+
 	private:
 
 		friend class Layout;
