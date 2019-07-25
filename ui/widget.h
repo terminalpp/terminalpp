@@ -170,7 +170,6 @@ namespace ui {
 				updateOverlay(value);
 		}
 
-
 	protected:
 
 		/** Paints given child. 
@@ -233,7 +232,23 @@ namespace ui {
 		 */
 		virtual void paint(Canvas& canvas) = 0;
 
-		/** Updated trigger function for events which takes the Widget as base class for event sender. 
+		virtual void updateParent(Widget* parent) {
+			if (parent == nullptr) {
+				parent_ = nullptr;
+				if (overlay_ != false)
+				    updateOverlay(false);
+			} else {
+				ASSERT(parent_ == nullptr);
+				parent_ = parent;
+				// parent's repaint will eventually trigger the overlay update
+			}
+		}
+
+		virtual void updateOverlay(bool value) {
+			overlay_ = value;
+		}
+
+		/** Updated trigger function for events which takes the Widget as base class for event sender.
 		 */
 		template<typename EVENT>
 		void trigger(EVENT& e) {
@@ -249,22 +264,6 @@ namespace ui {
 			static_assert(std::is_same<typename EVENT::Payload::Sender, Object >::value, "Only events with sender being ui::Widget should be used");
 			typename EVENT::Payload p(this, payload);
 			e.trigger(p);
-		}
-
-		virtual void updateParent(Widget* parent) {
-			if (parent == nullptr) {
-				parent_ = nullptr;
-				if (overlay_ != false)
-				    updateOverlay(false);
-			} else {
-				ASSERT(parent_ == nullptr);
-				parent_ = parent;
-				// parent's repaint will eventually trigger the overlay update
-			}
-		}
-
-		virtual void updateOverlay(bool value) {
-			overlay_ = value;
 		}
 
 	private:

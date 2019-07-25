@@ -10,6 +10,11 @@ namespace ui {
 		relayout_(true) {
 	}
 
+	Container::~Container() {
+		for (Widget* child : children_)
+			delete child;
+	}
+
 	void Container::paint(Canvas& canvas) {
 		canvas.fill(Rect(canvas.width(), canvas.height()), Color::Red(), Color::White(), 'x', Font());
 		if (relayout_) {

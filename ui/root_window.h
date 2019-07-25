@@ -40,6 +40,7 @@ namespace ui {
 
 		using Container::addChild;
 		using Container::removeChild;
+		using Container::setLayout;
 
 	protected:
 

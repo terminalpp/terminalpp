@@ -13,9 +13,10 @@ namespace ui {
 	class Container : public Widget {
 	public:
 
-		~Container() override {
-			for (Widget* child : children_)
-				delete child;
+		~Container() override;
+
+		Layout* layout() const {
+			return layout_;
 		}
 
 	protected:
@@ -46,6 +47,28 @@ namespace ui {
 			relayout_ = true;
 			repaint();
 			return child;
+		}
+
+		void setLayout(Layout* value) {
+			ASSERT(value != nullptr) << "use Layout::None instead";
+			if (layout_ != value) {
+				layout_ = value;
+				relayout_ = true;
+				repaint();
+			}
+		}
+
+		virtual void setChildGeometry(Widget* child, int x, int y, unsigned width, unsigned height) {
+			if (child->x() != x || child->y() != y) {
+				if (child->visibleRegion_.isValid())
+					child->invalidateContents();
+				child->updatePosition(x, y);
+			}
+			if (child->width() != width || child->height() != height) {
+				if (child->visibleRegion_.isValid())
+				    child->invalidateContents();
+				child->updateSize(width, height);
+			}
 		}
 
 		void invalidateContents() override {

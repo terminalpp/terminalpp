@@ -8,6 +8,7 @@
 
 #include "ui/root_window.h"
 #include "ui/label.h"
+#include "ui/layout.h"
 
 
 namespace tpp {
@@ -81,6 +82,8 @@ namespace tpp {
 		l3->setText("Third");
 		l2->setText("Second");
 		l1->setText("First of his name");
+		rw->setLayout(ui::Layout::Horizontal());
+		l1->setText("blabla");
 
 #else
 		// create the terminal backend
