@@ -133,6 +133,7 @@ namespace tpp {
 			selectionStart_.row = 0;
 			selectionEnd_.col = 0;
 			selectionEnd_.row = 0;
+			doInvalidate();
 		}
 
         virtual void selectionSet() {
