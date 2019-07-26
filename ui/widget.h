@@ -111,7 +111,7 @@ namespace ui {
 
 	public:
 
-		Widget(int x = 0, int y = 0, unsigned width = 1, unsigned height = 1):
+		Widget(int x = 0, int y = 0, int width = 1, int height = 1):
 			parent_(nullptr),
 			visibleRegion_(nullptr),
 			overlay_(false),
@@ -140,11 +140,11 @@ namespace ui {
 			return y_;
 		}
 
-		unsigned width() const {
+		int width() const {
 			return width_;
 		}
 
-		unsigned height() const {
+		int height() const {
 			return height_;
 		}
 
@@ -183,7 +183,7 @@ namespace ui {
 
 		/** Resizes the widget. 
 		 */
-		void resize(unsigned width, unsigned height) {
+		void resize(int width, int height) {
 			if (width_ != width || height_ != height)
 				updateSize(width, height);
 		}
@@ -203,28 +203,28 @@ namespace ui {
 
 		// https://docs.microsoft.com/en-us/dotnet/framework/winforms/how-to-distinguish-between-clicks-and-double-clicks
 
-		virtual void mouseDown(unsigned col, unsigned row, MouseButton button, Key modifiers) {
+		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
 			MARK_AS_UNUSED(col);
 			MARK_AS_UNUSED(row);
 			MARK_AS_UNUSED(button);
 			MARK_AS_UNUSED(modifiers);
 		}
 
-		virtual void mouseUp(unsigned col, unsigned row, MouseButton button, Key modifiers) {
+		virtual void mouseUp(int col, int row, MouseButton button, Key modifiers) {
 			MARK_AS_UNUSED(col);
 			MARK_AS_UNUSED(row);
 			MARK_AS_UNUSED(button);
 			MARK_AS_UNUSED(modifiers);
 		}
 
-		virtual void mouseWheel(unsigned col, unsigned row, int by, Key modifiers) {
+		virtual void mouseWheel(int col, int row, int by, Key modifiers) {
 			MARK_AS_UNUSED(col);
 			MARK_AS_UNUSED(row);
 			MARK_AS_UNUSED(by);
 			MARK_AS_UNUSED(modifiers);
 		}
 
-		virtual void mouseMove(unsigned col, unsigned row, Key modifiers) {
+		virtual void mouseMove(int col, int row, Key modifiers) {
 			MARK_AS_UNUSED(col);
 			MARK_AS_UNUSED(row);
 			MARK_AS_UNUSED(modifiers);
@@ -288,7 +288,8 @@ namespace ui {
 		
 		    Assumes the size is different that current size. However, if the size is invalid, the widget may choose to update the requested width and height accordingly. Invalidates the widget and triggers the onResize event. 
 		 */
-		virtual void updateSize(unsigned width, unsigned height) {
+		virtual void updateSize(int width, int height) {
+			ASSERT(width >= 0 && height >= 0);
 			width_ = width;
 			height_ = height;
 			invalidate();
@@ -363,8 +364,8 @@ namespace ui {
 		int y_;
 
 		/* Size */
-		unsigned width_;
-		unsigned height_;
+		int width_;
+		int height_;
 
 	};
 

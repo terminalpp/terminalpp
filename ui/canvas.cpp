@@ -12,7 +12,7 @@ namespace ui {
 
 
 
-	Canvas::VisibleRegion::VisibleRegion(VisibleRegion const& from, int left, int top, unsigned width, unsigned height) :
+	Canvas::VisibleRegion::VisibleRegion(VisibleRegion const& from, int left, int top, int width, int height) :
 		root(from.root),
 	    region(Rect::Intersection(from.region, Rect(left, top, left + width, top + height))) {
 		// if the new visible region is not empty, update the intersection by the control start and update the offset, otherwise the offset's value does not matter
@@ -23,11 +23,10 @@ namespace ui {
 				from.windowOffset.row + (top + region.top - from.region.top)
 			);
 		}
+		ASSERT(windowOffset.col >= 0 && windowOffset.row >= 0);
 	}
 
-
-
-	Canvas::Canvas(Canvas const& from, int left, int top, unsigned width, unsigned height) :
+	Canvas::Canvas(Canvas const& from, int left, int top, int width, int height) :
 		visibleRegion_(from.visibleRegion_, left, top, width, height),
 		screen_(from.screen_),
 		width_(width),
@@ -48,7 +47,7 @@ namespace ui {
 		char const* i = text.c_str();
 		char const* e = i + text.size();
 		while (i < e) {
-			if (start.col >= static_cast<int>(width_)) // don't draw past first line
+			if (start.col >= width_) // don't draw past first line
 				break;
 			Char const* c = Char::At(i, e);
 			Cell* cell = at(start);

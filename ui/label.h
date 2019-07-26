@@ -7,7 +7,7 @@ namespace ui {
 	class Label : public Widget {
 	public:
 
-		Label(int left = 0, int top = 0, unsigned width = 10, unsigned height = 1) :
+		Label(int left = 0, int top = 0, int width = 10, int height = 1) :
 			Widget(left, top, width, height),
 			text_("Label"),
 			textColor_(Color::White()),

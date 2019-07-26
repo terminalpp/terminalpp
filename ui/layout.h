@@ -46,7 +46,7 @@ namespace ui {
 			return container->children_;
 		}
 
-		void setChildGeometry(Container* container, Widget* child, int x, int y, unsigned width, unsigned height) {
+		void setChildGeometry(Container* container, Widget* child, int x, int y, int width, int height) {
 			container->setChildGeometry(child, x, y, width, height);
 		}
 
@@ -96,8 +96,8 @@ namespace ui {
 			// nothing to layout if there are no kids
 			if (visibleChildren == 0)
 				return;
-			unsigned totalHeight = container->height();
-			unsigned h = static_cast<unsigned>(totalHeight / visibleChildren);
+			int totalHeight = container->height();
+			int h = static_cast<int>(totalHeight / visibleChildren);
 			int top = 0;
 			for (Widget* child : children) {
 				if (child->visible()) {

@@ -50,13 +50,13 @@ namespace ui {
 
 		/** Returns the width of the canvas in cells.
 		 */
-		unsigned width() const {
+		int width() const {
 			return width_;
 		}
 
 		/** Returns the height of the canvas in cells. 
 		 */
-		unsigned height() const {
+		int height() const {
 			return height_;
 		}
 
@@ -87,7 +87,7 @@ namespace ui {
 
 			/** Creates a new visible region within existing visible region. 
 			 */
-			VisibleRegion(VisibleRegion const& from, int left, int top, unsigned width, unsigned height);
+			VisibleRegion(VisibleRegion const& from, int left, int top, int width, int height);
 
 			bool isValid() const {
 				return root != nullptr;
@@ -109,12 +109,12 @@ namespace ui {
 
 			/** Determines whether the visible region contains given screen column and row. 
 			 */
-			bool contains(int col, int row) {
+			bool contains(unsigned col, unsigned row) {
 				if (root == nullptr)
 					return false;
-				if (col < windowOffset.col || row < windowOffset.row)
+				if (col < static_cast<unsigned>(windowOffset.col) || row < static_cast<unsigned>(windowOffset.row))
 					return false;
-				if (col >= windowOffset.col + region.width() || row >= windowOffset.row + region.height())
+				if (col >= static_cast<unsigned>(windowOffset.col) + region.width() || row >= static_cast<unsigned>(windowOffset.row + region.height()))
 					return false;
 				return true;
 			}
@@ -132,7 +132,7 @@ namespace ui {
 
 		/** Creates the canvas from given valid visible region, underlying screen and width & height. 
 		 */
-		Canvas(VisibleRegion const& from, vterm::Terminal::Screen& screen, unsigned width, unsigned height) :
+		Canvas(VisibleRegion const& from, vterm::Terminal::Screen& screen, int width, int height) :
 			visibleRegion_(from),
 			screen_(screen),
 			width_(width),
@@ -144,7 +144,7 @@ namespace ui {
 
 		    Reuses the screen from the existing canvas and recalculates the visible region to reflect the child selected rectangle's position and dimension. 
 		 */
-		Canvas(Canvas const& from, int left, int top, unsigned width, unsigned height);
+		Canvas(Canvas const& from, int left, int top, int width, int height);
 
 		/** Returns the cell at given canvas coordinates if visible, or nullptr if the cell is outside the visible region. 
 		 */
@@ -160,8 +160,8 @@ namespace ui {
 
 		vterm::Terminal::Screen& screen_;
 
-		unsigned width_;
-		unsigned height_;
+		int width_;
+		int height_;
 
 	}; // ui::Canvas
 

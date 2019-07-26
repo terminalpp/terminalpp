@@ -21,7 +21,7 @@ namespace ui {
 
 	protected:
 
-		Container(int x = 0, int y = 0, unsigned width = 1, unsigned height = 0);
+		Container(int x = 0, int y = 0, int width = 1, int height = 1);
 
 		void addChild(Widget * child) {
 			ASSERT(child->parent() != this) << "Already a child";
@@ -58,7 +58,7 @@ namespace ui {
 			}
 		}
 
-		virtual void setChildGeometry(Widget* child, int x, int y, unsigned width, unsigned height) {
+		virtual void setChildGeometry(Widget* child, int x, int y, int width, int height) {
 			if (child->x() != x || child->y() != y) {
 				if (child->visibleRegion_.isValid())
 					child->invalidateContents();
@@ -88,7 +88,7 @@ namespace ui {
 			Widget::updatePosition(x, y);
 		}
 
-		void updateSize(unsigned width, unsigned height) override {
+		void updateSize(int width, int height) override {
 			relayout_ = true;
 			Widget::updateSize(width, height);
 		}
