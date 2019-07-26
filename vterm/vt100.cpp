@@ -104,6 +104,8 @@ namespace vterm {
 		addVTModifiers(Key::Right, "\033[1;", "C");
 		addVTModifiers(Key::Home, "\033[1;", "H");
 		addVTModifiers(Key::End, "\033[1;", "F");
+		addVTModifiers(Key::PageUp, "\033[5;", "~");
+		addVTModifiers(Key::PageDown, "\033[6;", "~");
 
 		addVTModifiers(Key::F1, "\033[1;", "P");
 		addVTModifiers(Key::F2, "\033[1;", "Q");
