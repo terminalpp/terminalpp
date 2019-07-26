@@ -22,12 +22,28 @@ namespace helpers {
 		return result;
 	}
 
+	/** Returns a steady clock time in milliseconds. 
+
+	    Note that the time has no meaningful reference, so all it is good for is simple time duration calculations. 
+	 */
+	inline size_t SteadyClockMillis() {
+		using namespace std::chrono;
+		return static_cast<size_t>(
+			duration<long, std::milli>(
+				duration_cast<milliseconds>(
+					steady_clock::now().time_since_epoch()
+					)
+				).count()
+			);
+	}
+
 	/** Simple timer class which encapsulates the std::chrono.
 	 */
 	class Timer {
 	public:
 		Timer():
-		    started_(false) {
+		    started_(false),
+		    value_(0) {
 		}
 
 		~Timer() {
@@ -35,22 +51,27 @@ namespace helpers {
 
 		void start() {
 			started_ = true;
-			start_ = std::chrono::high_resolution_clock::now();
+			start_ = std::chrono::steady_clock::now();
 		}
 
 		/** Returns the duration in seconds. 
 		 */
-		double stop() {
+		size_t stop() {
 			ASSERT(started_) << "Timer was not started";
-			value_ = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_);
+			auto end = std::chrono::steady_clock::now();
+			value_ = static_cast<size_t>(std::chrono::duration<long, std::milli>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start_)).count());
 			started_ = false;
-			return value_.count();
+			return value_;
+		}
+
+		size_t value() const {
+			return value_;
 		}
 
 	private:
 		bool started_;
-		std::chrono::high_resolution_clock::time_point start_;
-		std::chrono::duration<double> value_;
+		std::chrono::steady_clock::time_point start_;
+		size_t value_;
 	};
 
 

@@ -72,6 +72,14 @@ namespace ui {
 			canvas.textOut(Point(0, 0), text_);
 		}
 
+		void mouseClick(int x, int y, MouseButton button, Key modifiers) override {
+			setText("Clicked");
+		}
+
+		void mouseDoubleClick(int x, int y, MouseButton button, Key modifiers) override {
+			setText("Double clicked");
+		}
+
 		void mouseEnter() override {
 			font_.setUnderline(true);
 			repaint();

@@ -103,6 +103,8 @@ namespace ui {
 
 		Event<MouseButtonEvent> onMouseDown;
 		Event<MouseButtonEvent> onMouseUp;
+		Event<MouseButtonEvent> onMouseClick;
+		Event<MouseButtonEvent> onMouseDoubleClick;
 		Event<MouseWheelEvent> onMouseWheel;
 		Event<MouseMoveEvent> onMouseMove;
 		Event<NoPayloadEvent> onMouseEnter;
@@ -201,43 +203,43 @@ namespace ui {
 
 	protected:
 
-		// https://docs.microsoft.com/en-us/dotnet/framework/winforms/how-to-distinguish-between-clicks-and-double-clicks
-
 		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
-			MARK_AS_UNUSED(col);
-			MARK_AS_UNUSED(row);
-			MARK_AS_UNUSED(button);
-			MARK_AS_UNUSED(modifiers);
+			MouseButtonPayload e{ col, row, button, modifiers };
+			trigger(onMouseUp, e);
 		}
 
 		virtual void mouseUp(int col, int row, MouseButton button, Key modifiers) {
-			MARK_AS_UNUSED(col);
-			MARK_AS_UNUSED(row);
-			MARK_AS_UNUSED(button);
-			MARK_AS_UNUSED(modifiers);
+			MouseButtonPayload e{ col, row, button, modifiers };
+			trigger(onMouseUp, e);
+		}
+
+		virtual void mouseClick(int col, int row, MouseButton button, Key modifiers) {
+			MouseButtonPayload e{ col, row, button, modifiers };
+			trigger(onMouseClick, e);
+		}
+
+		virtual void mouseDoubleClick(int col, int row, MouseButton button, Key modifiers) {
+			MouseButtonPayload e{ col, row, button, modifiers };
+			trigger(onMouseDoubleClick, e);
 		}
 
 		virtual void mouseWheel(int col, int row, int by, Key modifiers) {
-			MARK_AS_UNUSED(col);
-			MARK_AS_UNUSED(row);
-			MARK_AS_UNUSED(by);
-			MARK_AS_UNUSED(modifiers);
+			MouseWheelPayload e{ col, row, by, modifiers };
+			trigger(onMouseWheel, e);
 		}
 
 		virtual void mouseMove(int col, int row, Key modifiers) {
-			MARK_AS_UNUSED(col);
-			MARK_AS_UNUSED(row);
-			MARK_AS_UNUSED(modifiers);
+			MouseMovePayload e{ col, row, modifiers };
+			trigger(onMouseMove, e);
 		}
 
 		virtual void mouseEnter() {
-
+			trigger(onMouseEnter);
 		}
 
 		virtual void mouseLeave() {
-
+			trigger(onMouseLeave);
 		}
-
 
 		/** Paints given child. 
 		 */
@@ -334,7 +336,7 @@ namespace ui {
 		 */
 		template<typename EVENT>
 		void trigger(EVENT& e, typename EVENT::Payload::Payload const& payload) {
-			static_assert(std::is_same<typename EVENT::Payload::Sender, Object >::value, "Only events with sender being ui::Widget should be used");
+			static_assert(std::is_same<typename EVENT::Payload::Sender, Widget >::value, "Only events with sender being ui::Widget should be used");
 			typename EVENT::Payload p(this, payload);
 			e.trigger(p);
 		}

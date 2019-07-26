@@ -17,6 +17,9 @@ namespace ui {
 	class RootWindow : public vterm::Terminal, public Container {
 	public:
 
+		static unsigned MOUSE_CLICK_MAX_DURATION;
+		static unsigned MOUSE_DOUBLE_CLICK_MAX_INTERVAL;
+
 		RootWindow(unsigned width, unsigned height) :
 			Terminal(width, height),
 			Container(0, 0, width, height),
@@ -59,7 +62,23 @@ namespace ui {
 
 		// widget interface
 
+		/** Takes screen coordinates and converts them to the widget's coordinates.
 
+			Returns (-1;-1) if the screen coordinates are outside the current widget.
+		 */
+		Point screenToWidgetCoordinates(Widget * w, unsigned col, unsigned row) {
+			Canvas::VisibleRegion const& wr = w->visibleRegion_;
+			if (!wr.isValid() || wr.windowOffset.col > static_cast<int>(col) || wr.windowOffset.row > static_cast<int>(row))
+				return Point(-1, -1);
+			Point result(
+				wr.region.left + (col - wr.windowOffset.col),
+				wr.region.top + (row - wr.windowOffset.row)
+			);
+			ASSERT(result.col >= 0 && result.row >= 0);
+			if (result.col >= w->width() || result.row >= w->height())
+				return Point(-1, -1);
+			return result;
+		}
 
 	private:
 
@@ -68,6 +87,12 @@ namespace ui {
 		unsigned mouseCol_;
 		unsigned mouseRow_;
 		Widget* mouseFocus_;
+		Widget* mouseClickWidget_;
+		MouseButton mouseClickButton_;
+		size_t mouseClickStart_;
+		size_t mouseDoubleClickPrevious_;
+
+
 
 	};
 

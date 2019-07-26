@@ -27,7 +27,6 @@
 - size hints in controls
 - client area in container, i.e. a possibility of a border around the container
 - add events
-- propagate events through windows
 - hide properties not meant to be public immediately
 - make canvas do more
 
