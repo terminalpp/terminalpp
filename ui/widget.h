@@ -39,13 +39,34 @@ namespace ui {
 
 	class Widget;
 
-	typedef helpers::EventPayload<void, ui::Widget> ShowEvent;
-	typedef helpers::EventPayload<void, ui::Widget> HideEvent;
-	typedef helpers::EventPayload<void, ui::Widget> ResizeEvent;
-	typedef helpers::EventPayload<void, ui::Widget> MoveEvent;
-	typedef helpers::EventPayload<void, ui::Widget> FocusInEvent;
-	typedef helpers::EventPayload<void, ui::Widget> FocusOutEvent;
+	class MouseButtonPayload {
+	public:
+		int x;
+		int y;
+		MouseButton button;
+		Key modifiers;
+	};
 
+	class MouseWheelPayload {
+	public:
+		int x;
+		int y;
+		int by;
+		Key modifiers;
+	};
+
+	class MouseMovePayload {
+	public:
+		int x;
+		int y;
+		Key modifiers;
+	};
+
+	typedef helpers::EventPayload<void, ui::Widget> NoPayloadEvent;
+
+	typedef helpers::EventPayload<MouseButtonPayload, ui::Widget> MouseButtonEvent;
+	typedef helpers::EventPayload<MouseWheelPayload, ui::Widget> MouseWheelEvent;
+	typedef helpers::EventPayload<MouseMovePayload, ui::Widget> MouseMoveEvent;
 
 	/** Base class for all UI widgets. 
 
@@ -58,27 +79,35 @@ namespace ui {
 
 		/** Triggered when visibility changes to true. 
 		 */
-		Event<ShowEvent> onShow;
+		Event<NoPayloadEvent> onShow;
 
 		/** Triggered when visibility changes to false. 
 		 */
-		Event<HideEvent> onHide;
+		Event<NoPayloadEvent> onHide;
 
 		/** Triggered when the widget's size has been updated. 
 		 */
-		Event<ResizeEvent> onResize;
+		Event<NoPayloadEvent> onResize;
 
 		/** Triggered when the widget's position has been updated. 
 		 */
-		Event<MoveEvent> onMove;
+		Event<NoPayloadEvent> onMove;
 
 		/** Triggered when the widget has obtained focus, i.e. it will receive keyboard events. 
 		 */
-		Event<FocusInEvent> onFocusIn;
+		Event<NoPayloadEvent> onFocusIn;
 
 		/** Triggered when the widget has lost focus, i.e. it will no longer receive keyboard events. 
 		 */
-		Event<FocusOutEvent> onFocusOut;
+		Event<NoPayloadEvent> onFocusOut;
+
+		Event<MouseButtonEvent> onMouseDown;
+		Event<MouseButtonEvent> onMouseUp;
+		Event<MouseWheelEvent> onMouseWheel;
+		Event<MouseMoveEvent> onMouseMove;
+		Event<NoPayloadEvent> onMouseEnter;
+		Event<NoPayloadEvent> onMouseLeave;
+
 
 	public:
 
@@ -125,26 +154,23 @@ namespace ui {
 
 		// all this should be protected and should then be enabled in respective subclasses, such as control
 
-		/** Sets the widget as visible and repaints it. 
+		/** Sets the widget as visible or hidden.
 
 		    Also triggers the repaint of entire parent, because the widget may interfere with other children of its own parent.
 		 */
-		void show() {
-			if (visible_ == false) {
-				visible_ = true;
-				parent_->childInvalidated(this);
-				trigger(onShow);
-			}
-		}
-
-		/** Hides the widget and triggers parent repaint as the widget could have prevented other children from being visible. 
-		 */
-		void hide() {
-			if (visible_ == true) {
-				visible_ = false;
-				if (parent_)
-					parent_->childInvalidated(this);
-				trigger(onHide);
+		void setVisible(bool value) {
+			if (visible_ != value) {
+				if (value) {
+					visible_ = true;
+					if (parent_ != nullptr)
+					    parent_->childInvalidated(this);
+					trigger(onShow);
+				} else {
+					visible_ = false;
+					if (parent_ != nullptr)
+						parent_->childInvalidated(this);
+					trigger(onHide);
+				}
 			}
 		}
 
@@ -175,19 +201,33 @@ namespace ui {
 
 	protected:
 
+		// https://docs.microsoft.com/en-us/dotnet/framework/winforms/how-to-distinguish-between-clicks-and-double-clicks
+
 		virtual void mouseDown(unsigned col, unsigned row, MouseButton button, Key modifiers) {
+			MARK_AS_UNUSED(col);
+			MARK_AS_UNUSED(row);
+			MARK_AS_UNUSED(button);
+			MARK_AS_UNUSED(modifiers);
 		}
 
 		virtual void mouseUp(unsigned col, unsigned row, MouseButton button, Key modifiers) {
-
+			MARK_AS_UNUSED(col);
+			MARK_AS_UNUSED(row);
+			MARK_AS_UNUSED(button);
+			MARK_AS_UNUSED(modifiers);
 		}
 
 		virtual void mouseWheel(unsigned col, unsigned row, int by, Key modifiers) {
-
+			MARK_AS_UNUSED(col);
+			MARK_AS_UNUSED(row);
+			MARK_AS_UNUSED(by);
+			MARK_AS_UNUSED(modifiers);
 		}
 
 		virtual void mouseMove(unsigned col, unsigned row, Key modifiers) {
-
+			MARK_AS_UNUSED(col);
+			MARK_AS_UNUSED(row);
+			MARK_AS_UNUSED(modifiers);
 		}
 
 		virtual void mouseEnter() {
@@ -327,6 +367,7 @@ namespace ui {
 		unsigned height_;
 
 	};
+
 
 
 

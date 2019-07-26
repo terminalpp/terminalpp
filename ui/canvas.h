@@ -109,7 +109,7 @@ namespace ui {
 
 			/** Determines whether the visible region contains given screen column and row. 
 			 */
-			bool contains(unsigned col, unsigned row) {
+			bool contains(int col, int row) {
 				if (root == nullptr)
 					return false;
 				if (col < windowOffset.col || row < windowOffset.row)

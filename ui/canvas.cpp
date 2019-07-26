@@ -48,7 +48,7 @@ namespace ui {
 		char const* i = text.c_str();
 		char const* e = i + text.size();
 		while (i < e) {
-			if (start.col >= width_) // don't draw past first line
+			if (start.col >= static_cast<int>(width_)) // don't draw past first line
 				break;
 			Char const* c = Char::At(i, e);
 			Cell* cell = at(start);

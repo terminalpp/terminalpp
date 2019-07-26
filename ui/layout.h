@@ -32,6 +32,8 @@ namespace ui {
 		virtual void calculateOverlay(Container* container) {
 			Rect overlay;
 			for (auto i = childrenOf(container).rbegin(), e = childrenOf(container).rend(); i != e; ++i) {
+				if (!(*i)->visible())
+					continue;
 				Rect childRect = (*i)->rect();
 				(*i)->setOverlay(!Rect::Intersection(childRect, overlay).empty());
 				overlay = Rect::Union(childRect, overlay);
@@ -69,15 +71,16 @@ namespace ui {
 				setChildGeometry(container, child, 0, 0, container->width(), container->height());
 		}
 
-		/** All but the last widget in the maximized container are overlaid.
+		/** All but the last visible widget in the maximized container are overlaid.
 		 */
 		virtual void calculateOverlay(Container* container) {
 			std::vector<Widget*> const& children = childrenOf(container);
-			auto i = children.rbegin(), e = children.rend();
-			if (i != e) {
-				(*i++)->setOverlay(false);
-				while (i != e)
-					(*i++)->setOverlay(true);
+			bool overlay = false;
+			for (auto i = children.rbegin(), e = children.rend(); i != e; ++i) {
+				if (!(*i)->visible())
+					continue;
+				(*i)->setOverlay(overlay);
+				overlay = false;
 			}
 		}
 	};
@@ -86,17 +89,23 @@ namespace ui {
 	protected:
 		virtual void relayout(Container* container) {
 			std::vector<Widget*> const& children = childrenOf(container);
+			size_t visibleChildren = 0;
+			for (Widget* child : children)
+				if (child->visible())
+					++visibleChildren;
 			// nothing to layout if there are no kids
-			if (children.empty())
+			if (visibleChildren == 0)
 				return;
 			unsigned totalHeight = container->height();
-			unsigned h = totalHeight / children.size();
+			unsigned h = static_cast<unsigned>(totalHeight / visibleChildren);
 			int top = 0;
 			for (Widget* child : children) {
-				setChildGeometry(container, child, 0, top, container->width(), h);
-				top += h;
-				if (top + (h * 2) > totalHeight)
-					h = totalHeight - top;
+				if (child->visible()) {
+					setChildGeometry(container, child, 0, top, container->width(), h);
+					top += h;
+					if (top + (h * 2) > totalHeight)
+						h = totalHeight - top;
+				}
 			}
 		}
 

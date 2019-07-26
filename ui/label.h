@@ -63,6 +63,8 @@ namespace ui {
 			}
 		}
 
+		using Widget::setVisible;
+
 	protected:
 
 		void paint(Canvas& canvas) {

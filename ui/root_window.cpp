@@ -3,12 +3,15 @@
 namespace ui {
 
 	void RootWindow::keyDown(Key k) {
+		MARK_AS_UNUSED(k);
 	}
 
 	void RootWindow::keyUp(Key k) {
+		MARK_AS_UNUSED(k);
 	}
 
 	void RootWindow::keyChar(helpers::Char c) {
+		MARK_AS_UNUSED(c);
 	}
 
 	void RootWindow::mouseDown(unsigned col, unsigned row, MouseButton button, Key modifiers) {
@@ -45,7 +48,7 @@ namespace ui {
 	}
 
 	void RootWindow::paste(std::string const& what) {
-
+		MARK_AS_UNUSED(what);
 	}
 
 	void RootWindow::doOnResize(unsigned cols, unsigned rows) {
