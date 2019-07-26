@@ -74,19 +74,23 @@ namespace ui {
 
 		void mouseClick(int x, int y, MouseButton button, Key modifiers) override {
 			setText("Clicked");
+			Widget::mouseClick(x, y, button, modifiers);
 		}
 
 		void mouseDoubleClick(int x, int y, MouseButton button, Key modifiers) override {
 			setText("Double clicked");
+			Widget::mouseClick(x, y, button, modifiers);
 		}
 
 		void mouseEnter() override {
 			font_.setUnderline(true);
 			repaint();
+			Widget::mouseEnter();
 		}
 		void mouseLeave() override {
 			font_.setUnderline(false);
 			repaint();
+			Widget::mouseLeave();
 		}
 
 
