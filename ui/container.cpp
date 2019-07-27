@@ -23,9 +23,10 @@ namespace ui {
 				layout_->calculateOverlay(this);
 			relayout_ = false;
 		}
+		Canvas clientCanvas = getClientCanvas(canvas);
 		// display the children
 		for (Widget* child : children_)
-			paintChild(child, canvas);
+			paintChild(child, clientCanvas);
 	}
 
 	void Container::updateOverlay(bool value) {

@@ -18,7 +18,30 @@ namespace ui {
 	typedef vterm::Font Font;
 	typedef helpers::Char Char;
 
+	class Border {
+	public:
+		int left;
+		int top;
+		int right;
+		int bottom;
+		
+		Border(int left = 0, int top = 0, int right = 0, int bottom = 0) :
+			left(left),
+			top(top),
+			right(right),
+			bottom(bottom) {
+		}
 
+		bool operator == (Border const& other) const {
+			return left == other.left && top == other.top && right == other.right && bottom == other.bottom;
+		}
+
+		bool operator != (Border const& other) const {
+			return left != other.left || top != other.top || right != other.right || bottom != other.bottom;
+		}
+
+	};
+	
 	/** Horizontal align. 
 	 */
 	enum class HAlign {

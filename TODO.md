@@ -23,11 +23,14 @@
 
 # UI
 
+- hide properties not meant to be public immediately
 - horizontal and vertical layouts
 - size hints in controls
-- client area in container, i.e. a possibility of a border around the container
+- scrolling (make clientWidth and height virtual functions and scrollable controls allow larger client width and height than the actual area? 
+- onChange handler for generic changes
 - add events
-- hide properties not meant to be public immediately
 - make canvas do more
 
 - mouseFocus, should it disapper when mouse moves from parent to child? 
+
+

@@ -67,8 +67,10 @@ namespace ui {
 	class Layout::MaximizedImpl : public Layout {
 	protected:
 		virtual void relayout(Container* container) {
+			int w = container->clientWidth();
+			int h = container->clientHeight();
 			for (Widget* child : childrenOf(container))
-				setChildGeometry(container, child, 0, 0, container->width(), container->height());
+				setChildGeometry(container, child, 0, 0, w, h);
 		}
 
 		/** All but the last visible widget in the maximized container are overlaid.
@@ -96,12 +98,13 @@ namespace ui {
 			// nothing to layout if there are no kids
 			if (visibleChildren == 0)
 				return;
-			int totalHeight = container->height();
+			int totalHeight = container->clientHeight();
 			int h = static_cast<int>(totalHeight / visibleChildren);
 			int top = 0;
+			int w = container->clientWidth();
 			for (Widget* child : children) {
 				if (child->visible()) {
-					setChildGeometry(container, child, 0, top, container->width(), h);
+					setChildGeometry(container, child, 0, top, w, h);
 					top += h;
 					if (top + (h * 2) > totalHeight)
 						h = totalHeight - top;

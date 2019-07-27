@@ -121,7 +121,8 @@ namespace ui {
 			x_(x),
 			y_(y),
 			width_(width),
-			height_(height) {
+			height_(height),
+		    border_(0, 0, 0, 0) {
 		}
 
 		Widget* parent() const {
@@ -150,11 +151,25 @@ namespace ui {
 			return height_;
 		}
 
+		/** The clientWidth and clientHeight return the size of the widget that is available for children (i.e. excluding the border of the control. 
+		 */
+		int clientWidth() const {
+			return std::max(width_ - border_.left - border_.right, 0);
+		}
+
+		int clientHeight() const {
+			return std::max(height_ - border_.top - border_.bottom, 0);
+		}
+
+		Border const& border() const {
+			return border_;
+		}
+
 		Rect rect() const {
 			return Rect(x_, y_, x_ + width_, y_ + height_);
 		}
 
-		// all this should be protected and should then be enabled in respective subclasses, such as control
+		// TODO TODO TODO all this should be protected and should then be enabled in respective subclasses, such as control
 
 		/** Sets the widget as visible or hidden.
 
@@ -201,6 +216,11 @@ namespace ui {
 				updateOverlay(value);
 		}
 
+		void setBorder(Border const& value) {
+			if (value != border_)
+				updateBorder(value);
+		}
+
 	protected:
 
 		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
@@ -241,14 +261,21 @@ namespace ui {
 			trigger(onMouseLeave);
 		}
 
-		/** Paints given child. 
+		/** Paints given child.
+
+		    Expects the clientCanvas of the parent as the second argument. In cases where border is 0, this can be the widget's main canvas as well. In other cases the getClientCanvas method should be used to obtain the client canvas first. 
 		 */
-		void paintChild(Widget * child, Canvas& canvas);
+		void paintChild(Widget * child, Canvas& clientCanvas);
+
+		/** Given a canvas for the full widget, returns a canvas for the client area only. 
+		 */
+		Canvas getClientCanvas(Canvas& canvas) {
+			return Canvas(canvas, border_.left, border_.top, clientWidth(), clientHeight());
+		}
 
 		/** Invalidates the widget and request its parent repaint,
 
 		    If the widget is valid, invalidates its visible region and informs its parent that a child was invalidated. If the widget is already not valid, does nothing because the parent has already been notified. 
-
 		 */
 		void invalidate() {
 			if (visibleRegion_.isValid()) {
@@ -318,6 +345,13 @@ namespace ui {
 			overlay_ = value;
 		}
 
+		/** Updates the value of the widget's border and invalidates the widget.
+		 */
+		virtual void updateBorder(Border const& value) {
+			border_ = value;
+			invalidate();
+		}
+
 		virtual Widget* getMouseTarget(unsigned col, unsigned row) {
 			ASSERT(visibleRegion_.contains(col, row));
 			return this;
@@ -369,6 +403,8 @@ namespace ui {
 		int width_;
 		int height_;
 
+		/* Border of the widget */
+		Border border_;
 	};
 
 

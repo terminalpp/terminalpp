@@ -99,6 +99,13 @@ namespace ui {
 
 		void updateOverlay(bool value) override;
 
+		/** When border is updated, the children widget's layout must be recalculated since the client width and height might have changed. 
+		 */
+		void updateBorder(Border const& value) override {
+			relayout_ = true;
+			Widget::updateBorder(value);
+		}
+
 		Widget* getMouseTarget(unsigned col, unsigned row) override {
 			ASSERT(visibleRegion_.contains(col, row));
 			for (auto i = children_.rbegin(), e = children_.rend(); i != e; ++i)
@@ -115,8 +122,6 @@ namespace ui {
 
 		Layout* layout_;
 		bool relayout_;
-
-
 
 	}; // ui::Container
 
