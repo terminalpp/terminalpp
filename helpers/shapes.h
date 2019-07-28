@@ -33,6 +33,12 @@ namespace helpers {
 			return col != other.col || row != other.row;
 		}
 
+		Point& operator += (Point const& other) {
+			col += other.col;
+			row += other.row;
+			return *this;
+		}
+
 		friend std::ostream& operator << (std::ostream& s, Point const& p) {
 			s << "[" << p.col << "," << p.row << "]";
 			return s;

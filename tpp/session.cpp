@@ -107,7 +107,7 @@ namespace tpp {
 		window_->setTerminal(rw);
 		terminal_ = rw;
 		rw->repaint();
-		sb->setScrollOffset(0, 0);
+		sb->setScrollOffset(-3, -4);
 
 #else
 		// create the terminal backend

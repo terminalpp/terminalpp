@@ -60,7 +60,7 @@ namespace ui {
 		virtual void updateScrollSize(int scrollWidth, int scrollHeight) {
 			scrollWidth_ = scrollWidth;
 			scrollHeight_ = scrollHeight;
-			// TODO how to do relayout
+			// TODO how to do relayout nicely
 			relayout_ = true;
 			invalidate();
 		}
@@ -74,11 +74,20 @@ namespace ui {
 		Canvas getClientCanvas(Canvas& canvas) override {
 			// create the canvas of appropriate size
 			Canvas result(canvas, border().left, border().top, scrollWidth_, scrollHeight_);
-			// offset the visible region by the scrollLeft and scrollRight
+			// first reposition the visible region according to positive scroll offsets
 			result.visibleRegion_.region = Rect::Intersection(
 				Rect(scrollWidth_, scrollHeight_),
-				result.visibleRegion_.region + Point(scrollLeft_, scrollTop_)
+				result.visibleRegion_.region + Point(std::max(0, scrollLeft_), std::max(0, scrollTop_))
 			);
+			// negative offsets update the window offset of the visible region and make the visible region smaller by their value
+			if (scrollLeft_ < 0) {
+				result.visibleRegion_.windowOffset.col -= scrollLeft_;
+				result.visibleRegion_.region.right += scrollLeft_;
+			}
+			if (scrollTop_ < 0) {
+				result.visibleRegion_.windowOffset.row -= scrollTop_;
+				result.visibleRegion_.region.bottom += scrollTop_;
+			}
 			return result;
 		}
 
