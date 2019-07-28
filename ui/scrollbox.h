@@ -60,8 +60,7 @@ namespace ui {
 		virtual void updateScrollSize(int scrollWidth, int scrollHeight) {
 			scrollWidth_ = scrollWidth;
 			scrollHeight_ = scrollHeight;
-			// TODO how to do relayout nicely
-			relayout_ = true;
+			scheduleLayout();
 			invalidate();
 		}
 

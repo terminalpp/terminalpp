@@ -62,6 +62,8 @@ namespace ui {
 
 		// widget interface
 
+		void invalidateContents() override;
+
 		/** Takes screen coordinates and converts them to the widget's coordinates.
 
 			Returns (-1;-1) if the screen coordinates are outside the current widget.

@@ -32,7 +32,7 @@ namespace ui {
 			}
 			children_.push_back(child);
 			child->updateParent(this);
-			relayout_ = true;
+			scheduleLayout();
 			repaint();
 		}
 
@@ -44,7 +44,7 @@ namespace ui {
 					children_.erase(i);
 					break;
 				}
-			relayout_ = true;
+			scheduleLayout();
 			repaint();
 			return child;
 		}
@@ -53,7 +53,7 @@ namespace ui {
 			ASSERT(value != nullptr) << "use Layout::None instead";
 			if (layout_ != value) {
 				layout_ = value;
-				relayout_ = true;
+				scheduleLayout();
 				repaint();
 			}
 		}
@@ -73,23 +73,23 @@ namespace ui {
 
 		void invalidateContents() override {
 			Widget::invalidateContents();
-			relayout_ = true;
+			scheduleLayout();
 			for (Widget* child : children_)
 				child->invalidateContents();
 		}
 
 		void childInvalidated(Widget* child) override {
-			relayout_ = true;
+			scheduleLayout();
 			Widget::childInvalidated(child);
 		}
 
 		void updatePosition(int x, int y) override {
-			relayout_ = true;
+			scheduleLayout();
 			Widget::updatePosition(x, y);
 		}
 
 		void updateSize(int width, int height) override {
-			relayout_ = true;
+			scheduleLayout();
 			Widget::updateSize(width, height);
 		}
 
@@ -102,7 +102,7 @@ namespace ui {
 		/** When border is updated, the children widget's layout must be recalculated since the client width and height might have changed. 
 		 */
 		void updateBorder(Border const& value) override {
-			relayout_ = true;
+			scheduleLayout();
 			Widget::updateBorder(value);
 		}
 
@@ -114,13 +114,17 @@ namespace ui {
 			return this;
 		}
 
+		/** Schedules layout of all components on the next repaint event without actually triggering the repaint itself. 
+		 */
+		void scheduleLayout() {
+			relayout_ = true;
+		}
+
 	private:
 
 		friend class Layout;
 
-		friend class ScrollBox;
-
-		std::vector<Widget*> children_;
+    	std::vector<Widget*> children_;
 
 		Layout* layout_;
 		bool relayout_;

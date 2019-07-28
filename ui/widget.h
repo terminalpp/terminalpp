@@ -194,15 +194,19 @@ namespace ui {
 		/** Moves the widget to the given coordinates relative to its parent.
 		 */
 		void move(int x, int y) {
-			if (x_ != x || y_ != y)
+			if (x_ != x || y_ != y) {
 				updatePosition(x, y);
+				repaint();
+			}
 		}
 
 		/** Resizes the widget. 
 		 */
 		void resize(int width, int height) {
-			if (width_ != width || height_ != height)
+			if (width_ != width || height_ != height) {
 				updateSize(width, height);
+				repaint();
+			}
 		}
 
 		/** Repaints the widget. 
@@ -217,8 +221,10 @@ namespace ui {
 		}
 
 		void setBorder(Border const& value) {
-			if (value != border_)
+			if (value != border_) {
 				updateBorder(value);
+				repaint();
+			}
 		}
 
 	protected:

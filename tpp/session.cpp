@@ -62,7 +62,7 @@ namespace tpp {
 
 		ui::RootWindow * rw = new ui::RootWindow(window_->cols(), window_->rows());
 		rw->setLayout(ui::Layout::Maximized());
-		//rw->setBorder(ui::Border(1, 1, 1, 1));
+		rw->setBorder(ui::Border(1, 1, 1, 1));
 
 		//rw->setLayout(ui::Layout::Horizontal());
 
@@ -107,7 +107,7 @@ namespace tpp {
 		window_->setTerminal(rw);
 		terminal_ = rw;
 		rw->repaint();
-		sb->setScrollOffset(-3, -4);
+		sb->setScrollOffset(0,0);
 
 #else
 		// create the terminal backend

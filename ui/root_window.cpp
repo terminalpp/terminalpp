@@ -99,6 +99,12 @@ namespace ui {
 		repaint();
 	}
 
+	void RootWindow::invalidateContents() {
+		Container::invalidateContents();
+		// update the visible region to the new size
+		visibleRegion_ = Canvas::VisibleRegion(this);
+	}
+
 	Widget* RootWindow::mouseFocusWidget(unsigned col, unsigned row) {
 		if (mouseFocus_ == nullptr || mouseCol_ != col || mouseRow_ != row) {
 			Widget* newFocus = nullptr;
