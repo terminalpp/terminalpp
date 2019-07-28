@@ -223,6 +223,14 @@ namespace ui {
 
 	protected:
 
+		virtual int scrollWidth() const {
+			return clientWidth();
+		}
+
+		virtual int scrollHeight() const {
+			return clientHeight();
+		}
+
 		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
 			MouseButtonPayload e{ col, row, button, modifiers };
 			trigger(onMouseUp, e);
@@ -269,7 +277,7 @@ namespace ui {
 
 		/** Given a canvas for the full widget, returns a canvas for the client area only. 
 		 */
-		Canvas getClientCanvas(Canvas& canvas) {
+		virtual Canvas getClientCanvas(Canvas& canvas) {
 			return Canvas(canvas, border_.left, border_.top, clientWidth(), clientHeight());
 		}
 

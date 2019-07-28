@@ -98,6 +98,7 @@ namespace ui {
 		friend class Widget;
 		friend class Control;
 		friend class RootWindow;
+		friend class ScrollBox;
 
 		/** Determins the visible region of the canvas.
 		 */

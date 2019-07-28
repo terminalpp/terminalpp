@@ -17,13 +17,13 @@ namespace ui {
 
 	void Container::paint(Canvas& canvas) {
 		canvas.fill(Rect(canvas.width(), canvas.height()), Color::Red(), Color::White(), 'x', Font());
+		Canvas clientCanvas = getClientCanvas(canvas);
 		if (relayout_) {
-			layout_->relayout(this);
+			layout_->relayout(this, clientCanvas);
 			if (!overlay_)
 				layout_->calculateOverlay(this);
 			relayout_ = false;
 		}
-		Canvas clientCanvas = getClientCanvas(canvas);
 		// display the children
 		for (Widget* child : children_)
 			paintChild(child, clientCanvas);

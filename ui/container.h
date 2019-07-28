@@ -118,6 +118,8 @@ namespace ui {
 
 		friend class Layout;
 
+		friend class ScrollBox;
+
 		std::vector<Widget*> children_;
 
 		Layout* layout_;

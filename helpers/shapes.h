@@ -163,6 +163,18 @@ namespace helpers {
 			}
 		}
 
+		Rect& operator += (Point<COORD> const & point) {
+			left += point.col;
+			top += point.row;
+			right += point.col;
+			bottom += point.row;
+			return *this;
+		}
+
+		friend Rect operator + (Rect const& rect, Point<COORD> const& p) {
+			return Rect(rect.left + p.col, rect.top + p.row, rect.right + p.col, rect.bottom + p.row);
+		}
+
 		/** Moves the rectangle by coordinates given by the point. 
 		 */
 		friend Rect operator - (Rect const& rect, Point<COORD> const& p) {

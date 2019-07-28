@@ -9,6 +9,7 @@
 #include "ui/root_window.h"
 #include "ui/label.h"
 #include "ui/layout.h"
+#include "ui/scrollbox.h"
 
 
 namespace tpp {
@@ -60,29 +61,53 @@ namespace tpp {
 #ifdef UI
 
 		ui::RootWindow * rw = new ui::RootWindow(window_->cols(), window_->rows());
+		rw->setLayout(ui::Layout::Maximized());
+		//rw->setBorder(ui::Border(1, 1, 1, 1));
 
 		//rw->setLayout(ui::Layout::Horizontal());
 
-		ui::Label* l1 = new ui::Label(10, 10, 30, 1);
-		//l1->setHeightHint(ui::SizeHint::Fixed());
-		ui::Label* l2 = new ui::Label(20, 11, 30, 3);
-		l2->setBackground(ui::Color::Magenta());
-		ui::Label* l3 = new ui::Label(10, 5, 30, 1);
-		//l3->setHeightHint(ui::SizeHint::Fixed());
-		rw->addChild(l1);
-		rw->addChild(l2);
-		rw->addChild(l3);
-		l2->resize(10,10);
-		l2->move(5, 5);
-
+		ui::Label* l0 = new ui::Label();
+		ui::Label* l1 = new ui::Label();
+		ui::Label* l2 = new ui::Label();
+		ui::Label* l3 = new ui::Label();
+		ui::Label* l4 = new ui::Label();
+		ui::Label* l5 = new ui::Label();
+		ui::Label* l6 = new ui::Label();
+		ui::Label* l7 = new ui::Label();
+		ui::Label* l8 = new ui::Label();
+		ui::Label* l9 = new ui::Label();
+		l1->setBackground(ui::Color::Magenta());
+		l3->setBackground(ui::Color::Magenta());
+		l5->setBackground(ui::Color::Magenta());
+		l7->setBackground(ui::Color::Magenta());
+		l9->setBackground(ui::Color::Magenta());
+		l0->setText("This is the zero one");
+		l1->setText("First");
+		l2->setText("Second");
+		l3->setText("Third");
+		l4->setText("Fourth");
+		l5->setText("Sixth");
+		l6->setText("Sevneth");
+		l7->setText("Eight");
+		l8->setText("Ninth");
+		ui::ScrollBox* sb = new ui::ScrollBox();
+		sb->setLayout(ui::Layout::Horizontal());
+		sb->setScrollSize(40, 100);
+		sb->addChild(l0);
+		sb->addChild(l1);
+		sb->addChild(l2);
+		sb->addChild(l3);
+		sb->addChild(l4);
+		sb->addChild(l5);
+		sb->addChild(l6);
+		sb->addChild(l7);
+		sb->addChild(l8);
+		sb->addChild(l9);
+		rw->addChild(sb);
 		window_->setTerminal(rw);
 		terminal_ = rw;
 		rw->repaint();
-		l3->setText("Third");
-		l2->setText("Second");
-		l1->setText("First of his name");
-		rw->setLayout(ui::Layout::Horizontal());
-		l1->setText("blabla");
+		sb->setScrollOffset(0, 0);
 
 #else
 		// create the terminal backend

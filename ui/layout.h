@@ -22,7 +22,7 @@ namespace ui {
 
 		    Respective layouts should implement the functionality. 
 		 */
-		virtual void relayout(Container* container) = 0;
+		virtual void relayout(Container* container, Canvas const & clientCanvas) = 0;
 
 
 		/** Calculates overlays for the widgets in the container. 
@@ -59,16 +59,16 @@ namespace ui {
 
 	class Layout::NoneImpl : public Layout {
 	protected:
-		virtual void relayout(Container* container) {
+		virtual void relayout(Container* container, Canvas const& clientCanvas) {
 			MARK_AS_UNUSED(container);
 		}
 	};
 
 	class Layout::MaximizedImpl : public Layout {
 	protected:
-		virtual void relayout(Container* container) {
-			int w = container->clientWidth();
-			int h = container->clientHeight();
+		virtual void relayout(Container* container, Canvas const& clientCanvas) {
+			int w = clientCanvas.width();
+			int h = clientCanvas.height();
 			for (Widget* child : childrenOf(container))
 				setChildGeometry(container, child, 0, 0, w, h);
 		}
@@ -89,7 +89,7 @@ namespace ui {
 
 	class Layout::HorizontalImpl : public Layout {
 	protected:
-		virtual void relayout(Container* container) {
+		virtual void relayout(Container* container, Canvas const& clientCanvas) {
 			std::vector<Widget*> const& children = childrenOf(container);
 			size_t visibleChildren = 0;
 			for (Widget* child : children)
@@ -98,10 +98,10 @@ namespace ui {
 			// nothing to layout if there are no kids
 			if (visibleChildren == 0)
 				return;
-			int totalHeight = container->clientHeight();
+			int totalHeight = clientCanvas.height();
 			int h = static_cast<int>(totalHeight / visibleChildren);
 			int top = 0;
-			int w = container->clientWidth();
+			int w = clientCanvas.width();
 			for (Widget* child : children) {
 				if (child->visible()) {
 					setChildGeometry(container, child, 0, top, w, h);

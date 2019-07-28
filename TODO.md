@@ -26,7 +26,7 @@
 - hide properties not meant to be public immediately
 - horizontal and vertical layouts
 - size hints in controls
-- scrolling (make clientWidth and height virtual functions and scrollable controls allow larger client width and height than the actual area? 
+- scrolling 
 - onChange handler for generic changes
 - add events
 - make canvas do more
