@@ -6,30 +6,66 @@
 
 namespace ui {
 
-	/**
+	/** Size hint provides hints about the width and height of a widget to the layouting engine. 
 
-	    Generally, all getters are public
-	
-	    Events:
+	    Can be:
 
-		onMouseClick
-		onMouseDown
-		onMouseUp
-		onMouseMove
-		onMouseEnter
-		onMouseLeave
-		onKeyDown
-		onKeyUp
-		onChar
-		onFocusIn
-		onFocusOut
-		onPaste
-		onSizeChange,
-		onPositionChange
-	    
-
-	
+		- auto (left to the layout engine, if any)
+		- fixed (not allowed to touch the present value)
+		- percentage (percentage of the parent)
 	 */
+	class SizeHint {
+	public:
+
+		static SizeHint Auto() {
+			return SizeHint(AUTO);
+		}
+
+		static SizeHint Fixed() {
+			return SizeHint(FIXED);
+		}
+
+		static SizeHint Percentage(unsigned value) {
+			ASSERT(value <= 100);
+			return SizeHint(PERCENTAGE + value);
+		}
+
+		int pct() const {
+			ASSERT(raw_ && PERCENTAGE) << "Not a percentage size hint";
+			return static_cast<int>(raw_ & 0xff);
+		}
+
+		bool isFixed() const {
+			return raw_ & FIXED;
+		}
+
+		bool isAuto() const {
+			return raw_ & AUTO;
+		}
+
+		bool isPercentage() const {
+			return raw_ & PERCENTAGE;
+		}
+
+		bool operator == (SizeHint other) const {
+			return raw_ == other.raw_;
+		}
+
+		bool operator != (SizeHint other) const {
+			return raw_ != other.raw_;
+		}
+
+	private:
+		static constexpr unsigned AUTO = 0x100;
+		static constexpr unsigned FIXED = 0x200;
+		static constexpr unsigned PERCENTAGE = 0x400;
+
+		SizeHint(unsigned raw) :
+			raw_(raw) {
+		}
+
+		unsigned raw_;
+	};
 
 	template<typename T>
 	using Event = helpers::Event<T>;
@@ -122,6 +158,8 @@ namespace ui {
 			y_(y),
 			width_(width),
 			height_(height),
+			widthHint_(SizeHint::Auto()),
+			heightHint_(SizeHint::Auto()),
 		    border_(0, 0, 0, 0) {
 		}
 
@@ -149,6 +187,14 @@ namespace ui {
 
 		int height() const {
 			return height_;
+		}
+
+		SizeHint widthHint() const {
+			return widthHint_;
+		}
+
+		SizeHint heightHint() const {
+			return heightHint_;
 		}
 
 		/** The clientWidth and clientHeight return the size of the widget that is available for children (i.e. excluding the border of the control. 
@@ -224,6 +270,22 @@ namespace ui {
 			if (value != border_) {
 				updateBorder(value);
 				repaint();
+			}
+		}
+
+		void setWidthHint(SizeHint value) {
+			if (widthHint_ != value) {
+				widthHint_ = value;
+				if (parent_ != nullptr)
+					parent_->childInvalidated(this);
+			}
+		}
+
+		void setHeightHint(SizeHint value) {
+			if (heightHint_ != value) {
+				heightHint_ = value;
+				if (parent_ != nullptr)
+					parent_->childInvalidated(this);
 			}
 		}
 
@@ -428,6 +490,9 @@ namespace ui {
 		/* Size */
 		int width_;
 		int height_;
+
+		SizeHint widthHint_;
+		SizeHint heightHint_;
 
 		/* Border of the widget */
 		Border border_;
