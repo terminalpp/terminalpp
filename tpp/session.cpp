@@ -108,6 +108,7 @@ namespace tpp {
 		terminal_ = rw;
 		rw->repaint();
 		sb->setScrollOffset(0,0);
+		//sb->setLayout(ui::Layout::Vertical());
 
 #else
 		// create the terminal backend

@@ -341,9 +341,14 @@ namespace tpp {
 			case WM_MBUTTONUP:
 				tw->mouseUp(MOUSE_X, MOUSE_Y, vterm::MouseButton::Wheel);
 				break;
-			case WM_MOUSEWHEEL:
-				tw->mouseWheel(MOUSE_X, MOUSE_Y, GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+			/* Mouse wheel contains the position relative to screen top/left, so we must first translate it to window coordinates. 
+			 */
+			case WM_MOUSEWHEEL: {
+				POINT pos{ MOUSE_X, MOUSE_Y };
+				ScreenToClient(hWnd, &pos);
+				tw->mouseWheel(pos.x, pos.y, GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 				break;
+			}
 			case WM_MOUSEMOVE:
 				tw->mouseMove(MOUSE_X, MOUSE_Y);
 				break;
