@@ -24,7 +24,6 @@ namespace ui {
 		 */
 		virtual void relayout(Container* container, Canvas const & clientCanvas) = 0;
 
-
 		/** Calculates overlays for the widgets in the container. 
 
 		    This can be overriden in children to provide better overlaying logic, but the default overlay is quite simple: Iterates the widgets in the container backwards and remembers the rectangle in which the widget fits. If new widgets intersects with the rectangle, its overlay is set to true, otherwise its set to false. 
@@ -50,6 +49,9 @@ namespace ui {
 			container->setChildGeometry(child, x, y, width, height);
 		}
 
+		void relayoutWidget(Widget* child, int width, int height) {
+			child->relayout(width, height);
+		}
 
 	private:
 		class NoneImpl;
@@ -60,7 +62,10 @@ namespace ui {
 	class Layout::NoneImpl : public Layout {
 	protected:
 		virtual void relayout(Container* container, Canvas const& clientCanvas) {
-			MARK_AS_UNUSED(container);
+			int w = clientCanvas.width();
+			int h = clientCanvas.height();
+			for (Widget* child : childrenOf(container))
+				relayoutWidget(child, w, h);
 		}
 	};
 

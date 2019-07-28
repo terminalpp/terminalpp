@@ -339,6 +339,18 @@ namespace ui {
 			trigger(onResize);
 		}
 
+		/** Re-layouts the control within its parent. 
+
+		    This method can be called by the parent's layout in cases the parent allows the children to layout themselves. It should update the position of the widget according to the provided parent width and height. 
+
+			If the parent's layout has own layout specification, then this method will not be called. 
+		 */
+		virtual void relayout(int parentWidth, int parentHeight) {
+			MARK_AS_UNUSED(parentWidth);
+			MARK_AS_UNUSED(parentHeight);
+			// TODO do fancy stuff like anchors, etc. 
+		}
+
 		/** Paints the widget's contents on the provided canvas. 
 		 */
 		virtual void paint(Canvas& canvas) = 0;
