@@ -77,7 +77,7 @@ namespace ui {
 			int w = clientCanvas.width();
 			int h = clientCanvas.height();
 			for (Widget* child : childrenOf(container))
-				setChildGeometry(container, child, 0, 0, w, h);
+				layout(container, child, w, h);
 		}
 
 		/** All but the last visible widget in the maximized container are overlaid.
@@ -92,6 +92,19 @@ namespace ui {
 				overlay = false;
 			}
 		}
+
+		void layout(Container* container, Widget* child, int maxWidth, int maxHeight) {
+			if (child->widthHint().isFixed())
+				maxWidth = child->width();
+			else if (child->widthHint().isPercentage())
+				maxWidth = maxWidth * child->widthHint().pct() / 100;
+			if (child->heightHint().isFixed())
+				maxHeight = child->width();
+			else if (child->heightHint().isPercentage())
+				maxHeight = maxHeight * child->heightHint().pct() / 100;
+			setChildGeometry(container, child, 0, 0, maxWidth, maxHeight);
+		}
+
 	};
 
 	class Layout::HorizontalImpl : public Layout {
@@ -155,13 +168,12 @@ namespace ui {
 		}
 
 		void layout(Container * container, Widget* child, int top, int maxWidth, int height) {
-			if (child->widthHint().isFixed()) {
+			if (child->widthHint().isFixed()) 
 				setChildGeometry(container, child, 0, top, child->width(), height);
-			} else if (child->widthHint().isAuto()) {
+			else if (child->widthHint().isAuto()) 
 				setChildGeometry(container, child, 0, top, maxWidth, height);
-			} else {
+			else 
 				setChildGeometry(container, child, 0, top, maxWidth * child->widthHint().pct() / 100, height);
-			}
 		}
 	};
 
@@ -226,13 +238,12 @@ namespace ui {
 		}
 
 		void layout(Container* container, Widget* child, int left, int width, int maxHeight) {
-			if (child->heightHint().isFixed()) {
+			if (child->heightHint().isFixed())
 				setChildGeometry(container, child, left, 0, width, child->height());
-			} else if (child->heightHint().isAuto()) {
+			else if (child->heightHint().isAuto())
 				setChildGeometry(container, child, left, 0, width, maxHeight);
-			} else {
+			else
 				setChildGeometry(container, child, left, 0, width, maxHeight * child->heightHint().pct() / 100);
-			}
 		}
 	};
 
