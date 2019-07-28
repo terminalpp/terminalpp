@@ -14,6 +14,7 @@ namespace ui {
 		static Layout* None();
 		static Layout* Maximized();
 		static Layout* Horizontal();
+		static Layout* Vertical();
 
 	protected:
 		friend class Container;
@@ -57,6 +58,7 @@ namespace ui {
 		class NoneImpl;
 		class MaximizedImpl;
 		class HorizontalImpl;
+		class VerticalImpl;
 	};
 
 	class Layout::NoneImpl : public Layout {
@@ -106,7 +108,7 @@ namespace ui {
 					++visibleChildren;
 					if (child->heightHint().isFixed()) {
 						fixedHeight += child->height();
-						layout(container, child, child->y(), child->height(), w);
+						layout(container, child, child->y(), w, child->height());
 					} else if (child->heightHint().isAuto()) {
 						++autoChildren;
 					} 
@@ -121,7 +123,7 @@ namespace ui {
 				if (child->heightHint().isPercentage()) {
 					// determine the height 
 					int h = (totalHeight - fixedHeight) * child->heightHint().pct() / 100;
-					layout(container, child, child->y(), h, w);
+					layout(container, child, child->y(), w, h);
 					// this is important because the height might have been adjusted by the widget itself when it was set by the layout
 					availableHeight -= child->height();
 				}
@@ -132,7 +134,7 @@ namespace ui {
 					if (child->heightHint().isAuto()) {
 						if (--autoChildren == 0)
 							h = availableHeight;
-						layout(container, child, child->y(), h, w);
+						layout(container, child, child->y(), w, h);
 						availableHeight -= child->height();
 					}
 				}
@@ -152,7 +154,7 @@ namespace ui {
 				child->setOverlay(false);
 		}
 
-		void layout(Container * container, Widget* child, int top, int height, int maxWidth) {
+		void layout(Container * container, Widget* child, int top, int maxWidth, int height) {
 			if (child->widthHint().isFixed()) {
 				setChildGeometry(container, child, 0, top, child->width(), height);
 			} else if (child->widthHint().isAuto()) {
@@ -162,6 +164,78 @@ namespace ui {
 			}
 		}
 	};
+
+	class Layout::VerticalImpl : public Layout {
+	protected:
+		virtual void relayout(Container* container, Canvas const& clientCanvas) {
+			int h = clientCanvas.height();
+			std::vector<Widget*> const& children = childrenOf(container);
+			// first determine the number of visible children to layout, the total width occupied by children with fixed width and number of children with width hint set to auto
+			size_t visibleChildren = 0;
+			size_t autoChildren = 0;
+			int fixedWidth = 0;
+			for (Widget* child : children)
+				if (child->visible()) {
+					++visibleChildren;
+					if (child->widthHint().isFixed()) {
+						fixedWidth += child->width();
+						layout(container, child, child->x(), child->width(), h);
+					} else if (child->widthHint().isAuto()) {
+						++autoChildren;
+					}
+				}
+			// nothing to layout if there are no kids
+			if (visibleChildren == 0)
+				return;
+			// set the width and height of the percentage wanting children
+			int totalWidth = clientCanvas.width();
+			int availableWidth = totalWidth - fixedWidth;
+			for (Widget* child : children)
+				if (child->widthHint().isPercentage()) {
+					// determine the height 
+					int w = (totalWidth - fixedWidth) * child->widthHint().pct() / 100;
+					layout(container, child, child->x(), w, h);
+					// this is important because the height might have been adjusted by the widget itself when it was set by the layout
+					availableWidth -= child->width();
+				}
+			// now we know the available height for the auto widgets
+			if (autoChildren != 0) {
+				int w = availableWidth / autoChildren;
+				for (Widget* child : children) {
+					if (child->widthHint().isAuto()) {
+						if (--autoChildren == 0)
+							w = availableWidth;
+						layout(container, child, child->x(), w, h);
+						availableWidth -= child->width();
+					}
+				}
+			}
+			// finally, when the sizes are right, we must reposition the elements
+			int left = 0;
+			for (Widget* child : children) {
+				setChildGeometry(container, child, left, 0, child->width(), child->height());
+				left += child->width();
+			}
+		}
+
+		/** None of the children are overlaid.
+		 */
+		virtual void calculateOverlay(Container* container) {
+			for (Widget* child : childrenOf(container))
+				child->setOverlay(false);
+		}
+
+		void layout(Container* container, Widget* child, int left, int width, int maxHeight) {
+			if (child->heightHint().isFixed()) {
+				setChildGeometry(container, child, left, 0, width, child->height());
+			} else if (child->heightHint().isAuto()) {
+				setChildGeometry(container, child, left, 0, width, maxHeight);
+			} else {
+				setChildGeometry(container, child, left, 0, width, maxHeight * child->heightHint().pct() / 100);
+			}
+		}
+	};
+
 
 
 	inline Layout* Layout::None() {
@@ -176,6 +250,11 @@ namespace ui {
 
 	inline Layout* Layout::Horizontal() {
 		static HorizontalImpl layout;
+		return &layout;
+	}
+
+	inline Layout* Layout::Vertical() {
+		static VerticalImpl layout;
 		return &layout;
 	}
 

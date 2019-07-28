@@ -24,8 +24,6 @@
 # UI
 
 - hide properties not meant to be public immediately
-- horizontal and vertical layouts
-- size hints in controls
 - onChange handler for generic changes
 - add events
 - make canvas do more
