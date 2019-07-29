@@ -149,7 +149,7 @@ namespace ui {
 
 	public:
 
-		Widget(int x = 0, int y = 0, int width = 1, int height = 1):
+		Widget(int x, int y, int width, int height):
 			parent_(nullptr),
 			visibleRegion_(nullptr),
 			overlay_(false),
@@ -160,8 +160,7 @@ namespace ui {
 			width_(width),
 			height_(height),
 			widthHint_(SizeHint::Auto()),
-			heightHint_(SizeHint::Auto()),
-		    border_(0, 0, 0, 0) {
+			heightHint_(SizeHint::Auto()) {
 		}
 
 		Widget* parent() const {
@@ -198,25 +197,17 @@ namespace ui {
 			return heightHint_;
 		}
 
-		/** The clientWidth and clientHeight return the size of the widget that is available for children (i.e. excluding the border of the control. 
-		 */
-		int clientWidth() const {
-			return std::max(width_ - border_.left - border_.right, 0);
-		}
-
-		int clientHeight() const {
-			return std::max(height_ - border_.top - border_.bottom, 0);
-		}
-
-		Border const& border() const {
-			return border_;
-		}
-
 		Rect rect() const {
 			return Rect(x_, y_, x_ + width_, y_ + height_);
 		}
 
-		// TODO TODO TODO all this should be protected and should then be enabled in respective subclasses, such as control
+		/** Repaints the widget.
+
+			Only repaints the widget if the visibleRegion is valid. If the visible region is invalid, does nothing because when the region was invalidated, the repaint was automatically triggered, so there is either repaint pending, or in progress.
+		 */
+		void repaint();
+
+    protected:
 
 		/** Sets the widget as visible or hidden.
 
@@ -256,23 +247,11 @@ namespace ui {
 			}
 		}
 
-		/** Repaints the widget. 
-
-		    Only repaints the widget if the visibleRegion is valid. If the visible region is invalid, does nothing because when the region was invalidated, the repaint was automatically triggered, so there is either repaint pending, or in progress. 
-		 */
-		void repaint();
-
 		void setOverlay(bool value) {
 			if (value != overlay_)
 				updateOverlay(value);
 		}
 
-		void setBorder(Border const& value) {
-			if (value != border_) {
-				updateBorder(value);
-				repaint();
-			}
-		}
 
 		void setWidthHint(SizeHint value) {
 			if (widthHint_ != value) {
@@ -300,14 +279,6 @@ namespace ui {
 			if (forceOverlay_ != value) {
 				forceOverlay_ = value;
 			}
-		}
-
-		virtual int scrollWidth() const {
-			return clientWidth();
-		}
-
-		virtual int scrollHeight() const {
-			return clientHeight();
 		}
 
 		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
@@ -357,7 +328,7 @@ namespace ui {
 		/** Given a canvas for the full widget, returns a canvas for the client area only. 
 		 */
 		virtual Canvas getClientCanvas(Canvas& canvas) {
-			return Canvas(canvas, border_.left, border_.top, clientWidth(), clientHeight());
+			return Canvas(canvas, 0, 0, width(), height());
 		}
 
 		/** Invalidates the widget and request its parent repaint,
@@ -444,13 +415,6 @@ namespace ui {
 			overlay_ = value;
 		}
 
-		/** Updates the value of the widget's border and invalidates the widget.
-		 */
-		virtual void updateBorder(Border const& value) {
-			border_ = value;
-			invalidate();
-		}
-
 		virtual Widget* getMouseTarget(unsigned col, unsigned row) {
 			ASSERT(visibleRegion_.contains(col, row));
 			return this;
@@ -508,11 +472,43 @@ namespace ui {
 		SizeHint widthHint_;
 		SizeHint heightHint_;
 
-		/* Border of the widget */
-		Border border_;
 	};
 
+	/** Public widget simply exposes the widget's protected events and methods as public ones. 
 
+	    It is a suitable class for most user available controls. 
+	 */
+	class PublicWidget : public Widget {
+	public:
+
+		// Events 
+
+		using Widget::onShow;
+		using Widget::onHide;
+		using Widget::onResize;
+		using Widget::onMove;
+		using Widget::onMouseDown;
+		using Widget::onMouseUp;
+		using Widget::onMouseClick;
+		using Widget::onMouseDoubleClick;
+		using Widget::onMouseWheel;
+		using Widget::onMouseMove;
+		using Widget::onMouseEnter;
+		using Widget::onMouseLeave;
+
+		// Methods 
+
+		using Widget::setVisible;
+		using Widget::move;
+		using Widget::resize;
+		using Widget::setWidthHint;
+		using Widget::setHeightHint;
+
+		PublicWidget(int x = 0, int y = 0, int width = 1, int height = 1) :
+			Widget(x, y, width, height) {
+		}
+
+	}; // ui::Control
 
 
 

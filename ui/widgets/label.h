@@ -1,14 +1,14 @@
 #pragma once
 
-#include "widget.h"
+#include "../widget.h"
 
 namespace ui {
 
-	class Label : public Widget {
+	class Label : public PublicWidget {
 	public:
 
 		Label(int left = 0, int top = 0, int width = 10, int height = 1) :
-			Widget(left, top, width, height),
+			PublicWidget(left, top, width, height),
 			text_("Label"),
 			textColor_(Color::White()),
 			font_(Font()),

@@ -14,7 +14,7 @@ namespace ui {
 
 	
 	 */
-	class RootWindow : public vterm::Terminal, public Container {
+	class RootWindow : public vterm::Terminal, public PublicContainer {
 	public:
 
 		static unsigned MOUSE_CLICK_MAX_DURATION;
@@ -22,7 +22,7 @@ namespace ui {
 
 		RootWindow(unsigned width, unsigned height) :
 			Terminal(width, height),
-			Container(0, 0, width, height),
+			PublicContainer(0, 0, width, height),
 		    mouseFocus_(nullptr) {
 			visibleRegion_ = Canvas::VisibleRegion(this);
 		}
@@ -41,10 +41,6 @@ namespace ui {
 		void paste(std::string const& what) override;
 
 		// widget interface
-
-		using Container::addChild;
-		using Container::removeChild;
-		using Container::setLayout;
 
 	protected:
 

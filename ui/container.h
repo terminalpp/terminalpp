@@ -21,7 +21,7 @@ namespace ui {
 
 	protected:
 
-		Container(int x = 0, int y = 0, int width = 1, int height = 1);
+		Container(int x, int y, int width, int height);
 
 		void addChild(Widget * child) {
 			ASSERT(child->parent() != this) << "Already a child";
@@ -32,7 +32,7 @@ namespace ui {
 			}
 			children_.push_back(child);
 			child->updateParent(this);
-			scheduleLayout();
+			scheduleRelayout();
 			repaint();
 		}
 
@@ -44,7 +44,7 @@ namespace ui {
 					children_.erase(i);
 					break;
 				}
-			scheduleLayout();
+			scheduleRelayout();
 			repaint();
 			return child;
 		}
@@ -53,7 +53,7 @@ namespace ui {
 			ASSERT(value != nullptr) << "use Layout::None instead";
 			if (layout_ != value) {
 				layout_ = value;
-				scheduleLayout();
+				scheduleRelayout();
 				repaint();
 			}
 		}
@@ -73,23 +73,23 @@ namespace ui {
 
 		void invalidateContents() override {
 			Widget::invalidateContents();
-			scheduleLayout();
+			scheduleRelayout();
 			for (Widget* child : children_)
 				child->invalidateContents();
 		}
 
 		void childInvalidated(Widget* child) override {
-			scheduleLayout();
+			scheduleRelayout();
 			Widget::childInvalidated(child);
 		}
 
 		void updatePosition(int x, int y) override {
-			scheduleLayout();
+			scheduleRelayout();
 			Widget::updatePosition(x, y);
 		}
 
 		void updateSize(int width, int height) override {
-			scheduleLayout();
+			scheduleRelayout();
 			Widget::updateSize(width, height);
 		}
 
@@ -98,13 +98,6 @@ namespace ui {
 		void paint(Canvas& canvas) override;
 
 		void updateOverlay(bool value) override;
-
-		/** When border is updated, the children widget's layout must be recalculated since the client width and height might have changed. 
-		 */
-		void updateBorder(Border const& value) override {
-			scheduleLayout();
-			Widget::updateBorder(value);
-		}
 
 		Widget* getMouseTarget(unsigned col, unsigned row) override {
 			ASSERT(visibleRegion_.contains(col, row));
@@ -116,7 +109,7 @@ namespace ui {
 
 		/** Schedules layout of all components on the next repaint event without actually triggering the repaint itself. 
 		 */
-		void scheduleLayout() {
+		void scheduleRelayout() {
 			relayout_ = true;
 		}
 
@@ -130,5 +123,77 @@ namespace ui {
 		bool relayout_;
 
 	}; // ui::Container
+
+
+	/** Exposes the container's interface publicly. 
+	 */
+	class PublicContainer : public Container {
+	public:
+
+		// Events from Widget
+
+		using Widget::onShow;
+		using Widget::onHide;
+		using Widget::onResize;
+		using Widget::onMove;
+		using Widget::onMouseDown;
+		using Widget::onMouseUp;
+		using Widget::onMouseClick;
+		using Widget::onMouseDoubleClick;
+		using Widget::onMouseWheel;
+		using Widget::onMouseMove;
+		using Widget::onMouseEnter;
+		using Widget::onMouseLeave;
+
+		// Methods from Widget
+
+		using Widget::setVisible;
+		using Widget::move;
+		using Widget::resize;
+		using Widget::setWidthHint;
+		using Widget::setHeightHint;
+
+		// Methods from Container
+
+		using Container::addChild;
+		using Container::removeChild;
+		using Container::setLayout;
+
+		PublicContainer(int x = 0, int y = 0, int width = 1, int height = 1) :
+			Container(x, y, width, height),
+		    background_(Color::Black()) {
+		}
+
+		/** Returns the background of the container.
+		 */
+		Brush const& backrgound() const {
+			return background_;
+		}
+
+		/** Sets the background of the container. 
+		 */
+		void setBackground(Brush const& value) {
+			if (background_ != value) {
+				background_ = value;
+				setForceOverlay(!background_.color.opaque());
+				repaint();
+			}
+		}
+
+	protected:
+
+		void paint(Canvas& canvas) override {
+			canvas.fill(Rect(canvas.width(), canvas.height()), Brush(Color::Black()));
+			Container::paint(canvas);
+		}
+
+	private:
+
+		Brush background_;
+
+
+
+
+	};
 
 } // namespace ui

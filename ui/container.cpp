@@ -16,7 +16,6 @@ namespace ui {
 	}
 
 	void Container::paint(Canvas& canvas) {
-		canvas.fill(Rect(canvas.width(), canvas.height()), Brush(Color::Red(), 'x', Color::White()));
 		Canvas clientCanvas = getClientCanvas(canvas);
 		if (relayout_) {
 			layout_->relayout(this, clientCanvas);

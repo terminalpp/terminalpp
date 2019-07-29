@@ -7,9 +7,9 @@
 #include "session.h"
 
 #include "ui/root_window.h"
-#include "ui/label.h"
+#include "ui/widgets/label.h"
 #include "ui/layout.h"
-#include "ui/scrollbox.h"
+#include "ui/widgets/scrollbox.h"
 
 
 namespace tpp {
@@ -62,7 +62,7 @@ namespace tpp {
 
 		ui::RootWindow * rw = new ui::RootWindow(window_->cols(), window_->rows());
 		rw->setLayout(ui::Layout::Maximized());
-		rw->setBorder(ui::Border(1, 1, 1, 1));
+		//rw->setBorder(ui::Border(1, 1, 1, 1));
 
 		//rw->setLayout(ui::Layout::Horizontal());
 
@@ -90,7 +90,7 @@ namespace tpp {
 		l6->setText("Sevneth");
 		l7->setText("Eight");
 		l8->setText("Ninth");
-		ui::ScrollBox* sb = new ui::ScrollBox();
+		ui::ScrollBox* sb = new ui::ScrollBox(0, 0, 1, 1);
 		sb->setLayout(ui::Layout::Horizontal());
 		sb->setScrollSize(40, 100);
 		sb->addChild(l0);
@@ -107,7 +107,7 @@ namespace tpp {
 		window_->setTerminal(rw);
 		terminal_ = rw;
 		rw->repaint();
-		sb->setScrollOffset(0,0);
+		sb->setScrollOffset(-2,-4);
 		//sb->setLayout(ui::Layout::Vertical());
 
 #else

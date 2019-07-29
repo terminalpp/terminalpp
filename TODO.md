@@ -5,6 +5,8 @@
 
 ### Win32 Bugs
 
+- get rid of the sound when going fullscreen -> non-fullscreen
+
 ### X11 Bugs
 
 # Code Fixes
@@ -24,16 +26,14 @@
 - 
 # UI
 
-- hide properties not meant to be public immediately
 - onChange handler for generic changes
-- add events
 - make canvas do more
 - terminal widget
+- keyboard focus and events
 - mouseFocus, should it disapper when mouse moves from parent to child? 
 
 - add extra styles to the font (left-top-bottom-right) borders (??)
 - add color to the font decorations 
 - how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
-
-- transparent controls must repaint their parent as well when they repaint themselves, this can easily mean that when a control is transparent, its overlay is always true :)
+- add some simple UI elements builder. 
 

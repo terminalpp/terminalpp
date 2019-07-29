@@ -137,6 +137,12 @@ namespace ui {
 		 */
 		typedef vterm::Terminal::Cell Cell;
 
+		/** Creates a canvas into a rectangle in existing canvas.
+
+			Reuses the screen from the existing canvas and recalculates the visible region to reflect the child selected rectangle's position and dimension.
+		 */
+		Canvas(Canvas const& from, int left, int top, int width, int height);
+
 		/** Returns the width of the canvas in cells.
 		 */
 		int width() const {
@@ -163,9 +169,7 @@ namespace ui {
 
 	private:
 		friend class Widget;
-		friend class Control;
 		friend class RootWindow;
-		friend class ScrollBox;
 
 		/** Determins the visible region of the canvas.
 		 */
@@ -230,12 +234,6 @@ namespace ui {
 		    height_(height) {
 			ASSERT(from.isValid());
 		}
-
-		/** Creates a canvas into a rectangle in existing canvas.
-
-		    Reuses the screen from the existing canvas and recalculates the visible region to reflect the child selected rectangle's position and dimension. 
-		 */
-		Canvas(Canvas const& from, int left, int top, int width, int height);
 
 		/** Returns the cell at given canvas coordinates if visible, or nullptr if the cell is outside the visible region. 
 		 */
