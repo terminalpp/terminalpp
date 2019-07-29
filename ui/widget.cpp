@@ -8,7 +8,7 @@ namespace ui {
 		// only repaint the control if it is visible
 		if (visible_ && visibleRegion_.isValid()) {
 			// if the widget is overlaid, the parent must be repainted
-			if (overlay_) {
+			if (forceOverlay_ || overlay_) {
 				ASSERT(parent_ != nullptr);
 				parent_->repaint();
 			// otherwise repainting the widget is enough

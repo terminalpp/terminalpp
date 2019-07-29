@@ -53,7 +53,7 @@ namespace tpp {
 			   at the top of the window and the name of the minimized window
 			   respectively.
 			*/
-		XSetStandardProperties(display_, window_, title_.c_str(), nullptr, None, nullptr, 0, nullptr);
+		XSetStandardProperties(display_, window_, title_.c_str(), nullptr, x11::None, nullptr, 0, nullptr);
 
 		/* this routine determines which types of input are allowed in
 		   the input.  see the appropriate section for details...
@@ -134,7 +134,7 @@ namespace tpp {
 	}
 
 	void X11TerminalWindow::titleChange(vterm::Terminal::TitleChangeEvent & e) {
-		XSetStandardProperties(display_, window_, e->c_str(), nullptr, None, nullptr, 0, nullptr);
+		XSetStandardProperties(display_, window_, e->c_str(), nullptr, x11::None, nullptr, 0, nullptr);
         TerminalWindow::titleChange(e);
 	}
 
@@ -147,7 +147,7 @@ namespace tpp {
         TerminalWindow::selectionClear();
         // only set selection owner to none if the selection is cleared manually
         if (manual)
-            XSetSelectionOwner(display_, app()->primaryName_, None, CurrentTime);
+            XSetSelectionOwner(display_, app()->primaryName_, x11::None, CurrentTime);
     }
 
     void X11TerminalWindow::selectionSet() {
@@ -472,7 +472,7 @@ namespace tpp {
 				if (e.xselection.property) {
 					char * result;
 					unsigned long resSize, resTail;
-					Atom type = None;
+					Atom type = x11::None;
 					int format = 0;
 					XGetWindowProperty(tw->display_, tw->window_, e.xselection.property, 0, LONG_MAX / 4, False, AnyPropertyType,
 						&type, &format, &resSize, &resTail, (unsigned char**)& result);
@@ -496,7 +496,7 @@ namespace tpp {
 				response.target = e.xselectionrequest.target;
 				response.time = e.xselectionrequest.time;
 				// by default, the request is rejected
-				response.property = None; 
+				response.property = x11::None; 
 				// if the target is TARGETS, then all supported formats should be sent, in our case this is simple, only UTF8_STRING is supported
 				if (response.target == app->formatTargets_) {
 					XChangeProperty(

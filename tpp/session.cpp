@@ -76,7 +76,7 @@ namespace tpp {
 		ui::Label* l7 = new ui::Label();
 		ui::Label* l8 = new ui::Label();
 		ui::Label* l9 = new ui::Label();
-		l1->setBackground(ui::Color::Magenta());
+		l1->setBackground(ui::Color(255, 0, 255, 128));
 		l3->setBackground(ui::Color::Magenta());
 		l5->setBackground(ui::Color::Magenta());
 		l7->setBackground(ui::Color::Magenta());

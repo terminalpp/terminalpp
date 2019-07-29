@@ -51,17 +51,17 @@ namespace tpp {
 		broadcastWindow_ = XCreateSimpleWindow(xDisplay_, parent, 0, 0, 1, 1, 1, white, black);
 
 		if (
-			primaryName_ == None ||
-			clipboardName_ == None ||
-			formatString_ == None ||
-			formatStringUTF8_ == None ||
-			formatTargets_ == None ||
-			clipboardIncr_ == None ||
-			wmDeleteMessage_ == None ||
-			fpsTimerMessage_ == None ||
-			broadcastWindow_ == None ||
-			motifWmHints_ == None ||
-			netWmIcon_ == None
+			primaryName_ == x11::None ||
+			clipboardName_ == x11::None ||
+			formatString_ == x11::None ||
+			formatStringUTF8_ == x11::None ||
+			formatTargets_ == x11::None ||
+			clipboardIncr_ == x11::None ||
+			wmDeleteMessage_ == x11::None ||
+			fpsTimerMessage_ == x11::None ||
+			broadcastWindow_ == x11::None ||
+			motifWmHints_ == x11::None ||
+			netWmIcon_ == x11::None
 		) THROW(helpers::Exception()) << "X11 Atoms instantiation failed";
 
 		start();
@@ -116,7 +116,7 @@ namespace tpp {
 				if (e.type == ClientMessage && static_cast<unsigned long>(e.xclient.data.l[0]) == fpsTimerMessage_) {
 					X11TerminalWindow::FPSTimer();
 				} else {
-					if (XFilterEvent(&e, None))
+					if (XFilterEvent(&e, x11::None))
 						continue;
 					X11TerminalWindow::EventHandler(e);
 				}

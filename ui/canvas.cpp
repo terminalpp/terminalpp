@@ -33,14 +33,28 @@ namespace ui {
 		height_(height) {
 	}
 
-	void Canvas::fill(Rect rect, Color bg, Color fg, Char fill, Font font) {
+	void Canvas::fill(Rect const& rect, Brush const& brush) {
+		// don't do anything if the brush is empty
+		if (brush == Brush::None())
+			return;
+		// otherwise apply the brush to the cells
 		Point p;
-		for (p.row = rect.top; p.row < rect.bottom; ++p.row)
+		for (p.row = rect.top; p.row < rect.bottom; ++p.row) {
 			for (p.col = rect.left; p.col < rect.right; ++p.col) {
-				Cell* c = at(p);
-				if (c != nullptr)
-					*c = Cell(fill, fg, bg, font);
+				if (Cell * c = at(p)) {
+					// update the backrgound color of the cell 
+					c->setBg(brush.color.blendOver(c->bg()));
+					// if there is no fill character, overlay the text color as well
+					if (brush.fill == Char::NUL) {
+						c->setFg(brush.color.blendOver(c->fg()));
+					} else {
+						c->setC(brush.fill);
+						c->setFg(brush.fillColor);
+						c->setFont(brush.fillFont);
+					}
+				}
 			}
+		}
 	}
 
 	void Canvas::textOut(Point start, std::string const& text) {

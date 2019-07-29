@@ -20,7 +20,8 @@
 - non-english double width characters don't work properly (at all)
 - vt100 should have palette access ready
 - xim is wrong, it works on linux, but fails on mac
-
+- then at some point in the future, helpers, tpp and ui+vterm should go in separate repos
+- 
 # UI
 
 - hide properties not meant to be public immediately
@@ -32,5 +33,7 @@
 
 - add extra styles to the font (left-top-bottom-right) borders (??)
 - add color to the font decorations 
+- how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
 
+- transparent controls must repaint their parent as well when they repaint themselves, this can easily mean that when a control is transparent, its overlay is always true :)
 

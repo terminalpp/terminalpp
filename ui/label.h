@@ -59,6 +59,7 @@ namespace ui {
 		void setBackground(Color value) {
 			if (background_ != value) {
 				background_ = value;
+				setForceOverlay(! background_.opaque());
 				repaint();
 			}
 		}
@@ -68,7 +69,7 @@ namespace ui {
 	protected:
 
 		void paint(Canvas& canvas) {
-			canvas.fill(Rect(width(), height()), background_, textColor_, ' ', font_);
+			canvas.fill(Rect(width(), height()), Brush(background_, ' ', textColor_));
 			canvas.textOut(Point(0, 0), text_);
 		}
 
@@ -87,6 +88,7 @@ namespace ui {
 			repaint();
 			Widget::mouseEnter();
 		}
+
 		void mouseLeave() override {
 			font_.setUnderline(false);
 			repaint();

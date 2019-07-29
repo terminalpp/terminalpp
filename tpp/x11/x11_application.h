@@ -6,11 +6,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xos.h>
-#include <X11/Xft/Xft.h>
-
+#include "x11.h"
 #include "../application.h"
 
 namespace tpp {
@@ -53,7 +49,7 @@ namespace tpp {
 			memset(&e, 0, sizeof(XEvent));
 			e.xclient.type = ClientMessage;
 			e.xclient.display = xDisplay_;
-			e.xclient.window = None;
+			e.xclient.window = x11::None;
 			e.xclient.format = 32;
 			e.xclient.data.l[0] = fpsTimerMessage_;
 			xSendEvent(nullptr, e);

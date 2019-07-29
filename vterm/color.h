@@ -28,7 +28,7 @@ namespace vterm {
 
 		/** Creates a color of given properties. 
 		 */
-		constexpr Color(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 0) :
+		constexpr Color(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255) :
 			red(red),
 			green(green),
 			blue(blue),
@@ -41,11 +41,37 @@ namespace vterm {
 			red(0),
 			green(0),
 			blue(0),
-			alpha(0) {
+			alpha(255) {
 		}
 
 		unsigned toNumber() const {
 			return (red << 16) + (green << 8) + blue;
+		}
+
+		/** Returns true if the color is opaque, i.e. its alpha channel is maximized. 
+		 */
+		bool opaque() const {
+			return alpha == 255;
+		}
+
+		/** Bleds the current color oven existing one. 
+		 */
+		Color blendOver(Color const& other) const {
+			if (alpha == 255) {
+				return *this;
+			} else if (alpha == 0) {
+				return other;
+			} else if (other.alpha == 255) {
+				unsigned char a = alpha + 1;
+				unsigned char aInv = 256 - alpha;
+				unsigned char r = (a * red + aInv * other.red) / 256;
+				unsigned char g = (a * green + aInv * other.green) / 256;
+				unsigned char b = (a * blue + aInv * other.blue) / 256;
+				return Color(r, g, b, 255);
+			} else {
+				// TODO we can do this because the color always blends over an existing fully opaque color of the background.If this were not the case, the assert failsand we have to change the algorithm.
+				NOT_IMPLEMENTED;
+			}
 		}
 
 		bool operator == (Color const & other) const {
@@ -60,6 +86,7 @@ namespace vterm {
 
 		    They have to me static methods because of the static initialization order issue.
 		 */
+		static Color None() { return Color(0, 0, 0, 0); }
 		static Color Black() { return Color(0, 0, 0); }
 		static Color White() { return Color(255, 255, 255);	}
 		static Color Green() { return Color(0, 255, 0);	}

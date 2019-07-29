@@ -32,6 +32,7 @@ namespace helpers {
 	class Char {
 	public:
 
+		static constexpr char NUL = 0;
 		static constexpr char BEL = 7;
 		static constexpr char BACKSPACE = 8;
 		static constexpr char TAB = 9;
@@ -53,7 +54,7 @@ namespace helpers {
             return true;
         }
 
-        bool operator != (Char const & other) {
+        bool operator != (Char const & other) const {
             for (size_t i = 0; i < 4; ++i)
                 if (bytes_[i] != other.bytes_[i])
                     return true;

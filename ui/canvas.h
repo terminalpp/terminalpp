@@ -58,7 +58,73 @@ namespace ui {
 		Bottom
 	};
 
+	/** A brush used to fill areas on the canvas. 
 
+	    A brush consists of background color which is applied as backrgound colors to the cells, and the fill character and its color which can be written in the respective cells. 
+	 */
+	class Brush {
+	public:
+
+		/** The background color of the brush. 
+
+		    All cells background color will be set to this color. This color can be transparent. 
+		 */
+		Color color;
+
+		/** Fill character. 
+		 */
+		Char fill;
+
+		/** Color of the fill character. 
+		 */
+		Color fillColor;
+
+		/** Font of the fill character. 
+
+		    Note that only fonts of size 1 are supported. 
+			
+			TODO how does this change with double width characters, would solution to this make it work with larger fonts as well? 
+		 */
+		Font fillFont;
+
+		/** Creates a simple brush with only a background color. 
+
+		    T he fill character is set to NUL and its color to None. This means that if the background color is transparent, the contents of the cell will be kept as is. 
+		 */
+		Brush(Color color) :
+			color(color),
+			fill(Char::NUL),
+			fillColor(Color::None()),
+		    fillFont(Font()) {
+		}
+
+		/** Creates a brush with specified fill character and its color. 
+		
+		    Such a brush will first change the background color, but then also overwrite the contents of the cell.	    
+		 */
+		Brush(Color color, Char fill, Color fillColor, Font fillFont = Font()) :
+			color(color),
+			fill(fill),
+			fillColor(fillColor),
+		    fillFont(fillFont) {
+		}
+
+		/** Returns an empty brush, which when used leaves all properties of the cell intact. 
+		 */
+		static Brush None() {
+			return Brush(Color::None(), 0, Color::None());
+		}
+
+		/** Brushes are equal if their contents are equal. 
+		 */
+		bool operator == (Brush const& other) const {
+			return color == other.color && fill == other.fill && fillColor == other.fillColor && fillFont == other.fillFont;
+		}
+
+		bool operator != (Brush const& other) const {
+			return color != other.color || fill != other.fill || fillColor != other.fillColor || fillFont != other.fillFont;
+		}
+	}; // ui::Brush
 
 	/** Describes the canvas of the UI controls.
 
@@ -83,10 +149,11 @@ namespace ui {
 			return height_;
 		}
 
-		/** Fills the given rectangle of the canvas with given attributes. 
-		 */
-		void fill(Rect rect, Color bg, Color fg, Char fill, Font font);
+		/** Fills the given rectangle with specified brush. 
 
+		    See the Brush class for more details. 
+		 */
+		void fill(Rect const& rect, Brush const& brush);
 
 		/** Displays the given text. 
 

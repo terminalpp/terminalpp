@@ -153,6 +153,7 @@ namespace ui {
 			parent_(nullptr),
 			visibleRegion_(nullptr),
 			overlay_(false),
+			forceOverlay_(false),
 			visible_(true),
 			x_(x),
 			y_(y),
@@ -290,6 +291,16 @@ namespace ui {
 		}
 
 	protected:
+
+		bool forceOverlay() const {
+			return forceOverlay_;
+		}
+
+		void setForceOverlay(bool value) {
+			if (forceOverlay_ != value) {
+				forceOverlay_ = value;
+			}
+		}
 
 		virtual int scrollWidth() const {
 			return clientWidth();
@@ -479,6 +490,9 @@ namespace ui {
 
 		/* If true, the rectangle of the widget is shared with other widgets, i.e. when the widget is to be repainted, its parent must be repainted instead. */
 		bool overlay_;
+
+		/** Forces the overlay to be always true. This is especially useful for controls with transparent backgrounds. */
+		bool forceOverlay_;
 
 		/* Visibility */
 		bool visible_;
