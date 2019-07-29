@@ -27,7 +27,10 @@
 - onChange handler for generic changes
 - add events
 - make canvas do more
-
+- terminal widget
 - mouseFocus, should it disapper when mouse moves from parent to child? 
+
+- add extra styles to the font (left-top-bottom-right) borders (??)
+- add color to the font decorations 
 
 

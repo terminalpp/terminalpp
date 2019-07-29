@@ -6,14 +6,29 @@ namespace ui {
 
 	/** Determines the basic interface of a container layout. 
 	
-	    The layout is a class responsible for layouting the widgets in the container.
+	    The Layout is responsible for determining the position and size of container's children when the container, or its children are resized. A layout implementation is responsible for two things, namely repositioning the children via the relayout() method and determining their overlay via the calculateOverlay() method, both of which can be updated in the subclasses.
+
+		Layouts are expected to be global objects and are never deleted by the containers. 
+
+		Common layouts can be obtained via static methods in the Layout class.
 	 */
 	class Layout {
 	public:
 
+		/** Returns default layout implementation, which just delegates the layouting to the children widget's themselves. 
+		 */
 		static Layout* None();
+
+		/** Returns a layout which maximizes all children of the container. 
+		 */
 		static Layout* Maximized();
+
+		/** Returns a layoyt which organizes the children horizontally. 
+		 */
 		static Layout* Horizontal();
+
+		/** Returns a layout which organizes the children vertically. 
+		 */
 		static Layout* Vertical();
 
 	protected:
@@ -59,8 +74,10 @@ namespace ui {
 		class MaximizedImpl;
 		class HorizontalImpl;
 		class VerticalImpl;
-	};
+	}; // ui::Layout
 
+	/** No layout, where any of the layouting decissions are forwarded to the children widgets via their relayout() method. 
+	 */
 	class Layout::NoneImpl : public Layout {
 	protected:
 		virtual void relayout(Container* container, Canvas const& clientCanvas) {
@@ -69,8 +86,12 @@ namespace ui {
 			for (Widget* child : childrenOf(container))
 				relayoutWidget(child, w, h);
 		}
-	};
+	}; // Layout::NoneImpl
 
+	/** Layout which maximizes the children widgets to fill the entire area of the parent container. 
+
+	    If the children cannot be maximized (i.e. their size hints prevent that, or their resize update sets different values, the widget is centered with its size. 
+	 */
 	class Layout::MaximizedImpl : public Layout {
 	protected:
 		virtual void relayout(Container* container, Canvas const& clientCanvas) {
@@ -93,20 +114,39 @@ namespace ui {
 			}
 		}
 
+		/** Layouts the child according to its size hints and positions it in the center of the parent's canvas.
+		 */
 		void layout(Container* container, Widget* child, int maxWidth, int maxHeight) {
+			int w = maxWidth;
 			if (child->widthHint().isFixed())
-				maxWidth = child->width();
+				w = child->width();
 			else if (child->widthHint().isPercentage())
-				maxWidth = maxWidth * child->widthHint().pct() / 100;
+				w = maxWidth * child->widthHint().pct() / 100;
+			int h = maxHeight;
 			if (child->heightHint().isFixed())
-				maxHeight = child->width();
+				h = child->width();
 			else if (child->heightHint().isPercentage())
-				maxHeight = maxHeight * child->heightHint().pct() / 100;
-			setChildGeometry(container, child, 0, 0, maxWidth, maxHeight);
+				h = maxHeight * child->heightHint().pct() / 100;
+			int l = (w == maxWidth) ? 0 : ((maxWidth - w) / 2);
+			int t = (h == maxHeight) ? 0 : ((maxHeight - h) / 2);
+			setChildGeometry(container, child, l, t, w, h);
+			// if the child altered its size, we must reposition it
+			if (child->width() != w || child->height() != h) {
+				w = child->width();
+				h = child->height();
+				l = ((maxWidth - w) / 2);
+				t = ((maxHeight - h) / 2);
+				setChildGeometry(container, child, l, t, w, h);
+			}
 		}
+	}; // Layout::MaximizedImpl
 
-	};
+	/** Layouts all the children as horizontally stacked bars. 
 
+	    Does not resize widgets with fixed-size hint, all percentage hints are relative to the total available height - the fixed widget's height being 100%. The autosized widgets will each get equal share of the remaining available height. The last autosized widget fills up the rest of the parent's container. 
+
+		Unless hinted otherwise, width of all children will be set to the width of the parent's canvas.
+	 */
 	class Layout::HorizontalImpl : public Layout {
 	protected:
 		virtual void relayout(Container* container, Canvas const& clientCanvas) {
@@ -175,8 +215,14 @@ namespace ui {
 			else 
 				setChildGeometry(container, child, 0, top, maxWidth * child->widthHint().pct() / 100, height);
 		}
-	};
+	}; // Layout::HorizontalImpl
 
+	/** Layouts all the children as vertically stacked bars.
+
+		Does not resize widgets with fixed-size hint, all percentage hints are relative to the total available width - the fixed widget's width being 100%. The autosized widgets will each get equal share of the remaining available width. The last autosized widget fills up the rest of the parent's container.
+
+		Unless hinted otherwise, height of all children will be set to the height of the parent's canvas.
+	 */
 	class Layout::VerticalImpl : public Layout {
 	protected:
 		virtual void relayout(Container* container, Canvas const& clientCanvas) {
@@ -245,9 +291,9 @@ namespace ui {
 			else
 				setChildGeometry(container, child, left, 0, width, maxHeight * child->heightHint().pct() / 100);
 		}
-	};
+	}; // Layout::VerticalImpl
 
-
+	// actual implementation of layout getters now that we have implementations of the actual layouts
 
 	inline Layout* Layout::None() {
 		static NoneImpl layout;
@@ -268,7 +314,5 @@ namespace ui {
 		static VerticalImpl layout;
 		return &layout;
 	}
-
-
 
 } // namespace ui
