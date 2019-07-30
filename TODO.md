@@ -35,5 +35,7 @@
 - add extra styles to the font (left-top-bottom-right) borders (??)
 - add color to the font decorations 
 - how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
-- add some simple UI elements builder. 
 
+# Terminal Simplification
+
+Terminal can be simplified a lot by saying that the UI controls the terminal and that the ui::Terminal is its renderer. 

@@ -8,6 +8,7 @@
 
 #include "ui/root_window.h"
 #include "ui/widgets/label.h"
+#include "ui/widgets/terminal.h"
 #include "ui/layout.h"
 #include "ui/widgets/scrollbox.h"
 #include "ui/builders.h"
