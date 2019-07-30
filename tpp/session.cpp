@@ -10,6 +10,7 @@
 #include "ui/widgets/label.h"
 #include "ui/layout.h"
 #include "ui/widgets/scrollbox.h"
+#include "ui/builders.h"
 
 
 namespace tpp {
@@ -67,8 +68,8 @@ namespace tpp {
 		//rw->setLayout(ui::Layout::Horizontal());
 
 		ui::Label* l0 = new ui::Label();
-		ui::Label* l1 = new ui::Label();
-		ui::Label* l2 = new ui::Label();
+		ui::Label* l1 = ui::Create<ui::Label>() << ui::Background(ui::Color(255, 0, 255, 128));
+		ui::Label* l2 = ui::Create<ui::Label>() << "Third";
 		ui::Label* l3 = new ui::Label();
 		ui::Label* l4 = new ui::Label();
 		ui::Label* l5 = new ui::Label();
@@ -90,8 +91,7 @@ namespace tpp {
 		l6->setText("Sevneth");
 		l7->setText("Eight");
 		l8->setText("Ninth");
-		ui::ScrollBox* sb = new ui::ScrollBox(0, 0, 1, 1);
-		sb->setLayout(ui::Layout::Horizontal());
+		ui::ScrollBox* sb = ui::Create(new ui::ScrollBox(0, 0, 1, 1)) << ui::Layout::Horizontal();
 		sb->setScrollSize(40, 100);
 		sb->addChild(l0);
 		sb->addChild(l1);

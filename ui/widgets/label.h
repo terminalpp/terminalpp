@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../widget.h"
+#include "../builders.h"
 
 namespace ui {
 
@@ -52,25 +53,23 @@ namespace ui {
 			}
 		}
 
-		Color background() const {
+		Brush background() const {
 			return background_;
 		}
 
-		void setBackground(Color value) {
+		void setBackground(Brush const & value) {
 			if (background_ != value) {
 				background_ = value;
-				setForceOverlay(! background_.opaque());
+				setForceOverlay(! background_.color.opaque());
 				repaint();
 			}
 		}
 
-		using Widget::setVisible;
-
 	protected:
 
 		void paint(Canvas& canvas) {
-			canvas.fill(Rect(width(), height()), Brush(background_, ' ', textColor_));
-			canvas.textOut(Point(0, 0), text_);
+			canvas.fill(Rect(width(), height()), background_);
+			canvas.textOut(Point(0, 0), text_, textColor_, font_);
 		}
 
 		void mouseClick(int x, int y, MouseButton button, Key modifiers) override {
@@ -101,7 +100,17 @@ namespace ui {
 		std::string text_;
 		Color textColor_;
 		Font font_;
-		Color background_;
+		Brush background_;
 	};
+
+	/** Builder overload for setting the text of a label. 
+
+	    TODO make this enable for any label children
+	 */
+	template<>
+	Builder<Label> operator << (Builder<Label> widget, std::string const& str) {
+		widget->setText(str);
+		return widget;
+	}
 
 } // namespace ui

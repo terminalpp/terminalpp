@@ -57,16 +57,18 @@ namespace ui {
 		}
 	}
 
-	void Canvas::textOut(Point start, std::string const& text) {
+	void Canvas::textOut(Point start, std::string const& text, Color color, Font font) {
 		char const* i = text.c_str();
 		char const* e = i + text.size();
 		while (i < e) {
 			if (start.col >= width_) // don't draw past first line
 				break;
 			Char const* c = Char::At(i, e);
-			Cell* cell = at(start);
-			if (cell != nullptr)
+			if (Cell * cell = at(start)) {
 				cell->setC(*c);
+				cell->setFg(color);
+				cell->setFont(font);
+			}
 			++start.col;
 		}
 	}

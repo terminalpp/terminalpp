@@ -510,8 +510,6 @@ namespace ui {
 
 	}; // ui::Control
 
-
-
 } // namespace ui
 
 

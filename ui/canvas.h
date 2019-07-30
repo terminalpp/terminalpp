@@ -165,7 +165,7 @@ namespace ui {
 
 		    TODO this is stupid api, should change
 		 */
-		void textOut(Point start, std::string const& text);
+		void textOut(Point start, std::string const& text, Color color, Font font = Font());
 
 	private:
 		friend class Widget;
