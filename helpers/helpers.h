@@ -36,6 +36,16 @@
 
 namespace helpers {
 
+    template<typename T, typename W>
+    inline T pointer_cast(W const * from) {
+        return static_cast<T>(static_cast<void const *>(from));
+    }
+
+    template<typename T, typename W>
+    inline T pointer_cast(W * from) {
+        return static_cast<T>(static_cast<void *>(from));
+    }
+
     class Exception : public std::exception {
     public:
         /** Simple class responsible for storing the exception origin and message.

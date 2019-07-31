@@ -63,10 +63,10 @@ namespace vterm {
 				return other;
 			} else if (other.alpha == 255) {
 				unsigned char a = alpha + 1;
-				unsigned char aInv = 256 - alpha;
-				unsigned char r = (a * red + aInv * other.red) / 256;
-				unsigned char g = (a * green + aInv * other.green) / 256;
-				unsigned char b = (a * blue + aInv * other.blue) / 256;
+				unsigned char aInv = static_cast<unsigned char>(256 - alpha);
+				unsigned char r = static_cast<unsigned char>((a * red + aInv * other.red) / 256);
+				unsigned char g = static_cast<unsigned char>((a * green + aInv * other.green) / 256);
+				unsigned char b = static_cast<unsigned char>((a * blue + aInv * other.blue) / 256);
 				return Color(r, g, b, 255);
 			} else {
 				// TODO we can do this because the color always blends over an existing fully opaque color of the background.If this were not the case, the assert failsand we have to change the algorithm.

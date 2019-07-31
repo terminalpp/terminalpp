@@ -153,8 +153,8 @@ namespace ui {
 			int w = clientCanvas.width();
 			std::vector<Widget*> const& children = childrenOf(container);
 			// first determine the number of visible children to layout, the total height occupied by children with fixed height and number of children with height hint set to auto
-			size_t visibleChildren = 0;
-			size_t autoChildren = 0;
+			int visibleChildren = 0;
+			int autoChildren = 0;
 			int fixedHeight = 0;
 			for (Widget* child : children)
 				if (child->visible()) {
@@ -229,8 +229,8 @@ namespace ui {
 			int h = clientCanvas.height();
 			std::vector<Widget*> const& children = childrenOf(container);
 			// first determine the number of visible children to layout, the total width occupied by children with fixed width and number of children with width hint set to auto
-			size_t visibleChildren = 0;
-			size_t autoChildren = 0;
+			int visibleChildren = 0;
+			int autoChildren = 0;
 			int fixedWidth = 0;
 			for (Widget* child : children)
 				if (child->visible()) {
