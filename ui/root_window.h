@@ -23,7 +23,8 @@ namespace ui {
 
 		RootWindow(int width, int height) :
 			Container(0, 0, width, height),
-			buffer_(width, height) {
+			buffer_(width, height),
+            mouseFocus_(nullptr) {
             visibleRegion_ = Canvas::VisibleRegion(this);
 		}
 
@@ -49,10 +50,13 @@ namespace ui {
             resize(width, height);
         }
 
-        void mouseDown(int col, int row, MouseButton button, Key modifiers);
-        void mouseUp(int col, int row, MouseButton button, Key modifiers);
-        void mouseWheel(int col, int row, int by, Key modifiers);
-        void mouseMove(int col, int row, Key modifiers);
+        void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
+        void mouseUp(int col, int row, MouseButton button, Key modifiers) override;
+        void mouseWheel(int col, int row, int by, Key modifiers) override;
+        void mouseMove(int col, int row, Key modifiers) override;
+        void keyChar(helpers::Char c) override;
+        void keyDown(Key k) override;
+        void keyUp(Key k) override;
 
         /** Locks the backing buffer and returns it in a RAII smart pointer.
          */
@@ -80,7 +84,7 @@ namespace ui {
 
         void invalidateContents() override;
 
-        void updateSize(int width, int height) {
+        void updateSize(int width, int height) override {
             // resize the buffer first
             {
                 std::lock_guard<Canvas::Buffer> g(buffer_);
@@ -88,6 +92,9 @@ namespace ui {
             }
             Container::updateSize(width, height);
         }
+
+		Widget* mouseFocusWidget(int col, int row);
+
 		/** Takes screen coordinates and converts them to the widget's coordinates.
 
 			Returns (-1;-1) if the screen coordinates are outside the current widget.
@@ -111,6 +118,15 @@ namespace ui {
         friend class Canvas;
 
         Canvas::Buffer buffer_;
+
+		int mouseCol_;
+		int mouseRow_;
+		Widget* mouseFocus_;
+		Widget* mouseClickWidget_;
+		MouseButton mouseClickButton_;
+		size_t mouseClickStart_;
+		size_t mouseDoubleClickPrevious_;
+
 
     }; 
 

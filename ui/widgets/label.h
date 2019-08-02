@@ -11,9 +11,9 @@ namespace ui {
 		Label(int left = 0, int top = 0, int width = 10, int height = 1) :
 			PublicWidget(left, top, width, height),
 			text_("Label"),
-			textColor_(Color::Red()),
+			textColor_(Color::White()),
 			font_(Font()),
-			background_(Color::Red()) {
+			background_(Color::Blue()) {
 		}
 
 		std::string const& text() const {

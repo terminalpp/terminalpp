@@ -101,6 +101,12 @@ namespace tpp {
             rootWindow_->rendererResized(this, cols_, rows_);
         }
 
+		void convertMouseCoordsToCells(int & x, int & y) {
+			x = x / cellWidthPx_;
+			y = y / cellHeightPx_;
+		}
+
+
         virtual void updateSizePx(unsigned widthPx, unsigned heightPx) {
             widthPx_ = widthPx;
             heightPx_ = heightPx;
@@ -122,6 +128,55 @@ namespace tpp {
             zoom_ = value;
         }
 
+        // interface to ui's root element
+
+        virtual void mouseDown(int x, int y, ui::MouseButton button) {
+            if (rootWindow_) {
+                convertMouseCoordsToCells(x, y);
+                rootWindow_->mouseDown(x, y, button, activeModifiers_);
+            }
+        }
+
+        virtual void mouseUp(int x, int y, ui::MouseButton button) {
+            if (rootWindow_) {
+                convertMouseCoordsToCells(x, y);
+                rootWindow_->mouseUp(x, y, button, activeModifiers_);
+            }
+        }
+
+        virtual void mouseWheel(int x, int y, int by) {
+            if (rootWindow_) {
+                convertMouseCoordsToCells(x, y);
+                rootWindow_->mouseWheel(x, y, by, activeModifiers_);
+            }
+        }
+
+        virtual void mouseMove(int x, int y) {
+            if (rootWindow_) {
+                convertMouseCoordsToCells(x, y);
+                rootWindow_->mouseMove(x, y, activeModifiers_);
+            }
+        }
+
+        virtual void keyChar(helpers::Char c) {
+            if (rootWindow_)
+                rootWindow_->keyChar(c);
+        }
+
+        virtual void keyDown(ui::Key key) {
+    		activeModifiers_ = ui::Key(ui::Key::Invalid, key.modifiers());
+            // TODO we can do window shortcuts here? 
+            if (key != ui::Key::Invalid && rootWindow_)
+                rootWindow_->keyDown(key);
+        }
+
+        virtual void keyUp(ui::Key key) {
+    		activeModifiers_ = ui::Key(ui::Key::Invalid, key.modifiers());
+            if (key != ui::Key::Invalid && rootWindow_)
+                rootWindow_->keyUp(key);
+        }
+
+
 		int cols_;
 		int rows_;
 		unsigned widthPx_;
@@ -137,6 +192,8 @@ namespace tpp {
         std::string title_;
 
         ui::RootWindow * rootWindow_;
+
+        ui::Key activeModifiers_;
     };
 
     template<typename IMPLEMENTATION> 

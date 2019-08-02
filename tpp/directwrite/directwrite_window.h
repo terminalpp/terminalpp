@@ -234,6 +234,8 @@ namespace tpp {
             return i == Windows_.end() ? nullptr : i->second;
         }
 
+        static ui::Key GetKey(unsigned vk);
+
         static LRESULT CALLBACK EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 

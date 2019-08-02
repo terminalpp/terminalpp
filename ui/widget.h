@@ -320,6 +320,18 @@ namespace ui {
 			trigger(onMouseLeave);
 		}
 
+		virtual void keyChar(helpers::Char c) {
+			MARK_AS_UNUSED(c);
+		}
+
+		virtual void keyDown(Key k) {
+			MARK_AS_UNUSED(k);
+		}
+
+		virtual void keyUp(Key k) {
+			MARK_AS_UNUSED(k);
+		}
+
 		/** Paints given child.
 
 		    Expects the clientCanvas of the parent as the second argument. In cases where border is 0, this can be the widget's main canvas as well. In other cases the getClientCanvas method should be used to obtain the client canvas first. 

@@ -124,6 +124,22 @@ namespace tpp {
 		glyphRun_.glyphCount = 0;
 	}
 
+	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
+	ui::Key DirectWriteWindow::GetKey(unsigned vk) {
+		// we don't distinguish between left and right win keys
+		if (vk == VK_RWIN)
+			vk = VK_LWIN;
+		if (! ui::Key::IsValidCode(vk))
+			return ui::Key(ui::Key::Invalid);
+		// MSB == pressed, LSB state since last time
+		unsigned shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? ui::Key::Shift : 0;
+		unsigned ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) ? ui::Key::Ctrl : 0;
+		unsigned alt = (GetAsyncKeyState(VK_MENU) & 0x8000) ? ui::Key::Alt : 0;
+		unsigned win = (GetAsyncKeyState(VK_LWIN) & 0x8000) || (GetAsyncKeyState(VK_RWIN) & 0x8000) ? ui::Key::Win : 0;
+
+		return ui::Key(vk, shift | ctrl | alt | win);
+	}
+
 	LRESULT CALLBACK DirectWriteWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         // obtain the window object (nullptr if unknown)
         DirectWriteWindow * window = GetWindowFromHWND(hWnd);
@@ -211,6 +227,69 @@ namespace tpp {
 				window->render();
 				break;
 			}
+			/* No need to use WM_UNICHAR since WM_CHAR is already unicode aware */
+			case WM_UNICHAR:
+				UNREACHABLE;
+				break;
+			case WM_CHAR:
+				if (wParam >= 0x20)
+					window->keyChar(helpers::Char::FromCodepoint(static_cast<unsigned>(wParam)));
+				break;
+			/* Processes special key events.
+			
+			   TODO perhaps all the syskeydown & syskeyup events should be stopped? 
+			 */
+			case WM_SYSKEYDOWN:
+			case WM_KEYDOWN: {
+				ui::Key k = GetKey(static_cast<unsigned>(wParam));
+				if (k != ui::Key::Invalid)
+					window->keyDown(k);
+				// returning w/o calling the default window proc means that the OS will not interfere by interpreting own shortcuts
+				// NOTE add other interfering shortcuts as necessary
+				if (k == ui::Key::F10 || k.code() == ui::Key::AltKey)
+				    return 0;
+				break;
+			}
+			case WM_SYSKEYUP:
+			case WM_KEYUP: {
+				ui::Key k = GetKey(static_cast<unsigned>(wParam));
+				window->keyUp(k);
+				break;
+			}
+			/* Mouse events which simply obtain the mouse coordinates, convert the buttons and wheel values to vterm standards and then calls the DirectWriteTerminalWindow's events, which perform the pixels to cols & rows translation and then call the terminal itself.
+			 */
+#define MOUSE_X static_cast<unsigned>(lParam & 0xffff)
+#define MOUSE_Y static_cast<unsigned>((lParam >> 16) & 0xffff)
+			case WM_LBUTTONDOWN:
+				window->mouseDown(MOUSE_X, MOUSE_Y, ui::MouseButton::Left);
+				break;
+			case WM_LBUTTONUP:
+				window->mouseUp(MOUSE_X, MOUSE_Y, ui::MouseButton::Left);
+				break;
+			case WM_RBUTTONDOWN:
+				window->mouseDown(MOUSE_X, MOUSE_Y, ui::MouseButton::Right);
+				break;
+			case WM_RBUTTONUP:
+				window->mouseUp(MOUSE_X, MOUSE_Y, ui::MouseButton::Right);
+				break;
+			case WM_MBUTTONDOWN:
+				window->mouseDown(MOUSE_X, MOUSE_Y, ui::MouseButton::Wheel);
+				break;
+			case WM_MBUTTONUP:
+				window->mouseUp(MOUSE_X, MOUSE_Y, ui::MouseButton::Wheel);
+				break;
+			/* Mouse wheel contains the position relative to screen top/left, so we must first translate it to window coordinates. 
+			 */
+			case WM_MOUSEWHEEL: {
+				POINT pos{ MOUSE_X, MOUSE_Y };
+				ScreenToClient(hWnd, &pos);
+				window->mouseWheel(pos.x, pos.y, GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+				break;
+			}
+			case WM_MOUSEMOVE:
+				window->mouseMove(MOUSE_X, MOUSE_Y);
+				break;
+
 
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);
