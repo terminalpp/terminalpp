@@ -11,9 +11,9 @@ namespace ui {
 		Label(int left = 0, int top = 0, int width = 10, int height = 1) :
 			PublicWidget(left, top, width, height),
 			text_("Label"),
-			textColor_(Color::White()),
+			textColor_(Color::Red()),
 			font_(Font()),
-			background_(Color::Blue()) {
+			background_(Color::Red()) {
 		}
 
 		std::string const& text() const {
@@ -67,7 +67,7 @@ namespace ui {
 
 	protected:
 
-		void paint(Canvas& canvas) {
+		void paint(Canvas& canvas) override {
 			canvas.fill(Rect(width(), height()), background_);
 			canvas.textOut(Point(0, 0), text_, textColor_, font_);
 		}
@@ -83,13 +83,11 @@ namespace ui {
 		}
 
 		void mouseEnter() override {
-			font_.setUnderline(true);
 			repaint();
 			Widget::mouseEnter();
 		}
 
 		void mouseLeave() override {
-			font_.setUnderline(false);
 			repaint();
 			Widget::mouseLeave();
 		}

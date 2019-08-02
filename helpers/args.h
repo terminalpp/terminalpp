@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <limits>
 #include <stdexcept>
+#include <iostream>
 
 #include "helpers.h"
 #include "string.h"

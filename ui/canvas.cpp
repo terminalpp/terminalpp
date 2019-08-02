@@ -1,37 +1,66 @@
 #include "canvas.h"
+
 #include "root_window.h"
 
 namespace ui {
 
-	Canvas::VisibleRegion::VisibleRegion(RootWindow* root) :
-		root(root), 
-		windowOffset(0, 0) {
-		if (root != nullptr)
-		    region = Rect(root->width(), root->height());
-	}
+    // Canvas::VisibleRegion
 
+    Canvas::VisibleRegion::VisibleRegion(RootWindow * root):
+        root(root),
+        region(root->width(), root->height()),
+        windowOffset(0, 0) {
 
+    }
 
-	Canvas::VisibleRegion::VisibleRegion(VisibleRegion const& from, int left, int top, int width, int height) :
-		root(from.root),
+    Canvas::VisibleRegion::VisibleRegion(VisibleRegion const & from, int left, int top, int width, int height):
+        root(from.root),
 	    region(Rect::Intersection(from.region, Rect(left, top, left + width, top + height))) {
 		// if the new visible region is not empty, update the intersection by the control start and update the offset, otherwise the offset's value does not matter
 		if (!region.empty()) {
 			region = region - Point(left, top);
 			windowOffset = Point(
-				from.windowOffset.col + (left + region.left - from.region.left),
-				from.windowOffset.row + (top + region.top - from.region.top)
+				from.windowOffset.x + (left + region.left() - from.region.left()),
+				from.windowOffset.y + (top + region.top() - from.region.top())
 			);
 		}
-		ASSERT(windowOffset.col >= 0 && windowOffset.row >= 0);
-	}
+		ASSERT(windowOffset.x >= 0 && windowOffset.y >= 0);
+    }
 
-	Canvas::Canvas(Canvas const& from, int left, int top, int width, int height) :
-		visibleRegion_(from.visibleRegion_, left, top, width, height),
-		screen_(from.screen_),
-		width_(width),
-		height_(height) {
-	}
+    // Canvas
+
+    Canvas::Canvas(Canvas & from, int left, int top, int width, int height):
+        width_(width),
+        height_(height),
+        visibleRegion_(from.visibleRegion_, left, top, width, height),
+        buffer_(visibleRegion_.root->buffer_) {
+        ++buffer_.lockDepth_;
+    }
+
+    Canvas::~Canvas() {
+        if (--buffer_.lockDepth_ == 0) {
+            buffer_.lock_.unlock();
+            visibleRegion_.root->repaint(
+                Rect(visibleRegion_.region.width(), visibleRegion_.region.height()) + visibleRegion_.windowOffset
+            );
+        }
+    }
+
+    Canvas::Canvas(VisibleRegion const & visibleRegion, int width, int height):
+        width_(width),
+        height_(height),
+        visibleRegion_(visibleRegion),
+        buffer_(visibleRegion.root->buffer_) {
+        ++buffer_.lockDepth_;
+    }
+
+    Canvas Canvas::Create(Widget const & widget) {
+        ASSERT(widget.visibleRegion_.valid());
+        Buffer & b = widget.visibleRegion_.root->buffer_;
+        b.lock_.lock();
+        ASSERT(b.lockDepth_ == 0);
+        return Canvas(widget.visibleRegion_, widget.width_, widget.height_);
+    }
 
 	void Canvas::fill(Rect const& rect, Brush const& brush) {
 		// don't do anything if the brush is empty
@@ -39,19 +68,18 @@ namespace ui {
 			return;
 		// otherwise apply the brush to the cells
 		Point p;
-		for (p.row = rect.top; p.row < rect.bottom; ++p.row) {
-			for (p.col = rect.left; p.col < rect.right; ++p.col) {
+		for (p.y = rect.top(); p.y < rect.bottom(); ++p.y) {
+			for (p.x = rect.left(); p.x < rect.right(); ++p.x) {
 				if (Cell * c = at(p)) {
-					// update the backrgound color of the cell 
-					c->setBg(brush.color.blendOver(c->bg()));
-					// if there is no fill character, overlay the text color as well
-					if (brush.fill == Char::NUL) {
-						c->setFg(brush.color.blendOver(c->fg()));
-					} else {
-						c->setC(brush.fill);
-						c->setFg(brush.fillColor);
-						c->setFont(brush.fillFont);
-					}
+                    *c << Background(brush.color.blendOver(c->background()));
+                    if (brush.fill == helpers::Char::NUL) {
+                        *c << Foreground(brush.color.blendOver(c->foreground()))
+                           << DecorationColor(brush.color.blendOver(c->decorationColor()));
+                    } else {
+                        *c << brush.fill 
+                           << Foreground(brush.fillColor)
+                           << brush.fillFont; 
+                    }
 				}
 			}
 		}
@@ -61,16 +89,16 @@ namespace ui {
 		char const* i = text.c_str();
 		char const* e = i + text.size();
 		while (i < e) {
-			if (start.col >= width_) // don't draw past first line
+			if (start.x >= width_) // don't draw past first line
 				break;
-			Char const* c = Char::At(i, e);
-			if (Cell * cell = at(start)) {
-				cell->setC(*c);
-				cell->setFg(color);
-				cell->setFont(font);
-			}
-			++start.col;
+			helpers::Char const * c = helpers::Char::At(i, e);
+			if (Cell * cell = at(start)) 
+                *cell << c->codepoint() << Foreground(color) << font;
+			++start.x;
 		}
 	}
+
+
+
 
 } // namespace ui

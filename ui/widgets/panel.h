@@ -18,11 +18,11 @@ namespace ui {
 		/** The clientWidth and clientHeight return the size of the widget that is available for children (i.e. excluding the border of the control.
 		 */
 		int clientWidth() const {
-			return std::max(width_ - border_.left - border_.right, 0);
+			return std::max(width() - border_.left - border_.right, 0);
 		}
 
 		int clientHeight() const {
-			return std::max(height_ - border_.top - border_.bottom, 0);
+			return std::max(height() - border_.top - border_.bottom, 0);
 		}
 
 	protected:

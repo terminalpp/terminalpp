@@ -1,8 +1,11 @@
 #pragma once
 
 #include "helpers/helpers.h"
+#include "helpers/object.h"
 
 #include "canvas.h"
+#include "mouse.h"
+#include "key.h"
 
 namespace ui {
 
@@ -70,9 +73,6 @@ namespace ui {
 	template<typename T>
 	using Event = helpers::Event<T>;
 
-	typedef vterm::MouseButton MouseButton;
-	typedef vterm::Key Key;
-
 	class Widget;
 
 	class MouseButtonPayload {
@@ -99,6 +99,7 @@ namespace ui {
 	};
 
 	typedef helpers::EventPayload<void, ui::Widget> NoPayloadEvent;
+    typedef helpers::EventPayload<Rect, ui::Widget> RectEvent;
 
 	typedef helpers::EventPayload<MouseButtonPayload, ui::Widget> MouseButtonEvent;
 	typedef helpers::EventPayload<MouseWheelPayload, ui::Widget> MouseWheelEvent;
@@ -108,7 +109,7 @@ namespace ui {
 
 	    The widget manages the basic properties of every ui element, namely the position, size, visibility, drawing of its contents and events corresponding to this functionality as well as basic input & output events from the terminal (mouse, keyboard and clipboard). 
 	 */
-	class Widget : virtual public helpers::Object {
+	class Widget : public helpers::Object {
 	protected:
 
 		// events
@@ -151,7 +152,7 @@ namespace ui {
 
 		Widget(int x, int y, int width, int height):
 			parent_(nullptr),
-			visibleRegion_(nullptr),
+			visibleRegion_(),
 			overlay_(false),
 			forceOverlay_(false),
 			visible_(true),
@@ -336,7 +337,7 @@ namespace ui {
 		    If the widget is valid, invalidates its visible region and informs its parent that a child was invalidated. If the widget is already not valid, does nothing because the parent has already been notified. 
 		 */
 		void invalidate() {
-			if (visibleRegion_.isValid()) {
+			if (visibleRegion_.valid()) {
 				invalidateContents();
 				if (parent_ != nullptr)
 					parent_->childInvalidated(this);
@@ -443,6 +444,7 @@ namespace ui {
 		friend class Layout;
 		friend class Container;
 		friend class RootWindow;
+		friend class Canvas;
 
 		/* Parent widget or none. 
 		 */

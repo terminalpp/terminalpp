@@ -5,16 +5,13 @@
 #include "helpers/args.h"
 #include "helpers/time.h"
 
-#include "vterm/local_pty.h"
-#include "vterm/vt100.h"
-
 #include "config.h"
 #include "session.h"
 
 #if (defined ARCH_WINDOWS)
 
 #include "directwrite/directwrite_application.h"
-#include "directwrite/directwrite_terminal_window.h"
+#include "directwrite/directwrite_window.h"
 // link to directwrite
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
@@ -27,6 +24,12 @@
 #else
 #error "Unsupported platform"
 #endif
+
+#include "ui/widgets/panel.h"
+#include "ui/widgets/label.h"
+#include "ui/widgets/scrollbox.h"
+#include "ui/builders.h"
+#include "ui/layout.h"
 
 
 #include "stamp.h"
@@ -120,19 +123,30 @@ int main(int argc, char* argv[]) {
 	try {
 	    // create the application singleton
 #ifdef ARCH_WINDOWS
-	    new DirectWriteApplication(hInstance);
+	    DirectWriteApplication::Initialize(hInstance);
 #else
 	    new X11Application();
 #endif
-		helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
-		helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
-		helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
+		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
+		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
+		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
 
+		/* 
 		Session* s = Session::Create("t++", helpers::Command(*config::Command));
 		s->start();
 		s->show();
+		*/
 
-    	Application::MainLoop();
+	    Window * w = Application::Instance()->createWindow("test", 80, 25, 18);
+		ui::RootWindow * rw = ui::Create(new ui::RootWindow(80,25))
+		    << ui::Layout::Horizontal()
+			<< (ui::Create<ui::Label>() << "Hello world!")
+			<< (ui::Create<ui::Label>() << "Hello world 2");
+
+		w->setRootWindow(rw);
+		w->show();
+
+    	Application::Instance()->mainLoop();
 
 	    return EXIT_SUCCESS;
 	} catch (helpers::Exception const& e) {

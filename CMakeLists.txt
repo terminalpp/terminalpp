@@ -57,5 +57,5 @@ add_subdirectory("ui")
 
 add_subdirectory("tpp")
 
-add_subdirectory("bypass")
+#add_subdirectory("bypass")
 

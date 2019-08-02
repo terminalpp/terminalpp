@@ -86,19 +86,14 @@ namespace ui {
 		SizeHint const value;
 	}; // ui::HeightHint
 
-	class Background {
+	class BackgroundBrushHolder {
 	public:
-		explicit Background(Brush const& brush) :
-			value(brush) {
-		}
-
-		explicit Background(Color color) :
-			value(Brush(color)) {
-		}
-
 		Brush const value;
 	}; // ui::Background
 
+	inline BackgroundBrushHolder Background(Brush const & brush) {
+		return BackgroundBrushHolder{brush};
+	}
 
 	/** Operator << overloads for differen properties. 
 
@@ -137,7 +132,7 @@ namespace ui {
 	}
 
 	template<typename WIDGET>
-	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, Background const& b) {
+	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, BackgroundBrushHolder const& b) {
 		widget->setBackground(b.value);
 		return widget;
 	}

@@ -193,3 +193,8 @@ template<typename PAYLOAD>
 ::helpers::EventHandler<PAYLOAD> CreateEventHandler_(void(*f)(PAYLOAD &)) {
 	return ::helpers::EventHandler<PAYLOAD>(f);
 }
+
+template<typename C, typename PAYLOAD>
+::helpers::EventHandler<PAYLOAD> CreateEventHandler_(void (C::*f)(PAYLOAD &), C * instance) {
+	return ::helpers::EventHandler<PAYLOAD>(instance, f);
+}

@@ -1,165 +1,44 @@
 #pragma once
 
-#include "helpers/shapes.h"
+#include <cstdint>
 
-#include "vterm/terminal.h"
+#include "helpers/helpers.h"
+#include "helpers/locks.h"
+
+#include "cell.h"
+#include "shapes.h"
 
 namespace ui {
 
-	/* Forward declarations */
-	class RootWindow;
+    /** Drawable surface of the UI. 
+     
+        The canvas represents provides an API To draw the UI elements. The canvas is represented by its backing buffer which is the actual array of cells that can be altered. 
+     */
+    class Canvas {
+    public:
 
-	/* For simplicity, bring existing types to the ui namespace where appropriate
-	 */
+        /* Backing buffer. */
+        class Buffer;
 
-	typedef helpers::Point<int> Point;
-	typedef helpers::Rect<int> Rect;
-	typedef vterm::Color Color;
-	typedef vterm::Font Font;
-	typedef helpers::Char Char;
+        /** Given existing canvas, creates a canvas encompassing the given subset of the original canvas. 
+         */
+        Canvas(Canvas & from, int left, int top, int width, int height);
 
-	class Border {
-	public:
-		int left;
-		int top;
-		int right;
-		int bottom;
-		
-		Border(int left = 0, int top = 0, int right = 0, int bottom = 0) :
-			left(left),
-			top(top),
-			right(right),
-			bottom(bottom) {
-		}
+        ~Canvas();
 
-		bool operator == (Border const& other) const {
-			return left == other.left && top == other.top && right == other.right && bottom == other.bottom;
-		}
+        int width() const {
+            return width_;
+        }
 
-		bool operator != (Border const& other) const {
-			return left != other.left || top != other.top || right != other.right || bottom != other.bottom;
-		}
-
-	};
-	
-	/** Horizontal align. 
-	 */
-	enum class HAlign {
-		Left,
-		Center,
-		Right
-	};
-
-	/** Vertical Align 
-	 */
-	enum class VAlign {
-		Top,
-		Middle,
-		Bottom
-	};
-
-	/** A brush used to fill areas on the canvas. 
-
-	    A brush consists of background color which is applied as backrgound colors to the cells, and the fill character and its color which can be written in the respective cells. 
-	 */
-	class Brush {
-	public:
-
-		/** The background color of the brush. 
-
-		    All cells background color will be set to this color. This color can be transparent. 
-		 */
-		Color color;
-
-		/** Fill character. 
-		 */
-		Char fill;
-
-		/** Color of the fill character. 
-		 */
-		Color fillColor;
-
-		/** Font of the fill character. 
-
-		    Note that only fonts of size 1 are supported. 
-			
-			TODO how does this change with double width characters, would solution to this make it work with larger fonts as well? 
-		 */
-		Font fillFont;
-
-		/** Creates a simple brush with only a background color. 
-
-		    T he fill character is set to NUL and its color to None. This means that if the background color is transparent, the contents of the cell will be kept as is. 
-		 */
-		Brush(Color color) :
-			color(color),
-			fill(Char::NUL),
-			fillColor(Color::None()),
-		    fillFont(Font()) {
-		}
-
-		/** Creates a brush with specified fill character and its color. 
-		
-		    Such a brush will first change the background color, but then also overwrite the contents of the cell.	    
-		 */
-		Brush(Color color, Char fill, Color fillColor, Font fillFont = Font()) :
-			color(color),
-			fill(fill),
-			fillColor(fillColor),
-		    fillFont(fillFont) {
-		}
-
-		/** Returns an empty brush, which when used leaves all properties of the cell intact. 
-		 */
-		static Brush None() {
-			return Brush(Color::None(), 0, Color::None());
-		}
-
-		/** Brushes are equal if their contents are equal. 
-		 */
-		bool operator == (Brush const& other) const {
-			return color == other.color && fill == other.fill && fillColor == other.fillColor && fillFont == other.fillFont;
-		}
-
-		bool operator != (Brush const& other) const {
-			return color != other.color || fill != other.fill || fillColor != other.fillColor || fillFont != other.fillFont;
-		}
-	}; // ui::Brush
-
-	/** Describes the canvas of the UI controls.
-
-		The canvas acts as an interface to the underlying root window. 
-	 */
-	class Canvas {
-	public:
-
-		/** A cell of the canvas is the same as the cell of a terminal's screen. 
-		 */
-		typedef vterm::Terminal::Cell Cell;
-
-		/** Creates a canvas into a rectangle in existing canvas.
-
-			Reuses the screen from the existing canvas and recalculates the visible region to reflect the child selected rectangle's position and dimension.
-		 */
-		Canvas(Canvas const& from, int left, int top, int width, int height);
-
-		/** Returns the width of the canvas in cells.
-		 */
-		int width() const {
-			return width_;
-		}
-
-		/** Returns the height of the canvas in cells. 
-		 */
-		int height() const {
-			return height_;
-		}
+        int height() const {
+            return height_;
+        }
 
 		/** Fills the given rectangle with specified brush. 
 
 		    See the Brush class for more details. 
 		 */
-		void fill(Rect const& rect, Brush const& brush);
+        void fill(Rect const & rect, Brush const & brush);
 
 		/** Displays the given text. 
 
@@ -167,38 +46,54 @@ namespace ui {
 		 */
 		void textOut(Point start, std::string const& text, Color color, Font font = Font());
 
-	private:
-		friend class Widget;
-		friend class RootWindow;
+    private:
+        friend class Widget;
+        friend class RootWindow;
 
-		/** Determins the visible region of the canvas.
-		 */
-		class VisibleRegion {
-		public:
 
-			/** Creates a visible region that encompases the entirety of a given root window. 
-			 */
-			VisibleRegion(RootWindow* root);
+        /** Determines the visible region of the canvas, i.e. the part of the canvas that is backed by the root window's buffer. 
+         */
+        class VisibleRegion {
+        public:
 
-			/** Creates a new visible region within existing visible region. 
-			 */
-			VisibleRegion(VisibleRegion const& from, int left, int top, int width, int height);
+            /** Link to the root window which contains the buffer. */
+            RootWindow * root;
 
-			bool isValid() const {
-				return root != nullptr;
+            /** Visible region of the canvas in canvas' coordinates.
+              
+                All coordinates of the region are expected to be positive. 
+             */
+            Rect region;
+
+            /** Offset of the top-left corner of the region in root window's coordinates.
+             */
+            Point windowOffset;
+
+			VisibleRegion() :
+				root(nullptr),
+				region(0, 0),
+				windowOffset(0, 0) {
 			}
 
-			void invalidate() {
-				root = nullptr;
-			}
+            VisibleRegion(RootWindow * root);
+
+            VisibleRegion(VisibleRegion const & from, int left, int top, int width, int height);
+
+            bool valid() const {
+                return root != nullptr;
+            }
+
+            void invalidate() {
+                root = nullptr;
+            }
 
 			/** Returns the given point in canvas coordinates translated to the screen coordinates. 
 			 */
-			helpers::Point<unsigned> translate(Point what) {
+			Point translate(Point what) {
 				ASSERT(region.contains(what));
-				return helpers::Point<unsigned>(
-					static_cast<unsigned>(what.col - region.left + windowOffset.col),
-					static_cast<unsigned>(what.row - region.top + windowOffset.row)
+				return Point(
+					(what.x - region.left() + windowOffset.x),
+					(what.y - region.top() + windowOffset.y)
 				);
 			}
 
@@ -207,51 +102,141 @@ namespace ui {
 			bool contains(unsigned col, unsigned row) {
 				if (root == nullptr)
 					return false;
-				if (col < static_cast<unsigned>(windowOffset.col) || row < static_cast<unsigned>(windowOffset.row))
+				if (col < static_cast<unsigned>(windowOffset.x) || row < static_cast<unsigned>(windowOffset.y))
 					return false;
-				if (col >= static_cast<unsigned>(windowOffset.col) + region.width() || row >= static_cast<unsigned>(windowOffset.row + region.height()))
+				if (col >= static_cast<unsigned>(windowOffset.x) + region.width() || row >= static_cast<unsigned>(windowOffset.y + region.height()))
 					return false;
 				return true;
 			}
 
-			RootWindow* root;
+        };
 
-			/** The visible region, in the coordinates of the canvas of the control.
-			 */
-			Rect region;
-
-			/** The coordinates of the top left visible corner in the root window buffer.
-			 */
-			Point windowOffset;
-		};
-
-		/** Creates the canvas from given valid visible region, underlying screen and width & height. 
-		 */
-		Canvas(VisibleRegion const& from, vterm::Terminal::Screen& screen, int width, int height) :
-			visibleRegion_(from),
-			screen_(screen),
-			width_(width),
-		    height_(height) {
-			ASSERT(from.isValid());
-		}
+        Canvas(VisibleRegion const & visibleRegion, int width, int height);
 
 		/** Returns the cell at given canvas coordinates if visible, or nullptr if the cell is outside the visible region. 
 		 */
-		Cell* at(Point p) {
-			// if the coordinates are not in visible region, return nullptr
-			if (!visibleRegion_.region.contains(p))
-				return nullptr;
-			// otherwise recalculate the coordinates to the screen ones and return the cell
-			return &screen_.at(visibleRegion_.translate(p));
-		}
+		Cell* at(Point p);
 
-		VisibleRegion visibleRegion_;
+        /* Dimensions of the canvas. */
+        int width_;
+        int height_;
 
-		vterm::Terminal::Screen& screen_;
+        VisibleRegion visibleRegion_;
 
-		int width_;
-		int height_;
+        Canvas::Buffer & buffer_;
 
-	}; // ui::Canvas
+        static Canvas Create(Widget const & widget);
+    };
+
+
+    /** Canvas backing buffer. 
+     
+        Represents the screen that can be displayed and consists of a 2D mapped array of cells. 
+    */
+    class Canvas::Buffer {
+    public:
+
+        typedef helpers::SmartRAIIPtr<Buffer> Ptr;
+
+        /** Smart pointer which automatically releases the lock on the buffer when destroyed.
+         */
+        class Ptr;
+
+        Buffer(int cols, int rows):
+            cols_(0),
+            rows_(0),
+            cells_(nullptr),
+            lockDepth_(0) {
+			resize(cols, rows);
+        }
+
+        /** Deleting the buffer deletes the underlying cell array.
+         */
+        ~Buffer() {
+            delete [] cells_;
+        }
+
+        void resize(int cols, int rows) {
+            if (cols_ != cols || rows_ != rows) {
+                delete [] cells_;
+                cols_ = cols;
+                rows_ = rows;
+                cells_ = new Cell[cols_ * rows_];
+				// TODO delete this when done with randomized stuff
+				for (int r = 0; r < rows; ++r)
+					for (int c = 0; c < cols; ++c)
+						at(c, r) << ((rand() % 64) + 32);
+            }
+        }
+
+        int cols() const {
+            return cols_;
+        }
+
+        int rows() const {
+            return rows_;
+        }
+
+        Cell const & at(int x, int y) const {
+            ASSERT(x >= 0 && x <= cols_ && y >= 0 && y < rows_);
+            return cells_[y * cols_ + x];
+        }
+
+        Cell & at(int x, int y) {
+            ASSERT(x >= 0 && x <= cols_ && y >= 0 && y < rows_);
+            return cells_[y * cols_ + x];
+        }
+
+        Cell const & at(Point p) const {
+            ASSERT(p.x >= 0 && p.x <= cols_ && p.y >= 0 && p.y < rows_);
+            return cells_[p.y * cols_ + p.x];
+        }
+
+        Cell & at(Point p) {
+            ASSERT(p.x >= 0 && p.x <= cols_ && p.y >= 0 && p.y < rows_);
+            return cells_[p.y * cols_ + p.x];
+        }
+
+        void lock() {
+            lock_.lock();
+        }
+
+        void priorityLock() {
+            lock_.priorityLock();
+        }
+
+        void unlock() {
+            lock_.unlock();
+        }
+
+    private:
+
+        friend class Canvas;
+
+        /* Size of the buffer and the array of the cells. */
+        int cols_;
+        int rows_;
+        Cell * cells_;
+
+        /* Depth of the locking done by the canvases. */
+        unsigned lockDepth_;
+        
+        /* Priority lock on the buffer. */
+        helpers::PriorityLock lock_;
+
+
+
+    }; // Canvas::Buffer
+
+
+    inline Cell * Canvas::at(Point p) {
+        // if the coordinates are not in visible region, return nullptr
+        if (!visibleRegion_.region.contains(p))
+            return nullptr;
+        // otherwise recalculate the coordinates to the screen ones and return the cell
+        return &buffer_.at(visibleRegion_.translate(p));
+    }
+
+
 
 } // namespace ui

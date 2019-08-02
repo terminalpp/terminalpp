@@ -1,4 +1,17 @@
-﻿## Bugs and missing features
+﻿# V0.2
+
+- I need attributes as separate class so that they can be specified to canvas methods
+- resize root window buffer when terminal resized
+- let window listen to root window repaint 
+- add attributes drawing
+- add UI so that UI can be displayed
+- make terminal an UI widget
+- consider keeping track of what needs to be changed
+
+- of course, add X11
+
+
+## Bugs and missing features
 
 - check asserts, some should actually be OSCHECKS
 - add zoom out? and default zoom? 

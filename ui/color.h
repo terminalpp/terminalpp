@@ -1,52 +1,38 @@
 #pragma once
 
-#include <ostream>
+#include <cstdint>
 
 #include "helpers/helpers.h"
 
-namespace vterm {
+namespace ui {
 
-	/** Color specification (8bit true color with alpha channel)
-	 */
-	class Color {
-	public:
-		/** Red channel. 
-		 */
-		unsigned char red;
-		
-		/** Green channel.
-		 */
-		unsigned char green;
-		
-		/** Blue channel. 
-		 */
-		unsigned char blue;
-
-		/** Alpha channel - 0 is no transparency, 255 is full transparency. 
-		 */
-		unsigned char alpha;
-
+    class Color {
+    public:
+		uint8_t alpha;
+		uint8_t blue;
+		uint8_t green;
+		uint8_t red;
+        
 		/** Creates a color of given properties. 
 		 */
-		constexpr Color(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255) :
+		constexpr Color(unsigned char red = 0, unsigned char green = 0, unsigned char blue = 0, unsigned char alpha = 255) :
 			red(red),
 			green(green),
 			blue(blue),
 			alpha(alpha) {
 		}
 
-		/** Default constructor creates black color.
-		 */
-		constexpr Color() :
-			red(0),
-			green(0),
-			blue(0),
-			alpha(255) {
+        uint32_t toRGB() const {
+            return (red << 16) + (green << 8) + blue;
+        };
+
+		uint32_t toRGBA() const {
+			return * helpers::pointer_cast<uint32_t const*>(this);
 		}
 
-		unsigned toNumber() const {
-			return (red << 16) + (green << 8) + blue;
-		}
+        float floatAlpha() {
+            return static_cast<float>(alpha) / 255.0f;
+        }
 
 		/** Returns true if the color is opaque, i.e. its alpha channel is maximized. 
 		 */
@@ -103,66 +89,49 @@ namespace vterm {
 		static Color DarkCyan() { return Color(0, 128, 128); }
 		static Color DarkYellow() { return Color(128, 128, 0); }
 		static Color DarkGray() { return Color(128, 128, 128); }
-	};
+
+    private:
+        friend class Cell;
+
+        // TODO maybe the order of RGB in the Color is not correct
+        Color(uint32_t raw) {
+            *helpers::pointer_cast<uint32_t *>(this) = raw;
+        }
+
+    }; 
 
 	inline std::ostream & operator << (std::ostream & s, Color const & c) {
 		s << static_cast<unsigned>(c.red) << ";" << static_cast<unsigned>(c.green) << ";" << static_cast<unsigned>(c.blue);
 		return s;
 	}
 
-	/** Palette of colors.
-
-		Although vterm fully supports the true color rendering, for compatibility and shorter escape codes, the 256 color palette as defined for xterm is supported via this class.
-
-		The separation of the palette and the terminal allows very simple theming in the future, should this feature be implemented.
-	 */
-	class Palette {
+	class ForegroundColorHolder {
 	public:
-		Palette(size_t size) :
-			size_(size),
-			colors_(new Color[size]) {
-		}
-
-		Palette(std::initializer_list<Color> colors);
-
-		Palette(Palette const& from);
-
-		Palette(Palette&& from);
-
-		~Palette() {
-			delete [] colors_;
-		}
-
-		void fillFrom(Palette const& from);
-
-		size_t size() const {
-			return size_;
-		}
-
-		Color const& operator [] (size_t index) const {
-			return color(index);
-		}
-
-		Color& operator [] (size_t index) {
-			return color(index);
-		}
-
-		Color const& color(size_t index) const {
-			ASSERT(index < size_);
-			return colors_[index];
-		}
-
-		Color& color(size_t index) {
-			ASSERT(index < size_) << index << " -- " << size_;
-			return colors_[index];
-		}
-
-		static Palette Colors16();
-
-	private:
-		size_t size_;
-		Color* colors_;
+	    Color value;
 	};
 
+	class BackgroundColorHolder {
+	public:
+	    Color value;
+	};
 
-} // namespace vterm
+	class DecorationColorHolder {
+	public:
+	    Color value;
+	};
+
+	inline ForegroundColorHolder Foreground(Color color) {
+		return ForegroundColorHolder{color};
+	}
+
+	inline BackgroundColorHolder Background(Color color) {
+		return BackgroundColorHolder{color};
+	}
+	inline DecorationColorHolder DecorationColor(Color color) {
+		return DecorationColorHolder{color};
+	}
+
+
+
+
+} // namespace ui

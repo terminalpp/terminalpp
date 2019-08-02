@@ -60,12 +60,12 @@ namespace ui {
 
 		virtual void setChildGeometry(Widget* child, int x, int y, int width, int height) {
 			if (child->x() != x || child->y() != y) {
-				if (child->visibleRegion_.isValid())
+				if (child->visibleRegion_.valid())
 					child->invalidateContents();
 				child->updatePosition(x, y);
 			}
 			if (child->width() != width || child->height() != height) {
-				if (child->visibleRegion_.isValid())
+				if (child->visibleRegion_.valid())
 				    child->invalidateContents();
 				child->updateSize(width, height);
 			}
