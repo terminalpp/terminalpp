@@ -154,10 +154,9 @@ namespace tpp {
 
         /** Sets the attributes of the cell. 
          
-            There is nothing to do since the attributes are stored in the status cell anyway and the glyph run drawing only queries the status cell for their values.  
          */
-        void setAttributes(ui::Cell const & cell) {
-            MARK_AS_UNUSED(cell);
+        void setAttributes(ui::Attributes const & attrs) {
+            attrs_ = attrs;
         }
 
         /** Draws the glyph run. 
@@ -181,19 +180,24 @@ namespace tpp {
                 static_cast<float>(glyphRunRow_ * cellHeightPx_ + dwFont_->nativeHandle().ascent));
             rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
             // see if there are any attributes to be drawn 
-            // TODO
-
-
-
+            if (!attrs_.emptyVisible()) {
+                if (attrs_.underline()) {
+					D2D1_POINT_2F start = origin;
+					start.y -= dwFont_->nativeHandle().underlineOffset;
+					D2D1_POINT_2F end = start;
+					end.x += glyphRun_.glyphCount * cellWidthPx_;
+					rt_->DrawLine(start, end, decor_.Get(), dwFont_->nativeHandle().underlineThickness);
+                }
+                if (attrs_.strikethrough()) {
+					D2D1_POINT_2F start = origin;
+					start.y -= dwFont_->nativeHandle().strikethroughOffset;
+					D2D1_POINT_2F end = start;
+					end.x += glyphRun_.glyphCount * cellWidthPx_;
+					rt_->DrawLine(start, end, decor_.Get(), dwFont_->nativeHandle().strikethroughThickness);
+                }
+            }
 			glyphRun_.glyphCount = 0;
-
-
-
         }
-
-
-
-
 
 
         /* Window handle. */
@@ -212,6 +216,7 @@ namespace tpp {
 		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> bg_; // background style
 		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> decor_; // decoration color
 		Font* dwFont_;
+        ui::Attributes attrs_;
 
 		DWRITE_GLYPH_RUN glyphRun_;
 		UINT16 * glyphIndices_;

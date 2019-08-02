@@ -1,14 +1,13 @@
 ﻿# V0.2
 
-- I need attributes as separate class so that they can be specified to canvas methods
-- resize root window buffer when terminal resized
-- let window listen to root window repaint 
-- add attributes drawing
-- add UI so that UI can be displayed
+- propagare UI events properly
 - make terminal an UI widget
-- consider keeping track of what needs to be changed
+- make Font contain stuff from nativeHandle on DirectWrite (like underline & strikethrough positions & thickness)
+- move the rebderer in window.h to use glyph runs in all instances
 
 - of course, add X11
+- consider keeping track of what needs to be changed
+- add the extra attributes drawing
 
 
 ## Bugs and missing features

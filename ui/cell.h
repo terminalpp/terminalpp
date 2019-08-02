@@ -8,6 +8,145 @@
 #include "font.h"
 
 namespace ui {
+
+    class Attributes {
+	public:
+
+		Attributes():
+		    raw_(0) {
+		}
+
+		bool empty() {
+			return raw_ == 0;
+		}
+
+		/** Returns true if the attributes contain any of the visible ones.
+		  
+		    I.e. if rendering them is necessary.
+		 */
+		bool emptyVisible() {
+			return raw_ & 0x7eff; // no end of line, no border above
+		}
+
+	    bool underline() const {
+			return raw_ & UNDERLINE;
+		}
+
+		bool strikethrough() const {
+			return raw_ & STRIKETHROUGH;
+		}
+
+		bool curlyUnderline() const {
+			return raw_ & CURLY_UNDERLINE;
+		}
+
+		bool borderLeft() const {
+			return raw_ & BORDER_LEFT;
+		}
+
+		bool borderTop() const {
+			return raw_ & BORDER_TOP;
+		}
+
+		bool borderRight() const {
+			return raw_ & BORDER_RIGHT;
+		}
+
+		bool borderBottom() const {
+			return raw_ & BORDER_BOTTOM;
+		}
+
+		bool borderThick() const {
+			return raw_ & BORDER_THICK;
+		}
+
+		bool borderAbove() const {
+			return raw_ & BORDER_ABOVE;
+		}
+
+		bool endOfLine() const {
+			return raw_ & END_OF_LINE;
+		}
+
+		bool operator == (Attributes other) const {
+			return raw_ == other.raw_;
+		}
+
+		bool operator != (Attributes other) const {
+			return raw_ != other.raw_;
+		}
+
+		Attributes operator + (Attributes other) const {
+			return Attributes(raw_ | other.raw_);
+		}
+
+		Attributes operator - (Attributes other) const {
+			return Attributes(raw_ & ~other.raw_);
+		}
+
+		static Attributes Underline() {
+			return Attributes(UNDERLINE);
+		}
+
+		static Attributes Strikethrough() {
+			return Attributes(STRIKETHROUGH);
+		}
+
+		static Attributes CurlyUnderline() {
+			return Attributes(CURLY_UNDERLINE);
+		}
+
+		static Attributes BorderLeft() {
+			return Attributes(BORDER_LEFT);
+		}
+
+		static Attributes BorderTop() {
+			return Attributes(BORDER_TOP);
+		}
+
+		static Attributes BorderRight() {
+			return Attributes(BORDER_RIGHT);
+		}
+
+		static Attributes BorderBottom() {
+			return Attributes(BORDER_BOTTOM);
+		}
+
+		static Attributes BorderThick() {
+			return Attributes(BORDER_THICK);
+		}
+
+		static Attributes BorderAbove() {
+			return Attributes(BORDER_ABOVE);
+		}
+
+		static Attributes EndOfLine() {
+			return Attributes(END_OF_LINE);
+		}
+
+	private:
+
+        friend class Cell;
+
+		static constexpr uint32_t UNDERLINE = 1 << 0;
+		static constexpr uint32_t STRIKETHROUGH = 1 << 1;
+		static constexpr uint32_t CURLY_UNDERLINE = 1 << 2;
+		static constexpr uint32_t BORDER_LEFT = 1 << 3;
+		static constexpr uint32_t BORDER_TOP = 1 << 4;
+		static constexpr uint32_t BORDER_RIGHT = 1 << 5;
+		static constexpr uint32_t BORDER_BOTTOM = 1 << 6;
+		static constexpr uint32_t BORDER_THICK = 1 << 7;
+		static constexpr uint32_t BORDER_ABOVE = 1 << 8;
+
+		static constexpr uint32_t END_OF_LINE = 1 << 15;
+
+		Attributes(uint16_t raw):
+		    raw_(raw) {
+		}
+
+	    uint16_t raw_;
+	};
+
     /** Base representation of a single UI cell.  
 
 	    Contains packed information about a single cell, namely the codepoint (unencoded Unicode), the foreground (text), background, and decorations (underlines, strikethroughs, etc) attributes (underline, borders, etc.) and the font to use to render the cell. 
@@ -24,19 +163,6 @@ namespace ui {
 	 */
     class Cell {
 	public:
-    	enum class Attributes {
-			Underline,
-			Strikethrough,
-			CurlyUnderline,
-			BorderLeft,
-			BorderTop,
-			BorderRight,
-			BorderBottom,
-			BorderThick,
-			BorderAbove,
-
-			EndOfLine
-	    }; // Cell::Attributes
 
 		/** Default cell constructor is white space on black background. 
 		 */
@@ -77,46 +203,9 @@ namespace ui {
 			return Color(small_[3]);
 		}
 
-		bool underline() const {
-			return small_[1] & UNDERLINE;
+		Attributes attributes() const {
+			return Attributes((small_[1] & 0xff << 8) + small_[2] & 0xff);
 		}
-
-		bool strikethrough() const {
-			return small_[1] & STRIKETHROUGH;
-		}
-
-		bool curlyUnderline() const {
-			return small_[1] & CURLY_UNDERLINE;
-		}
-
-		bool borderLeft() const {
-			return small_[1] & BORDER_LEFT;
-		}
-
-		bool borderTop() const {
-			return small_[1] & BORDER_TOP;
-		}
-
-		bool borderRight() const {
-			return small_[1] & BORDER_RIGHT;
-		}
-
-		bool borderBottom() const {
-			return small_[1] & BORDER_BOTTOM;
-		}
-
-		bool borderThick() const {
-			return small_[1] & BORDER_THICK;
-		}
-
-		bool borderAbove() const {
-			return small_[2] & BORDER_ABOVE;
-		}
-
-		bool endOfLine() const {
-			return small_[2] & END_OF_LINE;
-		}
-
 
 		Cell & operator = (Cell const & other) {
 			big_[0] = other.big_[0];
@@ -132,14 +221,6 @@ namespace ui {
 			return big_[0] != other.big_[0] || big_[1] != other.big_[1];
 		}
 
-		/** Returns true is the attributes of the given cell are identical to visible own visible attributes.
-		   
-		    TODO what are visible attributes
-		 */
-		bool sameVisibleAttributesAs(Cell const & other) const {
-			return ((small_[1] & 0xff) == (other.small_[1] & 0xff)) && ((small_[2] & 0xff) == (other.small_[2] & 0xff));
-		}
-
     protected:
 
 	    unsigned padding() const {
@@ -153,21 +234,6 @@ namespace ui {
 		}
 
 	private:
-		// first part
-		static constexpr uint32_t UNDERLINE = 1 << 0;
-		static constexpr uint32_t STRIKETHROUGH = 1 << 1;
-		static constexpr uint32_t CURLY_UNDERLINE = 1 << 2;
-		static constexpr uint32_t BORDER_LEFT = 1 << 3;
-		static constexpr uint32_t BORDER_TOP = 1 << 4;
-		static constexpr uint32_t BORDER_RIGHT = 1 << 5;
-		static constexpr uint32_t BORDER_BOTTOM = 1 << 6;
-		static constexpr uint32_t BORDER_THICK = 1 << 7;
-
-		// second part
-		static constexpr uint32_t BORDER_ABOVE = 1 << 0;
-
-		static constexpr uint32_t END_OF_LINE = 1 << 7;
-
 
 	    /** Sets the codepoint of the cell. 
  		 */
@@ -214,81 +280,10 @@ namespace ui {
     	 */
 		template<typename CELL>
 		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator += (CELL & cell, Attributes attr) {
-			switch (attr) {
-				case Cell::Attributes::Underline:
-				    cell.small_[1] |= Cell::UNDERLINE;
-					break;
-				case Cell::Attributes::Strikethrough:
-				    cell.small_[1] |= Cell::STRIKETHROUGH;
-					break;
-				case Cell::Attributes::CurlyUnderline:
-				    cell.small_[1] |= Cell::CURLY_UNDERLINE;
-					break;
-				case Cell::Attributes::BorderLeft:
-				    cell.small_[1] |= Cell::BORDER_LEFT;
-					break;
-				case Cell::Attributes::BorderTop:
-				    cell.small_[1] |= Cell::BORDER_TOP;
-					break;
-				case Cell::Attributes::BorderRight:
-				    cell.small_[1] |= Cell::BORDER_RIGHT;
-					break;
-				case Cell::Attributes::BorderBottom:
-				    cell.small_[1] |= Cell::BORDER_BOTTOM;
-					break;
-				case Cell::Attributes::BorderThick:
-				    cell.small_[1] |= Cell::BORDER_THICK;
-					break;
-				case Cell::Attributes::BorderAbove:
-				    cell.small_[2] |= Cell::BORDER_ABOVE;
-					break;
-				case Cell::Attributes::EndOfLine:
-				    cell.small_[2] |= Cell::END_OF_LINE;
-					break;
-				default:
-				    UNREACHABLE;
-			}
-			return cell;
-		}
-
-		/** Clears the attributes of the cell. 
- 		 */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator -= (CELL & cell, Attributes attr) {
-			switch (attr) {
-				case Cell::Attributes::Underline:
-				    cell.small_[1] &= ~ Cell::UNDERLINE;
-					break;
-				case Cell::Attributes::Strikethrough:
-				    cell.small_[1] &= ~ Cell::STRIKETHROUGH;
-					break;
-				case Cell::Attributes::CurlyUnderline:
-				    cell.small_[1] &= ~ Cell::CURLY_UNDERLINE;
-					break;
-				case Cell::Attributes::BorderLeft:
-				    cell.small_[1] &= ~ Cell::BORDER_LEFT;
-					break;
-				case Cell::Attributes::BorderTop:
-				    cell.small_[1] &= ~ Cell::BORDER_TOP;
-					break;
-				case Cell::Attributes::BorderRight:
-				    cell.small_[1] &= ~ Cell::BORDER_RIGHT;
-					break;
-				case Cell::Attributes::BorderBottom:
-				    cell.small_[1] &= ~ Cell::BORDER_BOTTOM;
-					break;
-				case Cell::Attributes::BorderThick:
-				    cell.small_[1] &= ~ Cell::BORDER_THICK;
-					break;
-				case Cell::Attributes::BorderAbove:
-				    cell.small_[2] &= ~ Cell::BORDER_ABOVE;
-					break;
-				case Cell::Attributes::EndOfLine:
-				    cell.small_[2] &= ~ Cell::END_OF_LINE;
-					break;
-				default:
-				    UNREACHABLE;
-			}
+			small_[1] &= 0xffffff00;
+			small_[2] &= 0xffffff00;
+			small_[1] |= (attr.raw_ >> 8);
+			small_[2] |= (attr.raw_ & 0xff);
 			return cell;
 		}
 

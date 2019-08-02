@@ -49,13 +49,10 @@ namespace ui {
             resize(width, height);
         }
 
-		/*
         void mouseDown(int col, int row, MouseButton button, Key modifiers);
         void mouseUp(int col, int row, MouseButton button, Key modifiers);
         void mouseWheel(int col, int row, int by, Key modifiers);
         void mouseMove(int col, int row, Key modifiers);
-		*/
-
 
         /** Locks the backing buffer and returns it in a RAII smart pointer.
          */

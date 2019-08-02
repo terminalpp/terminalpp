@@ -172,7 +172,7 @@ namespace tpp {
             setForegroundColor(statusCell_.foreground());
             setBackgroundColor(statusCell_.background());
             setDecorationColor(statusCell_.decorationColor());
-            setAttributes(statusCell_); 
+            setAttributes(statusCell_.attributes()); 
 
             for (int row = 0, re = std::min(rows_, buffer->rows()); row < re; ++row) {
                 for (int col = 0, ce = std::min(cols_, buffer->cols()); col < ce; ++col) {
@@ -191,8 +191,8 @@ namespace tpp {
                             setBackgroundColor(c.background());
                         if (statusCell_.decorationColor() != c.decorationColor())
                             setDecorationColor(c.decorationColor());
-                        if (! statusCell_.sameVisibleAttributesAs(c))
-                            setAttributes(c);
+                        if (statusCell_.attributes() != c.attributes())
+                            setAttributes(c.attributes());
                         statusCell_ = c;
                     }
                     // draw the cell

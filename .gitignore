@@ -265,3 +265,4 @@ build/
 build-release/
 build-win/
 /tpp/stamp.h
+build-test-win/
