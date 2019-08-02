@@ -1,9 +1,8 @@
 ﻿# V0.2
 
-- propagare UI events properly
 - make terminal an UI widget
 - make Font contain stuff from nativeHandle on DirectWrite (like underline & strikethrough positions & thickness)
-- move the rebderer in window.h to use glyph runs in all instances
+- move the renderer in window.h to use glyph runs in all instances
 
 - add focus in/out events to root window
 - determine the closing mechanism (ie. session v2)

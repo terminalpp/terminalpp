@@ -428,7 +428,9 @@ namespace ui {
 			overlay_ = value;
 		}
 
-		virtual Widget* getMouseTarget(unsigned col, unsigned row) {
+		virtual Widget* getMouseTarget(int col, int row) {
+			MARK_AS_UNUSED(col);
+			MARK_AS_UNUSED(row);
 			ASSERT(visibleRegion_.contains(col, row));
 			return this;
 		}

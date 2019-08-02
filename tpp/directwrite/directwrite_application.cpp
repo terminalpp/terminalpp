@@ -78,8 +78,7 @@ namespace tpp {
 		wClass.hCursor = LoadCursor(nullptr, IDC_IBEAM); // mouse pointer icon
 		wClass.hbrBackground = nullptr; // do not display background - the terminal window does it itself
 		// register the class
-		ATOM result = RegisterClassExW(&wClass);
-		ASSERT(result != 0) << "Unable to register window class";
+		OSCHECK(RegisterClassExW(&wClass) != 0) << "Unable to register window class";
     }
 
 
