@@ -234,6 +234,9 @@ namespace ui {
 		}
 
 	private:
+	    static uint16_t AttributesToRaw(Attributes attrs) {
+			return attrs.raw_;
+		}
 
 	    /** Sets the codepoint of the cell. 
  		 */
@@ -279,13 +282,41 @@ namespace ui {
 		/** Sets the attributes of the cell. 
     	 */
 		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator += (CELL & cell, Attributes attr) {
-			small_[1] &= 0xffffff00;
-			small_[2] &= 0xffffff00;
-			small_[1] |= (attr.raw_ >> 8);
-			small_[2] |= (attr.raw_ & 0xff);
+		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, Attributes attr) {
+			cell.small_[1] &= 0xffffff00;
+			cell.small_[2] &= 0xffffff00;
+			cell.small_[1] |= (Cell::AttributesToRaw(attr) >> 8);
+			cell.small_[2] |= (Cell::AttributesToRaw(attr) & 0xff);
 			return cell;
 		}
+
+		/** Sets the attributes of the cell. 
+    	 */
+		template<typename CELL>
+		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &&>::type operator << (CELL && cell, Attributes attr) {
+			cell.small_[1] &= 0xffffff00;
+			cell.small_[2] &= 0xffffff00;
+			cell.small_[1] |= (Cell::AttributesToRaw(attr) >> 8);
+			cell.small_[2] |= (Cell::AttributesToRaw(attr) & 0xff);
+			return std::move(cell);
+		}
+
+		/** Adds given attributes to the cell
+    	 */
+		template<typename CELL>
+		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator += (CELL & cell, Attributes attr) {
+			cell << (cell.attributes() + attr);
+			return cell;
+		}
+
+		/** Removes given attributes to the cell
+    	 */
+		template<typename CELL>
+		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator -= (CELL & cell, Attributes attr) {
+			cell << (cell.attributes() - attr);
+			return cell;
+		}
+
 
 	    union {
 			uint64_t big_[2];

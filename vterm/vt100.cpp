@@ -142,16 +142,18 @@ namespace vterm {
 
 
     VT100::VT100(int x, int y, int width, int height, PTY * pty, size_t ptyBufferSize):
-        Terminal(x, y, width, height, pty, ptyBufferSize),
-        mouseMode_(MouseMode::Off),
-        mouseEncoding_(MouseEncoding::Default),
-        mouseLastButton_(0),
-        mouseButtonsDown_(0),
-        cursorMode_(CursorMode::Normal) {
+        Terminal{x, y, width, height, pty, ptyBufferSize},
+        state_{width, height, ui::Color::White(), ui::Color::Black()},
+        mouseMode_{MouseMode::Off},
+        mouseEncoding_{MouseEncoding::Default},
+        mouseLastButton_{0},
+        mouseButtonsDown_{0},
+        cursorMode_{CursorMode::Normal} {
     }
 
     void VT100::updateSize(int cols, int rows) {
         // TODO resize alternate buffer as well
+        state_.resize(cols, rows);
         Terminal::updateSize(cols, rows);
     }
 
@@ -232,9 +234,89 @@ namespace vterm {
     }
 
     size_t VT100::processInput(char * buffer, size_t bufferSize) {
-        Buffer::Ptr guard(this->buffer()); // non-priority lock the buffer
-
-
+        {
+            Buffer::Ptr guard(this->buffer()); // non-priority lock the buffer
+            char * bufferEnd = buffer + bufferSize;
+            char * x = buffer;
+            while (x != bufferEnd) {
+                switch (*x) {
+                    /* Parse the escape sequence */
+                    case helpers::Char::ESC: {
+                        break;
+                    }
+                    case helpers::Char::BEL: {
+                        ++x;
+                        break;
+                    }
+                    case helpers::Char::TAB: {
+						++x;
+						updateCursorPosition();
+						if (buffer_.cursor().col % 8 == 0)
+							buffer_.cursor().col += 8;
+						else
+							buffer_.cursor().col += 8 - (buffer_.cursor().col % 8);
+						LOG(SEQ) << "Tab: cursor col is " << buffer_.cursor().col;
+						break;
+                    }
+					/* New line simply moves to next line.
+					 */
+					case helpers::Char::LF: {
+						LOG(SEQ) << "LF";
+						markLastCharPosition();
+						++x;
+						// determine if region should be scrolled
+						if (++buffer_.cursor().row == state_.scrollEnd) {
+							buffer_.deleteLines(1, state_.scrollStart, state_.scrollEnd, (ui::Cell(state_.cell) << ui::Attributes()));
+							--buffer_.cursor().row;
+						}
+						updateCursorPosition();
+						setLastCharPosition();
+						break;
+                    }
+					/* Carriage return sets cursor column to 0.
+					 */
+					case helpers::Char::CR: {
+						LOG(SEQ) << "CR";
+						markLastCharPosition();
+						++x;
+						buffer_.cursor().col = 0;
+						break;
+                    }
+					case helpers::Char::BACKSPACE: {
+						LOG(SEQ) << "BACKSPACE";
+						++x;
+						if (buffer_.cursor().col == 0) {
+							if (buffer_.cursor().row > 0)
+								--buffer_.cursor().row;
+							buffer_.cursor().col = buffer_.cols() - 1;
+						} else {
+							--buffer_.cursor().col;
+						}
+						break;
+					}
+  					/* default variant is to print the character received to current cell.
+					 */
+                    default: {
+						// make sure that the cursor is in visible part of the screen
+						updateCursorPosition();
+						// it could be we are dealing with unicode. If entire character was not read, stop the processing, what we have so far will be prepended to next data to be processed
+						helpers::Char const * c8 = helpers::Char::At(x, bufferEnd);
+						if (c8 == nullptr)
+							return x - buffer;
+						LOG(SEQ) << "codepoint " << std::hex << c8->codepoint() << " " << static_cast<char>(c8->codepoint() & 0xff);
+						// get the cell and update its contents
+						Cell& cell = buffer_.at(buffer_.cursor().col, buffer_.cursor().row);
+                        cell = state_.cell;
+                        cell << c8->codepoint();
+						// store the last character position
+						setLastCharPosition();
+						// move to next column
+						++buffer_.cursor().col;
+                    }
+                }
+            }
+        }
+        repaint();
         return bufferSize;
 
     }
@@ -301,6 +383,22 @@ namespace vterm {
 			}
 		}
 	}
+
+    void VT100::updateCursorPosition() {
+        int c = buffer_.cols();
+        while (buffer_.cursor().col >= c) {
+            buffer_.cursor().col -= c;
+            if (++buffer_.cursor().row == state_.scrollEnd) {
+                buffer_.deleteLines(1, state_.scrollStart, state_.scrollEnd, ui::Cell(state_.cell) << ui::Attributes());
+                --buffer_.cursor().row;
+            }
+        }
+        ASSERT(buffer_.cursor().col < buffer_.cols());
+        // if cursor row is not valid, just set it to the last row 
+        if (buffer_.cursor().row >= buffer_.rows())
+            buffer_.cursor().row = buffer_.rows() - 1;
+    }
+
 
 
 

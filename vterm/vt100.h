@@ -47,6 +47,31 @@ namespace vterm {
         unsigned encodeMouseButton(ui::MouseButton btn, ui::Key modifiers);
         void sendMouseEvent(unsigned button, int col, int row, char end);
 
+        /** Updates cursor position before modifying the cell it points to. 
+         
+            This is because the cursor position may temporarily be outside of the terminal size, such as when last character on the line is written and the cursor moves to next column, which is outside of the screen. This cannot be fixed when it happens because if the cursor is then moved by non cell-changing means, such as position change, por carriage return, no changes should be observed. 
+
+            This function on the other hand is called before each observable change and makes sure that the cursor is positioned within the terminal. If the reposition requires changes, scrolls the terminal accordingly.
+         */
+        void updateCursorPosition();
+
+
+        // TODO add comments and determine if it actually does what it is supposed to do, i.e. wrt CR and LF
+		void invalidateLastCharPosition() {
+			state_.lastCharCol = -1;
+		}
+
+		void markLastCharPosition() {
+			if (state_.lastCharCol >= 0 && state_.lastCharCol < buffer_.cols() &&
+                state_.lastCharRow >= 0 && state_.lastCharRow < buffer_.rows())
+				buffer_.at(state_.lastCharCol, state_.lastCharRow) += ui::Attributes::EndOfLine();
+		}
+
+		void setLastCharPosition() {
+			state_.lastCharCol = buffer_.cursor().col;
+			state_.lastCharRow = buffer_.cursor().row;
+		}
+
 
         enum class MouseMode {
             Off,
@@ -66,7 +91,38 @@ namespace vterm {
             Application
         }; // VT100::CursorMode
 
+        struct State {
+            /* Start of the scrolling region (inclusive row) */
+            int scrollStart;
+            /* End of the scrolling rehion (exclusive row) */
+            int scrollEnd;
+            /* Cell containing space and current fg, bg, decorations, etc. settings */
+            ui::Cell cell;
+            /* Location of the last valid character printed so that if followed by return, it can be set as line terminating. */
+            int lastCharCol;
+            int lastCharRow;
 
+            State(int cols, int rows, ui::Color fg, ui::Color bg):
+                scrollStart{0},
+                scrollEnd{rows},
+                cell{},
+                lastCharCol{-1},
+                lastCharRow{0} {
+                cell << ' ' << ui::Foreground(fg) << ui::Background(bg) << ui::DecorationColor(fg);
+                MARK_AS_UNUSED(cols);
+            }
+
+            void resize(int cols, int rows) {
+                MARK_AS_UNUSED(cols);
+                scrollStart = 0;
+                scrollEnd = rows;
+            }
+
+        }; // VT100::State
+
+
+
+        State state_;
 
         MouseMode mouseMode_;
         MouseEncoding mouseEncoding_;
@@ -75,6 +131,7 @@ namespace vterm {
         unsigned mouseButtonsDown_;
 
         CursorMode cursorMode_;
+
 
 
         std::string const * GetSequenceForKey(ui::Key key) {
@@ -124,7 +181,7 @@ namespace vterm {
 
 
 
-    }; 
+    }; // VT100::CSISequence
 
 
 } // namespace vterm

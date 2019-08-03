@@ -19,6 +19,8 @@
 - add the FPS timer to the terminal
 - and add cursor display to the ui root window and figure out how the two should be reconciled
 
+- cell builders should use && as well so that we can use them on temporary objects
+
 
 ## Bugs and missing features
 

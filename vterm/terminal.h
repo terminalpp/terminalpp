@@ -197,10 +197,11 @@ namespace vterm {
 
         // TODO add more events from the terminal, such as notification, etc. 
 
-    private:
         /* Cells and cursor. */
         Buffer buffer_;
 
+    private:
+    
         /* Pseudoterminal for communication */
         PTY * pty_;
 
