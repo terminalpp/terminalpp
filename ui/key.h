@@ -68,7 +68,17 @@ namespace ui {
 			return result;
 		}
 
+		bool operator == (Key const & other) const {
+			return raw_ == other.raw_;
+		}
+
+		bool operator != (Key const & other) const {
+			return raw_ != other.raw_;
+		}
+
 	private:
+
+	    friend struct std::hash<Key>;
 
 	    unsigned raw_;
 
@@ -78,3 +88,14 @@ namespace ui {
 	std::ostream& operator << (std::ostream& s, Key k);
 
 } // namespace vterm
+
+namespace std {
+
+	template<>
+	struct hash<ui::Key> {
+		size_t operator () (ui::Key const & key) const {
+			return std::hash<unsigned>{}(key.raw_);
+		}
+	}; // std::hash<ui::Key>
+
+} // namespace std

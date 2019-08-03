@@ -7,8 +7,11 @@
 
 namespace vterm {
 
+    typedef helpers::EventPayload<helpers::ExitCode, ui::Widget> ExitCodePayload;
+
     class Terminal : public ui::Widget {
     public:
+
         typedef ui::Cell Cell;
         typedef ui::Cursor Cursor;
 
@@ -109,9 +112,17 @@ namespace vterm {
 
         }; // Terminal::Buffer 
 
+        // events
+
+        /** Triggered when the attached pseudoterminal terminates. 
+         
+            Note that when the terminal is deleted, its PTY is forcibly terminated at first, so the event will fire precisely once in the terminal lifetime. 
+         */
+        helpers::Event<ExitCodePayload> onPTYTerminated;
 
 
 
+        // methods
 
         PTY * pty() {
             return pty_;
@@ -159,6 +170,17 @@ namespace vterm {
             send(str.c_str(), str.size());
         }
 
+        /** When terminal size is updated, we must resize the underlying buffer and the PTY.
+         */
+        void updateSize(int width, int height) override {
+            {
+                Buffer::Ptr b = buffer(true); // grab priority lock
+                b->resize(width, height);
+            }
+            pty_->resize(width, height);
+            ui::Widget::updateSize(width, height);
+        }
+
         // terminal interface
 
         /** Called by the terminal when new input data is available from the pty. 
@@ -170,9 +192,7 @@ namespace vterm {
         /** Called when the attached PTY has terminated. 
          */
         virtual void ptyTerminated(helpers::ExitCode exitCode) {
-            // TODO throw the event
-            MARK_AS_UNUSED(exitCode);
-            
+            trigger(onPTYTerminated, exitCode);
         }
 
         // TODO add more events from the terminal, such as notification, etc. 

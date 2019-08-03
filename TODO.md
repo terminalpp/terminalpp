@@ -1,15 +1,24 @@
 ﻿# V0.2
 
+- add VT100 and goodies
+- then add localpty as well for Windows
+- add events for the terminal (notification, etc.)
+
 - make terminal an UI widget
 - make Font contain stuff from nativeHandle on DirectWrite (like underline & strikethrough positions & thickness)
 - move the renderer in window.h to use glyph runs in all instances
 
 - add focus in/out events to root window
 - determine the closing mechanism (ie. session v2)
-- of course, add X11
+- of course, add X11 - and localpTY on linux...
 - consider keeping track of what needs to be changed
 - add the extra attributes drawing
 - terminal should have an event to be called when a line is to be scrolled out
+
+
+- add the FPS timer to the terminal
+- and add cursor display to the ui root window and figure out how the two should be reconciled
+
 
 ## Bugs and missing features
 
