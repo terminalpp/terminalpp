@@ -10,6 +10,30 @@
 
 namespace ui {
 
+    /** Information about cursor, its position and apperance. 
+
+     */
+    class Cursor {
+    public:
+        int col;
+        int row;
+        char32_t codepoint;
+        Color color;
+        bool blink;
+        bool visible;
+
+        Cursor():
+            col(0),
+            row(0),
+            codepoint(0x2581),
+            color(Color::White()),
+            blink(true),
+            visible(true) {
+            }
+
+
+    }; // ui::Cursor
+
     /** Drawable surface of the UI. 
      
         The canvas represents provides an API To draw the UI elements. The canvas is represented by its backing buffer which is the actual array of cells that can be altered. 

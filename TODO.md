@@ -9,7 +9,7 @@
 - of course, add X11
 - consider keeping track of what needs to be changed
 - add the extra attributes drawing
-
+- terminal should have an event to be called when a line is to be scrolled out
 
 ## Bugs and missing features
 

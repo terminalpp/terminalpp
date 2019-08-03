@@ -31,6 +31,10 @@
 #include "ui/builders.h"
 #include "ui/layout.h"
 
+#include "vterm/terminal.h"
+#include "vterm/bypass_pty.h"
+#include <thread>
+
 
 #include "stamp.h"
 #include "helpers/stamp.h"
