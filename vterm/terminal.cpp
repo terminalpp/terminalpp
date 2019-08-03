@@ -149,12 +149,44 @@ namespace vterm {
 
     // Terminal 
 
+    Terminal::Terminal(int x, int y, int width, int height, PTY * pty, size_t ptyBufferSize):
+        ui::Widget(x, y, width, height),
+        buffer_(width, height),
+        pty_(pty) {
+        pty_->resize(width, height);
+        ptyReader_ = std::thread([this, ptyBufferSize](){
+            std::unique_ptr<char> holder(new char[ptyBufferSize]);
+            char * ptyBuffer = holder.get();
+            char * writeStart = holder.get();
+            while (true) {
+                size_t read = pty_->receive(writeStart, ptyBufferSize - (writeStart - ptyBuffer));
+				// if 0 bytes were read, terminate the thread
+                if (read == 0)
+                    break;
+				// otherwise add any pending data from previous cycle
+                read += (writeStart - ptyBuffer);
+                // process the input
+                size_t processed = processInput(ptyBuffer, read);
+                // if not everything was processed, copy the unprocessed part at the beginning and set writeStart_ accordingly
+                if (processed != read) {
+                    memcpy(ptyBuffer, ptyBuffer + processed, read - processed);
+                    writeStart = ptyBuffer + read - processed;
+                } else {
+                    writeStart = ptyBuffer;
+                }
+            }
+        });
+        ptyListener_ = std::thread([this](){
+            helpers::ExitCode ec = pty_->waitFor();
+            this->ptyTerminated(ec);
+        });
+    }
+
     void Terminal::paint(ui::Canvas & canvas) {
         Buffer::Ptr buffer = this->buffer(/* priority */true);
         MARK_AS_UNUSED(canvas);
         NOT_IMPLEMENTED;
 
     }
-
 
 } // namespace vterm

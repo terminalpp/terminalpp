@@ -117,8 +117,23 @@ namespace vterm {
             return pty_;
         }
 
+        /** Deletes the terminal and the attached PTY. 
+         
+            Waits for the reading and process exit terminating threads to finalize. 
+         */
+        ~Terminal() {
+            delete pty_;
+            ptyReader_.join();
+            ptyListener_.join();
+        }
 
     protected:
+
+        /** Creates the terminal with the given PTY. 
+
+            Starts the process exit monitoring thread and the receiving thread to read input from the pty. 
+         */
+        Terminal(int x, int y, int width, int height, PTY * pty, size_t ptyBufferSize = 10240);
 
         /** Returns the locked buffer. 
          */
@@ -135,8 +150,6 @@ namespace vterm {
         void paint(ui::Canvas & canvas) override;
 
 
-        // terminal interface
-
         void send(char const * buffer, size_t size) {
             pty_->send(buffer, size);
             // TODO check errors
@@ -146,8 +159,23 @@ namespace vterm {
             send(str.c_str(), str.size());
         }
 
+        // terminal interface
+
+        /** Called by the terminal when new input data is available from the pty. 
+         
+            The method should obtain locked buffer and update it according to the received data. 
+         */
         virtual size_t processInput(char * buffer, size_t bufferSize) = 0;
 
+        /** Called when the attached PTY has terminated. 
+         */
+        virtual void ptyTerminated(helpers::ExitCode exitCode) {
+            // TODO throw the event
+            MARK_AS_UNUSED(exitCode);
+            
+        }
+
+        // TODO add more events from the terminal, such as notification, etc. 
 
     private:
         /* Cells and cursor. */
@@ -155,6 +183,12 @@ namespace vterm {
 
         /* Pseudoterminal for communication */
         PTY * pty_;
+
+        /* Thread which reads data from the attached pseudoterminal. */
+        std::thread ptyReader_;
+
+        /* Thread which waits for the attached pty to be terminated. */
+        std::thread ptyListener_;
 
     }; // vterm::Terminal
 
