@@ -92,7 +92,7 @@ namespace vterm {
 			newCells[i] = new Cell[newCols];
 		// now determine the row at which we should stop - this is done by going back from cursor's position until we hit end of line, that would be the last line we will use
 		int stopRow = cursor_.row - 1;
-		while (stopRow < rows_) {
+		while (stopRow >= 0) {
 			Cell* row = cells_[stopRow];
 			int i = 0;
 			for (; i < cols_; ++i)
@@ -107,7 +107,7 @@ namespace vterm {
 			--stopRow;
 		}
 		// if not found, or out of bounds, we'll stop immediately
-		if (stopRow > rows_)
+		if (stopRow < 0 )
 			stopRow = 0;
 		// now transfer the contents
 		int oldCursorRow = cursor_.row;
@@ -184,9 +184,7 @@ namespace vterm {
 
     void Terminal::paint(ui::Canvas & canvas) {
         Buffer::Ptr buffer = this->buffer(/* priority */true);
-        MARK_AS_UNUSED(canvas);
-        NOT_IMPLEMENTED;
-
+        canvas.copyBuffer(0,0,* buffer);
     }
 
 } // namespace vterm

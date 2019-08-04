@@ -31,11 +31,11 @@ namespace vterm {
 
             ~Buffer();
 
-            int cols() const {
+            int width() const {
                 return cols_;
             }
 
-            int rows() const {
+            int height() const {
                 return rows_;
             }
 

@@ -70,6 +70,21 @@ namespace ui {
 		 */
 		void textOut(Point start, std::string const& text, Color color, Font font = Font());
 
+
+        /** Copies the given buffer to specified coordinates. 
+         
+            The buffer must provide width(), height() and at() methods.
+         */
+        template<typename BUFFER>
+        void copyBuffer(int x, int y, BUFFER const & buffer) {
+            int xe = std::min(x + buffer.width(), width()) - x;
+            int ye = std::min(y + buffer.height(), height()) - y;
+            for (int by = 0; by < ye; ++by)
+                for (int bx = 0; bx < xe; ++bx)
+                    if (Cell * c = at(Point(x + bx, y + by))) 
+                        *c = buffer.at(bx, by);
+        }
+
     private:
         friend class Widget;
         friend class RootWindow;

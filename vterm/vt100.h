@@ -62,8 +62,8 @@ namespace vterm {
 		}
 
 		void markLastCharPosition() {
-			if (state_.lastCharCol >= 0 && state_.lastCharCol < buffer_.cols() &&
-                state_.lastCharRow >= 0 && state_.lastCharRow < buffer_.rows())
+			if (state_.lastCharCol >= 0 && state_.lastCharCol < buffer_.width() &&
+                state_.lastCharRow >= 0 && state_.lastCharRow < buffer_.height())
 				buffer_.at(state_.lastCharCol, state_.lastCharRow) += ui::Attributes::EndOfLine();
 		}
 

@@ -11,13 +11,13 @@ namespace vterm {
 
         std::unordered_map<ui::Key, std::string> InitializeVT100KeyMap() {
             #define KEY(K, ...) ASSERT(km.find(K) == km.end()) << "Key " << K << " altrady defined"; km.insert(std::make_pair(K, STR(__VA_ARGS__)))
-            #define VT_MODIFIERS(K, SEQ1, SEQ2) KEY(K + Key::Shift, SEQ1 << 2 << SEQ2); \
-                                                KEY(K + Key::Alt, SEQ1 << 3 << SEQ2); \
-                                                KEY(K + Key::Shift + Key::Alt, SEQ1 << 4 << SEQ2); \
-                                                KEY(K + Key::Ctrl, SEQ1 << 5 << SEQ2); \
-                                                KEY(K + Key::Ctrl + Key::Shift, SEQ1 << 6 << SEQ2); \
-                                                KEY(K + Key::Ctrl + Key::Alt, SEQ1 << 7 << SEQ2); \
-                                                KEY(K + Key::Ctrl + Key::Alt + Key::Shift, SEQ1 << 8 << SEQ2);
+            #define VT_MODIFIERS(K, SEQ1, SEQ2) KEY(Key(K) + Key::Shift, SEQ1 << 2 << SEQ2); \
+                                                KEY(Key(K) + Key::Alt, SEQ1 << 3 << SEQ2); \
+                                                KEY(Key(K) + Key::Shift + Key::Alt, SEQ1 << 4 << SEQ2); \
+                                                KEY(Key(K) + Key::Ctrl, SEQ1 << 5 << SEQ2); \
+                                                KEY(Key(K) + Key::Ctrl + Key::Shift, SEQ1 << 6 << SEQ2); \
+                                                KEY(Key(K) + Key::Ctrl + Key::Alt, SEQ1 << 7 << SEQ2); \
+                                                KEY(Key(K) + Key::Ctrl + Key::Alt + Key::Shift, SEQ1 << 8 << SEQ2);
 
             using namespace ui;
 
@@ -242,6 +242,7 @@ namespace vterm {
                 switch (*x) {
                     /* Parse the escape sequence */
                     case helpers::Char::ESC: {
+                        ++x;
                         break;
                     }
                     case helpers::Char::BEL: {
@@ -288,7 +289,7 @@ namespace vterm {
 						if (buffer_.cursor().col == 0) {
 							if (buffer_.cursor().row > 0)
 								--buffer_.cursor().row;
-							buffer_.cursor().col = buffer_.cols() - 1;
+							buffer_.cursor().col = buffer_.width() - 1;
 						} else {
 							--buffer_.cursor().col;
 						}
@@ -385,7 +386,7 @@ namespace vterm {
 	}
 
     void VT100::updateCursorPosition() {
-        int c = buffer_.cols();
+        int c = buffer_.width();
         while (buffer_.cursor().col >= c) {
             buffer_.cursor().col -= c;
             if (++buffer_.cursor().row == state_.scrollEnd) {
@@ -393,10 +394,10 @@ namespace vterm {
                 --buffer_.cursor().row;
             }
         }
-        ASSERT(buffer_.cursor().col < buffer_.cols());
+        ASSERT(buffer_.cursor().col < buffer_.width());
         // if cursor row is not valid, just set it to the last row 
-        if (buffer_.cursor().row >= buffer_.rows())
-            buffer_.cursor().row = buffer_.rows() - 1;
+        if (buffer_.cursor().row >= buffer_.height())
+            buffer_.cursor().row = buffer_.height() - 1;
     }
 
 
