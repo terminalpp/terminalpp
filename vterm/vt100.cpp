@@ -138,17 +138,176 @@ namespace vterm {
 
     } // anonymous namespace
 
+    // VT100::Palette
+    VT100::Palette VT100::Palette::Colors16() {
+		return Palette{
+			ui::Color::Black(), // 0
+			ui::Color::DarkRed(), // 1
+			ui::Color::DarkGreen(), // 2
+			ui::Color::DarkYellow(), // 3
+			ui::Color::DarkBlue(), // 4
+			ui::Color::DarkMagenta(), // 5
+			ui::Color::DarkCyan(), // 6
+			ui::Color::Gray(), // 7
+			ui::Color::DarkGray(), // 8
+			ui::Color::Red(), // 9
+			ui::Color::Green(), // 10
+			ui::Color::Yellow(), // 11
+			ui::Color::Blue(), // 12
+			ui::Color::Magenta(), // 13
+			ui::Color::Cyan(), // 14
+			ui::Color::White() // 15
+		};
+    }
+
+    VT100::Palette VT100::Palette::XTerm256() {
+        Palette result(256);
+        // first the basic 16 colors
+		result[0] =	ui::Color::Black();
+		result[1] =	ui::Color::DarkRed();
+		result[2] =	ui::Color::DarkGreen();
+		result[3] =	ui::Color::DarkYellow();
+		result[4] =	ui::Color::DarkBlue();
+		result[5] =	ui::Color::DarkMagenta();
+		result[6] =	ui::Color::DarkCyan();
+		result[7] =	ui::Color::Gray();
+		result[8] =	ui::Color::DarkGray();
+		result[9] =	ui::Color::Red();
+		result[10] = ui::Color::Green();
+		result[11] = ui::Color::Yellow();
+		result[12] = ui::Color::Blue();
+		result[13] = ui::Color::Magenta();
+		result[14] = ui::Color::Cyan();
+		result[15] = ui::Color::White();
+		// now do the xterm color cube
+		unsigned i = 16;
+		for (unsigned r = 0; r < 256; r += 40) {
+			for (unsigned g = 0; g < 256; g += 40) {
+				for (unsigned b = 0; b < 256; b += 40) {
+					result[i] = ui::Color(
+						static_cast<unsigned char>(r),
+						static_cast<unsigned char>(g),
+						static_cast<unsigned char>(b)
+					);
+					++i;
+					if (b == 0)
+						b = 55;
+				}
+				if (g == 0)
+					g = 55;
+			}
+			if (r == 0)
+				r = 55;
+		}
+		// and finally do the grayscale
+		for (unsigned char x = 8; x <= 238; x += 10) {
+			result[i] = ui::Color(x, x, x);
+			++i;
+		}
+        return result;
+    }
+
+    VT100::Palette::Palette(std::initializer_list<ui::Color> colors, size_t defaultFg, size_t defaultBg):
+        size_(colors.size()),
+        defaultFg_(defaultFg),
+        defaultBg_(defaultBg),
+        colors_(new ui::Color[colors.size()]) {
+        ASSERT(defaultFg < size_ && defaultBg < size_);
+		unsigned i = 0;
+		for (ui::Color c : colors)
+			colors_[i++] = c;
+    }
+
+    VT100::Palette::Palette(Palette const & from):
+        size_(from.size_),
+        defaultFg_(from.defaultFg_),
+        defaultBg_(from.defaultBg_),
+        colors_(new ui::Color[from.size_]) {
+		memcpy(colors_, from.colors_, sizeof(ui::Color) * size_);
+    }
+
+    VT100::Palette::Palette(Palette && from):
+        size_(from.size_),
+        defaultFg_(from.defaultFg_),
+        defaultBg_(from.defaultBg_),
+        colors_(from.colors_) {
+        from.colors_ = nullptr;
+        from.size_ = 0;
+    }
+
+
+
+    // VT100::CSISequence
+
+    VT100::CSISequence VT100::CSISequence::Parse(char * & start, char const * end) {
+        CSISequence result;
+        char * x = start;
+        // if we are at the end, return incomplete
+        if (x == end) {
+            result.firstByte_ = INCOMPLETE;
+            return result;
+        }
+        // parse the first byte
+        if (IsParameterByte(*x) && *x != ';' && !helpers::IsDecimalDigit(*x))
+            result.firstByte_ = *x++;
+        ASSERT(result.firstByte_ != INVALID);
+        // parse arguments, if any
+        while (x != end && IsParameterByte(*x)) {
+            // semicolon separates arguments, in this case an empty argument, which is initialized to default value (0)
+            if (*x == ';') {
+                ++x;
+                result.args_.push_back(std::make_pair(DEFAULT_ARG_VALUE, false));
+            // otherwise if we see digit, parse the argument given
+            } else if (helpers::IsDecimalDigit(*x)) {
+                int arg = 0;
+                do {
+                    arg = arg * 10 + helpers::DecCharToNumber(*x++);
+                } while (x != end && helpers::IsDecimalDigit(*x));
+                result.args_.push_back(std::make_pair(arg, true));
+                // if there is separator, parse it as well
+                if (x != end && *x == ';')
+                    ++x;
+            // other than numeric values are not supported for now
+            } else {
+                ++x;
+                result.firstByte_ = INVALID;
+            }
+        }
+        // parse intermediate bytes, if there are any, the sequence is marked as invalid because these are not supported now
+		while (x != end && IsIntermediateByte(*x)) {
+			result.firstByte_ = INVALID;
+			++x;
+		}
+		// parse final byte, first check we are not at the end
+		if (x == end) {
+            result.firstByte_ = INCOMPLETE;
+            return result;
+        }
+		if (IsFinalByte(*x))
+			result.finalByte_ = *x++;
+		else
+			result.firstByte_ = INVALID;
+        // log the sequence if invalid
+        if (! result.isValid())
+			LOG(SEQ_UNKNOWN) << "Unknown, possibly invalid CSI sequence: \x1b" << std::string(start - 1 , x - start + 1);
+        start = x;
+        return result;
+    }
+
+    // VT100
+
     std::unordered_map<ui::Key, std::string> VT100::KeyMap_(InitializeVT100KeyMap());
 
 
-    VT100::VT100(int x, int y, int width, int height, PTY * pty, size_t ptyBufferSize):
+    VT100::VT100(int x, int y, int width, int height, Palette const * palette, PTY * pty, size_t ptyBufferSize):
         Terminal{x, y, width, height, pty, ptyBufferSize},
         state_{width, height, ui::Color::White(), ui::Color::Black()},
         mouseMode_{MouseMode::Off},
         mouseEncoding_{MouseEncoding::Default},
         mouseLastButton_{0},
         mouseButtonsDown_{0},
-        cursorMode_{CursorMode::Normal} {
+        cursorMode_{CursorMode::Normal},
+        palette_(palette) {
     }
 
     void VT100::updateSize(int cols, int rows) {
@@ -242,7 +401,8 @@ namespace vterm {
                 switch (*x) {
                     /* Parse the escape sequence */
                     case helpers::Char::ESC: {
-                        ++x;
+                        if (! parseEscapeSequence(x, bufferEnd))
+                            return x - buffer;
                         break;
                     }
                     case helpers::Char::BEL: {
@@ -319,7 +479,251 @@ namespace vterm {
         }
         repaint();
         return bufferSize;
+    }
 
+    bool VT100::parseEscapeSequence(char * & buffer, char const * bufferEnd) {
+        ASSERT(*buffer == helpers::Char::ESC);
+        char *x = buffer;
+        ++x;
+        // if we have nothing after the escape character, it is incomplete sequence
+        if (x == bufferEnd)
+            return false;
+        // otherwise, based on the immediate character after ESC, determine what kind of sequence it is
+        switch (*x++) {
+            /* CSI Sequence */
+            case '[': {
+                CSISequence seq{CSISequence::Parse(x, bufferEnd)};
+                // if the sequence is not valid, it has been reported already and we should just exit
+                if (!seq.isValid())
+                    break;
+                // if the sequence is not complete, return false and do not advance the buffer
+                if (!seq.isComplete())
+                    return false;
+                // otherwise parse the CSI sequence
+                parseCSISequence(seq);
+                break;
+            }
+            default:
+				LOG(SEQ_UNKNOWN) << "Unknown escape sequence \x1b" << *(x-1);
+				break;
+        }
+        buffer = x;
+        return true;
+    }
+
+    void VT100::parseCSISequence(CSISequence & seq) {
+        switch (seq.firstByte()) {
+            // the "normal" CSI sequences
+            case 0: 
+                switch (seq.finalByte()) {
+
+                }
+                break;
+            // getters and setters
+            case '?':
+                switch (seq.finalByte()) {
+                    case 'h':
+                        return parseCSIGetterOrSetter(seq, true);
+                    case 'l':
+                        return parseCSIGetterOrSetter(seq, false);
+                    case 's':
+                    case 'r':
+                        return parseCSISaveOrRestore(seq);
+                    default:
+                        break;
+                }
+                break;
+            // other CSI sequences
+            case '>':
+                switch (seq.finalByte()) {
+    				/* CSI > 0 c -- Send secondary device attributes.
+                     */
+                    case 'c':
+                        if (seq[0] != 0)
+                            break;
+					LOG(SEQ) << "Secondary Device Attributes - VT100 sent";
+					send("\033[>0;0;0c", 9); // we are VT100, no version third must always be zero (ROM cartridge)
+					return;
+				default:
+					break;
+                }
+                break;
+            default:
+                break;
+        }
+		LOG(SEQ_UNKNOWN) << " Unknown CSI sequence " << seq;
+    }
+
+    void VT100::parseCSIGetterOrSetter(CSISequence & seq, bool value) {
+
+    }
+
+    void VT100::parseCSISaveOrRestore(CSISequence & seq) {
+		for (size_t i = 0; i < seq.numArgs(); ++i)
+			LOG(SEQ_WONT_SUPPORT) << "Private mode " << (seq.finalByte() == 's' ? "save" : "restore") << ", id " << seq[i];
+    }
+
+    void VT100::parseSGR(CSISequence & seq) {
+        seq.setDefault(0, 0);
+		for (size_t i = 0; i < seq.numArgs(); ++i) {
+			switch (seq[i]) {
+				/* Resets all attributes. */
+				case 0:
+                    state_.cell << ui::Font() 
+                                << ui::Foreground(palette_->defaultForeground())
+                                << ui::DecorationColor(palette_->defaultForeground())
+                                << ui::Background(palette_->defaultBackground())
+                                << ui::Attributes();
+					LOG(SEQ) << "font fg bg reset";
+					break;
+				/* Bold / bright foreground. */
+				case 1:
+					state_.cell << state_.cell.font().setBold();
+					LOG(SEQ) << "bold set";
+					break;
+				/* faint font (light) - won't support for now, though in theory we easily can. */
+				case 2:
+					LOG(SEQ_WONT_SUPPORT) << "faint font";
+					break;
+				/* Italics */
+				case 3:
+					state_.cell << state_.cell.font().setItalics();
+					LOG(SEQ) << "italics set";
+					break;
+				/* Underline */
+				case 4:
+                    state_.cell += ui::Attributes::Underline();
+					LOG(SEQ) << "underline set";
+					break;
+				/* Blinking text */
+				case 5:
+                    state_.cell += ui::Attributes::Blink();
+					LOG(SEQ) << "blink set";
+					break;
+				/* Inverse and inverse off */
+				case 7:
+				case 27: {
+                    ui::Color bg = state_.cell.foreground();
+                    ui::Color fg = state_.cell.background();
+                    state_.cell << ui::Foreground(fg) << ui::DecorationColor(fg) << ui::Background(bg); 
+					LOG(SEQ) << "toggle inverse mode";
+					break;
+                }
+				/* Strikethrough */
+				case 9:
+                    state_.cell += ui::Attributes::Strikethrough();
+					LOG(SEQ) << "strikethrough";
+					break;
+				/* Bold off */
+				case 21:
+					state_.cell << state_.cell.font().setBold(false);
+					LOG(SEQ) << "bold off";
+					break;
+				/* Normal - neither bold, nor faint. */
+				case 22:
+					state_.cell << state_.cell.font().setBold(false).setItalics(false);
+					LOG(SEQ) << "normal font set";
+					break;
+				/* Italics off. */
+				case 23:
+					state_.cell << state_.cell.font().setItalics(false);
+					LOG(SEQ) << "italics off";
+					break;
+				/* Disable underline. */
+				case 24:
+                    state_.cell -= ui::Attributes::Underline();
+					LOG(SEQ) << "undeline off";
+					break;
+				/* Disable blinking. */
+				case 25:
+                    state_.cell -= ui::Attributes::Blink();
+					LOG(SEQ) << "blink off";
+					break;
+				/* Disable strikethrough. */
+				case 29:
+                    state_.cell -= ui::Attributes::Strikethrough();
+					LOG(SEQ) << "Strikethrough off";
+					break;
+				/* 30 - 37 are dark foreground colors, handled in the default case. */
+				/* 38 - extended foreground color */
+				case 38: {
+                    ui::Color fg = parseSGRExtendedColor(seq, i);
+                    state_.cell << ui::Foreground(fg) << ui::DecorationColor(fg);    
+					LOG(SEQ) << "fg set to " << fg;
+					break;
+                }
+				/* Foreground default. */
+				case 39:
+                    state_.cell << ui::Foreground(palette_->defaultForeground())
+                                << ui::DecorationColor(palette_->defaultForeground());
+					LOG(SEQ) << "fg reset";
+					break;
+				/* 40 - 47 are dark background color, handled in the default case. */
+				/* 48 - extended background color */
+				case 48: {
+                    ui::Color bg = parseSGRExtendedColor(seq, i);
+                    state_.cell << ui::Foreground(bg);    
+					LOG(SEQ) << "bg set to " << bg;
+					break;
+                }
+				/* Background default */
+				case 49:
+					state_.cell << ui::Background(palette_->defaultBackground());
+					LOG(SEQ) << "bg reset";
+					break;
+				/* 90 - 97 are bright foreground colors, handled in the default case. */
+				/* 100 - 107 are bright background colors, handled in the default case. */
+				default:
+					if (seq[i] >= 30 && seq[i] <= 37) {
+						state_.cell << ui::Foreground(palette_->at(seq[i] - 30))
+                                    << ui::DecorationColor(palette_->at(seq[i] - 30));
+						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 30);
+					} else if (seq[i] >= 40 && seq[i] <= 47) {
+						state_.cell << ui::Background(palette_->at(seq[i] - 40));
+						LOG(SEQ) << "bg set to " << palette_->at(seq[i] - 40);
+					} else if (seq[i] >= 90 && seq[i] <= 97) {
+						state_.cell << ui::Foreground(palette_->at(seq[i] - 82))
+                                    << ui::DecorationColor(palette_->at(seq[i] - 82));
+						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 82);
+					} else if (seq[i] >= 100 && seq[i] <= 107) {
+						state_.cell << ui::Background(palette_->at(seq[i] - 92));
+						LOG(SEQ) << "bg set to " << palette_->at(seq[i] - 92);
+					} else {
+						LOG(SEQ_UNKNOWN) << "Invalid SGR code: " << seq;
+					}
+					break;
+			}
+		}
+    }
+
+    ui::Color VT100::parseSGRExtendedColor(CSISequence & seq, size_t & i) {
+		++i;
+		if (i < seq.numArgs()) {
+			switch (seq[i++]) {
+				/* index from 256 colors */
+				case 5:
+					if (i >= seq.numArgs()) // not enough args 
+						break;
+					if (seq[i] > 255) // invalid color spec
+						break;
+                    // TODO fix this with palette
+                    break;
+					//return palette_[seq_[i]];
+				/* true color rgb */
+				case 2:
+					i += 2;
+					if (i >= seq.numArgs()) // not enough args
+						break;
+					if (seq[i - 2] > 255 || seq[i - 1] > 255 || seq[i] > 255) // invalid color spec
+						break;
+					return ui::Color(seq[i - 2] & 0xff, seq[i - 1] & 0xff, seq[i] & 0xff);
+				/* everything else is an error */
+				default:
+					break;
+			}
+		}
+		LOG(SEQ_UNKNOWN) << "Invalid extended color: " << seq;
+		return ui::Color::White();
     }
 
 

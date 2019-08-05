@@ -105,18 +105,15 @@ namespace ui {
 		return s;
 	}
 
-	class ForegroundColorHolder {
-	public:
+	struct ForegroundColorHolder {
 	    Color value;
 	};
 
-	class BackgroundColorHolder {
-	public:
+	struct BackgroundColorHolder {
 	    Color value;
 	};
 
-	class DecorationColorHolder {
-	public:
+	struct DecorationColorHolder {
 	    Color value;
 	};
 
@@ -127,11 +124,9 @@ namespace ui {
 	inline BackgroundColorHolder Background(Color color) {
 		return BackgroundColorHolder{color};
 	}
+
 	inline DecorationColorHolder DecorationColor(Color color) {
 		return DecorationColorHolder{color};
 	}
-
-
-
 
 } // namespace ui

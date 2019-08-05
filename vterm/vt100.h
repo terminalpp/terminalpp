@@ -14,6 +14,8 @@ namespace vterm {
     class VT100 : public Terminal {
     public:
 
+        class Palette;
+
         // log levels
 
 		static constexpr char const* const SEQ = "VT100";
@@ -21,10 +23,12 @@ namespace vterm {
 		static constexpr char const* const SEQ_WONT_SUPPORT = "VT100_WONT_SUPPORT";
 
 
-        VT100(int x, int y, int width, int height, PTY * pty, size_t ptyBufferSize = 10240);
+        VT100(int x, int y, int width, int height, Palette const * palette, PTY * pty, size_t ptyBufferSize = 10240);
 
 
     protected:
+        class CSISequence;
+
         void updateSize(int cols, int rows) override;
 
         void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
@@ -37,12 +41,15 @@ namespace vterm {
 
         size_t processInput(char * buffer, size_t bufferSize) override;
 
-
-    private:
-
-        class CSISequence;
+        bool parseEscapeSequence(char *& buffer, const char * bufferEnd);
+        void parseCSISequence(CSISequence & seq);
 
 
+        void parseCSIGetterOrSetter(CSISequence & seq, bool value);
+        void parseCSISaveOrRestore(CSISequence & seq);
+
+        void parseSGR(CSISequence & seq);
+        ui::Color parseSGRExtendedColor(CSISequence & seq, size_t & i);
 
         unsigned encodeMouseButton(ui::MouseButton btn, ui::Key modifiers);
         void sendMouseEvent(unsigned button, int col, int row, char end);
@@ -120,8 +127,6 @@ namespace vterm {
 
         }; // VT100::State
 
-
-
         State state_;
 
         MouseMode mouseMode_;
@@ -132,7 +137,8 @@ namespace vterm {
 
         CursorMode cursorMode_;
 
-
+        /* The palette used for the terminal. */
+        Palette const * palette_;        
 
         std::string const * GetSequenceForKey(ui::Key key) {
             auto i = KeyMap_.find(key);
@@ -146,6 +152,70 @@ namespace vterm {
 
     }; // vterm::VT100
 
+    /** Palette
+     */
+    class VT100::Palette {
+    public:
+
+        static Palette Colors16();
+        static Palette XTerm256(); 
+
+        Palette(size_t size, size_t defaultFg = 15, size_t defaultBg = 0):
+            size_(size),
+            defaultFg_(defaultFg),
+            defaultBg_(defaultBg),
+            colors_(new ui::Color[size]) {
+            ASSERT(defaultFg < size && defaultBg < size);
+        }
+
+        Palette(std::initializer_list<ui::Color> colors, size_t defaultFg = 15, size_t defaultBg = 0);
+
+        Palette(Palette const & from);
+
+        Palette(Palette && from);
+
+        ~Palette() {
+            delete colors_;
+        }
+
+        size_t size() const {
+            return size_;
+        }
+
+        ui::Color defaultForeground() const {
+            return colors_[defaultFg_];
+        }
+
+        ui::Color defaultBackground() const {
+            return colors_[defaultBg_];
+        }
+
+        ui::Color operator [] (size_t index) const {
+            ASSERT(index < size_);
+            return colors_[index];
+        } 
+
+        ui::Color & operator [] (size_t index) {
+            ASSERT(index < size_);
+            return colors_[index];
+        } 
+
+        ui::Color at(size_t index) const {
+            return (*this)[index];
+        }
+        ui::Color & at(size_t index) {
+            return (*this)[index];
+        }
+
+    private:
+
+        size_t size_;
+        size_t defaultFg_;
+        size_t defaultBg_;
+        ui::Color * colors_;
+
+    }; // VT100::Palette
+
 
     /** Desrcibes parsed CSI sequence.
 
@@ -153,6 +223,20 @@ namespace vterm {
      */
     class VT100::CSISequence {
     public:
+
+        CSISequence():
+            firstByte_{0},
+            finalByte_{0} {
+        }
+
+        bool isValid() const {
+            return firstByte_ != INVALID;
+        }
+
+        bool isComplete() const {
+            return firstByte_ != INCOMPLETE;
+        }
+
         char firstByte() const {
             return firstByte_;
         }
@@ -171,15 +255,65 @@ namespace vterm {
             return args_[index].first;
         }
 
-        
+        CSISequence & setDefault(size_t index, int value) {
+            while (args_.size() <= index)
+                args_.push_back(std::make_pair(0, false));
+            std::pair<int, bool> & arg = args_[index];
+            // because we set default args after parsing, we only change default value if it was not supplied
+            if (!arg.second)
+               arg.first = value;
+            return *this;
+        }
+
+        /** Parses the CSI sequence from given input. 
+
+         */
+        static CSISequence Parse(char * & buffer, char const * end);
 
     private:
+
         char firstByte_;
         char finalByte_;
         std::vector<std::pair<int, bool>> args_;
 
+        static constexpr char INVALID = -1;
+        static constexpr char INCOMPLETE = -2;
+        static constexpr int DEFAULT_ARG_VALUE = 0;
 
+        static bool IsParameterByte(char c) {
+            return (c >= 0x30) && (c <= 0x3f);
+        }
 
+        static bool IsIntermediateByte(char c) {
+			return (c >= 0x20) && (c <= 0x2f);
+        }
+
+        static bool IsFinalByte(char c) {
+            // no need to check the upper bound - char is signed
+            return (c >= 0x40) /*&& (c <= 0x7f) */;
+        }
+
+        friend std::ostream & operator << (std::ostream & s, CSISequence const & seq) {
+            if (!seq.isValid()) {
+                s << "Invalid CSI Sequence";
+            } else if (!seq.isComplete()) {
+                s << "Incomplete CSI Sequence";
+            } else {
+                s << "\x1b[";
+                if (seq.firstByte_ != 0) 
+                    s << seq.firstByte_;
+                if (!seq.args_.empty()) {
+                    for (size_t i = 0, e = seq.args_.size(); i != e; ++i) {
+                        if (seq.args_[i].second)
+                            s << seq.args_[i].first;
+                        if (i != e - 1)
+                            s << ';';
+                    }
+                }
+                s << seq.finalByte();
+            }
+            return s;
+        }
 
     }; // VT100::CSISequence
 

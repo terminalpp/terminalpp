@@ -64,6 +64,10 @@ namespace ui {
 			return raw_ & BORDER_ABOVE;
 		}
 
+		bool blink() const {
+			return raw_ & BLINK;
+		}
+
 		bool endOfLine() const {
 			return raw_ & END_OF_LINE;
 		}
@@ -120,6 +124,10 @@ namespace ui {
 			return Attributes(BORDER_ABOVE);
 		}
 
+		static Attributes Blink() {
+			return Attributes(BLINK);
+		}
+
 		static Attributes EndOfLine() {
 			return Attributes(END_OF_LINE);
 		}
@@ -137,6 +145,7 @@ namespace ui {
 		static constexpr uint32_t BORDER_BOTTOM = 1 << 6;
 		static constexpr uint32_t BORDER_THICK = 1 << 7;
 		static constexpr uint32_t BORDER_ABOVE = 1 << 8;
+		static constexpr uint32_t BLINK = 1 << 9;
 
 		static constexpr uint32_t END_OF_LINE = 1 << 15;
 
