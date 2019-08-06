@@ -301,12 +301,17 @@ namespace vterm {
 
     VT100::VT100(int x, int y, int width, int height, Palette const * palette, PTY * pty, size_t ptyBufferSize):
         Terminal{x, y, width, height, pty, ptyBufferSize},
-        state_{width, height, ui::Color::White(), ui::Color::Black()},
+        state_{width, height, palette->defaultForeground(), palette->defaultBackground()},
         mouseMode_{MouseMode::Off},
         mouseEncoding_{MouseEncoding::Default},
         mouseLastButton_{0},
         mouseButtonsDown_{0},
         cursorMode_{CursorMode::Normal},
+        keypadMode_{KeypadMode::Normal},
+        bracketedPaste_{false},
+        alternateBufferMode_{false},
+        alternateBuffer_{width, height},
+        alternateState_{width, height, palette->defaultForeground(), palette->defaultBackground()},
         palette_(palette) {
     }
 
@@ -449,7 +454,7 @@ namespace vterm {
 						if (buffer_.cursor().col == 0) {
 							if (buffer_.cursor().row > 0)
 								--buffer_.cursor().row;
-							buffer_.cursor().col = buffer_.width() - 1;
+							buffer_.cursor().col = buffer_.cols() - 1;
 						} else {
 							--buffer_.cursor().col;
 						}
@@ -503,6 +508,68 @@ namespace vterm {
                 parseCSISequence(seq);
                 break;
             }
+			/* Operating system command. */
+			case ']':
+                /* 
+				if (!parseOSCSequence(x, bufferEnd))
+					return false;
+                 */
+				break;
+			/* Save Cursor. */
+			case '7':
+                /* 
+				state_.cursorStack.push_back(std::make_pair(screen_.cursor().col, screen_.cursor().row));
+				LOG(SEQ) << "DECSC: Cursor position saved";
+                */
+				break;
+			/* Restore Cursor. */
+			case '8':
+                /* 
+				if (!state_.cursorStack.empty()) {
+					auto i = state_.cursorStack.back();
+					setCursor(i.first, i.second);
+					state_.cursorStack.pop_back();
+					LOG(SEQ) << "DECRC: Cursor position restored";
+				} else {
+					LOG(SEQ_UNKNOWN) << "No cursor position to restore (DECRC)";
+				}
+                */
+				break;
+			/* Reverse line feed - move up 1 row, same column.
+			 */
+			case 'M':
+				LOG(SEQ) << "RI: move cursor 1 line up";
+				if (buffer_.cursor().row == 0) {
+					buffer_.insertLines(1, 0, state_.scrollEnd, state_.cell);
+				} else {
+					setCursor(buffer_.cursor().col, buffer_.cursor().row - 1);
+				}
+				break;
+    		/* Character set specification - ignored, we just have to parse it. */
+			case '(':
+			case ')':
+			case '*':
+			case '+':
+				// missing character set specification
+				if (x == bufferEnd)
+					return false;
+				if (*x == 'B') { // US
+					++x;
+					break;
+				}
+				LOG(SEQ_WONT_SUPPORT) << "Unknown (possibly mismatched) character set final char " << *x;
+				++x;
+				break;
+			/* ESC = -- Application keypad */
+			case '=':
+				LOG(SEQ) << "Application keypad mode enabled";
+                keypadMode_ = KeypadMode::Application;
+				break;
+			/* ESC > -- Normal keypad */
+			case '>':
+				LOG(SEQ) << "Normal keypad mode enabled";
+                keypadMode_ = KeypadMode::Normal;
+				break;
             default:
 				LOG(SEQ_UNKNOWN) << "Unknown escape sequence \x1b" << *(x-1);
 				break;
@@ -516,7 +583,262 @@ namespace vterm {
             // the "normal" CSI sequences
             case 0: 
                 switch (seq.finalByte()) {
+                    // CSI <n> @ -- insert blank characters (ICH)
+                    case '@':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "ICH: deleteCharacter " << seq[0];
+                        insertCharacters(seq[0]);
+                        return;
+                    // CSI <n> A -- moves cursor n rows up (CUU)
+                    case 'A': {
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        unsigned r = buffer_.cursor().row >= seq[0] ? buffer_.cursor().row - seq[0] : 0;
+                        LOG(SEQ) << "CUU: setCursor " << buffer_.cursor().col << ", " << r;
+                        setCursor(buffer_.cursor().col, r);
+                        return;
+                    }
+                    // CSI <n> B -- moves cursor n rows down (CUD)
+                    case 'B':
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        LOG(SEQ) << "CUD: setCursor " << buffer_.cursor().col << ", " << buffer_.cursor().row + seq[0];
+                        setCursor(buffer_.cursor().col, buffer_.cursor().row + seq[0]);
+                        return;
+                    // CSI <n> C -- moves cursor n columns forward (right) (CUF)
+                    case 'C':
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        LOG(SEQ) << "CUF: setCursor " << buffer_.cursor().col + seq[0] << ", " << buffer_.cursor().row;
+                        setCursor(buffer_.cursor().col + seq[0], buffer_.cursor().row);
+                        return;
+                    // CSI <n> D -- moves cursor n columns back (left) (CUB)
+                    case 'D': {// cursor backward
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        unsigned c = buffer_.cursor().col >= seq[0] ? buffer_.cursor().col - seq[0] : 0;
+                        LOG(SEQ) << "CUB: setCursor " << c << ", " << buffer_.cursor().row;
+                        setCursor(c, buffer_.cursor().row);
+                        return;
+                    }
+                    /* CSI <n> G -- set cursor character absolute (CHA)
+                    */
+                    case 'G':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "CHA: set column " << seq[0] - 1;
+                        setCursor(seq[0] - 1, buffer_.cursor().row);
+                        return;
+                    /* set cursor position (CUP) */
+                    case 'H': // CUP
+                    case 'f': // HVP
+                        seq.setDefault(0, 1).setDefault(1, 1);
+                        if (seq.numArgs() != 2)
+                            break;
+                        seq.conditionalReplace(0, 0, 1);
+                        seq.conditionalReplace(1, 0, 1);
+                        LOG(SEQ) << "CUP: setCursor " << seq[1] - 1 << ", " << seq[0] - 1;
+                        setCursor(seq[1] - 1, seq[0] - 1);
+                        return;
+                    /* CSI <n> J -- erase display, depending on <n>:
+                        0 = erase from the current position (inclusive) to the end of display
+                        1 = erase from the beginning to the current position(inclusive)
+                        2 = erase entire display
+                    */
+                    case 'J':
+                        if (seq.numArgs() > 1)
+                            break;
+                        switch (seq[0]) {
+                            case 0:
+                                updateCursorPosition();
+                                fillRect(ui::Rect(buffer_.cursor().col, buffer_.cursor().row, buffer_.cols(), buffer_.cursor().row + 1), state_.cell);
+                                fillRect(ui::Rect(0, buffer_.cursor().row + 1, buffer_.cols(), buffer_.rows()), state_.cell);
+                                return;
+                            case 1:
+                                updateCursorPosition();
+                                fillRect(ui::Rect(0, 0, buffer_.cols(), buffer_.cursor().row), state_.cell);
+                                fillRect(ui::Rect(0, buffer_.cursor().row, buffer_.cursor().col + 1, buffer_.cursor().row + 1), state_.cell);
+                                return;
+                            case 2:
+                                fillRect(ui::Rect(buffer_.cols(), buffer_.rows()), state_.cell);
+                                return;
+                            default:
+                                break;
+                        }
+                        break;
+                    /* CSI <n> K -- erase in line, depending on <n>
+                        0 = Erase to Right
+                        1 = Erase to Left
+                        2 = Erase entire line
+                    */
+                    case 'K':
+                        if (seq.numArgs() > 1)
+                            break;
+                        switch (seq[0]) {
+                            case 0:
+                                updateCursorPosition();
+                                fillRect(ui::Rect(buffer_.cursor().col, buffer_.cursor().row, buffer_.cols(), buffer_.cursor().row + 1), state_.cell);
+                                return;
+                            case 1:
+                                updateCursorPosition();
+                                fillRect(ui::Rect(0, buffer_.cursor().row, buffer_.cursor().col + 1, buffer_.cursor().row + 1), state_.cell);
+                                return;
+                            case 2:
+                                updateCursorPosition();
+                                fillRect(ui::Rect(0, buffer_.cursor().row, buffer_.cols(), buffer_.cursor().row + 1), state_.cell);
+                                return;
+                            default:
+                                break;
+                        }
+					break;
+                    /* CSI <n> L -- Insert n lines. (IL)
+                     */
+                    case 'L':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "IL: scrollUp " << seq[0];
+                        buffer_.insertLines(seq[0], buffer_.cursor().row, state_.scrollEnd, state_.cell);
+                        return;
+                    /* CSI <n> M -- Remove n lines. (DL)
+                     */
+                    case 'M':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "DL: scrollDown " << seq[0];
+                        buffer_.deleteLines(seq[0], buffer_.cursor().row, state_.scrollEnd, state_.cell);
+                        return;
+                    /* CSI <n> P -- Delete n charcters. (DCH) 
+                     */
+                    case 'P':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "DCH: deleteCharacter " << seq[0];
+                        deleteCharacters(seq[0]);
+                        return;
+                    /* CSI <n> S -- Scroll up n lines
+                     */
+                    case 'S':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "SU: scrollUp " << seq[0];
+                        buffer_.deleteLines(seq[0], state_.scrollStart, state_.scrollEnd, state_.cell);
+                        return;
+                    /* CSI <n> T -- Scroll down n lines
+                     */
+                    case 'T':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "SD: scrollDown " << seq[0];
+                        buffer_.insertLines(seq[0], buffer_.cursor().row, state_.scrollEnd, state_.cell);
+                        return;
+                    /* CSI <n> X -- erase <n> characters from the current position
+                     */
+                    case 'X': {
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        updateCursorPosition();
+                        // erase from first line
+                        int n = static_cast<unsigned>(seq[0]);
+                        int l = std::min(buffer_.cols() - buffer_.cursor().col, n);
+                        fillRect(ui::Rect(buffer_.cursor().col, buffer_.cursor().row, buffer_.cursor().col + l, buffer_.cursor().row + 1), state_.cell);
+                        n -= l;
+                        // while there is enough stuff left to be larger than a line, erase entire line
+                        l = buffer_.cursor().row + 1;
+                        while (n >= buffer_.cols() && l < buffer_.rows()) {
+                            fillRect(ui::Rect(0, l, buffer_.cols(), l + 1), state_.cell);
+                            ++l;
+                            n -= buffer_.cols();
+                        }
+                        // if there is still something to erase, erase from the beginning
+                        if (n != 0 && l < buffer_.rows())
+                            fillRect(ui::Rect(0, l, n, l + 1), state_.cell);
+                        return;
+                    }
+                    /* CSI <n> c - primary device attributes.
+                     */
+                    case 'c': {
+                        if (seq[0] != 0)
+                            break;
+                        LOG(SEQ) << "Device Attributes - VT102 sent";
+                        send("\033[?6c", 5); // send VT-102 for now, go for VT-220? 
+                        return;
+                    }
+                    /* CSI <n> d -- Line position absolute (VPA)
+                     */
+                    case 'd': {
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        int r = seq[0];
+                        if (r < 1)
+                            r = 1;
+                        else if (r > buffer_.rows())
+                            r = buffer_.rows();
+                        LOG(SEQ) << "VPA: setCursor " << buffer_.cursor().col << ", " << r - 1;
+                        setCursor(buffer_.cursor().col, r - 1);
+                        return;
+                    }
+                    /* CSI <n> h -- Reset mode enable
+                      
+                       Depending on the argument, certain things are turned on. None of the RM settings are currently supported.
+                     */
+                    case 'h':
+                        break;
+                    /* CSI <n> l -- Reset mode disable
+                    
+                       Depending on the argument, certain things are turned off. Turning the features on/off is not allowed, but if the client wishes to disable something that is disabled, it's happily ignored.
+                     */
+                    case 'l':
+                        seq.setDefault(0, 0);
+                        // enable replace mode (IRM) since this is the only mode we allow, do nothing
+                        if (seq[0] == 4)
+                            return;
+                        break;
+                    /* SGR
+                     */
+                    case 'm':
+                        return parseSGR(seq);
+                    /* CSI <n> ; <n> r -- Set scrolling region (default is the whole window) (DECSTBM)
+                     */
+                    case 'r':
+                        seq.setDefault(0, 1); // inclusive
+                        seq.setDefault(1, buffer_.cursor().row); // inclusive
+                        if (seq.numArgs() != 2)
+                            break;
+                        // This is not proper 
+                        seq.conditionalReplace(0, 0, 1);
+                        seq.conditionalReplace(1, 0, 1);
+                        if (seq[0] > buffer_.rows())
+                            break;
+                        if (seq[1] > buffer_.rows())
+                            break;
+                        state_.scrollStart = std::min(seq[0] - 1, buffer_.rows() - 1); // inclusive
+                        state_.scrollEnd = std::min(seq[1], buffer_.rows()); // exclusive 
+                        setCursor(0, 0);
+                        LOG(SEQ) << "Scroll region set to " << state_.scrollStart << " - " << state_.scrollEnd;
+                        return;
+                    /* CSI <n> : <n> : <n> t -- window manipulation (xterm)
 
+                        We do nothing for these at the moment, just recognize the few possibly interesting ones.
+                     */
+                    case 't':
+                        seq.setDefault(0, 0).setDefault(1, 0).setDefault(2, 0);
+                        switch (seq[0]) {
+                        case 22:
+                            // 22;0;0 -- save xterm icon and window title on stack
+                            if (seq[1] == 0 && seq[2] == 0)
+                                return;
+                            break;
+                        case 23:
+                            // 23;0;0 -- restore xterm icon and window title from stack
+                            if (seq[1] == 0 && seq[2] == 0)
+                                return;
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    default:
+                        break;
                 }
                 break;
             // getters and setters
@@ -555,7 +877,114 @@ namespace vterm {
     }
 
     void VT100::parseCSIGetterOrSetter(CSISequence & seq, bool value) {
+		for (size_t i = 0; i < seq.numArgs(); ++i) {
+			int id = seq[i];
+			switch (id) {
+				/* application cursor mode on/off
+				 */
+				case 1:
+					cursorMode_ = value ? CursorMode::Application : CursorMode::Normal;
+					LOG(SEQ) << "application cursor mode: " << value;
+					continue;
+				/* Smooth scrolling -- ignored*/
+				case 4:
+					LOG(SEQ_WONT_SUPPORT) << "Smooth scrolling: " << value;
+					continue;
+				/* DECAWM - autowrap mode on/off */
+				case 7:
+					if (value)
+						LOG(SEQ) << "autowrap mode enable (by default)";
+					else
+						LOG(SEQ_UNKNOWN) << "CSI?7l, DECAWM does not support being disabled";
+					continue;
+				// cursor blinking
+				case 12:
+					buffer_.cursor().blink = value;
+					LOG(SEQ) << "cursor blinking: " << value;
+					continue;
+				// cursor show/hide
+				case 25:
+					buffer_.cursor().visible = value;
+					LOG(SEQ) << "cursor visible: " << value;
+					continue;
+				/* Mouse tracking movement & buttons.
 
+				https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
+				*/
+				/* Enable normal mouse mode, i.e. report button press & release events only.
+				 */
+				case 1000:
+                    mouseMode_ = value ? MouseMode::Normal : MouseMode::Off;
+					LOG(SEQ) << "normal mouse tracking: " << value;
+					continue;
+				/* Mouse highlighting - will not support because it requires supporting application and may hang terminal if not used properly, which sounds rather dangerous.
+				 */
+				case 1001:
+					LOG(SEQ_WONT_SUPPORT) << "hilite mouse mode";
+					continue;
+				/* Mouse button events (report mouse button press & release and mouse movement if any of the buttons is down.
+				 */
+				case 1002:
+                    mouseMode_ = value ? MouseMode::ButtonEvent : MouseMode::Off;
+					LOG(SEQ) << "button-event mouse tracking: " << value;
+					continue;
+				/* Report all mouse events (i.e. report mouse move even when buttons are not pressed).
+				 */
+				case 1003:
+                    mouseMode_ = value ? MouseMode::All : MouseMode::Off;
+					LOG(SEQ) << "all mouse tracking: " << value;
+					continue;
+				/* UTF8 encoded tracking.
+				 */
+				case 1005:
+					//mouseEncoding_ = value ? MouseEncoding::UTF8 : MouseEncoding::Default;
+					LOG(SEQ_WONT_SUPPORT) << "UTF8 mouse encoding: " << value;
+					continue;
+				/* SGR mouse encoding.
+				 */
+				case 1006: // 
+					mouseEncoding_ = value ? MouseEncoding::SGR : MouseEncoding::Default;
+					LOG(SEQ) << "UTF8 mouse encoding: " << value;
+					continue;
+				/* Enable or disable the alternate screen buffer.
+				 */
+				case 47:
+				case 1049:
+					if (value) {
+						// flip to alternate buffer and clear it
+						if (!alternateBufferMode_) {
+							alternateBuffer_ = buffer_;
+							std::swap(state_, alternateState_);
+							invalidateLastCharPosition();
+						}
+                        state_.cell << ui::Foreground(palette_->defaultForeground()) 
+                                    << ui::DecorationColor(palette_->defaultForeground()) 
+                                    << ui::Background(palette_->defaultBackground())
+                                    << ui::Font()
+                                    << ui::Attributes();
+						fillRect(ui::Rect(buffer_.cols(), buffer_.rows()), state_.cell);
+						buffer_.cursor() = ui::Cursor();
+						LOG(SEQ) << "Alternate screen on";
+					} else {
+						// go back from alternate buffer
+						if (alternateBufferMode_) {
+							buffer_ = alternateBuffer_;
+							std::swap(state_, alternateState_);
+						}
+						LOG(SEQ) << "Alternate screen off";
+					}
+					alternateBufferMode_ = value;
+					continue;
+				/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. 
+				 */
+				case 2004:
+					bracketedPaste_ = value;
+					continue;
+				default:
+					break;
+			}
+			LOG(SEQ_UNKNOWN) << "Invalid Get/Set command: " << seq;
+		}
     }
 
     void VT100::parseCSISaveOrRestore(CSISequence & seq) {
@@ -708,7 +1137,7 @@ namespace vterm {
 						break;
                     // TODO fix this with palette
                     break;
-					//return palette_[seq_[i]];
+					//return palette_[seq[i]];
 				/* true color rgb */
 				case 2:
 					i += 2;
@@ -790,7 +1219,7 @@ namespace vterm {
 	}
 
     void VT100::updateCursorPosition() {
-        int c = buffer_.width();
+        int c = buffer_.cols();
         while (buffer_.cursor().col >= c) {
             buffer_.cursor().col -= c;
             if (++buffer_.cursor().row == state_.scrollEnd) {
@@ -798,10 +1227,52 @@ namespace vterm {
                 --buffer_.cursor().row;
             }
         }
-        ASSERT(buffer_.cursor().col < buffer_.width());
+        ASSERT(buffer_.cursor().col < buffer_.cols());
         // if cursor row is not valid, just set it to the last row 
-        if (buffer_.cursor().row >= buffer_.height())
-            buffer_.cursor().row = buffer_.height() - 1;
+        if (buffer_.cursor().row >= buffer_.rows())
+            buffer_.cursor().row = buffer_.rows() - 1;
+    }
+
+    void VT100::setCursor(int col, int row) {
+		buffer_.cursor().col = col;
+		buffer_.cursor().row = row;
+		// invalidate the last character position
+		invalidateLastCharPosition();
+    }
+
+    void VT100::fillRect(ui::Rect const& rect, ui::Cell const & cell) {
+		LOG(SEQ) << "fillRect " << rect;
+		for (int row = rect.top(); row < rect.bottom(); ++row) {
+			for (int col = rect.left(); col < rect.right(); ++col) {
+				Cell& c = buffer_.at(col, row);
+                c = cell;
+			}
+		}
+    }
+
+    void VT100::deleteCharacters(unsigned num) {
+		unsigned r = buffer_.cursor().row;
+		for (unsigned c = buffer_.cursor().col, e = buffer_.cols() - num; c < e; ++c) {
+			Cell& cell = buffer_.at(c, r);
+			cell = buffer_.at(c + num, r);
+		}
+		for (unsigned c = buffer_.cols() - num, e = buffer_.cols(); c < e; ++c) {
+			Cell& cell = buffer_.at(c, r);
+            cell = state_.cell;
+		}
+    }
+
+    void VT100::insertCharacters(unsigned num) {
+		unsigned r = buffer_.cursor().row;
+		// first copy the characters
+		for (unsigned c = buffer_.cols() - 1, e = buffer_.cursor().col + num; c >= e; --c) {
+			Cell& cell = buffer_.at(c, r);
+			cell = buffer_.at(c - num, r);
+		}
+		for (unsigned c = buffer_.cursor().col, e = buffer_.cursor().col + num; c < e; ++c) {
+			Cell& cell = buffer_.at(c, r);
+            cell = state_.cell;
+		}
     }
 
 

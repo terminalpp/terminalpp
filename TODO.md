@@ -1,10 +1,9 @@
 ﻿# V0.2
 
-- add VT100 and goodies
+- add OSC to VT100
 - then add localpty as well for Windows
 - add events for the terminal (notification, etc.)
 
-- make terminal an UI widget
 - make Font contain stuff from nativeHandle on DirectWrite (like underline & strikethrough positions & thickness)
 - move the renderer in window.h to use glyph runs in all instances
 

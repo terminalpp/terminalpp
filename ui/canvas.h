@@ -73,7 +73,7 @@ namespace ui {
 
         /** Copies the given buffer to specified coordinates. 
          
-            The buffer must provide width(), height() and at() methods.
+            The buffer must provide width(), height() and at() methods, alternatively the template can be manually specialized to a different type.
          */
         template<typename BUFFER>
         void copyBuffer(int x, int y, BUFFER const & buffer) {

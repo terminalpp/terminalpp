@@ -41,14 +41,40 @@ namespace vterm {
 
         size_t processInput(char * buffer, size_t bufferSize) override;
 
+        /** Parses ANSI and similar escape sequences in the input. 
+         
+            CSI, OSC and few others are supported. 
+         */
         bool parseEscapeSequence(char *& buffer, const char * bufferEnd);
+
+        /** Processes given CSI sequence. 
+         
+            Special sequences, such as get/set and save/restore sequences are delegated to their own functions, others are processed directly in the method. 
+         */
         void parseCSISequence(CSISequence & seq);
-
-
+        
+        /** Parses CSI getters and setters.
+         
+            These are sequences `?` as the first byte, followed by arbitrary numbers, ending with either `h` or `l`. 
+         */
         void parseCSIGetterOrSetter(CSISequence & seq, bool value);
+
+        /** Parses the CSI save and restore commands. 
+         
+            These are sequences staring with `?` and ending with `r` or `s`. 
+
+            At the moment, save and restore commands are not supported. 
+         */
         void parseCSISaveOrRestore(CSISequence & seq);
 
+        /** Parses special graphic rendition commands. 
+         
+            These have final byte of `m`, preceded by numeric arguments.
+         */
         void parseSGR(CSISequence & seq);
+
+        /** Parses the SGR extended color specification, i.e. either TrueColor RGB values, or 256 palette specification.
+         */
         ui::Color parseSGRExtendedColor(CSISequence & seq, size_t & i);
 
         unsigned encodeMouseButton(ui::MouseButton btn, ui::Key modifiers);
@@ -62,6 +88,17 @@ namespace vterm {
          */
         void updateCursorPosition();
 
+		/** Updates the cursor position.
+		 */
+		void setCursor(int col, int row);
+
+		/** Fills the given rectangle with character, colors and font.
+		 */
+		void fillRect(ui::Rect const& rect, ui::Cell const & cell);
+
+		void deleteCharacters(unsigned num);
+		void insertCharacters(unsigned num);
+
 
         // TODO add comments and determine if it actually does what it is supposed to do, i.e. wrt CR and LF
 		void invalidateLastCharPosition() {
@@ -69,8 +106,8 @@ namespace vterm {
 		}
 
 		void markLastCharPosition() {
-			if (state_.lastCharCol >= 0 && state_.lastCharCol < buffer_.width() &&
-                state_.lastCharRow >= 0 && state_.lastCharRow < buffer_.height())
+			if (state_.lastCharCol >= 0 && state_.lastCharCol < buffer_.cols() &&
+                state_.lastCharRow >= 0 && state_.lastCharRow < buffer_.rows())
 				buffer_.at(state_.lastCharCol, state_.lastCharRow) += ui::Attributes::EndOfLine();
 		}
 
@@ -97,6 +134,11 @@ namespace vterm {
             Normal,
             Application
         }; // VT100::CursorMode
+
+        enum class KeypadMode {
+            Normal, 
+            Application
+        }; // VT100::KeypadMode
 
         struct State {
             /* Start of the scrolling region (inclusive row) */
@@ -136,6 +178,15 @@ namespace vterm {
         unsigned mouseButtonsDown_;
 
         CursorMode cursorMode_;
+        KeypadMode keypadMode_;
+
+        /* Determines whether pasted text will be surrounded by ESC[200~ and ESC[201~ */
+        bool bracketedPaste_;
+
+        /* Alternate screen & state */
+        bool alternateBufferMode_;
+        Buffer alternateBuffer_;
+        State alternateState_;
 
         /* The palette used for the terminal. */
         Palette const * palette_;        
@@ -263,6 +314,19 @@ namespace vterm {
             if (!arg.second)
                arg.first = value;
             return *this;
+        }
+
+        /** If the given argument has the specified value, it is replaced with the new value given. 
+
+            Returns true if the replace occured, false otherwise. 
+            */
+        bool conditionalReplace(size_t index, int value, int newValue) {
+            if (index >= args_.size())
+                return false;
+            if (args_[index].first != value)
+                return false;
+            args_[index].first = newValue;
+            return true;
         }
 
         /** Parses the CSI sequence from given input. 

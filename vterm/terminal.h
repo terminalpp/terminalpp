@@ -31,11 +31,11 @@ namespace vterm {
 
             ~Buffer();
 
-            int width() const {
+            int cols() const {
                 return cols_;
             }
 
-            int height() const {
+            int rows() const {
                 return rows_;
             }
 
@@ -216,3 +216,17 @@ namespace vterm {
 
 
 } // namespace vterm
+
+namespace ui {
+
+    template<>
+    inline void ui::Canvas::copyBuffer<vterm::Terminal::Buffer>(int x, int y, vterm::Terminal::Buffer const & buffer) {
+        int xe = std::min(x + buffer.cols(), width()) - x;
+        int ye = std::min(y + buffer.rows(), height()) - y;
+        for (int by = 0; by < ye; ++by)
+            for (int bx = 0; bx < xe; ++bx)
+                if (Cell * c = at(Point(x + bx, y + by))) 
+                    *c = buffer.at(bx, by);
+    }
+
+}

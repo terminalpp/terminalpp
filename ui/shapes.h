@@ -158,6 +158,11 @@ namespace ui {
 			return Rect(rect.left() - p.x, rect.top() - p.y, rect.right() - p.x, rect.bottom() - p.y);
 		}
 
+		friend std::ostream & operator << (std::ostream & s, Rect const & rect) {
+			s << "[" << rect.left() << "," << rect.top() << "; " << rect.right() << "," << rect.bottom() << "]";
+			return s;
+		}
+
 
     };
 
