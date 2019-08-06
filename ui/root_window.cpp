@@ -72,15 +72,24 @@ namespace ui {
     }
 
     void RootWindow::keyChar(helpers::Char c) {
-        Container::keyChar(c);
+		if (keyboardFocus_)
+		    keyboardFocus_->keyChar(c);
+		else 
+            Container::keyChar(c);
     }
 
     void RootWindow::keyDown(Key k) {
-        Container::keyDown(k);
+		if (keyboardFocus_)
+		    keyboardFocus_->keyDown(k);
+		else 
+            Container::keyDown(k);
     }
 
     void RootWindow::keyUp(Key k) {
-        Container::keyUp(k);
+		if (keyboardFocus_)
+		    keyboardFocus_->keyUp(k);
+		else 
+            Container::keyUp(k);
     }
 
     void RootWindow::invalidateContents() {

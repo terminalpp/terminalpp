@@ -4,6 +4,13 @@
 namespace ui {
 
 
+	
+	void Widget::setFocus(bool value) {
+		if (focused_ != value && visibleRegion_.valid())
+			visibleRegion_.root->focusWidget(this); 
+	}
+
+
 	void Widget::repaint() {
 		// only repaint the control if it is visible
 		if (visible_ && visibleRegion_.valid()) {

@@ -144,13 +144,18 @@ int main(int argc, char* argv[]) {
 
 		vterm::VT100::Palette palette(vterm::VT100::Palette::XTerm256());
 
+		vterm::VT100 * vt100;
+
 	    Window * w = Application::Instance()->createWindow("test", 80, 25, 18);
 		ui::RootWindow * rw = ui::Create(new ui::RootWindow(80,25))
 		    << ui::Layout::Maximized()
-			<< (ui::Create(new vterm::VT100(0,0,80,25, &palette, new vterm::BypassPTY(helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "htop" })))));
+			<< (
+				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::BypassPTY(helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "bash" }))))
+				);
 
 		w->setRootWindow(rw);
 		w->show();
+		vt100->setFocus(true);
 
     	Application::Instance()->mainLoop();
 

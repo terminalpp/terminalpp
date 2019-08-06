@@ -22,10 +22,11 @@ namespace ui {
         using Widget::repaint;
 
 		RootWindow(int width, int height) :
-			Container(0, 0, width, height),
-			buffer_(width, height),
-            mouseFocus_(nullptr) {
-            visibleRegion_ = Canvas::VisibleRegion(this);
+			Container{0, 0, width, height},
+			buffer_{width, height},
+            keyboardFocus_{nullptr},
+            mouseFocus_{nullptr} {
+            visibleRegion_ = Canvas::VisibleRegion{this};
 		}
 
         // events 
@@ -69,6 +70,8 @@ namespace ui {
         }
 
     protected:
+
+        friend class Widget;
         
 	    static constexpr unsigned MOUSE_CLICK_MAX_DURATION = 100;
 
@@ -91,6 +94,14 @@ namespace ui {
                 buffer_.resize(width, height);
             }
             Container::updateSize(width, height);
+        }
+
+        void focusWidget(Widget * widget) {
+            if (keyboardFocus_ != nullptr)
+                keyboardFocus_->updateFocused(false);
+            keyboardFocus_ = widget;
+            if (keyboardFocus_ != nullptr)
+                keyboardFocus_->updateFocused(true);
         }
 
 		Widget* mouseFocusWidget(int col, int row);
@@ -118,6 +129,8 @@ namespace ui {
         friend class Canvas;
 
         Canvas::Buffer buffer_;
+
+        Widget * keyboardFocus_;
 
 		int mouseCol_;
 		int mouseRow_;

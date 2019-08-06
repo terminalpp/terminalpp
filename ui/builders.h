@@ -68,6 +68,14 @@ namespace ui {
 		bool const value;
 	}; // ui::Visibility
 
+	class Focus {
+	public:
+	    explicit Focus(bool value) :
+		    value(value) {
+		}
+		bool const value;
+	}; // ui::Focus
+
 	class WidthHint {
 	public:
 		explicit WidthHint(SizeHint const& value) :
@@ -103,6 +111,12 @@ namespace ui {
 	template<typename WIDGET>
 	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, Visibility v) {
 		widget->setVisible(v.value);
+		return widget;
+	}
+
+	template<typename WIDGET>
+	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, Focus v) {
+		widget->setFocus(v.value);
 		return widget;
 	}
 

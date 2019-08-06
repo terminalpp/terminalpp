@@ -156,6 +156,7 @@ namespace ui {
 			overlay_(false),
 			forceOverlay_(false),
 			visible_(true),
+			focused_(false),
 			x_(x),
 			y_(y),
 			width_(width),
@@ -170,6 +171,10 @@ namespace ui {
 
 		bool visible() const {
 			return visible_;
+		}
+
+		bool focused() const {
+			return focused_;
 		}
 
 		/** Returns the x and y coordinates of the top-left corner of the widget in its parent 
@@ -216,19 +221,17 @@ namespace ui {
 		 */
 		void setVisible(bool value) {
 			if (visible_ != value) {
-				if (value) {
-					visible_ = true;
-					if (parent_ != nullptr)
-					    parent_->childInvalidated(this);
-					trigger(onShow);
-				} else {
-					visible_ = false;
-					if (parent_ != nullptr)
-						parent_->childInvalidated(this);
-					trigger(onHide);
-				}
+				updateVisible(value);
+				if (parent_ != nullptr)
+					parent_->childInvalidated(this);
 			}
 		}
+
+		/** Focuses or defocuses the widget. 
+		 
+		    Relays the request to the root window, which means that only valid widgets can be focused or defocused.
+		 */
+		void setFocus(bool value);
 
 		/** Moves the widget to the given coordinates relative to its parent.
 		 */
@@ -280,6 +283,22 @@ namespace ui {
 			if (forceOverlay_ != value) {
 				forceOverlay_ = value;
 			}
+		}
+
+		virtual void updateVisible(bool value) {
+			visible_ = value;
+			if (value)
+				trigger(onShow);
+			else
+				trigger(onHide);
+		}
+
+		virtual void updateFocused(bool value) {
+			focused_ = value;
+			if (value)
+				trigger(onFocusIn);
+			else
+				trigger(onFocusOut);
 		}
 
 		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
@@ -476,6 +495,9 @@ namespace ui {
 
 		/* Visibility */
 		bool visible_;
+
+		/** Determines whether the widget receives keyboard events. */
+		bool focused_;
 
 		/* Position */
 		int x_;
