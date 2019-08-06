@@ -31,9 +31,13 @@ namespace tpp {
             PostMessage(hWnd_, WM_CLOSE, 0, 0);
         }
 
+        /** Schedules the window to be repainted.
+
+            Instead of invalidating the rectange, WM_PAINT must explicitly be sent, as it may happen that different thread is already repainting the window, and therefore the request will be silenced (the window region is validated at the end of WM_PAINT). 
+         */
 		void paint(ui::RectEvent & e) override {
             MARK_AS_UNUSED(e);
-			InvalidateRect(hWnd_, /* rect */ nullptr, /* erase */ false);
+            PostMessage(hWnd_, WM_PAINT, 0, 0);
 		}
 
     protected:

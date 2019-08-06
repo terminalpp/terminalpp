@@ -1,4 +1,6 @@
 #if (defined ARCH_WINDOWS)
+#include "helpers/log.h"
+
 #include "directwrite_window.h"
 
 #include "directwrite_font.h"
@@ -289,8 +291,19 @@ namespace tpp {
 			case WM_MOUSEMOVE:
 				window->mouseMove(MOUSE_X, MOUSE_Y);
 				break;
+			/* 
+			 */
+			case WM_USER:
+			    switch (wParam) {
+					case DirectWriteApplication::INVALIDATE: {
+						InvalidateRect(hWnd, /* rect */ nullptr, /* erase */ false);
+						break;
+					}
+				    default:
+					    LOG("Win32") << "Invalid user message " << wParam;
 
-
+				}
+				break;
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);
     }

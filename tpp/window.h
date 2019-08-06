@@ -165,6 +165,11 @@ namespace tpp {
 
         virtual void keyDown(ui::Key key) {
     		activeModifiers_ = ui::Key(ui::Key::Invalid, key.modifiers());
+            // TODO delete this
+            if (key == ui::Key::F5) {
+                repaint();
+                return;
+            }
             // TODO we can do window shortcuts here? 
             if (key != ui::Key::Invalid && rootWindow_)
                 rootWindow_->keyDown(key);

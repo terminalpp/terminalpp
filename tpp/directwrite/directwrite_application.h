@@ -34,7 +34,6 @@ namespace tpp {
 
         DirectWriteApplication(HINSTANCE hInstance);
 
-		static wchar_t const* const WindowClassName_;
 
 		/** Attaches a console to the GDIApplication for debugging purposes.
 
@@ -52,6 +51,9 @@ namespace tpp {
 		/* Direct write factories that can be used by all windows, automatically deleted via the WRL pointers */
 		Microsoft::WRL::ComPtr<IDWriteFactory> dwFactory_;
 		Microsoft::WRL::ComPtr<ID2D1Factory> d2dFactory_;
+
+		static wchar_t const* const WindowClassName_;
+
 
     }; // tpp::DirectWriteApplication
 
