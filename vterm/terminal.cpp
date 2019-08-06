@@ -149,10 +149,12 @@ namespace vterm {
 
     // Terminal 
 
-    Terminal::Terminal(int x, int y, int width, int height, PTY * pty, size_t ptyBufferSize):
-        ui::Widget(x, y, width, height),
-        buffer_(width, height),
-        pty_(pty) {
+    Terminal::Terminal(int x, int y, int width, int height, PTY * pty, unsigned fps, size_t ptyBufferSize):
+        ui::Widget{x, y, width, height},
+        buffer_{width, height},
+        pty_{pty},
+        fps_{fps},
+        repaint_{false} {
         pty_->resize(width, height);
         ptyReader_ = std::thread([this, ptyBufferSize](){
             std::unique_ptr<char> holder(new char[ptyBufferSize]);
@@ -179,6 +181,15 @@ namespace vterm {
         ptyListener_ = std::thread([this](){
             helpers::ExitCode ec = pty_->waitFor();
             this->ptyTerminated(ec);
+        });
+        repainter_ = std::thread([this](){
+            while (fps_ > 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000 / fps_));
+                if (repaint_) {
+                    repaint_ = false;
+                    repaint();
+                }
+            }
         });
     }
 

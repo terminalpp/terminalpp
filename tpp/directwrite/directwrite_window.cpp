@@ -295,10 +295,6 @@ namespace tpp {
 			 */
 			case WM_USER:
 			    switch (wParam) {
-					case DirectWriteApplication::INVALIDATE: {
-						InvalidateRect(hWnd, /* rect */ nullptr, /* erase */ false);
-						break;
-					}
 				    default:
 					    LOG("Win32") << "Invalid user message " << wParam;
 

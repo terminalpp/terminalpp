@@ -299,8 +299,8 @@ namespace vterm {
     std::unordered_map<ui::Key, std::string> VT100::KeyMap_(InitializeVT100KeyMap());
 
 
-    VT100::VT100(int x, int y, int width, int height, Palette const * palette, PTY * pty, size_t ptyBufferSize):
-        Terminal{x, y, width, height, pty, ptyBufferSize},
+    VT100::VT100(int x, int y, int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize):
+        Terminal{x, y, width, height, pty, fps, ptyBufferSize},
         state_{width, height, palette->defaultForeground(), palette->defaultBackground()},
         mouseMode_{MouseMode::Off},
         mouseEncoding_{MouseEncoding::Default},
@@ -406,8 +406,10 @@ namespace vterm {
                 switch (*x) {
                     /* Parse the escape sequence */
                     case helpers::Char::ESC: {
-                        if (! parseEscapeSequence(x, bufferEnd))
+                        if (! parseEscapeSequence(x, bufferEnd)) {
+                            requestRepaint();
                             return x - buffer;
+                        }
                         break;
                     }
                     case helpers::Char::BEL: {
@@ -482,7 +484,7 @@ namespace vterm {
                 }
             }
         }
-        repaint();
+        requestRepaint();
         return bufferSize;
     }
 

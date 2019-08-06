@@ -135,9 +135,11 @@ namespace vterm {
             Waits for the reading and process exit terminating threads to finalize. 
          */
         ~Terminal() {
+            fps_ = 0;
             delete pty_;
             ptyReader_.join();
             ptyListener_.join();
+            repainter_.join();
         }
 
     protected:
@@ -146,7 +148,7 @@ namespace vterm {
 
             Starts the process exit monitoring thread and the receiving thread to read input from the pty. 
          */
-        Terminal(int x, int y, int width, int height, PTY * pty, size_t ptyBufferSize = 10240);
+        Terminal(int x, int y, int width, int height, PTY * pty, unsigned fps = 60, size_t ptyBufferSize = 10240);
 
         /** Returns the locked buffer. 
          */
@@ -162,6 +164,14 @@ namespace vterm {
          */
         void paint(ui::Canvas & canvas) override;
 
+        /** Updates the FPS ratio of the terminal. 
+         
+            Note that the FPS is not precise since triggering the repaint event itself is not accounted for in the wait. This should not be a problem since the terminal is not really hard real-time affair.
+         */
+        void setFPS(unsigned value) {
+            ASSERT(value != 0);
+            fps_ = value;
+        }
 
         void send(char const * buffer, size_t size) {
             pty_->send(buffer, size);
@@ -184,6 +194,10 @@ namespace vterm {
         }
 
         // terminal interface
+
+        void requestRepaint() {
+            repaint_ = true;
+        }
 
         /** Called by the terminal when new input data is available from the pty. 
          
@@ -212,6 +226,11 @@ namespace vterm {
 
         /* Thread which waits for the attached pty to be terminated. */
         std::thread ptyListener_;
+
+        /* The requested number of redraws */
+        volatile unsigned fps_;
+        std::thread repainter_;
+        std::atomic<bool> repaint_;
 
     }; // vterm::Terminal
 
