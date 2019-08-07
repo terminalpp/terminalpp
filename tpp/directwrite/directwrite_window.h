@@ -160,6 +160,8 @@ namespace tpp {
          
          */
         void setAttributes(ui::Attributes const & attrs) {
+			if (glyphRun_.glyphCount != 0) 
+                drawGlyphRun();
             attrs_ = attrs;
         }
 
@@ -178,13 +180,21 @@ namespace tpp {
 			);
             // fill it with the background
 			rt_->FillRectangle(rect, bg_.Get());
+#ifdef SHOW_LINE_ENDINGS
+            if (attrs_.endOfLine()) {
+                auto oldC = bg_->GetColor();
+                bg_->SetColor(D2D1::ColorF(0x00ff00, 1.0f));
+                rt_->DrawRectangle(rect, bg_.Get());
+                bg_->SetColor(oldC);
+            }
+#endif
             // determine the originl and draw the glyph run
             D2D1_POINT_2F origin = D2D1::Point2F(
                 static_cast<float>(glyphRunCol_* cellWidthPx_),
                 static_cast<float>(glyphRunRow_ * cellHeightPx_ + dwFont_->nativeHandle().ascent));
             rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
             // see if there are any attributes to be drawn 
-            if (!attrs_.emptyVisible()) {
+            if (!attrs_.emptyDecorations()) {
                 if (attrs_.underline()) {
 					D2D1_POINT_2F start = origin;
 					start.y -= dwFont_->nativeHandle().underlineOffset;

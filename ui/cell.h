@@ -24,9 +24,9 @@ namespace ui {
 		  
 		    I.e. if rendering them is necessary.
 		 */
-		bool emptyVisible() {
+		bool emptyDecorations() {
 			return raw_ & 0x7eff; // no end of line, no border above
-		}
+		} 
 
 	    bool underline() const {
 			return raw_ & UNDERLINE;
@@ -136,18 +136,18 @@ namespace ui {
 
         friend class Cell;
 
-		static constexpr uint32_t UNDERLINE = 1 << 0;
-		static constexpr uint32_t STRIKETHROUGH = 1 << 1;
-		static constexpr uint32_t CURLY_UNDERLINE = 1 << 2;
-		static constexpr uint32_t BORDER_LEFT = 1 << 3;
-		static constexpr uint32_t BORDER_TOP = 1 << 4;
-		static constexpr uint32_t BORDER_RIGHT = 1 << 5;
-		static constexpr uint32_t BORDER_BOTTOM = 1 << 6;
-		static constexpr uint32_t BORDER_THICK = 1 << 7;
-		static constexpr uint32_t BORDER_ABOVE = 1 << 8;
-		static constexpr uint32_t BLINK = 1 << 9;
+		static constexpr uint16_t UNDERLINE = 1 << 0;
+		static constexpr uint16_t STRIKETHROUGH = 1 << 1;
+		static constexpr uint16_t CURLY_UNDERLINE = 1 << 2;
+		static constexpr uint16_t BORDER_LEFT = 1 << 3;
+		static constexpr uint16_t BORDER_TOP = 1 << 4;
+		static constexpr uint16_t BORDER_RIGHT = 1 << 5;
+		static constexpr uint16_t BORDER_BOTTOM = 1 << 6;
+		static constexpr uint16_t BORDER_THICK = 1 << 7;
+		static constexpr uint16_t BORDER_ABOVE = 1 << 8;
+		static constexpr uint16_t BLINK = 1 << 9;
 
-		static constexpr uint32_t END_OF_LINE = 1 << 15;
+		static constexpr uint16_t END_OF_LINE = 1 << 15;
 
 		Attributes(uint16_t raw):
 		    raw_(raw) {
@@ -213,7 +213,7 @@ namespace ui {
 		}
 
 		Attributes attributes() const {
-			return Attributes((small_[1] & 0xff << 8) + small_[2] & 0xff);
+			return Attributes(((small_[1] & 0xff) << 8) + (small_[2] & 0xff));
 		}
 
 		Cell & operator = (Cell const & other) {

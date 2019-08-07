@@ -113,7 +113,7 @@ namespace vterm {
 
 		void markLastCharPosition() {
 			if (state_.lastCharCol >= 0 && state_.lastCharCol < buffer_.cols() &&
-                state_.lastCharRow >= 0 && state_.lastCharRow < buffer_.rows())
+                state_.lastCharRow >= 0 && state_.lastCharRow < buffer_.rows()) 
 				buffer_.at(state_.lastCharCol, state_.lastCharRow) += ui::Attributes::EndOfLine();
 		}
 
@@ -121,7 +121,6 @@ namespace vterm {
 			state_.lastCharCol = buffer_.cursor().col;
 			state_.lastCharRow = buffer_.cursor().row;
 		}
-
 
         enum class MouseMode {
             Off,

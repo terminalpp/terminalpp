@@ -1,6 +1,9 @@
 #pragma once
 #include "helpers/args.h"
 
+#define SHOW_LINE_ENDINGS
+
+
 /** Keyboard shortcuts for various actions.
  */
 #define SHORTCUT_ZOOM_IN (vterm::Key::Equals + vterm::Key::Ctrl)
@@ -58,5 +61,6 @@ namespace tpp {
 		    This essentially logs all the text and escape sequences that were sent to the terminal during a session. 
 		 */
 		extern helpers::Arg<std::string> RecordSession;
-	}
-}
+
+	} // namespace config
+} // namespace tpp
