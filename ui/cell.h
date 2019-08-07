@@ -25,7 +25,7 @@ namespace ui {
 		    I.e. if rendering them is necessary.
 		 */
 		bool emptyDecorations() {
-			return raw_ & 0x7eff; // no end of line, no border above
+			return  (raw_ & 0x7eff) == 0; // no end of line, no border above
 		} 
 
 	    bool underline() const {
