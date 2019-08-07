@@ -98,12 +98,14 @@ namespace ui {
 		Key modifiers;
 	};
 
-	typedef helpers::EventPayload<void, ui::Widget> NoPayloadEvent;
+	typedef helpers::EventPayload<void, ui::Widget> VoidEvent;
     typedef helpers::EventPayload<Rect, ui::Widget> RectEvent;
 
 	typedef helpers::EventPayload<MouseButtonPayload, ui::Widget> MouseButtonEvent;
 	typedef helpers::EventPayload<MouseWheelPayload, ui::Widget> MouseWheelEvent;
 	typedef helpers::EventPayload<MouseMovePayload, ui::Widget> MouseMoveEvent;
+
+	typedef helpers::EventPayload<std::string, ui::Widget> StringEvent;
 
 	/** Base class for all UI widgets. 
 
@@ -116,27 +118,27 @@ namespace ui {
 
 		/** Triggered when visibility changes to true. 
 		 */
-		Event<NoPayloadEvent> onShow;
+		Event<VoidEvent> onShow;
 
 		/** Triggered when visibility changes to false. 
 		 */
-		Event<NoPayloadEvent> onHide;
+		Event<VoidEvent> onHide;
 
 		/** Triggered when the widget's size has been updated. 
 		 */
-		Event<NoPayloadEvent> onResize;
+		Event<VoidEvent> onResize;
 
 		/** Triggered when the widget's position has been updated. 
 		 */
-		Event<NoPayloadEvent> onMove;
+		Event<VoidEvent> onMove;
 
 		/** Triggered when the widget has obtained focus, i.e. it will receive keyboard events. 
 		 */
-		Event<NoPayloadEvent> onFocusIn;
+		Event<VoidEvent> onFocusIn;
 
 		/** Triggered when the widget has lost focus, i.e. it will no longer receive keyboard events. 
 		 */
-		Event<NoPayloadEvent> onFocusOut;
+		Event<VoidEvent> onFocusOut;
 
 		Event<MouseButtonEvent> onMouseDown;
 		Event<MouseButtonEvent> onMouseUp;
@@ -144,8 +146,8 @@ namespace ui {
 		Event<MouseButtonEvent> onMouseDoubleClick;
 		Event<MouseWheelEvent> onMouseWheel;
 		Event<MouseMoveEvent> onMouseMove;
-		Event<NoPayloadEvent> onMouseEnter;
-		Event<NoPayloadEvent> onMouseLeave;
+		Event<VoidEvent> onMouseEnter;
+		Event<VoidEvent> onMouseLeave;
 
 
 	public:

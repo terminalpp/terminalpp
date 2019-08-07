@@ -7,7 +7,7 @@
 
 namespace vterm {
 
-    typedef helpers::EventPayload<helpers::ExitCode, ui::Widget> ExitCodePayload;
+    typedef helpers::EventPayload<helpers::ExitCode, ui::Widget> ExitCodeEvent;
 
     class Terminal : public ui::Widget {
     public:
@@ -120,14 +120,22 @@ namespace vterm {
          
             Note that when the terminal is deleted, its PTY is forcibly terminated at first, so the event will fire precisely once in the terminal lifetime. 
          */
-        helpers::Event<ExitCodePayload> onPTYTerminated;
+        helpers::Event<ExitCodeEvent> onPTYTerminated;
 
+        helpers::Event<ui::StringEvent> onTitleChange;
 
+        helpers::Event<ui::VoidEvent> onNotification;
 
         // methods
 
         PTY * pty() {
             return pty_;
+        }
+
+        /** Returns the title of the terminal. 
+         */
+        std::string const & title() const {
+            return title_;
         }
 
         /** Deletes the terminal and the attached PTY. 
@@ -173,6 +181,13 @@ namespace vterm {
             fps_ = value;
         }
 
+        void setTitle(std::string const & value) {
+            if (title_ != value) {
+                title_ = value;
+                updateTitle(value);
+            }
+        }
+
         void send(char const * buffer, size_t size) {
             pty_->send(buffer, size);
             // TODO check errors
@@ -211,7 +226,14 @@ namespace vterm {
             trigger(onPTYTerminated, exitCode);
         }
 
-        // TODO add more events from the terminal, such as notification, etc. 
+        virtual void updateTitle(std::string const & title) {
+            trigger(onTitleChange, title);
+        }
+
+        virtual void notify() {
+            trigger(onNotification);
+        }
+
 
         /* Cells and cursor. */
         Buffer buffer_;
@@ -231,6 +253,9 @@ namespace vterm {
         volatile unsigned fps_;
         std::thread repainter_;
         std::atomic<bool> repaint_;
+
+        /* Terminal title */
+        std::string title_;
 
     }; // vterm::Terminal
 

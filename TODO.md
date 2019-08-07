@@ -11,12 +11,10 @@
 - add focus in/out events to root window
 - determine the closing mechanism (ie. session v2)
 - of course, add X11 - and localpTY on linux...
-- consider keeping track of what needs to be changed
+- consider keeping track of what needs to be changed (not worth it in Win32 it seems)
 - add the extra attributes drawing
 - terminal should have an event to be called when a line is to be scrolled out
 
-
-- add the FPS timer to the terminal
 - and add cursor display to the ui root window and figure out how the two should be reconciled
 
 - cell builders should use && as well so that we can use them on temporary objects

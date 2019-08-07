@@ -457,8 +457,13 @@ namespace vterm {
                         }
                         break;
                     }
+                    /* BEL triggers the notification */
                     case helpers::Char::BEL: {
                         ++x;
+                        // temporarily unlock the buffer as we are triggering the event, which is not high performance code
+                        buffer_.unlock();
+                        notify();
+                        buffer_.lock();
                         break;
                     }
                     case helpers::Char::TAB: {
@@ -1210,13 +1215,26 @@ namespace vterm {
 
     void VT100::parseOSCSequence(OSCSequence & seq) {
         switch (seq.num()) {
+            /* OSC 0 - change the terminal title.
+             */
+            case 0:
+    			LOG(SEQ) << "Title change to " << seq.value();
+                buffer_.unlock();
+                setTitle(seq.value());
+                buffer_.lock();
+                break;
+            /* OSC 52 - set clipboard to given value. 
+             */
+            case 52:
+                NOT_IMPLEMENTED;
+            /* OSC 112 - reset cursor color. 
+             */
+            case 112:
+                NOT_IMPLEMENTED;
             default:
         		LOG(SEQ_UNKNOWN) << "Invalid OSC sequence: " << seq;
         }
     }
-
-
-
 
 	unsigned VT100::encodeMouseButton(ui::MouseButton btn, ui::Key modifiers) {
 		unsigned result =
