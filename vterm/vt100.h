@@ -147,15 +147,21 @@ namespace vterm {
         }; // VT100::KeypadMode
 
         struct State {
+
             /* Start of the scrolling region (inclusive row) */
             int scrollStart;
             /* End of the scrolling rehion (exclusive row) */
             int scrollEnd;
+            
             /* Cell containing space and current fg, bg, decorations, etc. settings */
             ui::Cell cell;
+
             /* Location of the last valid character printed so that if followed by return, it can be set as line terminating. */
             int lastCharCol;
             int lastCharRow;
+
+            /* Stack of loaded & saved cursor positions. */
+            std::vector<ui::Point> cursorStack;
 
             State(int cols, int rows, ui::Color fg, ui::Color bg):
                 scrollStart{0},

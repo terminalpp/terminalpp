@@ -29,8 +29,7 @@ namespace ui {
             color(Color::White()),
             blink(true),
             visible(true) {
-            }
-
+        }
 
     }; // ui::Cursor
 

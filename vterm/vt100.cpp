@@ -575,23 +575,19 @@ namespace vterm {
             }
 			/* Save Cursor. */
 			case '7':
-                /* 
-				state_.cursorStack.push_back(std::make_pair(screen_.cursor().col, screen_.cursor().row));
+				state_.cursorStack.push_back(ui::Point(buffer_.cursor().col, buffer_.cursor().row));
 				LOG(SEQ) << "DECSC: Cursor position saved";
-                */
 				break;
 			/* Restore Cursor. */
 			case '8':
-                /* 
 				if (!state_.cursorStack.empty()) {
-					auto i = state_.cursorStack.back();
-					setCursor(i.first, i.second);
+					ui::Point p = state_.cursorStack.back();
+					setCursor(p.x, p.y);
 					state_.cursorStack.pop_back();
 					LOG(SEQ) << "DECRC: Cursor position restored";
 				} else {
 					LOG(SEQ_UNKNOWN) << "No cursor position to restore (DECRC)";
 				}
-                */
 				break;
 			/* Reverse line feed - move up 1 row, same column.
 			 */
