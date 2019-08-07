@@ -294,6 +294,51 @@ namespace vterm {
         return result;
     }
 
+    // VT100::OSCSequence
+
+    VT100::OSCSequence VT100::OSCSequence::Parse(char * & start, char const * end) {
+        OSCSequence result;
+        char * x = start;
+        if (x == end) {
+            result.num_ = INCOMPLETE;
+            return result;
+        }
+        // now parse the number
+        if (helpers::IsDecimalDigit(*x)) {
+            int arg = 0;
+            do {
+                arg = arg * 10 + helpers::DecCharToNumber(*x++);
+            } while (x != end && helpers::IsDecimalDigit(*x));
+            // if there is no semicolon, keep the INVALID in the number, but continue parsing to BEL or ST
+            if (x != end && *x == ';') {
+                ++x;
+                result.num_ = arg;
+            }
+        }
+        // parse the value, which is terminated by either BEL, or ST, which is ESC followed by backslash
+        char * valueStart = x;
+        while (true) {
+            if (x == end) {
+                result.num_ = INCOMPLETE;
+                return result;
+            }
+            // BEL
+            if (*x == helpers::Char::BEL)
+                break;
+            // ST
+            if (*x == helpers::Char::ESC && x + 1 != end && x[1] == '\\') {
+                ++x;
+                break;
+            }
+            // next
+            ++x;
+        }
+        result.value_ = std::string(valueStart, x - valueStart);
+        ++x; // past the terminating character
+        start = x;
+        return result;
+    }
+
     // VT100
 
     std::unordered_map<ui::Key, std::string> VT100::KeyMap_(InitializeVT100KeyMap());
@@ -511,12 +556,18 @@ namespace vterm {
                 break;
             }
 			/* Operating system command. */
-			case ']':
-                /* 
-				if (!parseOSCSequence(x, bufferEnd))
-					return false;
-                 */
+			case ']': {
+                OSCSequence seq{OSCSequence::Parse(x, bufferEnd)};
+                // if the sequence is not valid, it has been reported already and we should just exit
+                if (!seq.isValid())
+                    break;
+                // if the sequence is not complete, return false and do not advance the buffer
+                if (!seq.isComplete())
+                    return false;
+                // otherwise parse the CSI sequence
+                parseOSCSequence(seq);
 				break;
+            }
 			/* Save Cursor. */
 			case '7':
                 /* 
@@ -1157,9 +1208,12 @@ namespace vterm {
 		return ui::Color::White();
     }
 
-
-
-
+    void VT100::parseOSCSequence(OSCSequence & seq) {
+        switch (seq.num()) {
+            default:
+        		LOG(SEQ_UNKNOWN) << "Invalid OSC sequence: " << seq;
+        }
+    }
 
 
 

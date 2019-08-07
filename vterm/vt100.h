@@ -29,6 +29,8 @@ namespace vterm {
     protected:
         class CSISequence;
 
+        class OSCSequence;
+
         void updateSize(int cols, int rows) override;
 
         void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
@@ -76,6 +78,10 @@ namespace vterm {
         /** Parses the SGR extended color specification, i.e. either TrueColor RGB values, or 256 palette specification.
          */
         ui::Color parseSGRExtendedColor(CSISequence & seq, size_t & i);
+
+        /** Parses the operating system sequence. 
+         */
+        void parseOSCSequence(OSCSequence & seq);
 
         unsigned encodeMouseButton(ui::MouseButton btn, ui::Key modifiers);
         void sendMouseEvent(unsigned button, int col, int row, char end);
@@ -381,5 +387,52 @@ namespace vterm {
 
     }; // VT100::CSISequence
 
+    class VT100::OSCSequence {
+    public:
+
+        OSCSequence():
+            num_{INVALID} {
+        }
+
+        int num() const {
+            return num_;
+        }
+
+        std::string const & value() const {
+            return value_;
+        }
+
+        bool isValid() const {
+            return num_ != INVALID;
+        }
+
+        bool isComplete() const {
+            return num_ != INCOMPLETE;
+        }
+
+        /** Parses the OSC sequence from given input. 
+         */
+        static OSCSequence Parse(char * & buffer, char const * end);
+
+    private:
+
+        int num_;
+        std::string value_;
+
+        static constexpr int INVALID = -1;
+        static constexpr int INCOMPLETE = -2;
+
+        friend std::ostream & operator << (std::ostream & s, OSCSequence const & seq) {
+            if (!seq.isValid()) 
+                s << "Invalid CSI Sequence";
+            else if (!seq.isComplete()) 
+                s << "Incomplete CSI Sequence";
+            else 
+                s << "\x1b]" << seq.num() << ';' << seq.value();
+            return s;
+        }
+
+
+    }; // VT100::OSCSequence
 
 } // namespace vterm
