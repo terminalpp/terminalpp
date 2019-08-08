@@ -138,7 +138,7 @@ namespace tpp {
 
         /** Updates the background color. 
          
-            If there is non-empty glyph run, draws it before changint the color.
+            If there is non-empty glyph run, draws it before changing the color.
          */
         void setBackgroundColor(ui::Color color) {
 			if (glyphRun_.glyphCount != 0) 

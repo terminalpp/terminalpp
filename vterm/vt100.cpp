@@ -1145,7 +1145,7 @@ namespace vterm {
 				/* 48 - extended background color */
 				case 48: {
                     ui::Color bg = parseSGRExtendedColor(seq, i);
-                    state_.cell << ui::Foreground(bg);    
+                    state_.cell << ui::Background(bg);    
 					LOG(SEQ) << "bg set to " << bg;
 					break;
                 }
@@ -1189,9 +1189,7 @@ namespace vterm {
 						break;
 					if (seq[i] > 255) // invalid color spec
 						break;
-                    // TODO fix this with palette
-                    break;
-					//return palette_[seq[i]];
+                    return palette_->at(seq[i]);
 				/* true color rgb */
 				case 2:
 					i += 2;
