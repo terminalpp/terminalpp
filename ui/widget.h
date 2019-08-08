@@ -275,8 +275,6 @@ namespace ui {
 			}
 		}
 
-	protected:
-
 		bool forceOverlay() const {
 			return forceOverlay_;
 		}

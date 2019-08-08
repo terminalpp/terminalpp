@@ -262,6 +262,20 @@ namespace tpp {
                 }
             }
             // draw the cursor by creating a cell corresponding to how the cursor should be displayed
+            ui::Cursor const & cursor = window->cursor();
+            if (cursor.visible == true && buffer->at(cursor.pos).isCursor()) {
+                statusCell_ << cursor.codepoint 
+                           << ui::Foreground(cursor.color)
+                           << ui::Background(ui::Color::None()) 
+                           << buffer->at(cursor.pos).font()
+                           << (cursor.blink ? ui::Attributes::Blink() : ui::Attributes());
+                setFont(statusCell_.font());
+                setForegroundColor(statusCell_.foreground());
+                setBackgroundColor(ui::Color::None());
+                setDecorationColor(statusCell_.decorationColor());
+                setAttributes(statusCell_.attributes()); 
+                drawCell(cursor.pos.x, cursor.pos.y, statusCell_);
+            }
             // and we are done
             #undef initializeDraw
             #undef shouldDraw

@@ -1,13 +1,11 @@
 ﻿# V0.2
 
-- add OSC to VT100
 - then add localpty as well for Windows
 - add events for the terminal (notification, etc.)
 
 - make Font contain stuff from nativeHandle on DirectWrite (like underline & strikethrough positions & thickness)
 - move the renderer in window.h to use glyph runs in all instances
 
-- add keyboard handling to root window
 - add focus in/out events to root window
 - determine the closing mechanism (ie. session v2)
 - of course, add X11 - and localpTY on linux...
@@ -18,6 +16,17 @@
 - and add cursor display to the ui root window and figure out how the two should be reconciled
 
 - cell builders should use && as well so that we can use them on temporary objects
+- resizing the terminal does sometimes eats stuff
+
+
+
+
+
+
+
+
+
+
 
 
 ## Bugs and missing features

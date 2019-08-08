@@ -10,28 +10,6 @@
 
 namespace ui {
 
-    /** Information about cursor, its position and apperance. 
-
-     */
-    class Cursor {
-    public:
-        int col;
-        int row;
-        char32_t codepoint;
-        Color color;
-        bool blink;
-        bool visible;
-
-        Cursor():
-            col(0),
-            row(0),
-            codepoint(0x2581),
-            color(Color::White()),
-            blink(true),
-            visible(true) {
-        }
-
-    }; // ui::Cursor
 
     /** Drawable surface of the UI. 
      
@@ -56,6 +34,10 @@ namespace ui {
         int height() const {
             return height_;
         }
+
+        /** Sets the cursor to gievn behavior and position. 
+         */
+        void setCursor(Cursor const & cursor);
 
 		/** Fills the given rectangle with specified brush. 
 

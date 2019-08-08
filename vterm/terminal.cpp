@@ -93,7 +93,7 @@ namespace vterm {
 		for (size_t i = 0; i < newRows; ++i)
 			newCells[i] = new Cell[newCols];
 		// now determine the row at which we should stop - this is done by going back from cursor's position until we hit end of line, that would be the last line we will use
-		int stopRow = cursor_.row - 1;
+		int stopRow = cursor_.pos.y - 1;
 		while (stopRow >= 0) {
 			Cell* row = cells_[stopRow];
 			int i = 0;
@@ -112,25 +112,25 @@ namespace vterm {
 		if (stopRow < 0 )
 			stopRow = 0;
 		// now transfer the contents
-		int oldCursorRow = cursor_.row;
-		cursor_.col = 0;
-		cursor_.row = 0;
+		int oldCursorRow = cursor_.pos.y;
+		cursor_.pos.x = 0;
+		cursor_.pos.y = 0;
 		for (int y = 0; y < stopRow; ++y) {
 			for (int x = 0; x < cols_; ++x) {
 				Cell& cell = cells_[y][x];
-				newCells[cursor_.row][cursor_.col] = cell;
+				newCells[cursor_.pos.y][cursor_.pos.x] = cell;
 				// if the copied cell is end of line, or if we are at the end of new line, increase the cursor row
-				if (cell.attributes().endOfLine() || ++cursor_.col == newCols) {
-					++cursor_.row;
-					cursor_.col = 0;
+				if (cell.attributes().endOfLine() || ++cursor_.pos.x == newCols) {
+					++cursor_.pos.y;
+					cursor_.pos.x = 0;
 				}
 				// scroll the new lines if necessary
-				if (cursor_.row == newRows) {
+				if (cursor_.pos.y == newRows) {
 					Cell* r = newCells[0];
 					memmove(newCells, newCells + 1, sizeof(Cell*) * (newRows - 1));
 					newCells[newRows - 1] = r;
 					fillRow(r, Cell(), newCols);
-					--cursor_.row;
+					--cursor_.pos.y;
 				}
 				// if it was new line, skip whatever was afterwards
 				if (cell.attributes().endOfLine())
@@ -143,7 +143,7 @@ namespace vterm {
 		delete[] cells_;
 		cells_ = newCells;
 		// because the first thing the app will do after resize is to adjust the cursor position if the current line span more than 1 terminal line, we must account for this and update cursor position
-		cursor_.row += (oldCursorRow - stopRow);
+		cursor_.pos.y += (oldCursorRow - stopRow);
 	}
 
 
@@ -198,6 +198,7 @@ namespace vterm {
     void Terminal::paint(ui::Canvas & canvas) {
         Buffer::Ptr buffer = this->buffer(/* priority */true);
         canvas.copyBuffer(0,0,* buffer);
+        canvas.setCursor(buffer->cursor());
     }
 
 } // namespace vterm

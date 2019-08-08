@@ -69,6 +69,12 @@ namespace ui {
             return Canvas::Buffer::Ptr(buffer_, false);
         }
 
+        /** Returns the cursor information, i.e. where & how to draw the cursor.
+         */
+        Cursor const & cursor() const {
+            return cursor_;
+        }
+
     protected:
 
         friend class Widget;
@@ -139,6 +145,8 @@ namespace ui {
 		MouseButton mouseClickButton_;
 		size_t mouseClickStart_;
 		size_t mouseDoubleClickPrevious_;
+
+        Cursor cursor_;
 
 
     }; 

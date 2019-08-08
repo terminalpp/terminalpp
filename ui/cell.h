@@ -4,10 +4,40 @@
 
 #include "helpers/helpers.h"
 
+#include "shapes.h"
 #include "color.h"
 #include "font.h"
 
 namespace ui {
+
+    /** Information about cursor, its position and apperance. 
+     */
+    class Cursor {
+    public:
+	    Point pos;
+        char32_t codepoint;
+        Color color;
+        bool blink;
+        bool visible;
+
+        Cursor():
+		    pos(0,0),
+            codepoint(0x2581),
+            color(Color::White()),
+            blink(true),
+            visible(true) {
+        }
+
+        /** Shorthand for creating an invisible cursor description. 
+         */
+        static Cursor Invisible() {
+            Cursor result;
+            result.visible = false;
+            return result;
+        }
+
+    }; // ui::Cursor
+
 
     class Attributes {
 	public:
@@ -230,7 +260,17 @@ namespace ui {
 			return big_[0] != other.big_[0] || big_[1] != other.big_[1];
 		}
 
+		/** Returns true if the cells has text cursor in it. 
+		 
+		    Keeping this information in the cell allows easy tracking of whether the cursor should be displayed, or it was overlaid by some other widget and therefore should not be visible. 
+		 */
+		bool isCursor() const {
+			// we use the first padding bit to determine whether a cursor is at the coordinates or not. 
+			return padding() & PADDING_CURSOR;
+		}
+
     protected:
+	    static constexpr unsigned PADDING_CURSOR = 1;
 
 	    unsigned padding() const {
 			return small_[0] >> 21 & 0x7;
@@ -326,6 +366,12 @@ namespace ui {
 			return cell;
 		}
 
+		template<typename CELL>
+		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, Cursor const & cursor) {
+			MARK_AS_UNUSED(cursor);
+			cell.setPadding(cell.padding() | PADDING_CURSOR);
+			return cell;
+		}
 
 	    union {
 			uint64_t big_[2];

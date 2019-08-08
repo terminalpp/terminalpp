@@ -62,6 +62,16 @@ namespace ui {
         return Canvas(widget.visibleRegion_, widget.width_, widget.height_);
     }
 
+    void Canvas::setCursor(Cursor const & cursor) {
+        Cell * cell = at(cursor.pos);
+        // mark the cell as containing the cursor
+        if (cell != nullptr) 
+            *cell << cursor;
+        // translate the cursor position to that of the root window and update the root window's cursor information
+        visibleRegion_.root->cursor_ = cursor;
+        visibleRegion_.root->cursor_.pos = visibleRegion_.translate(cursor.pos);
+    }
+
 	void Canvas::fill(Rect const& rect, Brush const& brush) {
 		// don't do anything if the brush is empty
 		if (brush == Brush::None())

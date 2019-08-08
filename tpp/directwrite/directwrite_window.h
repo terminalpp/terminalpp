@@ -133,7 +133,7 @@ namespace tpp {
         void setForegroundColor(ui::Color color) {
 			if (glyphRun_.glyphCount != 0) 
                 drawGlyphRun();
-			fg_->SetColor(D2D1::ColorF(D2D1::ColorF(color.toRGB(), 1.0f)));
+			fg_->SetColor(D2D1::ColorF(D2D1::ColorF(color.toRGB(), color.floatAlpha())));
         }
 
         /** Updates the background color. 
@@ -143,7 +143,8 @@ namespace tpp {
         void setBackgroundColor(ui::Color color) {
 			if (glyphRun_.glyphCount != 0) 
                 drawGlyphRun();
-			bg_->SetColor(D2D1::ColorF(D2D1::ColorF(color.toRGB(), 1.0f)));
+		    bg_->SetColor(D2D1::ColorF(D2D1::ColorF(color.toRGB(), color.floatAlpha())));
+
         }
 
         /** Updates the decoration color. 
@@ -183,7 +184,7 @@ namespace tpp {
 #ifdef SHOW_LINE_ENDINGS
             if (attrs_.endOfLine()) {
                 auto oldC = bg_->GetColor();
-                bg_->SetColor(D2D1::ColorF(0x00ff00, 1.0f));
+                bg_->SetColor(D2D1::ColorF(0xffff00, 1.0f));
                 rt_->DrawRectangle(rect, bg_.Get());
                 bg_->SetColor(oldC);
             }

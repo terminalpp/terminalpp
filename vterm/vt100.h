@@ -118,8 +118,8 @@ namespace vterm {
 		}
 
 		void setLastCharPosition() {
-			state_.lastCharCol = buffer_.cursor().col;
-			state_.lastCharRow = buffer_.cursor().row;
+			state_.lastCharCol = buffer_.cursor().pos.x;
+			state_.lastCharRow = buffer_.cursor().pos.y;
 		}
 
         enum class MouseMode {

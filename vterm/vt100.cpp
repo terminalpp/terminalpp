@@ -469,11 +469,11 @@ namespace vterm {
                     case helpers::Char::TAB: {
 						++x;
 						updateCursorPosition();
-						if (buffer_.cursor().col % 8 == 0)
-							buffer_.cursor().col += 8;
+						if (buffer_.cursor().pos.x % 8 == 0)
+							buffer_.cursor().pos.x += 8;
 						else
-							buffer_.cursor().col += 8 - (buffer_.cursor().col % 8);
-						LOG(SEQ) << "Tab: cursor col is " << buffer_.cursor().col;
+							buffer_.cursor().pos.x += 8 - (buffer_.cursor().pos.x % 8);
+						LOG(SEQ) << "Tab: cursor col is " << buffer_.cursor().pos.x;
 						break;
                     }
 					/* New line simply moves to next line.
@@ -483,9 +483,9 @@ namespace vterm {
 						markLastCharPosition();
 						++x;
 						// determine if region should be scrolled
-						if (++buffer_.cursor().row == state_.scrollEnd) {
+						if (++buffer_.cursor().pos.y == state_.scrollEnd) {
 							buffer_.deleteLines(1, state_.scrollStart, state_.scrollEnd, (ui::Cell(state_.cell) << ui::Attributes()));
-							--buffer_.cursor().row;
+							--buffer_.cursor().pos.y;
 						}
 						updateCursorPosition();
 						setLastCharPosition();
@@ -497,18 +497,18 @@ namespace vterm {
 						LOG(SEQ) << "CR";
 						markLastCharPosition();
 						++x;
-						buffer_.cursor().col = 0;
+						buffer_.cursor().pos.x = 0;
 						break;
                     }
 					case helpers::Char::BACKSPACE: {
 						LOG(SEQ) << "BACKSPACE";
 						++x;
-						if (buffer_.cursor().col == 0) {
-							if (buffer_.cursor().row > 0)
-								--buffer_.cursor().row;
-							buffer_.cursor().col = buffer_.cols() - 1;
+						if (buffer_.cursor().pos.x == 0) {
+							if (buffer_.cursor().pos.y > 0)
+								--buffer_.cursor().pos.y;
+							buffer_.cursor().pos.x = buffer_.cols() - 1;
 						} else {
-							--buffer_.cursor().col;
+							--buffer_.cursor().pos.x;
 						}
 						break;
 					}
@@ -523,13 +523,13 @@ namespace vterm {
 							return x - buffer;
 						LOG(SEQ) << "codepoint " << std::hex << c8->codepoint() << " " << static_cast<char>(c8->codepoint() & 0xff);
 						// get the cell and update its contents
-						Cell& cell = buffer_.at(buffer_.cursor().col, buffer_.cursor().row);
+						Cell& cell = buffer_.at(buffer_.cursor().pos.x, buffer_.cursor().pos.y);
                         cell = state_.cell;
                         cell << c8->codepoint();
 						// store the last character position
 						setLastCharPosition();
 						// move to next column
-						++buffer_.cursor().col;
+						++buffer_.cursor().pos.x;
                     }
                 }
             }
@@ -575,7 +575,7 @@ namespace vterm {
             }
 			/* Save Cursor. */
 			case '7':
-				state_.cursorStack.push_back(ui::Point(buffer_.cursor().col, buffer_.cursor().row));
+				state_.cursorStack.push_back(ui::Point(buffer_.cursor().pos.x, buffer_.cursor().pos.y));
 				LOG(SEQ) << "DECSC: Cursor position saved";
 				break;
 			/* Restore Cursor. */
@@ -593,10 +593,10 @@ namespace vterm {
 			 */
 			case 'M':
 				LOG(SEQ) << "RI: move cursor 1 line up";
-				if (buffer_.cursor().row == 0) {
+				if (buffer_.cursor().pos.y == 0) {
 					buffer_.insertLines(1, 0, state_.scrollEnd, state_.cell);
 				} else {
-					setCursor(buffer_.cursor().col, buffer_.cursor().row - 1);
+					setCursor(buffer_.cursor().pos.x, buffer_.cursor().pos.y - 1);
 				}
 				break;
     		/* Character set specification - ignored, we just have to parse it. */
@@ -648,9 +648,9 @@ namespace vterm {
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        unsigned r = buffer_.cursor().row >= seq[0] ? buffer_.cursor().row - seq[0] : 0;
-                        LOG(SEQ) << "CUU: setCursor " << buffer_.cursor().col << ", " << r;
-                        setCursor(buffer_.cursor().col, r);
+                        unsigned r = buffer_.cursor().pos.y >= seq[0] ? buffer_.cursor().pos.y - seq[0] : 0;
+                        LOG(SEQ) << "CUU: setCursor " << buffer_.cursor().pos.x << ", " << r;
+                        setCursor(buffer_.cursor().pos.x, r);
                         return;
                     }
                     // CSI <n> B -- moves cursor n rows down (CUD)
@@ -658,25 +658,25 @@ namespace vterm {
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        LOG(SEQ) << "CUD: setCursor " << buffer_.cursor().col << ", " << buffer_.cursor().row + seq[0];
-                        setCursor(buffer_.cursor().col, buffer_.cursor().row + seq[0]);
+                        LOG(SEQ) << "CUD: setCursor " << buffer_.cursor().pos.x << ", " << buffer_.cursor().pos.y + seq[0];
+                        setCursor(buffer_.cursor().pos.x, buffer_.cursor().pos.y + seq[0]);
                         return;
                     // CSI <n> C -- moves cursor n columns forward (right) (CUF)
                     case 'C':
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        LOG(SEQ) << "CUF: setCursor " << buffer_.cursor().col + seq[0] << ", " << buffer_.cursor().row;
-                        setCursor(buffer_.cursor().col + seq[0], buffer_.cursor().row);
+                        LOG(SEQ) << "CUF: setCursor " << buffer_.cursor().pos.x + seq[0] << ", " << buffer_.cursor().pos.y;
+                        setCursor(buffer_.cursor().pos.x + seq[0], buffer_.cursor().pos.y);
                         return;
                     // CSI <n> D -- moves cursor n columns back (left) (CUB)
                     case 'D': {// cursor backward
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        unsigned c = buffer_.cursor().col >= seq[0] ? buffer_.cursor().col - seq[0] : 0;
-                        LOG(SEQ) << "CUB: setCursor " << c << ", " << buffer_.cursor().row;
-                        setCursor(c, buffer_.cursor().row);
+                        unsigned c = buffer_.cursor().pos.x >= seq[0] ? buffer_.cursor().pos.x - seq[0] : 0;
+                        LOG(SEQ) << "CUB: setCursor " << c << ", " << buffer_.cursor().pos.y;
+                        setCursor(c, buffer_.cursor().pos.y);
                         return;
                     }
                     /* CSI <n> G -- set cursor character absolute (CHA)
@@ -684,7 +684,7 @@ namespace vterm {
                     case 'G':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "CHA: set column " << seq[0] - 1;
-                        setCursor(seq[0] - 1, buffer_.cursor().row);
+                        setCursor(seq[0] - 1, buffer_.cursor().pos.y);
                         return;
                     /* set cursor position (CUP) */
                     case 'H': // CUP
@@ -708,13 +708,13 @@ namespace vterm {
                         switch (seq[0]) {
                             case 0:
                                 updateCursorPosition();
-                                fillRect(ui::Rect(buffer_.cursor().col, buffer_.cursor().row, buffer_.cols(), buffer_.cursor().row + 1), state_.cell);
-                                fillRect(ui::Rect(0, buffer_.cursor().row + 1, buffer_.cols(), buffer_.rows()), state_.cell);
+                                fillRect(ui::Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(ui::Rect(0, buffer_.cursor().pos.y + 1, buffer_.cols(), buffer_.rows()), state_.cell);
                                 return;
                             case 1:
                                 updateCursorPosition();
-                                fillRect(ui::Rect(0, 0, buffer_.cols(), buffer_.cursor().row), state_.cell);
-                                fillRect(ui::Rect(0, buffer_.cursor().row, buffer_.cursor().col + 1, buffer_.cursor().row + 1), state_.cell);
+                                fillRect(ui::Rect(0, 0, buffer_.cols(), buffer_.cursor().pos.y), state_.cell);
+                                fillRect(ui::Rect(0, buffer_.cursor().pos.y, buffer_.cursor().pos.x + 1, buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             case 2:
                                 fillRect(ui::Rect(buffer_.cols(), buffer_.rows()), state_.cell);
@@ -734,15 +734,15 @@ namespace vterm {
                         switch (seq[0]) {
                             case 0:
                                 updateCursorPosition();
-                                fillRect(ui::Rect(buffer_.cursor().col, buffer_.cursor().row, buffer_.cols(), buffer_.cursor().row + 1), state_.cell);
+                                fillRect(ui::Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             case 1:
                                 updateCursorPosition();
-                                fillRect(ui::Rect(0, buffer_.cursor().row, buffer_.cursor().col + 1, buffer_.cursor().row + 1), state_.cell);
+                                fillRect(ui::Rect(0, buffer_.cursor().pos.y, buffer_.cursor().pos.x + 1, buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             case 2:
                                 updateCursorPosition();
-                                fillRect(ui::Rect(0, buffer_.cursor().row, buffer_.cols(), buffer_.cursor().row + 1), state_.cell);
+                                fillRect(ui::Rect(0, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             default:
                                 break;
@@ -753,14 +753,14 @@ namespace vterm {
                     case 'L':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "IL: scrollUp " << seq[0];
-                        buffer_.insertLines(seq[0], buffer_.cursor().row, state_.scrollEnd, state_.cell);
+                        buffer_.insertLines(seq[0], buffer_.cursor().pos.y, state_.scrollEnd, state_.cell);
                         return;
                     /* CSI <n> M -- Remove n lines. (DL)
                      */
                     case 'M':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "DL: scrollDown " << seq[0];
-                        buffer_.deleteLines(seq[0], buffer_.cursor().row, state_.scrollEnd, state_.cell);
+                        buffer_.deleteLines(seq[0], buffer_.cursor().pos.y, state_.scrollEnd, state_.cell);
                         return;
                     /* CSI <n> P -- Delete n charcters. (DCH) 
                      */
@@ -781,7 +781,7 @@ namespace vterm {
                     case 'T':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "SD: scrollDown " << seq[0];
-                        buffer_.insertLines(seq[0], buffer_.cursor().row, state_.scrollEnd, state_.cell);
+                        buffer_.insertLines(seq[0], buffer_.cursor().pos.y, state_.scrollEnd, state_.cell);
                         return;
                     /* CSI <n> X -- erase <n> characters from the current position
                      */
@@ -792,11 +792,11 @@ namespace vterm {
                         updateCursorPosition();
                         // erase from first line
                         int n = static_cast<unsigned>(seq[0]);
-                        int l = std::min(buffer_.cols() - buffer_.cursor().col, n);
-                        fillRect(ui::Rect(buffer_.cursor().col, buffer_.cursor().row, buffer_.cursor().col + l, buffer_.cursor().row + 1), state_.cell);
+                        int l = std::min(buffer_.cols() - buffer_.cursor().pos.x, n);
+                        fillRect(ui::Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cursor().pos.x + l, buffer_.cursor().pos.y + 1), state_.cell);
                         n -= l;
                         // while there is enough stuff left to be larger than a line, erase entire line
-                        l = buffer_.cursor().row + 1;
+                        l = buffer_.cursor().pos.y + 1;
                         while (n >= buffer_.cols() && l < buffer_.rows()) {
                             fillRect(ui::Rect(0, l, buffer_.cols(), l + 1), state_.cell);
                             ++l;
@@ -827,8 +827,8 @@ namespace vterm {
                             r = 1;
                         else if (r > buffer_.rows())
                             r = buffer_.rows();
-                        LOG(SEQ) << "VPA: setCursor " << buffer_.cursor().col << ", " << r - 1;
-                        setCursor(buffer_.cursor().col, r - 1);
+                        LOG(SEQ) << "VPA: setCursor " << buffer_.cursor().pos.x << ", " << r - 1;
+                        setCursor(buffer_.cursor().pos.x, r - 1);
                         return;
                     }
                     /* CSI <n> h -- Reset mode enable
@@ -855,7 +855,7 @@ namespace vterm {
                      */
                     case 'r':
                         seq.setDefault(0, 1); // inclusive
-                        seq.setDefault(1, buffer_.cursor().row); // inclusive
+                        seq.setDefault(1, buffer_.cursor().pos.y); // inclusive
                         if (seq.numArgs() != 2)
                             break;
                         // This is not proper 
@@ -1288,22 +1288,22 @@ namespace vterm {
 
     void VT100::updateCursorPosition() {
         int c = buffer_.cols();
-        while (buffer_.cursor().col >= c) {
-            buffer_.cursor().col -= c;
-            if (++buffer_.cursor().row == state_.scrollEnd) {
+        while (buffer_.cursor().pos.x >= c) {
+            buffer_.cursor().pos.x -= c;
+            if (++buffer_.cursor().pos.y == state_.scrollEnd) {
                 buffer_.deleteLines(1, state_.scrollStart, state_.scrollEnd, ui::Cell(state_.cell) << ui::Attributes());
-                --buffer_.cursor().row;
+                --buffer_.cursor().pos.y;
             }
         }
-        ASSERT(buffer_.cursor().col < buffer_.cols());
+        ASSERT(buffer_.cursor().pos.x < buffer_.cols());
         // if cursor row is not valid, just set it to the last row 
-        if (buffer_.cursor().row >= buffer_.rows())
-            buffer_.cursor().row = buffer_.rows() - 1;
+        if (buffer_.cursor().pos.y >= buffer_.rows())
+            buffer_.cursor().pos.y = buffer_.rows() - 1;
     }
 
     void VT100::setCursor(int col, int row) {
-		buffer_.cursor().col = col;
-		buffer_.cursor().row = row;
+		buffer_.cursor().pos.x = col;
+		buffer_.cursor().pos.y = row;
 		// invalidate the last character position
 		invalidateLastCharPosition();
     }
@@ -1319,8 +1319,8 @@ namespace vterm {
     }
 
     void VT100::deleteCharacters(unsigned num) {
-		unsigned r = buffer_.cursor().row;
-		for (unsigned c = buffer_.cursor().col, e = buffer_.cols() - num; c < e; ++c) {
+		unsigned r = buffer_.cursor().pos.y;
+		for (unsigned c = buffer_.cursor().pos.x, e = buffer_.cols() - num; c < e; ++c) {
 			Cell& cell = buffer_.at(c, r);
 			cell = buffer_.at(c + num, r);
 		}
@@ -1331,13 +1331,13 @@ namespace vterm {
     }
 
     void VT100::insertCharacters(unsigned num) {
-		unsigned r = buffer_.cursor().row;
+		unsigned r = buffer_.cursor().pos.y;
 		// first copy the characters
-		for (unsigned c = buffer_.cols() - 1, e = buffer_.cursor().col + num; c >= e; --c) {
+		for (unsigned c = buffer_.cols() - 1, e = buffer_.cursor().pos.x + num; c >= e; --c) {
 			Cell& cell = buffer_.at(c, r);
 			cell = buffer_.at(c - num, r);
 		}
-		for (unsigned c = buffer_.cursor().col, e = buffer_.cursor().col + num; c < e; ++c) {
+		for (unsigned c = buffer_.cursor().pos.x, e = buffer_.cursor().pos.x + num; c < e; ++c) {
 			Cell& cell = buffer_.at(c, r);
             cell = state_.cell;
 		}
