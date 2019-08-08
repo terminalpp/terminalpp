@@ -15,7 +15,8 @@ namespace vterm {
     Terminal::Buffer::Buffer(Buffer const & from):
         cols_{from.cols_},
         rows_{from.rows_},
-        cells_{new Cell*[from.rows_]} {
+        cells_{new Cell*[from.rows_]},
+        cursor_{from.cursor_} {
         for (size_t i = 0; i < rows_; ++i) {
             cells_[i] = new Cell[cols_];
             memcpy(cells_[i], from.cells_[i], sizeof(Cell) * cols_);
@@ -35,6 +36,7 @@ namespace vterm {
         }
         for (size_t i = 0; i < rows_; ++i) 
             memcpy(cells_[i], other.cells_[i], sizeof(Cell) * cols_);
+        cursor_ = other.cursor_;
         return *this;
     }
 
