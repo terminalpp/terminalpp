@@ -67,18 +67,6 @@ namespace tpp {
 
         void updateZoom(double value) override;
 
-		void render() override {
-			helpers::Timer t;
-			t.start();
-			rt_->BeginDraw();
-			RendererWindow<DirectWriteWindow>::render();
-			if (glyphRun_.glyphCount != 0)
-				drawGlyphRun();
-			rt_->EndDraw();
-			t.stop();
-			std::cout << "Paint: " << t.value() << " ms\n" ;
-		}
-
     private:
         friend class DirectWriteApplication;
         friend class RendererWindow<DirectWriteWindow>;
@@ -88,6 +76,14 @@ namespace tpp {
         void updateDirectWriteStructures(int cols);
 
         // rendering methods - we really want these to inline
+
+        void initializeDraw() {
+            rt_->BeginDraw();
+        }
+
+        void finalizeDraw() {
+            rt_->EndDraw();
+        }
 
         bool shouldDraw(int col, int row, ui::Cell const & cell) {
             MARK_AS_UNUSED(col);
@@ -110,30 +106,11 @@ namespace tpp {
             ++glyphRun_.glyphCount;
         }
 
-        /** Converts the cell's codepoint into a glyph index and adds it to the glyph run. 
-         
-            If the cell is first in the glyph run, also updates the glyph run column and row to the cell's coordinates. If the cell is not sequential to the existing glyph run, draws the glyph run first and then starts new one. 
-         */
-        /*void drawCell(int col, int row, ui::Cell const & cell) {
-            if (glyphRun_.glyphCount != 0 && (col != static_cast<int>(glyphRunCol_ + glyphRun_.glyphCount) || row != glyphRunRow_))
-                drawGlyphRun();
-            if (glyphRun_.glyphCount == 0) {
-                glyphRunCol_ = col;
-                glyphRunRow_ = row;
-            }
-            UINT32 cp = cell.codepoint();
-            dwFont_->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
-            const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(dwFont_->cellWidthPx());
-            ++glyphRun_.glyphCount;
-        } */
-
         /** Updates the current font.
          
             If there is non-empty glyph run, draws it before changing the font. 
          */
         void setFont(ui::Font font) {
-			//if (glyphRun_.glyphCount != 0) 
-            //    drawGlyphRun();
 			dwFont_ = Font::GetOrCreate(font, cellHeightPx_);
 			glyphRun_.fontFace = dwFont_->nativeHandle().fontFace.Get();
 			glyphRun_.fontEmSize = dwFont_->nativeHandle().sizeEm;
@@ -144,8 +121,6 @@ namespace tpp {
             If there is non-empty glyph run, draws it before changing the color. 
          */
         void setForegroundColor(ui::Color color) {
-			//if (glyphRun_.glyphCount != 0) 
-            //    drawGlyphRun();
 			fg_->SetColor(D2D1::ColorF(D2D1::ColorF(color.toRGB(), color.floatAlpha())));
         }
 
@@ -154,10 +129,7 @@ namespace tpp {
             If there is non-empty glyph run, draws it before changing the color.
          */
         void setBackgroundColor(ui::Color color) {
-			//if (glyphRun_.glyphCount != 0) 
-            //    drawGlyphRun();
 		    bg_->SetColor(D2D1::ColorF(D2D1::ColorF(color.toRGB(), color.floatAlpha())));
-
         }
 
         /** Updates the decoration color. 
@@ -165,17 +137,12 @@ namespace tpp {
             If there is non-empty glyph run, draws it before changint the color.
          */
         void setDecorationColor(ui::Color color) {
-			//if (glyphRun_.glyphCount != 0) 
-            //    drawGlyphRun();
             decor_->SetColor(D2D1::ColorF(D2D1::ColorF(color.toRGB(), color.floatAlpha())));
         }
 
         /** Sets the attributes of the cell. 
-         
          */
         void setAttributes(ui::Attributes const & attrs) {
-			//if (glyphRun_.glyphCount != 0) 
-            //    drawGlyphRun();
             attrs_ = attrs;
         }
 
