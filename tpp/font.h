@@ -38,6 +38,26 @@ namespace tpp {
 			return nativeHandle_;
 		}
 
+		float ascent() const {
+			return ascent_;
+		}
+
+		float underlineOffset() const {
+			return underlineOffset_;
+		}
+
+		float underlineThickness() const {
+			return underlineThickness_;
+		}
+
+		float strikethroughOffset() const {
+			return strikethroughOffset_;
+		}
+
+		float strikethroughThickness() const {
+			return strikethroughThickness_;
+		}
+
 
 	private:
 
@@ -47,17 +67,27 @@ namespace tpp {
 
 		static std::unordered_map<unsigned, Font*> Fonts_;
 		
-		Font(ui::Font font, unsigned cellWidthPx, unsigned cellHeightPx, T const& nativeHandle) :
-			font_(font),
-			cellWidthPx_(cellWidthPx),
-			cellHeightPx_(cellHeightPx),
-			nativeHandle_(nativeHandle) {
+		Font(ui::Font font, unsigned cellWidthPx, unsigned cellHeightPx, float ascent, T const& nativeHandle) :
+			font_{font},
+			cellWidthPx_{cellWidthPx},
+			cellHeightPx_{cellHeightPx},
+			ascent_{ascent},
+			underlineOffset_{0},
+			underlineThickness_{1},
+			strikethroughOffset_{0},
+			strikethroughThickness_{1},
+			nativeHandle_{nativeHandle} {
 		}
 
 		ui::Font font_;
 
 		unsigned cellWidthPx_;
 		unsigned cellHeightPx_;
+		float ascent_;
+		float underlineOffset_;
+		float underlineThickness_;
+		float strikethroughOffset_;
+		float strikethroughThickness_;
 
 		T nativeHandle_;
 

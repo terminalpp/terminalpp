@@ -6,10 +6,10 @@
 
 /** Keyboard shortcuts for various actions.
  */
-#define SHORTCUT_ZOOM_IN (vterm::Key::Equals + vterm::Key::Ctrl)
-#define SHORTCUT_ZOOM_OUT (vterm::Key::Minus + vterm::Key::Ctrl)
-#define SHORTCUT_FULLSCREEN (vterm::Key::Enter + vterm::Key::Alt)
-#define SHORTCUT_PASTE (vterm::Key::V + vterm::Key::Ctrl + vterm::Key::Shift)
+#define SHORTCUT_ZOOM_IN (ui::Key::Equals + ui::Key::Ctrl)
+#define SHORTCUT_ZOOM_OUT (ui::Key::Minus + ui::Key::Ctrl)
+#define SHORTCUT_FULLSCREEN (ui::Key::Enter + ui::Key::Alt)
+#define SHORTCUT_PASTE (ui::Key::V + ui::Key::Ctrl + ui::Key::Shift)
 
 
 namespace tpp {

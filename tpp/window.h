@@ -5,6 +5,8 @@
 #include "ui/canvas.h"
 #include "ui/root_window.h"
 
+#include "config.h"
+
 namespace tpp {
 
     /** Base class for display a UI window contents and capturing the mouse, keyboard and clipboard events. 
@@ -165,14 +167,20 @@ namespace tpp {
 
         virtual void keyDown(ui::Key key) {
     		activeModifiers_ = ui::Key(ui::Key::Invalid, key.modifiers());
-            // TODO delete this
-            if (key == ui::Key::F5) {
-                repaint();
-                return;
-            }
-            // TODO we can do window shortcuts here? 
-            if (key != ui::Key::Invalid && rootWindow_)
+            // TODO make these nicer actions
+            if (key == SHORTCUT_FULLSCREEN) {
+                setFullscreen(!fullscreen());
+            // zoom in
+            } else if (key == SHORTCUT_ZOOM_IN) {
+                if (zoom() < 10)
+                    setZoom(zoom() * 1.25);
+            // zoom out
+            } else if (key == SHORTCUT_ZOOM_OUT) {
+                if (zoom() > 1)
+                    setZoom(std::max(1.0, zoom() / 1.25));
+            } else if (key != ui::Key::Invalid && rootWindow_) {
                 rootWindow_->keyDown(key);
+            }
         }
 
         virtual void keyUp(ui::Key key) {
@@ -209,7 +217,7 @@ namespace tpp {
             Window(title, cols, rows, cellWidthPx, baseCellHeightPx) {
         }
 
-		virtual void render() {
+		void render() {
 			if (rootWindow_ != nullptr)
 				render(rootWindow_);
 		}
@@ -232,9 +240,9 @@ namespace tpp {
             helpers::Timer t;
             t.start();
             {
+                initializeDraw();
                 // Lock the buffer so that the drawing method has exclusive access
                 ui::Canvas::Buffer::Ptr buffer = window->buffer(/* priority */ true);
-                initializeDraw();
                 // reset the status cell and call selectors on the font, colors and attributes
                 statusCell_ = buffer->at(0,0);
                 setFont(statusCell_.font());

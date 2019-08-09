@@ -3,9 +3,6 @@
 - then add localpty as well for Windows
 - add events for the terminal (notification, etc.)
 
-- make Font contain stuff from nativeHandle on DirectWrite (like underline & strikethrough positions & thickness)
-- move the renderer in window.h to use glyph runs in all instances
-
 - add focus in/out events to root window
 - determine the closing mechanism (ie. session v2)
 - of course, add X11 - and localpTY on linux...

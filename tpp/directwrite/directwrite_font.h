@@ -14,19 +14,9 @@ namespace tpp {
 	public:
 		Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace;
 		float sizeEm;
-		float underlineOffset;
-		float underlineThickness;
-		float strikethroughOffset;
-		float strikethroughThickness;
-		unsigned ascent;
-		DirectWriteFont(Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace, float sizeEm, float underlineOffset, float underlineThickness, float strikethroughOffset, float strikethroughThickness, unsigned ascent) :
-			fontFace(fontFace),
-			sizeEm(sizeEm),
-			underlineOffset(underlineOffset),
-			underlineThickness(underlineThickness),
-			strikethroughOffset(strikethroughOffset),
-			strikethroughThickness(strikethroughThickness),
-			ascent(ascent) {
+		DirectWriteFont(Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace, float sizeEm) :
+			fontFace{fontFace},
+			sizeEm{sizeEm} {
 		}
 	};
 
@@ -70,17 +60,22 @@ namespace tpp {
 		UINT32 codepoint = 'M';
 		fface->GetGlyphIndices(&codepoint, 1, &glyph);
 		fface->GetDesignGlyphMetrics(&glyph, 1, &glyphMetrics);
-		return new Font<DirectWriteFont>(font,
-			static_cast<unsigned>(std::round((static_cast<float>(glyphMetrics.advanceWidth) / glyphMetrics.advanceHeight) * height * font.size())),
-			height * font.size(),
+        Font<DirectWriteFont> * result = new Font<DirectWriteFont>(
+			font, /* ui font */
+			static_cast<unsigned>(std::round((static_cast<float>(glyphMetrics.advanceWidth) / glyphMetrics.advanceHeight) * height * font.size())), /* cell width px */
+			height * font.size(), /* cell height px */
+			//static_cast<unsigned>(std::round(emSize * metrics.ascent / metrics.designUnitsPerEm)), /* ascent */
+			(emSize * metrics.ascent / metrics.designUnitsPerEm), /* ascent */
 			DirectWriteFont(
 				fface,
-				emSize,
-				(emSize * metrics.underlinePosition / metrics.designUnitsPerEm),
-				(emSize * metrics.underlineThickness / metrics.designUnitsPerEm),
-				(emSize * metrics.strikethroughPosition / metrics.designUnitsPerEm),
-				(emSize * metrics.strikethroughThickness / metrics.designUnitsPerEm),
-				static_cast<unsigned>(std::round(emSize * metrics.ascent / metrics.designUnitsPerEm))));
+				emSize
+			)
+		);
+		result->underlineOffset_ = (emSize * metrics.underlinePosition / metrics.designUnitsPerEm); 
+		result->underlineThickness_ = (emSize * metrics.underlineThickness / metrics.designUnitsPerEm);
+		result->strikethroughOffset_ = (emSize * metrics.strikethroughPosition / metrics.designUnitsPerEm);
+		result->strikethroughThickness_ = (emSize * metrics.strikethroughThickness / metrics.designUnitsPerEm);
+		return result;
 	}
 
 

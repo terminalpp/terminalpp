@@ -121,7 +121,7 @@ namespace tpp {
             If there is non-empty glyph run, draws it before changing the color. 
          */
         void setForegroundColor(ui::Color color) {
-			fg_->SetColor(D2D1::ColorF(D2D1::ColorF(color.toRGB(), color.floatAlpha())));
+			fg_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
         }
 
         /** Updates the background color. 
@@ -129,7 +129,7 @@ namespace tpp {
             If there is non-empty glyph run, draws it before changing the color.
          */
         void setBackgroundColor(ui::Color color) {
-		    bg_->SetColor(D2D1::ColorF(D2D1::ColorF(color.toRGB(), color.floatAlpha())));
+		    bg_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
         }
 
         /** Updates the decoration color. 
@@ -137,7 +137,7 @@ namespace tpp {
             If there is non-empty glyph run, draws it before changint the color.
          */
         void setDecorationColor(ui::Color color) {
-            decor_->SetColor(D2D1::ColorF(D2D1::ColorF(color.toRGB(), color.floatAlpha())));
+            decor_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
         }
 
         /** Sets the attributes of the cell. 
@@ -173,23 +173,23 @@ namespace tpp {
             // determine the originl and draw the glyph run
             D2D1_POINT_2F origin = D2D1::Point2F(
                 static_cast<float>(glyphRunCol_* cellWidthPx_),
-                static_cast<float>(glyphRunRow_ * cellHeightPx_ + dwFont_->nativeHandle().ascent));
+                (glyphRunRow_ * cellHeightPx_ + dwFont_->ascent()));
             rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
             // see if there are any attributes to be drawn 
             if (!attrs_.emptyDecorations()) {
                 if (attrs_.underline()) {
 					D2D1_POINT_2F start = origin;
-					start.y -= dwFont_->nativeHandle().underlineOffset;
+					start.y -= dwFont_->underlineOffset();
 					D2D1_POINT_2F end = start;
 					end.x += glyphRun_.glyphCount * cellWidthPx_;
-					rt_->DrawLine(start, end, decor_.Get(), dwFont_->nativeHandle().underlineThickness);
+					rt_->DrawLine(start, end, decor_.Get(), dwFont_->underlineThickness());
                 }
                 if (attrs_.strikethrough()) {
 					D2D1_POINT_2F start = origin;
-					start.y -= dwFont_->nativeHandle().strikethroughOffset;
+					start.y -= dwFont_->strikethroughOffset();
 					D2D1_POINT_2F end = start;
 					end.x += glyphRun_.glyphCount * cellWidthPx_;
-					rt_->DrawLine(start, end, decor_.Get(), dwFont_->nativeHandle().strikethroughThickness);
+					rt_->DrawLine(start, end, decor_.Get(), dwFont_->strikethroughThickness());
                 }
             }
 			glyphRun_.glyphCount = 0;

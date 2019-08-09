@@ -55,7 +55,7 @@ namespace tpp {
 				&bg_
 			)));
 			OSCHECK(SUCCEEDED(rt_->CreateSolidColorBrush(
-				D2D1::ColorF(D2D1::ColorF::Black),
+				D2D1::ColorF(D2D1::ColorF::White),
 				&decor_
 			)));
 			ZeroMemory(&glyphRun_, sizeof(DWRITE_GLYPH_RUN));
@@ -108,7 +108,7 @@ namespace tpp {
 		cellWidthPx_ = f->cellWidthPx();
 		cellHeightPx_ = f->cellHeightPx();
 		Window::updateZoom(value);
-		Window::updateSize(widthPx_, heightPx_);
+		Window::updateSizePx(widthPx_, heightPx_);
 	}
 
 	void DirectWriteWindow::updateDirectWriteStructures(int cols) {
