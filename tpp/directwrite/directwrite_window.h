@@ -7,7 +7,6 @@
 
 #include "../window.h"
 
-#include "../font.h"
 #include "directwrite_font.h"
 
 namespace tpp {
@@ -107,8 +106,6 @@ namespace tpp {
         }
 
         /** Updates the current font.
-         
-            If there is non-empty glyph run, draws it before changing the font. 
          */
         void setFont(ui::Font font) {
 			dwFont_ = Font::GetOrCreate(font, cellHeightPx_);
@@ -117,24 +114,18 @@ namespace tpp {
         }
 
         /** Updates the foreground color.
-         
-            If there is non-empty glyph run, draws it before changing the color. 
          */
         void setForegroundColor(ui::Color color) {
 			fg_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
         }
 
         /** Updates the background color. 
-         
-            If there is non-empty glyph run, draws it before changing the color.
          */
         void setBackgroundColor(ui::Color color) {
 		    bg_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
         }
 
         /** Updates the decoration color. 
-         
-            If there is non-empty glyph run, draws it before changint the color.
          */
         void setDecorationColor(ui::Color color) {
             decor_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
@@ -148,7 +139,7 @@ namespace tpp {
 
         /** Draws the glyph run. 
          
-            Should only be really called if there are glyphs to run. First clears the background with given background color, then draws the text and finally applies any decorations. 
+            First clears the background with given background color, then draws the text and finally applies any decorations. 
          */
         void drawGlyphRun() {
             if (glyphRun_.glyphCount == 0)
