@@ -36,6 +36,8 @@ namespace ui {
         }
 
         /** Sets the cursor to gievn behavior and position. 
+         
+            Marks the cell at cursor's position to contain the cursor and updates the cursor definition in the root window to the provided cursor info and translated coordinates. Having the cursor position both in the cursor info and the cell itself has the benefit of quickly checking whether the cursor is visible or has been overriden by other contents.
          */
         void setCursor(Cursor const & cursor);
 
@@ -50,7 +52,6 @@ namespace ui {
 		    TODO this is stupid api, should change
 		 */
 		void textOut(Point start, std::string const& text, Color color, Font font = Font());
-
 
         /** Copies the given buffer to specified coordinates. 
          

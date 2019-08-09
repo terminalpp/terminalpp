@@ -31,7 +31,7 @@ namespace vterm {
 
         class OSCSequence;
 
-        void updateSize(int cols, int rows) override;
+        void updateSize(int width, int height) override;
 
         void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         void mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;

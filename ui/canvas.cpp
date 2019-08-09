@@ -63,13 +63,15 @@ namespace ui {
     }
 
     void Canvas::setCursor(Cursor const & cursor) {
-        Cell * cell = at(cursor.pos);
-        // mark the cell as containing the cursor
-        if (cell != nullptr) 
-            *cell << cursor;
-        // translate the cursor position to that of the root window and update the root window's cursor information
+        // set the cursor behavior in root to given cursor info and position 0 0
         visibleRegion_.root->cursor_ = cursor;
-        visibleRegion_.root->cursor_.pos = visibleRegion_.translate(cursor.pos);
+        visibleRegion_.root->cursor_.pos = Point(0,0);
+        // mark the cell as containing the cursor and update the cursor position with proper coordinates if in range
+        Cell * cell = at(cursor.pos);
+        if (cell != nullptr) {
+            *cell << cursor;
+            visibleRegion_.root->cursor_.pos = visibleRegion_.translate(cursor.pos);
+        }
     }
 
 	void Canvas::fill(Rect const& rect, Brush const& brush) {

@@ -360,10 +360,19 @@ namespace vterm {
         palette_(palette) {
     }
 
-    void VT100::updateSize(int cols, int rows) {
-        // TODO resize alternate buffer as well
-        state_.resize(cols, rows);
-        Terminal::updateSize(cols, rows);
+    void VT100::updateSize(int width, int height) {
+        {
+            Buffer::Ptr b = buffer(true); // grab priority lock
+            b->resize(width, height);
+            // resize the real buffer
+            state_.resize(width, height);
+            // resize the alternate buffer and state
+            alternateBuffer_.resize(width, height);
+            alternateState_.resize(width, height);
+        }
+        pty()->resize(width, height);
+        // skip terminal as it only updates the buffer which we do above anyways
+        Widget::updateSize(width, height);
     }
 
     void VT100::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
