@@ -9,9 +9,10 @@ namespace vterm {
     BypassPTY::BypassPTY(helpers::Command const & command):
         command_{command},
 		pipeIn_{ INVALID_HANDLE_VALUE },
-		pipePTYOut_{ INVALID_HANDLE_VALUE },
-		pipeOut_{ INVALID_HANDLE_VALUE },
-		pipePTYIn_{ INVALID_HANDLE_VALUE } {
+		pipeOut_{ INVALID_HANDLE_VALUE } {
+		//  input and output handles for the process
+		HANDLE pipePTYOut;
+		HANDLE pipePTYIn;
 		// create the pipes
 		SECURITY_ATTRIBUTES attrs;
 		attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -19,7 +20,7 @@ namespace vterm {
 		attrs.lpSecurityDescriptor = NULL;
 		// first create the pipes we need, no security arguments and we use default buffer size for now
 		OSCHECK(
-			CreatePipe(&pipePTYIn_, &pipeOut_, &attrs, 0) && CreatePipe(&pipeIn_, &pipePTYOut_, &attrs, 0)
+			CreatePipe(&pipePTYIn, &pipeOut_, &attrs, 0) && CreatePipe(&pipeIn_, &pipePTYOut, &attrs, 0)
 		) << "Unable to create pipes for the subprocess";
 		// make sure that own handles are not inherited
 		OSCHECK(
@@ -29,9 +30,9 @@ namespace vterm {
 		STARTUPINFO sInfo;
 		ZeroMemory(&sInfo, sizeof(STARTUPINFO));
 		sInfo.cb = sizeof(STARTUPINFO);
-		sInfo.hStdError = pipePTYOut_;
-		sInfo.hStdOutput = pipePTYOut_;
-		sInfo.hStdInput = pipePTYIn_;
+		sInfo.hStdError = pipePTYOut;
+		sInfo.hStdOutput = pipePTYOut;
+		sInfo.hStdInput = pipePTYIn;
 		sInfo.dwFlags |= STARTF_USESTDHANDLES;
 		helpers::utf16_string cmd = helpers::UTF8toUTF16(command_.toString());
 		OSCHECK(CreateProcess(NULL,
@@ -45,8 +46,8 @@ namespace vterm {
 			&sInfo,  // startup info
 			&pInfo_));  // info about the process
 		// we can close our handles to the other ends now
-		OSCHECK(CloseHandle(pipePTYOut_));
-		OSCHECK(CloseHandle(pipePTYIn_));
+		OSCHECK(CloseHandle(pipePTYOut));
+		OSCHECK(CloseHandle(pipePTYIn));
     }
 
     BypassPTY::~BypassPTY() {

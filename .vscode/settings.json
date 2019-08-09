@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "initializer_list": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "chrono": "cpp",
+        "limits": "cpp"
     }
 }

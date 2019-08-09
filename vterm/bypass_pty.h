@@ -31,13 +31,11 @@ namespace vterm {
     private:
         helpers::Command command_;
 
-		/* The pipe from which input should be read and output pipe handle for the process. */
+		/* The pipe from which input should be read. */
 		HANDLE pipeIn_;
-		HANDLE pipePTYOut_;
 
-		/* Pipe to which data for the application should be sent and input pipe handle for the process. */
+		/* Pipe to which data for the application should be sent */
 		HANDLE pipeOut_;
-		HANDLE pipePTYIn_;
 
 		/* Information about the process being executed. */
 		PROCESS_INFORMATION pInfo_;

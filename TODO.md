@@ -10,8 +10,6 @@
 - add the extra attributes drawing
 - terminal should have an event to be called when a line is to be scrolled out
 
-- and add cursor display to the ui root window and figure out how the two should be reconciled
-
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
 
