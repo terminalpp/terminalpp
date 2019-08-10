@@ -42,8 +42,11 @@ namespace tpp {
             handle->ascent,
             handle
         );
-        // TODO add underline and strikethrough metrics
-
+        // add underline and strikethrough metrics
+		result->underlineOffset_ = result->ascent_ + 1;
+		result->underlineThickness_ = 1;
+		result->strikethroughOffset_ = result->ascent_ * 2 / 3;
+		result->strikethroughThickness_ = 1;
         return result;
 	}
 

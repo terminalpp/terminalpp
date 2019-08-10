@@ -85,6 +85,9 @@ namespace tpp {
         }
 
         bool shouldDraw(int col, int row, ui::Cell const & cell) {
+            MARK_AS_UNUSED(col);
+            MARK_AS_UNUSED(row);
+            MARK_AS_UNUSED(cell);
             return true;
         }
 
@@ -141,28 +144,19 @@ namespace tpp {
             First clears the background with given background color, then draws the text and finally applies any decorations. 
          */
         void drawGlyphRun() {
-            /*
             if (textSize_ == 0)
                 return;
-			// if we are drawing the last col, or row, clear remaining border as well
-			if (textCol_ + textSize_ == cols() || textRow_ == rows() - 1) {
-				unsigned clearW = (textCol_ + textSize_ == cols()) ? (widthPx_ - (textCol_ * cellWidthPx_)) : (textSize_ * cellWidthPx_);
-				unsigned clearH = (textRow_ == rows() - 1) ? (heightPx_ - (textRow_ * cellHeightPx_)) : (cellHeightPx_);
-				XftColor clearC = toXftColor(terminal()->defaultBackgroundColor());
-				XftDrawRect(draw_, &clearC, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_, clearW, clearH);
-			}
+            // fill the background
 			XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_, textSize_ * cellWidthPx_, cellHeightPx_);
-			// if the cell is blinking, only draw the text if blink is on
-			if (!textBlink_ || blink_) {
-                XftDrawCharSpec(draw_, &fg_, font_->handle(), text_, textSize_);
-				// renders underline and strikethrough lines
-				// TODO for now, this is just approximate values of just below and 2/3 of the font, which is blatantly copied from st and is most likely not typographically correct (see issue 12)
-				if (textUnderline_)
-					XftDrawRect(draw_, &fg_,textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->handle()->ascent + 1, cellWidthPx_ * textSize_, 1);
-				if (textStrikethrough_)
-					XftDrawRect(draw_, &fg_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + (2 * font_->handle()->ascent / 3), cellWidthPx_ * textSize_, 1);
-			}
-            */
+            // draw the text
+            XftDrawCharSpec(draw_, &fg_, font_->nativeHandle(), text_, textSize_);
+            // deal with the attributes
+            if (!attrs_.emptyDecorations()) {
+                if (attrs_.underline())
+					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->underlineOffset(), cellWidthPx_ * textSize_, font_->underlineThickness());
+                if (attrs_.strikethrough())
+					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->strikethroughOffset(), cellWidthPx_ * textSize_, font_->strikethroughThickness());
+            }
             textSize_ = 0;
         }
 
@@ -219,10 +213,6 @@ namespace tpp {
         unsigned textRow_;
         unsigned textSize_;
         ui::Attributes attrs_;
-        bool textBlink_;
-        bool textUnderline_;
-        bool textStrikethrough_;
-
 
         std::mutex drawGuard_;
         std::atomic<bool> invalidate_;
