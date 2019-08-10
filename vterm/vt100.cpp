@@ -454,6 +454,17 @@ namespace vterm {
         Terminal::keyUp(key);
     }
 
+    void VT100::paste(std::string const & contents) {
+        if (bracketedPaste_) {
+			send("\033[200~", 6);
+			send(contents);
+			send("\033[201~", 6);
+        } else {
+            send(contents);
+        }
+        Terminal::paste(contents);
+    }
+
     size_t VT100::processInput(char * buffer, size_t bufferSize) {
         {
             Buffer::Ptr guard(this->buffer()); // non-priority lock the buffer

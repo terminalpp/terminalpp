@@ -92,6 +92,13 @@ namespace ui {
             Container::keyUp(k);
     }
 
+	void RootWindow::paste(std::string const & contents) {
+		if (keyboardFocus_)
+		    keyboardFocus_->paste(contents);
+		else 
+            Container::paste(contents);
+	}
+
     void RootWindow::invalidateContents() {
         Container::invalidateContents();
         visibleRegion_ = Canvas::VisibleRegion(this);

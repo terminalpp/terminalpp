@@ -58,6 +58,7 @@ namespace ui {
         void keyChar(helpers::Char c) override;
         void keyDown(Key k) override;
         void keyUp(Key k) override;
+        void paste(std::string const & contents) override;
 
         /** Locks the backing buffer and returns it in a RAII smart pointer.
          */

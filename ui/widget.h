@@ -150,6 +150,13 @@ namespace ui {
 		Event<VoidEvent> onMouseLeave;
 
 
+		// keyboard events
+
+		/** Triggered when contents of the clipboard was pasted to the widget. 
+		 */
+		Event<StringEvent> onPaste;
+
+
 	public:
 
 		Widget(int x, int y, int width, int height):
@@ -349,6 +356,10 @@ namespace ui {
 
 		virtual void keyUp(Key k) {
 			MARK_AS_UNUSED(k);
+		}
+
+		virtual void paste(std::string const & contents) {
+			trigger(onPaste, contents);
 		}
 
 		/** Paints given child.

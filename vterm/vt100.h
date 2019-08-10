@@ -40,6 +40,7 @@ namespace vterm {
         void keyChar(helpers::Char c) override;
         void keyDown(ui::Key key) override;
         void keyUp(ui::Key key) override;
+        void paste(std::string const & contents) override;
 
         size_t processInput(char * buffer, size_t bufferSize) override;
 
