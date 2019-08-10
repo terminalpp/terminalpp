@@ -3,19 +3,81 @@
 
 namespace tpp {
 
+	/** The statically generated icon description stored in an array so that in can be part of the executable. 
+	
+	    To change its contents, run the `icons` build target. 
+	 */
+	extern unsigned long tppIcon[];
+
+
 	std::unordered_map<x11::Window, X11Window *> X11Window::Windows_;
 
     X11Window::X11Window(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
-        RendererWindow<X11Window>(title, cols, rows, Font::GetOrCreate(ui::Font(), baseCellHeightPx)->cellWidthPx(),baseCellHeightPx) {
+        RendererWindow<X11Window>(title, cols, rows, Font::GetOrCreate(ui::Font(), baseCellHeightPx)->cellWidthPx(),baseCellHeightPx) ,
+		display_(X11Application::Instance()->xDisplay()),
+		screen_(X11Application::Instance()->xScreen()),
+	    visual_(DefaultVisual(display_, screen_)),
+	    colorMap_(DefaultColormap(display_, screen_)),
+		ic_(nullptr),
+	    buffer_(0),
+	    draw_(nullptr),
+        text_(nullptr),
+        textSize_(0) {
+		unsigned long black = BlackPixel(display_, screen_);	/* get color black */
+		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
+        x11::Window parent = XRootWindow(display_, screen_);
+
+		window_ = XCreateSimpleWindow(display_, parent, 0, 0, widthPx_, heightPx_, 1, white, black);
+
+		// from http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
+
+		/* here is where some properties of the window can be set.
+			   The third and fourth items indicate the name which appears
+			   at the top of the window and the name of the minimized window
+			   respectively.
+			*/
+		XSetStandardProperties(display_, window_, title_.c_str(), nullptr, x11::None, nullptr, 0, nullptr);
+
+		/* this routine determines which types of input are allowed in
+		   the input.  see the appropriate section for details...
+		*/
+		XSelectInput(display_, window_, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask);
+
+		/* X11 in itself does not deal with window close requests, but this enables sending of the WM_DELETE_WINDOW message when the close button is send and the application can decide what to do instead. 
+
+		   The message is received as a client message with the wmDeleteMessage_ atom in its first long payload.
+		 */
+		XSetWMProtocols(display_, window_, & X11Application::Instance()->wmDeleteMessage_, 1);
+
+        XGCValues gcv;
+        memset(&gcv, 0, sizeof(XGCValues));
+    	gcv.graphics_exposures = False;
+        gc_ = XCreateGC(display_, parent, GCGraphicsExposures, &gcv);
+
+		// only create input context if XIM is present
+		if (X11Application::Instance()->xIm_ != nullptr) {
+			// create input context for the window... The extra arguments to the XCreateIC are c-c c-v from the internet and for now are a mystery to me
+			ic_ = XCreateIC(X11Application::Instance()->xIm_, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+				XNClientWindow, window_, XNFocusWindow, window_, nullptr);
+		}
+
+        updateXftStructures(cols_);
+
+        // set the icon
+		setIcon(tppIcon);
+
+		// register the window
+        Windows_[window_] = this;
 
     }
 
     X11Window::~X11Window() {
-
+        Windows_.erase(window_);
+		XFreeGC(display_, gc_);
     }
 
     void X11Window::show() {
-
+        XMapWindow(display_, window_);
     }
 
     void X11Window::updateFullscreen(bool value) {
@@ -210,7 +272,240 @@ namespace tpp {
     }
 
     void X11Window::EventHandler(XEvent & e) {
+        X11Window * window = nullptr;
+        auto i = Windows_.find(e.xany.window);
+        if (i != Windows_.end())
+            window = i->second;
+        switch(e.type) {
+            /* Handles repaint event when window is shown or a repaint was triggered. 
+             */
+            case Expose: 
+                if (e.xexpose.count != 0)
+                    break;
+                window->render();
+                break;
+			/** Handles when the window gets focus. 
+			 */
+			case FocusIn:
+            /*
+				if (e.xfocus.mode == NotifyGrab || e.xfocus.mode == NotifyUngrab)
+					break;
+				ASSERT(tw != nullptr);
+				window->focusChangeMessageReceived(true);
+                */
+				break;
+			/** Handles when the window loses focus. 
+			 */
+			case FocusOut:
+            /*
+				if (e.xfocus.mode == NotifyGrab || e.xfocus.mode == NotifyUngrab)
+					break;
+				ASSERT(tw != nullptr);
+				window->focusChangeMessageReceived(false);
+                */
+				break;
+            /* Handles window resize, which should change the terminal size accordingly. 
+             */  
+            case ConfigureNotify: {
+                if (window->widthPx_ != static_cast<unsigned>(e.xconfigure.width) || window->heightPx_ != static_cast<unsigned>(e.xconfigure.height))
+                    window->updateSizePx(e.xconfigure.width, e.xconfigure.height);
+                break;
+            }
+            case MapNotify:
+                break;
+            /* Unlike Win32 we have to determine whether we are dealing with sendChar, or keyDown. 
+             */
+            case KeyPress: {
+				unsigned modifiers = GetStateModifiers(e.xkey.state);
+				window->activeModifiers_ = ui::Key(ui::Key::Invalid, modifiers);
+				KeySym kSym;
+                char str[32];
+                Status status;
+				int strLen = 0;
+				if (window->ic_ != nullptr)
+					strLen = Xutf8LookupString(window->ic_, &e.xkey, str, sizeof str, &kSym, &status);
+				else
+					strLen = XLookupString(&e.xkey, str, sizeof str, &kSym, nullptr);
+                // if it is printable character and there were no modifiers other than shift pressed, we are dealing with printable character (backspace is not printable character)
+                if (strLen > 0 && (str[0] < 0 || str[0] >= 0x20) && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
+                    char * x = reinterpret_cast<char*>(& str);
+					helpers::Char const* c = helpers::Char::At(x, x + 32);
+					if (c != nullptr) {
+						window->keyChar(*c);
+					    break;
+                    }
+                }
+                // otherwise if the keysym was recognized, it is a keyDown event
+                ui::Key key = GetKey(kSym, modifiers, true);
+				// if the modifiers were updated (i.e. the key is Shift, Ctrl, Alt or Win, updated active modifiers
+				if (modifiers != key.modifiers())
+					window->activeModifiers_ = ui::Key(ui::Key::Invalid, modifiers);
+				if (key != ui::Key::Invalid)
+                    window->keyDown(key);
+                break;
+            }
+            case KeyRelease: {
+				unsigned modifiers = GetStateModifiers(e.xkey.state);
+				window->activeModifiers_ = ui::Key(ui::Key::Invalid, modifiers);
+				KeySym kSym = XLookupKeysym(& e.xkey, 0);
+                ui::Key key = GetKey(kSym, modifiers, false);
+				// if the modifiers were updated (i.e. the key is Shift, Ctrl, Alt or Win, updated active modifiers
+				if (modifiers != key.modifiers())
+					window->activeModifiers_ = ui::Key(ui::Key::Invalid, modifiers);
+				if (key != ui::Key::Invalid)
+                    window->keyUp(key);
+                break;
+            }
+            case ButtonPress: 
+				window->activeModifiers_ = ui::Key(ui::Key::Invalid, GetStateModifiers(e.xbutton.state));
+				switch (e.xbutton.button) {
+                    case 1:
+                        window->mouseDown(e.xbutton.x, e.xbutton.y, ui::MouseButton::Left);
+                        break;
+                    case 2:
+                        window->mouseDown(e.xbutton.x, e.xbutton.y, ui::MouseButton::Wheel);
+                        break;
+                    case 3:
+                        window->mouseDown(e.xbutton.x, e.xbutton.y, ui::MouseButton::Right);
+                        break;
+                    case 4:
+                        window->mouseWheel(e.xbutton.x, e.xbutton.y, 1);
+                        break;
+                    case 5:
+                        window->mouseWheel(e.xbutton.x, e.xbutton.y, -1);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case ButtonRelease: 
+				window->activeModifiers_ = ui::Key(ui::Key::Invalid, GetStateModifiers(e.xbutton.state));
+				switch (e.xbutton.button) {
+                    case 1:
+                        window->mouseUp(e.xbutton.x, e.xbutton.y, ui::MouseButton::Left);
+                        break;
+                    case 2:
+                        window->mouseUp(e.xbutton.x, e.xbutton.y, ui::MouseButton::Wheel);
+                        break;
+                    case 3:
+                        window->mouseUp(e.xbutton.x, e.xbutton.y, ui::MouseButton::Right);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case MotionNotify:
+				window->activeModifiers_ = ui::Key(ui::Key::Invalid, GetStateModifiers(e.xbutton.state));
+				window->mouseMove(e.xmotion.x, e.xmotion.y);
+                break;
+			/** Called when we are notified that clipboard contents is available for previously requested paste.
+			
+			    Get the clipboard contents and call terminal's paste event. 
+			 */
+			case SelectionNotify:
+            /*
+				if (e.xselection.property) {
+					char * result;
+					unsigned long resSize, resTail;
+					Atom type = x11::None;
+					int format = 0;
+					XGetWindowProperty(window->display_, window->window_, e.xselection.property, 0, LONG_MAX / 4, False, AnyPropertyType,
+						&type, &format, &resSize, &resTail, (unsigned char**)& result);
+					if (type == window->app()->clipboardIncr_)
+						// buffer too large, incremental reads must be implemented
+						// https://stackoverflow.com/questions/27378318/c-get-string-from-clipboard-on-linux
+						NOT_IMPLEMENTED;
+					else
+						window->terminal()->paste(std::string(result, resSize));
+					XFree(result);
+                 }
+                 */
+				 break;
+			/** Called when the clipboard contents is requested by an outside app. 
+			 */
+			case SelectionRequest: {
+                /*
+				X11Application* app = Application::Instance<X11Application>();
+				XSelectionEvent response;
+				response.type = SelectionNotify;
+				response.requestor = e.xselectionrequest.requestor;
+				response.selection = e.xselectionrequest.selection;
+				response.target = e.xselectionrequest.target;
+				response.time = e.xselectionrequest.time;
+				// by default, the request is rejected
+				response.property = x11::None; 
+				// if the target is TARGETS, then all supported formats should be sent, in our case this is simple, only UTF8_STRING is supported
+				if (response.target == app->formatTargets_) {
+					XChangeProperty(
+						window->display_,
+						e.xselectionrequest.requestor,
+						e.xselectionrequest.property,
+						e.xselectionrequest.target,
+						32, // atoms are 4 bytes, so 32 bits
+						PropModeReplace,
+						reinterpret_cast<unsigned char const*>(&app->formatStringUTF8_),
+						1
+					);
+					response.property = e.xselectionrequest.property;
+				// otherwise, if UTF8_STRING, or a STRING is requested, we just send what we have 
+				} else if (response.target == app->formatString_ || response.target == app->formatStringUTF8_) {
+                    std::string clipboard = (response.selection == app->clipboardName_) ? app->clipboard_ : window->terminal()->getText(window->selectedArea());
+					XChangeProperty(
+						window->display_,
+						e.xselectionrequest.requestor,
+						e.xselectionrequest.property,
+						e.xselectionrequest.target,
+						8, // utf-8 is encoded in chars, i.e. 8 bits
+						PropModeReplace,
+						reinterpret_cast<unsigned char const *>(clipboard.c_str()),
+						clipboard.size()
+					);
+					response.property = e.xselectionrequest.property;
+				}
+				// send the event to the requestor
+				if (!XSendEvent(
+					e.xselectionrequest.display,
+					e.xselectionrequest.requestor,
+					1, // propagate
+					0, // event mask
+					reinterpret_cast<XEvent*>(&response)
+				))
+					LOG << "Error sending selection notify";
+                    */
+				break;
+			}
+			/** If we lose ownership, clear the clipboard contents with the application, or if we lose primary ownership, just clear the selection.   
+			 */
+			case SelectionClear: {
+                /*
+                X11Application * app = Application::Instance<X11Application>();
+                if (e.xselectionclear.selection == app->clipboardName_)
+    				app->clipboard_.clear();
+                else 
+                    window->selectionClear(false);
+				break;
+                */
+            }
+            case DestroyNotify:
+                // delete the window object and remove it from the list of active windows
+                delete i->second;
+                // if it was last window, exit the terminal
+                if (Windows_.empty()) {
+                    throw X11Application::Terminate();
+                }
+                break;
+			/* User-defined messages. 
+			 */
+			case ClientMessage:
+			    if (static_cast<unsigned long>(e.xclient.data.l[0]) == X11Application::Instance()->wmDeleteMessage_) {
+					ASSERT(window != nullptr) << "Attempt to destroy unknown window";
+                    window->close();
+				}
+				break;
+            default:
+                break;
 
+        }
     }
 
 

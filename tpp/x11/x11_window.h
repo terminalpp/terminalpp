@@ -46,26 +46,19 @@ namespace tpp {
         X11Window(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);
 
         void updateSizePx(unsigned widthPx, unsigned heightPx) override {
-            //widthPx -= frameWidthPx_;
-            //heightPx -= frameHeightPx_;
-            /*
-			if (rt_ != nullptr) {
-				D2D1_SIZE_U size = D2D1::SizeU(widthPx, heightPx);
-				rt_->Resize(size);
-			} */
+			if (buffer_ != 0) {
+				XFreePixmap(display_, buffer_);
+				buffer_ = 0;
+			}
             Window::updateSizePx(widthPx, heightPx);
 			repaint();
         }
 
         void updateSize(int cols, int rows) override {
-            /*
-			if (rt_ != nullptr) 
-                updateXftStructures(cols);
-                */
+            updateXftStructures(cols);
             Window::updateSize(cols, rows);
 			repaint();
         }
-
 
         void updateFullscreen(bool value) override;
 
@@ -79,9 +72,26 @@ namespace tpp {
         // rendering methods - we really want these to inline
 
         void initializeDraw() {
+            ASSERT(draw_ == nullptr);
+            if (buffer_ == 0) {
+                buffer_ = XCreatePixmap(display_, window_, widthPx_, heightPx_, DefaultDepth(display_, screen_));
+                ASSERT(buffer_ != 0);
+            }
+            draw_ = XftDrawCreate(display_, buffer_, visual_, colorMap_);
         }
 
         void finalizeDraw() {
+            unsigned marginRight = widthPx_ % cellWidthPx_;
+            unsigned marginBottom = heightPx_ % cellHeightPx_;
+            if (marginRight != 0) 
+                XClearArea(display_, window_, widthPx_ - marginRight, 0, marginRight, heightPx_, false);
+            if (marginBottom != 0)
+                XClearArea(display_, window_, 0, heightPx_ - marginBottom, widthPx_, marginBottom, false);
+            // now bitblt the buffer
+            XCopyArea(display_, buffer_, window_, gc_, 0, 0, widthPx_, heightPx_, 0, 0);
+            XftDrawDestroy(draw_);
+            draw_ = nullptr;
+            XFlush(display_);
         }
 
         bool shouldDraw(int col, int row, ui::Cell const & cell) {
