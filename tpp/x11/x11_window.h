@@ -194,18 +194,6 @@ namespace tpp {
 			unsigned long   status;
 		};
 
-		/** Given current state as reported from X11, translates it to vterm::Key modifiers
-		 */
-		static unsigned GetStateModifiers(int state);
-
-        /** Converts the KeySym and preexisting modifiers as reported by X11 into key. 
-
-		    Because the modifiers are preexisting, but the terminal requires post-state, Shift, Ctrl, Alt and Win keys also update the modifiers based on whether they key was pressed, or released
-         */
-        static ui::Key GetKey(KeySym k, unsigned modifiers, bool pressed);
-
-        static void EventHandler(XEvent & e);
-
 		x11::Window window_;
 		Display* display_;
 		int screen_;
@@ -242,6 +230,19 @@ namespace tpp {
 		/** Info about the window state before fullscreen was triggered. 
 		 */
         XWindowChanges fullscreenRestore_;
+
+		/** Given current state as reported from X11, translates it to vterm::Key modifiers
+		 */
+		static unsigned GetStateModifiers(int state);
+
+        /** Converts the KeySym and preexisting modifiers as reported by X11 into key. 
+
+		    Because the modifiers are preexisting, but the terminal requires post-state, Shift, Ctrl, Alt and Win keys also update the modifiers based on whether they key was pressed, or released
+         */
+        static ui::Key GetKey(KeySym k, unsigned modifiers, bool pressed);
+
+        static void EventHandler(XEvent & e);
+
 
 		static std::unordered_map<x11::Window, X11Window *> Windows_;
 

@@ -42,7 +42,7 @@ if(MSVC)
   add_definitions(-DARCH_WINDOWS)
   add_definitions(-DARCH=\"Windows\")
 else()
-  add_compile_options(-std=c++11 -Wall -Wextra -pedantic)
+  add_compile_options(-std=c++17 -Wall -Wextra -pedantic)
 endif()
 
 include_directories(".")

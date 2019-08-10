@@ -154,6 +154,48 @@ namespace vterm {
 		) << "Unable to start process " << command_;
     }
 
+#elif (defined ARCH_UNIX)
+
+    LocalPTY::LocalPTY(helpers::Command const& command):
+        command_{command} {
+        start();
+    }
+
+	LocalPTY::LocalPTY(helpers::Command const& command, helpers::Environment const & env) :
+		command_(command),
+		environment_(env) {
+        start();
+    }
+
+    LocalPTY::~LocalPTY() {
+        terminate();
+    }
+
+    // PTY interface
+
+    void LocalPTY::send(char const * buffer, size_t bufferSize) {
+    }
+
+    size_t LocalPTY::receive(char * buffer, size_t bufferSize) {
+		size_t bytesRead = 0;
+		return bytesRead;
+    }
+
+    void LocalPTY::terminate() {
+    }
+
+    helpers::ExitCode LocalPTY::waitFor() {
+		helpers::ExitCode ec;
+        return ec;
+    }
+
+    void LocalPTY::resize(int cols, int rows) {
+    }
+
+    void LocalPTY::start() {
+    }
+
+
 #endif
 
 

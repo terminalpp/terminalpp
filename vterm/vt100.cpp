@@ -1,7 +1,10 @@
 
 #include "helpers/log.h"
 
+#include "ui/key.h"
+
 #include "vt100.h"
+
 
 
 
