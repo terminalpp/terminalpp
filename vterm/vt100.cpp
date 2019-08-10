@@ -392,7 +392,7 @@ namespace vterm {
     void VT100::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         ASSERT(mouseButtonsDown_ > 0);
         --mouseButtonsDown_;
-		if (mouseMode_ == MouseMode::Off) {
+		if (mouseMode_ != MouseMode::Off) {
             mouseLastButton_ = encodeMouseButton(button, modifiers);
             sendMouseEvent(mouseLastButton_, col, row, 'm');
             LOG(SEQ) << "Button " << button << " up at " << col << ";" << row;
