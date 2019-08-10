@@ -8,7 +8,7 @@ namespace vterm {
         cols_{cols},
         rows_{rows},
         cells_{new Cell*[rows]} {
-        for (size_t i = 0; i < rows; ++i)
+        for (int i = 0; i < rows; ++i)
             cells_[i] = new Cell[cols];
     }
 
@@ -17,7 +17,7 @@ namespace vterm {
         rows_{from.rows_},
         cells_{new Cell*[from.rows_]},
         cursor_{from.cursor_} {
-        for (size_t i = 0; i < rows_; ++i) {
+        for (int i = 0; i < rows_; ++i) {
             cells_[i] = new Cell[cols_];
             memcpy(cells_[i], from.cells_[i], sizeof(Cell) * cols_);
         }
@@ -25,23 +25,23 @@ namespace vterm {
 
     Terminal::Buffer & Terminal::Buffer::operator = (Buffer const & other) {
         if (cols_ != other.cols_ || rows_ != other.rows_) {
-            for (size_t i = 0; i < rows_; ++i)
+            for (int i = 0; i < rows_; ++i)
                 delete [] cells_[i];
             delete[] cells_;
             cols_ = other.cols_;
             rows_ = other.rows_;
             cells_ = new Cell*[rows_];
-            for (size_t i = 0; i < rows_; ++i) 
+            for (int i = 0; i < rows_; ++i) 
                 cells_[i] = new Cell[cols_];
         }
-        for (size_t i = 0; i < rows_; ++i) 
+        for (int i = 0; i < rows_; ++i) 
             memcpy(cells_[i], other.cells_[i], sizeof(Cell) * cols_);
         cursor_ = other.cursor_;
         return *this;
     }
 
     Terminal::Buffer::~Buffer() {
-        for (size_t i = 0; i < rows_; ++i)
+        for (int i = 0; i < rows_; ++i)
             delete [] cells_[i];
         delete [] cells_;
     }
@@ -56,7 +56,7 @@ namespace vterm {
 
     void Terminal::Buffer::insertLines(int lines, int top, int bottom, Cell const & fill) {
         ASSERT(bottom <= rows_);
-        for (size_t i = 0; i < lines; ++i) {
+        for (int i = 0; i < lines; ++i) {
             Cell* row = cells_[bottom - 1];
             memmove(cells_ + top + 1, cells_ + top, sizeof(Cell*) * (bottom - top - 1));
             cells_[top] = row;
@@ -67,7 +67,7 @@ namespace vterm {
     void Terminal::Buffer::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         ASSERT(bottom <= rows_);
         ASSERT(lines <= bottom - top);
-        for (size_t i = 0; i < lines; ++i) {
+        for (int i = 0; i < lines; ++i) {
             Cell* row = cells_[top];
             memmove(cells_ + top, cells_ + top + 1, sizeof(Cell*) * (bottom - top - 1));
             cells_[bottom - 1] = row;
@@ -90,7 +90,7 @@ namespace vterm {
 	void Terminal::Buffer::resizeCells(int newCols, int newRows) {
 		// create the new cells 
 		Cell** newCells = new Cell * [newRows];
-		for (size_t i = 0; i < newRows; ++i)
+		for (int i = 0; i < newRows; ++i)
 			newCells[i] = new Cell[newCols];
 		// now determine the row at which we should stop - this is done by going back from cursor's position until we hit end of line, that would be the last line we will use
 		int stopRow = cursor_.pos.y - 1;
@@ -138,7 +138,7 @@ namespace vterm {
 			}
 		}
 		// the contents was transferred, delete the old cells, replace them with the new ones
-		for (size_t i = 0; i < rows_; ++i)
+		for (int i = 0; i < rows_; ++i)
 			delete[] cells_[i];
 		delete[] cells_;
 		cells_ = newCells;

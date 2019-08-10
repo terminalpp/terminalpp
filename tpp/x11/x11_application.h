@@ -6,7 +6,7 @@
 
 namespace tpp {
 
-    class X11Window
+    class X11Window;
 
     /** https://www.student.cs.uwaterloo.ca/~cs349/f15/resources/X/xTutorialPart1.html
      */
@@ -34,9 +34,16 @@ namespace tpp {
 
         ~X11Application() override;
 
+        Display* xDisplay() const {
+            return xDisplay_;
+        }
+
+        int xScreen() const {
+            return xScreen_;
+        }
+
     private:
         friend class X11Window;
-		friend class Font<XftFont*>;
 
         X11Application();
 
@@ -52,7 +59,7 @@ namespace tpp {
 
 		/* A window that always exists, is always hidden and we use it to send broadcast messages because X does not allow window-less messages and this feels simpler than copying the whole queue. 
 		 */
-		Window broadcastWindow_;
+		x11::Window broadcastWindow_;
         XIM xIm_;
 		Atom wmDeleteMessage_;
 		Atom fpsTimerMessage_;

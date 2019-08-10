@@ -123,13 +123,13 @@ namespace ui {
 	template<typename WIDGET>
 	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, Rect const& x) {
 		widget->resize(x.width(), x.height());
-		widget->move(x.left, x.top);
+		widget->move(x.left(), x.top());
 		return widget;
 	}
 
 	template<typename WIDGET>
 	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, Point const& x) {
-		widget->move(x.col, x.row);
+		widget->move(x.x, x.y);
 		return widget;
 	}
 

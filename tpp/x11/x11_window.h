@@ -1,5 +1,7 @@
-#pragma
+#pragma once
 #if (defined ARCH_UNIX)
+
+#include "x11.h"
 
 #include "x11_font.h"
 
@@ -8,7 +10,7 @@ namespace tpp {
 
     class X11Window : public RendererWindow<X11Window> {
     public:
-        typedef Font<XftFont*> Font;
+        typedef tpp::Font<XftFont*> Font;
 
         ~X11Window() override;
         
@@ -27,13 +29,14 @@ namespace tpp {
             Instead of invalidating the rectange, WM_PAINT must explicitly be sent, as it may happen that different thread is already repainting the window, and therefore the request will be silenced (the window region is validated at the end of WM_PAINT). 
          */
 		void paint(ui::RectEvent & e) override {
+            MARK_AS_UNUSED(e);
             // trigger a refresh
-            XEvent e;
-            memset(&e, 0, sizeof(XEvent));
-            e.xexpose.type = Expose;
-            e.xexpose.display = display_;
-            e.xexpose.window = window_;
-            X11Application::Instance()->xSendEvent(this, e, ExposureMask);
+            XEvent xe;
+            memset(&xe, 0, sizeof(XEvent));
+            xe.xexpose.type = Expose;
+            xe.xexpose.display = display_;
+            xe.xexpose.window = window_;
+            X11Application::Instance()->xSendEvent(this, xe, ExposureMask);
 		}
 
     protected:
@@ -45,17 +48,20 @@ namespace tpp {
         void updateSizePx(unsigned widthPx, unsigned heightPx) override {
             //widthPx -= frameWidthPx_;
             //heightPx -= frameHeightPx_;
+            /*
 			if (rt_ != nullptr) {
 				D2D1_SIZE_U size = D2D1::SizeU(widthPx, heightPx);
 				rt_->Resize(size);
-			}
+			} */
             Window::updateSizePx(widthPx, heightPx);
 			repaint();
         }
 
         void updateSize(int cols, int rows) override {
+            /*
 			if (rt_ != nullptr) 
                 updateXftStructures(cols);
+                */
             Window::updateSize(cols, rows);
 			repaint();
         }
@@ -135,6 +141,7 @@ namespace tpp {
             First clears the background with given background color, then draws the text and finally applies any decorations. 
          */
         void drawGlyphRun() {
+            /*
             if (textSize_ == 0)
                 return;
 			// if we are drawing the last col, or row, clear remaining border as well
@@ -155,10 +162,11 @@ namespace tpp {
 				if (textStrikethrough_)
 					XftDrawRect(draw_, &fg_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + (2 * font_->handle()->ascent / 3), cellWidthPx_ * textSize_, 1);
 			}
+            */
             textSize_ = 0;
         }
 
-		XftColor toXftColor(vterm::Color const& c) {
+		XftColor toXftColor(ui::Color const& c) {
 			XftColor result;
 			result.color.red = c.red * 256;
 			result.color.green = c.green * 256;
@@ -174,6 +182,8 @@ namespace tpp {
 		void setIcon(unsigned long * icon);
 
     private:
+
+        friend class X11Application;
 
 		class MotifHints {
 		public:
@@ -192,11 +202,11 @@ namespace tpp {
 
 		    Because the modifiers are preexisting, but the terminal requires post-state, Shift, Ctrl, Alt and Win keys also update the modifiers based on whether they key was pressed, or released
          */
-        static vterm::Key GetKey(KeySym k, unsigned modifiers, bool pressed);
+        static ui::Key GetKey(KeySym k, unsigned modifiers, bool pressed);
 
         static void EventHandler(XEvent & e);
 
-		Window window_;
+		x11::Window window_;
 		Display* display_;
 		int screen_;
 		Visual* visual_;
@@ -209,6 +219,7 @@ namespace tpp {
 		XftDraw * draw_;
 		XftColor fg_;
 		XftColor bg_;
+        XftColor decor_;
 		Font * font_;
 
 
@@ -219,6 +230,7 @@ namespace tpp {
         unsigned textCol_;
         unsigned textRow_;
         unsigned textSize_;
+        ui::Attributes attrs_;
         bool textBlink_;
         bool textUnderline_;
         bool textStrikethrough_;
@@ -231,7 +243,7 @@ namespace tpp {
 		 */
         XWindowChanges fullscreenRestore_;
 
-		static std::unordered_map<Window, X11Window *> Windows_;
+		static std::unordered_map<x11::Window, X11Window *> Windows_;
 
     }; // X11Window
 

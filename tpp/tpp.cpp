@@ -19,7 +19,7 @@
 #elif (defined ARCH_UNIX)
 
 #include "x11/x11_application.h"
-#include "x11/x11_terminal_window.h"
+#include "x11/x11_window.h"
 
 #else
 #error "Unsupported platform"
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
 #ifdef ARCH_WINDOWS
 	    DirectWriteApplication::Initialize(hInstance);
 #else
-	    new X11Application();
+	    X11Application::Initialize();
 #endif
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
@@ -147,11 +147,12 @@ int main(int argc, char* argv[]) {
 
 		vterm::VT100 * vt100;
 
-	    Window * w = Application::Instance()->createWindow("test", 80, 25, 18);
+	    tpp::Window * w = Application::Instance()->createWindow("test", 80, 25, 18);
 		ui::RootWindow * rw = ui::Create(new ui::RootWindow(80,25))
 		    << ui::Layout::Maximized()
 			<< (
-				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::LocalPTY(helpers::Command("wsl", {"-e", "bash"}))))
+				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::LocalPTY(helpers::Command("bash", {}))))
+//				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::LocalPTY(helpers::Command("wsl", {"-e", "bash"}))))
 //				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::BypassPTY(helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "bash" }))))
 				);
 

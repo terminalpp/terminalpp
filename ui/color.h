@@ -16,10 +16,10 @@ namespace ui {
 		/** Creates a color of given properties. 
 		 */
 		constexpr Color(unsigned char red = 0, unsigned char green = 0, unsigned char blue = 0, unsigned char alpha = 255) :
-			red(red),
-			green(green),
+		    alpha(alpha),
 			blue(blue),
-			alpha(alpha) {
+			green(green),
+			red(red) {
 		}
 
         uint32_t toRGB() const {

@@ -10,6 +10,9 @@
 
 namespace ui {
 
+    class Widget;
+    class RootWindow;
+
 
     /** Drawable surface of the UI. 
      
@@ -157,11 +160,9 @@ namespace ui {
     class Canvas::Buffer {
     public:
 
-        typedef helpers::SmartRAIIPtr<Buffer> Ptr;
-
         /** Smart pointer which automatically releases the lock on the buffer when destroyed.
          */
-        class Ptr;
+        typedef helpers::SmartRAIIPtr<Buffer> Ptr;
 
         Buffer(int cols, int rows):
             cols_(0),

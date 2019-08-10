@@ -1,6 +1,11 @@
-#pragma once
 #if (defined ARCH_UNIX)
+
+#include "helpers/log.h"
+
+#include "x11_window.h"
+
 #include "x11_application.h"
+
 
 namespace tpp {
 
@@ -43,7 +48,7 @@ namespace tpp {
 
 		unsigned long black = BlackPixel(xDisplay_, xScreen_);	/* get color black */
 		unsigned long white = WhitePixel(xDisplay_, xScreen_);  /* get color white */
-		Window parent = RootWindow(xDisplay_, xScreen_);
+		x11::Window parent = XRootWindow(xDisplay_, xScreen_);
 		broadcastWindow_ = XCreateSimpleWindow(xDisplay_, parent, 0, 0, 1, 1, 1, white, black);
 
 		if (
@@ -60,7 +65,6 @@ namespace tpp {
 			netWmIcon_ == x11::None
 		) THROW(helpers::Exception()) << "X11 Atoms instantiation failed";
 
-		start();
 	}
 
 	X11Application::~X11Application() {
@@ -68,11 +72,11 @@ namespace tpp {
 		xDisplay_ = nullptr;
 	}
 
-    Window * X11Application::createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override {
+    Window * X11Application::createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) {
 		return new X11Window(title, cols, rows, cellHeightPx);
     }
 
-    void X11Application::xSendEvent(X11TerminalWindow * window, XEvent & e, long mask) {
+    void X11Application::xSendEvent(X11Window * window, XEvent & e, long mask) {
 		if (window != nullptr)
             XSendEvent(xDisplay_, window->window_, false, mask, &e);
 		else 
@@ -85,13 +89,9 @@ namespace tpp {
             XEvent e;
             while (true) { 
                 XNextEvent(xDisplay_, &e);
-				if (e.type == ClientMessage && static_cast<unsigned long>(e.xclient.data.l[0]) == fpsTimerMessage_) {
-					X11TerminalWindow::FPSTimer();
-				} else {
-					if (XFilterEvent(&e, x11::None))
-						continue;
-					X11TerminalWindow::EventHandler(e);
-				}
+				if (XFilterEvent(&e, x11::None))
+					continue;
+				X11Window::EventHandler(e);
             }
 		} catch (Terminate const& e) {
 			// do nothing

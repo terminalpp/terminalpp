@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "helpers/time.h"
+
 #include "ui/canvas.h"
 #include "ui/root_window.h"
 

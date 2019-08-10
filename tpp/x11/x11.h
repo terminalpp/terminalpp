@@ -8,9 +8,12 @@
 #include <X11/Xft/Xft.h>
 
 #undef None
+#undef RootWindow
 
 namespace x11 {
 	static constexpr long None = 0;
+
+	typedef ::Window Window;
 } // namespace X11
 
 #endif

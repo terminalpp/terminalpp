@@ -1,5 +1,7 @@
 #pragma once
 
+#include <thread>
+
 #include "ui/canvas.h"
 #include "ui/widget.h"
 
