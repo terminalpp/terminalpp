@@ -35,6 +35,22 @@ namespace tpp {
 		return new DirectWriteWindow(title, cols, rows, cellHeightPx);
 	}
 
+	std::string DirectWriteApplication::getClipboardContents() {
+		std::string result;
+		if (OpenClipboard(nullptr)) {
+			HANDLE clipboard = GetClipboardData(CF_UNICODETEXT);
+			if (clipboard) {
+				// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+				helpers::utf16_char* data = reinterpret_cast<helpers::utf16_char*>(GlobalLock(clipboard));
+				if (data) {
+					result = helpers::UTF16toUTF8(data);
+					GlobalUnlock(clipboard);
+				}
+			}
+			CloseClipboard();
+		}
+		return result;
+	}
 
     void DirectWriteApplication::mainLoop() {
 		MSG msg;

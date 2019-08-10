@@ -26,6 +26,8 @@ namespace tpp {
 
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;
 
+        std::string getClipboardContents() override;
+
         void mainLoop() override;
 
     private:

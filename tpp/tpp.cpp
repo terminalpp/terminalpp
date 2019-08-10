@@ -151,9 +151,9 @@ int main(int argc, char* argv[]) {
 		ui::RootWindow * rw = ui::Create(new ui::RootWindow(80,25))
 		    << ui::Layout::Maximized()
 			<< (
-				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::LocalPTY(helpers::Command("bash", {}))))
+//				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::LocalPTY(helpers::Command("bash", {}))))
 //				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::LocalPTY(helpers::Command("wsl", {"-e", "bash"}))))
-//				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::BypassPTY(helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "bash" }))))
+				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::BypassPTY(helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "bash" }))))
 				);
 
 		w->setRootWindow(rw);

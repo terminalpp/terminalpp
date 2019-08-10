@@ -9,6 +9,8 @@
 
 #include "config.h"
 
+#include "application.h"
+
 namespace tpp {
 
     /** Base class for display a UI window contents and capturing the mouse, keyboard and clipboard events. 
@@ -180,6 +182,8 @@ namespace tpp {
             } else if (key == SHORTCUT_ZOOM_OUT) {
                 if (zoom() > 1)
                     setZoom(std::max(1.0, zoom() / 1.25));
+            } else if (key == SHORTCUT_PASTE) {
+                rootWindow_->paste(Application::Instance()->getClipboardContents());
             } else if (key != ui::Key::Invalid && rootWindow_) {
                 rootWindow_->keyDown(key);
             }
