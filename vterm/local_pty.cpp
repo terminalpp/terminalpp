@@ -1,3 +1,16 @@
+#if (defined ARCH_UNIX)
+    #include <unistd.h>
+    #include <signal.h>
+    #include <sys/wait.h>
+    #include <sys/ioctl.h>
+    #include <errno.h>
+    #if (defined ARCH_LINUX)
+        #include <pty.h>
+    #elif (defined ARCH_MACOS)
+        #include <util.h>
+    #endif
+#endif
+
 #include <memory>
 
 #include "helpers/string.h"
@@ -174,27 +187,85 @@ namespace vterm {
     // PTY interface
 
     void LocalPTY::send(char const * buffer, size_t bufferSize) {
+		int nw = ::write(pipe_, (void*)buffer, bufferSize);
+		// TODO check errors properly 
+		ASSERT(nw >= 0 && static_cast<unsigned>(nw) == bufferSize);
     }
 
     size_t LocalPTY::receive(char * buffer, size_t bufferSize) {
-		size_t bytesRead = 0;
-		return bytesRead;
+		int cnt = 0;
+		while (true) {
+			cnt = ::read(pipe_, (void*)buffer, bufferSize);
+			if (cnt == -1) {
+				if (errno == EINTR || errno == EAGAIN)
+					continue;
+				// the pipe is broken, which is direct action of the process terminating, return eof
+				return 0;
+			}
+			break;
+		}
+		return cnt;
     }
 
     void LocalPTY::terminate() {
+		kill(pid_, SIGKILL);
     }
 
     helpers::ExitCode LocalPTY::waitFor() {
 		helpers::ExitCode ec;
-        return ec;
+		pid_t x = waitpid(pid_, &ec, 0);
+		ec = WEXITSTATUS(ec);
+        // it is ok to see errno ECHILD, happens when process has already been terminated
+		if (x < 0 && errno != ECHILD) 
+			NOT_IMPLEMENTED; // error
+		return ec;
     }
 
     void LocalPTY::resize(int cols, int rows) {
+        struct winsize s;
+        s.ws_row = rows;
+        s.ws_col = cols;
+        s.ws_xpixel = 0;
+        s.ws_ypixel = 0;
+        if (ioctl(pipe_, TIOCSWINSZ, &s) < 0)
+            NOT_IMPLEMENTED;
     }
 
     void LocalPTY::start() {
-    }
+		// fork & open the pty
+		switch (pid_ = forkpty(&pipe_, nullptr, nullptr, nullptr)) {
+			// forkpty failed
+			case -1:
+			    OSCHECK(false) << "Fork failed";
+		    // running the child process,
+			case 0: {
+				setsid();
+				if (ioctl(1, TIOCSCTTY, nullptr) < 0)
+					UNREACHABLE;
+				environment_.unsetIfUnspecified("COLUMNS");
+				environment_.unsetIfUnspecified("LINES");
+				environment_.unsetIfUnspecified("TERMCAP");
+				environment_.setIfUnspecified("TERM", "xterm-256color");
+				environment_.setIfUnspecified("COLORTERM", "truecolor");
+				environment_.apply();
 
+				signal(SIGCHLD, SIG_DFL);
+				signal(SIGHUP, SIG_DFL);
+				signal(SIGINT, SIG_DFL);
+				signal(SIGQUIT, SIG_DFL);
+				signal(SIGTERM, SIG_DFL);
+				signal(SIGALRM, SIG_DFL);
+
+				char** argv = command_.toArgv();
+				// execvp never returns
+				OSCHECK(execvp(command_.command().c_str(), argv) != -1) << "Unable to execute command " << command_;
+				UNREACHABLE;
+			}
+			// continuing the terminal program 
+			default:
+				break;
+		}
+    }
 
 #endif
 

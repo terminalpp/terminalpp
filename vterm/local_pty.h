@@ -1,6 +1,8 @@
 #pragma once
 #if (defined ARCH_WINDOWS)
-#include "windows.h"
+    #include "windows.h"
+#elif (defined ARCH_UNIX)
+    #include "sys/types.h"
 #endif
 
 #include "pty.h"
@@ -57,6 +59,13 @@ namespace vterm {
         std::mutex m_;
         std::condition_variable cv_;
         std::atomic<unsigned> active_;
+#elif (defined ARCH_UNIX)
+
+        /* Pipe to the process. */
+		int pipe_;
+
+        /* Pid of the process. */
+		pid_t pid_;
 #endif
 
 

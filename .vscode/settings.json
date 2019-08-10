@@ -4,6 +4,7 @@
         "algorithm": "cpp",
         "chrono": "cpp",
         "limits": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "atomic": "cpp"
     }
 }
