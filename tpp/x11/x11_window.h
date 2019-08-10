@@ -94,13 +94,6 @@ namespace tpp {
             XFlush(display_);
         }
 
-        bool shouldDraw(int col, int row, ui::Cell const & cell) {
-            MARK_AS_UNUSED(col);
-            MARK_AS_UNUSED(row);
-            MARK_AS_UNUSED(cell);
-            return true;
-        }
-
         void initializeGlyphRun(int col, int row) {
             textSize_ = 0;
             textCol_ = col;

@@ -1,12 +1,9 @@
 ﻿# V0.2
 
-- then add localpty as well for Windows
 - add events for the terminal (notification, etc.)
-
+- add clipboard
 - add focus in/out events to root window
 - determine the closing mechanism (ie. session v2)
-- of course, add X11 - and localpTY on linux...
-- consider keeping track of what needs to be changed (not worth it in Win32 it seems)
 - add the extra attributes drawing
 - terminal should have an event to be called when a line is to be scrolled out
 

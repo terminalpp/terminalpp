@@ -228,7 +228,6 @@ namespace tpp {
          */
         void render(ui::RootWindow * window) {
             #define initializeDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->initializeDraw(__VA_ARGS__)
-            #define shouldDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->shouldDraw(__VA_ARGS__)
             #define initializeGlyphRun(...) reinterpret_cast<IMPLEMENTATION*>(this)->initializeGlyphRun(__VA_ARGS__)
             #define addGlyph(...) reinterpret_cast<IMPLEMENTATION*>(this)->addGlyph(__VA_ARGS__)
             #define setFont(...) reinterpret_cast<IMPLEMENTATION*>(this)->setFont(__VA_ARGS__)
@@ -258,9 +257,6 @@ namespace tpp {
                     for (int col = 0, ce = std::min(cols_, buffer->cols()); col < ce; ++col) {
                         // get the cell to be drawn
                         ui::Cell const & c = buffer->at(col, row);
-                        // determine if the cell needs to be redrawn
-                        if (! shouldDraw(col, row, c)) 
-                            continue;
                         // now we know the cell must be drawn, determine if the attributes of the cell changed since last cell drawn
                         if ((statusCell_ << c.codepoint()) != c) {
                             drawGlyphRun();
@@ -305,7 +301,6 @@ namespace tpp {
 			std::cout << "Paint: " << t.value() << " ms\n" ;
             // and we are done
             #undef initializeDraw
-            #undef shouldDraw
             #undef initializeGlyphRun
             #undef addGlyph
             #undef setFont

@@ -84,14 +84,6 @@ namespace tpp {
             rt_->EndDraw();
         }
 
-        bool shouldDraw(int col, int row, ui::Cell const & cell) {
-            MARK_AS_UNUSED(col);
-            MARK_AS_UNUSED(row);
-            MARK_AS_UNUSED(cell);
-            // draw all by default
-            return true;
-        }
-
         void initializeGlyphRun(int col, int row) {
             glyphRun_.glyphCount = 0;
             glyphRunCol_ = col;
