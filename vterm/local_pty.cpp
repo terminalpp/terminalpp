@@ -1,6 +1,7 @@
 #include <memory>
 
 #include "helpers/string.h"
+#include "helpers/locks.h"
 
 #include "local_pty.h"
 
@@ -13,7 +14,8 @@ namespace vterm {
         command_{command},
 		startupInfo_{},
    		pipeIn_{ INVALID_HANDLE_VALUE },
-		pipeOut_{ INVALID_HANDLE_VALUE } {
+		pipeOut_{ INVALID_HANDLE_VALUE },
+		active_{0} {
         start();
     }
 
@@ -22,12 +24,22 @@ namespace vterm {
 		environment_(env),
 		startupInfo_{},
 		pipeIn_{ INVALID_HANDLE_VALUE },
-		pipeOut_{ INVALID_HANDLE_VALUE } {
+		pipeOut_{ INVALID_HANDLE_VALUE },
+		active_{0} {
         start();
     }
 
     LocalPTY::~LocalPTY() {
         terminate();
+		// now wait for all waiting threads to finish
+		std::unique_lock<std::mutex> g(m_);
+		while (active_ != 0)
+		    cv_.wait(g);
+        CloseHandle(pInfo_.hProcess);
+        CloseHandle(pInfo_.hThread);
+		ClosePseudoConsole(conPTY_);
+		CloseHandle(pipeIn_);
+        CloseHandle(pipeOut_);
 		delete [] reinterpret_cast<char*>(startupInfo_.lpAttributeList);
     }
 
@@ -54,20 +66,19 @@ namespace vterm {
     }
 
     void LocalPTY::terminate() {
+		helpers::ResourceGrabber g(active_, cv_);
         if (TerminateProcess(pInfo_.hProcess, std::numeric_limits<unsigned>::max()) != ERROR_SUCCESS) {
             // it could be that the process has already terminated
     		helpers::ExitCode ec = STILL_ACTIVE;
-	    	GetExitCodeProcess(pInfo_.hProcess, &ec);
-            // the process has been terminated already, it's ok
-            if (ec != STILL_ACTIVE)
-                return;
-            // otherwise throw the last error (this could in theory be error from the GetExitCodeProcess, but that's ok for now)
-            OSCHECK(false); 
+	    	GetExitCodeProcess(pInfo_.hProcess, &ec);		
+			// the process has been terminated already, it's ok, otherwise throw last error (this could in theory be error from the GetExitCodeProcess, but that's ok for now)
+            OSCHECK(ec != STILL_ACTIVE);
         }
     }
 
     helpers::ExitCode LocalPTY::waitFor() {
-        OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) != WAIT_FAILED);
+		helpers::ResourceGrabber g(active_, cv_);
+		OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) != WAIT_FAILED);
 		helpers::ExitCode ec;
 		OSCHECK(GetExitCodeProcess(pInfo_.hProcess, &ec) != 0);
         return ec;

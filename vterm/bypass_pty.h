@@ -44,6 +44,7 @@ namespace vterm {
 		/* Information about the process being executed. */
 		PROCESS_INFORMATION pInfo_;
 
+        /* Synchronization help so that terminate and waitFor() calls will not error if another thread runs destructor. */
         std::mutex m_;
         std::condition_variable cv_;
         std::atomic<unsigned> active_;
