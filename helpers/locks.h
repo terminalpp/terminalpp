@@ -7,6 +7,24 @@
 
 namespace helpers {
 
+    class ResourceGrabber {
+    public:
+        ResourceGrabber(std::atomic<unsigned> & counter, std::condition_variable & cv):
+            counter_(counter),
+            cv_(cv) {
+            ++counter_;
+        }
+
+        ~ResourceGrabber() {
+            if (--counter_ == 0)
+                cv_.notify_all();
+        }
+
+    private:
+        std::atomic<unsigned> & counter_;
+        std::condition_variable & cv_;
+    };
+
     /** A simple RAII pointer to a class providing unlock() method which is called when the pointer goes out of scope.
      */
     template<typename T>

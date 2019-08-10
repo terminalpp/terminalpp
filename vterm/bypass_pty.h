@@ -1,6 +1,10 @@
 #pragma once
 #if (defined ARCH_WINDOWS)
 
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+
 #include "windows.h"
 
 #include "pty.h"
@@ -39,6 +43,10 @@ namespace vterm {
 
 		/* Information about the process being executed. */
 		PROCESS_INFORMATION pInfo_;
+
+        std::mutex m_;
+        std::condition_variable cv_;
+        std::atomic<unsigned> active_;
 
     }; // BypassPTY
 

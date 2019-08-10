@@ -37,6 +37,10 @@ namespace vterm {
 
 #if (defined ARCH_WINDOWS)
 
+        /* Startupo info which must be alive throughout the execution of the process.
+         */
+        STARTUPINFOEX startupInfo_;
+
 		/* Handle to the ConPTY object created for the command. */
 		HPCON conPTY_;
 

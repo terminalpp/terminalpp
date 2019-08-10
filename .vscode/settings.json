@@ -3,6 +3,7 @@
         "initializer_list": "cpp",
         "algorithm": "cpp",
         "chrono": "cpp",
-        "limits": "cpp"
+        "limits": "cpp",
+        "mutex": "cpp"
     }
 }

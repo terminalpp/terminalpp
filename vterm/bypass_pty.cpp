@@ -1,6 +1,7 @@
 
 #if (defined ARCH_WINDOWS)
 #include "helpers/string.h"
+#include "helpers/locks.h"
 
 #include "bypass_pty.h"
 
@@ -9,7 +10,8 @@ namespace vterm {
     BypassPTY::BypassPTY(helpers::Command const & command):
         command_{command},
 		pipeIn_{ INVALID_HANDLE_VALUE },
-		pipeOut_{ INVALID_HANDLE_VALUE } {
+		pipeOut_{ INVALID_HANDLE_VALUE },
+		active_{0} {
 		//  input and output handles for the process
 		HANDLE pipePTYOut;
 		HANDLE pipePTYIn;
@@ -52,6 +54,10 @@ namespace vterm {
 
     BypassPTY::~BypassPTY() {
         terminate();
+		// now wait for all waiting threads to finish
+		std::unique_lock<std::mutex> g(m_);
+		while (active_ != 0)
+		    cv_.wait(g);
         CloseHandle(pInfo_.hProcess);
         CloseHandle(pInfo_.hThread);
         CloseHandle(pipeIn_);
@@ -81,19 +87,18 @@ namespace vterm {
     }
 
     void BypassPTY::terminate() {
+		helpers::ResourceGrabber g(active_, cv_);
         if (TerminateProcess(pInfo_.hProcess, std::numeric_limits<unsigned>::max()) != ERROR_SUCCESS) {
             // it could be that the process has already terminated
     		helpers::ExitCode ec = STILL_ACTIVE;
 	    	GetExitCodeProcess(pInfo_.hProcess, &ec);
-            // the process has been terminated already, it's ok
-            if (ec != STILL_ACTIVE)
-                return;
-            // otherwise throw the last error (this could in theory be error from the GetExitCodeProcess, but that's ok for now)
-            OSCHECK(false);
+			// the process has been terminated already, it's ok, otherwise throw last error (this could in theory be error from the GetExitCodeProcess, but that's ok for now)
+            OSCHECK(ec != STILL_ACTIVE);
         }
     }
 
     helpers::ExitCode BypassPTY::waitFor() {
+		helpers::ResourceGrabber g(active_, cv_);
         OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) != WAIT_FAILED);
 		helpers::ExitCode ec;
 		OSCHECK(GetExitCodeProcess(pInfo_.hProcess, &ec) != 0);

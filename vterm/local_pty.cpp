@@ -11,6 +11,7 @@ namespace vterm {
 
     LocalPTY::LocalPTY(helpers::Command const& command):
         command_{command},
+		startupInfo_{},
    		pipeIn_{ INVALID_HANDLE_VALUE },
 		pipeOut_{ INVALID_HANDLE_VALUE } {
         start();
@@ -19,6 +20,7 @@ namespace vterm {
 	LocalPTY::LocalPTY(helpers::Command const& command, helpers::Environment const & env) :
 		command_(command),
 		environment_(env),
+		startupInfo_{},
 		pipeIn_{ INVALID_HANDLE_VALUE },
 		pipeOut_{ INVALID_HANDLE_VALUE } {
         start();
@@ -26,6 +28,7 @@ namespace vterm {
 
     LocalPTY::~LocalPTY() {
         terminate();
+		delete [] reinterpret_cast<char*>(startupInfo_.lpAttributeList);
     }
 
     // PTY interface
@@ -79,7 +82,7 @@ namespace vterm {
     }
 
     void LocalPTY::start() {
-		STARTUPINFOEX startupInfo{};
+		startupInfo_.lpAttributeList = nullptr;
         // create the pseudoconsole
 		HRESULT result{ E_UNEXPECTED };
 		HANDLE pipePTYIn{ INVALID_HANDLE_VALUE };
@@ -102,19 +105,18 @@ namespace vterm {
 		OSCHECK(result == S_OK) << "Unable to open pseudo console";
         // generate the startup info
 		size_t attrListSize = 0;
-		startupInfo.StartupInfo.cb = sizeof(STARTUPINFOEX);
+		startupInfo_.StartupInfo.cb = sizeof(STARTUPINFOEX);
 		// allocate the attribute list of required size
 		InitializeProcThreadAttributeList(nullptr, 1, 0, &attrListSize); // get size of list of 1 attribute
-        std::unique_ptr<char> attrList(new char[attrListSize]);        
-		startupInfo.lpAttributeList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(attrList.get());
+		startupInfo_.lpAttributeList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(new char[attrListSize]);
 		// initialize the attribute list
 		OSCHECK(
-			InitializeProcThreadAttributeList(startupInfo.lpAttributeList, 1, 0, &attrListSize)
+			InitializeProcThreadAttributeList(startupInfo_.lpAttributeList, 1, 0, &attrListSize)
 		) << "Unable to create attribute list";
 		// set the pseudoconsole attribute
 		OSCHECK(
 			UpdateProcThreadAttribute(
-				startupInfo.lpAttributeList,
+				startupInfo_.lpAttributeList,
 				0,
 				PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
 				conPTY_,
@@ -135,7 +137,7 @@ namespace vterm {
 				EXTENDED_STARTUPINFO_PRESENT, // we have extra info 
 				nullptr, // use parent's environment
 				nullptr, // use parent's directory
-				&startupInfo.StartupInfo, // startup info
+				&startupInfo_.StartupInfo, // startup info
 				&pInfo_ // info about the process
 			)
 		) << "Unable to start process " << command_;

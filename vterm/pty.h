@@ -34,6 +34,11 @@ namespace vterm {
 
         virtual void resize(int cols, int rows) = 0;
 
+		/** Virtual destructor. 
+		 */
+		virtual ~PTY() {
+		}
+
 
     }; // vterm::PTY
 
