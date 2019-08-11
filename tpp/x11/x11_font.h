@@ -8,6 +8,8 @@
 #include "../font.h"
 #include "x11_application.h"
 
+#include "../config.h"
+
 namespace tpp {
 
 	/** Because XFT font sizes are ascent only, the font is obtained by trial and error. First we try the requested height and then, based on the actual height. If the actually obtained height differs, height multiplier is calculated and the font is re-obtained with the height adjusted. */

@@ -125,6 +125,11 @@ namespace tpp {
 		Window::updateSizePx(widthPx_, heightPx_);
     }
 
+    void X11Window::requestClipboardPaste() {
+        X11Application * app = X11Application::Instance();
+		XConvertSelection(display_, app->clipboardName_, app->formatStringUTF8_, app->clipboardName_, window_, CurrentTime);
+    }
+
     void X11Window::setIcon(unsigned long * icon) {
 		XChangeProperty(
 			display_,
@@ -403,7 +408,6 @@ namespace tpp {
 			    Get the clipboard contents and call terminal's paste event. 
 			 */
 			case SelectionNotify:
-            /*
 				if (e.xselection.property) {
 					char * result;
 					unsigned long resSize, resTail;
@@ -411,15 +415,14 @@ namespace tpp {
 					int format = 0;
 					XGetWindowProperty(window->display_, window->window_, e.xselection.property, 0, LONG_MAX / 4, False, AnyPropertyType,
 						&type, &format, &resSize, &resTail, (unsigned char**)& result);
-					if (type == window->app()->clipboardIncr_)
+					if (type == X11Application::Instance()->clipboardIncr_)
 						// buffer too large, incremental reads must be implemented
 						// https://stackoverflow.com/questions/27378318/c-get-string-from-clipboard-on-linux
 						NOT_IMPLEMENTED;
 					else
-						window->terminal()->paste(std::string(result, resSize));
+						window->paste(std::string(result, resSize));
 					XFree(result);
                  }
-                 */
 				 break;
 			/** Called when the clipboard contents is requested by an outside app. 
 			 */

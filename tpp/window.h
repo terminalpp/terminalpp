@@ -183,7 +183,7 @@ namespace tpp {
                 if (zoom() > 1)
                     setZoom(std::max(1.0, zoom() / 1.25));
             } else if (key == SHORTCUT_PASTE) {
-                rootWindow_->paste(Application::Instance()->getClipboardContents());
+                requestClipboardPaste();
             } else if (key != ui::Key::Invalid && rootWindow_) {
                 rootWindow_->keyDown(key);
             }
@@ -193,6 +193,12 @@ namespace tpp {
     		activeModifiers_ = ui::Key(ui::Key::Invalid, key.modifiers());
             if (key != ui::Key::Invalid && rootWindow_)
                 rootWindow_->keyUp(key);
+        }
+
+        virtual void requestClipboardPaste() = 0;
+
+        void paste(std::string const & clipboard) {
+            rootWindow_->paste(clipboard);
         }
 
 

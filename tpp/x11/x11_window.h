@@ -4,6 +4,7 @@
 #include "x11.h"
 
 #include "x11_font.h"
+#include "../window.h"
 
 namespace tpp {
 
@@ -63,6 +64,8 @@ namespace tpp {
         void updateFullscreen(bool value) override;
 
         void updateZoom(double value) override;
+
+        void requestClipboardPaste() override;
 
         void updateXftStructures(int cols) {
             delete text_;

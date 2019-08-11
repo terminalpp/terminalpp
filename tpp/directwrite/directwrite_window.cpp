@@ -111,6 +111,24 @@ namespace tpp {
 		Window::updateSizePx(widthPx_, heightPx_);
 	}
 
+	void DirectWriteWindow::requestClipboardPaste() {
+		std::string result;
+		if (OpenClipboard(nullptr)) {
+			HANDLE clipboard = GetClipboardData(CF_UNICODETEXT);
+			if (clipboard) {
+				// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+				helpers::utf16_char* data = reinterpret_cast<helpers::utf16_char*>(GlobalLock(clipboard));
+				if (data) {
+					result = helpers::UTF16toUTF8(data);
+					GlobalUnlock(clipboard);
+				}
+			}
+			CloseClipboard();
+		}
+		if (!result.empty())
+		    paste(result);
+	}
+
 	void DirectWriteWindow::updateDirectWriteStructures(int cols) {
 		delete[] glyphIndices_;
 		delete[] glyphAdvances_;

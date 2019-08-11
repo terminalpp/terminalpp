@@ -66,6 +66,8 @@ namespace tpp {
 
         void updateZoom(double value) override;
 
+        void requestClipboardPaste() override;
+
     private:
         friend class DirectWriteApplication;
         friend class RendererWindow<DirectWriteWindow>;

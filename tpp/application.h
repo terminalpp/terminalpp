@@ -17,10 +17,6 @@ namespace tpp {
 
         virtual Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) = 0;
 
-        /** Returns the contents of the clipboard, or empty string if the clipboard is empty. 
-         */
-        virtual std::string getClipboardContents() = 0;
-
         /** The main event loop of the application. 
          */
         virtual void mainLoop() = 0;
