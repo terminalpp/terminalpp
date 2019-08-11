@@ -133,9 +133,8 @@ namespace tpp {
 	}
 
 	void DirectWriteWindow::setSelection(std::string const & selection) {
-		MARK_AS_UNUSED(selection);
-		NOT_IMPLEMENTED;
-
+		DirectWriteApplication * app = DirectWriteApplication::Instance();
+		app->selection_ = selection;
 	}
 
 	void DirectWriteWindow::invalidateSelection() {

@@ -22,7 +22,25 @@ namespace ui {
             visibleRegion_ = Canvas::VisibleRegion{this};
 		}
 
+
+    protected:
+
+        friend class Widget;
+        
+	    static constexpr unsigned MOUSE_CLICK_MAX_DURATION = 100;
+
+	    static constexpr unsigned MOUSE_DOUBLE_CLICK_MAX_INTERVAL = 300;
+
+        
         // renderable (and widget where appropriate)
+
+        void rendererResized(int width, int height) override {
+            resize(width, height);
+        }
+
+        void rendererFocused(bool value) override {
+            setFocus(value);
+        }
 
         /** Locks the backing buffer and returns it in a RAII smart pointer.
          */
@@ -40,14 +58,6 @@ namespace ui {
             return cursor_;
         }
 
-        void rendererResized(int width, int height) override {
-            resize(width, height);
-        }
-
-        void rendererFocused(bool value) override {
-            setFocus(value);
-        }
-
         void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
         void mouseUp(int col, int row, MouseButton button, Key modifiers) override;
         void mouseWheel(int col, int row, int by, Key modifiers) override;
@@ -59,6 +69,18 @@ namespace ui {
 
         void paste(std::string const & contents) override;
 
+        // TODO this shoudl be locked and perhaps paste should also tell about its origin
+        void requestClipboardPaste(Widget * sender) {
+            MARK_AS_UNUSED(sender);
+            Renderable::requestClipboardPaste();
+
+        }
+
+        void requestSelectionPaste(Widget * sender) {
+            MARK_AS_UNUSED(sender);
+            Renderable::requestSelectionPaste();
+        }
+
         void updateFocused(bool value) override {
             // first make sure the focus in/out 
             Container::updateFocused(value);
@@ -66,14 +88,6 @@ namespace ui {
             if (keyboardFocus_ != nullptr)
                 keyboardFocus_->updateFocused(value);
         }
-
-    protected:
-
-        friend class Widget;
-        
-	    static constexpr unsigned MOUSE_CLICK_MAX_DURATION = 100;
-
-	    static constexpr unsigned MOUSE_DOUBLE_CLICK_MAX_INTERVAL = 300;
 
         void invalidateContents() override;
 

@@ -43,5 +43,21 @@ namespace ui {
 			visibleRegion_.root->Renderable::setClipboard(contents);
 	}
 
+	void Widget::setSelection(std::string const & contents) {
+		if (visibleRegion_.valid())
+			visibleRegion_.root->Renderable::setSelection(contents);
+	}
+
+	void Widget::requestClipboardPaste() {
+		if (visibleRegion_.valid())
+			visibleRegion_.root->requestClipboardPaste(this);
+	}
+
+	void Widget::requestSelectionPaste() {
+		if (visibleRegion_.valid())
+			visibleRegion_.root->requestSelectionPaste(this);
+
+	}
+
 
 } // namespace ui

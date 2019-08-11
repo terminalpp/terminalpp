@@ -216,6 +216,8 @@ namespace vterm {
                 selectionStart_ = ui::Point(col, row);
                 selection_ = ui::Selection();
                 requestRepaint();
+            } else if (button == ui::MouseButton::Wheel) {
+                requestSelectionPaste();                
             }
         }
         Widget::mouseDown(col, row, button, modifiers);
@@ -226,6 +228,7 @@ namespace vterm {
             if (button == ui::MouseButton::Left) {
                 selectionStart_ = ui::Point(-1, -1);
                 // TODO inform the renderer that selection has been
+                setSelection("Hello all this is test");
             }
         }
         Widget::mouseUp(col, row, button, modifiers);
@@ -240,6 +243,5 @@ namespace vterm {
         }
         Widget::mouseMove(col, row, modifiers);
     }
-
 
 } // namespace vterm

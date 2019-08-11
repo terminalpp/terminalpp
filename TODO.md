@@ -1,5 +1,10 @@
 ﻿# V0.2
 
+- clipboard & selection - the renderer requests contain sender's and the root window will ignore any that come from non focused widgets
+- selection management should be own object which deals with this stuff, terminal will then inherit from it, have access to the functions and also have simple access
+- maybe composition (i.e. the selection class itself should allow clearing, invalidation, etc. )
+
+
 - add selection (selection update mechanism, clearing selection etc.)
 - check that bypass still works
 - determine the closing mechanism (ie. session v2)

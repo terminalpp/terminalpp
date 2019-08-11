@@ -64,12 +64,18 @@ namespace ui {
 
         void setClipboard(std::string const & contents);
 
+        void setSelection(std::string const & contents);
+
+        void requestClipboardPaste();
+
+        void requestSelectionPaste();
+
     private:
         friend class Renderer;
 
-
         Renderer * renderer_;
 
+        Widget * pasteSender_;
     }; // ui::Renderable
 
     /** Base class for user interface renderers.
@@ -224,6 +230,21 @@ namespace ui {
     inline void Renderable::setClipboard(std::string const & contents) {
         if (attached())
             renderer_->setClipboard(contents);
+    }
+
+    inline void Renderable::setSelection(std::string const & contents) {
+        if (attached())
+            renderer_->setSelection(contents);
+    }
+
+    inline void Renderable::requestClipboardPaste() {
+        if (attached())
+            renderer_->requestClipboardPaste();
+    }
+
+    inline void Renderable::requestSelectionPaste() {
+        if (attached())
+            renderer_->requestSelectionPaste();
     }
 
 } // namespace ui
