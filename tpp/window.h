@@ -210,7 +210,6 @@ namespace tpp {
             rootWindow_->paste(clipboard);
         }
 
-
 		int cols_;
 		int rows_;
 		unsigned widthPx_;

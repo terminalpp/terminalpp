@@ -7,6 +7,7 @@
 
 #include "cell.h"
 #include "shapes.h"
+#include "selection.h"
 
 namespace ui {
 
@@ -49,6 +50,10 @@ namespace ui {
 		    See the Brush class for more details. 
 		 */
         void fill(Rect const & rect, Brush const & brush);
+
+        /** Fills the given selection with specified brush. 
+         */
+        void fill(Selection const & sel, Brush const & brush);
 
 		/** Displays the given text. 
 
@@ -136,6 +141,10 @@ namespace ui {
         };
 
         Canvas(VisibleRegion const & visibleRegion, int width, int height);
+
+        /** Fills given cell, if exists with given brush. 
+         */
+        void fill(Cell * cell, Brush const & brush);
 
 		/** Returns the cell at given canvas coordinates if visible, or nullptr if the cell is outside the visible region. 
 		 */

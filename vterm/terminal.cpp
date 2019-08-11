@@ -156,7 +156,9 @@ namespace vterm {
         buffer_{width, height},
         pty_{pty},
         fps_{fps},
-        repaint_{false} {
+        repaint_{false},
+        selectionStart_{-1, -1},
+        selection_{} {
         pty_->resize(width, height);
         ptyReader_ = std::thread([this, ptyBufferSize](){
             std::unique_ptr<char> holder(new char[ptyBufferSize]);
@@ -198,10 +200,46 @@ namespace vterm {
     void Terminal::paint(ui::Canvas & canvas) {
         Buffer::Ptr buffer = this->buffer(/* priority */true);
         canvas.copyBuffer(0,0,* buffer);
+        if (!selection_.empty()) {
+            ui::Brush selBrush(ui::Color(192, 192, 255, 128));
+            canvas.fill(selection_, selBrush); 
+        }
         if (focused())
             canvas.setCursor(buffer->cursor());
         else
             canvas.setCursor(ui::Cursor::Invisible());
     }
+
+    void Terminal::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+        if (modifiers == 0) {
+            if (button == ui::MouseButton::Left) {
+                selectionStart_ = ui::Point(col, row);
+                selection_ = ui::Selection();
+                requestRepaint();
+            }
+        }
+        Widget::mouseDown(col, row, button, modifiers);
+    }
+
+    void Terminal::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+        if (modifiers == 0) {
+            if (button == ui::MouseButton::Left) {
+                selectionStart_ = ui::Point(-1, -1);
+                // TODO inform the renderer that selection has been
+            }
+        }
+        Widget::mouseUp(col, row, button, modifiers);
+    }
+
+    void Terminal::mouseMove(int col, int row, ui::Key modifiers) {
+        if (modifiers == 0) {
+            if (selectionStart_.x > 0) {
+                selection_ = ui::Selection::Create(selectionStart_, ui::Point(col, row));
+                requestRepaint();
+            }
+        }
+        Widget::mouseMove(col, row, modifiers);
+    }
+
 
 } // namespace vterm

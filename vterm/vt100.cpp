@@ -386,7 +386,7 @@ namespace vterm {
             sendMouseEvent(mouseLastButton_, col, row, 'M');
             LOG(SEQ) << "Button " << button << " down at " << col << ";" << row;
         }
-        Terminal::mouseUp(col, row, button, modifiers);
+        Terminal::mouseDown(col, row, button, modifiers);
     }
 
     void VT100::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {

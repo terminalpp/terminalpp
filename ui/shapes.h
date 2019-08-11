@@ -222,7 +222,7 @@ namespace ui {
 
 		/** Creates a simple brush with only a background color. 
 
-		    T he fill character is set to NUL and its color to None. This means that if the background color is transparent, the contents of the cell will be kept as is. 
+		    The fill character is set to NUL and its color to None. This means that if the background color is transparent, the contents of the cell will be kept as is. 
 		 */
 		Brush(Color color) :
 			color(color),

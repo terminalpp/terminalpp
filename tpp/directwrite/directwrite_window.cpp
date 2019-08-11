@@ -217,7 +217,7 @@ namespace tpp {
 				if (fw != 0 || fh != 0) {
 					window->frameWidthPx_ = fw;
 					window->frameHeightPx_ = fh;
-					SetWindowPos(hWnd, HWND_TOP, cs.x, cs.y, cs.cx + fw, cs.cy + fh, SWP_NOZORDER);
+					SetWindowPos(hWnd, HWND_TOP, cs.x, cs.y, cs.cx + fw, cs.cy + fh, SWP_NOZORDER | SWP_NOACTIVATE);
 				}
 				break;
 			}

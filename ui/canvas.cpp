@@ -82,20 +82,30 @@ namespace ui {
 		Point p;
 		for (p.y = rect.top(); p.y < rect.bottom(); ++p.y) {
 			for (p.x = rect.left(); p.x < rect.right(); ++p.x) {
-				if (Cell * c = at(p)) {
-                    *c << Background(brush.color.blendOver(c->background()));
-                    if (brush.fill == helpers::Char::NUL) {
-                        *c << Foreground(brush.color.blendOver(c->foreground()))
-                           << DecorationColor(brush.color.blendOver(c->decorationColor()));
-                    } else {
-                        *c << brush.fill 
-                           << Foreground(brush.fillColor)
-                           << brush.fillFont; 
-                    }
-				}
+                fill(at(p), brush);
 			}
 		}
 	}
+
+    void Canvas::fill(Selection const & sel, Brush const & brush) {
+		// don't do anything if the brush is empty
+		if (brush == Brush::None())
+			return;
+        if (sel.start().y + 1 == sel.end().y) {
+            Point p = sel.start();
+            for (; p.x < sel.end().x; ++p.x)
+                fill(at(p), brush);
+        } else {
+            Point p = sel.start();
+            for (; p.x < width_; ++p.x)
+                fill(at(p), brush);
+            for (p.y = sel.start().y + 1; p.y < sel.end().y - 1; ++p.y)
+                for (p.x = 0; p.x < width_; ++p.x)
+                    fill(at(p), brush);
+            for (p.y = sel.end().y - 1, p.x = 0; p.x < sel.end().x; ++p.x)
+                fill(at(p), brush);
+        }
+    }
 
 	void Canvas::textOut(Point start, std::string const& text, Color color, Font font) {
 		char const* i = text.c_str();
@@ -109,6 +119,21 @@ namespace ui {
 			++start.x;
 		}
 	}
+
+    void Canvas::fill(Cell * cell, Brush const & brush) {
+        if (!cell)
+            return;
+        *cell << Background(brush.color.blendOver(cell->background()));
+        if (brush.fill == helpers::Char::NUL) {
+            *cell << Foreground(brush.color.blendOver(cell->foreground()))
+                << DecorationColor(brush.color.blendOver(cell->decorationColor()));
+        } else {
+            *cell << brush.fill 
+                << Foreground(brush.fillColor)
+                << brush.fillFont; 
+        }
+
+    }
 
 
 

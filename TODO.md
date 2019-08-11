@@ -8,6 +8,7 @@
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
 
+- set window title (& icon?)
 - the ui sometimes does not propagate mouse events right and crashes
 
 ## Bugs and missing features

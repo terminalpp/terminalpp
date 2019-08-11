@@ -4,6 +4,7 @@
 
 #include "ui/canvas.h"
 #include "ui/widget.h"
+#include "ui/selection.h"
 
 #include "pty.h"
 
@@ -215,6 +216,12 @@ namespace vterm {
             requestRepaint();
         }
 
+        // mouse events to deal with the selection
+
+        void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        void mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        void mouseMove(int col, int row, ui::Key modifiers) override;
+
         // terminal interface
 
         void requestRepaint() {
@@ -263,6 +270,9 @@ namespace vterm {
 
         /* Terminal title */
         std::string title_;
+
+        ui::Point selectionStart_;
+        ui::Selection selection_;
 
     }; // vterm::Terminal
 
