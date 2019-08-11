@@ -18,21 +18,19 @@ namespace tpp {
     class Window : public ui::Renderer {
     public:
 
-        virtual ~Window() {
-            detach();
-        }
+        using ui::Renderer::renderable;
+        using ui::Renderer::setRenderable;
 
         virtual void show() = 0;
         virtual void hide() = 0;
         virtual void close() = 0;
 
-        virtual void paint(ui::RectEvent & e) = 0;
+        //void paint(ui::RectEvent & e) override;
 
         /** Shorthand to repaint the entire window. 
          */
-        virtual void repaint() {
-            ui::RectEvent e(nullptr, ui::Rect(cols_, rows_));
-            paint(e);
+        void repaint() {
+            render(ui::Rect(cols_, rows_));
         }
 
         int cols() const override {
@@ -61,18 +59,6 @@ namespace tpp {
                 updateZoom(value);
         }
 
-        ui::RootWindow * rootWindow() const {
-            return rootWindow_;
-        }
-
-        void setRootWindow(ui::RootWindow * rootWindow) {
-            if (rootWindow_ != rootWindow) {
-                detach();
-                attach(rootWindow);
-            }
-        }
-
-
     protected:
 
 		Window(std::string const & title, int cols, int rows, unsigned cellWidthPx, unsigned cellHeightPx) :
@@ -85,33 +71,15 @@ namespace tpp {
 			cellHeightPx_(cellHeightPx),
 			zoom_(1.0),
 			fullscreen_(false),
-            title_(title),
-            rootWindow_(nullptr) {
+            title_(title) {
 		}
 
-        void detach() {
-            if (rootWindow_ == nullptr)
-                return;
-            rootWindow_->rendererDetached(this);
-            rootWindow_->onRepaint -= HANDLER(Window::paint, this);
-            rootWindow_->onSetClipboard -= HANDLER(Window::setClipboard, this);
-            rootWindow_ = nullptr;
-        }
-
-        void attach(ui::RootWindow * rootWindow) {
-            if (rootWindow == nullptr)
-                return;
-            ASSERT(rootWindow_ == nullptr);
-            rootWindow_ = rootWindow;
-            rootWindow_->onRepaint += HANDLER(Window::paint, this);
-            rootWindow_->onSetClipboard += HANDLER(Window::setClipboard, this);
-            rootWindow_->rendererAttached(this);
-            rootWindow_->rendererResized(this, cols_, rows_);
-        }
+        /** The actual paint method. 
+         */
+        virtual void paint() = 0;
 
         virtual void setFocus(bool value) {
-            if (rootWindow_)
-                rootWindow_->setFocus(value);
+            ui::Renderer::setFocus(value);
         }
 
 		void convertMouseCoordsToCells(int & x, int & y) {
@@ -129,8 +97,8 @@ namespace tpp {
         virtual void updateSize(int cols, int rows) {
             cols_ = cols;
             rows_ = rows;
-            if (rootWindow_)
-                rootWindow_->rendererResized(this, cols_, rows_);
+            // notify the rendered root window
+            ui::Renderer::updateSize(cols, rows);
         }
 
         virtual void updateFullscreen(bool value) {
@@ -144,36 +112,27 @@ namespace tpp {
         // interface to ui's root element
 
         virtual void mouseDown(int x, int y, ui::MouseButton button) {
-            if (rootWindow_) {
-                convertMouseCoordsToCells(x, y);
-                rootWindow_->mouseDown(x, y, button, activeModifiers_);
-            }
+            convertMouseCoordsToCells(x, y);
+            ui::Renderer::mouseDown(x, y, button, activeModifiers_);
         }
 
         virtual void mouseUp(int x, int y, ui::MouseButton button) {
-            if (rootWindow_) {
-                convertMouseCoordsToCells(x, y);
-                rootWindow_->mouseUp(x, y, button, activeModifiers_);
-            }
+            convertMouseCoordsToCells(x, y);
+            ui::Renderer::mouseUp(x, y, button, activeModifiers_);
         }
 
         virtual void mouseWheel(int x, int y, int by) {
-            if (rootWindow_) {
-                convertMouseCoordsToCells(x, y);
-                rootWindow_->mouseWheel(x, y, by, activeModifiers_);
-            }
+            convertMouseCoordsToCells(x, y);
+            ui::Renderer::mouseWheel(x, y, by, activeModifiers_);
         }
 
         virtual void mouseMove(int x, int y) {
-            if (rootWindow_) {
-                convertMouseCoordsToCells(x, y);
-                rootWindow_->mouseMove(x, y, activeModifiers_);
-            }
+            convertMouseCoordsToCells(x, y);
+            ui::Renderer::mouseMove(x, y, activeModifiers_);
         }
 
         virtual void keyChar(helpers::Char c) {
-            if (rootWindow_)
-                rootWindow_->keyChar(c);
+            ui::Renderer::keyChar(c);
         }
 
         virtual void keyDown(ui::Key key) {
@@ -191,23 +150,15 @@ namespace tpp {
                     setZoom(std::max(1.0, zoom() / 1.25));
             } else if (key == SHORTCUT_PASTE) {
                 requestClipboardPaste();
-            } else if (key != ui::Key::Invalid && rootWindow_) {
-                rootWindow_->keyDown(key);
+            } else if (key != ui::Key::Invalid) {
+                ui::Renderer::keyDown(key);
             }
         }
 
         virtual void keyUp(ui::Key key) {
     		activeModifiers_ = ui::Key(ui::Key::Invalid, key.modifiers());
-            if (key != ui::Key::Invalid && rootWindow_)
-                rootWindow_->keyUp(key);
-        }
-
-        virtual void requestClipboardPaste() = 0;
-
-        virtual void setClipboard(ui::StringEvent & e) = 0;
-
-        void paste(std::string const & clipboard) {
-            rootWindow_->paste(clipboard);
+            if (key != ui::Key::Invalid)
+                ui::Renderer::keyUp(key);
         }
 
 		int cols_;
@@ -224,8 +175,6 @@ namespace tpp {
 
         std::string title_;
 
-        ui::RootWindow * rootWindow_;
-
         ui::Key activeModifiers_;
     };
 
@@ -237,14 +186,11 @@ namespace tpp {
             Window(title, cols, rows, cellWidthPx, baseCellHeightPx) {
         }
 
-		void render() {
-			if (rootWindow_ != nullptr)
-				render(rootWindow_);
-		}
-
         /** Draws the provided buffer in the window. 
          */
-        void render(ui::RootWindow * window) {
+        void paint() override {
+            if (!attached())
+                return;
             #define initializeDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->initializeDraw(__VA_ARGS__)
             #define initializeGlyphRun(...) reinterpret_cast<IMPLEMENTATION*>(this)->initializeGlyphRun(__VA_ARGS__)
             #define addGlyph(...) reinterpret_cast<IMPLEMENTATION*>(this)->addGlyph(__VA_ARGS__)
@@ -261,7 +207,7 @@ namespace tpp {
             {
                 initializeDraw();
                 // Lock the buffer so that the drawing method has exclusive access
-                ui::Canvas::Buffer::Ptr buffer = window->buffer(/* priority */ true);
+                ui::Canvas::Buffer::Ptr buffer = bufferToRender();
                 // reset the status cell and call selectors on the font, colors and attributes
                 statusCell_ = buffer->at(0,0);
                 setFont(statusCell_.font());
@@ -297,7 +243,7 @@ namespace tpp {
                     drawGlyphRun();
                 }
                 // draw the cursor by creating a cell corresponding to how the cursor should be displayed
-                ui::Cursor const & cursor = window->cursor();
+                ui::Cursor const & cursor = cursorToRender();
                 if (cursor.visible == true && buffer->at(cursor.pos).isCursor()) {
                     initializeGlyphRun(cursor.pos.x, cursor.pos.y);
                     statusCell_ << cursor.codepoint 
@@ -329,7 +275,6 @@ namespace tpp {
             #undef drawGlyphRun
             #undef finalizeDraw
         }
-
 
         ui::Cell statusCell_;
     };

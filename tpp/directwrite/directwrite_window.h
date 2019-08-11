@@ -34,8 +34,8 @@ namespace tpp {
 
             Instead of invalidating the rectange, WM_PAINT must explicitly be sent, as it may happen that different thread is already repainting the window, and therefore the request will be silenced (the window region is validated at the end of WM_PAINT). 
          */
-		void paint(ui::RectEvent & e) override {
-            MARK_AS_UNUSED(e);
+		void render(ui::Rect const & rect) override {
+            MARK_AS_UNUSED(rect);
             PostMessage(hWnd_, WM_PAINT, 0, 0);
 		}
 
@@ -66,9 +66,13 @@ namespace tpp {
 
         void updateZoom(double value) override;
 
-        void requestClipboardPaste() override;
+        // renderer interface
 
-        void setClipboard(ui::StringEvent & e) override;
+        void setClipboard(std::string const & contents) override;
+        void setSelection(std::string const & contents) override;
+        void invalidateSelection() override;
+        void requestClipboardPaste() override;
+        void requestSelectionPaste() override;
 
     private:
         friend class DirectWriteApplication;

@@ -29,20 +29,18 @@ namespace tpp {
 
             Instead of invalidating the rectange, WM_PAINT must explicitly be sent, as it may happen that different thread is already repainting the window, and therefore the request will be silenced (the window region is validated at the end of WM_PAINT). 
          */
-		void paint(ui::RectEvent & e) override {
-            MARK_AS_UNUSED(e);
+		void render(ui::Rect const & rect) override {
+            MARK_AS_UNUSED(rect);
             // trigger a refresh
-            XEvent xe;
-            memset(&xe, 0, sizeof(XEvent));
-            xe.xexpose.type = Expose;
-            xe.xexpose.display = display_;
-            xe.xexpose.window = window_;
-            X11Application::Instance()->xSendEvent(this, xe, ExposureMask);
+            XEvent e;
+            memset(&e, 0, sizeof(XEvent));
+            e.xexpose.type = Expose;
+            e.xexpose.display = display_;
+            e.xexpose.window = window_;
+            X11Application::Instance()->xSendEvent(this, e, ExposureMask);
 		}
 
     protected:
-
-        friend class RendererWindow<X11Window>;
 
         X11Window(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);
 
@@ -65,9 +63,17 @@ namespace tpp {
 
         void updateZoom(double value) override;
 
-        void requestClipboardPaste() override;
+        // renderer interface 
 
-        void setClipboard(ui::StringEvent & e) override;
+        void setClipboard(std::string const & contents) override;
+        void setSelection(std::string const & contents) override;
+        void invalidateSelection() override;
+        void requestClipboardPaste() override;
+        void requestSelectionPaste() override;
+
+    private:
+
+        friend class RendererWindow<X11Window>;
 
         void updateXftStructures(int cols) {
             delete text_;

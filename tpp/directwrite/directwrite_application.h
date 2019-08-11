@@ -54,6 +54,9 @@ namespace tpp {
 
 		static wchar_t const* const WindowClassName_;
 
+        /** Holds the selection so that it can be pasted when requested by the windows. 
+         */
+        std::string selection_;
 
     }; // tpp::DirectWriteApplication
 

@@ -40,7 +40,7 @@ namespace ui {
     Canvas::~Canvas() {
         if (--buffer_.lockDepth_ == 0) {
             buffer_.lock_.unlock();
-            visibleRegion_.root->repaint(
+            visibleRegion_.root->render(
                 Rect(visibleRegion_.region.width(), visibleRegion_.region.height()) + visibleRegion_.windowOffset
             );
         }

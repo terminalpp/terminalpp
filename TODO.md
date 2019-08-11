@@ -1,6 +1,7 @@
 ﻿# V0.2
 
-- add selection
+- add selection (selection update mechanism, clearing selection etc.)
+- check that bypass still works
 - determine the closing mechanism (ie. session v2)
 - add the extra attributes drawing
 - terminal should have an event to be called when a line is to be scrolled out

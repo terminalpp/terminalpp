@@ -40,7 +40,7 @@ namespace ui {
 
 	void Widget::setClipboard(std::string const & contents) {
 		if (visibleRegion_.valid())
-			visibleRegion_.root->setClipboard(contents);
+			visibleRegion_.root->Renderable::setClipboard(contents);
 	}
 
 

@@ -111,6 +111,37 @@ namespace tpp {
 		Window::updateSizePx(widthPx_, heightPx_);
 	}
 
+    void DirectWriteWindow::setClipboard(std::string const & contents) {
+		if (OpenClipboard(nullptr)) {
+			EmptyClipboard();
+			// encode the string into UTF16 and get the size of the data we need
+			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+			helpers::utf16_string str = helpers::UTF8toUTF16(contents);
+			// the str is null-terminated
+			size_t size = (str.size() + 1) * 2;
+			HGLOBAL clipboard = GlobalAlloc(0, size);
+			if (clipboard) {
+				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clipboard));
+				if (data) {
+					memcpy(data, str.c_str(), size);
+					GlobalUnlock(clipboard);
+					SetClipboardData(CF_UNICODETEXT, clipboard);
+				}
+			}
+			CloseClipboard();
+		}
+	}
+
+	void DirectWriteWindow::setSelection(std::string const & selection) {
+		MARK_AS_UNUSED(selection);
+		NOT_IMPLEMENTED;
+
+	}
+
+	void DirectWriteWindow::invalidateSelection() {
+		NOT_IMPLEMENTED;
+	}
+
 	void DirectWriteWindow::requestClipboardPaste() {
 		std::string result;
 		if (OpenClipboard(nullptr)) {
@@ -129,25 +160,10 @@ namespace tpp {
 		    paste(result);
 	}
 
-    void DirectWriteWindow::setClipboard(ui::StringEvent & e) {
-		if (OpenClipboard(nullptr)) {
-			EmptyClipboard();
-			// encode the string into UTF16 and get the size of the data we need
-			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-			helpers::utf16_string str = helpers::UTF8toUTF16(*e);
-			// the str is null-terminated
-			size_t size = (str.size() + 1) * 2;
-			HGLOBAL clipboard = GlobalAlloc(0, size);
-			if (clipboard) {
-				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clipboard));
-				if (data) {
-					memcpy(data, str.c_str(), size);
-					GlobalUnlock(clipboard);
-					SetClipboardData(CF_UNICODETEXT, clipboard);
-				}
-			}
-			CloseClipboard();
-		}
+	void DirectWriteWindow::requestSelectionPaste() {
+		DirectWriteApplication * app = DirectWriteApplication::Instance();
+		if (!app->selection_.empty())
+		    paste(app->selection_);
 	}
 
 	void DirectWriteWindow::updateDirectWriteStructures(int cols) {
@@ -277,7 +293,7 @@ namespace tpp {
 			/* Repaint of the window is requested. */
 			case WM_PAINT: {
 				ASSERT(window != nullptr) << "Attempt to paint unknown window";
-				window->render();
+				window->paint();
 				break;
 			}
 			/* No need to use WM_UNICHAR since WM_CHAR is already unicode aware */

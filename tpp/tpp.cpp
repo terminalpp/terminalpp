@@ -159,7 +159,7 @@ int main(int argc, char* argv[]) {
 				#endif
 				);
 
-		w->setRootWindow(rw);
+		w->setRenderable(rw);
 		w->show();
 		vt100->setFocus(true);
 

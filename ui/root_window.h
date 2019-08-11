@@ -1,20 +1,12 @@
 #pragma once
 
 #include "container.h"
+#include "renderer.h"
 
 namespace ui {
 
-    /** Base class for user interface renderers.
-     */
-    class Renderer {
-    public:
-        virtual int cols() const = 0;
-        virtual int rows() const = 0;
-
-    }; // ui::Renderer
-
     /**  */
-    class RootWindow : public Container {
+    class RootWindow : public Container, public Renderable {
     public:
 
         using Widget::setFocus;
@@ -30,52 +22,11 @@ namespace ui {
             visibleRegion_ = Canvas::VisibleRegion{this};
 		}
 
-        // events 
-
-        /** Triggered by the root window when given rectangle of its buffer has changed and should be repainted. 
-         */
-        Event<RectEvent> onRepaint;
-
-        /** Triggered when clipboard should be set to the given string. 
-         
-            The renderer(s) should listen to the event and update their clipboard accordingly.
-         */ 
-        Event<StringEvent> onSetClipboard;
-
-        virtual void rendererAttached(Renderer * renderer) {
-            MARK_AS_UNUSED(renderer);
-
-        }
-
-        virtual void rendererDetached(Renderer * renderer) {
-            MARK_AS_UNUSED(renderer);
-        }
-
-        virtual void rendererResized(Renderer * renderer, int width, int height) {
-            MARK_AS_UNUSED(renderer);
-            resize(width, height);
-        }
-
-        void updateFocused(bool value) override {
-            // first make sure the focus in/out 
-            Container::updateFocused(value);
-            // if there is keyboard focused widget, update its state as well
-            if (keyboardFocus_ != nullptr)
-                keyboardFocus_->updateFocused(value);
-        }
-
-        void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
-        void mouseUp(int col, int row, MouseButton button, Key modifiers) override;
-        void mouseWheel(int col, int row, int by, Key modifiers) override;
-        void mouseMove(int col, int row, Key modifiers) override;
-        void keyChar(helpers::Char c) override;
-        void keyDown(Key k) override;
-        void keyUp(Key k) override;
-        void paste(std::string const & contents) override;
+        // renderable (and widget where appropriate)
 
         /** Locks the backing buffer and returns it in a RAII smart pointer.
          */
-        Canvas::Buffer::Ptr buffer(bool priority = false) {
+        Canvas::Buffer::Ptr buffer(bool priority = false) override {
             if (priority)
                 buffer_.priorityLock();
             else 
@@ -85,8 +36,35 @@ namespace ui {
 
         /** Returns the cursor information, i.e. where & how to draw the cursor.
          */
-        Cursor const & cursor() const {
+        Cursor const & cursor() const override {
             return cursor_;
+        }
+
+        void rendererResized(int width, int height) override {
+            resize(width, height);
+        }
+
+        void rendererFocused(bool value) override {
+            setFocus(value);
+        }
+
+        void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
+        void mouseUp(int col, int row, MouseButton button, Key modifiers) override;
+        void mouseWheel(int col, int row, int by, Key modifiers) override;
+        void mouseMove(int col, int row, Key modifiers) override;
+
+        void keyChar(helpers::Char c) override;
+        void keyDown(Key k) override;
+        void keyUp(Key k) override;
+
+        void paste(std::string const & contents) override;
+
+        void updateFocused(bool value) override {
+            // first make sure the focus in/out 
+            Container::updateFocused(value);
+            // if there is keyboard focused widget, update its state as well
+            if (keyboardFocus_ != nullptr)
+                keyboardFocus_->updateFocused(value);
         }
 
     protected:
@@ -97,14 +75,6 @@ namespace ui {
 
 	    static constexpr unsigned MOUSE_DOUBLE_CLICK_MAX_INTERVAL = 300;
 
-        /** Triggers the onRepaint event. 
-         
-            Called by the canvas destructor when last (and therefore the largest) canvas object is destroyed after the lock is released. 
-         */
-        virtual void repaint(Rect rect) {
-            trigger(onRepaint, rect);
-        }
-
         void invalidateContents() override;
 
         void updateSize(int width, int height) override {
@@ -114,10 +84,6 @@ namespace ui {
                 buffer_.resize(width, height);
             }
             Container::updateSize(width, height);
-        }
-
-        virtual void setClipboard(std::string const & value) {
-            trigger(onSetClipboard, value);
         }
 
         /** Called by widget that wants to obtain keyboard focus. 
@@ -168,6 +134,10 @@ namespace ui {
 
         friend class Canvas;
 
+        /** Attached renderer. 
+         */
+        Renderer * renderer_;
+
         Canvas::Buffer buffer_;
 
         Widget * keyboardFocus_;
@@ -181,6 +151,7 @@ namespace ui {
 		size_t mouseDoubleClickPrevious_;
 
         Cursor cursor_;
+
 
 
     }; 

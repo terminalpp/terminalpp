@@ -128,17 +128,31 @@ namespace tpp {
 		Window::updateSizePx(widthPx_, heightPx_);
     }
 
+    void X11Window::setClipboard(std::string const & contents) {
+        X11Application * app = X11Application::Instance();
+        // let the app manage the clipboard requests from other windows now
+        app->clipboard_ = contents;
+        // inform X that we own the clipboard selection
+        XConvertSelection(display_, app->primaryName_, app->formatStringUTF8_, app->primaryName_, window_, CurrentTime);
+    }
+
+    void X11Window::setSelection(std::string const & contents) {
+        MARK_AS_UNUSED(contents);
+        NOT_IMPLEMENTED;
+    }
+
+    void X11Window::invalidateSelection() {
+        NOT_IMPLEMENTED;
+    }
+
     void X11Window::requestClipboardPaste() {
         X11Application * app = X11Application::Instance();
 		XConvertSelection(display_, app->clipboardName_, app->formatStringUTF8_, app->clipboardName_, window_, CurrentTime);
     }
 
-    void X11Window::setClipboard(ui::StringEvent & e) {
+    void X11Window::requestSelectionPaste() {
         X11Application * app = X11Application::Instance();
-        // let the app manage the clipboard requests from other windows now
-        app->clipboard_ = *e;
-        // inform X that we own the clipboard selection
-        XConvertSelection(display_, app->primaryName_, app->formatStringUTF8_, app->primaryName_, window_, CurrentTime);
+		XConvertSelection(display_, app->primaryName_, app->formatStringUTF8_, app->primaryName_, window_, CurrentTime);
     }
 
     void X11Window::setIcon(unsigned long * icon) {
@@ -298,27 +312,23 @@ namespace tpp {
             case Expose: 
                 if (e.xexpose.count != 0)
                     break;
-                window->render();
+                window->paint();
                 break;
 			/** Handles when the window gets focus. 
 			 */
 			case FocusIn:
-            /*
 				if (e.xfocus.mode == NotifyGrab || e.xfocus.mode == NotifyUngrab)
 					break;
-				ASSERT(tw != nullptr);
-				window->focusChangeMessageReceived(true);
-                */
+				ASSERT(window != nullptr);
+				window->setFocus(true);
 				break;
 			/** Handles when the window loses focus. 
 			 */
 			case FocusOut:
-            /*
 				if (e.xfocus.mode == NotifyGrab || e.xfocus.mode == NotifyUngrab)
 					break;
-				ASSERT(tw != nullptr);
-				window->focusChangeMessageReceived(false);
-                */
+				ASSERT(window != nullptr);
+				window->setFocus(false);
 				break;
             /* Handles window resize, which should change the terminal size accordingly. 
              */  
