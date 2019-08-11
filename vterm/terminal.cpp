@@ -198,7 +198,10 @@ namespace vterm {
     void Terminal::paint(ui::Canvas & canvas) {
         Buffer::Ptr buffer = this->buffer(/* priority */true);
         canvas.copyBuffer(0,0,* buffer);
-        canvas.setCursor(buffer->cursor());
+        if (focused())
+            canvas.setCursor(buffer->cursor());
+        else
+            canvas.setCursor(ui::Cursor::Invisible());
     }
 
 } // namespace vterm

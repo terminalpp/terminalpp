@@ -7,7 +7,7 @@ namespace ui {
 	
 	void Widget::setFocus(bool value) {
 		if (focused_ != value && visibleRegion_.valid())
-			visibleRegion_.root->focusWidget(this); 
+			visibleRegion_.root->focusWidget(this, value); 
 	}
 
 

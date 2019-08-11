@@ -17,6 +17,7 @@ namespace ui {
     class RootWindow : public Container {
     public:
 
+        using Widget::setFocus;
         using Container::setLayout;
         using Container::addChild;
         using Widget::repaint;
@@ -41,8 +42,6 @@ namespace ui {
          */ 
         Event<StringEvent> onSetClipboard;
 
-
-
         virtual void rendererAttached(Renderer * renderer) {
             MARK_AS_UNUSED(renderer);
 
@@ -55,6 +54,14 @@ namespace ui {
         virtual void rendererResized(Renderer * renderer, int width, int height) {
             MARK_AS_UNUSED(renderer);
             resize(width, height);
+        }
+
+        void updateFocused(bool value) override {
+            // first make sure the focus in/out 
+            Container::updateFocused(value);
+            // if there is keyboard focused widget, update its state as well
+            if (keyboardFocus_ != nullptr)
+                keyboardFocus_->updateFocused(value);
         }
 
         void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
@@ -113,12 +120,28 @@ namespace ui {
             trigger(onSetClipboard, value);
         }
 
-        void focusWidget(Widget * widget) {
-            if (keyboardFocus_ != nullptr)
-                keyboardFocus_->updateFocused(false);
-            keyboardFocus_ = widget;
-            if (keyboardFocus_ != nullptr)
-                keyboardFocus_->updateFocused(true);
+        /** Called by widget that wants to obtain keyboard focus. 
+         
+            TODO what to do if widget is removed from the hierarchy while focused?
+         */
+        void focusWidget(Widget * widget, bool value) {
+            ASSERT(widget != nullptr);
+            // if the widget is not the root window, update its focus accordingly and set the focused
+            if (widget != this) {
+                if (focused()) {
+                    ASSERT(keyboardFocus_ == widget || value);
+                    if (keyboardFocus_ != nullptr) 
+                        keyboardFocus_->updateFocused(false);
+                    keyboardFocus_ = value ? widget : nullptr;
+                    if (keyboardFocus_ != nullptr)
+                        keyboardFocus_->updateFocused(true);
+                } else {
+                    keyboardFocus_ = value ? widget : nullptr;
+                }
+            // if the widget is root window, then just call own updateFocused method, which sets the focus of the root window and updates the focus of the active widget, if any
+         } else {
+                updateFocused(value);
+            }
         }
 
 		Widget* mouseFocusWidget(int col, int row);

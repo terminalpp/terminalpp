@@ -5,6 +5,11 @@
         "chrono": "cpp",
         "limits": "cpp",
         "mutex": "cpp",
-        "atomic": "cpp"
+        "atomic": "cpp",
+        "functional": "cpp",
+        "system_error": "cpp",
+        "type_traits": "cpp",
+        "xlocmon": "cpp",
+        "xtr1common": "cpp"
     }
 }

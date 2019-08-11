@@ -210,6 +210,11 @@ namespace vterm {
             ui::Widget::updateSize(width, height);
         }
 
+        void updateFocused(bool value) override {
+            Widget::updateFocused(value);
+            requestRepaint();
+        }
+
         // terminal interface
 
         void requestRepaint() {

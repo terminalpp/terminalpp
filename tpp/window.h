@@ -109,6 +109,11 @@ namespace tpp {
             rootWindow_->rendererResized(this, cols_, rows_);
         }
 
+        virtual void setFocus(bool value) {
+            if (rootWindow_)
+                rootWindow_->setFocus(value);
+        }
+
 		void convertMouseCoordsToCells(int & x, int & y) {
 			x = x / cellWidthPx_;
 			y = y / cellHeightPx_;

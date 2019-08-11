@@ -221,6 +221,18 @@ namespace tpp {
 				}
 				break;
 			}
+			/** Window gains focus. 
+			 */
+			case WM_SETFOCUS:
+				if (window != nullptr)
+    				window->setFocus(true);
+				break;
+			/** Window loses focus. 
+			 */
+			case WM_KILLFOCUS:
+				if (window != nullptr)
+    				window->setFocus(false);
+				break;
 			/* Called when the window is resized interactively by the user. Makes sure that the window size snaps to discrete terminal sizes. */
 			case WM_SIZING: {
 				RECT* winRect = reinterpret_cast<RECT*>(lParam);

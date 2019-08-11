@@ -1,8 +1,6 @@
 ﻿# V0.2
 
-- add events for the terminal (notification, etc.)
 - add selection
-- add focus in/out events to root window
 - determine the closing mechanism (ie. session v2)
 - add the extra attributes drawing
 - terminal should have an event to be called when a line is to be scrolled out
@@ -10,16 +8,7 @@
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
 
-
-
-
-
-
-
-
-
-
-
+- the ui sometimes does not propagate mouse events right and crashes
 
 ## Bugs and missing features
 
