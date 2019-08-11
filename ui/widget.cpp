@@ -38,4 +38,10 @@ namespace ui {
 		}
 	}
 
+	void Widget::setClipboard(std::string const & contents) {
+		if (visibleRegion_.valid())
+			visibleRegion_.root->setClipboard(contents);
+	}
+
+
 } // namespace ui

@@ -94,6 +94,7 @@ namespace tpp {
                 return;
             rootWindow_->rendererDetached(this);
             rootWindow_->onRepaint -= HANDLER(Window::paint, this);
+            rootWindow_->onSetClipboard -= HANDLER(Window::setClipboard, this);
             rootWindow_ = nullptr;
         }
 
@@ -103,6 +104,7 @@ namespace tpp {
             ASSERT(rootWindow_ == nullptr);
             rootWindow_ = rootWindow;
             rootWindow_->onRepaint += HANDLER(Window::paint, this);
+            rootWindow_->onSetClipboard += HANDLER(Window::setClipboard, this);
             rootWindow_->rendererAttached(this);
             rootWindow_->rendererResized(this, cols_, rows_);
         }
@@ -196,6 +198,8 @@ namespace tpp {
         }
 
         virtual void requestClipboardPaste() = 0;
+
+        virtual void setClipboard(ui::StringEvent & e) = 0;
 
         void paste(std::string const & clipboard) {
             rootWindow_->paste(clipboard);

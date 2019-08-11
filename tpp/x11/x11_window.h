@@ -67,6 +67,8 @@ namespace tpp {
 
         void requestClipboardPaste() override;
 
+        void setClipboard(ui::StringEvent & e) override;
+
         void updateXftStructures(int cols) {
             delete text_;
             text_ = new XftCharSpec[cols];

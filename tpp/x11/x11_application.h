@@ -72,6 +72,10 @@ namespace tpp {
 		Atom motifWmHints_;
 		Atom netWmIcon_;
 
+        /* Clipboard contents if the application is the owner of the clipboard selection. 
+         */
+        std::string clipboard_;
+
     }; // X11Application
 
 

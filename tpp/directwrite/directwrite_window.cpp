@@ -129,6 +129,27 @@ namespace tpp {
 		    paste(result);
 	}
 
+    void DirectWriteWindow::setClipboard(ui::StringEvent & e) {
+		if (OpenClipboard(nullptr)) {
+			EmptyClipboard();
+			// encode the string into UTF16 and get the size of the data we need
+			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+			helpers::utf16_string str = helpers::UTF8toUTF16(*e);
+			// the str is null-terminated
+			size_t size = (str.size() + 1) * 2;
+			HGLOBAL clipboard = GlobalAlloc(0, size);
+			if (clipboard) {
+				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clipboard));
+				if (data) {
+					memcpy(data, str.c_str(), size);
+					GlobalUnlock(clipboard);
+					SetClipboardData(CF_UNICODETEXT, clipboard);
+				}
+			}
+			CloseClipboard();
+		}
+	}
+
 	void DirectWriteWindow::updateDirectWriteStructures(int cols) {
 		delete[] glyphIndices_;
 		delete[] glyphAdvances_;

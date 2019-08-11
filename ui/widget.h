@@ -362,6 +362,12 @@ namespace ui {
 			trigger(onPaste, contents);
 		}
 
+		/** Sets the clipboard contents to the provided value. 
+		 
+		    Passes the information to the root window which informs the renderers who are ultimately responsible for the setting. 
+		 */
+		void setClipboard(std::string const & contents);
+
 		/** Paints given child.
 
 		    Expects the clientCanvas of the parent as the second argument. In cases where border is 0, this can be the widget's main canvas as well. In other cases the getClientCanvas method should be used to obtain the client canvas first. 

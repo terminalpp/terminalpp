@@ -35,6 +35,12 @@ namespace ui {
          */
         Event<RectEvent> onRepaint;
 
+        /** Triggered when clipboard should be set to the given string. 
+         
+            The renderer(s) should listen to the event and update their clipboard accordingly.
+         */ 
+        Event<StringEvent> onSetClipboard;
+
 
 
         virtual void rendererAttached(Renderer * renderer) {
@@ -101,6 +107,10 @@ namespace ui {
                 buffer_.resize(width, height);
             }
             Container::updateSize(width, height);
+        }
+
+        virtual void setClipboard(std::string const & value) {
+            trigger(onSetClipboard, value);
         }
 
         void focusWidget(Widget * widget) {

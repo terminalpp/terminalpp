@@ -1,7 +1,6 @@
 ﻿# V0.2
 
 - add events for the terminal (notification, etc.)
-- add clipboard setting
 - add selection
 - add focus in/out events to root window
 - determine the closing mechanism (ie. session v2)

@@ -1,4 +1,7 @@
 #if (defined ARCH_UNIX)
+
+#include "helpers/log.h"
+
 #include "x11_window.h"
 
 namespace tpp {
@@ -128,6 +131,14 @@ namespace tpp {
     void X11Window::requestClipboardPaste() {
         X11Application * app = X11Application::Instance();
 		XConvertSelection(display_, app->clipboardName_, app->formatStringUTF8_, app->clipboardName_, window_, CurrentTime);
+    }
+
+    void X11Window::setClipboard(ui::StringEvent & e) {
+        X11Application * app = X11Application::Instance();
+        // let the app manage the clipboard requests from other windows now
+        app->clipboard_ = *e;
+        // inform X that we own the clipboard selection
+        XConvertSelection(display_, app->primaryName_, app->formatStringUTF8_, app->primaryName_, window_, CurrentTime);
     }
 
     void X11Window::setIcon(unsigned long * icon) {
@@ -427,8 +438,7 @@ namespace tpp {
 			/** Called when the clipboard contents is requested by an outside app. 
 			 */
 			case SelectionRequest: {
-                /*
-				X11Application* app = Application::Instance<X11Application>();
+				X11Application* app = X11Application::Instance();
 				XSelectionEvent response;
 				response.type = SelectionNotify;
 				response.requestor = e.xselectionrequest.requestor;
@@ -452,7 +462,9 @@ namespace tpp {
 					response.property = e.xselectionrequest.property;
 				// otherwise, if UTF8_STRING, or a STRING is requested, we just send what we have 
 				} else if (response.target == app->formatString_ || response.target == app->formatStringUTF8_) {
-                    std::string clipboard = (response.selection == app->clipboardName_) ? app->clipboard_ : window->terminal()->getText(window->selectedArea());
+                    ASSERT(response.selection == app->clipboardName_) << "Selection not yet supported.";    
+                    std::string clipboard = app->clipboard_;
+                    //std::string clipboard = (response.selection == app->clipboardName_) ? app->clipboard_ : window->terminal()->getText(window->selectedArea());
 					XChangeProperty(
 						window->display_,
 						e.xselectionrequest.requestor,
@@ -474,7 +486,6 @@ namespace tpp {
 					reinterpret_cast<XEvent*>(&response)
 				))
 					LOG << "Error sending selection notify";
-                    */
 				break;
 			}
 			/** If we lose ownership, clear the clipboard contents with the application, or if we lose primary ownership, just clear the selection.   

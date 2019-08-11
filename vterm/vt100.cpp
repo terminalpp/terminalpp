@@ -1243,7 +1243,11 @@ namespace vterm {
             /* OSC 52 - set clipboard to given value. 
              */
             case 52:
-                NOT_IMPLEMENTED;
+                LOG(SEQ) << "Clipboard set to " << seq.value();
+                buffer_.unlock();
+                setClipboard(seq.value());
+                buffer_.lock();
+                break;
             /* OSC 112 - reset cursor color. 
              */
             case 112:

@@ -68,6 +68,8 @@ namespace tpp {
 
         void requestClipboardPaste() override;
 
+        void setClipboard(ui::StringEvent & e) override;
+
     private:
         friend class DirectWriteApplication;
         friend class RendererWindow<DirectWriteWindow>;
