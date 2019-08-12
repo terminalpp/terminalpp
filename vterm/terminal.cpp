@@ -151,14 +151,11 @@ namespace vterm {
 
     // Terminal 
 
-    Terminal::Terminal(int x, int y, int width, int height, PTY * pty, unsigned fps, size_t ptyBufferSize):
-        ui::Widget{x, y, width, height},
+    Terminal::Terminal(int width, int height, PTY * pty, unsigned fps, size_t ptyBufferSize):
         buffer_{width, height},
         pty_{pty},
         fps_{fps},
-        repaint_{false},
-        selectionStart_{-1, -1},
-        selection_{} {
+        repaint_{false} {
         pty_->resize(width, height);
         ptyReader_ = std::thread([this, ptyBufferSize](){
             std::unique_ptr<char> holder(new char[ptyBufferSize]);
@@ -213,8 +210,7 @@ namespace vterm {
     void Terminal::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         if (modifiers == 0) {
             if (button == ui::MouseButton::Left) {
-                selectionStart_ = ui::Point(col, row);
-                selection_ = ui::Selection();
+                updateSelectionRegionStart(ui::Point(col, row));
                 requestRepaint();
             } else if (button == ui::MouseButton::Wheel) {
                 requestSelectionPaste();                
@@ -226,8 +222,7 @@ namespace vterm {
     void Terminal::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         if (modifiers == 0) {
             if (button == ui::MouseButton::Left) {
-                selectionStart_ = ui::Point(-1, -1);
-                // TODO inform the renderer that selection has been
+                updateSelectionRegionStop();
                 setSelection("Hello all this is test");
             }
         }
@@ -236,8 +231,8 @@ namespace vterm {
 
     void Terminal::mouseMove(int col, int row, ui::Key modifiers) {
         if (modifiers == 0) {
-            if (selectionStart_.x > 0) {
-                selection_ = ui::Selection::Create(selectionStart_, ui::Point(col, row));
+            if (updatingSelectionRegion()) {
+                updateSelectionRegion(ui::Point(col, row));
                 requestRepaint();
             }
         }

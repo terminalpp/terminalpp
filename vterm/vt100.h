@@ -4,6 +4,8 @@
 
 #include "terminal.h"
 
+#include "ui/clipboard.h"
+
 namespace vterm {
 
 

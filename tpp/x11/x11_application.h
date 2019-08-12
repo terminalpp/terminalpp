@@ -1,6 +1,8 @@
 #pragma once
 #if (defined ARCH_UNIX)
 
+#include "ui/clipboard.h"
+
 #include "x11.h"
 #include "../application.h"
 
@@ -75,6 +77,8 @@ namespace tpp {
         /* Clipboard contents if the application is the owner of the clipboard selection. 
          */
         std::string clipboard_;
+        std::string selection_;
+        ui::Clipboard * selectionOwner_;
 
     }; // X11Application
 

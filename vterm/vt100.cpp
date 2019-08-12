@@ -348,7 +348,8 @@ namespace vterm {
 
 
     VT100::VT100(int x, int y, int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize):
-        Terminal{x, y, width, height, pty, fps, ptyBufferSize},
+        Widget{x, y, width, height},
+        Terminal{width, height, pty, fps, ptyBufferSize},
         state_{width, height, palette->defaultForeground(), palette->defaultBackground()},
         mouseMode_{MouseMode::Off},
         mouseEncoding_{MouseEncoding::Default},
@@ -426,6 +427,11 @@ namespace vterm {
     }
 
     void VT100::keyDown(ui::Key key) {
+        // TODO this is ugly, fix help, make nice, etc, etc, etc, etc, etc. 
+        if (key == (ui::Key::V + ui::Key::Ctrl + ui::Key::Shift)) {
+            requestClipboardPaste();
+            return;
+        }
 		std::string const* seq = GetSequenceForKey(key);
 		if (seq != nullptr) {
 			switch (key.code()) {
@@ -447,6 +453,7 @@ namespace vterm {
 			}
 			send(seq->c_str(), seq->size());
 		}
+
         Terminal::keyDown(key);
     }
 
@@ -462,7 +469,6 @@ namespace vterm {
         } else {
             send(contents);
         }
-        Terminal::paste(contents);
     }
 
     size_t VT100::processInput(char * buffer, size_t bufferSize) {

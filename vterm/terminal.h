@@ -5,6 +5,7 @@
 #include "ui/canvas.h"
 #include "ui/widget.h"
 #include "ui/selection.h"
+#include "ui/clipboard.h"
 
 #include "pty.h"
 
@@ -12,7 +13,7 @@ namespace vterm {
 
     typedef helpers::EventPayload<helpers::ExitCode, ui::Widget> ExitCodeEvent;
 
-    class Terminal : public ui::Widget {
+    class Terminal : public virtual ui::Widget, public ui::Clipboard {
     public:
 
         typedef ui::Cell Cell;
@@ -159,7 +160,7 @@ namespace vterm {
 
             Starts the process exit monitoring thread and the receiving thread to read input from the pty. 
          */
-        Terminal(int x, int y, int width, int height, PTY * pty, unsigned fps = 60, size_t ptyBufferSize = 10240);
+        Terminal(int width, int height, PTY * pty, unsigned fps = 60, size_t ptyBufferSize = 10240);
 
         /** Returns the locked buffer. 
          */
@@ -270,9 +271,6 @@ namespace vterm {
 
         /* Terminal title */
         std::string title_;
-
-        ui::Point selectionStart_;
-        ui::Selection selection_;
 
     }; // vterm::Terminal
 

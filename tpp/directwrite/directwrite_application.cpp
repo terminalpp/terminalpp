@@ -13,7 +13,8 @@ namespace tpp {
 
 
     DirectWriteApplication::DirectWriteApplication(HINSTANCE hInstance):
-        hInstance_(hInstance) {
+        hInstance_{hInstance},
+		selectionOwner_{nullptr} {
         attachConsole();
         registerWindowClass();
 		D2D1_FACTORY_OPTIONS options;

@@ -11,6 +11,7 @@ namespace ui {
 	public:
 
 		Panel(int x, int y, int width, int height) :
+		    Widget{x, y, width, height},
 			PublicContainer(x, y, width, height),
 			border_(0, 0, 0, 0) {
 		}

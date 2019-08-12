@@ -148,8 +148,6 @@ namespace tpp {
             } else if (key == SHORTCUT_ZOOM_OUT) {
                 if (zoom() > 1)
                     setZoom(std::max(1.0, zoom() / 1.25));
-            } else if (key == SHORTCUT_PASTE) {
-                requestClipboardPaste();
             } else if (key != ui::Key::Invalid) {
                 ui::Renderer::keyDown(key);
             }
@@ -262,7 +260,7 @@ namespace tpp {
                 finalizeDraw();
             }
 			t.stop();
-			std::cout << "Paint: " << t.value() << " ms\n" ;
+			//std::cout << "Paint: " << t.value() << " ms\n" ;
             // and we are done
             #undef initializeDraw
             #undef initializeGlyphRun

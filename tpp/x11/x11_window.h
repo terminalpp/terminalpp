@@ -65,11 +65,19 @@ namespace tpp {
 
         // renderer interface 
 
-        void setClipboard(std::string const & contents) override;
-        void setSelection(std::string const & contents) override;
-        void invalidateSelection() override;
-        void requestClipboardPaste() override;
-        void requestSelectionPaste() override;
+        // renderer clipboard interface 
+
+        void requestClipboardPaste(ui::Clipboard * sender) override;
+
+        void requestSelectionPaste(ui::Clipboard * sender) override;
+
+        void setClipboard(ui::Clipboard * sender, std::string const & contents) override;
+
+        void setSelection(ui::Clipboard * sender, std::string const & contents) override;
+
+        void clearSelection(ui::Clipboard * sender) override;
+
+        void yieldSelection();
 
     private:
 
@@ -234,6 +242,10 @@ namespace tpp {
 		/** Info about the window state before fullscreen was triggered. 
 		 */
         XWindowChanges fullscreenRestore_;
+
+        /** The widget which requested data to be pasted. 
+         */
+        ui::Clipboard * pasteTarget_;
 
 		/** Given current state as reported from X11, translates it to vterm::Key modifiers
 		 */

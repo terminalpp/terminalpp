@@ -66,13 +66,19 @@ namespace tpp {
 
         void updateZoom(double value) override;
 
-        // renderer interface
+        // renderer clipboard interface 
 
-        void setClipboard(std::string const & contents) override;
-        void setSelection(std::string const & contents) override;
-        void invalidateSelection() override;
-        void requestClipboardPaste() override;
-        void requestSelectionPaste() override;
+        void requestClipboardPaste(ui::Clipboard * sender) override;
+
+        void requestSelectionPaste(ui::Clipboard * sender) override;
+
+        void setClipboard(ui::Clipboard * sender, std::string const & contents) override;
+
+        void setSelection(ui::Clipboard * sender, std::string const & contents) override;
+
+        void clearSelection(ui::Clipboard * sender) override;
+
+
 
     private:
         friend class DirectWriteApplication;

@@ -15,6 +15,7 @@ namespace ui {
         using Widget::repaint;
 
 		RootWindow(int width, int height) :
+            Widget{0, 0, width, height},
 			Container{0, 0, width, height},
 			buffer_{width, height},
             keyboardFocus_{nullptr},
@@ -26,6 +27,7 @@ namespace ui {
     protected:
 
         friend class Widget;
+        friend class Clipboard;
         
 	    static constexpr unsigned MOUSE_CLICK_MAX_DURATION = 100;
 
@@ -66,20 +68,6 @@ namespace ui {
         void keyChar(helpers::Char c) override;
         void keyDown(Key k) override;
         void keyUp(Key k) override;
-
-        void paste(std::string const & contents) override;
-
-        // TODO this shoudl be locked and perhaps paste should also tell about its origin
-        void requestClipboardPaste(Widget * sender) {
-            MARK_AS_UNUSED(sender);
-            Renderable::requestClipboardPaste();
-
-        }
-
-        void requestSelectionPaste(Widget * sender) {
-            MARK_AS_UNUSED(sender);
-            Renderable::requestSelectionPaste();
-        }
 
         void updateFocused(bool value) override {
             // first make sure the focus in/out 

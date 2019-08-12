@@ -152,11 +152,6 @@ namespace ui {
 
 		// keyboard events
 
-		/** Triggered when contents of the clipboard was pasted to the widget. 
-		 */
-		Event<StringEvent> onPaste;
-
-
 	public:
 
 		Widget(int x, int y, int width, int height):
@@ -358,22 +353,6 @@ namespace ui {
 			MARK_AS_UNUSED(k);
 		}
 
-		virtual void paste(std::string const & contents) {
-			trigger(onPaste, contents);
-		}
-
-		/** Sets the clipboard contents to the provided value. 
-		 
-		    Passes the information to the root window which informs the renderers who are ultimately responsible for the setting. 
-		 */
-		void setClipboard(std::string const & contents);
-
-		void setSelection(std::string const & contents);
-
-		void requestClipboardPaste();
-
-		void requestSelectionPaste();
-
 		/** Paints given child.
 
 		    Expects the clientCanvas of the parent as the second argument. In cases where border is 0, this can be the widget's main canvas as well. In other cases the getClientCanvas method should be used to obtain the client canvas first. 
@@ -493,6 +472,12 @@ namespace ui {
 			static_assert(std::is_same<typename EVENT::Payload::Sender, Widget >::value, "Only events with sender being ui::Widget should be used");
 			typename EVENT::Payload p(this, payload);
 			e.trigger(p);
+		}
+
+		/** Returns the root window of the widget, or nullptr if the widget is invalid (cannot be painted).
+		 */
+		RootWindow * rootWindow() const {
+			return visibleRegion_.root;
 		}
 
 	private:

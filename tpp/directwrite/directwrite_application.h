@@ -6,6 +6,8 @@
 #include <d2d1_2.h>
 #include <wrl.h>
 
+#include "ui/clipboard.h"
+
 #include "../application.h"
 #include "../font.h"
 
@@ -57,6 +59,7 @@ namespace tpp {
         /** Holds the selection so that it can be pasted when requested by the windows. 
          */
         std::string selection_;
+        ui::Clipboard * selectionOwner_;
 
     }; // tpp::DirectWriteApplication
 

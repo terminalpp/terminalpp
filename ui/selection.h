@@ -36,6 +36,13 @@ namespace ui {
             return Selection(start, end);
         }
 
+        /** Clears the selection. 
+         */
+        void clear() {
+            start_ = Point(0,0);
+            end_ = Point(0, 0);
+        }
+
         /** Returns true if the selection is empty. 
          */
         bool empty() {

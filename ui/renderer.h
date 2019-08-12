@@ -3,6 +3,7 @@
 #include "helpers/helpers.h"
 
 #include "widget.h"
+#include "clipboard.h"
 
 namespace ui {
 
@@ -12,6 +13,8 @@ namespace ui {
      */
     class Renderable {
     protected:
+
+        friend class Clipboard;
 
         Renderable():
             renderer_(nullptr) {
@@ -44,10 +47,6 @@ namespace ui {
         virtual void keyDown(Key k) = 0;
         virtual void keyUp(Key k) = 0;
 
-        /** Clipboard events. 
-         */
-        virtual void paste(std::string const & contents) = 0;
-
         Renderer const * renderer() const {
             return renderer_;
         }
@@ -62,13 +61,18 @@ namespace ui {
 
         void render(Rect const & rect);
 
-        void setClipboard(std::string const & contents);
+        // clipboard
 
-        void setSelection(std::string const & contents);
+        void requestClipboardPaste(Clipboard * sender);
 
-        void requestClipboardPaste();
+        void requestSelectionPaste(Clipboard * sender);
 
-        void requestSelectionPaste();
+        void setClipboard(Clipboard * sender, std::string const & contents);
+
+        void setSelection(Clipboard * sender, std::string const & contents);
+
+        void clearSelection(Clipboard * sender);
+
 
     private:
         friend class Renderer;
@@ -99,18 +103,20 @@ namespace ui {
          * */
         virtual void render(ui::Rect const & rect) = 0;
 
+
+        virtual void requestClipboardPaste(Clipboard * sender) = 0;
+
+        virtual void requestSelectionPaste(Clipboard * sender) = 0;
+
         /** Sets the contents of the clipboard to the given text. 
          */
-        virtual void setClipboard(std::string const & contents) = 0;
+        virtual void setClipboard(Clipboard * sender, std::string const & contents) = 0;
 
         /** Sets the selection to given value. 
          */
-        virtual void setSelection(std::string const & contents) = 0;
+        virtual void setSelection(Clipboard * sender, std::string const & contents) = 0;
 
-        virtual void invalidateSelection() = 0;
-
-        virtual void requestSelectionPaste() = 0;
-        virtual void requestClipboardPaste() = 0;
+        virtual void clearSelection(Clipboard * sender) = 0;
 
         Canvas::Buffer::Ptr bufferToRender() {
             ASSERT(renderable_);
@@ -188,13 +194,18 @@ namespace ui {
                 renderable_->keyUp(k);
         }
 
-        /* Clipboard events.
-         */
-        void paste(std::string const & contents) {
-            if (attached())
-                renderable_->paste(contents);
+        // clipboard events
+
+        void paste(Clipboard * clipboard, std::string const & contents) {
+            clipboard->paste(contents);
         }
 
+        void invalidateSelection(Clipboard * sender, Clipboard * currentOwner) {
+            if (sender == currentOwner)
+                return;
+            if (currentOwner != nullptr)
+                currentOwner->invalidateSelection();
+        }
 
     private:
 
@@ -227,24 +238,29 @@ namespace ui {
             renderer_->render(rect);
     }
 
-    inline void Renderable::setClipboard(std::string const & contents) {
+    inline void Renderable::requestClipboardPaste(Clipboard * sender) {
         if (attached())
-            renderer_->setClipboard(contents);
+            renderer_->requestClipboardPaste(sender);
     }
 
-    inline void Renderable::setSelection(std::string const & contents) {
+    inline void Renderable::requestSelectionPaste(Clipboard * sender) {
         if (attached())
-            renderer_->setSelection(contents);
+            renderer_->requestSelectionPaste(sender);
     }
 
-    inline void Renderable::requestClipboardPaste() {
+    inline void Renderable::setClipboard(Clipboard * sender, std::string const & contents) {
         if (attached())
-            renderer_->requestClipboardPaste();
+            renderer_->setSelection(sender, contents);
     }
 
-    inline void Renderable::requestSelectionPaste() {
+    inline void Renderable::setSelection(Clipboard * sender, std::string const & contents) {
         if (attached())
-            renderer_->requestSelectionPaste();
+            renderer_->setSelection(sender, contents);
+    }
+
+    inline void Renderable::clearSelection(Clipboard * sender) {
+        if (attached())
+            renderer_->clearSelection(sender);
     }
 
 } // namespace ui

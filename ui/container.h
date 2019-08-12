@@ -10,7 +10,7 @@ namespace ui {
 
 	/** Container is a widget capable of managing its children at runtime. 
 	 */
-	class Container : public Widget {
+	class Container : public virtual Widget {
 	public:
 
 		~Container() override;
@@ -160,7 +160,8 @@ namespace ui {
 		using Container::setLayout;
 
 		PublicContainer(int x = 0, int y = 0, int width = 1, int height = 1) :
-			Container(x, y, width, height),
+		    Widget{x, y, width, height},
+			Container{x, y, width, height},
 		    background_(Color::Black()) {
 		}
 

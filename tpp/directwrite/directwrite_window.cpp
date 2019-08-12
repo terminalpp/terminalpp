@@ -111,7 +111,32 @@ namespace tpp {
 		Window::updateSizePx(widthPx_, heightPx_);
 	}
 
-    void DirectWriteWindow::setClipboard(std::string const & contents) {
+	void DirectWriteWindow::requestClipboardPaste(ui::Clipboard * sender) {
+		std::string result;
+		if (OpenClipboard(nullptr)) {
+			HANDLE clip = GetClipboardData(CF_UNICODETEXT);
+			if (clip) {
+				// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+				helpers::utf16_char* data = reinterpret_cast<helpers::utf16_char*>(GlobalLock(clip));
+				if (data) {
+					result = helpers::UTF16toUTF8(data);
+					GlobalUnlock(clip);
+				}
+			}
+			CloseClipboard();
+		}
+		if (!result.empty())
+		    paste(sender,result);
+	}
+
+	void DirectWriteWindow::requestSelectionPaste(ui::Clipboard * sender) {
+		DirectWriteApplication * app = DirectWriteApplication::Instance();
+		if (!app->selection_.empty())
+		    paste(sender, app->selection_);
+	}
+
+    void DirectWriteWindow::setClipboard(ui::Clipboard * sender, std::string const & contents) {
+		MARK_AS_UNUSED(sender);
 		if (OpenClipboard(nullptr)) {
 			EmptyClipboard();
 			// encode the string into UTF16 and get the size of the data we need
@@ -119,50 +144,31 @@ namespace tpp {
 			helpers::utf16_string str = helpers::UTF8toUTF16(contents);
 			// the str is null-terminated
 			size_t size = (str.size() + 1) * 2;
-			HGLOBAL clipboard = GlobalAlloc(0, size);
-			if (clipboard) {
-				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clipboard));
+			HGLOBAL clip = GlobalAlloc(0, size);
+			if (clip) {
+				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clip));
 				if (data) {
 					memcpy(data, str.c_str(), size);
-					GlobalUnlock(clipboard);
-					SetClipboardData(CF_UNICODETEXT, clipboard);
+					GlobalUnlock(clip);
+					SetClipboardData(CF_UNICODETEXT, clip);
 				}
 			}
 			CloseClipboard();
 		}
 	}
 
-	void DirectWriteWindow::setSelection(std::string const & selection) {
+	void DirectWriteWindow::setSelection(ui::Clipboard * sender, std::string const & contents) {
+		clearSelection(sender);
 		DirectWriteApplication * app = DirectWriteApplication::Instance();
-		app->selection_ = selection;
+		app->selection_ = contents;
+		app->selectionOwner_ = sender;
 	}
 
-	void DirectWriteWindow::invalidateSelection() {
-		NOT_IMPLEMENTED;
-	}
-
-	void DirectWriteWindow::requestClipboardPaste() {
-		std::string result;
-		if (OpenClipboard(nullptr)) {
-			HANDLE clipboard = GetClipboardData(CF_UNICODETEXT);
-			if (clipboard) {
-				// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-				helpers::utf16_char* data = reinterpret_cast<helpers::utf16_char*>(GlobalLock(clipboard));
-				if (data) {
-					result = helpers::UTF16toUTF8(data);
-					GlobalUnlock(clipboard);
-				}
-			}
-			CloseClipboard();
-		}
-		if (!result.empty())
-		    paste(result);
-	}
-
-	void DirectWriteWindow::requestSelectionPaste() {
+	void DirectWriteWindow::clearSelection(ui::Clipboard * sender) {
 		DirectWriteApplication * app = DirectWriteApplication::Instance();
-		if (!app->selection_.empty())
-		    paste(app->selection_);
+        invalidateSelection(sender, app->selectionOwner_);
+		app->selectionOwner_ = nullptr;
+		app->selection_.clear();
 	}
 
 	void DirectWriteWindow::updateDirectWriteStructures(int cols) {

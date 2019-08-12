@@ -1,10 +1,9 @@
 ﻿# V0.2
 
-- clipboard & selection - the renderer requests contain sender's and the root window will ignore any that come from non focused widgets
-- selection management should be own object which deals with this stuff, terminal will then inherit from it, have access to the functions and also have simple access
-- maybe composition (i.e. the selection class itself should allow clearing, invalidation, etc. )
-
-
+- widget should have empty constructor only, builders should be used to add geometry
+- move selection.h to clipboard.h
+- determine how clipboard events can be synchronized if the clipboard itself is not synchronous
+- fix selection on X11
 - add selection (selection update mechanism, clearing selection etc.)
 - check that bypass still works
 - determine the closing mechanism (ie. session v2)
