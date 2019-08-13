@@ -268,4 +268,51 @@ namespace vterm {
         return result.str();
     }
 
+    // This is the v0.1 selection version which follows the line breaks as reported by the terminal. The problem is this works nicely when there are some, but things like tmux make this useless. I need to figure out how to deal with this in a better way
+    /*
+	std::string Terminal::getText(Selection const & selection) const	{
+		std::stringstream result;
+		unsigned col = selection.start.col;
+		unsigned row = selection.start.row;
+		// obtain the screenlock and get the selected text
+		ScreenLock sl = const_cast<Terminal*>(this)->lockScreen();
+		bool ignoreSpaces = false;
+		unsigned spaces = 0;
+		while (selection.contains(col, row) && col < sl->cols() && row < sl->rows()) {
+			Cell const& cell = sl->at(col, row);
+			// if spaces are ignored, remember how many we have seen if it is next space, otherwise store the ones we have seen and then the non-space character 
+			if (ignoreSpaces) {
+				if (cell.c() == ' ') {
+					++spaces;
+				} else {
+					for (unsigned i = 0; i < spaces; ++i)
+						result << ' ';
+					spaces = 0;
+					result << cell.c();
+				}
+			// if we are not ignoring spaces, add the character, unless it is a space that is also end of line, in which case we won't print it, but set number of spaces ignored to 1
+			} else {
+				if (cell.c() != ' ' || !cell.isLineEnd()) 
+					result << cell.c();
+			    else
+    				spaces = 1;
+			}
+			// if the character is also end of line, append new line and start ignoring spaces
+			if (cell.isLineEnd()) {
+				result << '\n';
+				ignoreSpaces = true;
+			}
+			// if this is the last character in a row, move to next row and stop ignoring spaces
+			if (++col == sl->cols()) {
+				++row;
+				col = 0;
+				ignoreSpaces = false;
+				spaces = 0;
+			}
+		}
+		return result.str();
+	}
+    */
+
+
 } // namespace vterm
