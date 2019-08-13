@@ -111,7 +111,7 @@ namespace tpp {
 		Window::updateSizePx(widthPx_, heightPx_);
 	}
 
-	void DirectWriteWindow::requestClipboardPaste(ui::Clipboard * sender) {
+	void DirectWriteWindow::requestClipboardPaste() {
 		std::string result;
 		if (OpenClipboard(nullptr)) {
 			HANDLE clip = GetClipboardData(CF_UNICODETEXT);
@@ -125,18 +125,18 @@ namespace tpp {
 			}
 			CloseClipboard();
 		}
-		if (!result.empty())
-		    paste(sender,result);
+        paste(result);
 	}
 
-	void DirectWriteWindow::requestSelectionPaste(ui::Clipboard * sender) {
+	void DirectWriteWindow::requestSelectionPaste() {
 		DirectWriteApplication * app = DirectWriteApplication::Instance();
 		if (!app->selection_.empty())
-		    paste(sender, app->selection_);
+		    paste(app->selection_);
+		else
+		    paste(std::string{});
 	}
 
-    void DirectWriteWindow::setClipboard(ui::Clipboard * sender, std::string const & contents) {
-		MARK_AS_UNUSED(sender);
+    void DirectWriteWindow::setClipboard(std::string const & contents) {
 		if (OpenClipboard(nullptr)) {
 			EmptyClipboard();
 			// encode the string into UTF16 and get the size of the data we need
@@ -157,18 +157,24 @@ namespace tpp {
 		}
 	}
 
-	void DirectWriteWindow::setSelection(ui::Clipboard * sender, std::string const & contents) {
-		clearSelection(sender);
+	void DirectWriteWindow::setSelection(std::string const & contents) {
 		DirectWriteApplication * app = DirectWriteApplication::Instance();
+		// if the selectionOwner is own window, then there is no need to informa the window of selection change as it has done so already if necessary, in other cases we must inform the old owner that its selection has been invalidated
+		if (app->selectionOwner_)
+		    app->selectionOwner_->invalidateSelection();
+		// set the contents and owner
 		app->selection_ = contents;
-		app->selectionOwner_ = sender;
+	    app->selectionOwner_ = this;
 	}
 
-	void DirectWriteWindow::clearSelection(ui::Clipboard * sender) {
+	void DirectWriteWindow::clearSelection() {
 		DirectWriteApplication * app = DirectWriteApplication::Instance();
-        invalidateSelection(sender, app->selectionOwner_);
-		app->selectionOwner_ = nullptr;
-		app->selection_.clear();
+		if (app->selectionOwner_ == this) {
+			app->selectionOwner_ = nullptr;
+			app->selection_.clear();
+		} else {
+			LOG << "Window renderer clear selection does not match stored selection owner.";
+		}
 	}
 
 	void DirectWriteWindow::updateDirectWriteStructures(int cols) {

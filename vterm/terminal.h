@@ -4,7 +4,6 @@
 
 #include "ui/canvas.h"
 #include "ui/widget.h"
-#include "ui/selection.h"
 #include "ui/clipboard.h"
 
 #include "pty.h"
@@ -222,6 +221,17 @@ namespace vterm {
         void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         void mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         void mouseMove(int col, int row, ui::Key modifiers) override;
+
+        /** When selection is invalidated, we request repaint so that the selection is no longer displayed. 
+         */
+        void invalidateSelection() override {
+            Clipboard::invalidateSelection();
+            requestRepaint();
+        }
+
+        /** Returns the contents of the selection. 
+         */
+        std::string selectionContents();
 
         // terminal interface
 

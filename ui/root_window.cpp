@@ -1,8 +1,16 @@
 #include "helpers/time.h"
+#include "helpers/log.h"
+
+#include "renderer.h"
 
 #include "root_window.h"
 
 namespace ui {
+
+	void RootWindow::render(Rect const & rect) {
+		if (renderer_) 
+		    renderer_->render(rect);
+	}
 
     void RootWindow::mouseDown(int col, int row, MouseButton button, Key modifiers) {
 		Widget* target = mouseFocusWidget(col, row);
@@ -94,7 +102,9 @@ namespace ui {
 
     void RootWindow::invalidateContents() {
         Container::invalidateContents();
-        visibleRegion_ = Canvas::VisibleRegion(this);
+        // if the root window is in the process of being destroyed, don't revalidate
+        if (! destroying_)
+            visibleRegion_ = Canvas::VisibleRegion(this);
     }
 
 	Widget* RootWindow::mouseFocusWidget(int col, int row) {
@@ -115,6 +125,83 @@ namespace ui {
 		}
 		return mouseFocus_;
 	}
+
+	void RootWindow::requestClipboardPaste(Clipboard * sender) {
+		if (pasteRequestTarget_ == nullptr) {
+			pasteRequestTarget_ = sender;
+			if (renderer_) 
+			    renderer_->requestClipboardPaste();
+			else
+			    LOG << "Paste request w/o renderer";
+		} else {
+			LOG << "Paste request clash";
+		}
+	}
+
+	void RootWindow::requestSelectionPaste(Clipboard * sender) {
+		if (pasteRequestTarget_ == nullptr) {
+			pasteRequestTarget_ = sender;
+			if (renderer_) 
+			    renderer_->requestSelectionPaste();
+			else
+			    LOG << "Paste request w/o renderer";
+		} else {
+			LOG << "Paste request clash";
+		}
+	}
+
+	void RootWindow::setClipboard(Clipboard * sender, std::string const & contents) {
+		MARK_AS_UNUSED(sender);
+		// clipboard is simple as there is no state associated with it, we simply inform the renderer that clipboard state should be changed
+		if (renderer_) {
+			renderer_->setClipboard(contents);
+		} else {
+			LOG << "Set clipboard event in an unattached root window";
+		}
+	}
+
+	void RootWindow::setSelection(Clipboard * sender, std::string const & contents) {
+		if (renderer_) {
+			// if the selection belongs to other widget in the window, let it clear
+			if (selectionOwner_ && selectionOwner_ != sender)
+			    selectionOwner_->clearSelection();
+			// let the renderer know the selection value
+			renderer_->setSelection(contents);
+			// set the selection owner
+			selectionOwner_ = sender;
+		} else {
+			LOG << "Set Selection event when no renderer attached";
+		}
+	}
+
+	void RootWindow::clearSelection(Clipboard * sender) {
+		ASSERT(sender == selectionOwner_);
+		if (renderer_) {
+			renderer_->clearSelection();
+		} else {
+			LOG << "Clear selection event without renderer";
+		}
+		selectionOwner_ = nullptr;
+	}
+
+	void RootWindow::paste(std::string const & contents) {
+		if (pasteRequestTarget_) {
+		    pasteRequestTarget_->paste(contents);
+			pasteRequestTarget_ = nullptr;
+		} else {
+			LOG << "Paste event received w/o active request";
+		}
+	}
+
+	void RootWindow::invalidateSelection() {
+		if (selectionOwner_) {
+			selectionOwner_->invalidateSelection();
+			selectionOwner_ = nullptr;
+		} else {
+			LOG << "invalidate selection w/o selection owner present";
+		}
+	}
+
 
 
 

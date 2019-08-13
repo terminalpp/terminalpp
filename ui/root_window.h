@@ -1,52 +1,71 @@
 #pragma once
 
 #include "container.h"
-#include "renderer.h"
 
 namespace ui {
 
+    class Clipboard;
+    class Renderer;
+
     /**  */
-    class RootWindow : public Container, public Renderable {
+    class RootWindow : public Container {
     public:
 
         using Widget::setFocus;
         using Container::setLayout;
-        using Container::addChild;
+        using Container::attachChild;
         using Widget::repaint;
+        using Widget::resize;
 
-		RootWindow(int width, int height) :
-            Widget{0, 0, width, height},
-			Container{0, 0, width, height},
-			buffer_{width, height},
+		RootWindow() :
+            Widget{},
+			Container{},
+            destroying_{false},
+            renderer_{nullptr},
+			buffer_{0, 0},
             keyboardFocus_{nullptr},
-            mouseFocus_{nullptr} {
+            mouseFocus_{nullptr},
+            pasteRequestTarget_{nullptr},
+            selectionOwner_{nullptr} {
             visibleRegion_ = Canvas::VisibleRegion{this};
 		}
 
+        ~RootWindow() override {
+            // one-way detach all children
+            //for (Widget * child : children())
+            //    child->detach
+            // first set the destroy flag
+            destroying_ = true;
+            // then invalidate
+            invalidate();
+            // obtain the buffer - sync with end of any pending paints
+            buffer();
+        }
 
     protected:
 
         friend class Widget;
-        friend class Clipboard;
         
 	    static constexpr unsigned MOUSE_CLICK_MAX_DURATION = 100;
 
 	    static constexpr unsigned MOUSE_DOUBLE_CLICK_MAX_INTERVAL = 300;
 
         
-        // renderable (and widget where appropriate)
+        // Interface to the renderer (and widget implementation where used by both)
 
-        void rendererResized(int width, int height) override {
+        virtual void render(Rect const & rect);
+
+        virtual void rendererResized(int width, int height) {
             resize(width, height);
         }
 
-        void rendererFocused(bool value) override {
+        virtual void rendererFocused(bool value) {
             setFocus(value);
         }
 
         /** Locks the backing buffer and returns it in a RAII smart pointer.
          */
-        Canvas::Buffer::Ptr buffer(bool priority = false) override {
+        Canvas::Buffer::Ptr buffer(bool priority = false) {
             if (priority)
                 buffer_.priorityLock();
             else 
@@ -56,7 +75,7 @@ namespace ui {
 
         /** Returns the cursor information, i.e. where & how to draw the cursor.
          */
-        Cursor const & cursor() const override {
+        Cursor const & cursor() const {
             return cursor_;
         }
 
@@ -68,6 +87,9 @@ namespace ui {
         void keyChar(helpers::Char c) override;
         void keyDown(Key k) override;
         void keyUp(Key k) override;
+
+
+        // widget implementation specific to renderer
 
         void updateFocused(bool value) override {
             // first make sure the focus in/out 
@@ -120,7 +142,7 @@ namespace ui {
 		 */
 		Point screenToWidgetCoordinates(Widget * w, unsigned col, unsigned row) {
 			Canvas::VisibleRegion const& wr = w->visibleRegion_;
-			if (!wr.valid() || wr.windowOffset.x > static_cast<int>(col) || wr.windowOffset.y > static_cast<int>(row))
+			if (!wr.valid || wr.windowOffset.x > static_cast<int>(col) || wr.windowOffset.y > static_cast<int>(row))
 				return Point(-1, -1);
 			Point result(
 				wr.region.left() + (col - wr.windowOffset.x),
@@ -135,6 +157,20 @@ namespace ui {
     private:
 
         friend class Canvas;
+        friend class Clipboard;
+        friend class Renderer;
+
+        virtual void requestClipboardPaste(Clipboard * sender);
+        virtual void requestSelectionPaste(Clipboard * sender);
+        virtual void setClipboard(Clipboard * sender, std::string const & contents);
+        virtual void setSelection(Clipboard * sender, std::string const & contents);
+        virtual void clearSelection(Clipboard * sender);
+
+        virtual void paste(std::string const & contents);
+
+        virtual void invalidateSelection();
+
+        bool destroying_;
 
         /** Attached renderer. 
          */
@@ -153,6 +189,11 @@ namespace ui {
 		size_t mouseDoubleClickPrevious_;
 
         Cursor cursor_;
+
+        Clipboard * pasteRequestTarget_;
+        Clipboard * selectionOwner_;
+
+        
 
 
 

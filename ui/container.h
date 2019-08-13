@@ -2,6 +2,7 @@
 
 #include <vector>
 
+
 #include "widget.h"
 
 namespace ui {
@@ -21,33 +22,19 @@ namespace ui {
 
 	protected:
 
-		Container(int x, int y, int width, int height);
+		Container();
 
-		void addChild(Widget * child) {
-			ASSERT(child->parent() != this) << "Already a child";
-			if (child->parent() != nullptr) {
-				Container* oldParent = dynamic_cast<Container*>(child->parent());
-				ASSERT(oldParent != nullptr) << "Moving only works between containers";
-				oldParent->removeChild(child);
-			}
-			children_.push_back(child);
-			child->updateParent(this);
-			scheduleRelayout();
-			repaint();
-		}
+        void attachChild(Widget * child) override {
+            Widget::attachChild(child);
+            scheduleRelayout();
+            repaint();
+        }
 
-		Widget* removeChild(Widget* child) {
-			ASSERT(child->parent() == this) << "Not a child";
-			child->updateParent(nullptr);
-			for(auto i = children_.begin(), e = children_.end(); i != e; ++i)
-				if (*i == child) {
-					children_.erase(i);
-					break;
-				}
-			scheduleRelayout();
-			repaint();
-			return child;
-		}
+        void detachChild(Widget * child) override {
+            Widget::detachChild(child);
+            scheduleRelayout();
+            repaint();
+        }
 
 		void setLayout(Layout* value) {
 			ASSERT(value != nullptr) << "use Layout::None instead";
@@ -60,22 +47,22 @@ namespace ui {
 
 		virtual void setChildGeometry(Widget* child, int x, int y, int width, int height) {
 			if (child->x() != x || child->y() != y) {
-				if (child->visibleRegion_.valid())
+				if (child->visibleRegion_.valid)
 					child->invalidateContents();
 				child->updatePosition(x, y);
 			}
 			if (child->width() != width || child->height() != height) {
-				if (child->visibleRegion_.valid())
+				if (child->visibleRegion_.valid)
 				    child->invalidateContents();
 				child->updateSize(width, height);
 			}
 		}
 
+        /** Invalidate the container and its contents and then schedule relayout of the container. 
+         */
 		void invalidateContents() override {
 			Widget::invalidateContents();
 			scheduleRelayout();
-			for (Widget* child : children_)
-				child->invalidateContents();
 		}
 
 		void childInvalidated(Widget* child) override {
@@ -100,8 +87,10 @@ namespace ui {
 		void updateOverlay(bool value) override;
 
 		Widget* getMouseTarget(int col, int row) override {
+            if (!visibleRegion_.contains(col, row))
+                LOG << "Error";
 			ASSERT(visibleRegion_.contains(col, row));
-			for (auto i = children_.rbegin(), e = children_.rend(); i != e; ++i)
+			for (auto i = children().rbegin(), e = children().rend(); i != e; ++i)
 				if ((*i)->visibleRegion_.contains(col, row))
 					return (*i)->getMouseTarget(col, row);
 			return this;
@@ -116,8 +105,6 @@ namespace ui {
 	private:
 
 		friend class Layout;
-
-    	std::vector<Widget*> children_;
 
 		Layout* layout_;
 		bool relayout_;
@@ -155,13 +142,11 @@ namespace ui {
 
 		// Methods from Container
 
-		using Container::addChild;
-		using Container::removeChild;
+		using Container::attachChild;
+		using Container::detachChild;
 		using Container::setLayout;
 
-		PublicContainer(int x = 0, int y = 0, int width = 1, int height = 1) :
-		    Widget{x, y, width, height},
-			Container{x, y, width, height},
+		PublicContainer() :
 		    background_(Color::Black()) {
 		}
 

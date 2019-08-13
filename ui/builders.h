@@ -68,6 +68,30 @@ namespace ui {
 		bool const value;
 	}; // ui::Visibility
 
+    struct GeometrySize {
+        int const width;
+        int const height;
+    };
+
+    struct GeometryFull : public GeometrySize {
+        int const x;
+        int const y;
+		
+		GeometryFull(int x, int y, int width, int height):
+		    GeometrySize{width,height},
+			x(x),
+			y(y) {
+		}
+    };
+
+    inline GeometrySize Geometry(int width, int height) {
+        return GeometrySize{width, height};
+    }
+
+    inline GeometryFull Geometry(int x, int y, int width, int height) {
+        return GeometryFull{width, height, x, y};
+    }
+
 	class Focus {
 	public:
 	    explicit Focus(bool value) :
@@ -115,6 +139,20 @@ namespace ui {
 	}
 
 	template<typename WIDGET>
+	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, GeometrySize g) {
+        widget->resize(g.width, g.height);
+		return widget;
+	}
+
+	template<typename WIDGET>
+	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, GeometryFull g) {
+        widget->setPosition(g.x, g.y);
+        widget->resize(g.width, g.height);
+		return widget;
+	}
+
+
+	template<typename WIDGET>
 	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, Focus v) {
 		widget->setFocus(v.value);
 		return widget;
@@ -159,7 +197,7 @@ namespace ui {
 
 	template<typename WIDGET, typename CHILD>
 	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, Builder<CHILD> child) {
-		widget->addChild(child);
+		widget->attachChild(child);
 		return widget;
 	}
 

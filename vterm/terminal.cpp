@@ -214,6 +214,10 @@ namespace vterm {
                 requestRepaint();
             } else if (button == ui::MouseButton::Wheel) {
                 requestSelectionPaste();                
+            } else if (button == ui::MouseButton::Right && ! selection_.empty()) {
+                setClipboard(selectionContents());
+                clearSelection();
+                requestRepaint();
             }
         }
         Widget::mouseDown(col, row, button, modifiers);
@@ -223,7 +227,7 @@ namespace vterm {
         if (modifiers == 0) {
             if (button == ui::MouseButton::Left) {
                 updateSelectionRegionStop();
-                setSelection("Hello all this is test");
+                setSelection(selectionContents());
             }
         }
         Widget::mouseUp(col, row, button, modifiers);
@@ -237,6 +241,31 @@ namespace vterm {
             }
         }
         Widget::mouseMove(col, row, modifiers);
+    }
+
+    std::string Terminal::selectionContents() {
+        if (selection_.empty())
+            return std::string{};
+        std::stringstream result;
+        {
+            // get the buffer pointer
+            Buffer::Ptr buf = buffer();
+            if (selection_.start().y + 1 == selection_.end().y) {
+                ui::Point p = selection_.start();
+                for (; p.x < selection_.end().x; ++p.x)
+                    result << helpers::Char::FromCodepoint(buf->at(p.x, p.y).codepoint());
+            } else {
+                ui::Point p = selection_.start();
+                for (; p.x < buf->cols(); ++p.x)
+                    result << helpers::Char::FromCodepoint(buf->at(p.x, p.y).codepoint());
+                for (p.y = selection_.start().y + 1; p.y < selection_.end().y - 1; ++p.y)
+                    for (p.x = 0; p.x < buf->cols(); ++p.x)
+                        result << helpers::Char::FromCodepoint(buf->at(p.x, p.y).codepoint());
+                for (p.y = selection_.end().y - 1, p.x = 0; p.x < selection_.end().x; ++p.x)
+                        result << helpers::Char::FromCodepoint(buf->at(p.x, p.y).codepoint());
+            }
+        }
+        return result.str();
     }
 
 } // namespace vterm

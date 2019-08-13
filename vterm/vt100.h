@@ -25,7 +25,7 @@ namespace vterm {
 		static constexpr char const* const SEQ_WONT_SUPPORT = "VT100_WONT_SUPPORT";
 
 
-        VT100(int x, int y, int width, int height, Palette const * palette, PTY * pty, unsigned fps = 60, size_t ptyBufferSize = 10240);
+        VT100(int width, int height, Palette const * palette, PTY * pty, unsigned fps = 60, size_t ptyBufferSize = 10240);
 
 
     protected:

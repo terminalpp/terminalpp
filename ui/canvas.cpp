@@ -1,6 +1,8 @@
+#include "clipboard.h"
+#include "root_window.h"
+
 #include "canvas.h"
 
-#include "root_window.h"
 
 namespace ui {
 
@@ -9,13 +11,14 @@ namespace ui {
     Canvas::VisibleRegion::VisibleRegion(RootWindow * root):
         root(root),
         region(root->width(), root->height()),
-        windowOffset(0, 0) {
-
+        windowOffset(0, 0),
+        valid{true} {
     }
 
     Canvas::VisibleRegion::VisibleRegion(VisibleRegion const & from, int left, int top, int width, int height):
         root(from.root),
-	    region(Rect::Intersection(from.region, Rect(left, top, left + width, top + height))) {
+	    region(Rect::Intersection(from.region, Rect(left, top, left + width, top + height))),
+        valid{true} {
 		// if the new visible region is not empty, update the intersection by the control start and update the offset, otherwise the offset's value does not matter
 		if (!region.empty()) {
 			region = region - Point(left, top);
@@ -55,7 +58,7 @@ namespace ui {
     }
 
     Canvas Canvas::Create(Widget const & widget) {
-        ASSERT(widget.visibleRegion_.valid());
+        ASSERT(widget.visibleRegion_.valid);
         Buffer & b = widget.visibleRegion_.root->buffer_;
         b.lock_.lock();
         ASSERT(b.lockDepth_ == 0);

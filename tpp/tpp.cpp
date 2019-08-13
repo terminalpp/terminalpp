@@ -148,18 +148,22 @@ int main(int argc, char* argv[]) {
 		vterm::VT100 * vt100;
 
 	    tpp::Window * w = Application::Instance()->createWindow("test", 80, 25, 18);
-		ui::RootWindow * rw = ui::Create(new ui::RootWindow(80,25))
+		ui::RootWindow * rw = ui::Create<ui::RootWindow>() 
+            << ui::Geometry(80,25)
 		    << ui::Layout::Maximized()
 			<< (
 				#if (defined ARCH_UNIX)
-				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::LocalPTY(helpers::Command("bash", {}))))
+				ui::Create(vt100 = new vterm::VT100(80,25, &palette, new vterm::LocalPTY(helpers::Command("bash", {}))))
 				#else
-//				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::LocalPTY(helpers::Command("wsl", {"-e", "bash"}))))
-				ui::Create(vt100 = new vterm::VT100(0,0,80,25, &palette, new vterm::BypassPTY(helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "bash" }))))
+//				ui::Create(vt100 = new vterm::VT100(80,25, &palette, new vterm::LocalPTY(helpers::Command("wsl", {"-e", "bash"}))))
+				ui::Create(vt100 = new vterm::VT100(80,25, &palette, new vterm::BypassPTY(helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "bash" }))))
 				#endif
-				);
+				) 
+            << (
+                ui::Create<ui::Label>() << ui::HeightHint(ui::SizeHint::Fixed()) << ui::Geometry(1, 1) << "Hello world!!!!"
+               );
 
-		w->setRenderable(rw);
+		w->setRootWindow(rw);
 		w->show();
 		vt100->setFocus(true);
 

@@ -7,12 +7,12 @@
 
 #include "cell.h"
 #include "shapes.h"
-#include "selection.h"
 
 namespace ui {
 
     class Widget;
     class RootWindow;
+    class Selection;
 
 
     /** Drawable surface of the UI. 
@@ -98,23 +98,20 @@ namespace ui {
              */
             Point windowOffset;
 
+            /** Determines whether the visible region is valid or not. 
+             */
+            bool valid;
+
 			VisibleRegion() :
 				root(nullptr),
 				region(0, 0),
-				windowOffset(0, 0) {
+				windowOffset(0, 0),
+                valid{false} {
 			}
 
             VisibleRegion(RootWindow * root);
 
             VisibleRegion(VisibleRegion const & from, int left, int top, int width, int height);
-
-            bool valid() const {
-                return root != nullptr;
-            }
-
-            void invalidate() {
-                root = nullptr;
-            }
 
 			/** Returns the given point in canvas coordinates translated to the screen coordinates. 
 			 */

@@ -129,21 +129,18 @@ namespace tpp {
 		Window::updateSizePx(widthPx_, heightPx_);
     }
 
-    void X11Window::requestClipboardPaste(ui::Clipboard * sender) {
+    void X11Window::requestClipboardPaste() {
         X11Application * app = X11Application::Instance();
-        pasteTarget_ = sender;
 		XConvertSelection(display_, app->clipboardName_, app->formatStringUTF8_, app->clipboardName_, window_, CurrentTime);
     }
 
-    void X11Window::requestSelectionPaste(ui::Clipboard * sender) {
+    void X11Window::requestSelectionPaste() {
         X11Application * app = X11Application::Instance();
-        pasteTarget_ = sender;
 		XConvertSelection(display_, app->primaryName_, app->formatStringUTF8_, app->primaryName_, window_, CurrentTime);
     }
 
 
-    void X11Window::setClipboard(ui::Clipboard * sender, std::string const & contents) {
-        MARK_AS_UNUSED(sender);
+    void X11Window::setClipboard(std::string const & contents) {
         X11Application * app = X11Application::Instance();
         // let the app manage the clipboard requests from other windows now
         app->clipboard_ = contents;
@@ -151,35 +148,39 @@ namespace tpp {
 		XSetSelectionOwner(display_, app->clipboardName_, window_, CurrentTime);
     }
 
-    void X11Window::setSelection(ui::Clipboard * sender, std::string const & contents) {
+    void X11Window::setSelection(std::string const & contents) {
         X11Application * app = X11Application::Instance();
-        invalidateSelection(sender, app->selectionOwner_);
+        // if there is a selection ownership by other window, let it invalidate its selection first
+        if (app->selectionOwner_)
+            app->selectionOwner_->invalidateSelection();
+        // set the contents
 		app->selection_ = contents;
-		app->selectionOwner_ = sender;
+		app->selectionOwner_ = this;
         // inform X that we own the clipboard selection
         XSetSelectionOwner(display_, app->primaryName_, window_, CurrentTime);
     }
 
-    void X11Window::clearSelection(ui::Clipboard * sender) {
+    void X11Window::clearSelection() {
         X11Application * app = X11Application::Instance();
-        ASSERT(app->selectionOwner_ != nullptr);
-        // invalidate the selection in the widget if any
-        invalidateSelection(sender, app->selectionOwner_);
-        // clear the selection
-		app->selectionOwner_ = nullptr;
-		app->selection_.clear();
-        // tell the x server that the selection was cleared
-        XSetSelectionOwner(display_, app->primaryName_, x11::None, CurrentTime);
+        if (app->selectionOwner_ == this) {
+            app->selectionOwner_ = nullptr;
+            app->selection_.clear();
+            // tell the x server that the selection was cleared
+            XSetSelectionOwner(display_, app->primaryName_, x11::None, CurrentTime);
+        } else {
+			LOG << "Window renderer clear selection does not match stored selection owner.";
+        }
     }
 
     void X11Window::yieldSelection() {
         X11Application * app = X11Application::Instance();
         ASSERT(app->selectionOwner_ != nullptr);
-        invalidateSelection(nullptr, app->selectionOwner_);
+        // tell the owner of the selection to invalidate its selection
+        app->selectionOwner_->invalidateSelection();
+        // invalidate the selection in the app
 		app->selectionOwner_ = nullptr;
 		app->selection_.clear();
     }
-
 
     void X11Window::setIcon(unsigned long * icon) {
 		XChangeProperty(
@@ -467,10 +468,9 @@ namespace tpp {
 						// https://stackoverflow.com/questions/27378318/c-get-string-from-clipboard-on-linux
 						NOT_IMPLEMENTED;
 					else
-						window->paste(window->pasteTarget_, std::string(result, resSize));
+						window->paste(std::string(result, resSize));
 					XFree(result);
                  }
-                 window->pasteTarget_ = nullptr;
 				 break;
 			/** Called when the clipboard contents is requested by an outside app. 
 			 */

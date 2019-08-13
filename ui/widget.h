@@ -2,6 +2,7 @@
 
 #include "helpers/helpers.h"
 #include "helpers/object.h"
+#include "helpers/log.h"
 
 #include "canvas.h"
 #include "mouse.h"
@@ -154,20 +155,24 @@ namespace ui {
 
 	public:
 
-		Widget(int x, int y, int width, int height):
+        ~Widget() override;
+
+		Widget():
 			parent_(nullptr),
-			visibleRegion_(),
+			visibleRegion_{},
 			overlay_(false),
 			forceOverlay_(false),
 			visible_(true),
 			focused_(false),
-			x_(x),
-			y_(y),
-			width_(width),
-			height_(height),
+			x_(0),
+			y_(0),
+			width_(0),
+			height_(0),
 			widthHint_(SizeHint::Auto()),
 			heightHint_(SizeHint::Auto()) {
 		}
+
+		Widget(Widget &&) = delete;
 
 		Widget* parent() const {
 			return parent_;
@@ -370,7 +375,7 @@ namespace ui {
 		    If the widget is valid, invalidates its visible region and informs its parent that a child was invalidated. If the widget is already not valid, does nothing because the parent has already been notified. 
 		 */
 		void invalidate() {
-			if (visibleRegion_.valid()) {
+			if (visibleRegion_.valid) {
 				invalidateContents();
 				if (parent_ != nullptr)
 					parent_->childInvalidated(this);
@@ -378,11 +383,14 @@ namespace ui {
 		}
 
 		/** Invalidates the contents of the widget. 
+         
+            This invalidates the widget itself and any of its children.
 		
-		    For simple widgets this only means invalidating the widget's visible region, for more complex widgets all their children must be invalidated too. 
 		 */
 		virtual void invalidateContents() {
-			visibleRegion_.invalidate();
+			visibleRegion_.valid = false;
+            for (Widget * child : children_)
+                child->invalidateContents();
 		}
 
 		/** Action to take when child is invalidated. 
@@ -433,18 +441,6 @@ namespace ui {
 		 */
 		virtual void paint(Canvas& canvas) = 0;
 
-		virtual void updateParent(Widget* parent) {
-			if (parent == nullptr) {
-				parent_ = nullptr;
-				if (overlay_ != false)
-				    updateOverlay(false);
-			} else {
-				ASSERT(parent_ == nullptr);
-				parent_ = parent;
-				// parent's repaint will eventually trigger the overlay update
-			}
-		}
-
 		virtual void updateOverlay(bool value) {
 			overlay_ = value;
 		}
@@ -474,11 +470,52 @@ namespace ui {
 			e.trigger(p);
 		}
 
-		/** Returns the root window of the widget, or nullptr if the widget is invalid (cannot be painted).
+		/** Returns the root window of the widget, or nullptr if the window is not attached.
 		 */
 		RootWindow * rootWindow() const {
 			return visibleRegion_.root;
 		}
+
+        std::vector<Widget *> const & children() const {
+            return children_;
+        }
+
+        std::vector<Widget *> & children() {
+            return children_;
+        }
+
+        virtual void detachChild(Widget * child) {
+            ASSERT(child->parent_ == this);
+            // remove the child from list of children first and then detach it under the paint lock
+            {
+                PaintLockGuard g(this);
+                for (auto i = children_.begin(), e = children_.end(); i != e; ++i)
+                    if (*i == child) {
+                        children_.erase(i);
+                        break;
+                    }
+                child->parent_ = nullptr;
+                // udpate the overlay settings of the detached children
+                if (child->overlay_)
+                    child->updateOverlay(false);
+                // invalidate the child
+                child->invalidate();
+                // and detach its root window
+                child->detachRootWindow();
+            }
+        }
+
+        virtual void attachChild(Widget * child) {
+            // first detach the child if it is attached to other widget
+            if (child->parent_ != nullptr)
+                child->parent_->detachChild(child);
+            // now, under paint lock add the children to the list and patch the parent link
+            {
+                PaintLockGuard g(this);
+                child->parent_ = this;
+                children_.push_back(child);
+            }
+        }
 
 	private:
 
@@ -487,9 +524,31 @@ namespace ui {
 		friend class RootWindow;
 		friend class Canvas;
 
+        /** When the paint lock guard is held, the widget cannot be repainted. 
+
+
+            For now, this is a coarse grain lock on the root window's buffer if the root window exists. 
+         */
+        class PaintLockGuard {
+        public:
+            PaintLockGuard(Widget * w);
+        private:
+                Canvas::Buffer::Ptr guard_;
+        }; // PaintLockGuard
+
+        void detachRootWindow() {
+            visibleRegion_.root = nullptr;
+            for (Widget * child : children_)
+                child->detachRootWindow();
+        }
+
 		/* Parent widget or none. 
 		 */
 		Widget* parent_;
+
+        /** All widgets which have the current widget as their parent.
+         */
+        std::vector<Widget *> children_;
 
 		/* Visible region of the canvas. 
 		 */
@@ -520,6 +579,7 @@ namespace ui {
 
 	};
 
+
 	/** Public widget simply exposes the widget's protected events and methods as public ones. 
 
 	    It is a suitable class for most user available controls. 
@@ -549,10 +609,6 @@ namespace ui {
 		using Widget::resize;
 		using Widget::setWidthHint;
 		using Widget::setHeightHint;
-
-		PublicWidget(int x = 0, int y = 0, int width = 1, int height = 1) :
-			Widget(x, y, width, height) {
-		}
 
 	}; // ui::Control
 

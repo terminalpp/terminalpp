@@ -10,9 +10,9 @@ namespace ui {
 	class Panel : public PublicContainer {
 	public:
 
-		Panel(int x, int y, int width, int height) :
-		    Widget{x, y, width, height},
-			PublicContainer(x, y, width, height),
+		Panel() :
+		    Widget{},
+			PublicContainer(),
 			border_(0, 0, 0, 0) {
 		}
 

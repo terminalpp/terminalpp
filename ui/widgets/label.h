@@ -8,8 +8,8 @@ namespace ui {
 	class Label : public PublicWidget {
 	public:
 
-		Label(int left = 0, int top = 0, int width = 10, int height = 1) :
-			PublicWidget(left, top, width, height),
+		Label() :
+			PublicWidget(),
 			text_("Label"),
 			textColor_(Color::White()),
 			font_(Font()),

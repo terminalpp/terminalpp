@@ -4,14 +4,13 @@
 
 namespace ui {
 
-	Container::Container(int x, int y, int width, int height) :
-		Widget(x, y, width, height),
+	Container::Container() :
 		layout_(Layout::None()),
 		relayout_(true) {
 	}
 
 	Container::~Container() {
-		for (Widget* child : children_)
+		for (Widget* child : children())
 			delete child;
 	}
 
@@ -24,7 +23,7 @@ namespace ui {
 			relayout_ = false;
 		}
 		// display the children
-		for (Widget* child : children_)
+		for (Widget* child : children())
 			paintChild(child, clientCanvas);
 	}
 
@@ -32,12 +31,9 @@ namespace ui {
 		Widget::updateOverlay(value);
 		// if the container itself is overlaid, then all its children are overlaid too as they may be part of the parent's overlay
 		if (value) {
-			for (Widget* child : children_)
+			for (Widget* child : children())
 				child->updateOverlay(true);
-		// otherwise the overlay of the 
-		} else {
-
-		}
+		} 
 		// make sure that next repaint will relayout all children, which also sets their overlay flags
 		relayout_ = true;
 

@@ -59,7 +59,7 @@ namespace tpp {
         /** Holds the selection so that it can be pasted when requested by the windows. 
          */
         std::string selection_;
-        ui::Clipboard * selectionOwner_;
+        DirectWriteWindow * selectionOwner_;
 
     }; // tpp::DirectWriteApplication
 

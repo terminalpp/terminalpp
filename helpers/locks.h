@@ -30,6 +30,10 @@ namespace helpers {
     template<typename T>
     class SmartRAIIPtr {
     public:
+        SmartRAIIPtr():
+            value_(nullptr) {
+        }
+
         SmartRAIIPtr(T & value, bool lock = true):
             value_( &value) {
             if (lock)

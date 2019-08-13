@@ -78,7 +78,7 @@ namespace tpp {
          */
         std::string clipboard_;
         std::string selection_;
-        ui::Clipboard * selectionOwner_;
+        X11Window * selectionOwner_;
 
     }; // X11Application
 

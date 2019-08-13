@@ -13,9 +13,8 @@ namespace ui {
 	class ScrollBox : public PublicContainer {
 	public:
 
-		ScrollBox(int x, int y, int width, int height) :
-		    Widget{x, y, width, height},
-			PublicContainer(x, y, width, height),
+		ScrollBox() :
+			PublicContainer(),
 			scrollWidth_(1),
 			scrollHeight_(1),
 			scrollLeft_(0),

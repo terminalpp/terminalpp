@@ -101,19 +101,6 @@ namespace ui {
 				layout(container, child, w, h);
 		}
 
-		/** All but the last visible widget in the maximized container are overlaid.
-		 */
-		virtual void calculateOverlay(Container* container) {
-			std::vector<Widget*> const& children = childrenOf(container);
-			bool overlay = false;
-			for (auto i = children.rbegin(), e = children.rend(); i != e; ++i) {
-				if (!(*i)->visible())
-					continue;
-				(*i)->setOverlay(overlay);
-				overlay = false;
-			}
-		}
-
 		/** Layouts the child according to its size hints and positions it in the center of the parent's canvas.
 		 */
 		void layout(Container* container, Widget* child, int maxWidth, int maxHeight) {
@@ -124,7 +111,7 @@ namespace ui {
 				w = maxWidth * child->widthHint().pct() / 100;
 			int h = maxHeight;
 			if (child->heightHint().isFixed())
-				h = child->width();
+				h = child->height();
 			else if (child->heightHint().isPercentage())
 				h = maxHeight * child->heightHint().pct() / 100;
 			int l = (w == maxWidth) ? 0 : ((maxWidth - w) / 2);

@@ -347,8 +347,7 @@ namespace vterm {
     std::unordered_map<ui::Key, std::string> VT100::KeyMap_(InitializeVT100KeyMap());
 
 
-    VT100::VT100(int x, int y, int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize):
-        Widget{x, y, width, height},
+    VT100::VT100(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize):
         Terminal{width, height, pty, fps, ptyBufferSize},
         state_{width, height, palette->defaultForeground(), palette->defaultBackground()},
         mouseMode_{MouseMode::Off},

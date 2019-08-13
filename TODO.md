@@ -1,10 +1,6 @@
 ﻿# V0.2
 
-- widget should have empty constructor only, builders should be used to add geometry
-- move selection.h to clipboard.h
-- determine how clipboard events can be synchronized if the clipboard itself is not synchronous
-- fix selection on X11
-- add selection (selection update mechanism, clearing selection etc.)
+
 - check that bypass still works
 - determine the closing mechanism (ie. session v2)
 - add the extra attributes drawing
@@ -14,7 +10,6 @@
 - resizing the terminal does sometimes eats stuff
 
 - set window title (& icon?)
-- the ui sometimes does not propagate mouse events right and crashes
 
 ## Bugs and missing features
 
@@ -22,8 +17,6 @@
 - add zoom out? and default zoom? 
 
 ### Win32 Bugs
-
-- get rid of the sound when going fullscreen -> non-fullscreen
 
 ### X11 Bugs
 
