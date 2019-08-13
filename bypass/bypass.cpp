@@ -44,7 +44,7 @@ public:
             char * buffer = new char[* BufferSize];
             size_t numBytes;
             while (true) {
-                numBytes = pty_.read(buffer, * BufferSize);
+                numBytes = pty_.receive(buffer, * BufferSize);
                 // if nothing was read, the process has terminated and so should we
                 if (numBytes == 0)
                     break;
@@ -100,7 +100,7 @@ private:
     /** Input comes encoded and must be decoded and sent to the pty. 
      */
     size_t decodeInput(char * buffer, size_t bufferSize) {
-#define WRITE(FROM, TO) if (FROM != TO) { pty_.write(buffer + FROM, TO - FROM); FROM = TO; }
+#define WRITE(FROM, TO) if (FROM != TO) { pty_.send(buffer + FROM, TO - FROM); FROM = TO; }
 #define NEXT if (++i == bufferSize) return processed
 #define NUMBER(VAR) if (!ParseNumber(buffer, bufferSize, i, VAR)) return processed
 #define POP(WHAT) if (buffer[i++] != WHAT) { LOG(BYPASS) << "Expected " << WHAT << " but " << buffer[i] << " found"; processed = i; continue; }
