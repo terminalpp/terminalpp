@@ -6,7 +6,6 @@
 #include "helpers/time.h"
 
 #include "config.h"
-#include "session.h"
 
 #if (defined ARCH_WINDOWS)
 
@@ -147,18 +146,25 @@ int main(int argc, char* argv[]) {
 
 		vterm::VT100 * vt100;
 
-	    tpp::Window * w = Application::Instance()->createWindow("test", 80, 25, 18);
+		helpers::Command cmd(*config::Command);
+		vterm::PTY * pty;
+	#if (defined ARCH_WINDOWS)
+		if (*config::UseConPTY) 
+		    pty = new vterm::LocalPTY(cmd);
+		else
+		    pty = new vterm::BypassPTY(cmd);
+	#else
+		pty = new vterm::LocalPTY(cmd);
+	#endif
+		
+
+	    tpp::Window * w = Application::Instance()->createWindow("test", * config::Cols, * config::Rows, *config::FontSize);
 		ui::RootWindow * rw = ui::Create<ui::RootWindow>() 
-            << ui::Geometry(80,25)
+            //<< ui::Geometry(80,25)
 		    << ui::Layout::Maximized()
 			<< (
-				#if (defined ARCH_UNIX)
-				ui::Create(vt100 = new vterm::VT100(80,25, &palette, new vterm::LocalPTY(helpers::Command("bash", {}))))
-				#else
-//				ui::Create(vt100 = new vterm::VT100(80,25, &palette, new vterm::LocalPTY(helpers::Command("wsl", {"-e", "bash"}))))
-				ui::Create(vt100 = new vterm::VT100(80,25, &palette, new vterm::BypassPTY(helpers::Command("wsl", {"-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "bash" }))))
-				#endif
-				) 
+				ui::Create(vt100 = new vterm::VT100(*config::Cols, *config::Rows, &palette, pty))
+			   )
             << (
                 ui::Create<ui::Label>() << ui::HeightHint(ui::SizeHint::Fixed()) << ui::Geometry(1, 1) << "Hello world!!!!"
                );

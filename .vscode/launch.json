@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/tpp/tpp",
-            "args": [],
+            "args": ["--cols", "160"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
