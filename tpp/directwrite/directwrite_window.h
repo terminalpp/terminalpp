@@ -11,7 +11,7 @@
 
 namespace tpp {
 
-    class DirectWriteWindow : public RendererWindow<DirectWriteWindow> {
+    class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND> {
     public:
 
 		typedef Font<DirectWriteFont> Font;
@@ -34,7 +34,7 @@ namespace tpp {
 
             Instead of invalidating the rectange, WM_PAINT must explicitly be sent, as it may happen that different thread is already repainting the window, and therefore the request will be silenced (the window region is validated at the end of WM_PAINT). 
          */
-		void render(ui::Rect const & rect) override {
+		void requestRender(ui::Rect const & rect) override {
             MARK_AS_UNUSED(rect);
             PostMessage(hWnd_, WM_PAINT, 0, 0);
 		}
@@ -82,7 +82,7 @@ namespace tpp {
 
     private:
         friend class DirectWriteApplication;
-        friend class RendererWindow<DirectWriteWindow>;
+        friend class RendererWindow<DirectWriteWindow, HWND>;
 
         /** Updates the glyph run structures so that up to an entire line can be fit in a single glyph run. 
          */
@@ -171,17 +171,18 @@ namespace tpp {
             D2D1_POINT_2F origin = D2D1::Point2F(
                 static_cast<float>(glyphRunCol_* cellWidthPx_),
                 (glyphRunRow_ * cellHeightPx_ + dwFont_->ascent()));
-            rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
+            if (!attrs_.blink() || blinkVisible_)
+                rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
             // see if there are any attributes to be drawn 
             if (!attrs_.emptyDecorations()) {
-                if (attrs_.underline()) {
+                if (attrs_.underline() && (!attrs_.blink() || blinkVisible_)) {
 					D2D1_POINT_2F start = origin;
 					start.y -= dwFont_->underlineOffset();
 					D2D1_POINT_2F end = start;
 					end.x += glyphRun_.glyphCount * cellWidthPx_;
 					rt_->DrawLine(start, end, decor_.Get(), dwFont_->underlineThickness());
                 }
-                if (attrs_.strikethrough()) {
+                if (attrs_.strikethrough() && (!attrs_.blink() || blinkVisible_)) {
 					D2D1_POINT_2F start = origin;
 					start.y -= dwFont_->strikethroughOffset();
 					D2D1_POINT_2F end = start;
@@ -219,13 +220,6 @@ namespace tpp {
 		int glyphRunRow_;
 
 
-
-        static std::unordered_map<HWND, DirectWriteWindow *> Windows_;
-
-        static DirectWriteWindow * GetWindowFromHWND(HWND hWnd) {
-            auto i = Windows_.find(hWnd);
-            return i == Windows_.end() ? nullptr : i->second;
-        }
 
         static ui::Key GetKey(unsigned vk);
 

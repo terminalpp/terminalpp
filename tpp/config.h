@@ -4,6 +4,11 @@
 #define SHOW_LINE_ENDINGS
 
 
+/** Determines the default blink speed of the cursor or blinking text. 
+ */ 
+#define DEFAULT_BLINK_SPEED 500
+
+
 /** Keyboard shortcuts for various actions.
  */
 #define SHORTCUT_ZOOM_IN (ui::Key::Equals + ui::Key::Ctrl)

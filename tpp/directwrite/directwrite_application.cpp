@@ -30,6 +30,8 @@ namespace tpp {
 			__uuidof(IDWriteFactory),
 			&dwFactory_
 		))) << "Unable to create DW factory";
+		// start the blinker thread
+		DirectWriteWindow::StartBlinkerThread();
     }
 
 	Window * DirectWriteApplication::createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) {

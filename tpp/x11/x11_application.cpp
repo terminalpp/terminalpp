@@ -66,6 +66,8 @@ namespace tpp {
 			netWmIcon_ == x11::None
 		) THROW(helpers::Exception()) << "X11 Atoms instantiation failed";
 
+		// start the blinker thread
+		X11Window::StartBlinkerThread();
 	}
 
 	X11Application::~X11Application() {

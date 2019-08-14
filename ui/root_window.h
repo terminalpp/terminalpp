@@ -17,18 +17,7 @@ namespace ui {
         using Widget::repaint;
         using Widget::resize;
 
-		RootWindow() :
-            Widget{},
-			Container{},
-            destroying_{false},
-            renderer_{nullptr},
-			buffer_{0, 0},
-            keyboardFocus_{nullptr},
-            mouseFocus_{nullptr},
-            pasteRequestTarget_{nullptr},
-            selectionOwner_{nullptr} {
-            visibleRegion_ = Canvas::VisibleRegion{this};
-		}
+		RootWindow();
 
         ~RootWindow() override {
             // one-way detach all children
@@ -192,10 +181,6 @@ namespace ui {
 
         Clipboard * pasteRequestTarget_;
         Clipboard * selectionOwner_;
-
-        
-
-
 
     }; 
 

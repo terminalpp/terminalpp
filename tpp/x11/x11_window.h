@@ -9,7 +9,7 @@
 namespace tpp {
 
 
-    class X11Window : public RendererWindow<X11Window> {
+    class X11Window : public RendererWindow<X11Window, x11::Window> {
     public:
         typedef tpp::Font<XftFont*> Font;
 
@@ -29,7 +29,7 @@ namespace tpp {
 
             Instead of invalidating the rectange, WM_PAINT must explicitly be sent, as it may happen that different thread is already repainting the window, and therefore the request will be silenced (the window region is validated at the end of WM_PAINT). 
          */
-		void render(ui::Rect const & rect) override {
+		void requestRender(ui::Rect const & rect) override {
             MARK_AS_UNUSED(rect);
             // trigger a refresh
             XEvent e;
@@ -81,7 +81,7 @@ namespace tpp {
 
     private:
 
-        friend class RendererWindow<X11Window>;
+        friend class RendererWindow<X11Window, x11::Window>;
 
         void updateXftStructures(int cols) {
             delete text_;
@@ -171,12 +171,13 @@ namespace tpp {
             // fill the background
 			XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_, textSize_ * cellWidthPx_, cellHeightPx_);
             // draw the text
-            XftDrawCharSpec(draw_, &fg_, font_->nativeHandle(), text_, textSize_);
+            if (!attrs_.blink() || blinkVisible_)
+                XftDrawCharSpec(draw_, &fg_, font_->nativeHandle(), text_, textSize_);
             // deal with the attributes
             if (!attrs_.emptyDecorations()) {
-                if (attrs_.underline())
+                if (attrs_.underline() && (!attrs_.blink() || blinkVisible_))
 					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->underlineOffset(), cellWidthPx_ * textSize_, font_->underlineThickness());
-                if (attrs_.strikethrough())
+                if (attrs_.strikethrough() && (!attrs_.blink() || blinkVisible_))
 					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->strikethroughOffset(), cellWidthPx_ * textSize_, font_->strikethroughThickness());
             }
             textSize_ = 0;
@@ -258,10 +259,6 @@ namespace tpp {
         static ui::Key GetKey(KeySym k, unsigned modifiers, bool pressed);
 
         static void EventHandler(XEvent & e);
-
-
-		static std::unordered_map<x11::Window, X11Window *> Windows_;
-
     }; // X11Window
 
 } // namespace tpp

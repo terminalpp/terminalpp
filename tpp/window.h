@@ -1,6 +1,8 @@
 #pragma once
 
 #include <algorithm>
+#include <thread>
+#include <mutex>
 
 #include "helpers/time.h"
 
@@ -30,7 +32,7 @@ namespace tpp {
         /** Shorthand to repaint the entire window. 
          */
         void repaint() {
-            render(ui::Rect(cols_, rows_));
+            requestRender(ui::Rect(cols_, rows_));
         }
 
         int cols() const override {
@@ -71,7 +73,8 @@ namespace tpp {
 			cellHeightPx_(cellHeightPx),
 			zoom_(1.0),
 			fullscreen_(false),
-            title_(title) {
+            title_(title),
+            blinkVisible_(true) {
 		}
 
         /** The actual paint method. 
@@ -164,6 +167,17 @@ namespace tpp {
                 ui::Renderer::keyUp(key);
         }
 
+        /** Sets the window's blink visibility to given value. 
+         
+            If the visibility is different to the current one also triggers the redraw of the entire window. 
+         */
+        void setBlinkVisible(bool value) {
+            if (blinkVisible_ != value) {
+                blinkVisible_ = value;
+                repaint();
+            } 
+        }
+
 		int cols_;
 		int rows_;
 		unsigned widthPx_;
@@ -179,9 +193,18 @@ namespace tpp {
         std::string title_;
 
         ui::Key activeModifiers_;
+
+        /* Determines if the blinking text and cursor are currently visible, or not. 
+         */
+        bool blinkVisible_;
+
+        /** Determines the blink speed in milliseconds. 
+         */
+        static unsigned BlinkSpeed_;
+
     };
 
-    template<typename IMPLEMENTATION> 
+    template<typename IMPLEMENTATION, typename NATIVE_HANDLE> 
     class RendererWindow : public Window {
     protected:
 
@@ -247,7 +270,7 @@ namespace tpp {
                 }
                 // draw the cursor by creating a cell corresponding to how the cursor should be displayed
                 ui::Cursor const & cursor = cursorToRender();
-                if (cursor.visible == true && buffer->at(cursor.pos).isCursor()) {
+                if (cursor.visible == true && buffer->at(cursor.pos).isCursor() && (blinkVisible_ || ! cursor.blink)) {
                     initializeGlyphRun(cursor.pos.x, cursor.pos.y);
                     statusCell_ << cursor.codepoint 
                             << ui::Foreground(cursor.color)
@@ -280,8 +303,57 @@ namespace tpp {
         }
 
         ui::Cell statusCell_;
+
+        static IMPLEMENTATION * GetWindowFromNativeHandle(NATIVE_HANDLE handle) {
+            std::lock_guard<std::mutex> g(MWindows_);
+            auto i = Windows_.find(handle);
+            return i == Windows_.end() ? nullptr : i->second;
+        }
+
+        static void AddWindowNativeHandle(IMPLEMENTATION * window, NATIVE_HANDLE handle) {
+            std::lock_guard<std::mutex> g(MWindows_);
+            ASSERT(Windows_.find(handle) == Windows_.end());
+            Windows_.insert(std::make_pair(handle, window));
+        }
+
+        /** Removes the window with given handle from the list of windows. 
+         
+            Returns false if there are any windows left, true if this was the last window in the list.
+         */
+        static bool RemoveWindow(NATIVE_HANDLE handle) {
+            std::lock_guard<std::mutex> g(MWindows_);
+            Windows_.erase(handle);
+            return Windows_.empty();
+        }
+
+        static void StartBlinkerThread() {
+            std::thread t([](){
+                bool blink = true;
+                while (true) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(BlinkSpeed_));
+                    blink = ! blink;
+                    std::lock_guard<std::mutex> g(MWindows_);
+                    for (auto i : Windows_)
+                        i.second->setBlinkVisible(blink);
+                }
+            });
+            t.detach();
+        }
+
+        /** Mutex guarding the list of windows. 
+         */
+        static std::mutex MWindows_;
+
+        /* A map which points from the native handles to the windows. 
+         */
+        static std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> Windows_;
+
     };
 
+    template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
+    std::mutex RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::MWindows_;
 
+    template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
+    std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::Windows_;
 
 } // namespace tpp

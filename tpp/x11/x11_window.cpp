@@ -13,10 +13,8 @@ namespace tpp {
 	extern unsigned long tppIcon[];
 
 
-	std::unordered_map<x11::Window, X11Window *> X11Window::Windows_;
-
     X11Window::X11Window(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
-        RendererWindow<X11Window>(title, cols, rows, Font::GetOrCreate(ui::Font(), baseCellHeightPx)->cellWidthPx(),baseCellHeightPx) ,
+        RendererWindow(title, cols, rows, Font::GetOrCreate(ui::Font(), baseCellHeightPx)->cellWidthPx(),baseCellHeightPx) ,
 		display_(X11Application::Instance()->xDisplay()),
 		screen_(X11Application::Instance()->xScreen()),
 	    visual_(DefaultVisual(display_, screen_)),
@@ -71,12 +69,11 @@ namespace tpp {
 		setIcon(tppIcon);
 
 		// register the window
-        Windows_[window_] = this;
-
+        AddWindowNativeHandle(this, window_);
     }
 
     X11Window::~X11Window() {
-        Windows_.erase(window_);
+        RemoveWindow(window_);
 		XFreeGC(display_, gc_);
     }
 
@@ -329,10 +326,7 @@ namespace tpp {
     }
 
     void X11Window::EventHandler(XEvent & e) {
-        X11Window * window = nullptr;
-        auto i = Windows_.find(e.xany.window);
-        if (i != Windows_.end())
-            window = i->second;
+        X11Window * window = GetWindowFromNativeHandle(e.xany.window);
         switch(e.type) {
             /* Handles repaint event when window is shown or a repaint was triggered. 
              */
@@ -537,8 +531,8 @@ namespace tpp {
             }
             case DestroyNotify:
                 // delete the window object and remove it from the list of active windows
-                delete i->second;
-                // if it was last window, exit the terminal
+                delete window;
+                // if it was last window, exit the terminal - safe to access unprotected by the mutex now since there are no other windows left, and UI is single threaded
                 if (Windows_.empty()) {
                     throw X11Application::Terminate();
                 }

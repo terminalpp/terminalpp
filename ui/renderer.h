@@ -26,8 +26,8 @@ namespace ui {
         virtual int rows() const = 0;
 
         /** Paints the window, or its part. 
-         * */
-        virtual void render(ui::Rect const & rect) = 0;
+         */
+        virtual void requestRender(ui::Rect const & rect) = 0;
 
         virtual void requestClipboardPaste() = 0;
 

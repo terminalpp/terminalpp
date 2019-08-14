@@ -7,8 +7,6 @@
 
 namespace tpp {
 
-    std::unordered_map<HWND, DirectWriteWindow*> DirectWriteWindow::Windows_;
-
 	DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
 	    RendererWindow(title, cols, rows, Font::GetOrCreate(ui::Font(), baseCellHeightPx)->cellWidthPx(), baseCellHeightPx),
 		    wndPlacement_{ sizeof(wndPlacement_) },
@@ -62,14 +60,12 @@ namespace tpp {
 
 			updateDirectWriteStructures(cols_);
 
-
-			Windows_.insert(std::make_pair(hWnd_, this));
+			AddWindowNativeHandle(this, hWnd_);
 		}
 
 
     DirectWriteWindow::~DirectWriteWindow() {
-        Windows_.erase(hWnd_);
-        if (Windows_.empty())
+		if (RemoveWindow(hWnd_))
             PostQuitMessage(0);
     }
 
@@ -210,7 +206,7 @@ namespace tpp {
 
 	LRESULT CALLBACK DirectWriteWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         // obtain the window object (nullptr if unknown)
-        DirectWriteWindow * window = GetWindowFromHWND(hWnd);
+        DirectWriteWindow * window = GetWindowFromNativeHandle(hWnd);
         switch (msg) {
 			/** Closes the current window. */
 			case WM_CLOSE: {
