@@ -74,7 +74,8 @@ namespace tpp {
 			zoom_(1.0),
 			fullscreen_(false),
             title_(title),
-            blinkVisible_(true) {
+            blinkVisible_(true),
+            cursorBlinkVisible_(true) {
 		}
 
         /** The actual paint method. 
@@ -174,6 +175,8 @@ namespace tpp {
         void setBlinkVisible(bool value) {
             if (blinkVisible_ != value) {
                 blinkVisible_ = value;
+                if (blinkVisible_ != cursorBlinkVisible_)
+                    cursorBlinkVisible_ = blinkVisible_;
                 repaint();
             } 
         }
@@ -197,6 +200,7 @@ namespace tpp {
         /* Determines if the blinking text and cursor are currently visible, or not. 
          */
         bool blinkVisible_;
+        bool cursorBlinkVisible_;
 
         /** Determines the blink speed in milliseconds. 
          */
@@ -270,21 +274,26 @@ namespace tpp {
                 }
                 // draw the cursor by creating a cell corresponding to how the cursor should be displayed
                 ui::Cursor const & cursor = cursorToRender();
-                if (cursor.visible == true && buffer->at(cursor.pos).isCursor() && (blinkVisible_ || ! cursor.blink)) {
-                    initializeGlyphRun(cursor.pos.x, cursor.pos.y);
-                    statusCell_ << cursor.codepoint 
-                            << ui::Foreground(cursor.color)
-                            << ui::Background(ui::Color::None()) 
-                            << buffer->at(cursor.pos).font()
-                            << (cursor.blink ? ui::Attributes::Blink() : ui::Attributes());
-                    setFont(statusCell_.font());
-                    setForegroundColor(statusCell_.foreground());
-                    setBackgroundColor(ui::Color::None());
-                    setDecorationColor(statusCell_.decorationColor());
-                    setAttributes(statusCell_.attributes()); 
-                    addGlyph(statusCell_);
-                    drawGlyphRun();
+                if (cursor.visible == true && buffer->at(cursor.pos).isCursor()) {
+                    if (cursor.blink && cursor.pos != lastCursorPosition_)
+                        cursorBlinkVisible_ = true;
+                    if (! cursor.blink || cursorBlinkVisible_) {
+                        initializeGlyphRun(cursor.pos.x, cursor.pos.y);
+                        statusCell_ << cursor.codepoint 
+                                << ui::Foreground(cursor.color)
+                                << ui::Background(ui::Color::None()) 
+                                << buffer->at(cursor.pos).font()
+                                << ui::Attributes();
+                        setFont(statusCell_.font());
+                        setForegroundColor(statusCell_.foreground());
+                        setBackgroundColor(ui::Color::None());
+                        setDecorationColor(statusCell_.decorationColor());
+                        setAttributes(statusCell_.attributes()); 
+                        addGlyph(statusCell_);
+                        drawGlyphRun();
+                    }
                 }
+                lastCursorPosition_ = cursor.pos;
                 finalizeDraw();
             }
 			t.stop();
@@ -303,6 +312,8 @@ namespace tpp {
         }
 
         ui::Cell statusCell_;
+
+        ui::Point lastCursorPosition_;
 
         static IMPLEMENTATION * GetWindowFromNativeHandle(NATIVE_HANDLE handle) {
             std::lock_guard<std::mutex> g(MWindows_);
