@@ -136,27 +136,22 @@ int main(int argc, char* argv[]) {
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
 
-		/* 
-		Session* s = Session::Create("t++", helpers::Command(*config::Command));
-		s->start();
-		s->show();
-		*/
-
 		vterm::VT100::Palette palette(vterm::VT100::Palette::XTerm256());
 
 		vterm::VT100 * vt100;
 
-		helpers::Command cmd(*config::Command);
 		vterm::PTY * pty;
-	#if (defined ARCH_WINDOWS)
-		if (*config::UseConPTY) 
-		    pty = new vterm::LocalPTY(cmd);
-		else
-		    pty = new vterm::BypassPTY(cmd);
-	#else
-		pty = new vterm::LocalPTY(cmd);
-	#endif
-		
+#if (defined ARCH_WINDOWS)
+		if (*config::UseConPTY) { 
+			if (!config::Command.specified())
+			    (*config::Command) = std::vector<std::string>{DEFAULT_CONPTY_COMMAND};
+		    pty = new vterm::LocalPTY(helpers::Command(*config::Command));
+		} else {
+		    pty = new vterm::BypassPTY(helpers::Command(*config::Command));
+		}
+#else
+		pty = new vterm::LocalPTY(helpers::Command(*config::Command));
+#endif
 
 	    tpp::Window * w = Application::Instance()->createWindow("test", * config::Cols, * config::Rows, *config::FontSize);
 		ui::RootWindow * rw = ui::Create<ui::RootWindow>() 

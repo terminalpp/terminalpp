@@ -17,6 +17,8 @@
 
 ### Win32 Bugs
 
+- does not print version (I guess uninitialized console)
+
 ### X11 Bugs
 
 # Code Fixes

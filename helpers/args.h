@@ -146,6 +146,14 @@ namespace helpers {
 			return &value_;
 		}
 
+		T & operator * () {
+			return value_;
+		}
+
+		T * operator ->() {
+			return &value_;
+		}
+
 	protected:
 
 		/** This must be overriden by the specifications. 
@@ -450,6 +458,9 @@ namespace helpers {
 	 */
 	template<>
 	inline void Arg<std::vector<std::string>>::parse(char const* value) {
+		// if it is the first value, delete any default value that might have been present
+		if (specified_ == false)
+		    value_.clear();
 		value_.push_back(value);
 		specified_ = true;
 	}

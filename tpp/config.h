@@ -49,6 +49,7 @@ namespace tpp {
 		extern helpers::Arg<std::vector<std::string>> Command;
 #ifdef ARCH_WINDOWS
 		#define DEFAULT_TERMINAL_COMMAND "wsl", "-e", "/home/peta/devel/tpp-build/bypass/bypass", "SHELL=/bin/bash", "-e", "bash"
+		#define DEFAULT_CONPTY_COMMAND "wsl"
 #else
         #define DEFAULT_TERMINAL_COMMAND "bash"
 #endif
