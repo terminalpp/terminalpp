@@ -158,7 +158,7 @@ namespace ui {
 				return;
 			// set the width and height of the percentage wanting children
 			int totalHeight = clientCanvas.height();
-			int availableHeight = totalHeight - fixedHeight;
+			int availableHeight = std::max(0, totalHeight - fixedHeight);
 			for (Widget * child : children)
 				if (child->heightHint().isPercentage()) {
 					// determine the height 
@@ -234,7 +234,7 @@ namespace ui {
 				return;
 			// set the width and height of the percentage wanting children
 			int totalWidth = clientCanvas.width();
-			int availableWidth = totalWidth - fixedWidth;
+			int availableWidth = std::max(0, totalWidth - fixedWidth);
 			for (Widget* child : children)
 				if (child->widthHint().isPercentage()) {
 					// determine the height 

@@ -14,8 +14,6 @@ namespace ui {
 	class Container : public virtual Widget {
 	public:
 
-		~Container() override;
-
 		Layout* layout() const {
 			return layout_;
 		}

@@ -9,11 +9,6 @@ namespace ui {
 		relayout_(true) {
 	}
 
-	Container::~Container() {
-		for (Widget* child : children())
-			delete child;
-	}
-
 	void Container::paint(Canvas& canvas) {
 		Canvas clientCanvas = getClientCanvas(canvas);
 		if (relayout_) {

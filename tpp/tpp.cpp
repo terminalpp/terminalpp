@@ -123,7 +123,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #else
 int main(int argc, char* argv[]) {
 #endif
-	helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored() << ARCH));
+	helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored()));
 	helpers::Arguments::Parse(argc, argv);
 	try {
 	    // create the application singleton
@@ -154,15 +154,17 @@ int main(int argc, char* argv[]) {
 #endif
 
 	    tpp::Window * w = Application::Instance()->createWindow("test", * config::Cols, * config::Rows, *config::FontSize);
-		ui::RootWindow * rw = ui::Create<ui::RootWindow>() 
-            //<< ui::Geometry(80,25)
-		    << ui::Layout::Maximized()
+		ui::RootWindow* rw = ui::Create<ui::RootWindow>()
+			<< ui::Layout::Horizontal()
+			<< (ui::Create<ui::Label>()
+				<< ui::HeightHint(ui::SizeHint::Fixed())
+				<< ui::Geometry(1, 1)
+				<< STR("t++ :" << helpers::Stamp::Stored())
+				//<< ui::Visibility(false)
+				)
 			<< (
 				ui::Create(vt100 = new vterm::VT100(*config::Cols, *config::Rows, &palette, pty))
-			   )
-            << (
-                ui::Create<ui::Label>() << ui::HeightHint(ui::SizeHint::Fixed()) << ui::Geometry(1, 1) << "Hello world!!!!"
-               );
+				);
 
 		w->setRootWindow(rw);
 		w->show();
@@ -175,10 +177,10 @@ int main(int argc, char* argv[]) {
 	    return EXIT_SUCCESS;
 	} catch (helpers::Exception const& e) {
 		std::cout << e;
-	} catch (std::exception const& e) {
+	} /*catch (std::exception const& e) {
 		std::cout << e.what();
 	} catch (...) {
 		std::cout << "unknown error";
-	}
+	} */
 	return EXIT_FAILURE;
 }
