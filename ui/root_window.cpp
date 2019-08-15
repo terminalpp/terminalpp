@@ -140,6 +140,14 @@ namespace ui {
 		return mouseFocus_;
 	}
 
+	void RootWindow::updateTitle(std::string const & title) {
+		if (title_ != title) {
+			title_ = title;
+			if (renderer_)
+			renderer_->setTitle(title_);
+		}
+	}
+
 	void RootWindow::requestClipboardPaste(Clipboard * sender) {
 		if (pasteRequestTarget_ == nullptr) {
 			pasteRequestTarget_ = sender;

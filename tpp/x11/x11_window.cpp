@@ -14,7 +14,7 @@ namespace tpp {
 
 
     X11Window::X11Window(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
-        RendererWindow(title, cols, rows, Font::GetOrCreate(ui::Font(), baseCellHeightPx)->cellWidthPx(),baseCellHeightPx) ,
+        RendererWindow(cols, rows, Font::GetOrCreate(ui::Font(), baseCellHeightPx)->cellWidthPx(),baseCellHeightPx) ,
 		display_(X11Application::Instance()->xDisplay()),
 		screen_(X11Application::Instance()->xScreen()),
 	    visual_(DefaultVisual(display_, screen_)),
@@ -38,7 +38,7 @@ namespace tpp {
 			   at the top of the window and the name of the minimized window
 			   respectively.
 			*/
-		XSetStandardProperties(display_, window_, title_.c_str(), nullptr, x11::None, nullptr, 0, nullptr);
+		XSetStandardProperties(display_, window_, title.c_str(), nullptr, x11::None, nullptr, 0, nullptr);
 
 		/* this routine determines which types of input are allowed in
 		   the input.  see the appropriate section for details...

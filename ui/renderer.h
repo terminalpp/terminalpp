@@ -29,6 +29,10 @@ namespace ui {
          */
         virtual void requestRender(ui::Rect const & rect) = 0;
 
+        /** Sets the title of the rendered window. 
+         */
+        virtual void setTitle(std::string const & title) = 0;
+
         virtual void requestClipboardPaste() = 0;
 
         virtual void requestSelectionPaste() = 0;

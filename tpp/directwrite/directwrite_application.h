@@ -54,12 +54,14 @@ namespace tpp {
 		Microsoft::WRL::ComPtr<IDWriteFactory> dwFactory_;
 		Microsoft::WRL::ComPtr<ID2D1Factory> d2dFactory_;
 
-		static wchar_t const* const WindowClassName_;
-
         /** Holds the selection so that it can be pasted when requested by the windows. 
          */
         std::string selection_;
         DirectWriteWindow * selectionOwner_;
+
+        static constexpr WPARAM MSG_TITLE_CHANGE = 0;        
+
+		static wchar_t const* const WindowClassName_;
 
     }; // tpp::DirectWriteApplication
 

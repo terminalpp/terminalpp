@@ -8,7 +8,7 @@
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
 
-- set window title (& icon?)
+- terminal's on title change should propagate to the root window's title change 
 
 ## Bugs and missing features
 

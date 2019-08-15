@@ -40,6 +40,12 @@ namespace tpp {
             X11Application::Instance()->xSendEvent(this, e, ExposureMask);
 		}
 
+        /** Sets the title of the window. 
+         */
+        void setTitle(std::string const & title) override {
+            XSetStandardProperties(display_, window_, title.c_str(), nullptr, x11::None, nullptr, 0, nullptr);
+        }
+
     protected:
 
         X11Window(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);

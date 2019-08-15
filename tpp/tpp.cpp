@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
 		pty = new vterm::LocalPTY(helpers::Command(*config::Command));
 #endif
 
-	    tpp::Window * w = Application::Instance()->createWindow("test", * config::Cols, * config::Rows, *config::FontSize);
+	    tpp::Window * w = Application::Instance()->createWindow(DEFAULT_WINDOW_TITLE, * config::Cols, * config::Rows, *config::FontSize);
 		ui::RootWindow* rw = ui::Create<ui::RootWindow>()
 			<< ui::Layout::Horizontal()
 			<< (ui::Create<ui::Label>()

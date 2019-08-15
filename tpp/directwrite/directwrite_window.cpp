@@ -8,7 +8,7 @@
 namespace tpp {
 
 	DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
-	    RendererWindow(title, cols, rows, Font::GetOrCreate(ui::Font(), baseCellHeightPx)->cellWidthPx(), baseCellHeightPx),
+	    RendererWindow(cols, rows, Font::GetOrCreate(ui::Font(), baseCellHeightPx)->cellWidthPx(), baseCellHeightPx),
 		    wndPlacement_{ sizeof(wndPlacement_) },
 			frameWidthPx_(0),
 			frameHeightPx_(0),
@@ -16,7 +16,7 @@ namespace tpp {
 			glyphIndices_(nullptr),
 			glyphAdvances_(nullptr),
 			glyphOffsets_(nullptr) {
-			helpers::utf16_string t = helpers::UTF8toUTF16(title_);
+			helpers::utf16_string t = helpers::UTF8toUTF16(title);
 			hWnd_ = CreateWindowExW(
 				WS_EX_LEFT, // the default
 				DirectWriteApplication::Instance()->WindowClassName_, // window class
@@ -369,6 +369,12 @@ namespace tpp {
 			 */
 			case WM_USER:
 			    switch (wParam) {
+					case DirectWriteApplication::MSG_TITLE_CHANGE: {
+						helpers::utf16_string t = helpers::UTF8toUTF16(window->rootWindow()->title());
+						// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+						SetWindowTextW(hWnd, t.c_str());
+						break;
+					}					
 				    default:
 					    LOG("Win32") << "Invalid user message " << wParam;
 

@@ -4,6 +4,8 @@
 #define SHOW_LINE_ENDINGS
 
 
+#define DEFAULT_WINDOW_TITLE "t++"
+
 /** Determines the default blink speed of the cursor or blinking text. 
  */ 
 #define DEFAULT_BLINK_SPEED 500

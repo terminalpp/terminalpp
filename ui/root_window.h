@@ -31,6 +31,10 @@ namespace ui {
             buffer();
         }
 
+        std::string const & title() const {
+            return title_;
+        }
+
     protected:
 
         friend class Widget;
@@ -143,11 +147,20 @@ namespace ui {
 			return result;
 		}
 
+        void setTitle(std::string const & title) {
+            if (title_ != title) {
+                updateTitle(title);
+                // TODO on title change event
+            }
+        }
+
+        virtual void updateTitle(std::string const & title);
     private:
 
         friend class Canvas;
         friend class Clipboard;
         friend class Renderer;
+
 
         virtual void requestClipboardPaste(Clipboard * sender);
         virtual void requestSelectionPaste(Clipboard * sender);
@@ -181,6 +194,8 @@ namespace ui {
 
         Clipboard * pasteRequestTarget_;
         Clipboard * selectionOwner_;
+
+        std::string title_;
 
     }; 
 

@@ -63,7 +63,7 @@ namespace tpp {
 
     protected:
 
-		Window(std::string const & title, int cols, int rows, unsigned cellWidthPx, unsigned cellHeightPx) :
+		Window(int cols, int rows, unsigned cellWidthPx, unsigned cellHeightPx) :
 			cols_(cols),
 			rows_(rows),
 			widthPx_(cols* cellWidthPx),
@@ -73,7 +73,6 @@ namespace tpp {
 			cellHeightPx_(cellHeightPx),
 			zoom_(1.0),
 			fullscreen_(false),
-            title_(title),
             blinkVisible_(true),
             cursorBlinkVisible_(true) {
 		}
@@ -193,8 +192,6 @@ namespace tpp {
 
         bool fullscreen_;
 
-        std::string title_;
-
         ui::Key activeModifiers_;
 
         /* Determines if the blinking text and cursor are currently visible, or not. 
@@ -212,8 +209,8 @@ namespace tpp {
     class RendererWindow : public Window {
     protected:
 
-		RendererWindow(std::string const & title, int cols, int rows, unsigned cellWidthPx, unsigned baseCellHeightPx) :
-            Window(title, cols, rows, cellWidthPx, baseCellHeightPx) {
+		RendererWindow(int cols, int rows, unsigned cellWidthPx, unsigned baseCellHeightPx) :
+            Window(cols, rows, cellWidthPx, baseCellHeightPx) {
         }
 
         /** Draws the provided buffer in the window. 

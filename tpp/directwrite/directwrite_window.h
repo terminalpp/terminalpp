@@ -39,6 +39,13 @@ namespace tpp {
             PostMessage(hWnd_, WM_PAINT, 0, 0);
 		}
 
+        /** Sets the title of the window. 
+         */
+        void setTitle(std::string const & title) override {
+            MARK_AS_UNUSED(title);
+            PostMessage(hWnd_, WM_USER, DirectWriteApplication::MSG_TITLE_CHANGE, 0);                
+        }
+
     protected:
 
         DirectWriteWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);
