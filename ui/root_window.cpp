@@ -15,6 +15,10 @@ namespace ui {
 		buffer_{0, 0},
 		keyboardFocus_{nullptr},
 		mouseFocus_{nullptr},
+		mouseClickWidget_{nullptr},
+		mouseClickButton_{MouseButton::Left}, // does not matter
+		mouseClickStart_{0},
+		mouseDoubleClickPrevious_{0},
 		pasteRequestTarget_{nullptr},
 		selectionOwner_{nullptr} {
 		visibleRegion_ = Canvas::VisibleRegion{this};

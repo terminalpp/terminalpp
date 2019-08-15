@@ -1,3 +1,4 @@
+#!/bin/bash
 echo -e "\033[0mX\033[mNormal\033[0mX"
 echo -e "\033[0mX\033[1mBold\033[0mX"
 echo -e "\033[0mX\033[2mFaint\033[0mX"

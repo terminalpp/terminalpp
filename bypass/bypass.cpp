@@ -56,9 +56,8 @@ public:
         std::thread inputEncoder([this]() {
             char * buffer = new char[* BufferSize];
             char * bufferWrite = buffer;
-            size_t numBytes;
             while (true) {
-                numBytes = read(STDIN_FILENO, (void *) bufferWrite, *BufferSize - (bufferWrite - buffer));
+                size_t numBytes = read(STDIN_FILENO, (void *) bufferWrite, *BufferSize - (bufferWrite - buffer));
                 if (numBytes == 0)
                     break;
                 numBytes += bufferWrite - buffer;

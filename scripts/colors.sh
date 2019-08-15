@@ -1,3 +1,4 @@
+#!/bin/bash
 COLORS=("Black " "Red   " "Green " "Brown " "Blue  " "Violet" "Cyan  " "Gray  ")
 LINE=""
 for FG in {0..7}

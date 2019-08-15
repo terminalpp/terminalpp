@@ -24,6 +24,9 @@ namespace vterm {
     }
 
     Terminal::Buffer & Terminal::Buffer::operator = (Buffer const & other) {
+        // self - check
+        if (this == &other)
+            return *this;
         if (cols_ != other.cols_ || rows_ != other.rows_) {
             for (int i = 0; i < rows_; ++i)
                 delete [] cells_[i];
