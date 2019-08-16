@@ -57,9 +57,9 @@ namespace tpp {
         // nor do we need to FreeConsole at any point
         FILE* fpstdin = stdin, * fpstdout = stdout, * fpstderr = stderr;
         // patch the cin, cout, cerr
-        freopen_s(&fpstdin, "CONIN$", "r", stdin);
-        freopen_s(&fpstdout, "CONOUT$", "w", stdout);
-        freopen_s(&fpstderr, "CONOUT$", "w", stderr);
+        OSCHECK(freopen_s(&fpstdin, "CONIN$", "r", stdin) == 0);
+        OSCHECK(freopen_s(&fpstdout, "CONOUT$", "w", stdout) == 0);
+        OSCHECK(freopen_s(&fpstderr, "CONOUT$", "w", stderr) == 0);
         std::cin.clear();
         std::cout.clear();
         std::cerr.clear();

@@ -1,3 +1,4 @@
+#!/bin/bash
 xcode-select --install
 brew install Caskroom/cask/xquartz
 
