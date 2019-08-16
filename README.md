@@ -4,8 +4,8 @@
 Platform | Build Status
 ----------|----------
 Windows | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-win)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=1) 
-Linux | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-win)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=2)
-macOS * | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-win)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=3)
+Linux | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-linux)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=2)
+macOS * | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-apple)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=3)
 
 > * macOS is not supported yet.
 
