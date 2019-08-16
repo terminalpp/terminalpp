@@ -11,7 +11,6 @@
 
 ## Bugs and missing features
 
-- check asserts, some should actually be OSCHECKS
 - add zoom out? and default zoom? 
 
 ### Win32 Bugs

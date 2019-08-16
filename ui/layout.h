@@ -98,7 +98,8 @@ namespace ui {
 			int w = clientCanvas.width();
 			int h = clientCanvas.height();
 			for (Widget* child : childrenOf(container))
-				layout(container, child, w, h);
+			    if (child->visible())
+				    layout(container, child, w, h);
 		}
 
 		/** Layouts the child according to its size hints and positions it in the center of the parent's canvas.
@@ -160,7 +161,7 @@ namespace ui {
 			int totalHeight = clientCanvas.height();
 			int availableHeight = std::max(0, totalHeight - fixedHeight);
 			for (Widget * child : children)
-				if (child->heightHint().isPercentage()) {
+				if (child->heightHint().isPercentage() && child->visible()) {
 					// determine the height 
 					int h = (totalHeight - fixedHeight) * child->heightHint().pct() / 100;
 					layout(container, child, child->y(), w, h);
@@ -171,7 +172,7 @@ namespace ui {
 			if (autoChildren != 0) {
 				int h = availableHeight / autoChildren;
 				for (Widget* child : children) {
-					if (child->heightHint().isAuto()) {
+					if (child->heightHint().isAuto() && child->visible()) {
 						if (--autoChildren == 0)
 							h = availableHeight;
 						layout(container, child, child->y(), w, h);
@@ -182,8 +183,10 @@ namespace ui {
 			// finally, when the sizes are right, we must reposition the elements
 			int top = 0;
 			for (Widget* child : children) {
-				setChildGeometry(container, child, 0, top, child->width(), child->height());
-				top += child->height();
+				if (child->visible()) {
+					setChildGeometry(container, child, 0, top, child->width(), child->height());
+					top += child->height();
+				}
 			}
 		}
 
@@ -236,7 +239,7 @@ namespace ui {
 			int totalWidth = clientCanvas.width();
 			int availableWidth = std::max(0, totalWidth - fixedWidth);
 			for (Widget* child : children)
-				if (child->widthHint().isPercentage()) {
+				if (child->widthHint().isPercentage() && child->visible()) {
 					// determine the height 
 					int w = (totalWidth - fixedWidth) * child->widthHint().pct() / 100;
 					layout(container, child, child->x(), w, h);
@@ -247,7 +250,7 @@ namespace ui {
 			if (autoChildren != 0) {
 				int w = availableWidth / autoChildren;
 				for (Widget* child : children) {
-					if (child->widthHint().isAuto()) {
+					if (child->widthHint().isAuto() && child->visible()) {
 						if (--autoChildren == 0)
 							w = availableWidth;
 						layout(container, child, child->x(), w, h);
@@ -258,8 +261,10 @@ namespace ui {
 			// finally, when the sizes are right, we must reposition the elements
 			int left = 0;
 			for (Widget* child : children) {
-				setChildGeometry(container, child, left, 0, child->width(), child->height());
-				left += child->width();
+				if (child->visible()) {
+					setChildGeometry(container, child, left, 0, child->width(), child->height());
+					left += child->width();
+				}
 			}
 		}
 
