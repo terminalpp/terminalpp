@@ -42,9 +42,8 @@ public:
         // start the pty reader and encoder thread
         outputEncoder_ = std::thread([this]() {
             char * buffer = new char[* BufferSize];
-            size_t numBytes;
             while (true) {
-                numBytes = pty_.receive(buffer, * BufferSize);
+                size_t numBytes = pty_.receive(buffer, * BufferSize);
                 // if nothing was read, the process has terminated and so should we
                 if (numBytes == 0)
                     break;

@@ -106,12 +106,11 @@ namespace tpp {
         }
 
         void finalizeDraw() {
-            unsigned marginRight = widthPx_ % cellWidthPx_;
-            unsigned marginBottom = heightPx_ % cellHeightPx_;
-            if (marginRight != 0) 
-                XClearArea(display_, window_, widthPx_ - marginRight, 0, marginRight, heightPx_, false);
-            if (marginBottom != 0)
-                XClearArea(display_, window_, 0, heightPx_ - marginBottom, widthPx_, marginBottom, false);
+            setBackgroundColor(rootWindow()->background());
+            if (widthPx_ % cellWidthPx_ != 0)
+                XftDrawRect(draw_, &bg_, cols_ * cellWidthPx_, 0, widthPx_ % cellWidthPx_, heightPx_);
+            if (heightPx_ % cellHeightPx_ != 0)
+                XftDrawRect(draw_, &bg_, 0, rows_ * cellHeightPx_, widthPx_, heightPx_ % cellHeightPx_);
             // now bitblt the buffer
             XCopyArea(display_, buffer_, window_, gc_, 0, 0, widthPx_, heightPx_, 0, 0);
             XftDrawDestroy(draw_);

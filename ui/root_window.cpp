@@ -20,7 +20,8 @@ namespace ui {
 		mouseClickStart_{0},
 		mouseDoubleClickPrevious_{0},
 		pasteRequestTarget_{nullptr},
-		selectionOwner_{nullptr} {
+		selectionOwner_{nullptr},
+		background_{Color::Black()} {
 		visibleRegion_ = Canvas::VisibleRegion{this};
 	}
 

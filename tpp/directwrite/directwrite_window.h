@@ -102,6 +102,25 @@ namespace tpp {
         }
 
         void finalizeDraw() {
+            setBackgroundColor(rootWindow()->background());
+            if (widthPx_ % cellWidthPx_ != 0) {
+                D2D1_RECT_F rect = D2D1::RectF(
+                    static_cast<FLOAT>(cols_ * cellWidthPx_),
+                    static_cast<FLOAT>(0),
+                    static_cast<FLOAT>(widthPx_),
+                    static_cast<FLOAT>(heightPx_)
+                );
+    			rt_->FillRectangle(rect, bg_.Get());
+            }
+            if (heightPx_ % cellHeightPx_ != 0) {
+                D2D1_RECT_F rect = D2D1::RectF(
+                    static_cast<FLOAT>(0),
+                    static_cast<FLOAT>(rows_ * cellHeightPx_),
+                    static_cast<FLOAT>(widthPx_),
+                    static_cast<FLOAT>(heightPx_)
+                );
+    			rt_->FillRectangle(rect, bg_.Get());
+            }
             rt_->EndDraw();
         }
 

@@ -35,6 +35,12 @@ namespace ui {
             return title_;
         }
 
+        /** Returns the background color of the window. 
+         */
+        Color background() const {
+            return background_;
+        }
+
     protected:
 
         friend class Widget;
@@ -155,6 +161,7 @@ namespace ui {
         }
 
         virtual void updateTitle(std::string const & title);
+
     private:
 
         friend class Canvas;
@@ -196,6 +203,10 @@ namespace ui {
         Clipboard * selectionOwner_;
 
         std::string title_;
+
+        /* Default background of the window. 
+         */
+        Color background_;
 
     }; 
 

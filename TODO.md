@@ -1,6 +1,5 @@
 ﻿# V0.2
 
-- add painting the rectangles around the buffer if window size not precise (in finalizedraw)
 - determine the closing mechanism (ie. session v2)
 - add the extra attributes drawing
 - terminal should have an event to be called when a line is to be scrolled out
