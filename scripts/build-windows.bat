@@ -2,4 +2,4 @@ mkdir build
 cd build
 cmake ..
 cmake --build . --clean-first --config Debug
-cmake --build . --clean-first --condig Release
+cmake --build . --clean-first --config Release
