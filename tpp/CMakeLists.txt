@@ -11,6 +11,33 @@ file(GLOB_RECURSE SRC "*.cpp" "*.h")
 
 if(WIN32)
     add_executable(tpp WIN32 ${SRC} "directwrite/tpp.rc")
+
+    # Search for the wix toolkit    
+    file(GLOB WIX_ROOT "C:/Program Files*/WiX Toolset v*/bin")
+
+    if (WIX_ROOT) 
+        add_custom_target(tpp-msi
+            COMMAND ${CMAKE_COMMAND} -E make_directory "build/installer/msi"
+            COMMAND ${WIX_ROOT}/candle.exe
+                -nologo 
+                -arch "x64" 
+                -ext WixUIExtension -ext WixUtilExtension 
+                -out "build/installer/msi/tpp.wixobj" 
+                "tpp/installer/msi/tpp.wxs"
+            COMMAND ${WIX_ROOT}/light.exe 
+                -nologo
+                -ext WixUIExtension
+                -ext WixUtilExtension 
+                -out "build/installer/msi/tpp.msi" 
+                -sice:ICE61 -sice:ICE91 
+                "build/installer/msi/tpp.wixobj"
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        )        
+        set_target_properties(tpp-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    else()
+        message(STATUS "WIX toolset not found, tpp-msi is not available")
+    endif()
+
 elseif(UNIX)
     find_package(X11 REQUIRED)
 	find_package(Threads REQUIRED)

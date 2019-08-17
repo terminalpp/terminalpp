@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+    xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+
+    <Product Name="Terminal++" Id="*" UpgradeCode="3e26832c-a36a-4b82-8432-8908666865be" Language="1033" Codepage="1252" Version="0.3.3" Manufacturer="zduka">
+        <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine"/>
+        <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
+        <Icon Id="ProductIcon" SourceFile="..\..\..\resources\images\tpp.ico"/>
+        <WixVariable Id="WixUILicenseRtf" Value="..\..\..\resources\text\license.rtf"/>
+        <Property Id="ARPPRODUCTICON" Value="ProductIcon"/>
+        <MediaTemplate EmbedCab="yes"/>
+        <UIRef Id="WixUI_Minimal"/>
+
+        <Feature Id="ProductFeature" Title="ConsoleApp" Level="1">
+            <ComponentRef Id="TppExe"/>
+            <ComponentRef Id="TppShortcut"/>
+            <ComponentRef Id="ModifyPathEnv"/>
+        </Feature>
+
+        <!-- Create directories -->
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFiles64Folder">
+                <Directory Id="TppProgramFiles" Name="tpp"/>
+            </Directory>
+            <Directory Id="ProgramMenuFolder">
+                <Directory Id="TppProgramMenu" Name="tpp"/>
+            </Directory>
+        </Directory>
+
+        <!-- Application binaries -->
+        <DirectoryRef Id="TppProgramFiles">
+            <Component Id="TppExe" Guid="*">
+                <File Id="TppExeFile" Source="..\..\..\build\tpp\release\tpp.exe" Name="tpp.exe" KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="TppProgramMenu">
+            <!-- Application shortcut -->
+            <Component Id="TppShortcut" Guid="93cd3837-8e33-45c2-80b0-018688adb4be">
+                <Shortcut 
+                    Id="TppShortcutFile" Name="Terminal++" Description="Minimalist, fast, cross-platform terminal emulator." Target="[TppProgramFiles]tpp.exe"/>
+                <RemoveFolder Id="TppProgramMenu" On="uninstall"/>
+                <RegistryValue Root="HKCU" Key="Software\Microsoft\Tpp" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="TppProgramFiles">
+            <!-- Add to PATH -->
+            <Component Id="ModifyPathEnv" Guid="c1f289a7-dec6-4418-8f4b-832d5c2f8a0d" KeyPath="yes">
+                <Environment Id="PathEnv" Value="[TppProgramFiles]" Name="PATH" Permanent="no" Part="first" Action="set" System="yes"/>
+            </Component>
+        </DirectoryRef>
+    </Product>
+</Wix>
