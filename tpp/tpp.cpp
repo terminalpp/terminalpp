@@ -24,6 +24,8 @@
 #error "Unsupported platform"
 #endif
 
+#include "forms/session.h"
+
 #include "ui/widgets/panel.h"
 #include "ui/widgets/label.h"
 #include "ui/widgets/scrollbox.h"
@@ -98,7 +100,6 @@ namespace tpp {
 	}
 }
 
-
 using namespace tpp;
 
 // https://www.codeguru.com/cpp/misc/misc/graphics/article.php/c16139/Introduction-to-DirectWrite.htm
@@ -160,9 +161,9 @@ int main(int argc, char* argv[]) {
 				<< ui::HeightHint(ui::SizeHint::Fixed())
 				<< ui::Geometry(1, 1)
 				<< STR("t++ :" << helpers::Stamp::Stored())
-				<< ui::OnMouseClick([](ui::MouseButtonEvent & e) {
+				<< ui::OnMouseClick(ui::CreateHandler<ui::MouseButtonEvent>([](ui::MouseButtonEvent & e) {
 					e.sender<ui::Label>()->setVisible(false);
-				})
+				}))
 				)
 			<< (
 				ui::Create(vt100 = new vterm::VT100(*config::Cols, *config::Rows, &palette, pty))

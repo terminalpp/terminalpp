@@ -240,7 +240,7 @@ namespace vterm {
         Palette(Palette && from);
 
         ~Palette() {
-            delete colors_;
+            delete [] colors_;
         }
 
         size_t size() const {

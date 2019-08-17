@@ -1,8 +1,12 @@
 #pragma once
 
 #include "widget.h"
+#include "layout.h"
 
 namespace ui {
+
+    using helpers::CreateHandler;
+
 	/** The UI builder. 
 
 	    The builder just encapsulates an arbitrary widget, retaining its type in a smart pointer like structure. For more details on how it is used see the documentation to the Create functions below. 
@@ -223,9 +227,6 @@ namespace ui {
 		    handler_(handler) {
 		}
 
-		explicit OnMouseClick(void(*f)(MouseButtonEvent &)):
-		    handler_(f) {
-		}
 	private:
 	    helpers::EventHandler<MouseButtonEvent> handler_;
 

@@ -1,13 +1,11 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/587d39b5db9e4742bb6ce05f86863439)](https://www.codacy.com/app/zduka/tpp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=zduka/tpp&amp;utm_campaign=Badge_Grade)
 
-Platform | Build Status
-----------|----------
+Platform | Build Status | Notes
+----------|------------ | --------
 Windows | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-win)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=1) 
 Linux | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-linux)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=2)
-macOS * | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-apple)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=3)
-
-> * macOS is not supported yet.
+macOS  | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-apple)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=3) | (not officially supported, uses X11 rendering)
 
 # Terminal++
 

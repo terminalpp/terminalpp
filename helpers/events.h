@@ -6,86 +6,96 @@
 #include "helpers.h"
 
 
-#define HANDLER(...) CreateEventHandler_(&__VA_ARGS__)
-
 namespace helpers {
-
 
 	/** Encapsulation around event handler function or method.
 
-	    TODO The handler is fairly suboptimal now. Technically I should be able to use parametrized proxies for every method that is being used as a handler target and then calling it:
+	    If the handler is a function, the function pointer is kept inside with the target object being set to nullptr, in case of methods, this is more complicated as a method pointer does not have fixed (or even defined) size. What we therefore do is use the method pointer as a template argument of a wrapper function, whose pointer we store together with the object to be called. When triggered, the object and payload are passed to the wrapper function.
 
-		template<typename C, void (C:: *METHOD)(PAYLOAD &)>
-		static void MethodProxy(void * object, PAYLOAD & payload) {
-		    C * o = reinterpret_cast<C*>(object);
-			(o->*METHOD)(payload);
-		}
-
-		Getting function pointer to this is simple enough. However, figuring out how to get the class name and the method from the simple method pointer is not trivial it seems.
-
-		So for now the events use the cast of method pointer to method pointer of other object, so that I can store the ptr somehow and I bind the object to the method in a std::function. This is not efficient both in memory (the std::function cannot compare itself, so I need to check & store the object & function) and if internet is to be believed also in time - std::function should be slow. 
+		TODO Creating a handler is now a mouthful, it would be really nice if this can be simplified using template deductions (notably the method case), but I am not even sure if such magic is possible in C++. 
 	 */
-
 	template<typename PAYLOAD>
 	class EventHandler {
 	public:
 
-		EventHandler(void(*f)(PAYLOAD &)) :
-			object_(nullptr),
-			function_(f),
-			f_(f) {
-			ASSERT(f != nullptr) << "Cannot create handler to null function";
-		}
-
-		/** Creates event handler for the specified object and its method.
-		 */
-		template<typename C>
-		EventHandler(C * object, void (C:: * method)(PAYLOAD &)) :
-			object_(object),
-			method_(reinterpret_cast<void (EventHandler::*)(PAYLOAD &)>(method)) {
-			f_ = std::bind(method, object, std::placeholders::_1);
-			ASSERT(object != nullptr) << "Cannot create method handler for nullptr object";
-		}
-
-		/** Calls the stored handler.
-		 */
-		void operator() (PAYLOAD & payload) {
-			f_(payload);
-		}
-
-		/** Compares two handlers.
-
-			Handler functions are identical if they point to the same function. Handler methods are identical if they point to the same method of the same object.
+		/** Event handlers can be compared for equality, i.e. whether they point to the same target function, or method & object. 
 		 */
 		bool operator == (EventHandler<PAYLOAD> const & other) const {
-			return function_ == other.function_ &&  object_ == other.object_;
+			return (f_ == other.f_) && (object_ == other.object_);
 		}
 
 		bool operator != (EventHandler<PAYLOAD> const & other) const {
-			return function_ != other.function_ || object_ != other.object_;
+			return (f_ != other.f_) || (object_ != other.object_);
+		}
+
+		/** Triggers the handler. 
+		 */
+		void operator() (PAYLOAD & payload) {
+			if (object_ == nullptr)
+				(*f_)(payload);
+			else
+				(*w_)(object_, payload);
 		}
 
 	private:
+		typedef void (*FunctionPtr) (PAYLOAD &); 
+		typedef void (* WrapperPtr)(void *, PAYLOAD &);
 
-		typedef void(*FunctionPtr)(PAYLOAD &);
-		typedef void(EventHandler:: *MethodPtr)(PAYLOAD &);
+		template<typename P>
+		friend EventHandler<P> CreateHandler(void (*fptr)(P &));
 
-		/** The actual function to call. 
-		 */
-		std::function<void(PAYLOAD &)> f_;
+		template<typename P, typename C, void(C::*M)(P &)>
+		friend EventHandler<P> CreateHandler(C* target);
 
-		/** If the handler is a method, holds the handler object.
-		 */
+		EventHandler(FunctionPtr f):
+			object_(nullptr),
+			f_(f) {
+			static_assert(sizeof(FunctionPtr) == sizeof(WrapperPtr), "Function and wrapper are of the same size");
+		}
+
+		EventHandler(void * object, WrapperPtr w):
+			object_(object),
+			w_(w) {
+			static_assert(sizeof(FunctionPtr) == sizeof(WrapperPtr), "Function and wrapper are of the same size");
+			ASSERT(object != nullptr) << "When calling a method, target object must not be null";
+		}
+
+		template<typename C, void(C::*M)(PAYLOAD &)>
+		static void Wrapper(void * object, PAYLOAD & p) {
+			C * target = static_cast<C*>(object);
+			(*target.*M)(p);
+		} 
+
 		void * object_;
-
+		
 		union {
-			/** Pointer to the handler function, or handler method.
-			 */
-			FunctionPtr function_;
-			MethodPtr method_;
+			FunctionPtr f_;
+			WrapperPtr w_;
 		};
+	}; 
 
-	};
+	/** Creates event handler from given function pointer. 
+	 
+	    The function pointer is the argument to the method. If template deduction does not work, the payload type must be specified, i.e. :
+
+		    EventHandler<Payload> h = CreateHandler<Payload>([](Payload & e){ ... });
+	 */
+	template<typename PAYLOAD>
+	inline EventHandler<PAYLOAD> CreateHandler(void (*fptr)(PAYLOAD &)) {
+		return EventHandler<PAYLOAD>(fptr);
+	}
+
+	/** Creates event handler from given method pointer. 
+	 
+	    Note that the method pointer is template argument, while the target object is argument to the function. Since I did not figure out how to force C++ to deduce the template argument, creation of a handler from own method is rather verbose, i.e. if class Foo has instance foo and method bar, and the event payload is called Payload, we must do the following:
+
+		    EventHandler<Payload> h = CreateHandler<Payload, Foo, &Foo::bar>(&foo);
+
+	 */
+	template<typename PAYLOAD, typename C, void(C::*M)(PAYLOAD &)>
+	inline EventHandler<PAYLOAD> CreateHandler(C * target) {
+		return EventHandler<PAYLOAD>(static_cast<void*>(target), & EventHandler<PAYLOAD>::template Wrapper<C,M>);
+	} 
 
 	template<typename PAYLOAD>
 	class Event {
@@ -196,13 +206,3 @@ namespace helpers {
 	};
 
 } // namespace helpers
-
-template<typename PAYLOAD>
-::helpers::EventHandler<PAYLOAD> CreateEventHandler_(void(*f)(PAYLOAD &)) {
-	return ::helpers::EventHandler<PAYLOAD>(f);
-}
-
-template<typename C, typename PAYLOAD>
-::helpers::EventHandler<PAYLOAD> CreateEventHandler_(void (C::*f)(PAYLOAD &), C * instance) {
-	return ::helpers::EventHandler<PAYLOAD>(instance, f);
-}
