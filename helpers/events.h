@@ -6,7 +6,7 @@
 #include "helpers.h"
 
 
-#define HANDLER(...) CreateEventHandler_(& __VA_ARGS__)
+#define HANDLER(...) CreateEventHandler_(&__VA_ARGS__)
 
 namespace helpers {
 
@@ -132,10 +132,13 @@ namespace helpers {
 		typedef SENDER Sender;
 		typedef PAYLOAD Payload;
 
-		SENDER * const sender;
+		template<typename T = SENDER>
+		T * sender() const {
+			return dynamic_cast<T*>(sender_);
+		}
 
 		EventPayload(SENDER * sender, PAYLOAD const & payload) :
-			sender(sender),
+			sender_(sender),
 			payload_(payload),
 			doDispatch_(true) {
 		}
@@ -160,6 +163,7 @@ namespace helpers {
 
 	private:
 		friend class Event<EventPayload<PAYLOAD, SENDER>>;
+		SENDER * const sender_;
 		PAYLOAD payload_;
 		bool doDispatch_;
 	};
@@ -169,10 +173,13 @@ namespace helpers {
 	public:
 		typedef SENDER Sender;
 
-		SENDER * const sender;
+		template<typename T = SENDER>
+		T * sender() const {
+			return dynamic_cast<T>(sender_);
+		}
 
 		EventPayload(SENDER * sender) :
-			sender(sender),
+			sender_(sender),
 			doDispatch_(true) {
 		}
 		/** Stops dispatching the current event.
@@ -184,6 +191,7 @@ namespace helpers {
 		}
 	private:
 		friend class Event<EventPayload<void, SENDER>>;
+		SENDER * const sender_;
 		bool doDispatch_;
 	};
 

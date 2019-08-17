@@ -160,7 +160,9 @@ int main(int argc, char* argv[]) {
 				<< ui::HeightHint(ui::SizeHint::Fixed())
 				<< ui::Geometry(1, 1)
 				<< STR("t++ :" << helpers::Stamp::Stored())
-				<< ui::Visibility(false)
+				<< ui::OnMouseClick([](ui::MouseButtonEvent & e) {
+					e.sender<ui::Label>()->setVisible(false);
+				})
 				)
 			<< (
 				ui::Create(vt100 = new vterm::VT100(*config::Cols, *config::Rows, &palette, pty))

@@ -214,4 +214,27 @@ namespace ui {
 	}
 
 
+	// events
+
+// MouseButtonEvent
+	class OnMouseClick {
+	public:
+	    explicit OnMouseClick(helpers::EventHandler<MouseButtonEvent> const & handler):
+		    handler_(handler) {
+		}
+
+		explicit OnMouseClick(void(*f)(MouseButtonEvent &)):
+		    handler_(f) {
+		}
+	private:
+	    helpers::EventHandler<MouseButtonEvent> handler_;
+
+		template<typename WIDGET>
+		friend Builder<WIDGET> operator << (Builder<WIDGET> widget, OnMouseClick const & e) {
+			widget->onMouseClick += e.handler_;
+			return widget;
+		}
+	}; // ui::OnClick
+
+
 }  // namespace ui
