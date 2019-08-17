@@ -137,10 +137,8 @@ int main(int argc, char* argv[]) {
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
 
+		// Create the palette & the pty - TODO this should be more systematic
 		vterm::VT100::Palette palette(vterm::VT100::Palette::XTerm256());
-
-		vterm::VT100 * vt100;
-
 		vterm::PTY * pty;
 #if (defined ARCH_WINDOWS)
 		if (*config::UseConPTY) { 
@@ -153,6 +151,20 @@ int main(int argc, char* argv[]) {
 #else
 		pty = new vterm::LocalPTY(helpers::Command(*config::Command));
 #endif
+
+		// create the session
+		Session * session = new Session(pty, & palette);
+
+		// and create the main window
+
+	    tpp::Window * w = Application::Instance()->createWindow(DEFAULT_WINDOW_TITLE, * config::Cols, * config::Rows, *config::FontSize);
+		w->setRootWindow(session);
+		w->show();
+		/*
+
+
+		vterm::VT100 * vt100;
+
 
 	    tpp::Window * w = Application::Instance()->createWindow(DEFAULT_WINDOW_TITLE, * config::Cols, * config::Rows, *config::FontSize);
 		ui::RootWindow* rw = ui::Create<ui::RootWindow>()
@@ -172,10 +184,11 @@ int main(int argc, char* argv[]) {
 		w->setRootWindow(rw);
 		w->show();
 		vt100->setFocus(true);
+		*/
 
     	Application::Instance()->mainLoop();
 
-		delete rw;
+		delete session;
 
 	    return EXIT_SUCCESS;
 	} catch (helpers::Exception const& e) {

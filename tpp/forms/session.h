@@ -1,3 +1,4 @@
+#include "stamp.h"
 #include "helpers/stamp.h"
 
 #include "ui/widgets/label.h"
@@ -15,9 +16,10 @@ namespace tpp {
      */
     class Session : public ui::RootWindow {
     public:
-        Session(vterm::PTY * pty, vterm::VT100::Palette & palette):
+        Session(vterm::PTY * pty, vterm::VT100::Palette * palette):
             pty_(pty) {
             using namespace ui;
+            using namespace vterm;
             Create(this) 
                 << Layout::Horizontal()
                 << (Create(header_ = new Label())
@@ -26,8 +28,10 @@ namespace tpp {
                     << STR("t++ :" << helpers::Stamp::Stored())
                     << OnMouseClick(CreateHandler<MouseButtonEvent, Session, &Session::headerClicked>(this))
                 )
-                << (Create(terminal_ = new vterm::VT100(*config::Cols, *config::Rows, &palette, pty))
+                << (Create(terminal_ = new VT100(*config::Cols, *config::Rows, palette, pty))
+                    << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
                 );
+            focusWidget(terminal_, true);
         }
 
 
@@ -36,6 +40,10 @@ namespace tpp {
         void headerClicked(ui::MouseButtonEvent & e) {
             MARK_AS_UNUSED(e);
             header_->setVisible(false);
+        }
+
+        void terminalTitleChanged(ui::StringEvent & e) {
+            setTitle(*e);
         }
 
 

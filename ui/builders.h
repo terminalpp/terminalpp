@@ -220,7 +220,6 @@ namespace ui {
 
 	// events
 
-// MouseButtonEvent
 	class OnMouseClick {
 	public:
 	    explicit OnMouseClick(helpers::EventHandler<MouseButtonEvent> const & handler):
@@ -235,7 +234,7 @@ namespace ui {
 			widget->onMouseClick += e.handler_;
 			return widget;
 		}
-	}; // ui::OnClick
+	}; // ui::OnMouseClick
 
 
 }  // namespace ui

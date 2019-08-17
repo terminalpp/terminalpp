@@ -1,10 +1,11 @@
 #pragma once
-
+#include <type_traits>
 #include <thread>
 
 #include "ui/canvas.h"
 #include "ui/widget.h"
 #include "ui/clipboard.h"
+#include "ui/builders.h"
 
 #include "pty.h"
 
@@ -283,6 +284,23 @@ namespace vterm {
         std::string title_;
 
     }; // vterm::Terminal
+
+
+	class OnTitleChange {
+	public:
+	    explicit OnTitleChange(helpers::EventHandler<ui::StringEvent> const & handler):
+		    handler_(handler) {
+		}
+
+	private:
+	    helpers::EventHandler<ui::StringEvent> handler_;
+
+		template<typename WIDGET>
+		friend typename std::enable_if<std::is_base_of<Terminal, WIDGET>::value, ui::Builder<WIDGET>>::type operator << (ui::Builder<WIDGET> widget, OnTitleChange const & e) {
+			widget->onTitleChange += e.handler_;
+			return widget;
+		}
+	}; // vterm::OnTitleChange
 
 
 
