@@ -16,6 +16,7 @@ if(WIN32)
     file(GLOB WIX_ROOT "C:/Program Files*/WiX Toolset v*/bin")
 
     if (WIX_ROOT) 
+        message(STATUS "WIX toolset found in ${WIX_ROOT}, tpp-msi target is available")
         add_custom_target(tpp-msi
             COMMAND ${CMAKE_COMMAND} -E make_directory "build/installer/msi"
             COMMAND ${WIX_ROOT}/candle.exe
