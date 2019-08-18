@@ -30,6 +30,7 @@ namespace tpp {
                 )
                 << (Create(terminal_ = new VT100(*config::Cols, *config::Rows, palette, pty))
                     << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
+                    << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
                 );
             focusWidget(terminal_, true);
         }
@@ -46,15 +47,14 @@ namespace tpp {
             setTitle(*e);
         }
 
+        void ptyTerminated(vterm::ExitCodeEvent & e) {
+            header_->setText(STR("Attached process terminated (code " << *e << ")"));
+            header_->setVisible(true);
+        }
 
         vterm::PTY * pty_;
         vterm::Terminal * terminal_;
         ui::Label * header_;
-
-
-
-
-
 
     }; // tpp::Session
 

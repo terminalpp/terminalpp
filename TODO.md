@@ -1,6 +1,5 @@
 ﻿# V0.2
 
-- determine the closing mechanism (ie. session v2)
 - add the extra attributes drawing
 - terminal should have an event to be called when a line is to be scrolled out
 
@@ -12,8 +11,6 @@
 - add zoom out? and default zoom? 
 
 ### Win32 Bugs
-
-- does not print version (I guess uninitialized console)
 
 ### X11 Bugs
 

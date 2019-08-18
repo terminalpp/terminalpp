@@ -121,18 +121,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MARK_AS_UNUSED(nCmdShow);
 	int argc = __argc;
 	char** argv = __argv;
+	DirectWriteApplication::Initialize(hInstance);
 #else
 int main(int argc, char* argv[]) {
+	X11Application::Initialize();
 #endif
 	helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored()));
 	helpers::Arguments::Parse(argc, argv);
 	try {
-	    // create the application singleton
-#ifdef ARCH_WINDOWS
-	    DirectWriteApplication::Initialize(hInstance);
-#else
-	    X11Application::Initialize();
-#endif
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
@@ -160,43 +156,18 @@ int main(int argc, char* argv[]) {
 	    tpp::Window * w = Application::Instance()->createWindow(DEFAULT_WINDOW_TITLE, * config::Cols, * config::Rows, *config::FontSize);
 		w->setRootWindow(session);
 		w->show();
-		/*
-
-
-		vterm::VT100 * vt100;
-
-
-	    tpp::Window * w = Application::Instance()->createWindow(DEFAULT_WINDOW_TITLE, * config::Cols, * config::Rows, *config::FontSize);
-		ui::RootWindow* rw = ui::Create<ui::RootWindow>()
-			<< ui::Layout::Horizontal()
-			<< (ui::Create<ui::Label>()
-				<< ui::HeightHint(ui::SizeHint::Fixed())
-				<< ui::Geometry(1, 1)
-				<< STR("t++ :" << helpers::Stamp::Stored())
-				<< ui::OnMouseClick(ui::CreateHandler<ui::MouseButtonEvent>([](ui::MouseButtonEvent & e) {
-					e.sender<ui::Label>()->setVisible(false);
-				}))
-				)
-			<< (
-				ui::Create(vt100 = new vterm::VT100(*config::Cols, *config::Rows, &palette, pty))
-				);
-
-		w->setRootWindow(rw);
-		w->show();
-		vt100->setFocus(true);
-		*/
+		
 
     	Application::Instance()->mainLoop();
-
 		delete session;
 
 	    return EXIT_SUCCESS;
 	} catch (helpers::Exception const& e) {
 		std::cout << e;
-	} /*catch (std::exception const& e) {
+	} catch (std::exception const& e) {
 		std::cout << e.what();
 	} catch (...) {
 		std::cout << "unknown error";
-	} */
+	} 
 	return EXIT_FAILURE;
 }

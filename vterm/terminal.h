@@ -302,6 +302,23 @@ namespace vterm {
 		}
 	}; // vterm::OnTitleChange
 
+	class OnPTYTerminated {
+	public:
+	    explicit OnPTYTerminated(helpers::EventHandler<ExitCodeEvent> const & handler):
+		    handler_(handler) {
+		}
+
+	private:
+	    helpers::EventHandler<ExitCodeEvent> handler_;
+
+		template<typename WIDGET>
+		friend typename std::enable_if<std::is_base_of<Terminal, WIDGET>::value, ui::Builder<WIDGET>>::type operator << (ui::Builder<WIDGET> widget, OnPTYTerminated const & e) {
+			widget->onPTYTerminated += e.handler_;
+			return widget;
+		}
+	}; // vterm::OnPTYTerminated
+
+
 
 
 } // namespace vterm

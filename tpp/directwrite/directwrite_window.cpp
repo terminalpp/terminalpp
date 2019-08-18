@@ -377,7 +377,6 @@ namespace tpp {
 					}					
 				    default:
 					    LOG("Win32") << "Invalid user message " << wParam;
-
 				}
 				break;
         }
