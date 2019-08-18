@@ -33,12 +33,19 @@ namespace tpp {
                     << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
                 );
             focusWidget(terminal_, true);
+            headerTimer_.onTimer += CreateHandler<helpers::TimerEvent, Session, &Session::headerAutohide>(this);
+            headerTimer_.start(5000, false);
         }
 
 
     private:
 
         void headerClicked(ui::MouseButtonEvent & e) {
+            MARK_AS_UNUSED(e);
+            header_->setVisible(false);
+        }
+
+        void headerAutohide(helpers::TimerEvent & e) {
             MARK_AS_UNUSED(e);
             header_->setVisible(false);
         }
@@ -55,6 +62,8 @@ namespace tpp {
         vterm::PTY * pty_;
         vterm::Terminal * terminal_;
         ui::Label * header_;
+
+        helpers::Timer headerTimer_;
 
     }; // tpp::Session
 

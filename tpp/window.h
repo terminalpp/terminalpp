@@ -229,7 +229,7 @@ namespace tpp {
             #define drawGlyphRun(...) reinterpret_cast<IMPLEMENTATION*>(this)->drawGlyphRun(__VA_ARGS__)
             #define finalizeDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
 
-            helpers::Timer t;
+            helpers::Stopwatch t;
             t.start();
             {
                 initializeDraw();
