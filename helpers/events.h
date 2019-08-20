@@ -128,6 +128,14 @@ namespace helpers {
 			}
 		}
 
+		/** Returns number of attached handlers.
+		 
+		    Ideally would be protected like trigger, but eh. 
+		 */
+		size_t attachedHandlers() const {
+			return handlers_.size();
+		}
+
 	private:
 
 		std::vector<EventHandler<PAYLOAD>> handlers_;

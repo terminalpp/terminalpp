@@ -108,6 +108,11 @@ namespace vterm {
 		void deleteCharacters(unsigned num);
 		void insertCharacters(unsigned num);
 
+        /** Deletes lines and triggers the onLineScrolledOut event if appropriate. 
+         
+            The event is triggered only if the terminal is in normal mode and if the scroll region starts at the top of the window. 
+         */
+        void deleteLines(int lines, int top, int bottom, Cell const & fill);
 
         // TODO add comments and determine if it actually does what it is supposed to do, i.e. wrt CR and LF
 		void invalidateLastCharPosition() {

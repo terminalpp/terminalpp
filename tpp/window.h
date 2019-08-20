@@ -27,8 +27,6 @@ namespace tpp {
         virtual void hide() = 0;
         virtual void close() = 0;
 
-        //void paint(ui::RectEvent & e) override;
-
         /** Shorthand to repaint the entire window. 
          */
         void repaint() {

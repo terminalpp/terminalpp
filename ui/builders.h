@@ -3,6 +3,7 @@
 #include "widget.h"
 #include "layout.h"
 
+
 namespace ui {
 
     using helpers::CreateHandler;
@@ -220,21 +221,21 @@ namespace ui {
 
 	// events
 
-	class OnMouseClick {
-	public:
-	    explicit OnMouseClick(helpers::EventHandler<MouseButtonEvent> const & handler):
-		    handler_(handler) {
-		}
-
-	private:
-	    helpers::EventHandler<MouseButtonEvent> handler_;
-
-		template<typename WIDGET>
-		friend Builder<WIDGET> operator << (Builder<WIDGET> widget, OnMouseClick const & e) {
-			widget->onMouseClick += e.handler_;
-			return widget;
-		}
-	}; // ui::OnMouseClick
-
+#define EVENT_BUILDER(NAME, PAYLOAD, EVENT_NAME, BASE_WIDGET) class NAME { \
+    public: \
+	    explicit NAME(helpers::EventHandler<PAYLOAD> const & handler): \
+		    handler_(handler) { \
+		} \
+	private: \
+	    helpers::EventHandler<PAYLOAD> handler_; \
+		template<typename WIDGET> \
+		friend typename std::enable_if<std::is_base_of<BASE_WIDGET, WIDGET>::value, ui::Builder<WIDGET>>::type \
+		operator << (ui::Builder<WIDGET> widget, NAME const & e) { \
+		    widget->EVENT_NAME += e.handler_; \
+			return widget; \
+		} \
+};
+    
+	EVENT_BUILDER(OnMouseClick, MouseButtonEvent, onMouseClick, Widget);
 
 }  // namespace ui

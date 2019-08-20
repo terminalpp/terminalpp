@@ -13,6 +13,8 @@ namespace vterm {
 
     typedef helpers::EventPayload<helpers::ExitCode, ui::Widget> ExitCodeEvent;
 
+    typedef helpers::EventPayload<unsigned, ui::Widget> LineScrollEvent;
+
     class Terminal : public virtual ui::Widget, public ui::Clipboard {
     public:
 
@@ -116,6 +118,7 @@ namespace vterm {
             /* Priority lock on the buffer. */
             helpers::PriorityLock lock_;
 
+
         }; // Terminal::Buffer 
 
         // events
@@ -129,6 +132,12 @@ namespace vterm {
         helpers::Event<ui::StringEvent> onTitleChange;
 
         helpers::Event<ui::VoidEvent> onNotification;
+
+        /** Triggered when a terminal line has been scrolled out. 
+         
+            It is assumed that the topmost line is always the line scrolled out. 
+         */
+        helpers::Event<LineScrollEvent> onLineScrolledOut;
 
         // methods
 
@@ -260,7 +269,6 @@ namespace vterm {
             trigger(onNotification);
         }
 
-
         /* Cells and cursor. */
         Buffer buffer_;
 
@@ -286,40 +294,9 @@ namespace vterm {
     }; // vterm::Terminal
 
 
-	class OnTitleChange {
-	public:
-	    explicit OnTitleChange(helpers::EventHandler<ui::StringEvent> const & handler):
-		    handler_(handler) {
-		}
-
-	private:
-	    helpers::EventHandler<ui::StringEvent> handler_;
-
-		template<typename WIDGET>
-		friend typename std::enable_if<std::is_base_of<Terminal, WIDGET>::value, ui::Builder<WIDGET>>::type operator << (ui::Builder<WIDGET> widget, OnTitleChange const & e) {
-			widget->onTitleChange += e.handler_;
-			return widget;
-		}
-	}; // vterm::OnTitleChange
-
-	class OnPTYTerminated {
-	public:
-	    explicit OnPTYTerminated(helpers::EventHandler<ExitCodeEvent> const & handler):
-		    handler_(handler) {
-		}
-
-	private:
-	    helpers::EventHandler<ExitCodeEvent> handler_;
-
-		template<typename WIDGET>
-		friend typename std::enable_if<std::is_base_of<Terminal, WIDGET>::value, ui::Builder<WIDGET>>::type operator << (ui::Builder<WIDGET> widget, OnPTYTerminated const & e) {
-			widget->onPTYTerminated += e.handler_;
-			return widget;
-		}
-	}; // vterm::OnPTYTerminated
-
-
-
+    EVENT_BUILDER(OnTitleChange, ui::StringEvent, onTitleChange, Terminal);
+    EVENT_BUILDER(OnPTYTerminated, ExitCodeEvent, onPTYTerminated, Terminal);
+    EVENT_BUILDER(OnLineScrolledOut, LineScrollEvent, onLineScrolledOut, Terminal);
 
 } // namespace vterm
 

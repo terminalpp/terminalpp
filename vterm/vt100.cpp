@@ -512,7 +512,7 @@ namespace vterm {
 						++x;
 						// determine if region should be scrolled
 						if (++buffer_.cursor().pos.y == state_.scrollEnd) {
-							buffer_.deleteLines(1, state_.scrollStart, state_.scrollEnd, (ui::Cell(state_.cell) << ui::Attributes()));
+							deleteLines(1, state_.scrollStart, state_.scrollEnd, (ui::Cell(state_.cell) << ui::Attributes()));
 							--buffer_.cursor().pos.y;
 						}
 						updateCursorPosition();
@@ -788,7 +788,7 @@ namespace vterm {
                     case 'M':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "DL: scrollDown " << seq[0];
-                        buffer_.deleteLines(seq[0], buffer_.cursor().pos.y, state_.scrollEnd, state_.cell);
+                        deleteLines(seq[0], buffer_.cursor().pos.y, state_.scrollEnd, state_.cell);
                         return;
                     /* CSI <n> P -- Delete n charcters. (DCH) 
                      */
@@ -802,7 +802,7 @@ namespace vterm {
                     case 'S':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "SU: scrollUp " << seq[0];
-                        buffer_.deleteLines(seq[0], state_.scrollStart, state_.scrollEnd, state_.cell);
+                        deleteLines(seq[0], state_.scrollStart, state_.scrollEnd, state_.cell);
                         return;
                     /* CSI <n> T -- Scroll down n lines
                      */
@@ -1323,7 +1323,7 @@ namespace vterm {
         while (buffer_.cursor().pos.x >= c) {
             buffer_.cursor().pos.x -= c;
             if (++buffer_.cursor().pos.y == state_.scrollEnd) {
-                buffer_.deleteLines(1, state_.scrollStart, state_.scrollEnd, ui::Cell(state_.cell) << ui::Attributes());
+                deleteLines(1, state_.scrollStart, state_.scrollEnd, ui::Cell(state_.cell) << ui::Attributes());
                 --buffer_.cursor().pos.y;
             }
         }
@@ -1373,6 +1373,15 @@ namespace vterm {
 			Cell& cell = buffer_.at(c, r);
             cell = state_.cell;
 		}
+    }
+
+    void VT100::deleteLines(int lines, int top, int bottom, Cell const & fill) {
+        if (! alternateBufferMode_ && onLineScrolledOut.attachedHandlers() > 0 && top == 0) {
+            buffer_.unlock();
+            trigger(onLineScrolledOut, lines);
+            buffer_.lock();
+        } 
+        buffer_.deleteLines(lines, top, bottom, fill);
     }
 
 

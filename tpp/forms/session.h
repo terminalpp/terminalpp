@@ -31,6 +31,7 @@ namespace tpp {
                 << (Create(terminal_ = new VT100(*config::Cols, *config::Rows, palette, pty))
                     << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
                     << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
+                    //<< OnLineScrolledOut(CreateHandler<LineScrollEvent, Session, &Session::lineScrolledOut>(this))
                 );
             focusWidget(terminal_, true);
             headerTimer_.onTimer += CreateHandler<helpers::TimerEvent, Session, &Session::headerAutohide>(this);
@@ -57,6 +58,10 @@ namespace tpp {
         void ptyTerminated(vterm::ExitCodeEvent & e) {
             header_->setText(STR("Attached process terminated (code " << *e << ")"));
             header_->setVisible(true);
+        }
+
+        void lineScrolledOut(vterm::LineScrollEvent & e) {
+            LOG << "Scrolled " << *e << " lines";
         }
 
         vterm::PTY * pty_;
