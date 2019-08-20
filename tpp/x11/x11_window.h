@@ -173,8 +173,9 @@ namespace tpp {
         void drawGlyphRun() {
             if (textSize_ == 0)
                 return;
-            // fill the background
-			XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_, textSize_ * cellWidthPx_, cellHeightPx_);
+            // fill the background unless it is fully transparent
+            if (bg_.color.alpha != 0)
+			    XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_, textSize_ * cellWidthPx_, cellHeightPx_);
             // draw the text
             if (!attrs_.blink() || blinkVisible_)
                 XftDrawCharSpec(draw_, &fg_, font_->nativeHandle(), text_, textSize_);
