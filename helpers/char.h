@@ -47,6 +47,8 @@ namespace helpers {
 
 		Char(Char const& from) = default;
 
+		Char & operator = (Char const & from) = default;
+
         bool operator == (Char const & other) const {
             for (size_t i = 0; i < 4; ++i)
                 if (bytes_[i] != other.bytes_[i])

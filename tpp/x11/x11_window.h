@@ -90,7 +90,7 @@ namespace tpp {
         friend class RendererWindow<X11Window, x11::Window>;
 
         void updateXftStructures(int cols) {
-            delete text_;
+            delete [] text_;
             text_ = new XftCharSpec[cols];
         }
 

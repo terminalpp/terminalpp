@@ -96,6 +96,11 @@ namespace helpers {
 				args_.push_back(*i);
 		}
 
+		Command(Command const & from):
+		    command_(from.command_),
+			args_(from.args_) {
+		}
+
 		Command& operator = (Command const& other) {
 			command_ = other.command_;
 			args_ = other.args_;

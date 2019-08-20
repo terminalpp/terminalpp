@@ -21,7 +21,9 @@ namespace helpers {
 		OSCHECK(gmtime_s(&buf, &now) == 0);
 		strftime(& result[0], result.size() + 1, "%FT%TZ", &buf);
 #else
-		strftime(&result[0], result.size() + 1, "%FT%TZ", gmtime(&now));
+        struct tm buf;
+        gmtime_r(&now, &buf);
+		strftime(&result[0], result.size() + 1, "%FT%TZ", &buf);
 #endif
 		return result;
 	}

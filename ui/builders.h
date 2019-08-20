@@ -234,7 +234,7 @@ namespace ui {
 		    widget->EVENT_NAME += e.handler_; \
 			return widget; \
 		} \
-};
+}
     
 	EVENT_BUILDER(OnMouseClick, MouseButtonEvent, onMouseClick, Widget);
 

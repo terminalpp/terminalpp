@@ -210,6 +210,11 @@ namespace ui {
 			static_assert(sizeof(Cell) == 16, "Invalid cell size, padding must be adjusted");
 		}
 
+		Cell(Cell const & other):
+		    big_{other.big_[0], other.big_[1]} {
+		}
+
+
 		/** Returns the codepoint stored in the cell. 
 		 */
 	    char32_t codepoint() const {

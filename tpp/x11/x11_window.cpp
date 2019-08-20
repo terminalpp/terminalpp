@@ -75,6 +75,7 @@ namespace tpp {
     X11Window::~X11Window() {
         RemoveWindow(window_);
 		XFreeGC(display_, gc_);
+        delete [] text_;
     }
 
     void X11Window::show() {

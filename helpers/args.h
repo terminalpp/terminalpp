@@ -444,9 +444,9 @@ namespace helpers {
 			if (x > std::numeric_limits<unsigned>::max())
 				throw std::out_of_range("");
 			value_ = static_cast<unsigned>(x);
-		} catch (std::invalid_argument) {
+		} catch (std::invalid_argument const &) {
 			THROW(ArgumentError()) << "Invalid value given for argument " << name_ << ", expected positive number but " << value << " found.";
-		} catch (std::out_of_range) {
+		} catch (std::out_of_range const &) {
 			THROW(ArgumentError()) << "Value for argument " << name_ << " too large";
 		}
 	}
