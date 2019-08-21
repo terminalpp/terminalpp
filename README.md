@@ -1,11 +1,7 @@
-
+![Azure DevOps builds](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/1?label=windows&logo=azure-pipelines)
+![Azure DevOps builds](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/2?label=linux&logo=azure-pipelines)
+![Azure DevOps builds](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/3?label=macos&logo=azure-pipelines)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/587d39b5db9e4742bb6ce05f86863439)](https://www.codacy.com/app/zduka/tpp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=zduka/tpp&amp;utm_campaign=Badge_Grade)
-
-Platform | Build Status | Notes
-----------|------------ | --------
-Windows | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-win)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=1) 
-Linux | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-linux)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=2)
-macOS  | [![Build status](https://dev.azure.com/zduka/tpp/_apis/build/status/tpp-apple)](https://dev.azure.com/zduka/tpp/_build/latest?definitionId=3) | (not officially supported, uses X11 rendering)
 
 # Terminal++
 

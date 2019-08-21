@@ -42,7 +42,7 @@
 #include "stamp.h"
 #include "helpers/stamp.h"
 
-
+#include "helpers/json.h"
 
 namespace tpp {
 	namespace config {
