@@ -172,12 +172,14 @@ namespace tpp {
 
     void X11Window::yieldSelection() {
         X11Application * app = X11Application::Instance();
-        ASSERT(app->selectionOwner_ != nullptr);
-        // tell the owner of the selection to invalidate its selection
-        app->selectionOwner_->invalidateSelection();
-        // invalidate the selection in the app
-		app->selectionOwner_ = nullptr;
-		app->selection_.clear();
+        // if the app already does not know about any selection, the event can be ignored
+        if (app->selectionOwner_ != nullptr) {
+            // tell the owner of the selection to invalidate its selection
+            app->selectionOwner_->invalidateSelection();
+            // invalidate the selection in the app
+            app->selectionOwner_ = nullptr;
+            app->selection_.clear();
+        }
     }
 
     void X11Window::setIcon(unsigned long * icon) {
