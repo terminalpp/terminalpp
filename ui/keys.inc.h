@@ -1,4 +1,4 @@
-#ifndef KEY
+#ifndef KEY // lgtm [cpp/missing-header-guard]
 #error "KEY macro must be defined before including keys.inc.h"
 #endif
 

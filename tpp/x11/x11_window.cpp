@@ -11,6 +11,7 @@ namespace tpp {
 	    To change its contents, run the `icons` build target. 
 	 */
 	extern unsigned long tppIcon[];
+	extern unsigned long tppIconNotification[];
 
 
     X11Window::X11Window(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
