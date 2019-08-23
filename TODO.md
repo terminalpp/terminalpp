@@ -1,5 +1,8 @@
 ﻿# V0.2
 
+- JSON prints comments 
+- & parses comments properly
+
 - add the extra attributes drawing
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
@@ -19,6 +22,7 @@
 # Code Improvements 
 
 - improve logging - the logging overhead is gigantic, find a way to lower it
+- add JSON schema and validator support
 - add tests
 - add size selection to PTY? or not really, since it can always be resized. 
 

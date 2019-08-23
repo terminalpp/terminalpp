@@ -78,6 +78,34 @@ namespace helpers {
 		return result;
 	}
 
+	/** Quotes the current string. 
+	 
+	    TODO the quoting should be more robust. 
+ 	 */
+    inline std::string Quote(std::string const & what, char quote = '"') {
+		std::stringstream result;
+		result << quote;
+		for (char c : what) {
+			switch (c) {
+				case '\\':
+				case '\'':
+				case '"':
+				    result << '\\' << c;
+					break;
+				case '\n':
+				    result << "\\n";
+					break;
+				default:
+				    result << c;
+					break;
+			}
+		}
+		result << quote;
+		return result.str();
+	}
+
+	// Conversions ------------------------------------------------------------------------------------
+
 	/** Converts a null terminated wide string in UTF-16 encoding into an std::string encoded in UTF-8.
 	  */
 	inline std::string UTF16toUTF8(utf16_char const* str) {
@@ -107,30 +135,5 @@ namespace helpers {
 	}
 #endif
 
-	/** Quotes the current string. 
-	 
-	    TODO the quoting should be more robust. 
- 	 */
-    inline std::string Quote(std::string const & what, char quote = '"') {
-		std::stringstream result;
-		result << quote;
-		for (char c : what) {
-			switch (c) {
-				case '\\':
-				case '\'':
-				case '"':
-				    result << '\\' << c;
-					break;
-				case '\n':
-				    result << "\\n";
-					break;
-				default:
-				    result << c;
-					break;
-			}
-		}
-		result << quote;
-		return result.str();
-	}
 
 } // namespace helpers

@@ -11,18 +11,36 @@
 namespace helpers {
 
     class JSONError : public Exception {
+    public:
+        JSONError() = default;
+
+        JSONError(unsigned line, unsigned col) {
+            what_ = STR("Parser error at [" << line << "," << col << "]:");
+        }
     }; // helpers::JSONError
 
-    /* Numbers (int or double)
-       Strings
-       Arrays
-       Objects
-
-
+    /* A simple class for storing, serializing and deserializing JSON values. 
      */
-
     class JSON {
     public:
+
+        /** Parses the given input stream into a JSON object and returns it. 
+
+            The following grammar is supported:
+
+            JSON := [ COMMENT ] ELEMENT
+            ELEMENT := null | true | false | int | double | STR | ARRAY | OBJECT
+            STR := double quoted string
+            COMMENT := C/Javascript single or multi-line style comment
+            ARRAY := '[' [ JSON { ',' JSON } ] ']'
+            OBJECT := '{' [ [ COMMENT ] STR ':' ELEMENT { ',' [COMMENT] STR ':' ELEMENT } ] }
+         */
+        static JSON Parse(std::string const & from) {
+            std::stringstream ss(from);
+            return Parse(ss);
+        }
+
+        static JSON Parse(std::istream & s);
 
         enum class Kind {
             Null,
@@ -86,6 +104,7 @@ namespace helpers {
 
         JSON(JSON const & other):
             kind_(other.kind_),
+            comment_(other.comment_),
             valueInt_(other.valueInt_) {
             switch (kind_) {
                 case Kind::Null:
@@ -111,6 +130,7 @@ namespace helpers {
 
         JSON(JSON && other):
             kind_(other.kind_),
+            comment_(std::move(other.comment_)),
             valueInt_(other.valueInt_) {
             switch (kind_) {
                 case Kind::Null:
@@ -145,6 +165,7 @@ namespace helpers {
                 destroy();
                 kind_ = other.kind_;
             }
+            comment_ = other.comment_;
             switch (kind_) {
                 case Kind::Null:
                 case Kind::Integer:
@@ -176,6 +197,7 @@ namespace helpers {
                 destroy();
                 kind_ = other.kind_;
             }
+            comment_ = std::move(other.comment_);
             switch (kind_) {
                 case Kind::Null:
                 case Kind::Integer:
@@ -253,6 +275,14 @@ namespace helpers {
             return kind_ == Kind::Null;
         }
 
+        std::string const & comment() const {
+            return comment_;
+        }
+
+        void setComment(std::string const & value) {
+            comment_ = value;
+        }
+
         template<typename T> 
         T & value();
 
@@ -273,7 +303,20 @@ namespace helpers {
             return *(i->second);
         }
 
+        void add(JSON const & what) {
+            if (kind_ != Kind::Array)
+                THROW(JSONError()) << "Cannot add array elemnt to element holding " << kind_;
+            valueArray_.push_back(new JSON(what));
+        }
+
+        void add(std::string const & key, JSON const & value) {
+            if (kind_ != Kind::Object)
+                THROW(JSONError()) << "Cannot add member elemnt to element holding " << kind_;
+            valueObject_.insert(std::make_pair(key, new JSON(value)));
+        }
+
         void emit(std::ostream & s, unsigned tabWidth = 4) const {
+            emitComment(s, tabWidth, 0);
             emit(s, tabWidth, 0);
         }
 
@@ -312,6 +355,9 @@ namespace helpers {
 
     private:
 
+        class Parser;
+
+
         void destroy() {
             switch (kind_) {
                 case Kind::Null:
@@ -335,6 +381,22 @@ namespace helpers {
             }
         }
 
+        void emitComment(std::ostream & s, unsigned tabWidth, unsigned offset) const {
+            if (comment_.empty())
+                return;
+            std::vector<std::string> lines(Split(comment_, "\n"));
+            auto i = lines.begin();
+            s << std::setw(offset) << "" << "/* " << *i << std::endl;
+            ++i;
+            offset += tabWidth;
+            while (i != lines.end()) {
+                s << std::setw(offset) << "" << (*i) << std::endl;
+                ++i;
+            }
+            offset -= tabWidth;
+            s << std::setw(offset) << "" << " */" << std::endl;
+        }
+
         void emit(std::ostream & s, unsigned tabWidth, unsigned offset) const {
             switch (kind_) {
                 case Kind::Null:
@@ -356,6 +418,7 @@ namespace helpers {
                     s << "[" << std::endl;
                     offset += tabWidth;
                     for (auto i = valueArray_.begin(), e = valueArray_.end(); i != e;) {
+                        (*i)->emitComment(s,tabWidth, offset);
                         s << std::setw(offset) << "";
                         (*i)->emit(s, tabWidth, offset);
                         ++i;
@@ -364,12 +427,13 @@ namespace helpers {
                         s << std::endl;
                     }
                     offset -= tabWidth;
-                    s << std::setw(tabWidth) << "" << "]";
+                    s << std::setw(offset) << "" << "]";
                     break;
                 case Kind::Object:
                     s << "{" << std::endl;
                     offset += tabWidth;
                     for (auto i = valueObject_.begin(), e = valueObject_.end(); i != e;) {
+                        i->second->emitComment(s,tabWidth, offset);
                         s << std::setw(offset) << "" << Quote(i->first) << " : ";
                         i->second->emit(s, tabWidth, offset);
                         ++i;
@@ -385,6 +449,8 @@ namespace helpers {
 
         Kind kind_;
 
+        std::string comment_;
+
         union {
             int valueInt_;
             bool valueBool_;
@@ -393,8 +459,9 @@ namespace helpers {
             std::vector<JSON *> valueArray_;
             std::unordered_map<std::string, JSON *> valueObject_;
         };
-    }; // helpers::JSON
 
+
+    }; // helpers::JSON
 
     template<> 
     inline bool & JSON::value() {
@@ -423,5 +490,286 @@ namespace helpers {
             THROW(JSONError()) << "Cannot obtain string value from element holding " << kind_;
         return valueStr_;
     }
+
+
+    class JSON::Parser {
+    public:
+
+        Parser(std::istream & s):
+            line_(1),
+            col_(1),
+            input_(s) {
+        }
+
+        /** JSON := [ COMMENT ] ELEMENT
+         */
+        JSON parseJSON() {
+            skipWhitespace();
+            if (top() == '/') {
+                std::string comment = parseComment();
+                JSON result = parseElement();
+                result.setComment(comment);
+                return result;
+            } else {
+                return parseElement();
+            }
+        }
+
+        /** ELEMENT := null | true | false | int | double | STR | ARRAY | OBJECT
+         */
+        JSON parseElement() {
+            int sign = 1;
+            switch (top()) {
+                case 'n':
+                    pop("null");
+                    return JSON(Kind::Null);
+                    break;
+                case 't':
+                    pop("true");
+                    return JSON(true);
+                case 'f':
+                    pop("false");
+                    return JSON(false);
+                case '\"':
+                    return JSON(parseStr());
+                case '[':
+                    return parseArray();
+                case '{':
+                    return parseObject();
+                case '-':
+                    sign = -1;
+                    pop();
+                    // fallthrough
+                default:
+                    // it's number
+                    if (! IsDecimalDigit(top()))
+                        THROW(JSONError(line_, col_)) << "Expected number, bool, null, string, array, or object but " << top() << " found";
+                    int value = 0;
+                    do {
+                        value = value * 10 + DecCharToNumber(pop());
+                    } while (IsDecimalDigit(top()));
+                    if (condPop('.')) {
+                        double result = value;
+                        double n = 10.0;
+                        while (IsDecimalDigit(top())) {
+                            result = result + DecCharToNumber(pop()) / n;
+                            n *= 10;
+                        }
+                        return JSON(result * sign);
+                    } else {
+                        return JSON(value * sign);
+                    }
+                    break;
+            }
+        }
+
+        /** STR := double quoted string
+         */
+        std::string parseStr() {
+            unsigned l = line_;
+            unsigned c = col_;
+            std::stringstream result;
+            pop('\"');
+            while (true) {
+                if (input_.eof())
+                    THROW(JSONError(l, c)) << "Unterminated string";
+                char t = top();
+                if ( t == '"') {
+                    pop();
+                    break;
+                }
+                if (t == '\\') {
+                    pop();
+                    switch (top()) {
+                        case '\\':
+                        case '\'':
+                        case '"':
+                            result << pop();
+                            continue;
+                        case '\n':
+                            pop();
+                            continue;
+                        case 'n':
+                            result << '\n';
+                            pop();
+                            continue;
+                        case '\t':
+                            result << '\t';
+                            pop();
+                            continue;
+                        default:
+                            THROW(JSONError(line_, col_)) << "Invalid escape sequence " << top();
+                    }
+                } else {
+                    result << pop();
+                }
+            }
+            return result.str();
+        }
+
+        /** COMMENT := C/Javascript single or multi-line style comment
+         */
+        std::string parseComment() {
+            pop('/');
+            std::stringstream result;
+            switch (top()) {
+                case '/': {
+                    pop();
+                    while (! input_.eof() && ! condPop('\n'))
+                        result << pop();
+                    break;
+                }
+                case '*': {
+                    pop();
+                    while (! input_.eof()) {
+                        if (top() == '*') {
+                            pop();
+                            if (condPop('/'))
+                                break;
+                            result << '*';
+                        } else {
+                            result << pop();
+                        }
+                    }
+                    break;
+                }
+                default:
+                    THROW(JSONError(line_, col_)) << "Invalid comment detected";
+            }
+            return Trim(result.str());
+        }
+
+        /** ARRAY := '[' [ JSON { ',' JSON } ] ']'
+         */
+        JSON parseArray() {
+            pop('[');
+            JSON result(Kind::Array);
+            skipWhitespace();
+            if (top() != ']') {
+                result.add(JSON());
+                skipWhitespace();
+                while (condPop(',')) {
+                    skipWhitespace();
+                    result.add(JSON());
+                    skipWhitespace();
+                }
+            }
+            pop(']');
+            return result;
+        }
+
+        /** OBJECT := '{' [ [ COMMENT ] STR ':' ELEMENT { ',' [COMMENT] STR ':' ELEMENT } ] }
+         */
+        JSON parseObject() {
+            pop('{');
+            JSON result(Kind::Object);
+            skipWhitespace();
+            if (top() != '}') {
+                std::string comment;
+                if (top() == '/') {
+                    comment = parseComment();
+                    skipWhitespace();
+                }
+                std::string key = parseStr();
+                skipWhitespace();
+                pop(':');
+                skipWhitespace();
+                JSON value = parseElement();
+                value.setComment(comment);
+                result.add(key, value);
+                while (condPop(',')) {
+                    skipWhitespace();
+                    if (top() == '/') {
+                        comment = parseComment();
+                        skipWhitespace();
+                    }
+                    skipWhitespace();
+                    key = parseStr();
+                    skipWhitespace();
+                    pop(':');
+                    skipWhitespace();
+                    value = parseElement();
+                    value.setComment(comment);
+                    result.add(key, value);
+                    skipWhitespace();
+                }
+            }
+            pop('}');
+            return result;
+        }
+
+    private:
+
+        friend class JSON;
+
+        char top() const {
+            if (input_.eof())
+                return 0;
+            return static_cast<char>(input_.peek());
+        }
+
+        char pop() {
+            char x = top();
+            if (input_.get() == '\n') {
+                ++line_;
+                col_ = 1;
+            } else if (x >= 0) { // beginning of a character in UTF8
+                ++col_;
+            } 
+            return x;
+        }
+
+        char pop(char what) {
+            char x = top();
+            if (x != what)
+                THROW(JSONError(line_, col_)) << "Expected " << what << ", but " << x << " found";
+            return pop();
+        }
+
+        void pop(char const * what) {
+            char const * w = what;
+            unsigned l = line_;
+            unsigned c = col_;
+            while (*w != 0) {
+                if (input_.eof())
+                    THROW(JSONError(l, c)) << "Expected " << what << ", but EOF found";
+                if (input_.get() != *w)
+                    THROW(JSONError(l, c)) << "Expected " << what;
+                ++w;
+            }
+        }
+
+        bool condPop(char what) {
+            if (top() == what) {
+                pop();
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        void skipWhitespace() {
+            while(IsWhitespace(top()))
+                pop();
+        }
+
+
+        unsigned line_;
+        unsigned col_;
+        std::istream & input_;
+
+
+
+    }; // JSON::Parser
+
+    inline JSON JSON::Parse(std::istream & s) {
+        Parser p(s);
+        JSON result = p.parseJSON();
+        p.skipWhitespace();
+        if (! s.eof())
+            THROW(JSONError(p.line_, p.col_)) << "Unparsed contents";
+        return result;
+    }
+
 
 } // namespace helpers
