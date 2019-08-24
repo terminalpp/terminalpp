@@ -12,6 +12,7 @@ namespace ui {
      */
     class Selection {
     public:
+
         /** Default constructor creates an empty selection. 
          */
         Selection():

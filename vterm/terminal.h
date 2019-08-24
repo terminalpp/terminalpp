@@ -240,6 +240,8 @@ namespace vterm {
         }
 
         /** Returns the contents of the selection. 
+         
+            Trims the right of each line.
          */
         std::string selectionContents();
 

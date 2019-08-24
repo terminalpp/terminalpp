@@ -64,6 +64,19 @@ namespace helpers {
 		return from.substr(start, end - start + 1);
 	}
 
+	inline std::string TrimRight(std::string const & from) {
+		if (from.empty())
+		    return from;
+		int end = static_cast<int>(from.size() - 1);
+		while (end > 0) {
+		    if (! IsWhitespace(from[end]))
+			    break;
+			--end;
+		}
+		++end;
+		return from.substr(0, end);
+	}
+
 	/** Splits the given string by given delimiter. 
 	 */
 	inline std::vector<std::string> Split(std::string const& what, std::string const& delimiter) {

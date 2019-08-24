@@ -1,17 +1,17 @@
-﻿# V0.2
+﻿# Towards V0.2
 
-- JSON prints comments 
-- & parses comments properly
-
-- add the extra attributes drawing
-- cell builders should use && as well so that we can use them on temporary objects
-- resizing the terminal does sometimes eats stuff
+- settings in JSON instead of c++ header
+- default settings upon first run
+- slightly more informative webpage
 
 ## Bugs and missing features
 
 - add zoom out? and default zoom? 
 - add ability to change icon of the window
 - settings in JSON instead of c++ header
+- add the extra attributes drawing
+- cell builders should use && as well so that we can use them on temporary objects
+- resizing the terminal does sometimes eats stuff
 
 ### Win32 Bugs
 
