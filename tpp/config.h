@@ -40,6 +40,7 @@ namespace tpp {
 		extern helpers::Arg<std::string> FontFamily;
 		extern helpers::Arg<unsigned> FontSize;
 		#define DEFAULT_TERMINAL_FONT_FAMILY "Iosevka Term"
+		//#define DEFAULT_TERMINAL_FONT_FAMILY "Consolas"
 		#define DEFAULT_TERMINAL_FONT_SIZE 18
 
 		/** The command to be executed.

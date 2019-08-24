@@ -33,6 +33,7 @@ namespace tpp {
 		sfc->FindFamilyName(fname.c_str(), &findex, &fexists);
 		Microsoft::WRL::ComPtr<IDWriteFontFamily> ff;
 		sfc->GetFontFamily(findex, &ff);
+		OSCHECK(ff.Get() != nullptr) << "Unable to find font family " << config::FontFamily;
 		// now get the nearest font
 		Microsoft::WRL::ComPtr<IDWriteFont> drw;
 		ff->GetFirstMatchingFont(
@@ -62,9 +63,8 @@ namespace tpp {
 		fface->GetDesignGlyphMetrics(&glyph, 1, &glyphMetrics);
         Font<DirectWriteFont> * result = new Font<DirectWriteFont>(
 			font, /* ui font */
-			static_cast<unsigned>(std::round((static_cast<float>(glyphMetrics.advanceWidth) / glyphMetrics.advanceHeight) * height * font.size())), /* cell width px */
+			static_cast<unsigned>(std::round(static_cast<float>(glyphMetrics.advanceWidth) * emSize / metrics.designUnitsPerEm)), /* cell width px */
 			height * font.size(), /* cell height px */
-			//static_cast<unsigned>(std::round(emSize * metrics.ascent / metrics.designUnitsPerEm)), /* ascent */
 			(emSize * metrics.ascent / metrics.designUnitsPerEm), /* ascent */
 			DirectWriteFont(
 				fface,
