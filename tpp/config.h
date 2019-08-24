@@ -19,8 +19,7 @@
 #define SHORTCUT_PASTE (ui::Key::V + ui::Key::Ctrl + ui::Key::Shift)
 
 
-namespace tpp {
-	namespace config {
+namespace tpp {	namespace config {
 		/** Maximum number of frames per second the renderer is allowed to render.
 
 			There is very little point in setting this higher than the screen's v-sync rate. 30 fps seems to be just fine, 60 fps means more updated and greater stress on the terminal.
@@ -40,7 +39,6 @@ namespace tpp {
 		extern helpers::Arg<std::string> FontFamily;
 		extern helpers::Arg<unsigned> FontSize;
 		#define DEFAULT_TERMINAL_FONT_FAMILY "Iosevka Term"
-		//#define DEFAULT_TERMINAL_FONT_FAMILY "Consolas"
 		#define DEFAULT_TERMINAL_FONT_SIZE 18
 
 		/** The command to be executed.
@@ -65,11 +63,4 @@ namespace tpp {
 		extern helpers::Arg<bool> UseConPTY;
 #endif
 
-		/** Optional argument that specifies file in which all incomming data will be stored. 
-
-		    This essentially logs all the text and escape sequences that were sent to the terminal during a session. 
-		 */
-		extern helpers::Arg<std::string> RecordSession;
-
-	} // namespace config
-} // namespace tpp
+} } // namespace tpp::config

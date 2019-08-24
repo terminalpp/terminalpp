@@ -3,6 +3,7 @@
 - settings in JSON instead of c++ header
 - default settings upon first run
 - slightly more informative webpage
+- make install
 
 ## Bugs and missing features
 
