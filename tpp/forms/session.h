@@ -7,6 +7,8 @@
 
 #include "vterm/vt100.h"
 
+#include "config.h"
+
 
 namespace tpp {
 
@@ -18,6 +20,7 @@ namespace tpp {
     public:
         Session(vterm::PTY * pty, vterm::VT100::Palette * palette):
             pty_(pty) {
+            Config const & config = Config::Instance();
             using namespace ui;
             using namespace vterm;
             Create(this) 
@@ -28,7 +31,7 @@ namespace tpp {
                     << STR("t++ :" << helpers::Stamp::Stored())
                     << OnMouseClick(CreateHandler<MouseButtonEvent, Session, &Session::headerClicked>(this))
                 )
-                << (Create(terminal_ = new VT100(*config::Cols, *config::Rows, palette, pty))
+                << (Create(terminal_ = new VT100(config.sessionCols(), config.sessionRows(), palette, pty))
                     << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
                     << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
                     //<< OnLineScrolledOut(CreateHandler<LineScrollEvent, Session, &Session::lineScrolledOut>(this))

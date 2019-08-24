@@ -79,6 +79,12 @@ namespace helpers {
 			return args;
 		}
 
+		/** Creates an empty command. 
+		 */
+		Command():
+		    command_("") {
+		}
+
 		Command(std::string const& command, std::initializer_list<char const*> args) :
 			command_(command) {
 			setArgs(args);

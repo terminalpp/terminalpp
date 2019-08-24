@@ -29,11 +29,11 @@ namespace tpp {
 		UINT32 findex;
 		BOOL fexists;
 		// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-		helpers::utf16_string fname = helpers::UTF8toUTF16(*config::FontFamily);
+		helpers::utf16_string fname = helpers::UTF8toUTF16(Config::Instance().fontFamily());
 		sfc->FindFamilyName(fname.c_str(), &findex, &fexists);
 		Microsoft::WRL::ComPtr<IDWriteFontFamily> ff;
 		sfc->GetFontFamily(findex, &ff);
-		OSCHECK(ff.Get() != nullptr) << "Unable to find font family " << config::FontFamily;
+		OSCHECK(ff.Get() != nullptr) << "Unable to find font family " << Config::Instance().fontFamily();
 		// now get the nearest font
 		Microsoft::WRL::ComPtr<IDWriteFont> drw;
 		ff->GetFirstMatchingFont(

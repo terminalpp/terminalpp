@@ -80,8 +80,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 int main(int argc, char* argv[]) {
 	X11Application::Initialize();
 #endif
-	helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored()));
-	helpers::Arguments::Parse(argc, argv);
+	//helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored()));
+	//helpers::Arguments::Parse(argc, argv);
+	Config const & config = Config::Initialize(argc, argv);
 	try {
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
@@ -91,7 +92,7 @@ int main(int argc, char* argv[]) {
 		vterm::VT100::Palette palette(vterm::VT100::Palette::XTerm256());
 		vterm::PTY * pty;
 #if (defined ARCH_WINDOWS)
-		if (*config::UseConPTY) { 
+		if (config.sessionPTY() != "bypass") { 
 			if (!config::Command.specified())
 			    (*config::Command) = std::vector<std::string>{DEFAULT_CONPTY_COMMAND};
 		    pty = new vterm::LocalPTY(helpers::Command(*config::Command));
@@ -107,10 +108,9 @@ int main(int argc, char* argv[]) {
 
 		// and create the main window
 
-	    tpp::Window * w = Application::Instance()->createWindow(DEFAULT_WINDOW_TITLE, * config::Cols, * config::Rows, *config::FontSize);
+	    tpp::Window * w = Application::Instance()->createWindow(DEFAULT_WINDOW_TITLE, config.sessionCols(), config.sessionRows(), config.fontSize());
 		w->setRootWindow(session);
 		w->show();
-		
 
     	Application::Instance()->mainLoop();
 		delete session;

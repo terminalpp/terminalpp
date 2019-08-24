@@ -33,6 +33,8 @@ namespace helpers {
 	class BaseArg {
 	public:
 
+	    virtual ~BaseArg();
+
 		static constexpr int NOT_POSITIONAL = -1;
 
 		/** Returns the name of the argument. 
@@ -402,6 +404,22 @@ namespace helpers {
 			x.byPosition[position] = this;
 		}
 	}
+
+	inline BaseArg::~BaseArg() {
+		Arguments::Impl & x = Arguments::ArgumentsList();
+		// erase the argument specification by name
+		x.byName.erase(name_);
+		// erase any aliases
+		for (std::string const & alias : aliases_)
+		    x.byAlias.erase(alias);
+		// if the argument is positional, remove it from the positional array 
+		for (auto i = x.byPosition.begin(), e = x.byPosition.end(); i != e; ++i) {
+		    if (*i == this) {
+				x.byPosition.erase(i);
+				break;
+			}
+		}
+	}			    
 
 	/** String argument. 
 	 */

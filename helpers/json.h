@@ -120,10 +120,14 @@ namespace helpers {
                     new (&valueStr_) std::string(other.valueStr_);
                     break;
                 case Kind::Array:
-                    new (&valueArray_) std::vector<JSON *>(other.valueArray_);
+                    new (&valueArray_) std::vector<JSON *>();
+                    for (auto i : other.valueArray_)
+                        valueArray_.push_back(new JSON(i));
                     break;
                 case Kind::Object:
-                    new (&valueObject_) std::unordered_map<std::string, JSON *>(other.valueObject_);
+                    new (&valueObject_) std::unordered_map<std::string, JSON *>();
+                    for (auto i : other.valueObject_)
+                        valueObject_.insert(std::make_pair(i.first, new JSON(*i.second)));
                     break;
             }
         }
@@ -284,7 +288,19 @@ namespace helpers {
         }
 
         template<typename T> 
+        T const & value() const;
+
+        template<typename T> 
         T & value();
+
+        JSON const & operator [] (size_t index) const {
+            if (kind_ != Kind::Array)
+                THROW(JSONError()) << "Cannot index JSON element holding " << kind_;
+            if (index >= valueArray_.size())
+                THROW(JSONError()) << "Index " << index << " too large (available: " << valueArray_.size() << ")";
+            return *valueArray_[index];
+
+        }
 
         JSON & operator [] (size_t index) {
             if (kind_ != Kind::Array)
@@ -292,6 +308,15 @@ namespace helpers {
             while (index >= valueArray_.size())
                 valueArray_.push_back(new JSON());
             return *valueArray_[index];
+        }
+
+        JSON const & operator [] (std::string const & index) const {
+            if (kind_ != Kind::Object)
+                THROW(JSONError()) << "Cannot obtain property of JSON element holding " << kind_;
+            auto i = valueObject_.find(index);
+            if (i == valueObject_.end())
+                THROW(JSONError()) << "Key " << index << " does not exist";
+            return *(i->second);
         }
 
         JSON & operator [] (std::string const & index) {
@@ -307,13 +332,26 @@ namespace helpers {
             if (kind_ != Kind::Array)
                 THROW(JSONError()) << "Cannot add array elemnt to element holding " << kind_;
             valueArray_.push_back(new JSON(what));
+        } 
+
+        void add(JSON && what) {
+            if (kind_ != Kind::Array)
+                THROW(JSONError()) << "Cannot add array elemnt to element holding " << kind_;
+            valueArray_.push_back(new JSON(std::move(what)));
         }
 
         void add(std::string const & key, JSON const & value) {
             if (kind_ != Kind::Object)
                 THROW(JSONError()) << "Cannot add member elemnt to element holding " << kind_;
             valueObject_.insert(std::make_pair(key, new JSON(value)));
+        } 
+
+        void add(std::string const & key, JSON && value) {
+            if (kind_ != Kind::Object)
+                THROW(JSONError()) << "Cannot add member elemnt to element holding " << kind_;
+            valueObject_.insert(std::make_pair(key, new JSON(std::move(value))));
         }
+
 
         void emit(std::ostream & s, unsigned tabWidth = 4) const {
             emitComment(s, tabWidth, 0);
@@ -343,6 +381,8 @@ namespace helpers {
                 case Kind::Object:
                     s << "object";
                     break;
+                default:
+                    UNREACHABLE;
             }
             return s;
         }
@@ -491,6 +531,34 @@ namespace helpers {
         return valueStr_;
     }
 
+    template<> 
+    inline bool const & JSON::value() const {
+        if (kind_ != Kind::Boolean)
+            THROW(JSONError()) << "Cannot obtain boolean value from element holding " << kind_;
+        return valueBool_;
+    }
+
+    template<> 
+    inline int const & JSON::value() const {
+        if (kind_ != Kind::Integer)
+            THROW(JSONError()) << "Cannot obtain integer value from element holding " << kind_;
+        return valueInt_;
+    }
+
+    template<> 
+    inline double const & JSON::value() const {
+        if (kind_ != Kind::Double)
+            THROW(JSONError()) << "Cannot obtain double value from element holding " << kind_;
+        return valueDouble_;
+    }
+
+    template<> 
+    inline std::string const & JSON::value() const {
+        if (kind_ != Kind::String)
+            THROW(JSONError()) << "Cannot obtain string value from element holding " << kind_;
+        return valueStr_;
+    }
+
 
     class JSON::Parser {
     public:
@@ -518,6 +586,7 @@ namespace helpers {
         /** ELEMENT := null | true | false | int | double | STR | ARRAY | OBJECT
          */
         JSON parseElement() {
+            skipWhitespace();
             int sign = 1;
             switch (top()) {
                 case 'n':
@@ -676,7 +745,7 @@ namespace helpers {
                 skipWhitespace();
                 JSON value = parseElement();
                 value.setComment(comment);
-                result.add(key, value);
+                result.add(key, std::move(value));
                 while (condPop(',')) {
                     skipWhitespace();
                     if (top() == '/') {
@@ -690,10 +759,11 @@ namespace helpers {
                     skipWhitespace();
                     value = parseElement();
                     value.setComment(comment);
-                    result.add(key, value);
+                    result.add(key, std::move(value));
                     skipWhitespace();
                 }
             }
+            skipWhitespace();
             pop('}');
             return result;
         }

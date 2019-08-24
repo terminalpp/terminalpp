@@ -17,7 +17,7 @@ namespace tpp {
 	inline Font<XftFont*>* Font<XftFont*>::Create(ui::Font font, unsigned height) {
 		X11Application* app = X11Application::Instance();
 		// get the name of the font we want w/o the actual height
-		std::string fName = *config::FontFamily;
+		std::string fName = Config::Instance().fontFamily();
 		if (font.bold())
 			fName += ":bold";
 		if (font.italics())
