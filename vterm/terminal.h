@@ -169,7 +169,7 @@ namespace vterm {
 
             Starts the process exit monitoring thread and the receiving thread to read input from the pty. 
          */
-        Terminal(int width, int height, PTY * pty, unsigned fps = 60, size_t ptyBufferSize = 10240);
+        Terminal(int width, int height, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
 
         /** Returns the locked buffer. 
          */

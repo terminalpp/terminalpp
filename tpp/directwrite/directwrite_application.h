@@ -36,6 +36,7 @@ namespace tpp {
 
         DirectWriteApplication(HINSTANCE hInstance);
 
+        void updateDefaultSettings(helpers::JSON & json) override;
 
 		/** Attaches a console to the GDIApplication for debugging purposes.
 

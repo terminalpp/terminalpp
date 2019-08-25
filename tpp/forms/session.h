@@ -31,7 +31,7 @@ namespace tpp {
                     << STR("t++ :" << helpers::Stamp::Stored())
                     << OnMouseClick(CreateHandler<MouseButtonEvent, Session, &Session::headerClicked>(this))
                 )
-                << (Create(terminal_ = new VT100(config.sessionCols(), config.sessionRows(), palette, pty))
+                << (Create(terminal_ = new VT100(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
                     << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
                     << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
                     //<< OnLineScrolledOut(CreateHandler<LineScrollEvent, Session, &Session::lineScrolledOut>(this))

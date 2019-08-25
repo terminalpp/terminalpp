@@ -49,6 +49,8 @@ namespace tpp {
 
         X11Application();
 
+        void updateDefaultSettings(helpers::JSON & json) override;
+
         void openInputMethod();
 
 		/** An exception to be thrown when the program should terminate. 

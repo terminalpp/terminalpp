@@ -1,5 +1,9 @@
 #include "settings_json.h"
 
+#include "stamp.h"
+#include "helpers/stamp.h"
+
+#include "application.h"
 #include "config.h"
 
 namespace tpp { 
@@ -8,61 +12,82 @@ namespace tpp {
 		Config * & config = Singleton_();
 		ASSERT(config == nullptr) << "Already initialized";
 		config = new Config(GetJSONSettings());
-		//config->processCommandLineArguments(argc, argv);
-
+		config->processCommandLineArguments(argc, argv);
 
 		return * config;
 	}
 
 	void Config::processCommandLineArguments(int argc, char * argv[]) {
-#ifdef ARCH_WINDOWS
-		helpers::Arg<bool> UseConPTY(
+		// initialize the arguments
+#if (defined ARCH_WINDOWS)
+		helpers::Arg<bool> useConPTY(
 			{ "--use-conpty" },
 			sessionPTY() == "local",
 			false,
 			"Uses the Win32 ConPTY pseudoterminal instead of the WSL bypass"
 		);
 #endif
-		helpers::Arg<unsigned> FPS(
+		helpers::Arg<unsigned> fps(
 			{ "--fps" },
 			rendererFps(),
 			false,
 			"Maximum number of fps the terminal will display"
 		);
-		helpers::Arg<unsigned> Cols(
+		helpers::Arg<unsigned> cols(
 			{ "--cols", "-c" },
 			sessionCols(),
 			false,
 			"Number of columns of the terminal window"
 		);
-		helpers::Arg<unsigned> Rows(
+		helpers::Arg<unsigned> rows(
 			{ "--rows", "-r" },
 			sessionRows(),
 			false,
 			"Number of rows of the terminal window"
 		);
-		helpers::Arg<std::string> FontFamily(
+		helpers::Arg<std::string> fontFamily(
 			{ "--font" }, 
-			fontFamily(), 
+			this->fontFamily(), 
 			false, 
 			"Font to render the terminal with"
 		);
-		helpers::Arg<unsigned> FontSize(
+		helpers::Arg<unsigned> fontSize(
 			{ "--font-size" }, 
-			fontSize(),
+			this->fontSize(),
 			false,
 			"Size of the font in pixels at no zoom."
 		);
-		helpers::Arg<std::vector<std::string>> Command(
+		helpers::Arg<std::vector<std::string>> command(
 			{ "-e" }, 
-			{ DEFAULT_TERMINAL_COMMAND },
+			{ },
 			false,
 			"Determines the command to be executed in the terminal",
 			true
 		);
-
-
-
+		// process the arguments
+		helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored()));		
+		helpers::Arguments::Parse(argc, argv);
+		// now update any settings according to the specified arguments
+#if (defined ARCH_WINDOWS)
+		if (useConPTY.specified())
+		    json_["session"]["pty"] = (*useConPTY ? "local" : "bypass");
+#endif
+        if (fps.specified())
+		    json_["renderer"]["fps"] = static_cast<int>(*fps);
+        if (cols.specified())
+		    json_["session"]["cols"] = static_cast<int>(*cols);
+        if (rows.specified())
+		    json_["session"]["rows"] = static_cast<int>(*rows);
+        if (fontFamily.specified())
+		    json_["font"]["family"] = *fontFamily;
+        if (fontSize.specified())
+		    json_["font"]["size"] = static_cast<int>(*fontSize);
+		if (command.specified()) {
+			helpers::JSON & cmd = json_["session"]["command"];
+			cmd.clear();
+			for (std::string const & s : *command)
+			    cmd.add(helpers::JSON(s));
+		}
 	}
 
 	helpers::JSON Config::GetJSONSettings() {
@@ -72,65 +97,12 @@ namespace tpp {
 
 	helpers::JSON Config::CreateDefaultJSONSettings() {
 		helpers::JSON json(helpers::JSON::Parse(DefaultJSONSettings()));
-		// TODO platform dependent stuff here
+		Application::Instance()->updateDefaultSettings(json);
 		return json;
 	}
 
 
 
 	
-	namespace config {
-/*
-#ifdef ARCH_WINDOWS
-		helpers::Arg<bool> UseConPTY(
-			{ "--use-conpty" },
-			false,
-			false,
-			"Uses the Win32 ConPTY pseudoterminal instead of the WSL bypass"
-		);
-#endif
-*/
-		helpers::Arg<unsigned> FPS(
-			{ "--fps" },
-			DEFAULT_TERMINAL_FPS,
-			false,
-			"Maximum number of fps the terminal will display"
-		);
 
-/*		
-		helpers::Arg<unsigned> Cols(
-			{ "--cols", "-c" },
-			DEFAULT_TERMINAL_COLS,
-			false,
-			"Number of columns of the terminal window"
-		);
-		helpers::Arg<unsigned> Rows(
-			{ "--rows", "-r" },
-			DEFAULT_TERMINAL_ROWS,
-			false,
-			"Number of rows of the terminal window"
-		);
-		helpers::Arg<std::string> FontFamily(
-			{ "--font" }, 
-			DEFAULT_TERMINAL_FONT_FAMILY, 
-			false, 
-			"Font to render the terminal with"
-		);
-		helpers::Arg<unsigned> FontSize(
-			{ "--font-size" }, 
-			DEFAULT_TERMINAL_FONT_SIZE,
-			false,
-			"Size of the font in pixels at no zoom."
-		);
-
-		*/
-		helpers::Arg<std::vector<std::string>> Command(
-			{ "-e" }, 
-			{ DEFAULT_TERMINAL_COMMAND },
-			false,
-			"Determines the command to be executed in the terminal",
-			true
-		);
-
-
-}} // namespace tpp::config
+} // namespace tpp

@@ -75,6 +75,11 @@ namespace tpp {
 		xDisplay_ = nullptr;
 	}
 
+    void X11Application::updateDefaultSettings(helpers::JSON & json) {
+		helpers::JSON & cmd = json["session"]["command"];
+		cmd.add(helpers::JSON("bash"));
+	}
+
     Window * X11Application::createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) {
 		return new X11Window(title, cols, rows, cellHeightPx);
     }

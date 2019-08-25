@@ -1,6 +1,7 @@
 #pragma once
 
 #include "helpers/helpers.h"
+#include "helpers/json.h"
 
 namespace tpp {
 
@@ -23,10 +24,14 @@ namespace tpp {
 
     protected:
 
+        friend class Config;
+
         Application() {
             ASSERT(Singleton() == nullptr) << "Application assumed to be singleton";
             Singleton() = this;
         }
+
+        virtual void updateDefaultSettings(helpers::JSON & json) = 0;
 
     private:
 

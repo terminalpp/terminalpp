@@ -1,7 +1,8 @@
 ﻿# Towards V0.2
 
-- settings in JSON instead of c++ header
-- default settings upon first run
+- store & read the settings from file
+- proper default settings on platforms
+- how to deal with bypass installation on Win32 WSL?
 - slightly more informative webpage
 - make install
 

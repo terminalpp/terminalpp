@@ -24,6 +24,187 @@ namespace helpers {
     class JSON {
     public:
 
+        /** Iterator to the array and object values. 
+         */
+        class ConstIterator {
+        public:
+
+            JSON const & operator * () const {
+                switch(json_.kind_) {
+                    case Kind::Array:
+                        ASSERT(iArray_ != json_.valueArray_.end());
+                        return *(*iArray_);
+                    case Kind::Object:
+                        ASSERT(iObject_ != json_.valueObject_.end());
+                        return *(iObject_->second);
+                    default:
+                        UNREACHABLE;
+                }
+            }
+
+            ConstIterator & operator ++ () {
+                switch (json_.kind_) {
+                    case Kind::Array:
+                        ++iArray_;
+                        break;
+                    case Kind::Object:
+                        ++iObject_;
+                        break;
+                    default:
+                        UNREACHABLE;
+                }
+                return *this;
+            }
+
+            ConstIterator operator ++ (int) {
+                ConstIterator result(*this);
+                ++(*this);
+                return result;
+            }
+
+            bool operator == (ConstIterator const & other) const {
+                if (&json_ != &other.json_)
+                    return false;
+                switch(json_.kind_) {
+                    case Kind::Array:
+                        return iArray_ == other.iArray_;
+                    case Kind::Object:
+                        return iObject_ == other.iObject_;
+                        break;
+                    default:
+                        UNREACHABLE;
+                }
+            }
+
+            bool operator != (ConstIterator const & other) const {
+                if (&json_ != &other.json_)
+                    return true;
+                switch(json_.kind_) {
+                    case Kind::Array:
+                        return iArray_ != other.iArray_;
+                    case Kind::Object:
+                        return iObject_ != other.iObject_;
+                        break;
+                    default:
+                        UNREACHABLE;
+                }
+            }
+            
+        private:
+            friend class JSON;
+
+            ConstIterator(JSON const & json, std::vector<JSON*>::const_iterator const & it):
+                json_(json),
+                iArray_(it) {
+            }
+
+            ConstIterator(JSON const & json, std::unordered_map<std::string, JSON*>::const_iterator const & it):
+                json_(json),
+                iObject_(it) {
+            }
+
+            JSON const & json_;
+            std::vector<JSON *>::const_iterator iArray_;
+            std::unordered_map<std::string, JSON *>::const_iterator iObject_;
+        };
+
+        /** Iterator to the array and object values. 
+         */
+        class Iterator {
+        public:
+
+            JSON const & operator * () const {
+                switch(json_.kind_) {
+                    case Kind::Array:
+                        ASSERT(iArray_ != json_.valueArray_.end());
+                        return *(*iArray_);
+                    case Kind::Object:
+                        ASSERT(iObject_ != json_.valueObject_.end());
+                        return *(iObject_->second);
+                    default:
+                        UNREACHABLE;
+                }
+            }
+            JSON & operator * () {
+                switch(json_.kind_) {
+                    case Kind::Array:
+                        ASSERT(iArray_ != json_.valueArray_.end());
+                        return *(*iArray_);
+                    case Kind::Object:
+                        ASSERT(iObject_ != json_.valueObject_.end());
+                        return *(iObject_->second);
+                    default:
+                        UNREACHABLE;
+                }
+            }
+
+            Iterator & operator ++ () {
+                switch (json_.kind_) {
+                    case Kind::Array:
+                        ++iArray_;
+                        break;
+                    case Kind::Object:
+                        ++iObject_;
+                        break;
+                    default:
+                        UNREACHABLE;
+                }
+                return *this;
+            }
+
+            Iterator operator ++ (int) {
+                Iterator result(*this);
+                ++(*this);
+                return result;
+            }
+
+            bool operator == (Iterator const & other) const {
+                if (&json_ != &other.json_)
+                    return false;
+                switch(json_.kind_) {
+                    case Kind::Array:
+                        return iArray_ == other.iArray_;
+                    case Kind::Object:
+                        return iObject_ == other.iObject_;
+                        break;
+                    default:
+                        UNREACHABLE;
+                }
+            }
+
+            bool operator != (Iterator const & other) const {
+                if (&json_ != &other.json_)
+                    return true;
+                switch(json_.kind_) {
+                    case Kind::Array:
+                        return iArray_ != other.iArray_;
+                    case Kind::Object:
+                        return iObject_ != other.iObject_;
+                        break;
+                    default:
+                        UNREACHABLE;
+                }
+            }
+            
+        private:
+            friend class JSON;
+
+            Iterator(JSON const & json, std::vector<JSON*>::iterator const & it):
+                json_(json),
+                iArray_(it) {
+            }
+
+            Iterator(JSON const & json, std::unordered_map<std::string, JSON*>::iterator const & it):
+                json_(json),
+                iObject_(it) {
+            }
+
+            JSON const & json_;
+            std::vector<JSON *>::iterator iArray_;
+            std::unordered_map<std::string, JSON *>::iterator iObject_;
+        };
+
+
         /** Parses the given input stream into a JSON object and returns it. 
 
             The following grammar is supported:
@@ -226,7 +407,7 @@ namespace helpers {
             return *this;
         }
 
-        JSON & operator = (nullptr_t) {
+        JSON & operator = (std::nullptr_t) {
             if (kind_ != Kind::Null)
                 destroy();
             kind_ = Kind::Null;
@@ -352,6 +533,66 @@ namespace helpers {
             valueObject_.insert(std::make_pair(key, new JSON(std::move(value))));
         }
 
+        void clear() {
+            switch(kind_) {
+                case Kind::Array:
+                    for (JSON * i : valueArray_)
+                        delete i;
+                    valueArray_.clear();
+                    break;
+                case Kind::Object:
+                    for (auto i : valueObject_)
+                        delete i.second;
+                    valueObject_.clear();
+                    break;
+                default:
+                    THROW(JSONError()) << "Iterator only available for arrays and objects, not for " << kind_;
+            }
+        }
+
+        ConstIterator begin() const {
+            switch(kind_) {
+                case Kind::Array:
+                    return ConstIterator(*this,valueArray_.begin());
+                case Kind::Object:
+                    return ConstIterator(*this,valueObject_.begin());
+                default:
+                    THROW(JSONError()) << "Iterator only available for arrays and objects, not for " << kind_;
+            }
+        }
+
+        ConstIterator end() const {
+            switch(kind_) {
+                case Kind::Array:
+                    return ConstIterator(*this,valueArray_.end());
+                case Kind::Object:
+                    return ConstIterator(*this,valueObject_.end());
+                default:
+                    THROW(JSONError()) << "Iterator only available for arrays and objects, not for " << kind_;
+            }
+        }
+
+        Iterator begin() {
+            switch(kind_) {
+                case Kind::Array:
+                    return Iterator(*this,valueArray_.begin());
+                case Kind::Object:
+                    return Iterator(*this,valueObject_.begin());
+                default:
+                    THROW(JSONError()) << "Iterator only available for arrays and objects, not for " << kind_;
+            }
+        }
+
+        Iterator end() {
+            switch(kind_) {
+                case Kind::Array:
+                    return Iterator(*this,valueArray_.end());
+                case Kind::Object:
+                    return Iterator(*this,valueObject_.end());
+                default:
+                    THROW(JSONError()) << "Iterator only available for arrays and objects, not for " << kind_;
+            }
+        }
 
         void emit(std::ostream & s, unsigned tabWidth = 4) const {
             emitComment(s, tabWidth, 0);
@@ -394,7 +635,8 @@ namespace helpers {
 
 
     private:
-
+        friend class Iterator;
+        friend class ConstIterator;
         class Parser;
 
 
@@ -823,12 +1065,9 @@ namespace helpers {
                 pop();
         }
 
-
         unsigned line_;
         unsigned col_;
         std::istream & input_;
-
-
 
     }; // JSON::Parser
 

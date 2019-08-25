@@ -34,6 +34,16 @@ namespace tpp {
 		DirectWriteWindow::StartBlinkerThread();
     }
 
+	void DirectWriteApplication::updateDefaultSettings(helpers::JSON & json) {
+		helpers::JSON & cmd = json["session"]["command"];
+		cmd.add(helpers::JSON("wsl"));
+		cmd.add(helpers::JSON("-e"));
+		cmd.add(helpers::JSON("/home/peta/devel/tpp-build/bypass/bypass"));
+		cmd.add(helpers::JSON("SHELL=/bin/bash"));
+		cmd.add(helpers::JSON("-e"));
+		cmd.add(helpers::JSON("bash"));
+	}
+
 	Window * DirectWriteApplication::createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) {
 		return new DirectWriteWindow(title, cols, rows, cellHeightPx);
 	}

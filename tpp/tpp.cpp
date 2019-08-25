@@ -39,9 +39,6 @@
 #include <thread>
 
 
-#include "stamp.h"
-#include "helpers/stamp.h"
-
 #include "helpers/json.h"
 
 using namespace tpp;
@@ -80,10 +77,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 int main(int argc, char* argv[]) {
 	X11Application::Initialize();
 #endif
-	//helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored()));
-	//helpers::Arguments::Parse(argc, argv);
-	Config const & config = Config::Initialize(argc, argv);
 	try {
+    	Config const & config = Config::Initialize(argc, argv);
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
@@ -92,15 +87,12 @@ int main(int argc, char* argv[]) {
 		vterm::VT100::Palette palette(vterm::VT100::Palette::XTerm256());
 		vterm::PTY * pty;
 #if (defined ARCH_WINDOWS)
-		if (config.sessionPTY() != "bypass") { 
-			if (!config::Command.specified())
-			    (*config::Command) = std::vector<std::string>{DEFAULT_CONPTY_COMMAND};
-		    pty = new vterm::LocalPTY(helpers::Command(*config::Command));
-		} else {
-		    pty = new vterm::BypassPTY(helpers::Command(*config::Command));
-		}
+		if (config.sessionPTY() != "bypass") 
+		    pty = new vterm::LocalPTY(config.sessionCommand());
+		else
+		    pty = new vterm::BypassPTY(config.sessionCommand());
 #else
-		pty = new vterm::LocalPTY(helpers::Command(*config::Command));
+		pty = new vterm::LocalPTY(config.sessionCommand());
 #endif
 
 		// create the session
