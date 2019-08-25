@@ -2,7 +2,9 @@
 
 #include <iostream>
 
+
 #include "helpers/helpers.h"
+#include "helpers/filesystem.h"
 
 #include "directwrite_application.h"
 #include "directwrite_window.h"
@@ -42,6 +44,12 @@ namespace tpp {
 		cmd.add(helpers::JSON("SHELL=/bin/bash"));
 		cmd.add(helpers::JSON("-e"));
 		cmd.add(helpers::JSON("bash"));
+	}
+
+	std::string DirectWriteApplication::getSettingsFolder() {
+		std::string localSettings(helpers::LocalSettingsDir() + "\\terminalpp");
+		helpers::EnsurePath(localSettings);
+		return localSettings + "\\";
 	}
 
 	Window * DirectWriteApplication::createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) {

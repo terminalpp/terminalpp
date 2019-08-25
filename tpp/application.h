@@ -16,6 +16,10 @@ namespace tpp {
         virtual ~Application() {
         }
 
+        /** Returns the folder to which the terminal should store its settings. 
+         */
+        virtual std::string getSettingsFolder() = 0;
+
         virtual Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) = 0;
 
         /** The main event loop of the application. 

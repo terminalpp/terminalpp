@@ -26,6 +26,8 @@ namespace tpp {
             return dynamic_cast<DirectWriteApplication*>(Application::Instance());
         }
 
+        std::string getSettingsFolder() override;
+
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;
 
         void mainLoop() override;

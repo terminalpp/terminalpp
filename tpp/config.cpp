@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "settings_json.h"
 
 #include "stamp.h"
@@ -91,8 +93,17 @@ namespace tpp {
 	}
 
 	helpers::JSON Config::GetJSONSettings() {
-		// TODO this should be updated and we should check platform dependent if the settings are set
-		return CreateDefaultJSONSettings();
+		std::string settingsFile(Application::Instance()->getSettingsFolder() + "settings.json");
+		std::ifstream sf(settingsFile);
+		if (sf.good()) {
+		    return helpers::JSON::Parse(sf);
+		} else  {
+		    helpers::JSON json(CreateDefaultJSONSettings());
+			// TODO enable this when ready and platform defaults are working properly
+			//std::ofstream sfo(settingsFile);
+			//sfo << json;
+			return json;
+		}
 	}
 
 	helpers::JSON Config::CreateDefaultJSONSettings() {

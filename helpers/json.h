@@ -957,11 +957,11 @@ namespace helpers {
             JSON result(Kind::Array);
             skipWhitespace();
             if (top() != ']') {
-                result.add(JSON());
+                result.add(parseJSON());
                 skipWhitespace();
                 while (condPop(',')) {
                     skipWhitespace();
-                    result.add(JSON());
+                    result.add(parseJSON());
                     skipWhitespace();
                 }
             }

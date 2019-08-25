@@ -1,6 +1,5 @@
 ﻿# Towards V0.2
 
-- store & read the settings from file
 - proper default settings on platforms
 - how to deal with bypass installation on Win32 WSL?
 - slightly more informative webpage

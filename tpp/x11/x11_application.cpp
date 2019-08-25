@@ -1,6 +1,7 @@
 #if (defined ARCH_UNIX)
 
 #include "helpers/log.h"
+#include "helpers/filesystem.h"
 
 #include "x11_window.h"
 
@@ -79,6 +80,13 @@ namespace tpp {
 		helpers::JSON & cmd = json["session"]["command"];
 		cmd.add(helpers::JSON("bash"));
 	}
+
+	std::string X11Application::getSettingsFolder() {
+		std::string localSettings(helpers::LocalSettingsDir() + "/terminalpp");
+		helpers::EnsurePath(localSettings);
+		return localSettings + "/";
+	}
+
 
     Window * X11Application::createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) {
 		return new X11Window(title, cols, rows, cellHeightPx);
