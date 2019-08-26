@@ -4,12 +4,12 @@
 - how to deal with bypass installation on Win32 WSL?
 - slightly more informative webpage
 - make install
+- add c++ redistributable to windows installer and verify that it works
 
 ## Bugs and missing features
 
 - add zoom out? and default zoom? 
 - add ability to change icon of the window
-- settings in JSON instead of c++ header
 - add the extra attributes drawing
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff

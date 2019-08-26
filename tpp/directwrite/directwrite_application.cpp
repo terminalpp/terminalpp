@@ -38,6 +38,7 @@ namespace tpp {
 
 	void DirectWriteApplication::updateDefaultSettings(helpers::JSON & json) {
 		helpers::JSON & cmd = json["session"]["command"];
+		// determine if WSL is present
 		cmd.add(helpers::JSON("wsl"));
 		cmd.add(helpers::JSON("-e"));
 		cmd.add(helpers::JSON("/home/peta/devel/tpp-build/bypass/bypass"));
