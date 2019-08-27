@@ -2,11 +2,29 @@
 
 Because the Windows `conpty` pseudoterminal swallows some escape sequences (notably mouse), the `bypass` is a very simple application intended to be executed inside `wsl` locally, which creates a linux pseudoconsole directy. It then translates the input and output to normal non-console standard in and out stream, which are not subject to the `conpty` processing.
 
+The only thing needed to build the program is the `bypass.cpp` file in this folder so that it can be easily embedded in the terminal and installed when appropriate. 
+
+## Usage
+
+> `t++` users don't need to worry about the bypass as it is transparently invoked by the terminal when configured. 
+
+    bypass { --buffer-size N | envVar=value} [ -e cmd { arg}]
+
+where:
+
+- `--buffer-size N` sets the I/O buffers of the terminal to `N` bytes
+- `envVar=value` adds the `envVar` environment variable to the target command environment and sets it to the `value`
+- `-e cmd {args}` tells bypass to execute the given command with specified attributes. The default command is the current user's default shell.  
+
+## Known Limitations
+
+By default, the `SHELL` environment variable will be set to `bypass`, which would cause errors for any programs launching shells as they would try to launch the `bypass` instead. Unless the `SHELL` variable is manually set by the commandline, `bypass` sets it to the current user's default shell instead. 
+
 ## Encoding Scheme
 
-## Commands
+The encoding scheme is very primitive. All target command output is passed directly to the terminal unchanged. Any input from the terminal to the command is scanned for commands, these are performed and the rest of the input is sent as input to the target command. 
 
-All commands start with `` ` ``. If backtick is to be transmitted, then double backtick (``` `` ```) is transmitted instead. Otherwise a command is identified by the character following the backtick: 
+All bypass commands are prefixed with a backtick `` ` ``. If backtick is to be transmitted, then double backtick (``` `` ```) is transmitted instead. Otherwise a command is identified by the character following the backtick. The following commands are supported: 
 
 ### `r` - Resize
 
@@ -15,9 +33,3 @@ Resize command is sent to the client by the terminal when the terminal should be
     `r<cols>:<rows>;
 
 Where `<cols>` and `<rows>` stand for new number of columns and rows respectively, both encoded as decimal numbers. As an example `` `r80:25; `` should set the terminal to `80` columns and `20` rows. 
-
-## Known Limitations
-
-When used with `wsl`, the `SHELL` environment variable is set to `asciienc` executable path instead of `/bin/bash` or some such. This causes veird problems for many programs, such as `tmux` not starting properly, *some* ssh connections not working, or `mc` failing to launch commands. All can be fixed by explicitly changing the `SHELL` variable to bash. 
-
-

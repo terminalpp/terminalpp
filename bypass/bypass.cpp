@@ -1,9 +1,12 @@
 
 #include <cstdlib>
+#include <cassert>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <pwd.h>
 #include <errno.h>
 #include <termios.h>
 #include <memory.h>
@@ -14,13 +17,24 @@
 #endif
 
 #include <iostream>
+#include <fstream>
+#include <chrono>
 #include <thread>
 #include <string>
 #include <vector>
 #include <unordered_map>
 
+/** The Windows ConPTY bypass via WSL
+ 
+    The bypass creates a pseudoterminal in the WSL and relays any traffic on that terminal unchanged to the terminal connected via standard input and output, thus bypassing the Win32 ConPTY and its encoding and decoding of the escape sequences. This allows the terminal to use the terminal for linux applications in the same way it would on linux and spares it any issues the ConPTY might have. 
+
+	Extra terminal commands, such as terminal resize events are encoded in the stream using the backtick escape character.
+
+	An additional benefit is increase in speed since the ConPTY has to do much than the simple bypass. 
+ */
 class Bypass {
 public:
+
     /** Initializes the bypass and parses its command line arguments. 
 	 */
     Bypass(int argc, char * argv[]):
@@ -31,9 +45,9 @@ public:
 			if (arg == "-e") {
 				for (++i; i < argc; ++i)
 				    cmd_.push_back(argv[i]);
-				// if the command is empty, none was supplied, break to the error
+				// if the command is empty, none was supplied, error
 				if (cmd_.empty())
-				    break;
+					throw std::runtime_error("No command to execute specified after -e argument");
 				return;
 			} else if (arg.find("--buffer-size") == 0) {
 				if (arg[13] == '=') {
@@ -51,10 +65,15 @@ public:
 				env_.insert(std::make_pair(arg.substr(0, assignPos), arg.substr(assignPos + 1)));
 			}
 		}
-		throw std::runtime_error("No command to execute specified (missing '-e' arg)");
+		// if not command was specified, use the default shell of the current user
+		assert(cmd_.empty());
+		cmd_.push_back(getpwuid(getuid())->pw_shell);
+
 	}
 
 	/** Executes the command and relays its I/O.
+
+	    When the command terminates, returns its exit code.  
 	 */
 	int run() {
 		switch (pid_ = forkpty(&pipe_, nullptr, nullptr, nullptr)) {
@@ -80,6 +99,8 @@ public:
 
 private:
 
+	/** Converts the command from the commandline to the null terminated array of null terminated strings required by the execvp. 
+	 */
 	char ** commandToArgv() {
 		char** args = new char* [cmd_.size() + 1];
 		for (size_t i = 0; i < cmd_.size(); ++i)
@@ -88,10 +109,16 @@ private:
 		return args;
 	}
 
+	/** Sets the taregt command environment. 
+	 
+	    Clears any interfering definitions and updates the environment to act as a proper terminal (i.e. terminfo, color profile, shell, etc.). Applies any environment changes passed on the commandline as well. 
+	 */
 	void setTargetEnvironment() {
 		unsetenv("COLUMNS");
 		unsetenv("LINES");
 		unsetenv("TERMCAP");
+		if (env_.find("SHELL") == env_.end())
+		    setenv("SHELL", getpwuid(getuid())->pw_shell, true);
 		if (env_.find("TERM") == env_.end())
 			setenv("TERM", "xterm-256color", true);
 		if (env_.find("COLORTERM") == env_.end())
@@ -100,6 +127,8 @@ private:
 			setenv(i.first.c_str(), i.second.c_str(), true);
 	}
 
+	/** Clears the signal handling in the target process. 
+	 */
 	void clearTargetSignals() {
 		signal(SIGCHLD, SIG_DFL);
 		signal(SIGHUP, SIG_DFL);
@@ -109,6 +138,8 @@ private:
 		signal(SIGALRM, SIG_DFL);
 	}
 
+	/** Resizes the terminal to the target command. 
+	 */
 	void resize(int cols, int rows) {
         struct winsize s;
         s.ws_row = rows;
@@ -119,6 +150,10 @@ private:
             throw std::runtime_error("Unable to resize target terminal");
 	}
 
+    /** Reads the output of the command in the terminal pipe and outputs it unchanged on the stdout, reads the stdin, translates any extra commands (terminal resize) and passes the rest as input to the target commands's pseudoterminal.
+	    
+		When done, returns the exit code of the target command. 
+	 */
 	int translate() {
 		std::thread outputBypass{[this]() {
 			char * buffer = new char [bufferSize_];
@@ -202,12 +237,9 @@ private:
 						processed = i;
 						start = processed;
 						continue;
-					// otherwise (unrecognized command) skip what we have and move on
+					// otherwise (unrecognized command) do an error
 					default:
 					    throw std::runtime_error(std::string("Unrecognized command") + buffer[i]);
-						processed = i + 1;
-						start = processed;
-						continue;
 					}
 				}
 			} 
@@ -237,9 +269,6 @@ private:
 
     pid_t pid_;
 	int pipe_;
-	
-    
-
 }; // Bypass
 
 
@@ -251,11 +280,17 @@ int main(int argc, char * argv[]) {
 			return EXIT_SUCCESS;
 		} catch (std::exception const & e) {
 			std::cerr << "Bypass terminated with error: " <<  e.what() << std::endl;
-			// TODO add the error to some logfile
+			std::time_t t{std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+			std::ofstream log{"~/.bypass-errors.log", std::ios_base::app};
+			log << std::ctime(&t) << ": " << e.what() << std::endl;
 		}
 	} catch (std::exception const & e) {
-		// TODO do usage
-
+		std::cerr << "ConPTY Bypass for t++. Usage: " << std::endl << std::endl;
+		std::cerr << "bypass {--buffer-size | envVar=value } [ -e cmd { arg }]" << std::endl << std::endl;
+		std::cerr << "Where:" << std::endl;
+		std::cerr << "   --buffer-size determines the sizes of the I/O byuffers (--bufferSize=1024)" << std::endl;
+		std::cerr << "   envVar=value sets given environment variable to the value before executing the command" << std::endl;
+		std::cerr << "   -e sets the command to execute (defaults to current users's shell)" << std::endl;
 		std::cerr << "Bypass error: " << e.what() << std::endl;
 	}
 	return EXIT_FAILURE;

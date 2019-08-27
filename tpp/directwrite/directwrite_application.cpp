@@ -42,9 +42,9 @@ namespace tpp {
 		cmd.add(helpers::JSON("wsl"));
 		cmd.add(helpers::JSON("-e"));
 		cmd.add(helpers::JSON("/home/peta/devel/tpp-build/bypass/bypass"));
-		cmd.add(helpers::JSON("SHELL=/bin/bash"));
-		cmd.add(helpers::JSON("-e"));
-		cmd.add(helpers::JSON("bash"));
+		//cmd.add(helpers::JSON("SHELL=/bin/bash"));
+		//cmd.add(helpers::JSON("-e"));
+		//cmd.add(helpers::JSON("bash"));
 	}
 
 	std::string DirectWriteApplication::getSettingsFolder() {
