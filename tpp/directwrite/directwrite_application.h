@@ -38,6 +38,14 @@ namespace tpp {
 
         DirectWriteApplication(HINSTANCE hInstance);
 
+        /** Determines whether the WSL is installed or not. 
+         */
+        bool isWSLPresent() const;
+
+        /** Determines if the ConPTY bypass is present in the WSL or not. 
+         */
+        bool isBypassPresent() const;
+
         void updateDefaultSettings(helpers::JSON & json) override;
 
 		/** Attaches a console to the GDIApplication for debugging purposes.

@@ -36,15 +36,39 @@ namespace tpp {
 		DirectWriteWindow::StartBlinkerThread();
     }
 
+	bool DirectWriteApplication::isWSLPresent() const {
+		helpers::ExitCode ec;
+		std::vector<std::string> lines = helpers::Split(helpers::Exec(helpers::Command("wsl.exe", {"-l"}),"", &ec), "\n");
+	    if (lines.size() < 3 || lines[0] != "Windows Subsystem for Linux Distributions:\r\r")
+		    return false;
+		else 
+		    return true;
+	}
+
+	bool DirectWriteApplication::isBypassPresent() const {
+		helpers::ExitCode ec;
+		std::string output{helpers::Exec(helpers::Command("wsl.exe", {"-e", "tpp-bypass", "--version"}), "", &ec)};
+		return output.find("Terminal++ Bypass, version") == 0;
+	}
+
 	void DirectWriteApplication::updateDefaultSettings(helpers::JSON & json) {
 		helpers::JSON & cmd = json["session"]["command"];
-		// determine if WSL is present
-		cmd.add(helpers::JSON("wsl"));
-		cmd.add(helpers::JSON("-e"));
-		cmd.add(helpers::JSON("/home/peta/devel/tpp-build/bypass/bypass"));
-		//cmd.add(helpers::JSON("SHELL=/bin/bash"));
-		//cmd.add(helpers::JSON("-e"));
-		//cmd.add(helpers::JSON("bash"));
+		// if WSL is not present, default to cmd.exe
+		if (! isWSLPresent()) {
+			cmd.add("cmd.exe");
+			json["session"]["pty"] = "local";
+		// otherwise the terminal will default to WSL and we only have to determine whether to use bypass or ConPTY
+		} else {
+			if (isBypassPresent()) {
+    			json["session"]["pty"] = "bypass";
+	    		cmd.add(helpers::JSON("wsl.exe"));
+	    		cmd.add(helpers::JSON("-e"));
+	    		cmd.add(helpers::JSON("tpp-bypass"));
+			} else {
+    			json["session"]["pty"] = "local";
+	    		cmd.add(helpers::JSON("wsl.exe"));
+			}
+		}
 	}
 
 	std::string DirectWriteApplication::getSettingsFolder() {

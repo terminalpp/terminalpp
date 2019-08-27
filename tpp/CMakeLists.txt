@@ -54,6 +54,8 @@ elseif(UNIX)
     target_link_libraries(tpp ${X11_Xft_LIB})  
 	target_link_libraries(tpp ${CMAKE_THREAD_LIBS_INIT})
     target_link_libraries(tpp ${FREETYPE_LIBRARIES})
+    # install the tpp
+    install(TARGETS tpp DESTINATION bin)
 else()
     message(FATAL_ERROR "Only Windows and Linux are supported for now")
 endif() 

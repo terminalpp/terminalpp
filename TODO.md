@@ -1,10 +1,9 @@
 ﻿# Towards V0.2
 
-- proper default settings on platforms
-- how to deal with bypass installation on Win32 WSL?
 - slightly more informative webpage
-- make install
+- make install (also .desktop ?)
 - add c++ redistributable to windows installer and verify that it works
+- update readme, add about bypass, etc.
 
 ## Bugs and missing features
 

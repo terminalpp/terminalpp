@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "helpers.h"
+#include "string.h"
 
 
 namespace helpers {
@@ -217,6 +218,8 @@ namespace helpers {
 	};
 
 	/** Executes the given command and returns its output as a string. 
+	 
+	    Empty path means current directory.
 	 */
 	inline std::string Exec(Command const& command, std::string const& path, helpers::ExitCode* exitCode = nullptr) {
 #ifdef ARCH_WINDOWS
@@ -253,7 +256,7 @@ namespace helpers {
 			true, // handles are inherited 
 			0, // creation flags 
 			NULL, // use parent's environment 
-			path.c_str(), // current directory
+			path.empty() ? nullptr : path.c_str(), // current directory
 			&sInfo,  // startup info
 			&pi)  // info about the process
 			)
@@ -274,11 +277,15 @@ namespace helpers {
 		// close the handles to created process & thread since we do not need them
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
+		std::string output = result.str();
+		// a crude detection whether the output is given in UTF16, or UTF8 (ASCII)
+		if (output.size() > 1 && output[1] == 0)
+		    output = UTF16toUTF8(reinterpret_cast<utf16_char const *>(output.c_str()));
 		if (exitCode != nullptr)
 			* exitCode = ec;
 		else if (ec != EXIT_SUCCESS)
-			THROW(Exception()) << "Command " << command << " exited with code " << ec << ", output:\n" << result.str();
-		return result.str();
+			THROW(Exception()) << "Command " << command << " exited with code " << ec << ", output:\n" << output;
+		return output;
 #else
 		// create the pipes
 		int       toCmd[2];

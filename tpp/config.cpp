@@ -99,9 +99,8 @@ namespace tpp {
 		    return helpers::JSON::Parse(sf);
 		} else  {
 		    helpers::JSON json(CreateDefaultJSONSettings());
-			// TODO enable this when ready and platform defaults are working properly
-			//std::ofstream sfo(settingsFile);
-			//sfo << json;
+			std::ofstream sfo(settingsFile);
+			sfo << json;
 			return json;
 		}
 	}

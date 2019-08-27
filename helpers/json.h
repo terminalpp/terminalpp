@@ -258,27 +258,27 @@ namespace helpers {
             }
         }
 
-        explicit JSON(bool value):
+        JSON(bool value):
             kind_(Kind::Boolean),
             valueBool_(value ? 1 : 0) {
         }
 
-        explicit JSON(int value):
+        JSON(int value):
             kind_(Kind::Integer),
             valueInt_(value) {
         }
 
-        explicit JSON(double value):
+        JSON(double value):
             kind_(Kind::Double),
             valueDouble_(value) {
         }
 
-        explicit JSON(char const * value):
+        JSON(char const * value):
             kind_(Kind::String),
             valueStr_(value) {
         }
 
-        explicit JSON(std::string const & value):
+        JSON(std::string const & value):
             kind_(Kind::String),
             valueStr_(value) {
         }

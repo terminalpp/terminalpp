@@ -56,6 +56,3 @@ add_subdirectory("vterm")
 add_subdirectory("ui")
 
 add_subdirectory("tpp")
-
-add_subdirectory("bypass")
-
