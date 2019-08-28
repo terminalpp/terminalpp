@@ -8,14 +8,100 @@
       gtag('js', new Date());
       gtag('config', 'UA-76230115-2');
     </script>
+    <link rel="icon" type="image/png" href="favicon.png">    
     <title>&gt;++</title>
+    <style>
+
+        H1 {
+          font-family:monospace;
+          font-size:500%;
+          font-weight:bold;
+        }
+
+        P {
+          font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          font-size:125%;
+          text-align:center;
+          padding-left:50px;
+          padding-right:50px;
+        }
+
+        P.header {
+          font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          font-style:italic;
+          font-size:200%;
+          text-align:center;
+          padding-left:50px;
+          padding-right:50px;
+        }
+
+        .badges {
+          margin-bottom:50px;
+        }
+
+        .footer {
+          margin-top:50px;
+          margin-left: 50px;
+          margin-right: 50px;
+          padding-top: 20px;
+          padding-bottom: 20px;
+          border-top:1px solid #c0c0c0;
+          color: #c0c0c0;
+          font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    
+        #screenshots {
+          background-image:url("resources/images/screenshot-linux.png");
+          background-position:0 0;
+          background-repeat:no-repeat;
+          padding-left:50px;
+          padding-top:50px;
+          display:inline-block; 
+        }
+    </style>
   </head>
   <body>
   </br></br>
   <div align="center">
-    <img src="logo.png" width="500px" height="500px" />
-    <h1><pre>Soon...</pre></h1>
-    <h1><pre><a href="https://github.com/zduka/tpp">Impatient?</a></pre></h1>    
+    <!-- The logo and header text -->
+    <img alt="logo" src="favicon.png" />
+    <p class="header">
+      Powerful Cross-Platform Terminal Emulator  
+    </p>
+    <!-- The download / fork badges -->
+    <div class="badges">
+      <!--
+            <img src="https://img.shields.io/static/v1?label=Release&message=0.2&color=blue" />
+        -->
+        <a href="https://github.com/zduka/tpp">
+            <img src="https://img.shields.io/static/v1?label=Github&message=zduka/tpp&color=green&logo=Github" />
+        </a>
+
+        <!--
+        <img src="https://img.shields.io/static/v1?label=Installer&message=MSI&color=green&logo=Windows" />
+        <img src="https://img.shields.io/static/v1?label=Installer&message=cmake&color=green&logo=Linux" />
+        -->
+    </div>
+    <div id="screenshots">
+        <img src="resources/images/screenshot-windows.png" />
+    </div>
+    <p>
+      Terminal++ (<code>tpp</code>) is a simple, but powerful terminal emulator which provides same features on both Windows, and Linux (MacOS support planned). Although <code>tpp</code> is in alpha stage, it already provides all necessary features to be used as a daily driver.
+    </p>
+    <p class="header">
+      Features
+    </p>
+    <p>
+      native support for Windows (DirectWrite) and Linux (X11) <br/>
+      support for modern terminal features (16M colors, mouse, zoom, clipboard, etc.) <br/>
+      fullscreen mode <br/>
+      optional ConPTY bypass for Windows via WSL for better speed and more features <br/>
+      <code>cmd.exe</code>, Powershell and <code>WSL</code> support for Windows<br/>
+      fast (Linux, Windows ConPTY), or really fast (Windows WSL Bypass)<br/>
+    </p>
+    <div class="footer">
+      Released under MIT license.
+    </div>
   </div>
   </body>
 </html>
