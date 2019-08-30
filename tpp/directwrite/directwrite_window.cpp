@@ -61,6 +61,7 @@ namespace tpp {
 			updateDirectWriteStructures(cols_);
 
 			AddWindowNativeHandle(this, hWnd_);
+
 		}
 
 

@@ -258,6 +258,11 @@ namespace helpers {
             }
         }
 
+        JSON(std::nullptr_t):
+            kind_(Kind::Null),
+            valueInt_(0) {
+        }
+
         JSON(bool value):
             kind_(Kind::Boolean),
             valueBool_(value ? 1 : 0) {

@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-    <Product Name="Terminal++" Id="*" UpgradeCode="3e26832c-a36a-4b82-8432-8908666865be" Language="1033" Codepage="1252" Version="0.3.3" Manufacturer="zduka">
+    <Product Name="Terminal++" Id="*" UpgradeCode="3e26832c-a36a-4b82-8432-8908666865be" Language="1033" Codepage="1252" Version="0.2.0" Manufacturer="zduka">
         <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine"/>
         <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
         <Icon Id="ProductIcon" SourceFile="..\..\..\resources\images\tpp.ico"/>
@@ -16,6 +16,10 @@
             <ComponentRef Id="TppShortcut"/>
             <ComponentRef Id="ModifyPathEnv"/>
         </Feature>
+
+        <Feature Id="VCRedist" Title="Visual C++ 14.2 Runtime" AllowAdvertise="no" Display="hidden" Level="1">
+            <MergeRef Id="VCRedist"/>
+        </Feature>        
 
         <!-- Create directories -->
         <Directory Id="TARGETDIR" Name="SourceDir">
@@ -50,5 +54,9 @@
                 <Environment Id="PathEnv" Value="[TppProgramFiles]" Name="PATH" Permanent="no" Part="first" Action="set" System="yes"/>
             </Component>
         </DirectoryRef>
+
+        <DirectoryRef Id="TARGETDIR">
+            <Merge Id="VCRedist" SourceFile="..\..\..\tpp\installer\msi\vcredist\Microsoft_VC142_CRT_x64.msm" DiskId="1" Language="0"/>
+        </DirectoryRef>        
     </Product>
 </Wix>

@@ -3,7 +3,7 @@
 #include "helpers/process.h"
 #include "helpers/json.h"
 
-#define SHOW_LINE_ENDINGS
+//#define SHOW_LINE_ENDINGS
 
 
 #define DEFAULT_WINDOW_TITLE "t++"
@@ -92,14 +92,16 @@ namespace tpp {
 
 		void processCommandLineArguments(int argc, char * argv[]);
 
+		void saveSettings();
+
 	    static Config * & Singleton_() {
 			static Config * singleton = nullptr;
 			return singleton;
 		}
 
-		static helpers::JSON GetJSONSettings();
+		static helpers::JSON ReadSettings();
 
-		static helpers::JSON CreateDefaultJSONSettings();
+		static helpers::JSON CreateDefaultSettings();
 
 
 	}; // tpp::Config

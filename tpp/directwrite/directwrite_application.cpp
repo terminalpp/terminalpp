@@ -39,7 +39,7 @@ namespace tpp {
 	bool DirectWriteApplication::isWSLPresent() const {
 		helpers::ExitCode ec;
 		std::vector<std::string> lines = helpers::Split(helpers::Exec(helpers::Command("wsl.exe", {"-l"}),"", &ec), "\n");
-	    if (lines.size() < 3 || lines[0] != "Windows Subsystem for Linux Distributions:\r\r")
+	    if (lines.size() < 2 || lines[0] != "Windows Subsystem for Linux Distributions:\r\r")
 		    return false;
 		else 
 		    return true;
@@ -67,6 +67,17 @@ namespace tpp {
 			} else {
     			json["session"]["pty"] = "local";
 	    		cmd.add(helpers::JSON("wsl.exe"));
+			}
+		}
+		// determine the font, try the default one, if not found, try Consolas
+		try {
+			Font<DirectWriteFont>::GetOrCreate(ui::Font(), Config::Instance().fontSize());
+		} catch (helpers::OSError const &) {
+			json["font"]["family"] = "Consolas";
+			try {
+				Font<DirectWriteFont>::GetOrCreate(ui::Font(), Config::Instance().fontSize());
+    		} catch (helpers::OSError const &) {
+				MessageBox(nullptr, L"Unable to determine default font. Please edit the settings file manually.", L"Error", MB_ICONSTOP);
 			}
 		}
 	}

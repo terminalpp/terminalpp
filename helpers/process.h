@@ -223,6 +223,8 @@ namespace helpers {
 	 */
 	inline std::string Exec(Command const& command, std::string const& path, helpers::ExitCode* exitCode = nullptr) {
 #ifdef ARCH_WINDOWS
+		helpers::ExitCode ec = EXIT_FAILURE;
+		std::string output;
 		// create the pipes
 		SECURITY_ATTRIBUTES attrs;
 		attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -249,7 +251,7 @@ namespace helpers {
 		sInfo.hStdInput = pipeTheirIn;
 		sInfo.dwFlags |= STARTF_USESTDHANDLES;
 		std::string cmd = command.toString();
-		if (!CreateProcessA(NULL,
+		if (CreateProcessA(NULL,
 			&cmd[0], // the command to execute
 			NULL, // process security attributes 
 			NULL, // primary thread security attributes 
@@ -259,28 +261,27 @@ namespace helpers {
 			path.empty() ? nullptr : path.c_str(), // current directory
 			&sInfo,  // startup info
 			&pi)  // info about the process
-			)
-			THROW(Exception()) << "Unable to create process for " << command;
-		// we can close our handles to the other ends now
-		pipeTheirOut.close();
-		pipeTheirIn.close();
-		// read the output
-		std::stringstream result;
-		char buffer[128];
-		DWORD bytesRead;
-		while (ReadFile(pipeIn, &buffer, 128, &bytesRead, nullptr)) {
-			if (bytesRead != 0)
-				result << std::string(&buffer[0], &buffer[0] + bytesRead);
-		}
-		helpers::ExitCode ec;
-		GetExitCodeProcess(pi.hProcess, &ec);
-		// close the handles to created process & thread since we do not need them
-		CloseHandle(pi.hProcess);
-		CloseHandle(pi.hThread);
-		std::string output = result.str();
-		// a crude detection whether the output is given in UTF16, or UTF8 (ASCII)
-		if (output.size() > 1 && output[1] == 0)
-		    output = UTF16toUTF8(reinterpret_cast<utf16_char const *>(output.c_str()));
+			) {
+			// we can close our handles to the other ends now
+			pipeTheirOut.close();
+			pipeTheirIn.close();
+			// read the output
+			std::stringstream result;
+			char buffer[128];
+			DWORD bytesRead;
+			while (ReadFile(pipeIn, &buffer, 128, &bytesRead, nullptr)) {
+				if (bytesRead != 0)
+					result << std::string(&buffer[0], &buffer[0] + bytesRead);
+			}
+			GetExitCodeProcess(pi.hProcess, &ec);
+			// close the handles to created process & thread since we do not need them
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+			output = result.str();
+			// a crude detection whether the output is given in UTF16, or UTF8 (ASCII)
+			if (output.size() > 1 && output[1] == 0)
+				output = UTF16toUTF8(reinterpret_cast<utf16_char const *>(output.c_str()));
+		} 
 		if (exitCode != nullptr)
 			* exitCode = ec;
 		else if (ec != EXIT_SUCCESS)

@@ -13,7 +13,17 @@ namespace tpp {
 	Config const & Config::Initialize(int argc, char * argv[]) {
 		Config * & config = Singleton_();
 		ASSERT(config == nullptr) << "Already initialized";
-		config = new Config(GetJSONSettings());
+		helpers::JSON json = ReadSettings();
+
+		if (json.isNull()) {
+		    json = CreateDefaultSettings();
+		    config = new Config(std::move(json));
+			Application::Instance()->updateDefaultSettings(config->json_);
+			config->saveSettings();
+		} else {
+		    config = new Config(std::move(json));
+		}
+
 		config->processCommandLineArguments(argc, argv);
 
 		return * config;
@@ -92,22 +102,23 @@ namespace tpp {
 		}
 	}
 
-	helpers::JSON Config::GetJSONSettings() {
+	void Config::saveSettings() {
 		std::string settingsFile(Application::Instance()->getSettingsFolder() + "settings.json");
-		std::ifstream sf(settingsFile);
-		if (sf.good()) {
-		    return helpers::JSON::Parse(sf);
-		} else  {
-		    helpers::JSON json(CreateDefaultJSONSettings());
-			std::ofstream sfo(settingsFile);
-			sfo << json;
-			return json;
-		}
+		std::ofstream sf(settingsFile);
+		sf << json_;
 	}
 
-	helpers::JSON Config::CreateDefaultJSONSettings() {
+	helpers::JSON Config::ReadSettings() {
+		std::string settingsFile(Application::Instance()->getSettingsFolder() + "settings.json");
+		std::ifstream sf(settingsFile);
+		if (sf.good()) 
+		    return helpers::JSON::Parse(sf);
+		else  
+			return helpers::JSON(nullptr);
+	}
+
+	helpers::JSON Config::CreateDefaultSettings() {
 		helpers::JSON json(helpers::JSON::Parse(DefaultJSONSettings()));
-		Application::Instance()->updateDefaultSettings(json);
 		return json;
 	}
 
