@@ -24,21 +24,34 @@ namespace helpers {
 		/** Returns the SHA-1 hash of the current commit, i.e. head.  
 		 */
 		std::string currentCommit() const {
-			std::string result = Trim(Exec(Command("git", { "rev-parse", "HEAD" }), path_));
-			ASSERT(result.size() == 40) << "Invalid SHA1 hash size";
-			return result;
+			try {
+				std::string result = Trim(Exec(Command("git", { "rev-parse", "HEAD" }), path_));
+				ASSERT(result.size() == 40) << "Invalid SHA1 hash size";
+				return result;
+			} catch (Exception &) {
+				return "Not a git repo";
+			}
 		}
 
 		/** Checks if the repo has any uncommited changes or untracked files
 		 */
 		bool hasPendingChanges() const {
-			return ! Exec(Command("git", { "status", "--short" }), path_).empty();
+			try {
+			    return ! Exec(Command("git", { "status", "--short" }), path_).empty();
+			} catch (Exception &) {
+				// if it's not a git repo, then there is no way to determine if we have pending changes
+				return false;
+			}
 		}
 
 		/** Returns list of tags pointing to the current commit (head). 
 		 */
 		std::vector<std::string> currentTags() {
-			return Split(Trim(Exec(Command("git", { "tag", "--points-at", "HEAD" }), path_)), "\n");
+			try {
+				return Split(Trim(Exec(Command("git", { "tag", "--points-at", "HEAD" }), path_)), "\n");
+			} catch (Exception &) {
+				return std::vector<std::string>{};
+			}
 		}
 
 	private:
