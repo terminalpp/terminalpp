@@ -21,10 +21,11 @@ namespace ui {
 		mouseDoubleClickPrevious_{0},
 		pasteRequestTarget_{nullptr},
 		selectionOwner_{nullptr},
+		title_{""},
+		icon_{Icon::Default},
 		background_{Color::Black()} {
 		visibleRegion_ = Canvas::VisibleRegion{this};
 	}
-
 
 	void RootWindow::render(Rect const & rect) {
 		if (renderer_) 
@@ -146,11 +147,15 @@ namespace ui {
 	}
 
 	void RootWindow::updateTitle(std::string const & title) {
-		if (title_ != title) {
-			title_ = title;
-			if (renderer_)
+		title_ = title;
+		if (renderer_)
 			renderer_->setTitle(title_);
-		}
+	}
+
+	void RootWindow::updateIcon(Icon icon) {
+		icon_ = icon;
+		if (renderer_)
+			renderer_->setIcon(icon_);
 	}
 
 	void RootWindow::requestClipboardPaste(Clipboard * sender) {

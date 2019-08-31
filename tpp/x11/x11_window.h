@@ -46,6 +46,10 @@ namespace tpp {
             XSetStandardProperties(display_, window_, title.c_str(), nullptr, x11::None, nullptr, 0, nullptr);
         }
 
+		/** Sets the window icon. 
+		 */
+        void setIcon(ui::RootWindow::Icon icon) override;
+
     protected:
 
         X11Window(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);
@@ -197,12 +201,6 @@ namespace tpp {
 			result.color.alpha = c.alpha * 256;
 			return result;
 		}
-
-		/** Sets the window icon. 
-
-		    The window icon must be an array of BGRA colors for the different icon sizes where the first element is the total size of the array followed by arbitrary icon sizes encoded by first 2 items representing the icon width and height followed by the actual pixels. 
-		 */
-		void setIcon(unsigned long * icon);
 
     private:
 

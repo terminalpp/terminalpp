@@ -297,6 +297,7 @@ namespace vterm {
 
 
     EVENT_BUILDER(OnTitleChange, ui::StringEvent, onTitleChange, Terminal);
+    EVENT_BUILDER(OnNotification, ui::VoidEvent, onNotification, Terminal);
     EVENT_BUILDER(OnPTYTerminated, ExitCodeEvent, onPTYTerminated, Terminal);
     EVENT_BUILDER(OnLineScrolledOut, LineScrollEvent, onLineScrolledOut, Terminal);
 

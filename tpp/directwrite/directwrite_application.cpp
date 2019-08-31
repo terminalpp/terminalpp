@@ -18,6 +18,9 @@ namespace tpp {
         hInstance_{hInstance},
 		selectionOwner_{nullptr} {
         attachConsole();
+		// load the icons from the resource file
+		iconDefault_ = LoadIcon(hInstance_, L"IDI_ICON1");
+		iconNotification_ = LoadIcon(hInstance_, L"IDI_ICON2");
         registerWindowClass();
 		D2D1_FACTORY_OPTIONS options;
 		ZeroMemory(&options, sizeof(D2D1_FACTORY_OPTIONS));
@@ -133,8 +136,8 @@ namespace tpp {
 		wClass.cbWndExtra = 0; // extra memory to be allocated for each window
 		wClass.lpszClassName = WindowClassName_; // class name
 		wClass.lpszMenuName = nullptr; // menu name
-		wClass.hIcon = LoadIcon(hInstance_, L"IDI_ICON1"); // big icon (alt-tab)
-		wClass.hIconSm = LoadIcon(hInstance_, L"IDI_ICON1"); // small icon (taskbar)
+		wClass.hIcon = iconDefault_; // big icon (alt-tab)
+		wClass.hIconSm = iconDefault_; // small icon (taskbar)
 		wClass.hCursor = LoadCursor(nullptr, IDC_IBEAM); // mouse pointer icon
 		wClass.hbrBackground = nullptr; // do not display background - the terminal window does it itself
 		// register the class

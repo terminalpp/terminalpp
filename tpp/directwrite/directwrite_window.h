@@ -46,6 +46,21 @@ namespace tpp {
             PostMessage(hWnd_, WM_USER, DirectWriteApplication::MSG_TITLE_CHANGE, 0);                
         }
 
+        void setIcon(ui::RootWindow::Icon icon) override {
+            DirectWriteApplication *app = DirectWriteApplication::Instance();
+            WPARAM iconHandle;
+            switch (icon) {
+                case ui::RootWindow::Icon::Notification:
+                    iconHandle = reinterpret_cast<WPARAM>(app->iconNotification_);
+                    break;
+                default:
+                    iconHandle = reinterpret_cast<WPARAM>(app->iconDefault_);
+                    break;
+            }
+            PostMessage(hWnd_, WM_SETICON, ICON_BIG, iconHandle);
+            PostMessage(hWnd_, WM_SETICON, ICON_SMALL, iconHandle);
+        }
+
     protected:
 
         DirectWriteWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);

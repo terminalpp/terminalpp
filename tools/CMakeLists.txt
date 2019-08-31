@@ -26,10 +26,10 @@ if(UNIX AND NOT APPLE)
         COMMAND convert -background transparent ${CMAKE_SOURCE_DIR}/docs/resources/images/logo.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 tpp.ico
         COMMAND convert -background transparent ${CMAKE_SOURCE_DIR}/docs/resources/images/logo-notification.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 tpp-notification.ico
         COMMAND convert tpp.ico -depth 8 tpp.rgba
-        COMMAND xIconCpp tppIcon ../tpp/x11/tppIcon.cpp tpp.rgba 16 24 32 64
+        COMMAND xIconCpp tppIcon ../../tpp/x11/tppIcon.cpp tpp.rgba 16 24 32 64
         COMMAND rm tpp.rgba
-        COMMAND convert tpp.ico -depth 8 tpp.rgba
-        COMMAND xIconCpp tppIconNotification ../tpp/x11/tppIconNotification.cpp tpp.rgba 16 24 32 64
+        COMMAND convert tpp-notification.ico -depth 8 tpp.rgba
+        COMMAND xIconCpp tppIconNotification ../../tpp/x11/tppIconNotification.cpp tpp.rgba 16 24 32 64
         COMMAND rm tpp.rgba
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/images
     )

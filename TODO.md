@@ -1,7 +1,4 @@
-﻿# Towards V0.2
-
-- update readme, add about bypass, etc.
-
+﻿
 ## Bugs and missing features
 
 - add zoom out? and default zoom? 
@@ -9,6 +6,7 @@
 - add the extra attributes drawing
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
+- add transparency?
 
 ### Win32 Bugs
 

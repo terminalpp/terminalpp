@@ -11,6 +11,15 @@ namespace ui {
     class RootWindow : public Container {
     public:
 
+        /** Determines the icon of the renderer's window where appropriate. 
+         
+            Instead of specifying the actual icon, which is left to the actual renderers being used, the icon specifies the meaning of the icon.
+         */
+        enum class Icon {
+            Default,
+            Notification,
+        }; // RootWindow::Icon
+
         using Widget::setFocus;
         using Container::setLayout;
         using Container::attachChild;
@@ -33,6 +42,10 @@ namespace ui {
 
         std::string const & title() const {
             return title_;
+        }
+
+        Icon icon() const {
+            return icon_;
         }
 
         /** Returns the background color of the window. 
@@ -160,7 +173,16 @@ namespace ui {
             }
         }
 
+        void setIcon(Icon icon) {
+            if (icon_ != icon) {
+                updateIcon(icon);
+                // TODO on icon change event
+            }
+        }
+
         virtual void updateTitle(std::string const & title);
+
+        virtual void updateIcon(Icon icon);
 
     private:
 
@@ -203,6 +225,7 @@ namespace ui {
         Clipboard * selectionOwner_;
 
         std::string title_;
+        Icon icon_;
 
         /* Default background of the window. 
          */

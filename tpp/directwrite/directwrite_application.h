@@ -65,6 +65,11 @@ namespace tpp {
 		Microsoft::WRL::ComPtr<IDWriteFactory> dwFactory_;
 		Microsoft::WRL::ComPtr<ID2D1Factory> d2dFactory_;
 
+        /* Window icons.
+         */
+        HICON iconDefault_;
+        HICON iconNotification_;
+
         /** Holds the selection so that it can be pasted when requested by the windows. 
          */
         std::string selection_;

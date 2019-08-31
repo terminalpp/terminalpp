@@ -67,7 +67,7 @@ namespace tpp {
         updateXftStructures(cols_);
 
         // set the icon
-		setIcon(tppIcon);
+		setIcon(ui::RootWindow::Icon::Default);
 
 		// register the window
         AddWindowNativeHandle(this, window_);
@@ -77,6 +77,31 @@ namespace tpp {
         RemoveWindow(window_);
 		XFreeGC(display_, gc_);
         delete [] text_;
+    }
+
+    void X11Window::setIcon(ui::RootWindow::Icon icon) {
+        /* 
+		    The window icon must be an array of BGRA colors for the different icon sizes where the first element is the total size of the array followed by arbitrary icon sizes encoded by first 2 items representing the icon width and height followed by the actual pixels. 
+         */
+        unsigned long * iconHandle;
+        switch (icon) {
+            case ui::RootWindow::Icon::Notification:
+                iconHandle = tppIconNotification;
+                break;
+            default:
+                iconHandle = tppIcon;
+                break;
+        }
+		XChangeProperty(
+			display_,
+			window_,
+			X11Application::Instance()->netWmIcon_,
+			XA_CARDINAL,
+			32,
+			PropModeReplace,
+			reinterpret_cast<unsigned char*>(&iconHandle[1]),
+			iconHandle[0]
+		);
     }
 
     void X11Window::show() {
@@ -181,19 +206,6 @@ namespace tpp {
             app->selectionOwner_ = nullptr;
             app->selection_.clear();
         }
-    }
-
-    void X11Window::setIcon(unsigned long * icon) {
-		XChangeProperty(
-			display_,
-			window_,
-			X11Application::Instance()->netWmIcon_,
-			XA_CARDINAL,
-			32,
-			PropModeReplace,
-			reinterpret_cast<unsigned char*>(&icon[1]),
-			icon[0]
-		);
     }
 
     unsigned X11Window::GetStateModifiers(int state) {

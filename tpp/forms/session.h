@@ -33,6 +33,7 @@ namespace tpp {
                 )
                 << (Create(terminal_ = new VT100(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
                     << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
+                    << OnNotification(CreateHandler<VoidEvent, Session, &Session::terminalNotification>(this))
                     << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
                     //<< OnLineScrolledOut(CreateHandler<LineScrollEvent, Session, &Session::lineScrolledOut>(this))
                 );
@@ -58,13 +59,39 @@ namespace tpp {
             setTitle(*e);
         }
 
+        void terminalNotification(ui::VoidEvent & e) {
+            MARK_AS_UNUSED(e);
+            setIcon(Icon::Notification);
+        }
+
         void ptyTerminated(vterm::ExitCodeEvent & e) {
             header_->setText(STR("Attached process terminated (code " << *e << ")"));
             header_->setVisible(true);
+            setIcon(Icon::Notification);
         }
 
         void lineScrolledOut(vterm::LineScrollEvent & e) {
             LOG << "Scrolled " << *e << " lines";
+        }
+
+        void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override {
+            setIcon(Icon::Default);
+            ui::RootWindow::mouseDown(col, row, button, modifiers);
+        }
+
+        void mouseWheel(int col, int row, int by, ui::Key modifiers) override {
+            setIcon(Icon::Default);
+            ui::RootWindow::mouseWheel(col, row, by, modifiers);
+        }
+
+        void keyChar(helpers::Char c) override {
+            setIcon(Icon::Default);
+            ui::RootWindow::keyChar(c);
+        }
+
+        void keyDown(ui::Key k) override {
+            setIcon(Icon::Default);
+            ui::RootWindow::keyDown(k);
         }
 
         vterm::PTY * pty_;
