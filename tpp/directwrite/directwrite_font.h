@@ -52,7 +52,7 @@ namespace tpp {
 		fface->GetMetrics(&metrics);
 		// the em size is size in pixels divided by (DPI / 96)
 		// https://docs.microsoft.com/en-us/windows/desktop/LearnWin32/dpi-and-device-independent-pixels
-		float emSize = (height * font.size()) / (dpiY / 96);
+		float emSize = height / (dpiY / 96);
 		// we have to adjust this number for the actual font metrics
 		emSize = emSize * metrics.designUnitsPerEm / (metrics.ascent + metrics.descent + metrics.lineGap);
 		// now we have to determine the height of a character, which we can do via glyph metrics
@@ -64,7 +64,7 @@ namespace tpp {
         Font<DirectWriteFont> * result = new Font<DirectWriteFont>(
 			font, /* ui font */
 			static_cast<unsigned>(std::round(static_cast<float>(glyphMetrics.advanceWidth) * emSize / metrics.designUnitsPerEm)), /* cell width px */
-			height * font.size(), /* cell height px */
+			height, /* cell height px */
 			(emSize * metrics.ascent / metrics.designUnitsPerEm), /* ascent */
 			DirectWriteFont(
 				fface,

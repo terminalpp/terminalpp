@@ -2,7 +2,6 @@
 ## Bugs and missing features
 
 - add zoom out? and default zoom? 
-- add ability to change icon of the window
 - add the extra attributes drawing
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
