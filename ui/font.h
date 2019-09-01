@@ -8,16 +8,12 @@ namespace ui {
 
 	/** Describes a font. 
 	 
-	    A font is described by its style (regular, bold, italics, bold + italics) and size. The size of the font is measured in cells and both width and height can be set with the following effects:
-
-		The renderer will first determine the appropriate font and size so that it would fit best into the given area. It would then center the glyph in the area and render it, advancing by the specified number of cells. If the font is the same as the base font, then increasing both width and height will render larger letters, increasing one or another will increase spacing. 
-
-		If a different font will be used with more rectangular characters, such as icons & CJK characters, then keeping the height to 1, but increasing the width is likely to render larger glyphs that still fit in the default line. 
+	    A font is described by its style, i.e. whether it is bold and/or italics, its size (in terms of the base cells, i.e. font of size 1 has width of 1 cell width and height of 1 cell height, font of size 2 is 2 cells width and 2 cells height) and whether the font is double width font, i.e. its width is twice as many cell widths as its height is cell heights. 
 	 */
     class Font {
 	public:
 
-		/** Creates default font, i.e. size 1 and neither bold, nor italics. 
+		/** Creates default font, i.e. width and height 1 and neither bold, nor italics. 
   		 */
         Font():
 		    raw_(0) {
@@ -25,12 +21,30 @@ namespace ui {
 
 		/** Creates a font of specific properties. 
   		 */
-		Font(bool bold, bool italics):
+		Font(bool bold, bool italics, bool doubleWidth = false):
 		    raw_(0) {
 			if (bold)
 			    raw_ |= BOLD;
 			if (italics)
 			    raw_ |= ITALICS;
+			if (doubleWidth)
+			    raw_ |= DOUBLE_WIDTH;
+		}
+
+		/** Creates a font with given properties. 
+		 */
+		Font(bool bold, bool italics, unsigned size, bool doubleWidth = false):
+		    raw_(0) {
+			setBold(bold);
+			setItalics(italics);
+			setDoubleWidth(doubleWidth);
+			setSize(size);
+		}
+
+		/** Returns the size of the font, in multiplies of the default cell. 
+		 */
+		unsigned size() const {
+			return (raw_ & 1) + 1;
 		}
 
 		/** Returns true if the font is bold. 
@@ -43,6 +57,20 @@ namespace ui {
   		 */
 		bool italics() const {
 			return raw_ & ITALICS;
+		}
+
+		/** Determines whether double width font should be used. 
+		 */
+		bool doubleWidth() const {
+			return raw_ & DOUBLE_WIDTH;
+		}
+
+		/** Sets the size of the font. 
+		 */
+		Font & setSize(unsigned value) {
+			ASSERT(value <= 2);
+			raw_ = (raw_ & 0xfe) + static_cast<int8_t>(value - 1);
+			return *this;
 		}
 
 		/** Sets whether the font is bold, or not. 
@@ -65,36 +93,25 @@ namespace ui {
 			return *this;
 		}
 
-		/** Returns the width of the font in cells. 
+		/** Sets whether double width font should be used or not. 
 		 */
-		unsigned width() const {
-			return (raw_ & 0x7) + 1;
-		}
-
-		/** Returns the height of the font in cells. 
-		 */
-		unsigned height() const {
-			return ((raw_ & 0x38) >> 3) + 1;
-		}
-
-		/** Sets the width of the font in cells. 
-		 
-		    Values from 1 to 8 inclusive are supported. 
-		 */
-		Font & setWidth(unsigned width) {
-			ASSERT(width <= 8);
-			raw_ = (raw_ & 0xf8) + ((width & 0xf) - 1);
+		Font & setDoubleWidth(bool value = true) {
+			if (value)
+			    raw_ |= DOUBLE_WIDTH;
+			else
+			    raw_ &= ~ DOUBLE_WIDTH;
 			return *this;
 		}
 
-		/** Sets the width of the font in cells. 
-		 
-		    Values from 1 to 8 inclusive are supported. 
-		 */
-		Font & setHeight(unsigned height) {
-			ASSERT(height <= 8);
-			raw_ = (raw_ & 0xc7) + (((height & 0xf) - 1) << 3);
-			return *this;
+		unsigned calculateWidth(unsigned baseWidth) const {
+			if (doubleWidth()) 
+			    return baseWidth * size() * 2;
+			else
+			    return baseWidth * size();
+		}
+
+		unsigned calculateHeight(unsigned baseHeight) const {
+			return baseHeight * size();
 		}
 
 		bool operator == (Font const & other) const {
@@ -108,8 +125,9 @@ namespace ui {
 	private:
 	    friend class Cell;
 
-		static constexpr unsigned BOLD = 0x40;
-		static constexpr unsigned ITALICS = 0x80;
+		static constexpr unsigned BOLD = 0x80;
+		static constexpr unsigned ITALICS = 0x40;
+		static constexpr unsigned DOUBLE_WIDTH = 0x20;
 
 		Font(uint8_t raw):
 		    raw_(raw) {

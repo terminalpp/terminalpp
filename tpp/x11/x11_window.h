@@ -143,7 +143,7 @@ namespace tpp {
         /** Updates the current font.
          */
         void setFont(ui::Font font) {
-			font_ = Font::GetOrCreate(font, cellHeightPx_);
+			font_ = Font::GetOrCreate(font, cellWidthPx_, cellHeightPx_);
         }
 
         /** Updates the foreground color.

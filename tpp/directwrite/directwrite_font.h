@@ -21,14 +21,13 @@ namespace tpp {
 	};
 
 	template<>
-	inline Font<DirectWriteFont>* Font<DirectWriteFont>::Create(ui::Font font, unsigned height) {
+	inline Font<DirectWriteFont>* Font<DirectWriteFont>::Create(ui::Font font, unsigned cellWidth, unsigned cellHeight) {
 		// get the system font collection		
 		Microsoft::WRL::ComPtr<IDWriteFontCollection> sfc;
 		DirectWriteApplication::Instance()->dwFactory_->GetSystemFontCollection(&sfc, false);
 		// find the required font family - first get the index then obtain the family by the index
 		UINT32 findex;
 		BOOL fexists;
-		// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
 		helpers::utf16_string fname = helpers::UTF8toUTF16(Config::Instance().fontFamily());
 		sfc->FindFamilyName(fname.c_str(), &findex, &fexists);
 		Microsoft::WRL::ComPtr<IDWriteFontFamily> ff;
@@ -52,7 +51,11 @@ namespace tpp {
 		fface->GetMetrics(&metrics);
 		// the em size is size in pixels divided by (DPI / 96)
 		// https://docs.microsoft.com/en-us/windows/desktop/LearnWin32/dpi-and-device-independent-pixels
-		float emSize = height / (dpiY / 96);
+		// determine the font height in pixels, which is the cell height times the height of the font
+		// increase the cell height and width by the font size
+		cellHeight = font.calculateHeight(cellHeight);
+		cellWidth = font.calculateWidth(cellWidth);
+		float emSize = cellHeight / (dpiY / 96);
 		// we have to adjust this number for the actual font metrics
 		emSize = emSize * metrics.designUnitsPerEm / (metrics.ascent + metrics.descent + metrics.lineGap);
 		// now we have to determine the height of a character, which we can do via glyph metrics
@@ -61,10 +64,32 @@ namespace tpp {
 		UINT32 codepoint = 'M';
 		fface->GetGlyphIndices(&codepoint, 1, &glyph);
 		fface->GetDesignGlyphMetrics(&glyph, 1, &glyphMetrics);
+		// get the character dimensions and adjust the font size if necessary so that the characters are centered in their cell area as specified by the ui::Font
+		unsigned offsetLeft = 0;
+		unsigned offsetTop = 0;
+		unsigned fontHeight = cellHeight;
+		unsigned fontWidth = static_cast<unsigned>(std::round(static_cast<float>(glyphMetrics.advanceWidth) * emSize / metrics.designUnitsPerEm));
+		// if cellWidth is 0, the centering is ignored (the fontWidth will be used as default cell width)
+		if (cellWidth != 0) {
+			// if the width is greater then allowed, decrease the font size accordingly and center vertically
+			if (fontWidth > cellWidth) {
+				float x = static_cast<float>(cellWidth) / fontWidth;
+				emSize *= x;
+				fontHeight = static_cast<unsigned>(fontHeight * x);
+				fontWidth = cellWidth;
+				offsetTop = (cellHeight - fontHeight) / 2;
+			// otherwise center horizontally
+			} else {
+				offsetLeft = (cellWidth - fontWidth) / 2;
+			}
+		}
+		// create the font
         Font<DirectWriteFont> * result = new Font<DirectWriteFont>(
 			font, /* ui font */
-			static_cast<unsigned>(std::round(static_cast<float>(glyphMetrics.advanceWidth) * emSize / metrics.designUnitsPerEm)), /* cell width px */
-			height, /* cell height px */
+			fontWidth,
+			fontHeight,
+			offsetLeft, 
+			offsetTop,
 			(emSize * metrics.ascent / metrics.designUnitsPerEm), /* ascent */
 			DirectWriteFont(
 				fface,
@@ -78,12 +103,6 @@ namespace tpp {
 		return result;
 	}
 
-
-
 } // namespace tpp
-
-
-
-
 
 #endif

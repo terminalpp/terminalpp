@@ -148,14 +148,14 @@ namespace tpp {
         void addGlyph(ui::Cell const & cell) {
             UINT32 cp = cell.codepoint();
             dwFont_->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
-            const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(dwFont_->cellWidthPx());
+            const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(dwFont_->font().calculateWidth(cellWidthPx_));
             ++glyphRun_.glyphCount;
         }
 
         /** Updates the current font.
          */
         void setFont(ui::Font font) {
-			dwFont_ = Font::GetOrCreate(font, cellHeightPx_);
+			dwFont_ = Font::GetOrCreate(font, cellWidthPx_, cellHeightPx_);
 			glyphRun_.fontFace = dwFont_->nativeHandle().fontFace.Get();
 			glyphRun_.fontEmSize = dwFont_->nativeHandle().sizeEm;
         }

@@ -15,7 +15,7 @@ namespace tpp {
 
 
     X11Window::X11Window(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
-        RendererWindow(cols, rows, Font::GetOrCreate(ui::Font(), baseCellHeightPx)->cellWidthPx(),baseCellHeightPx) ,
+        RendererWindow(cols, rows, Font::GetOrCreate(ui::Font(), 0, baseCellHeightPx)->widthPx(),baseCellHeightPx) ,
 		display_(X11Application::Instance()->xDisplay()),
 		screen_(X11Application::Instance()->xScreen()),
 	    visual_(DefaultVisual(display_, screen_)),
@@ -146,9 +146,9 @@ namespace tpp {
     }
 
     void X11Window::updateZoom(double value) {
-		Font * f = Font::GetOrCreate(ui::Font(), static_cast<unsigned>(baseCellHeightPx_ * value));
-		cellWidthPx_ = f->cellWidthPx();
-		cellHeightPx_ = f->cellHeightPx();
+		Font * f = Font::GetOrCreate(ui::Font(), 0, static_cast<unsigned>(baseCellHeightPx_ * value));
+		cellWidthPx_ = f->widthPx();
+		cellHeightPx_ = f->heightPx();
 		Window::updateZoom(value);
 		Window::updateSizePx(widthPx_, heightPx_);
     }

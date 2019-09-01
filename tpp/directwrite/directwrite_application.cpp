@@ -74,11 +74,11 @@ namespace tpp {
 		}
 		// determine the font, try the default one, if not found, try Consolas
 		try {
-			Font<DirectWriteFont>::GetOrCreate(ui::Font(), Config::Instance().fontSize());
+			Font<DirectWriteFont>::GetOrCreate(ui::Font(), 0, Config::Instance().fontSize());
 		} catch (helpers::OSError const &) {
 			json["font"]["family"] = "Consolas";
 			try {
-				Font<DirectWriteFont>::GetOrCreate(ui::Font(), Config::Instance().fontSize());
+				Font<DirectWriteFont>::GetOrCreate(ui::Font(), 0, Config::Instance().fontSize());
     		} catch (helpers::OSError const &) {
 				MessageBox(nullptr, L"Unable to determine default font. Please edit the settings file manually.", L"Error", MB_ICONSTOP);
 			}

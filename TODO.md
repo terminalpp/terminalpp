@@ -1,4 +1,8 @@
 ﻿
+- fonts calculate their offsets and double width, but rendering does not support the offsets
+
+
+
 ## Bugs and missing features
 
 - add zoom out? and default zoom? 

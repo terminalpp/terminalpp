@@ -9,13 +9,24 @@ namespace tpp {
     class Font {
 	public:
 
+		/** Creates a font to fit the given cell dimensions. 
+			 */
+	    static  Font * GetOrCreate(ui::Font font, unsigned cellWidth, unsigned cellHeight) {
+			unsigned id = (cellHeight << 8) + helpers::pointer_cast<uint8_t*>(&font)[0];
+			auto i = Fonts_.find(id);
+			if (i == Fonts_.end())
+			    i = Fonts_.insert(std::make_pair(id, Create(font, cellWidth, cellHeight))).first;
+			return i->second;
+		}
+
+/*
 		static Font* GetOrCreate(ui::Font font, unsigned height) {
 			unsigned id = (height << 8) + helpers::pointer_cast<uint8_t*>(&font)[0];
 			auto i = Fonts_.find(id);
 			if (i == Fonts_.end())
 				i = Fonts_.insert(std::make_pair(id, Create(font, height))).first;
 			return i->second;
-		}
+		} */
 
 		/** Doesn't do anything, but is present so that specializations can override it. 
 		 */
@@ -26,13 +37,31 @@ namespace tpp {
 			return font_;
 		}
 
+/*
 		unsigned cellWidthPx() const {
 			return cellWidthPx_;
 		}
 
 		unsigned cellHeightPx() const {
 			return cellHeightPx_;
+		} */
+
+		unsigned widthPx() const {
+			return widthPx_;
 		}
+
+		unsigned heightPx() const {
+			return heightPx_;
+		}
+
+		unsigned offsetLeft() const {
+			return offsetLeft_;
+		}
+
+		unsigned offsetTop() const {
+			return offsetTop_;
+		}
+
 
 		T const& nativeHandle() const {
 			return nativeHandle_;
@@ -63,14 +92,20 @@ namespace tpp {
 
 		/** This must be implemented by each platform specification. 
 		 */
-		static Font* Create(ui::Font font, unsigned height);
+	    static Font* Create(ui::Font font, unsigned cellWidth, unsigned cellHeight);
+
+		/** This must be implemented by each platform specification. 
+		 */
+		//static Font* Create(ui::Font font, unsigned height);
 
 		static std::unordered_map<unsigned, Font*> Fonts_;
 		
-		Font(ui::Font font, unsigned cellWidthPx, unsigned cellHeightPx, float ascent, T const& nativeHandle) :
+		Font(ui::Font font, unsigned widthPx, unsigned heightPx, unsigned offsetLeft, unsigned offsetTop, float ascent, T const& nativeHandle) :
 			font_{font},
-			cellWidthPx_{cellWidthPx},
-			cellHeightPx_{cellHeightPx},
+			widthPx_{widthPx},
+			heightPx_{heightPx},
+			offsetLeft_{offsetLeft},
+			offsetTop_{offsetTop},
 			ascent_{ascent},
 			underlineOffset_{0},
 			underlineThickness_{1},
@@ -81,8 +116,10 @@ namespace tpp {
 
 		ui::Font font_;
 
-		unsigned cellWidthPx_;
-		unsigned cellHeightPx_;
+		unsigned widthPx_;
+		unsigned heightPx_;
+		unsigned offsetLeft_;
+		unsigned offsetTop_;
 		float ascent_;
 		float underlineOffset_;
 		float underlineThickness_;
