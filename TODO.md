@@ -1,7 +1,14 @@
-﻿
+﻿## Different font sizes
+
 - fonts calculate their offsets and double width, but rendering does not support the offsets
+- and nor does it support multiple sizes too
 
+## Font Fallback
 
+- do font fallback & different sizes first on Windows completely, then look at linux
+- the fallback font dimensions is not changed yet
+- where to store the cache of the font fallbacks? Perhaps on the "native handle" which is not really a native handle any more so should be renamed
+- font fallback does not work for emoticons
 
 ## Bugs and missing features
 
@@ -10,6 +17,7 @@
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
 - add transparency?
+- ssh plain does not display boxes in mc well
 
 ### Win32 Bugs
 
@@ -26,7 +34,6 @@
 
 # Long Term Goals
 
-- non-english double width characters don't work properly (at all)
 - xim is wrong, it works on linux, but fails on mac
 - then at some point in the future, helpers, tpp and ui+vterm should go in separate repos
 - start documentation - see https://devblogs.microsoft.com/cppblog/clear-functional-c-documentation-with-sphinx-breathe-doxygen-cmake/

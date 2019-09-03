@@ -263,7 +263,7 @@ namespace tpp {
                             statusCell_ = c;
                         }
                         // draw the cell
-                        addGlyph(c);
+                        addGlyph(col, row, c);
                     }
                     drawGlyphRun();
                 }
@@ -284,7 +284,7 @@ namespace tpp {
                         setBackgroundColor(ui::Color::None());
                         setDecorationColor(statusCell_.decorationColor());
                         setAttributes(statusCell_.attributes()); 
-                        addGlyph(statusCell_);
+                        addGlyph(cursor.pos.x, cursor.pos.y, statusCell_);
                         drawGlyphRun();
                     }
                 }

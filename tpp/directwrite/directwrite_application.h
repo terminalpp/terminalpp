@@ -26,6 +26,12 @@ namespace tpp {
             return dynamic_cast<DirectWriteApplication*>(Application::Instance());
         }
 
+        /** Returns the locale name of the current user. 
+         */
+        wchar_t const * localeName() const {
+            return localeName_;
+        }
+
         std::string getSettingsFolder() override;
 
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;
@@ -34,6 +40,7 @@ namespace tpp {
 
     private:
         friend class DirectWriteWindow;
+        friend class DirectWriteFont;
 		friend class Font<DirectWriteFont>;
 
         DirectWriteApplication(HINSTANCE hInstance);
@@ -60,6 +67,9 @@ namespace tpp {
 
         /* Handle to the application instance. */
         HINSTANCE hInstance_;
+
+        /* Default locale for the user. */
+        wchar_t localeName_[LOCALE_NAME_MAX_LENGTH];
 
 		/* Direct write factories that can be used by all windows, automatically deleted via the WRL pointers */
 		Microsoft::WRL::ComPtr<IDWriteFactory> dwFactory_;

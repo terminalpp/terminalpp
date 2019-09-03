@@ -145,9 +145,27 @@ namespace tpp {
             glyphRunRow_ = row;
         }
 
-        void addGlyph(ui::Cell const & cell) {
+        void addGlyph(int col, int row, ui::Cell const & cell) {
             UINT32 cp = cell.codepoint();
             dwFont_->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
+            // if the glyph is not in the font, try callback
+            if (glyphIndices_[glyphRun_.glyphCount] == 0) {
+                // draw glyph run so far and initialize a new glyph run
+                drawGlyphRun();
+                initializeGlyphRun(col, row);
+                // obtain the fallback font and point the glyph run towards it
+                auto i = dwFont_->fallbackFor(cp);
+                glyphRun_.fontFace = i->nativeHandle().fontFace.Get();
+                glyphRun_.fontEmSize = i->nativeHandle().sizeEm;
+                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(dwFont_->font().calculateWidth(cellWidthPx_));
+i->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
+                ++glyphRun_.glyphCount;
+                drawGlyphRun();
+                initializeGlyphRun(col + 1, row);
+                glyphRun_.fontFace = dwFont_->nativeHandle().fontFace.Get();
+                glyphRun_.fontEmSize = dwFont_->nativeHandle().sizeEm;
+                return;
+            }
             const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(dwFont_->font().calculateWidth(cellWidthPx_));
             ++glyphRun_.glyphCount;
         }

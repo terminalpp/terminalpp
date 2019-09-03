@@ -35,6 +35,8 @@ namespace tpp {
 			__uuidof(IDWriteFactory),
 			&dwFactory_
 		))) << "Unable to create DW factory";
+		// get the default user locale
+		OSCHECK(SUCCEEDED(GetUserDefaultLocaleName(localeName_, LOCALE_NAME_MAX_LENGTH)));
 		// start the blinker thread
 		DirectWriteWindow::StartBlinkerThread();
     }

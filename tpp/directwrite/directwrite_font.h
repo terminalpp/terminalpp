@@ -18,6 +18,43 @@ namespace tpp {
 			fontFace{fontFace},
 			sizeEm{sizeEm} {
 		}
+
+	private:
+	    friend class Font<DirectWriteFont>;
+	    class TextAnalysis : public ::Microsoft::WRL::RuntimeClass<::Microsoft::WRL::RuntimeClassFlags<::Microsoft::WRL::ClassicCom | ::Microsoft::WRL::InhibitFtmBase>, IDWriteTextAnalysisSource> {
+		public:
+		    TextAnalysis():
+			    c_{0x20,0} {
+			}
+
+			/** Sets given codepoint inside the analysis object. 
+			 
+			    TODO refactor this & helpers::Char::toUTF16 ?
+			 */
+			void setCodepoint(char32_t cp) {
+				if (cp < 0x10000) {
+					c_[0] = static_cast<wchar_t>(cp);
+				} else {
+					cp -= 0x10000;
+					unsigned high = cp >> 10; // upper 10 bits
+					unsigned low = cp & 0x3ff; // lower 10 bits
+					c_[0] = static_cast<wchar_t>(high + 0xd800);
+					c_[1] = static_cast<wchar_t>(low + 0xdc00);
+				}
+			}
+
+			// IDWriteTextAnalysisSource methods
+			virtual HRESULT STDMETHODCALLTYPE GetTextAtPosition(UINT32 textPosition, WCHAR const ** textString, UINT32* textLength) override;
+			virtual HRESULT STDMETHODCALLTYPE GetTextBeforePosition(UINT32 textPosition, WCHAR const** textString, _Out_ UINT32* textLength) override;
+			virtual DWRITE_READING_DIRECTION STDMETHODCALLTYPE GetParagraphReadingDirection() override;
+			virtual HRESULT STDMETHODCALLTYPE GetLocaleName(UINT32 textPosition, UINT32* textLength, WCHAR const** localeName) override;
+			virtual HRESULT STDMETHODCALLTYPE GetNumberSubstitution(UINT32 textPosition, UINT32* textLength, IDWriteNumberSubstitution ** numberSubstitution) override;			
+		private:
+			/* UTF16 encoded codepoint to be analyzed. 
+			 */
+		    wchar_t c_[2];
+		};
+
 	};
 
 	template<>
@@ -102,6 +139,76 @@ namespace tpp {
 		result->strikethroughThickness_ = (emSize * metrics.strikethroughThickness / metrics.designUnitsPerEm);
 		return result;
 	}
+
+	template<>
+	inline Font<DirectWriteFont> * Font<DirectWriteFont>::fallbackFor(char32_t character) {
+		static DirectWriteFont::TextAnalysis ta;
+		static Microsoft::WRL::ComPtr<IDWriteFontFallback> fallback(nullptr);
+		Microsoft::WRL::ComPtr<IDWriteFontCollection> sfc;
+		// create the font fallback if needed
+		if (fallback.Get() == nullptr) {
+			OSCHECK(SUCCEEDED(static_cast<IDWriteFactory2*>(DirectWriteApplication::Instance()->dwFactory_.Get())->GetSystemFontFallback(&fallback))) << "Unable to create font fallback";
+    		DirectWriteApplication::Instance()->dwFactory_->GetSystemFontCollection(&sfc, false);
+		}
+		ta.setCodepoint(character);
+		UINT32 mappedLength;
+		Microsoft::WRL::ComPtr<IDWriteFont> mappedFont;
+		FLOAT scale;
+		fallback->MapCharacters(
+			&ta, // IDWriteTextAnalysisSource
+			0, // text position
+			1, // text length -- how about surrogate pairs?
+			sfc.Get(), // base font collection
+			L"Iosevka", // base family name
+			font_.bold() ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR, // base weight
+			font_.italics() ? DWRITE_FONT_STYLE_OBLIQUE : DWRITE_FONT_STYLE_NORMAL, // base style			
+			DWRITE_FONT_STRETCH_NORMAL, // base stretch
+			&mappedLength,
+			&mappedFont,
+			&scale
+		);
+		IDWriteFontFamily * matchedFamily;
+		IDWriteLocalizedStrings * names;
+		mappedFont->GetFontFamily(&matchedFamily);
+		matchedFamily->GetFamilyNames(&names);
+		Microsoft::WRL::ComPtr<IDWriteFontFace> fface;
+		mappedFont->CreateFontFace(&fface);
+        Font<DirectWriteFont> * result = new Font<DirectWriteFont>(
+			font_, /* ui font */
+			widthPx_,
+			heightPx_,
+			offsetLeft_, 
+			offsetTop_,
+			ascent_,
+			DirectWriteFont(
+				fface,
+				nativeHandle_.sizeEm * scale
+			)
+		);
+		result->underlineOffset_ = underlineOffset_; 
+		result->underlineThickness_ = underlineThickness_;
+		result->strikethroughOffset_ = strikethroughOffset_;
+		result->strikethroughThickness_ = strikethroughThickness_;
+		return result;
+	}
+
+	/*
+HRESULT MapCharacters(
+  IDWriteTextAnalysisSource *analysisSource,
+  UINT32                    textPosition,
+  UINT32                    textLength,
+  IDWriteFontCollection     *baseFontCollection,
+  wchar_t const             *baseFamilyName,
+  DWRITE_FONT_WEIGHT        baseWeight,
+  DWRITE_FONT_STYLE         baseStyle,
+  DWRITE_FONT_STRETCH       baseStretch,
+  UINT32                    *mappedLength,
+  IDWriteFont               **mappedFont,
+  FLOAT                     *scale
+);
+
+*/
+
 
 } // namespace tpp
 

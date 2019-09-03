@@ -8,7 +8,6 @@
 
 namespace tpp {
 
-
     class X11Window : public RendererWindow<X11Window, x11::Window> {
     public:
         typedef tpp::Font<XftFont*> Font;
@@ -128,7 +127,7 @@ namespace tpp {
             textRow_ = row;
         }
 
-        void addGlyph(ui::Cell const & cell) {
+        void addGlyph(int col, int row, ui::Cell const & cell) {
             if (textSize_ == 0) {
                 text_[0].x = textCol_ * cellWidthPx_;
                 text_[0].y = textRow_ * cellHeightPx_ + font_->ascent();

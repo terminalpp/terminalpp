@@ -10,7 +10,7 @@ namespace tpp {
 	public:
 
 		/** Creates a font to fit the given cell dimensions. 
-			 */
+		 */
 	    static  Font * GetOrCreate(ui::Font font, unsigned cellWidth, unsigned cellHeight) {
 			unsigned id = (cellHeight << 8) + helpers::pointer_cast<uint8_t*>(&font)[0];
 			auto i = Fonts_.find(id);
@@ -19,32 +19,18 @@ namespace tpp {
 			return i->second;
 		}
 
-/*
-		static Font* GetOrCreate(ui::Font font, unsigned height) {
-			unsigned id = (height << 8) + helpers::pointer_cast<uint8_t*>(&font)[0];
-			auto i = Fonts_.find(id);
-			if (i == Fonts_.end())
-				i = Fonts_.insert(std::make_pair(id, Create(font, height))).first;
-			return i->second;
-		} */
-
 		/** Doesn't do anything, but is present so that specializations can override it. 
 		 */
 		~Font() {
 		}
 
+		/** Returns the fallback font that can be used for the given UTF codepoint. 
+		 */
+		Font<T> * fallbackFor(char32_t character);
+
 		ui::Font font() const {
 			return font_;
 		}
-
-/*
-		unsigned cellWidthPx() const {
-			return cellWidthPx_;
-		}
-
-		unsigned cellHeightPx() const {
-			return cellHeightPx_;
-		} */
 
 		unsigned widthPx() const {
 			return widthPx_;
@@ -61,7 +47,6 @@ namespace tpp {
 		unsigned offsetTop() const {
 			return offsetTop_;
 		}
-
 
 		T const& nativeHandle() const {
 			return nativeHandle_;

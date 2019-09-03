@@ -173,7 +173,6 @@ namespace helpers {
 		}
 #endif
 
-
 		char const* toCharPtr() const {
 			return reinterpret_cast<char const*>(&bytes_);
 		}
