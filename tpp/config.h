@@ -34,6 +34,10 @@ namespace tpp {
 			return json_["font"]["family"].value<std::string>();
 		}
 
+		std::string const & doubleWidthFontFamily() const {
+			return json_["font"]["doubleWidthFamily"].value<std::string>();
+		}
+
 		unsigned fontSize() const {
 			return json_["font"]["size"].value<int>();
 		}

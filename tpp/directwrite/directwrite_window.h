@@ -213,7 +213,7 @@ i->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.gl
 			D2D1_RECT_F rect = D2D1::RectF(
 				static_cast<FLOAT>(glyphRunCol_ * cellWidthPx_),
 				static_cast<FLOAT>(glyphRunRow_ * cellHeightPx_),
-				static_cast<FLOAT>((glyphRunCol_ + glyphRun_.glyphCount) * cellWidthPx_),
+				static_cast<FLOAT>((glyphRunCol_ + glyphRun_.glyphCount) * cellWidthPx_ * statusCell_.font().width()),
 				static_cast<FLOAT>((glyphRunRow_ + 1) * cellHeightPx_)
 			);
             // fill it with the background
@@ -228,8 +228,8 @@ i->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.gl
 #endif
             // determine the originl and draw the glyph run
             D2D1_POINT_2F origin = D2D1::Point2F(
-                static_cast<float>(glyphRunCol_* cellWidthPx_),
-                (glyphRunRow_ * cellHeightPx_ + dwFont_->ascent()));
+                static_cast<float>(glyphRunCol_* cellWidthPx_ + dwFont_->offsetLeft()),
+                (glyphRunRow_ * cellHeightPx_ + dwFont_->ascent()) + dwFont_->offsetTop());
             if (!attrs_.blink() || blinkVisible_)
                 rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
             // see if there are any attributes to be drawn 

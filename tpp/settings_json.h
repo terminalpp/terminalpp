@@ -23,6 +23,7 @@ namespace tpp {
      */
     "font" : {
         "family" : "Iosevka Term",
+        "doubleWidthFamily" : "SpaceMono NF",
         "size" : 18
     },
 

@@ -113,13 +113,16 @@ namespace ui {
 	void Canvas::textOut(Point start, std::string const& text, Color color, Font font) {
 		char const* i = text.c_str();
 		char const* e = i + text.size();
+        int fontWidth = font.width();
 		while (i < e) {
 			if (start.x >= width_) // don't draw past first line
 				break;
-			helpers::Char const * c = helpers::Char::At(i, e);
-			if (Cell * cell = at(start)) 
-                *cell << c->codepoint() << Foreground(color) << font;
-			++start.x;
+            helpers::Char const * c = helpers::Char::At(i, e);
+            for (int j = 0; j < fontWidth; ++j) {
+                if (Cell * cell = at(start)) 
+                    *cell << c->codepoint() << Foreground(color) << font;
+                ++start.x;
+            }
 		}
 	}
 

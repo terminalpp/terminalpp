@@ -27,8 +27,9 @@ namespace tpp {
                 << Layout::Horizontal()
                 << (Create(header_ = new Label())
                     << HeightHint(SizeHint::Fixed())
-                    << Geometry(1, 1)
-                    << STR("t++ :" << helpers::Stamp::Stored())
+                    << Geometry(1, 2)
+                    << ui::Font().setDoubleWidth().setSize(1)
+                    << STR("\xef\xa1\x96t++ :" << helpers::Stamp::Stored())
                     << OnMouseClick(CreateHandler<MouseButtonEvent, Session, &Session::headerClicked>(this))
                 )
                 << (Create(terminal_ = new VT100(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
@@ -39,7 +40,7 @@ namespace tpp {
                 );
             focusWidget(terminal_, true);
             headerTimer_.onTimer += CreateHandler<helpers::TimerEvent, Session, &Session::headerAutohide>(this);
-            headerTimer_.start(5000, false);
+            //headerTimer_.start(5000, false);
         }
 
 

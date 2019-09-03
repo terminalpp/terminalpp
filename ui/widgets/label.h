@@ -109,4 +109,10 @@ namespace ui {
 		return widget;
 	}
 
+	template<>
+	Builder<Label> operator << (Builder<Label> widget, Font const & font) {
+		widget->setFont(font);
+		return widget;
+	}
+
 } // namespace ui

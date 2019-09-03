@@ -240,10 +240,9 @@ namespace tpp {
                 setBackgroundColor(statusCell_.background());
                 setDecorationColor(statusCell_.decorationColor());
                 setAttributes(statusCell_.attributes()); 
-
                 for (int row = 0, re = std::min(rows_, buffer->rows()); row < re; ++row) {
                     initializeGlyphRun(0, row);
-                    for (int col = 0, ce = std::min(cols_, buffer->cols()); col < ce; ++col) {
+                    for (int col = 0, ce = std::min(cols_, buffer->cols()); col < ce;) {
                         // get the cell to be drawn
                         ui::Cell const & c = buffer->at(col, row);
                         // now we know the cell must be drawn, determine if the attributes of the cell changed since last cell drawn
@@ -264,6 +263,8 @@ namespace tpp {
                         }
                         // draw the cell
                         addGlyph(col, row, c);
+                        // move to the next column (skip invisible cols if double width or larger font)
+                        col += c.font().width();
                     }
                     drawGlyphRun();
                 }

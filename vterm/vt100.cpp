@@ -550,14 +550,20 @@ namespace vterm {
 						if (c8 == nullptr)
 							return x - buffer;
 						LOG(SEQ) << "codepoint " << std::hex << c8->codepoint() << " " << static_cast<char>(c8->codepoint() & 0xff);
-						// get the cell and update its contents
-						Cell& cell = buffer_.at(buffer_.cursor().pos.x, buffer_.cursor().pos.y);
+                        // get the cell and update its contents
+                        Cell& cell = buffer_.at(buffer_.cursor().pos.x, buffer_.cursor().pos.y);
                         cell = state_.cell;
                         cell << c8->codepoint();
-						// store the last character position
-						setLastCharPosition();
-						// move to next column
-						++buffer_.cursor().pos.x;
+                        // store the last character position
+                        setLastCharPosition();
+                        // move to next column
+                        ++buffer_.cursor().pos.x;
+                        if (c8->columnWidth() == 2 && buffer_.cursor().pos.x < buffer_.cols()) {
+                            cell << cell.font().setDoubleWidth();
+                            Cell& cell2 = buffer_.at(buffer_.cursor().pos.x, buffer_.cursor().pos.y);
+                            cell2 = cell;
+                            ++buffer_.cursor().pos.x;
+                        }
                     }
                 }
             }

@@ -177,6 +177,30 @@ namespace helpers {
 			return reinterpret_cast<char const*>(&bytes_);
 		}
 
+		/** Returns number of columns in monospace font (such as a terminal) the given character should occupy. 
+
+		    On linux, the funtion wcwidth should do, however this does not exist on Windows and to make sure that applications behave the same on all platforms, own decission is implemented. 
+		 */
+		int columnWidth() const {
+			unsigned cp = codepoint();
+			if (cp >= 0x1100) {
+				if (cp <= 0x115f || // Hangul
+				    cp == 0x2329 ||
+					cp == 0x2321 ||
+					(cp >= 0x2e80 && cp <= 0xa4cf && cp != 0x303f) || // CJK
+					(cp >= 0xac00 && cp <= 0xd7a3) || // Hangul Syllables
+					(cp >= 0xf900 && cp <= 0xfaff) || // CJK
+					(cp >= 0xfe10 && cp <= 0xfe19) || // Vertical forms
+					(cp >= 0xfe30 && cp <= 0xfe6f) || // CJK
+					(cp >= 0xff00 && cp <= 0xff60) || // Fullwidth forms
+					(cp >= 0xffe0 && cp <= 0xffe6) ||
+					(cp >= 0x20000 && cp <= 0x2fffd) ||
+					(cp >= 0x30000 && cp <= 0x3fffd))
+					return 2;
+			}
+			return 1;
+		}
+
 	private:
 
 		friend std::ostream& operator << (std::ostream& s, Char c) {

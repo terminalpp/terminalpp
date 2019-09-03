@@ -65,7 +65,7 @@ namespace tpp {
 		// find the required font family - first get the index then obtain the family by the index
 		UINT32 findex;
 		BOOL fexists;
-		helpers::utf16_string fname = helpers::UTF8toUTF16(Config::Instance().fontFamily());
+		helpers::utf16_string fname = helpers::UTF8toUTF16(font.doubleWidth() ? Config::Instance().doubleWidthFontFamily() : Config::Instance().fontFamily());
 		sfc->FindFamilyName(fname.c_str(), &findex, &fexists);
 		Microsoft::WRL::ComPtr<IDWriteFontFamily> ff;
 		sfc->GetFontFamily(findex, &ff);

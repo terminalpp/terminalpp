@@ -129,8 +129,8 @@ namespace tpp {
 
         void addGlyph(int col, int row, ui::Cell const & cell) {
             if (textSize_ == 0) {
-                text_[0].x = textCol_ * cellWidthPx_;
-                text_[0].y = textRow_ * cellHeightPx_ + font_->ascent();
+                text_[0].x = textCol_ * cellWidthPx_ + font_->offsetLeft();
+                text_[0].y = textRow_ * cellHeightPx_ + font_->ascent() + font_->offsetTop();
             } else {
                 text_[textSize_].x = text_[textSize_ - 1].x + cellWidthPx_;
                 text_[textSize_].y = text_[textSize_ - 1].y;

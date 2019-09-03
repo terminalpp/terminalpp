@@ -103,6 +103,13 @@ namespace ui {
 			return *this;
 		}
 
+	    int width() const {
+			if (doubleWidth())
+			    return size() * 2;
+			else
+			    return size();
+		}
+
 		unsigned calculateWidth(unsigned baseWidth) const {
 			if (doubleWidth()) 
 			    return baseWidth * size() * 2;

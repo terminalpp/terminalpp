@@ -1,7 +1,8 @@
 ﻿## Different font sizes
 
-- fonts calculate their offsets and double width, but rendering does not support the offsets
-- and nor does it support multiple sizes too
+- Rendering does not support multiple sizes
+- add default settings doubleWidth font check
+- doublewidth font centering does not work for all glyphs if not monospaced (icons)
 
 ## Font Fallback
 
