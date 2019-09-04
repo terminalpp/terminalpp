@@ -10,7 +10,7 @@ namespace tpp {
 
     class X11Window : public RendererWindow<X11Window, x11::Window> {
     public:
-        typedef tpp::Font<XftFont*> Font;
+        typedef tpp::Font<XFTFont> Font;
 
         ~X11Window() override;
         
@@ -94,7 +94,7 @@ namespace tpp {
 
         void updateXftStructures(int cols) {
             delete [] text_;
-            text_ = new XftCharSpec[cols];
+            text_ = new XftGlyphSpec[cols];
         }
 
         // rendering methods - we really want these to inline
@@ -128,15 +128,30 @@ namespace tpp {
         }
 
         void addGlyph(int col, int row, ui::Cell const & cell) {
-            if (textSize_ == 0) {
+            FT_UInt glyph = XftCharIndex(display_, font_->nativeHandle().font, cell.codepoint());
+            if (glyph == 0) {
+                drawGlyphRun();
+                initializeGlyphRun(col, row);
+                Font * oldFont = font_;
+                font_ = font_->fallbackFor(cell.codepoint());
+                text_[0].glyph = XftCharIndex(display_, font_->nativeHandle().font, cell.codepoint());
                 text_[0].x = textCol_ * cellWidthPx_ + font_->offsetLeft();
-                text_[0].y = (textRow_ + 1 - statusCell_.font().height()) * cellHeightPx_ + font_->ascent() + font_->offsetTop();
+                text_[0].y = (textRow_ + 1 - font_->font().height()) * cellHeightPx_ + font_->ascent() + font_->offsetTop();
+                ++textSize_;
+                drawGlyphRun();
+                initializeGlyphRun(col + font_->font().width(), row);
+                font_ = oldFont;
             } else {
-                text_[textSize_].x = text_[textSize_ - 1].x + cellWidthPx_ * statusCell_.font().width();
-                text_[textSize_].y = text_[textSize_ - 1].y;
+                if (textSize_ == 0) {
+                    text_[0].x = textCol_ * cellWidthPx_ + font_->offsetLeft();
+                    text_[0].y = (textRow_ + 1 - statusCell_.font().height()) * cellHeightPx_ + font_->ascent() + font_->offsetTop();
+                } else {
+                    text_[textSize_].x = text_[textSize_ - 1].x + cellWidthPx_ * statusCell_.font().width();
+                    text_[textSize_].y = text_[textSize_ - 1].y;
+                }
+                text_[textSize_].glyph = glyph;
+                ++textSize_;
             }
-            text_[textSize_].ucs4 = cell.codepoint();
-            ++textSize_;
         }
 
         /** Updates the current font.
@@ -183,7 +198,7 @@ namespace tpp {
 			    XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, (textRow_ + 1 - fontHeight) * cellHeightPx_, textSize_ * cellWidthPx_ * fontWidth, cellHeightPx_ * fontHeight);
             // draw the text
             if (!attrs_.blink() || blinkVisible_)
-                XftDrawCharSpec(draw_, &fg_, font_->nativeHandle(), text_, textSize_);
+                XftDrawGlyphSpec(draw_, &fg_, font_->nativeHandle().font, text_, textSize_);
             // deal with the attributes
             if (!attrs_.emptyDecorations()) {
                 if (attrs_.underline() && (!attrs_.blink() || blinkVisible_))
@@ -232,8 +247,7 @@ namespace tpp {
         XftColor decor_;
 		Font * font_;
 
-
-        XftCharSpec * text_;
+        XftGlyphSpec * text_;
 
         /** Text buffer rendering data.
          */

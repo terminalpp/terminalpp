@@ -67,6 +67,8 @@ namespace tpp {
 			netWmIcon_ == x11::None
 		) THROW(helpers::Exception()) << "X11 Atoms instantiation failed";
 
+        fcConfig_ = FcInitLoadConfigAndFonts();
+
 		// start the blinker thread
 		X11Window::StartBlinkerThread();
 	}

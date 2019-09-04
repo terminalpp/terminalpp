@@ -46,6 +46,10 @@ namespace tpp {
             return xScreen_;
         }
 
+        FcConfig * fcConfig() const {
+            return fcConfig_;
+        }
+
     private:
         friend class X11Window;
 
@@ -77,6 +81,10 @@ namespace tpp {
 		Atom clipboardIncr_;
 		Atom motifWmHints_;
 		Atom netWmIcon_;
+
+        /** Font config state. 
+         */
+        FcConfig * fcConfig_;
 
         /* Clipboard contents if the application is the owner of the clipboard selection. 
          */

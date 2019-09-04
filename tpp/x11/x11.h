@@ -6,6 +6,7 @@
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include <X11/Xft/Xft.h>
+#include <fontconfig/fontconfig.h>
 
 #undef None
 #undef RootWindow

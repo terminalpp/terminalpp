@@ -161,13 +161,13 @@ namespace tpp {
 i->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
                 ++glyphRun_.glyphCount;
                 drawGlyphRun();
-                initializeGlyphRun(col + 1, row);
+                initializeGlyphRun(col + i->font().width(), row);
                 glyphRun_.fontFace = dwFont_->nativeHandle().fontFace.Get();
                 glyphRun_.fontEmSize = dwFont_->nativeHandle().sizeEm;
-                return;
+            } else {
+                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidthPx_ * dwFont_->font().width());
+                ++glyphRun_.glyphCount;
             }
-            const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidthPx_ * dwFont_->font().width());
-            ++glyphRun_.glyphCount;
         }
 
         /** Updates the current font.

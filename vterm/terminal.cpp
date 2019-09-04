@@ -215,6 +215,8 @@ namespace vterm {
     void Terminal::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         if (modifiers == 0) {
             if (button == ui::MouseButton::Left) {
+                if (!selection_.empty())
+                    clearSelection();
                 updateSelectionRegionStart(ui::Point(col, row));
                 requestRepaint();
             } else if (button == ui::MouseButton::Wheel) {

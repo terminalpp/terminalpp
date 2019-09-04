@@ -1,15 +1,10 @@
-﻿## Different font sizes
-
-- Rendering does not support multiple sizes
-- add default settings doubleWidth font check
-- doublewidth font centering does not work for all glyphs if not monospaced (icons)
-
+﻿
 ## Font Fallback
 
-- do font fallback & different sizes first on Windows completely, then look at linux
 - the fallback font dimensions is not changed yet
 - where to store the cache of the font fallbacks? Perhaps on the "native handle" which is not really a native handle any more so should be renamed
 - font fallback does not work for emoticons
+- X11 font fallback not working, need to study font config more, perhaps generating font patterns ourselves
 
 ## Bugs and missing features
 

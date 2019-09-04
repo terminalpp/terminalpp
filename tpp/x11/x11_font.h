@@ -12,9 +12,22 @@
 
 namespace tpp {
 
+    class XFTFont {
+    public:
+        XftFont * font;
+        FcFontSet * set;
+
+        XFTFont(XftFont * font):
+            font(font),
+            set(nullptr) {
+        }
+    private:
+        friend class Font<XFTFont>;
+    }; // XFTFont
+
 	/** Because XFT font sizes are ascent only, the font is obtained by trial and error. First we try the requested height and then, based on the actual height. If the actually obtained height differs, height multiplier is calculated and the font is re-obtained with the height adjusted. */
 	template<>
-	inline Font<XftFont*>* Font<XftFont*>::Create(ui::Font font, unsigned cellWidth, unsigned cellHeight) {
+	inline Font<XFTFont>* Font<XFTFont>::Create(ui::Font font, unsigned cellWidth, unsigned cellHeight) {
 		X11Application* app = X11Application::Instance();
 		// update the cell size accordingly
 		cellWidth *= font.width();
@@ -63,14 +76,14 @@ namespace tpp {
 			}
 		}
 		// return the font 
-        Font<XftFont*>* result = new Font<XftFont*>(
+        Font<XFTFont>* result = new Font<XFTFont>(
             font,
             fontWidth,
 			fontHeight,
 			offsetLeft,
 			offsetTop,
             handle->ascent,
-            handle
+            XFTFont(handle)
         );
         // add underline and strikethrough metrics
 		result->underlineOffset_ = result->ascent_ + 1;
@@ -79,6 +92,46 @@ namespace tpp {
 		result->strikethroughThickness_ = 1;
         return result;
 	}
+
+    template<>
+    inline Font<XFTFont> * Font<XFTFont>::fallbackFor(char32_t character) {
+        Font<XFTFont> * result = this;    
+        FcResult fcResult;
+        if (nativeHandle_.set == nullptr)
+     		nativeHandle_.set = FcFontSort(0, nativeHandle_.font->pattern, 1, 0, &fcResult);
+
+        // reuse the patten of current font
+        FcPattern * pattern = FcPatternDuplicate(nativeHandle_.font->pattern);
+        // add the character we need to the pattern
+        FcCharSet * charSet = FcCharSetCreate();
+        FcCharSetAddChar(charSet, character);
+        FcPatternAddCharSet(pattern, FC_CHARSET, charSet);
+        // we want scalable glyphs so that we can adjust their size
+        FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
+        // 
+        FcConfigSubstitute(0, pattern, FcMatchPattern);
+        FcDefaultSubstitute(pattern);
+        // get the font pattern 
+
+        FcPattern * font = FcFontSetMatch(X11Application::Instance()->fcConfig(), &nativeHandle_.set, 1, pattern, &fcResult);
+
+        if (fcResult == FcResultMatch) {
+            XftFont * f = XftFontOpenPattern(X11Application::Instance()->xDisplay(), font);
+            result = new Font<XFTFont>(
+                font_,
+                widthPx_,
+                heightPx_,
+                offsetLeft_,
+                offsetTop_,
+                f->ascent,
+                XFTFont(f)
+            );
+        }
+
+        FcPatternDestroy(pattern);
+        FcCharSetDestroy(charSet);
+        return result;
+    }
 
 
 } // namespace tpp
