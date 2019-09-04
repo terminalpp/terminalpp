@@ -130,9 +130,9 @@ namespace tpp {
         void addGlyph(int col, int row, ui::Cell const & cell) {
             if (textSize_ == 0) {
                 text_[0].x = textCol_ * cellWidthPx_ + font_->offsetLeft();
-                text_[0].y = textRow_ * cellHeightPx_ + font_->ascent() + font_->offsetTop();
+                text_[0].y = (textRow_ + 1 - statusCell_.font().height()) * cellHeightPx_ + font_->ascent() + font_->offsetTop();
             } else {
-                text_[textSize_].x = text_[textSize_ - 1].x + cellWidthPx_;
+                text_[textSize_].x = text_[textSize_ - 1].x + cellWidthPx_ * statusCell_.font().width();
                 text_[textSize_].y = text_[textSize_ - 1].y;
             }
             text_[textSize_].ucs4 = cell.codepoint();
@@ -176,9 +176,11 @@ namespace tpp {
         void drawGlyphRun() {
             if (textSize_ == 0)
                 return;
+            int fontWidth = statusCell_.font().width();
+            int fontHeight = statusCell_.font().height();
             // fill the background unless it is fully transparent
             if (bg_.color.alpha != 0)
-			    XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_, textSize_ * cellWidthPx_, cellHeightPx_);
+			    XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, (textRow_ + 1 - fontHeight) * cellHeightPx_, textSize_ * cellWidthPx_ * fontWidth, cellHeightPx_ * fontHeight);
             // draw the text
             if (!attrs_.blink() || blinkVisible_)
                 XftDrawCharSpec(draw_, &fg_, font_->nativeHandle(), text_, textSize_);

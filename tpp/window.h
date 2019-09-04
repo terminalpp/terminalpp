@@ -183,8 +183,8 @@ namespace tpp {
 		unsigned widthPx_;
         unsigned heightPx_;
         unsigned baseCellHeightPx_;
-        unsigned cellWidthPx_;
-        unsigned cellHeightPx_;
+        int cellWidthPx_;
+        int cellHeightPx_;
 
         double zoom_;
 

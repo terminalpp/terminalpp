@@ -110,15 +110,8 @@ namespace ui {
 			    return size();
 		}
 
-		unsigned calculateWidth(unsigned baseWidth) const {
-			if (doubleWidth()) 
-			    return baseWidth * size() * 2;
-			else
-			    return baseWidth * size();
-		}
-
-		unsigned calculateHeight(unsigned baseHeight) const {
-			return baseHeight * size();
+		int height() const {
+			return size();
 		}
 
 		bool operator == (Font const & other) const {

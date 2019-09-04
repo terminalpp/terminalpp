@@ -90,8 +90,8 @@ namespace tpp {
 		// https://docs.microsoft.com/en-us/windows/desktop/LearnWin32/dpi-and-device-independent-pixels
 		// determine the font height in pixels, which is the cell height times the height of the font
 		// increase the cell height and width by the font size
-		cellHeight = font.calculateHeight(cellHeight);
-		cellWidth = font.calculateWidth(cellWidth);
+		cellHeight *= font.height();
+		cellWidth *= font.width();
 		float emSize = cellHeight / (dpiY / 96);
 		// we have to adjust this number for the actual font metrics
 		emSize = emSize * metrics.designUnitsPerEm / (metrics.ascent + metrics.descent + metrics.lineGap);

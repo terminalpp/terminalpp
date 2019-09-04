@@ -17,10 +17,10 @@ namespace tpp {
 	inline Font<XftFont*>* Font<XftFont*>::Create(ui::Font font, unsigned cellWidth, unsigned cellHeight) {
 		X11Application* app = X11Application::Instance();
 		// update the cell size accordingly
-		cellWidth = font.calculateWidth(cellWidth);
-		cellHeight = font.calculateHeight(cellHeight);
+		cellWidth *= font.width();
+		cellHeight *= font.height();
 		// get the name of the font we want w/o the actual height
-		std::string fName = Config::Instance().fontFamily();
+		std::string fName = font.doubleWidth() ? Config::Instance().doubleWidthFontFamily() : Config::Instance().fontFamily();
 		if (font.bold())
 			fName += ":bold";
 		if (font.italics())
