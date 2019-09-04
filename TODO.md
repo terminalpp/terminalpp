@@ -46,3 +46,7 @@
 - mouseFocus, should it disapper when mouse moves from parent to child? 
 - determine how keyboard focus is obtained automatically
 - how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
+
+sudo apt install doxygen python3-pip
+pip3 install sphinx breathe sphinx_rtd_theme
+

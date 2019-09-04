@@ -266,3 +266,9 @@ build-release/
 build-win/
 /tpp/stamp.h
 build-test-win/
+docs/documentation/xml/
+docs/documentation/html/
+docs/documentation/_build/
+docs/documentation/_static/
+docs/documentation/_templates/
+
