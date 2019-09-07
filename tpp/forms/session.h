@@ -43,7 +43,6 @@ namespace tpp {
             headerTimer_.start(5000, false);
         }
 
-
     private:
 
         void headerClicked(ui::MouseButtonEvent & e) {

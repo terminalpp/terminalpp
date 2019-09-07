@@ -8,11 +8,11 @@
 namespace tpp {
 
 	DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
-	    RendererWindow(cols, rows, Font::GetOrCreate(ui::Font(), 0, baseCellHeightPx)->widthPx(), baseCellHeightPx),
+	    RendererWindow(cols, rows, DirectWriteFont::GetOrCreate(ui::Font(), 0, baseCellHeightPx)->widthPx(), baseCellHeightPx),
 		    wndPlacement_{ sizeof(wndPlacement_) },
 			frameWidthPx_(0),
 			frameHeightPx_(0),
-			dwFont_(nullptr),
+			font_(nullptr),
 			glyphIndices_(nullptr),
 			glyphAdvances_(nullptr),
 			glyphOffsets_(nullptr) {
@@ -101,7 +101,7 @@ namespace tpp {
     }
 
 	void DirectWriteWindow::updateZoom(double value) {
-		Font * f = Font::GetOrCreate(ui::Font(), 0, static_cast<unsigned>(baseCellHeightPx_ * value));
+		DirectWriteFont * f = DirectWriteFont::GetOrCreate(ui::Font(), 0, static_cast<unsigned>(baseCellHeightPx_ * value));
 		cellWidthPx_ = f->widthPx();
 		cellHeightPx_ = f->heightPx();
 		Window::updateZoom(value);

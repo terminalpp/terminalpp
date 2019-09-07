@@ -12,127 +12,122 @@
 
 namespace tpp {
 
-    class XFTFont {
+    class X11Font : public Font<X11Font> {
     public:
-        XftFont * font;
-        FcFontSet * set;
-
-        XFTFont(XftFont * font):
-            font(font),
-            set(nullptr) {
+        XftFont * xftFont() const {
+            return xftFont_;
         }
+
+        ~X11Font() override {
+            XftFontClose(X11Application::Instance()->xDisplay(), xftFont_);
+            FcPatternDestroy(pattern_);
+        }
+
+        bool supportsCodepoint(char32_t codepoint) override {
+            return XftCharIndex(X11Application::Instance()->xDisplay(), xftFont_, codepoint) != 0;
+        }
+
     private:
-        friend class Font<XFTFont>;
-    }; // XFTFont
+        friend class Font<X11Font>;
 
-	/** Because XFT font sizes are ascent only, the font is obtained by trial and error. First we try the requested height and then, based on the actual height. If the actually obtained height differs, height multiplier is calculated and the font is re-obtained with the height adjusted. */
-	template<>
-	inline Font<XFTFont>* Font<XFTFont>::Create(ui::Font font, unsigned cellWidth, unsigned cellHeight) {
-		X11Application* app = X11Application::Instance();
-		// update the cell size accordingly
-		cellWidth *= font.width();
-		cellHeight *= font.height();
-		// get the name of the font we want w/o the actual height
-		std::string fName = font.doubleWidth() ? Config::Instance().doubleWidthFontFamily() : Config::Instance().fontFamily();
-		if (font.bold())
-			fName += ":bold";
-		if (font.italics())
-			fName += ":italic";
-		fName += ":pixelsize=";
-		double xFontHeight = cellHeight;
-		// get the font we request
-		std::string fRequest = STR(fName << xFontHeight);
-		XftFont* handle = XftFontOpenName(app->xDisplay(), app->xScreen(), fRequest.c_str());
-		// if the size is not correct, adjust height and try again
-		if (static_cast<unsigned>(handle->ascent + handle->descent) != cellHeight) {
-			xFontHeight = xFontHeight * xFontHeight / (handle->ascent + handle->descent);
-			XftFontClose(app->xDisplay(), handle);
-			fRequest = STR(fName << xFontHeight);
-			handle = XftFontOpenName(app->xDisplay(), app->xScreen(), fRequest.c_str());
-		}
-		// get the font width
-		XGlyphInfo gi;
-		XftTextExtentsUtf8(app->xDisplay(), handle, (FcChar8*)"m", 1, &gi);
-		// update the font width and height accordingly
-		unsigned offsetLeft = 0;
-		unsigned offsetTop = 0;
-		unsigned fontHeight = cellHeight;
-		unsigned fontWidth = gi.width;
-		// if cellWidth is 0, the centering is ignored (the fontWidth will be used as default cell width)
-		if (cellWidth != 0) {
-			// if the width is greater then allowed, decrease the font size accordingly and center vertically
-			if (fontWidth > cellWidth) {
-				float x = static_cast<float>(cellWidth) / fontWidth;
-				xFontHeight *= x;
-				fontHeight = static_cast<unsigned>(fontHeight * x);
-				fontWidth = cellWidth;
-				offsetTop = (cellHeight - fontHeight) / 2;
-				XftFontClose(app->xDisplay(), handle);
-				fRequest = STR(fName << xFontHeight);
-				handle = XftFontOpenName(app->xDisplay(), app->xScreen(), fRequest.c_str());
-			// otherwise center horizontally
-			} else {
-				offsetLeft = (cellWidth - fontWidth) / 2;
-			}
-		}
-		// return the font 
-        Font<XFTFont>* result = new Font<XFTFont>(
-            font,
-            fontWidth,
-			fontHeight,
-			offsetLeft,
-			offsetTop,
-            handle->ascent,
-            XFTFont(handle)
-        );
-        // add underline and strikethrough metrics
-		result->underlineOffset_ = result->ascent_ + 1;
-		result->underlineThickness_ = 1;
-		result->strikethroughOffset_ = result->ascent_ * 2 / 3;
-		result->strikethroughThickness_ = 1;
-        return result;
-	}
-
-    template<>
-    inline Font<XFTFont> * Font<XFTFont>::fallbackFor(char32_t character) {
-        Font<XFTFont> * result = this;    
-        FcResult fcResult;
-        if (nativeHandle_.set == nullptr)
-     		nativeHandle_.set = FcFontSort(0, nativeHandle_.font->pattern, 1, 0, &fcResult);
-
-        // reuse the patten of current font
-        FcPattern * pattern = FcPatternDuplicate(nativeHandle_.font->pattern);
-        // add the character we need to the pattern
-        FcCharSet * charSet = FcCharSetCreate();
-        FcCharSetAddChar(charSet, character);
-        FcPatternAddCharSet(pattern, FC_CHARSET, charSet);
-        // we want scalable glyphs so that we can adjust their size
-        FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
-        // 
-        FcConfigSubstitute(0, pattern, FcMatchPattern);
-        FcDefaultSubstitute(pattern);
-        // get the font pattern 
-
-        FcPattern * font = FcFontSetMatch(X11Application::Instance()->fcConfig(), &nativeHandle_.set, 1, pattern, &fcResult);
-
-        if (fcResult == FcResultMatch) {
-            XftFont * f = XftFontOpenPattern(X11Application::Instance()->xDisplay(), font);
-            result = new Font<XFTFont>(
-                font_,
-                widthPx_,
-                heightPx_,
-                offsetLeft_,
-                offsetTop_,
-                f->ascent,
-                XFTFont(f)
-            );
+        X11Font(ui::Font font, unsigned cellWidth, unsigned cellHeight):
+            Font<X11Font>(font) {
+            // update the cell size accordingly
+            cellWidth *= font.width();
+            cellHeight *= font.height();
+            // get the font pattern 
+            pattern_ = FcPatternCreate();
+            FcPatternAddBool(pattern_, FC_SCALABLE, FcTrue);
+            FcPatternAddString(pattern_, FC_FAMILY, helpers::pointer_cast<FcChar8 const *>(font.doubleWidth() ? Config::Instance().doubleWidthFontFamily().c_str() : Config::Instance().fontFamily().c_str()));
+            FcPatternAddInteger(pattern_, FC_WEIGHT, font.bold() ? FC_WEIGHT_BOLD : FC_WEIGHT_NORMAL);
+            FcPatternAddInteger(pattern_, FC_SLANT, font.italics() ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
+            FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, cellHeight);
+            initializeFromPattern(cellWidth, cellHeight);
         }
 
-        FcPatternDestroy(pattern);
-        FcCharSetDestroy(charSet);
-        return result;
-    }
+        X11Font(X11Font const & from, unsigned cellWidth, unsigned cellHeight, char32_t requiredCodepoint):
+            Font<X11Font>(from.font_) {
+            cellWidth *= font_.width();
+            cellHeight *= font_.height();
+            // get the font pattern 
+            pattern_ = FcPatternDuplicate(from.pattern_);
+            FcPatternRemove(pattern_, FC_FAMILY, 0);
+            FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);
+            FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, cellHeight);
+            FcCharSet * charSet = FcCharSetCreate();
+            FcCharSetAddChar(charSet, requiredCodepoint);
+            FcPatternAddCharSet(pattern_, FC_CHARSET, charSet);
+            initializeFromPattern(cellWidth, cellHeight);
+        }
 
+        void initializeFromPattern(unsigned cellWidth, unsigned cellHeight) {
+            X11Application * app = X11Application::Instance();
+            double fontHeight = cellHeight;
+            xftFont_ = MatchFont(pattern_);
+            // if the font height is not the cellHeight, update the pixel size accordingly and get the font again
+            if (static_cast<unsigned>(xftFont_->ascent + xftFont_->descent) != cellHeight) {
+                fontHeight = fontHeight * fontHeight / (xftFont_->ascent + xftFont_->descent);
+                XftFontClose(app->xDisplay(), xftFont_);
+                FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);
+                FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, fontHeight);
+                xftFont_ = MatchFont(pattern_);
+            }
+            // now calculate the width of the font 
+            XGlyphInfo gi;
+            XftTextExtentsUtf8(app->xDisplay(), xftFont_, (FcChar8*)"M", 1, &gi);
+            // update the font width and height accordingly
+            heightPx_ = cellHeight;
+            widthPx_ = gi.width;
+            // if cellWidth is 0, then the font is constructed to later determine the width of the cell and therefore no width adjustments are needed
+            if (cellWidth != 0) {
+                // if the width is greater than the cell width, we need smaller font
+                if (widthPx_ > cellWidth) {
+                    double x = static_cast<double>(cellWidth) / widthPx_;
+                    fontHeight = fontHeight * x;
+                    widthPx_ = cellWidth;
+                    heightPx_ = static_cast<unsigned>(heightPx_ * x);
+                    XftFontClose(app->xDisplay(), xftFont_);
+                    FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);
+                    FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, fontHeight);
+                    xftFont_ = MatchFont(pattern_);
+					offsetTop_ = (cellHeight - heightPx_) / 2;
+                // if the width is smaller, center the glyph horizontally
+                } else {
+                    offsetLeft_ = (cellWidth - widthPx_) / 2;
+                }
+            }
+            // now that we have correct font, initialize the rest of the properties
+            ascent_ = xftFont_->ascent;
+            // add underline and strikethrough metrics
+            underlineOffset_ = ascent_ + 1;
+            underlineThickness_ = 1;
+            strikethroughOffset_ = ascent_ * 2 / 3;
+            strikethroughThickness_ = 1;
+        }
+
+        XftFont * xftFont_;
+        FcPattern * pattern_;
+
+        static XftFont * MatchFont(FcPattern * pattern) {
+            X11Application * app = X11Application::Instance();
+            FcPattern * configured = FcPatternDuplicate(pattern);
+            if (configured == nullptr)
+                return nullptr;
+            FcConfigSubstitute(nullptr, configured, FcMatchPattern);
+            XftDefaultSubstitute(app->xDisplay(), app->xScreen(), configured);
+            FcResult fcr;
+            FcPattern * matched = FcFontMatch(nullptr, configured, & fcr);
+            if (matched == nullptr) {
+                FcPatternDestroy(configured);
+                return nullptr;
+            }
+            XftFont * font = XftFontOpenPattern(app->xDisplay(), matched);
+            FcPatternDestroy(configured);
+            FcPatternDestroy(matched);
+            return font;
+        }
+
+    };
 
 } // namespace tpp
 

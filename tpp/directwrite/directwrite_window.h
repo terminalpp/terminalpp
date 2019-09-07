@@ -14,8 +14,6 @@ namespace tpp {
     class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND> {
     public:
 
-		typedef Font<DirectWriteFont> Font;
-
         ~DirectWriteWindow() override;
 
         void show() override {
@@ -147,25 +145,28 @@ namespace tpp {
 
         void addGlyph(int col, int row, ui::Cell const & cell) {
             UINT32 cp = cell.codepoint();
-            dwFont_->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
+            font_->fontFace()->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
             // if the glyph is not in the font, try callback
             if (glyphIndices_[glyphRun_.glyphCount] == 0) {
                 // draw glyph run so far and initialize a new glyph run
                 drawGlyphRun();
                 initializeGlyphRun(col, row);
                 // obtain the fallback font and point the glyph run towards it
-                auto i = dwFont_->fallbackFor(cp);
-                glyphRun_.fontFace = i->nativeHandle().fontFace.Get();
-                glyphRun_.fontEmSize = i->nativeHandle().sizeEm;
-                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidthPx_ * dwFont_->font().width());
-i->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
-                ++glyphRun_.glyphCount;
+                DirectWriteFont * oldFont = font_;
+                font_ = font_->fallbackFor(cellWidthPx_, cellHeightPx_, cp);
+                glyphRun_.fontFace = font_->fontFace();
+                glyphRun_.fontEmSize = font_->sizeEm();
+                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidthPx_ * font_->font().width());
+                font_->fontFace()->GetGlyphIndices(&cp, 1, glyphIndices_);
+                glyphRun_.glyphCount = 1;
                 drawGlyphRun();
-                initializeGlyphRun(col + i->font().width(), row);
-                glyphRun_.fontFace = dwFont_->nativeHandle().fontFace.Get();
-                glyphRun_.fontEmSize = dwFont_->nativeHandle().sizeEm;
+                // revert the font back to what we had before and reinitialize the glyphrun to start at next character
+                font_ = oldFont;
+                initializeGlyphRun(col + font_->font().width(), row);
+                glyphRun_.fontFace = font_->fontFace();
+                glyphRun_.fontEmSize = font_->sizeEm();
             } else {
-                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidthPx_ * dwFont_->font().width());
+                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidthPx_ * font_->font().width());
                 ++glyphRun_.glyphCount;
             }
         }
@@ -173,9 +174,9 @@ i->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.gl
         /** Updates the current font.
          */
         void setFont(ui::Font font) {
-			dwFont_ = Font::GetOrCreate(font, cellWidthPx_, cellHeightPx_);
-			glyphRun_.fontFace = dwFont_->nativeHandle().fontFace.Get();
-			glyphRun_.fontEmSize = dwFont_->nativeHandle().sizeEm;
+			font_ = DirectWriteFont::GetOrCreate(font, cellWidthPx_, cellHeightPx_);
+			glyphRun_.fontFace = font_->fontFace();
+			glyphRun_.fontEmSize = font_->sizeEm();
         }
 
         /** Updates the foreground color.
@@ -228,25 +229,25 @@ i->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.gl
 #endif
             // determine the originl and draw the glyph run
             D2D1_POINT_2F origin = D2D1::Point2F(
-                static_cast<float>(glyphRunCol_* cellWidthPx_ + dwFont_->offsetLeft()),
-                ((glyphRunRow_ + 1 - statusCell_.font().height()) * cellHeightPx_ + dwFont_->ascent()) + dwFont_->offsetTop());
+                static_cast<float>(glyphRunCol_* cellWidthPx_ + font_->offsetLeft()),
+                ((glyphRunRow_ + 1 - statusCell_.font().height()) * cellHeightPx_ + font_->ascent()) + font_->offsetTop());
             if (!attrs_.blink() || blinkVisible_)
                 rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
             // see if there are any attributes to be drawn 
             if (!attrs_.emptyDecorations()) {
                 if (attrs_.underline() && (!attrs_.blink() || blinkVisible_)) {
 					D2D1_POINT_2F start = origin;
-					start.y -= dwFont_->underlineOffset();
+					start.y -= font_->underlineOffset();
 					D2D1_POINT_2F end = start;
 					end.x += glyphRun_.glyphCount * cellWidthPx_;
-					rt_->DrawLine(start, end, decor_.Get(), dwFont_->underlineThickness());
+					rt_->DrawLine(start, end, decor_.Get(), font_->underlineThickness());
                 }
                 if (attrs_.strikethrough() && (!attrs_.blink() || blinkVisible_)) {
 					D2D1_POINT_2F start = origin;
-					start.y -= dwFont_->strikethroughOffset();
+					start.y -= font_->strikethroughOffset();
 					D2D1_POINT_2F end = start;
 					end.x += glyphRun_.glyphCount * cellWidthPx_;
-					rt_->DrawLine(start, end, decor_.Get(), dwFont_->strikethroughThickness());
+					rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness());
                 }
             }
 			glyphRun_.glyphCount = 0;
@@ -268,7 +269,7 @@ i->nativeHandle().fontFace->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.gl
 		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> fg_; // foreground (text) style
 		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> bg_; // background style
 		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> decor_; // decoration color
-		Font* dwFont_;
+		DirectWriteFont* font_;
         ui::Attributes attrs_;
 
 		DWRITE_GLYPH_RUN glyphRun_;

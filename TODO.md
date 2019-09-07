@@ -1,10 +1,7 @@
 ﻿
 ## Font Fallback
 
-- the fallback font dimensions is not changed yet
-- where to store the cache of the font fallbacks? Perhaps on the "native handle" which is not really a native handle any more so should be renamed
 - font fallback does not work for emoticons
-- X11 font fallback not working, need to study font config more, perhaps generating font patterns ourselves
 
 ## Bugs and missing features
 

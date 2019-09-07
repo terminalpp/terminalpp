@@ -10,7 +10,6 @@ namespace tpp {
 
     class X11Window : public RendererWindow<X11Window, x11::Window> {
     public:
-        typedef tpp::Font<XFTFont> Font;
 
         ~X11Window() override;
         
@@ -128,13 +127,15 @@ namespace tpp {
         }
 
         void addGlyph(int col, int row, ui::Cell const & cell) {
-            FT_UInt glyph = XftCharIndex(display_, font_->nativeHandle().font, cell.codepoint());
+            FT_UInt glyph = XftCharIndex(display_, font_->xftFont(), cell.codepoint());
             if (glyph == 0) {
+                // draw glyph run so far and initialize a new glyph run
                 drawGlyphRun();
                 initializeGlyphRun(col, row);
-                Font * oldFont = font_;
-                font_ = font_->fallbackFor(cell.codepoint());
-                text_[0].glyph = XftCharIndex(display_, font_->nativeHandle().font, cell.codepoint());
+                // obtain the fallback font and initialize the glyph run with it
+                X11Font * oldFont = font_;
+                font_ = font_->fallbackFor(cellWidthPx_, cellHeightPx_, cell.codepoint());
+                text_[0].glyph = XftCharIndex(display_, font_->xftFont(), cell.codepoint());
                 text_[0].x = textCol_ * cellWidthPx_ + font_->offsetLeft();
                 text_[0].y = (textRow_ + 1 - font_->font().height()) * cellHeightPx_ + font_->ascent() + font_->offsetTop();
                 ++textSize_;
@@ -157,7 +158,7 @@ namespace tpp {
         /** Updates the current font.
          */
         void setFont(ui::Font font) {
-			font_ = Font::GetOrCreate(font, cellWidthPx_, cellHeightPx_);
+			font_ = X11Font::GetOrCreate(font, cellWidthPx_, cellHeightPx_);
         }
 
         /** Updates the foreground color.
@@ -198,7 +199,7 @@ namespace tpp {
 			    XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, (textRow_ + 1 - fontHeight) * cellHeightPx_, textSize_ * cellWidthPx_ * fontWidth, cellHeightPx_ * fontHeight);
             // draw the text
             if (!attrs_.blink() || blinkVisible_)
-                XftDrawGlyphSpec(draw_, &fg_, font_->nativeHandle().font, text_, textSize_);
+                XftDrawGlyphSpec(draw_, &fg_, font_->xftFont(), text_, textSize_);
             // deal with the attributes
             if (!attrs_.emptyDecorations()) {
                 if (attrs_.underline() && (!attrs_.blink() || blinkVisible_))
@@ -245,7 +246,7 @@ namespace tpp {
 		XftColor fg_;
 		XftColor bg_;
         XftColor decor_;
-		Font * font_;
+		X11Font * font_;
 
         XftGlyphSpec * text_;
 

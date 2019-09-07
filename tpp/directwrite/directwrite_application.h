@@ -41,7 +41,7 @@ namespace tpp {
     private:
         friend class DirectWriteWindow;
         friend class DirectWriteFont;
-		friend class Font<DirectWriteFont>;
+		friend class DirectWriteFont;
 
         DirectWriteApplication(HINSTANCE hInstance);
 
@@ -74,6 +74,10 @@ namespace tpp {
 		/* Direct write factories that can be used by all windows, automatically deleted via the WRL pointers */
 		Microsoft::WRL::ComPtr<IDWriteFactory> dwFactory_;
 		Microsoft::WRL::ComPtr<ID2D1Factory> d2dFactory_;
+
+        /* Font fallback */
+		Microsoft::WRL::ComPtr<IDWriteFontFallback> fontFallback_;
+		Microsoft::WRL::ComPtr<IDWriteFontCollection> systemFontCollection_;
 
         /* Window icons.
          */
