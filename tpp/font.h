@@ -5,28 +5,39 @@
 #include "ui/font.h"
 
 namespace tpp {
+
     template<typename T>
     class Font {
 	public:
-
 		/** Creates a font to fit the given cell dimensions. 
 		 */
-	    static  Font * GetOrCreate(ui::Font font, unsigned cellWidth, unsigned cellHeight) {
+	    static T * GetOrCreate(ui::Font font, unsigned cellWidth, unsigned cellHeight) {
 			unsigned id = (cellHeight << 8) + helpers::pointer_cast<uint8_t*>(&font)[0];
 			auto i = Fonts_.find(id);
 			if (i == Fonts_.end())
-			    i = Fonts_.insert(std::make_pair(id, Create(font, cellWidth, cellHeight))).first;
+			    i = Fonts_.insert(std::make_pair(id, new T(font, cellWidth, cellHeight))).first;
 			return i->second;
 		}
 
-		/** Doesn't do anything, but is present so that specializations can override it. 
+		/** Deletes the fallback cache.
 		 */
-		~Font() {
+		virtual ~Font() {
+            for (T * f : fallbackCache_)
+                delete f;
 		}
+
+        virtual bool supportsCodepoint(char32_t codepoint) = 0;
 
 		/** Returns the fallback font that can be used for the given UTF codepoint. 
 		 */
-		Font<T> * fallbackFor(char32_t character);
+		T * fallbackFor(unsigned cellWidth, unsigned cellHeight, char32_t codepoint) {
+            for (auto i : fallbackCache_)
+                if (i->supportsCodepoint(codepoint))
+                    return i;
+            T * f = new T(*dynamic_cast<T const *>(this), cellWidth, cellHeight, codepoint);
+            fallbackCache_.push_back(f);
+            return f;
+        }
 
 		ui::Font font() const {
 			return font_;
@@ -46,10 +57,6 @@ namespace tpp {
 
 		unsigned offsetTop() const {
 			return offsetTop_;
-		}
-
-		T const& nativeHandle() const {
-			return nativeHandle_;
 		}
 
 		float ascent() const {
@@ -72,35 +79,26 @@ namespace tpp {
 			return strikethroughThickness_;
 		}
 
-
-	private:
-
-		/** This must be implemented by each platform specification. 
-		 */
-	    static Font* Create(ui::Font font, unsigned cellWidth, unsigned cellHeight);
-
-		/** This must be implemented by each platform specification. 
-		 */
-		//static Font* Create(ui::Font font, unsigned height);
-
-		static std::unordered_map<unsigned, Font*> Fonts_;
+	protected:
 		
-		Font(ui::Font font, unsigned widthPx, unsigned heightPx, unsigned offsetLeft, unsigned offsetTop, float ascent, T const& nativeHandle) :
+		static std::unordered_map<unsigned, T*> Fonts_;
+
+        std::vector<T*> fallbackCache_;
+		
+		Font(ui::Font font) :
 			font_{font},
-			widthPx_{widthPx},
-			heightPx_{heightPx},
-			offsetLeft_{offsetLeft},
-			offsetTop_{offsetTop},
-			ascent_{ascent},
+			widthPx_{0},
+			heightPx_{0},
+			offsetLeft_{0},
+			offsetTop_{0},
+			ascent_{0},
 			underlineOffset_{0},
 			underlineThickness_{1},
 			strikethroughOffset_{0},
-			strikethroughThickness_{1},
-			nativeHandle_{nativeHandle} {
+			strikethroughThickness_{1} {
 		}
 
 		ui::Font font_;
-
 		unsigned widthPx_;
 		unsigned heightPx_;
 		unsigned offsetLeft_;
@@ -111,12 +109,10 @@ namespace tpp {
 		float strikethroughOffset_;
 		float strikethroughThickness_;
 
-		T nativeHandle_;
-
 	}; // tpp::Font
 
 	template<typename T>
-	std::unordered_map<unsigned, Font<T>*> Font<T>::Fonts_;
+	std::unordered_map<unsigned, T*> Font<T>::Fonts_;
 
 
 } // namespace tpp

@@ -1,6 +1,7 @@
 #!/bin/bash
 xcode-select --install
 brew install Caskroom/cask/xquartz
+brew install fontconfig
 
 mkdir -p build
 cd build

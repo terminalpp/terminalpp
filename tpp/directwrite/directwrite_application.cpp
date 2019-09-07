@@ -37,6 +37,10 @@ namespace tpp {
 		))) << "Unable to create DW factory";
 		// get the default user locale
 		OSCHECK(SUCCEEDED(GetUserDefaultLocaleName(localeName_, LOCALE_NAME_MAX_LENGTH)));
+		// get system font fallback
+		OSCHECK(SUCCEEDED(static_cast<IDWriteFactory2*>(dwFactory_.Get())->GetSystemFontFallback(&fontFallback_))) << "Unable to create font fallback";
+		// and get system font collection
+		OSCHECK(SUCCEEDED(dwFactory_->GetSystemFontCollection(&systemFontCollection_, false))) << "Unable to get system font collection";
 		// start the blinker thread
 		DirectWriteWindow::StartBlinkerThread();
     }
