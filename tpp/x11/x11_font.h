@@ -19,7 +19,7 @@ namespace tpp {
         }
 
         ~X11Font() override {
-            XftFontClose(X11Application::Instance()->xDisplay(), xftFont_);
+            CloseFont(xftFont_);
             FcPatternDestroy(pattern_);
         }
 
@@ -67,7 +67,7 @@ namespace tpp {
             // if the font height is not the cellHeight, update the pixel size accordingly and get the font again
             if (static_cast<unsigned>(xftFont_->ascent + xftFont_->descent) != cellHeight) {
                 fontHeight = fontHeight * fontHeight / (xftFont_->ascent + xftFont_->descent);
-                XftFontClose(app->xDisplay(), xftFont_);
+                CloseFont(xftFont_);
                 FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);
                 FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, fontHeight);
                 xftFont_ = MatchFont(pattern_);
@@ -86,7 +86,7 @@ namespace tpp {
                     fontHeight = fontHeight * x;
                     widthPx_ = cellWidth;
                     heightPx_ = static_cast<unsigned>(heightPx_ * x);
-                    XftFontClose(app->xDisplay(), xftFont_);
+                    CloseFont(xftFont_);
                     FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);
                     FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, fontHeight);
                     xftFont_ = MatchFont(pattern_);
@@ -122,9 +122,31 @@ namespace tpp {
                 return nullptr;
             }
             XftFont * font = XftFontOpenPattern(app->xDisplay(), matched);
+            auto & map = ActiveFontsMap();
+            auto i = map.find(font);
+            if (i == map.end())
+                map.insert(std::make_pair(font, 1));
+            else 
+                ++(i->second);
             FcPatternDestroy(configured);
-            FcPatternDestroy(matched);
             return font;
+        }
+
+        static void CloseFont(XftFont * font) {
+            auto & map = ActiveFontsMap();
+            auto i = map.find(font);
+            ASSERT(i != map.end());
+            if (i->second == 1) {
+                map.erase(i);
+                XftFontClose(X11Application::Instance()->xDisplay(), font);
+            } else {
+                --(i->second);
+            }
+        }
+
+        static std::unordered_map<XftFont *, unsigned> & ActiveFontsMap() {
+            static std::unordered_map<XftFont *, unsigned> map;
+            return map;
         }
 
     };
