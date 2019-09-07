@@ -1,166 +1,164 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <!-- favicon & title -->
-    <link rel="icon" type="image/png" href="favicon.png">    
-    <title>&gt;++</title>
+        <style>
+            .jumbotron>h1 {
+                margin-bottom:1em;
+                margin-top:0em;
+                text-align:center;
+            }
 
-  </head>
-  <body>
-    <div class="container">
-        <div class="jumbotron">
+            .jumbotron {
+                padding-top:2em;
+            }
+
+            #screenshots {
+                background-image:url("resources/images/screenshot-linux.png");
+                background-position:0 0;
+                background-repeat:no-repeat;
+                padding-left:50px;
+                padding-top:50px;
+                display:inline-block; 
+            }        
+        </style>
+
+
+        <!-- favicon & title -->
+        <link rel="icon" type="image/png" href="favicon.png">    
+        <title>&gt;++</title>
+
+    </head>
+    <body>
+        <nav class="navbar sticky-top navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="#">
+                <img src="favicon.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                Terminal++
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                </ul>
+            </div>
+
+        </nav>   
+              
+        <div class="container">
+            &nbsp;
+
             <h1 class="display-4"><img alt="logo" src="favicon.png" /> Terminal++</h1>
-            <p class="lead">Terminal++ (tpp) is a minimalist but powerfull cross-platform terminal emulator.</p>
-            <hr class="my-4">
-            <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
-            <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>
-        </div>      
+            <p class="lead"><code>tpp</code> is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.</p>
 
-        <div class="card-deck">
-            <div class="card">
-              <img src="..." class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-                <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
-              </div>
+            <div class="row justify-content-center">
+                <a href="https://github.com/zduka/tpp/releases/download/v0.2/Windows.Installer.msi" role="button" class="btn btn-success">
+                    <i class="fab fa-windows"></i> Installer
+                </a>
+                &nbsp;
+                <a href="https://github.com/zduka/tpp/releases/tag/v0.2" target="_blank" role="button" class="btn btn-primary">
+                    <i class="fas fa-tag"></i> release 0.2
+                </a>
+                &nbsp;
+                <a href="https://github.com/zduka/tpp" target="_blank" role="button" class="btn btn-secondary">
+                    <i class="fab fa-github"></i> zduka/tpp
+                </a>                
             </div>
-            <div class="card">
-              <img src="..." class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <p class="card-text">This card has supporting text below as a natural lead-in to additional content.</p>
-                <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
-              </div>
+
+            &nbsp;
+
+            <div class="row justify-content-center">
+                <div class="col-8" style="text-align:center">
+                    <img src="resources/images/screenshot-windows.png" style="width:100%;height:auto;max-width:562px;"/>
+                </div>
             </div>
-            <div class="card">
-              <img src="..." class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
-                <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
-              </div>
+
+            &nbsp;
+
+            <div class="jumbotron">
+                <h1>Feature Highlights</h1>
+                <div class="card-deck">
+                    <div class="card">
+                        <!-- <img src="..." class="card-img-top" alt="..."> -->
+                        <div class="card-body">
+                            <h5 class="card-title">Cross-platform</h5>
+                            <p class="card-text">
+                                <code>tpp</code> natively supports Windows 10 and Linux.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <!-- <img src="..." class="card-img-top" alt="..."> -->
+                        <div class="card-body">
+                            <h5 class="card-title">Fast</h5>
+                            <p class="card-text">
+                                Either on par, or faster than really fast emulators such as <code>alacritty</code>. Order(s) of magnitude faster on Windows with bypass.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <!-- <img src="..." class="card-img-top" alt="..."> -->
+                        <div class="card-body">
+                            <h5 class="card-title">ConPTY Bypass</h5>
+                            <p class="card-text">
+                                Special pseudoconsole for Windows when using WSL which bypasses the OS default ConPTY. Allows <code>tpp</code> to support all terminal features (mouse, special escape sequences, etc.) and greatly increases its speed.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                &nbsp;
+
+                <div class="card-deck">
+                    <div class="card" style="visibility:hidden">
+                        <img src="..." class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Fonts & Colors</h5>
+                            <p class="card-text">
+                                Support for all possible colors (16M) and native font fallback for extra characters. CJK, double width and double size characters support.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <!-- <img src="..." class="card-img-top" alt="..."> -->
+                        <div class="card-body">
+                            <h5 class="card-title">Clipboard</h5>
+                            <p class="card-text">
+                                Bi-directional clipboard. Primary and clipboard buffers on Linux, clipboard and emulated primary buffer in Windows.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <!-- <img src="..." class="card-img-top" alt="..."> -->
+                        <div class="card-body">
+                            <h5 class="card-title">Zoom</h5>
+                            <p class="card-text">
+                                <code>ctrl-</code> and <code>ctrl=</code> to fast zoom in & out similar to web browsers and other GUI apps.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        &nbsp;
-        <div class="card-deck">
-            <div class="card">
-              <img src="..." class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-                <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
-              </div>
-            </div>
-            <div class="card">
-              <img src="..." class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <p class="card-text">This card has supporting text below as a natural lead-in to additional content.</p>
-                <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
-              </div>
-            </div>
-            <div class="card">
-              <img src="..." class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
-                <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
-              </div>
-            </div>
-          </div>
-          </div>
         
+            <div class="alert alert-light" role="alert">
+                Terminal++ by Petr Maj &copy; 2019. Released under the MIT license.
+            </div>
 
-
-    </div>
+        </div>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <!-- FontAwesome for icons -->
+    <script src="https://kit.fontawesome.com/97a9eae21d.js"></script>
   </body>
 </html>
-
-
-<!--
-
-
-
-
-
-
-
-
-
-
-
-
-<html>
-  <head>
-    <!-- Global site tag (gtag.js) - Google Analytics - ->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-76230115-2"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'UA-76230115-2');
-    </script>
-    <meta name="description" content="Terminal++ is a powerful crossplatform terminal emulator">    
-    <link rel="icon" type="image/png" href="favicon.png">    
-    <title>&gt;++</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">    
-  </head>
-  <body>
-  </br></br>
-  <div align="center">
-    <!-- The logo and header text - ->
-    <img alt="logo" src="favicon.png" />
-    <p class="header">
-      Powerful Cross-Platform Terminal Emulator  
-    </p>
-    <!-- The download / fork badges -- >
-    <div class="badges">
-        <a href="https://github.com/zduka/tpp/releases/tag/v0.2">
-            <img src="https://img.shields.io/static/v1?label=Release&message=0.2&color=blue" />
-        </a>
-        <a href="https://github.com/zduka/tpp">
-            <img src="https://img.shields.io/static/v1?label=Github&message=zduka/tpp&color=green&logo=Github" />
-        </a>
-
-        <a href="https://github.com/zduka/tpp/releases/download/v0.2/Windows.Installer.msi">
-          <img src="https://img.shields.io/static/v1?label=Installer&message=MSI&color=green&logo=Windows" />
-        </a>
-    </div>
-    <div id="screenshots">
-        <img src="resources/images/screenshot-windows.png" />
-    </div>
-    <p>
-      Terminal++ (<code>tpp</code>) is a simple, but powerful terminal emulator which provides same features on both Windows, and Linux (MacOS support planned). Although <code>tpp</code> is in alpha stage, it already provides all necessary features to be used as a daily driver.
-    </p>
-    <p class="header">
-      Features
-    </p>
-    <p>
-      native support for Windows (DirectWrite) and Linux (X11) <br/>
-      support for modern terminal features (16M colors, mouse, zoom, clipboard, etc.) <br/>
-      fullscreen mode <br/>
-      optional ConPTY bypass for Windows via WSL for better speed and more features <br/>
-      <code>cmd.exe</code>, Powershell and <code>WSL</code> support for Windows<br/>
-      fast (Linux, Windows ConPTY), or really fast (Windows WSL Bypass)<br/>
-    </p>
-    <div class="footer">
-      Terminal++ by Petr Maj. Released under MIT license.
-    </div>
-  </div>
-  </body>
-</html>
--->
