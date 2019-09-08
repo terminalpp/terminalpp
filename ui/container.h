@@ -84,10 +84,13 @@ namespace ui {
 
 		void updateOverlay(bool value) override;
 
+		/** Returns the target for the given mouse coordinates. 
+		 
+		    If the coordinates are outside of the container, returns nullptr.
+		 */
 		Widget* getMouseTarget(int col, int row) override {
             if (!visibleRegion_.contains(col, row))
-                LOG << "Error";
-			ASSERT(visibleRegion_.contains(col, row));
+                return nullptr;
 			for (auto i = children().rbegin(), e = children().rend(); i != e; ++i)
 				if ((*i)->visibleRegion_.contains(col, row))
 					return (*i)->getMouseTarget(col, row);

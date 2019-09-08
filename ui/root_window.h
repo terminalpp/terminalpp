@@ -211,6 +211,7 @@ namespace ui {
 
         Widget * keyboardFocus_;
 
+        unsigned mouseFocusLock_; 
 		int mouseCol_;
 		int mouseRow_;
 		Widget* mouseFocus_;

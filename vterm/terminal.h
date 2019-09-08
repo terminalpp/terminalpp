@@ -53,6 +53,8 @@ namespace vterm {
             }
 
             Cell & at(int x, int y) {
+                if (x < 0 || y < 0)
+                    LOG << "Error";
                 ASSERT(x >= 0 && x <= cols_ && y >= 0 && y < rows_);
                 return cells_[y][x];
             }

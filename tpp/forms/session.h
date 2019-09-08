@@ -40,7 +40,7 @@ namespace tpp {
                 );
             focusWidget(terminal_, true);
             headerTimer_.onTimer += CreateHandler<helpers::TimerEvent, Session, &Session::headerAutohide>(this);
-            headerTimer_.start(5000, false);
+            //headerTimer_.start(5000, false);
         }
 
     private:

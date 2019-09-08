@@ -1,4 +1,7 @@
 ﻿
+issue 6 - clipboard issues
+- almost ok, but when clicked & moved outside of window on both windows and linux, no events are getting to the window and terminal which breaks the selection if mouse up happens outside of the window.
+
 ## Font Fallback
 
 - font fallback does not work for emoticons
@@ -9,8 +12,9 @@
 - add the extra attributes drawing
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
-- add transparency?
 - ssh plain does not display boxes in mc well
+- selection for doubleWidth & double size characters
+- settings.json versioning
 
 ### Win32 Bugs
 
@@ -42,3 +46,9 @@
 sudo apt install doxygen python3-pip
 pip3 install sphinx breathe sphinx_rtd_theme
 
+# Add Transparency?
+
+On Windows:
+
+https://msdn.microsoft.com/en-us/magazine/ee819134.aspx?f=255&MSPPError=-2147217396
+and use layered windows

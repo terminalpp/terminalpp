@@ -84,13 +84,10 @@ namespace tpp {
         }
 
         /** Converts the x & y coordinates in pixels to cell coordinates. 
-         
-            Returns true if the converted coordinates are in the buffer, false otherwise (such as when the window size is not divisible by the cell size).
          */
-		bool convertMouseCoordsToCells(int & x, int & y) {
+		void convertMouseCoordsToCells(int & x, int & y) {
 			x = x / cellWidthPx_;
 			y = y / cellHeightPx_;
-            return x < cols_ && y < rows_;
 		}
 
 
@@ -118,23 +115,23 @@ namespace tpp {
         // interface to ui's root element
 
         virtual void mouseDown(int x, int y, ui::MouseButton button) {
-            if (convertMouseCoordsToCells(x, y))
-                ui::Renderer::mouseDown(x, y, button, activeModifiers_);
+            convertMouseCoordsToCells(x, y);
+            ui::Renderer::mouseDown(x, y, button, activeModifiers_);
         }
 
         virtual void mouseUp(int x, int y, ui::MouseButton button) {
-            if (convertMouseCoordsToCells(x, y))
-                ui::Renderer::mouseUp(x, y, button, activeModifiers_);
+            convertMouseCoordsToCells(x, y);
+            ui::Renderer::mouseUp(x, y, button, activeModifiers_);
         }
 
         virtual void mouseWheel(int x, int y, int by) {
-            if (convertMouseCoordsToCells(x, y))
-                ui::Renderer::mouseWheel(x, y, by, activeModifiers_);
+            convertMouseCoordsToCells(x, y);
+            ui::Renderer::mouseWheel(x, y, by, activeModifiers_);
         }
 
         virtual void mouseMove(int x, int y) {
-            if (convertMouseCoordsToCells(x, y))
-                ui::Renderer::mouseMove(x, y, activeModifiers_);
+            convertMouseCoordsToCells(x, y);
+            ui::Renderer::mouseMove(x, y, activeModifiers_);
         }
 
         virtual void keyChar(helpers::Char c) {

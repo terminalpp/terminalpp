@@ -10,12 +10,16 @@ namespace tpp {
         return R"json(
 /* Default settings for tpp 
  */
-{
+{  
     /* The version of tpp the settings are intended for. For debugging purposes only.
-    */
-    "version" : 0.2,
-
+     */
+    "version" : 0.3,
+    
+    /* Renderer settings. 
+     */
     "renderer" : {
+        /* Maximum FPS. 
+         */
         "fps" : 60
     },
 
@@ -30,7 +34,8 @@ namespace tpp {
     /* Session properties. 
      */
     "session" : {
-        /* Determines whether local, or bypass PTY should be used. Useful only for Windows, ignored on other systems. */
+        /* Determines whether local, or bypass PTY should be used. Useful only for Windows, ignored on other systems. 
+         */
         "pty" : "bypass",
         /* The command to execute in the session. 
          */
