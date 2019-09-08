@@ -14,18 +14,20 @@ namespace tpp {
 		/** Creates a font to fit the given cell dimensions. 
 		 */
 	    static T * GetOrCreate(ui::Font font, unsigned cellWidth, unsigned cellHeight) {
-			unsigned id = (cellHeight << 8) + helpers::pointer_cast<uint8_t*>(&font)[0];
+			unsigned id = FontHash(font, cellHeight);
 			auto i = Fonts_.find(id);
-			if (i == Fonts_.end())
+			if (i == Fonts_.end()) {
 			    i = Fonts_.insert(std::make_pair(id, new T(font, cellWidth, cellHeight))).first;
+				// add the font to its fallback fonts as well
+				ASSERT(FallbackFonts_.find(id) == FallbackFonts_.end()); // if the font does not exist, its cache should neither
+				FallbackFonts_[id].push_back(i->second);
+			}
 			return i->second;
 		}
 
-		/** Deletes the fallback cache.
+		/** Note that font destructor does not delete the fallback cache, this should be done by the font manager itself if deleting a font will ever be implemented (otherwise there may be issues with fallback fonts wanting to delete their fallback cache, which they do not have, etc.)
 		 */
 		virtual ~Font() {
-            for (T * f : fallbackCache_)
-                delete f;
 		}
 
         virtual bool supportsCodepoint(char32_t codepoint) = 0;
@@ -33,13 +35,15 @@ namespace tpp {
 		/** Returns the fallback font that can be used for the given UTF codepoint. 
 		 */
 		T * fallbackFor(unsigned cellWidth, unsigned cellHeight, char32_t codepoint) {
-            for (auto i : fallbackCache_)
-                if (i->supportsCodepoint(codepoint))
+			std::vector<T*> & fallbackCache = FallbackFonts_[FontHash(font_, cellHeight)];
+            for (auto i : fallbackCache) {
+				if (i != this && i->supportsCodepoint(codepoint))
                     return i;
+			}
 			// if the character we search the fallback for is double width increase the cell width now
 			cellWidth *= helpers::Char::ColumnWidth(codepoint);
             T * f = new T(*dynamic_cast<T const *>(this), cellWidth, cellHeight, codepoint);
-            fallbackCache_.push_back(f);
+            fallbackCache.push_back(f);
             return f;
         }
 
@@ -87,8 +91,8 @@ namespace tpp {
 		
 		static std::unordered_map<unsigned, T*> Fonts_;
 
-        std::vector<T*> fallbackCache_;
-		
+		static std::unordered_map<unsigned, std::vector<T*>> FallbackFonts_;
+
 		Font(ui::Font font) :
 			font_{font},
 			widthPx_{0},
@@ -100,6 +104,12 @@ namespace tpp {
 			underlineThickness_{1},
 			strikethroughOffset_{0},
 			strikethroughThickness_{1} {
+		}
+
+		/** Joins the font and the cell height together to form a unique hash for the font & size under which the font and its fallback cache is stored. 
+  		 */
+		static unsigned FontHash(ui::Font font, unsigned cellHeight) {
+			return (cellHeight << 8) + helpers::pointer_cast<uint8_t*>(&font)[0];
 		}
 
 		ui::Font font_;
@@ -117,6 +127,9 @@ namespace tpp {
 
 	template<typename T>
 	std::unordered_map<unsigned, T*> Font<T>::Fonts_;
+
+	template<typename T>
+	std::unordered_map<unsigned, std::vector<T*>> Font<T>::FallbackFonts_;
 
 
 } // namespace tpp
