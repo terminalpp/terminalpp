@@ -2,6 +2,8 @@
 
 #include <unordered_map>
 
+#include "helpers/char.h"
+
 #include "ui/font.h"
 
 namespace tpp {
@@ -34,6 +36,8 @@ namespace tpp {
             for (auto i : fallbackCache_)
                 if (i->supportsCodepoint(codepoint))
                     return i;
+			// if the character we search the fallback for is double width increase the cell width now
+			cellWidth *= helpers::Char::ColumnWidth(codepoint);
             T * f = new T(*dynamic_cast<T const *>(this), cellWidth, cellHeight, codepoint);
             fallbackCache_.push_back(f);
             return f;
