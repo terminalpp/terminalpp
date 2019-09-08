@@ -150,19 +150,15 @@ namespace ui {
 
 		/** Takes screen coordinates and converts them to the widget's coordinates.
 
-			Returns (-1;-1) if the screen coordinates are outside the current widget.
+			Note that these may be negative, or bigger than the widget itself if the mouse is outside of the widget's area and the mouse target is locked.
 		 */
 		Point screenToWidgetCoordinates(Widget * w, unsigned col, unsigned row) {
 			Canvas::VisibleRegion const& wr = w->visibleRegion_;
-			if (!wr.valid || wr.windowOffset.x > static_cast<int>(col) || wr.windowOffset.y > static_cast<int>(row))
-				return Point(-1, -1);
+            ASSERT(wr.valid) << "An invalid widget is rather bad at receiving mouse coordinates";
 			Point result(
 				wr.region.left() + (col - wr.windowOffset.x),
 				wr.region.top() + (row - wr.windowOffset.y)
 			);
-			ASSERT(result.x >= 0 && result.y >= 0);
-			if (result.x >= w->width() || result.y >= w->height())
-				return Point(-1, -1);
 			return result;
 		}
 
@@ -211,6 +207,7 @@ namespace ui {
 
         Widget * keyboardFocus_;
 
+        unsigned mouseFocusLock_; 
 		int mouseCol_;
 		int mouseRow_;
 		Widget* mouseFocus_;

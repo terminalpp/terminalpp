@@ -125,7 +125,15 @@ namespace ui {
             selectionStart_ = start;
         }
 
-        void updateSelectionRegion(Point const & end) {
+        void updateSelectionRegion(Point end) {
+            if (end.x < 0)
+                end.x = 0;
+            else if (end.x >= width())
+                end.x = width() - 1;
+            if (end.y < 0)
+                end.y = 0;
+            else if (end.y >= height())
+                end.y = height() - 1;
             selection_ = Selection::Create(selectionStart_, end);
         }
 

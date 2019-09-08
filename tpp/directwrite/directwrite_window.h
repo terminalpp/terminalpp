@@ -86,6 +86,27 @@ namespace tpp {
 
         void updateZoom(double value) override;
 
+        /** Registers mouse button down.
+          
+            Starts mouse capture if no mouse button has been pressed previously, which allows the terminal window to track mouse movement outside of the window if at least one mouse button is pressed. 
+         */ 
+        virtual void mouseDown(int x, int y, ui::MouseButton button) override {
+            if (++mouseButtonsDown_ == 1)
+                SetCapture(hWnd_);
+            Window::mouseDown(x, y, button);
+        }
+
+        /** Registers mouse button up. 
+          
+            If there are no more pressed buttons left, releases the mouse capture previously obtained. 
+         */
+        virtual void mouseUp(int x, int y, ui::MouseButton button) override {
+            // just a bit of defensive programming to make sure if weird capture events wreak havoc the terminal is safe(ish)
+            if (mouseButtonsDown_ > 0 && --mouseButtonsDown_ == 0)
+                ReleaseCapture();
+            Window::mouseUp(x, y, button);
+        }
+
         // renderer clipboard interface 
 
         void requestClipboardPaste() override;
@@ -284,7 +305,9 @@ namespace tpp {
 		int glyphRunCol_;
 		int glyphRunRow_;
 
-
+        /* Number of mouse buttons currently pressed so that we know when to set & release mouse capture.
+         */
+        unsigned mouseButtonsDown_;
 
         static ui::Key GetKey(unsigned vk);
 

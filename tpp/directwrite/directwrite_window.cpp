@@ -15,7 +15,8 @@ namespace tpp {
 			font_(nullptr),
 			glyphIndices_(nullptr),
 			glyphAdvances_(nullptr),
-			glyphOffsets_(nullptr) {
+			glyphOffsets_(nullptr),
+			mouseButtonsDown_(0) {
 			helpers::utf16_string t = helpers::UTF8toUTF16(title);
 			hWnd_ = CreateWindowExW(
 				WS_EX_LEFT, // the default
@@ -366,6 +367,12 @@ namespace tpp {
 			case WM_MOUSEMOVE:
 				window->mouseMove(MOUSE_X, MOUSE_Y);
 				break;
+			/** Send when mouse capture has been lost (either explicitly, or implicitly). 
+
+			    Does nothing and just exists there as a simple placeholder if in future the capture change should be reflected.
+			 */
+			case WM_CAPTURECHANGED:
+			    break;
 			/* 
 			 */
 			case WM_USER:

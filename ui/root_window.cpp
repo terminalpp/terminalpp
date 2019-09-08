@@ -14,6 +14,7 @@ namespace ui {
 		renderer_{nullptr},
 		buffer_{0, 0},
 		keyboardFocus_{nullptr},
+		mouseFocusLock_{0},
 		mouseFocus_{nullptr},
 		mouseClickWidget_{nullptr},
 		mouseClickButton_{MouseButton::Left}, // does not matter
@@ -34,8 +35,11 @@ namespace ui {
 
     void RootWindow::mouseDown(int col, int row, MouseButton button, Key modifiers) {
 		Widget* target = mouseFocusWidget(col, row);
+		// nothing to dispatch if there is no mouse target (i.e. pointer outside of the window and no locked target)
+		if (target == nullptr)
+		    return;
+		++mouseFocusLock_;
 		Point pos = screenToWidgetCoordinates(target, col, row);
-		ASSERT(pos.x >= 0 && pos.y >= 0);
 		if (target == this)
 			Widget::mouseDown(pos.x, pos.y, button, modifiers);
 		else
@@ -52,8 +56,11 @@ namespace ui {
 
     void RootWindow::mouseUp(int col, int row, MouseButton button, Key modifiers) {
 		Widget* target = mouseFocusWidget(col, row);
+		// nothing to dispatch if there is no mouse target (i.e. pointer outside of the window and no locked target)
+		if (target == nullptr)
+		    return;
+		ASSERT(mouseFocusLock_-- > 0);
 		Point pos = screenToWidgetCoordinates(target, col, row);
-		ASSERT(pos.x >= 0 && pos.y >= 0);
 		if (target == this)
 			Widget::mouseUp(pos.x, pos.y, button, modifiers);
 		else
@@ -81,8 +88,10 @@ namespace ui {
 
     void RootWindow::mouseWheel(int col, int row, int by, Key modifiers) {
 		Widget* target = mouseFocusWidget(col, row);
+		// nothing to dispatch if there is no mouse target (i.e. pointer outside of the window and no locked target)
+		if (target == nullptr)
+		    return;
 		Point pos = screenToWidgetCoordinates(target, col, row);
-		ASSERT(pos.x >= 0 && pos.y >= 0);
 		if (target == this)
 			Widget::mouseWheel(pos.x, pos.y, by, modifiers);
 		else
@@ -91,8 +100,10 @@ namespace ui {
 
     void RootWindow::mouseMove(int col, int row, Key modifiers) {
 		Widget* target = mouseFocusWidget(col, row);
+		// nothing to dispatch if there is no mouse target (i.e. pointer outside of the window and no locked target)
+		if (target == nullptr)
+		    return;
 		Point pos = screenToWidgetCoordinates(target, col, row);
-		ASSERT(pos.x >= 0 && pos.y >= 0);
 		if (target == this)
 			Widget::mouseMove(pos.x, pos.y, modifiers);
 		else
@@ -128,6 +139,8 @@ namespace ui {
     }
 
 	Widget* RootWindow::mouseFocusWidget(int col, int row) {
+		if (mouseFocus_ != nullptr && mouseFocusLock_ > 0)
+		    return mouseFocus_;
 		if (mouseFocus_ == nullptr || mouseCol_ != col || mouseRow_ != row) {
 			Widget* newFocus = nullptr;
 			{
@@ -138,7 +151,8 @@ namespace ui {
 				if (mouseFocus_ != nullptr)
 					mouseFocus_->mouseLeave();
 				mouseFocus_ = newFocus;
-				mouseFocus_->mouseEnter();
+				if (mouseFocus_ != nullptr)
+				    mouseFocus_->mouseEnter();
 			}
 			mouseCol_ = col;
 			mouseRow_ = row;
