@@ -264,7 +264,7 @@ namespace tpp {
                         // draw the cell
                         addGlyph(col, row, c);
                         // move to the next column (skip invisible cols if double width or larger font)
-                        col += c.font().width();
+                        col += c.font().width() * helpers::Char::ColumnWidth(c.codepoint());
                     }
                     drawGlyphRun();
                 }

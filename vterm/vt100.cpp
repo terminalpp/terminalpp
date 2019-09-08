@@ -508,7 +508,12 @@ namespace vterm {
 					 */
 					case helpers::Char::LF: {
 						LOG(SEQ) << "LF";
+                        // disable double width and height chars
+                        state_.cell << state_.cell.font().setSize(1).setDoubleWidth(false);
+                        state_.doubleHeightTopLine = false;
+                        // mark last position
 						markLastCharPosition();
+                        // move to next char in the input
 						++x;
 						// determine if region should be scrolled
 						if (++buffer_.cursor().pos.y == state_.scrollEnd) {
@@ -558,8 +563,13 @@ namespace vterm {
                         setLastCharPosition();
                         // move to next column
                         ++buffer_.cursor().pos.x;
-                        if (c8->columnWidth() == 2 && buffer_.cursor().pos.x < buffer_.cols()) {
-                            cell << cell.font().setDoubleWidth();
+                        // determine the proper character size and copy the character if necessary (this will be ignored by the renderer)
+                        int charWidth = c8->columnWidth() * state_.cell.font().width();
+                        // if we are in the top double height line, just increase the width
+                        if (state_.doubleHeightTopLine)
+                            charWidth *= 2;
+                        // copy the character
+                        while (--charWidth > 0 && buffer_.cursor().pos.x < buffer_.cols()) {
                             Cell& cell2 = buffer_.at(buffer_.cursor().pos.x, buffer_.cursor().pos.y);
                             cell2 = cell;
                             ++buffer_.cursor().pos.x;
@@ -658,6 +668,13 @@ namespace vterm {
 				LOG(SEQ) << "Normal keypad mode enabled";
                 keypadMode_ = KeypadMode::Normal;
 				break;
+            /* ESC # number -- font size changes */
+            case '#':
+                if (x == bufferEnd)
+                    return false;
+                parseFontSizeSpecifier(*x);
+                ++x;
+                break;
             default:
 				LOG(SEQ_UNKNOWN) << "Unknown escape sequence \x1b" << *(x-1);
 				break;
@@ -1265,6 +1282,42 @@ namespace vterm {
                 NOT_IMPLEMENTED;
             default:
         		LOG(SEQ_UNKNOWN) << "Invalid OSC sequence: " << seq;
+        }
+    }
+
+    void VT100::parseFontSizeSpecifier(char kind) {
+        switch (kind) {
+            /* DECDHL - double height line, top half
+
+               The top line is ignored, we simply set the top line mark so that when characters are placed they will occupy the correct width.
+             */
+            case '3':
+                state_.doubleHeightTopLine = true;
+                break;
+            /* DECDHL - double height line, bottom half
+
+               The bottom half actually sets the font as it is solely responsible for drawing the line.
+             */
+            case '4':
+                state_.cell << state_.cell.font().setSize(2);
+                break;
+            /* DECSWL - single width line (default)
+             */
+            case '5':
+                state_.cell << state_.cell.font().setDoubleWidth(false);
+                break;
+            /* DECDWL - double width line
+             */
+            case '6':
+                state_.cell << state_.cell.font().setDoubleWidth();
+                break;
+            /* DECALN which fills terminal with chars so that screen on VT100 could be aligned. 
+             */
+            case '8':
+                LOG(SEQ_WONT_SUPPORT) << "DEC Screen Alignment test";
+                break;
+            default:
+                LOG(SEQ_UNKNOWN) << "Invalid DEC font size specifier ESC # " << kind;
         }
     }
 

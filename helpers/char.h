@@ -182,7 +182,10 @@ namespace helpers {
 		    On linux, the funtion wcwidth should do, however this does not exist on Windows and to make sure that applications behave the same on all platforms, own decission is implemented. 
 		 */
 		int columnWidth() const {
-			unsigned cp = codepoint();
+			return ColumnWidth(codepoint());
+        }
+
+        static int ColumnWidth(char32_t cp) {
 			if (cp >= 0x1100) {
 				if (cp <= 0x115f || // Hangul
 				    cp == 0x2329 ||

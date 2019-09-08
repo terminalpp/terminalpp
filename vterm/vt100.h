@@ -86,6 +86,10 @@ namespace vterm {
          */
         void parseOSCSequence(OSCSequence & seq);
 
+        /** Parses font size specifiers (double width, double height DEC modes) (ESC # x)
+         */
+        void parseFontSizeSpecifier(char kind);
+
         unsigned encodeMouseButton(ui::MouseButton btn, ui::Key modifiers);
         void sendMouseEvent(unsigned button, int col, int row, char end);
 
@@ -167,6 +171,12 @@ namespace vterm {
             int lastCharCol;
             int lastCharRow;
 
+            /* Determines if we are currently at double height font top line.
+
+               The second line is determined by the actual font used. 
+             */
+            bool doubleHeightTopLine;
+
             /* Stack of loaded & saved cursor positions. */
             std::vector<ui::Point> cursorStack;
 
@@ -175,7 +185,8 @@ namespace vterm {
                 scrollEnd{rows},
                 cell{},
                 lastCharCol{-1},
-                lastCharRow{0} {
+                lastCharRow{0},
+                doubleHeightTopLine(false) {
                 cell << ' ' << ui::Foreground(fg) << ui::Background(bg) << ui::DecorationColor(fg);
                 MARK_AS_UNUSED(cols);
             }
