@@ -250,6 +250,8 @@ namespace vterm {
         Widget::mouseMove(col, row, modifiers);
     }
 
+    /** TODO Selection works for CJK and double width characters, is a bit messy for double height characters, but not worth the time now, should be fixed when the selection is restructured and more pasting options are added. 
+     */
     std::string Terminal::selectionContents() {
         if (selection_.empty())
             return std::string{};
@@ -260,27 +262,40 @@ namespace vterm {
             Buffer::Ptr buf = buffer();
             if (selection_.start().y + 1 == selection_.end().y) {
                 ui::Point p = selection_.start();
-                for (; p.x < selection_.end().x; ++p.x)
-                    line << helpers::Char::FromCodepoint(buf->at(p.x, p.y).codepoint());
+                for (; p.x < selection_.end().x;) {
+                    char32_t cp = buf->at(p.x, p.y).codepoint();
+                    line << helpers::Char::FromCodepoint(cp);
+                    p.x += helpers::Char::ColumnWidth(cp) * buf->at(p.x, p.y).font().width();
+                }
                 result += helpers::TrimRight(line.str());
             } else {
                 ui::Point p = selection_.start();
-                for (; p.x < buf->cols(); ++p.x)
-                    line << helpers::Char::FromCodepoint(buf->at(p.x, p.y).codepoint());
+                for (; p.x < buf->cols(); ) {
+                    char32_t cp = buf->at(p.x, p.y).codepoint();
+                    line << helpers::Char::FromCodepoint(cp);
+                    p.x += helpers::Char::ColumnWidth(cp) * buf->at(p.x, p.y).font().width();
+
+                }
                 result += helpers::TrimRight(line.str());
                 for (p.y = selection_.start().y + 1; p.y < selection_.end().y - 1; ++p.y) {
                     line.str("");
                     line.clear();
                     line << std::endl;
-                    for (p.x = 0; p.x < buf->cols(); ++p.x)
-                        line << helpers::Char::FromCodepoint(buf->at(p.x, p.y).codepoint());
+                    for (p.x = 0; p.x < buf->cols(); ) {
+                        char32_t cp = buf->at(p.x, p.y).codepoint();
+                        line << helpers::Char::FromCodepoint(cp);
+                        p.x += helpers::Char::ColumnWidth(cp) * buf->at(p.x, p.y).font().width();
+                    }
                     result += helpers::TrimRight(line.str());
                 }
                 line.str("");
                 line.clear();
                 line << std::endl;
-                for (p.y = selection_.end().y - 1, p.x = 0; p.x < selection_.end().x; ++p.x)
-                        line << helpers::Char::FromCodepoint(buf->at(p.x, p.y).codepoint());
+                for (p.y = selection_.end().y - 1, p.x = 0; p.x < selection_.end().x;) {
+                    char32_t cp = buf->at(p.x, p.y).codepoint();
+                    line << helpers::Char::FromCodepoint(cp);
+                    p.x += helpers::Char::ColumnWidth(cp) * buf->at(p.x, p.y).font().width();
+                }
                 result += helpers::TrimRight(line.str());
             }
         }

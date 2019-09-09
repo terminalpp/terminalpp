@@ -1,19 +1,10 @@
-﻿
-issue 6 - clipboard issues
-- almost ok, but when clicked & moved outside of window on both windows and linux, no events are getting to the window and terminal which breaks the selection if mouse up happens outside of the window.
-
-## Font Fallback
-
-- font fallback does not work for emoticons
-
-## Bugs and missing features
+﻿## Bugs and missing features
 
 - add zoom out? and default zoom? 
 - add the extra attributes drawing
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
 - ssh plain does not display boxes in mc well
-- selection for doubleWidth & double size characters
 - settings.json versioning
 
 ### Win32 Bugs
