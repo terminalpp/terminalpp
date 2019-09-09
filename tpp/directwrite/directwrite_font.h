@@ -104,12 +104,16 @@ namespace tpp {
 				&mappedFont,
 				&scale
 			);
-			IDWriteFontFamily * matchedFamily;
-			IDWriteLocalizedStrings * names;
-			mappedFont->GetFontFamily(&matchedFamily);
-			matchedFamily->GetFamilyNames(&names);
-			//Microsoft::WRL::ComPtr<IDWriteFontFace> fface;
-			mappedFont->CreateFontFace(&fontFace_);
+			if (mappedFont.Get() != nullptr) {
+				IDWriteFontFamily * matchedFamily;
+				IDWriteLocalizedStrings * names;
+				mappedFont->GetFontFamily(&matchedFamily);
+				matchedFamily->GetFamilyNames(&names);
+				mappedFont->CreateFontFace(&fontFace_);
+			} else {
+				// no-one implements the character, use the last known font face
+				fontFace_ = from.fontFace();
+			}
 			cellWidth *= font_.width();
 			cellHeight *= font_.height();
 			initializeFromFontFace(cellWidth, cellHeight);
