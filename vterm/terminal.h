@@ -15,6 +15,17 @@ namespace vterm {
 
     typedef helpers::EventPayload<unsigned, ui::Widget> LineScrollEvent;
 
+    /** The input buffer of the terminal and its length. 
+     
+        TODO this looks very generic and perhaps can exist in some generic place too.
+     */
+    struct InputBuffer {
+        char const * buffer;
+        size_t size;
+    };
+
+    typedef helpers::EventPayload<InputBuffer, ui::Widget> InputProcessedEvent;
+
     class Terminal : public virtual ui::Widget, public ui::Clipboard {
     public:
 
@@ -53,8 +64,6 @@ namespace vterm {
             }
 
             Cell & at(int x, int y) {
-                if (x < 0 || y < 0)
-                    LOG << "Error";
                 ASSERT(x >= 0 && x <= cols_ && y >= 0 && y < rows_);
                 return cells_[y][x];
             }
@@ -140,6 +149,10 @@ namespace vterm {
             It is assumed that the topmost line is always the line scrolled out. 
          */
         helpers::Event<LineScrollEvent> onLineScrolledOut;
+
+        /** Triggered when new input has been processed by the terminal. 
+         */
+        helpers::Event<InputProcessedEvent> onInput;
 
         // methods
 
@@ -302,6 +315,7 @@ namespace vterm {
     EVENT_BUILDER(OnNotification, ui::VoidEvent, onNotification, Terminal);
     EVENT_BUILDER(OnPTYTerminated, ExitCodeEvent, onPTYTerminated, Terminal);
     EVENT_BUILDER(OnLineScrolledOut, LineScrollEvent, onLineScrolledOut, Terminal);
+    EVENT_BUILDER(OnInput, InputProcessedEvent, onInput, Terminal);
 
 } // namespace vterm
 

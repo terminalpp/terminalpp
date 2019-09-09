@@ -27,8 +27,8 @@ namespace tpp {
                 << Layout::Horizontal()
                 << (Create(header_ = new Label())
                     << HeightHint(SizeHint::Fixed())
-                    << Geometry(1, 2)
-                    << ui::Font().setDoubleWidth(true).setSize(1)
+                    << Geometry(1, 1)
+                    << ui::Font().setDoubleWidth(false).setSize(1)
                     << STR("t++ :" << helpers::Stamp::Stored())
                     << OnMouseClick(CreateHandler<MouseButtonEvent, Session, &Session::headerClicked>(this))
                 )
@@ -40,7 +40,11 @@ namespace tpp {
                 );
             focusWidget(terminal_, true);
             headerTimer_.onTimer += CreateHandler<helpers::TimerEvent, Session, &Session::headerAutohide>(this);
-            //headerTimer_.start(5000, false);
+            headerTimer_.start(5000, false);
+            if (! config.logFile().empty()) {
+                logFile_.open(config.logFile());
+                terminal_->onInput += CreateHandler<InputProcessedEvent, Session, &Session::terminalInputProcessed>(this);
+            }
         }
 
     private:
@@ -74,6 +78,10 @@ namespace tpp {
             LOG << "Scrolled " << *e << " lines";
         }
 
+        void terminalInputProcessed(vterm::InputProcessedEvent & e) {
+            logFile_.write(e->buffer, e->size);
+        }
+
         void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override {
             setIcon(Icon::Default);
             ui::RootWindow::mouseDown(col, row, button, modifiers);
@@ -99,6 +107,8 @@ namespace tpp {
         ui::Label * header_;
 
         helpers::Timer headerTimer_;
+
+        std::ofstream logFile_;
 
     }; // tpp::Session
 

@@ -1,4 +1,7 @@
-﻿## Bugs and missing features
+﻿- json addition and reading data should be simpler (see logfile)
+- like optional arguments, such as logfile, etc.
+
+## Bugs and missing features
 
 - add zoom out? and default zoom? 
 - add the extra attributes drawing

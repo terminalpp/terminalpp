@@ -175,6 +175,8 @@ namespace vterm {
                 read += (writeStart - ptyBuffer);
                 // process the input
                 size_t processed = processInput(ptyBuffer, read);
+                // trigger the input processed event
+                trigger(onInput, InputBuffer{ptyBuffer, processed});
                 // if not everything was processed, copy the unprocessed part at the beginning and set writeStart_ accordingly
                 if (processed != read) {
                     memcpy(ptyBuffer, ptyBuffer + processed, read - processed);

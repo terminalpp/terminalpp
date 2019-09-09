@@ -76,6 +76,12 @@ namespace tpp {
 			"Determines the command to be executed in the terminal",
 			true
 		);
+		helpers::Arg<std::string> logFile(
+			{ "--log-file" }, 
+			"", 
+			false, 
+			"File to which all terminal input will be logged, if specified"
+		);
 		// process the arguments
 		helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored()));		
 		helpers::Arguments::Parse(argc, argv);
@@ -100,6 +106,10 @@ namespace tpp {
 			for (std::string const & s : *command)
 			    cmd.add(helpers::JSON(s));
 		}
+		if (logFile.specified())
+		    json_["log"]["file"] = *logFile;
+		else
+		    json_["log"]["file"] = std::string{};
 	}
 
 	void Config::saveSettings() {

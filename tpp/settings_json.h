@@ -14,6 +14,14 @@ namespace tpp {
     /* The version of tpp the settings are intended for. For debugging purposes only.
      */
     "version" : 0.3,
+
+    /* Log properties.
+     */
+    "log" : {
+        /* File to which all terminal input should be logged.
+         */
+        "file" : ""
+    },
     
     /* Renderer settings. 
      */

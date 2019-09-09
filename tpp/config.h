@@ -26,6 +26,10 @@ namespace tpp {
 	class Config {
 	public:
 
+	    std::string const & logFile() const {
+			return json_["log"]["file"].value<std::string>();
+		}
+
 		unsigned rendererFps() const {
 			return json_["renderer"]["fps"].value<int>();
 		}
