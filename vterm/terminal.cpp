@@ -212,6 +212,8 @@ namespace vterm {
             canvas.setCursor(buffer->cursor());
         else
             canvas.setCursor(ui::Cursor::Invisible());
+        if (!enabled())
+            canvas.fill(ui::Rect(width(), height()), ui::Brush(ui::Color::Black().setAlpha(128)));
     }
 
     void Terminal::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {

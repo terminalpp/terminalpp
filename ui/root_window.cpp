@@ -172,6 +172,11 @@ namespace ui {
 			renderer_->setIcon(icon_);
 	}
 
+	void RootWindow::closeRenderer() {
+		if (renderer_)
+		    renderer_->requestClose();
+	}
+
 	void RootWindow::requestClipboardPaste(Clipboard * sender) {
 		if (pasteRequestTarget_ == nullptr) {
 			pasteRequestTarget_ = sender;

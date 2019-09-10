@@ -14,7 +14,7 @@ namespace ui {
             parent_->detachChild(this);
     }
 	
-	void Widget::setFocus(bool value) {
+	void Widget::setFocused(bool value) {
 		if (focused_ != value && visibleRegion_.valid)
 			visibleRegion_.root->focusWidget(this, value); 
 	}

@@ -19,7 +19,8 @@ namespace tpp {
     class Session : public ui::RootWindow {
     public:
         Session(vterm::PTY * pty, vterm::VT100::Palette * palette):
-            pty_(pty) {
+            pty_(pty),
+            closeOnKeyDown_(false) {
             Config const & config = Config::Instance();
             using namespace ui;
             using namespace vterm;
@@ -69,9 +70,14 @@ namespace tpp {
         }
 
         void ptyTerminated(vterm::ExitCodeEvent & e) {
-            header_->setText(STR("Attached process terminated (code " << *e << ")"));
+            headerTimer_.stop();
+            header_->setText(STR("Attached process terminated (code " << *e << ") - press a key to exit"));
             header_->setVisible(true);
             setIcon(Icon::Notification);
+            // disable the terminal
+            terminal_->setEnabled(false);
+            // close the window upon next key down
+            closeOnKeyDown_ = true;
         }
 
         void lineScrolledOut(vterm::LineScrollEvent & e) {
@@ -98,8 +104,12 @@ namespace tpp {
         }
 
         void keyDown(ui::Key k) override {
-            setIcon(Icon::Default);
-            ui::RootWindow::keyDown(k);
+            if (closeOnKeyDown_) {
+                closeRenderer();
+            } else {
+                setIcon(Icon::Default);
+                ui::RootWindow::keyDown(k);
+            }
         }
 
         vterm::PTY * pty_;
@@ -109,6 +119,8 @@ namespace tpp {
         helpers::Timer headerTimer_;
 
         std::ofstream logFile_;
+
+        bool closeOnKeyDown_;
 
     }; // tpp::Session
 

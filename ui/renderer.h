@@ -25,6 +25,12 @@ namespace ui {
         virtual int cols() const = 0;
         virtual int rows() const = 0;
 
+        /** Request from the root window to close & detach the renderer. 
+         
+            In most cases this also means that the renderer will in due time dispose of the root window. 
+         */
+        virtual void requestClose() = 0;
+
         /** Paints the window, or its part. 
          */
         virtual void requestRender(ui::Rect const & rect) = 0;

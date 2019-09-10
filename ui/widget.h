@@ -141,6 +141,11 @@ namespace ui {
 		 */
 		Event<VoidEvent> onFocusOut;
 
+		/** Triggered when the widget has been enabled or disabled. 
+		 */
+		Event<VoidEvent> onEnabled;
+		Event<VoidEvent> onDisabled;
+
 		Event<MouseButtonEvent> onMouseDown;
 		Event<MouseButtonEvent> onMouseUp;
 		Event<MouseButtonEvent> onMouseClick;
@@ -163,6 +168,7 @@ namespace ui {
 			overlay_(false),
 			forceOverlay_(false),
 			visible_(true),
+			enabled_(true),
 			focused_(false),
 			x_(0),
 			y_(0),
@@ -182,8 +188,20 @@ namespace ui {
 			return visible_;
 		}
 
+		bool enabled() const {
+			return enabled_;
+		}
+
 		bool focused() const {
 			return focused_;
+		}
+
+		bool focusStop() const {
+			return focusStop_;
+		}
+
+		unsigned focusIndex() const {
+			return focusIndex_;
 		}
 
 		/** Returns the x and y coordinates of the top-left corner of the widget in its parent 
@@ -236,11 +254,19 @@ namespace ui {
 			}
 		}
 
+		void setEnabled(bool value) {
+			if (enabled_ != value) {
+				updateEnabled(value);
+				if (parent_ != nullptr)
+				    parent_->childInvalidated(this);
+			}
+		}
+
 		/** Focuses or defocuses the widget. 
 		 
 		    Relays the request to the root window, which means that only valid widgets can be focused or defocused.
 		 */
-		void setFocus(bool value);
+		void setFocused(bool value);
 
 		/** Moves the widget to the given coordinates relative to its parent.
 		 */
@@ -306,6 +332,17 @@ namespace ui {
 				trigger(onFocusIn);
 			else
 				trigger(onFocusOut);
+		}
+
+		virtual void updateEnabled(bool value) {
+			enabled_ = value;
+			// disabled window can;t be focused
+			if (!enabled_)
+			    setFocused(false);
+			if (enabled_)
+			    trigger(onEnabled);
+			else 
+			    trigger(onDisabled);
 		}
 
 		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
@@ -563,8 +600,15 @@ namespace ui {
 		/* Visibility */
 		bool visible_;
 
+		/** Determines whether the widget is enabled (i.e. can accept user input), or not. */
+		bool enabled_;
+
 		/** Determines whether the widget receives keyboard events. */
 		bool focused_;
+
+		/** Determines whether the widget can be focused by user's action, usually by the TAB key, and if so, what is the widget's index in the circular list of focusable elements. */
+		bool focusStop_;
+		unsigned focusIndex_;
 
 		/* Position */
 		int x_;

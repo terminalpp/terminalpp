@@ -1293,23 +1293,27 @@ namespace vterm {
              */
             case '3':
                 state_.doubleHeightTopLine = true;
+                state_.cell << state_.cell.font().setSize(1).setDoubleWidth(false);
                 break;
             /* DECDHL - double height line, bottom half
 
                The bottom half actually sets the font as it is solely responsible for drawing the line.
              */
             case '4':
-                state_.cell << state_.cell.font().setSize(2);
+                state_.doubleHeightTopLine = false;
+                state_.cell << state_.cell.font().setSize(2).setDoubleWidth(false);
                 break;
             /* DECSWL - single width line (default)
              */
             case '5':
-                state_.cell << state_.cell.font().setDoubleWidth(false);
+                state_.doubleHeightTopLine = false;
+                state_.cell << state_.cell.font().setDoubleWidth(false).setSize(1);
                 break;
             /* DECDWL - double width line
              */
             case '6':
-                state_.cell << state_.cell.font().setDoubleWidth();
+                state_.doubleHeightTopLine = false;
+                state_.cell << state_.cell.font().setDoubleWidth().setSize(1);
                 break;
             /* DECALN which fills terminal with chars so that screen on VT100 could be aligned. 
              */

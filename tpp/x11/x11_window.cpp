@@ -558,7 +558,7 @@ namespace tpp {
 			case ClientMessage:
 			    if (static_cast<unsigned long>(e.xclient.data.l[0]) == X11Application::Instance()->wmDeleteMessage_) {
 					ASSERT(window != nullptr) << "Attempt to destroy unknown window";
-                    window->close();
+                    window->requestClose();
 				}
 				break;
             default:

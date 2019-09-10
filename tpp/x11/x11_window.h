@@ -19,7 +19,11 @@ namespace tpp {
             NOT_IMPLEMENTED;
         }
 
-        void close() override {
+        /** Renderer closure request. 
+         
+            Terminates the window and the attached session.
+         */
+        void requestClose() override {
             XDestroyWindow(display_, window_);            
         }
 

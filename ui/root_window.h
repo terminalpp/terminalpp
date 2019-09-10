@@ -20,7 +20,7 @@ namespace ui {
             Notification,
         }; // RootWindow::Icon
 
-        using Widget::setFocus;
+        using Widget::setFocused;
         using Container::setLayout;
         using Container::attachChild;
         using Widget::repaint;
@@ -72,7 +72,7 @@ namespace ui {
         }
 
         virtual void rendererFocused(bool value) {
-            setFocus(value);
+            setFocused(value);
         }
 
         /** Locks the backing buffer and returns it in a RAII smart pointer.
@@ -180,12 +180,13 @@ namespace ui {
 
         virtual void updateIcon(Icon icon);
 
+        virtual void closeRenderer();
+
     private:
 
         friend class Canvas;
         friend class Clipboard;
         friend class Renderer;
-
 
         virtual void requestClipboardPaste(Clipboard * sender);
         virtual void requestSelectionPaste(Clipboard * sender);

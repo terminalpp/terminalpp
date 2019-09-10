@@ -24,7 +24,11 @@ namespace tpp {
             NOT_IMPLEMENTED;
         }
 
-        void close() override {
+        /** Renderer closure request. 
+         
+            Terminates the window and the attached session.
+         */
+        void requestClose() override {
             PostMessage(hWnd_, WM_CLOSE, 0, 0);
         }
 
@@ -118,8 +122,6 @@ namespace tpp {
         void setSelection(std::string const & contents) override;
 
         void clearSelection() override;
-
-
 
     private:
         friend class DirectWriteApplication;

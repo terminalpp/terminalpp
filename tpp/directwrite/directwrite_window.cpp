@@ -213,7 +213,6 @@ namespace tpp {
 			/** Closes the current window. */
 			case WM_CLOSE: {
 				ASSERT(window != nullptr) << "Unknown window";
-				//Session::Close(tw->session());
 				break;
 			}
 			/** Destroys the window, if it is the last window, quits the app. */

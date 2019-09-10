@@ -30,6 +30,11 @@ namespace ui {
 			return * helpers::pointer_cast<uint32_t const*>(this);
 		}
 
+		Color & setAlpha(unsigned char value) {
+			alpha = value;
+			return *this;
+		}
+
         float floatAlpha() {
             return static_cast<float>(alpha) / 255.0f;
         }
