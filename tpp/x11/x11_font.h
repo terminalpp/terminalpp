@@ -77,7 +77,7 @@ namespace tpp {
             XftTextExtentsUtf8(app->xDisplay(), xftFont_, (FcChar8*)"M", 1, &gi);
             // update the font width and height accordingly
             heightPx_ = cellHeight;
-            widthPx_ = gi.width;
+            widthPx_ = gi.xOff; 
             // if cellWidth is 0, then the font is constructed to later determine the width of the cell and therefore no width adjustments are needed
             if (cellWidth != 0) {
                 // if the width is greater than the cell width, we need smaller font
