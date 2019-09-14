@@ -8,20 +8,28 @@
 #include "application.h"
 #include "config.h"
 
+
+
 namespace tpp { 
-	
+
 	Config const & Config::Initialize(int argc, char * argv[]) {
 		Config * & config = Singleton_();
 		ASSERT(config == nullptr) << "Already initialized";
 		helpers::JSON json = ReadSettings();
-
 		if (json.isNull()) {
+			Application::Instance()->alert("No settings found, initializing from defaults");
 		    json = CreateDefaultSettings();
 		    config = new Config(std::move(json));
 			Application::Instance()->updateDefaultSettings(config->json_);
 			config->saveSettings();
 		} else {
 		    config = new Config(std::move(json));
+			if (config->version() != JSONSettingsVersion()) {
+				Application::Instance()->alert("Settings will be updated to new version. Existing values will be preserved where possible");
+			    config->updateToNewVersion();
+				Application::Instance()->updateDefaultSettings(config->json_);
+                config->saveSettings();
+			}
 		}
 
 		config->processCommandLineArguments(argc, argv);
@@ -118,22 +126,49 @@ namespace tpp {
 		sf << json_;
 	}
 
+	void Config::updateToNewVersion() {
+		// parse the default settings and update them to any runtime calculated values
+		helpers::JSON defaults = CreateDefaultSettings();
+		// update the version
+		json_["version"] = JSONSettingsVersion();
+		// now check the defaults
+		copyMissingSettingsFrom(json_, defaults);
+	}
+
+	void Config::copyMissingSettingsFrom(helpers::JSON & settings, helpers::JSON & defaults) {
+		// make sure that we are dealing with objects only
+		ASSERT(settings.kind() == helpers::JSON::Kind::Object && defaults.kind() == helpers::JSON::Kind::Object);
+		// copy all missing setings
+		for (helpers::JSON::Iterator i = defaults.begin(), e = defaults.end(); i != e; ++i) {
+			if (!settings.hasKey(i.name()) || settings[i.name()].kind() != i->kind()) { 
+				settings[i.name()] = std::move(*i);
+			} else {
+				// if the settings element is an object itself, recurse 
+				if (i->kind() == helpers::JSON::Kind::Object)
+				    copyMissingSettingsFrom(settings[i.name()], *i);
+			}
+		}
+	}
+
 	helpers::JSON Config::ReadSettings() {
 		std::string settingsFile(Application::Instance()->getSettingsFolder() + "settings.json");
 		std::ifstream sf(settingsFile);
-		if (sf.good()) 
-		    return helpers::JSON::Parse(sf);
-		else  
+		if (sf.good()) {
+			helpers::JSON result(helpers::JSON::Parse(sf));
+			// backwards compatibility with version 0.2 where version was double
+			// TODO to be deleted later as a dead code
+			if (result["version"].kind() == helpers::JSON::Kind::Double)
+			    result["version"] = STR(static_cast<double>(result["version"]));
+		    return result;
+		} else {
 			return helpers::JSON(nullptr);
+		}
 	}
 
 	helpers::JSON Config::CreateDefaultSettings() {
 		helpers::JSON json(helpers::JSON::Parse(DefaultJSONSettings()));
+		json["version"] = JSONSettingsVersion();
 		return json;
 	}
-
-
-
-	
 
 } // namespace tpp

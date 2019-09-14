@@ -10,6 +10,7 @@
 
 #undef None
 #undef RootWindow
+#undef index
 
 namespace x11 {
 	static constexpr long None = 0;

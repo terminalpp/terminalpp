@@ -24,6 +24,11 @@ namespace tpp {
             return dynamic_cast<X11Application*>(Application::Instance());
         }
 
+        // TODO actually display the error in an X window
+        void alert(std::string const & message) override {
+            std::cout << message << std::endl;
+        }
+
         std::string getSettingsFolder() override;
 
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;

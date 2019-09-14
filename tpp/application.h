@@ -16,6 +16,10 @@ namespace tpp {
         virtual ~Application() {
         }
 
+        /** Displays an alert box with single button to dismiss. 
+         */
+        virtual void alert(std::string const & message) = 0;
+
         /** Returns the folder to which the terminal should store its settings. 
          */
         virtual std::string getSettingsFolder() = 0;

@@ -60,11 +60,24 @@ namespace tpp {
 		return output.find("Terminal++ Bypass, version") == 0;
 	}
 
+	void DirectWriteApplication::updateSettingsFontName(ui::Font font, helpers::JSON & fontFamily) {
+		try {
+			Font<DirectWriteFont>::GetOrCreate(font, 0, Config::Instance().fontSize());
+		} catch (helpers::OSError const &) {
+			fontFamily = "Consolas";
+			try {
+				Font<DirectWriteFont>::GetOrCreate(font, 0, Config::Instance().fontSize());
+    		} catch (helpers::OSError const &) {
+				MessageBox(nullptr, L"Unable to determine default font. Please edit the settings file manually.", L"Error", MB_ICONSTOP);
+			}
+		}
+	}
+
 	void DirectWriteApplication::updateDefaultSettings(helpers::JSON & json) {
 		helpers::JSON & cmd = json["session"]["command"];
 		// if WSL is not present, default to cmd.exe
 		if (! isWSLPresent()) {
-			cmd.add("cmd.exe");
+			cmd.add(helpers::JSON("cmd.exe"));
 			json["session"]["pty"] = "local";
 		// otherwise the terminal will default to WSL and we only have to determine whether to use bypass or ConPTY
 		} else {
@@ -79,16 +92,8 @@ namespace tpp {
 			}
 		}
 		// determine the font, try the default one, if not found, try Consolas
-		try {
-			Font<DirectWriteFont>::GetOrCreate(ui::Font(), 0, Config::Instance().fontSize());
-		} catch (helpers::OSError const &) {
-			json["font"]["family"] = "Consolas";
-			try {
-				Font<DirectWriteFont>::GetOrCreate(ui::Font(), 0, Config::Instance().fontSize());
-    		} catch (helpers::OSError const &) {
-				MessageBox(nullptr, L"Unable to determine default font. Please edit the settings file manually.", L"Error", MB_ICONSTOP);
-			}
-		}
+		updateSettingsFontName(ui::Font(), json["font"]["family"]);
+		updateSettingsFontName(ui::Font().setDoubleWidth(), json["font"]["doubleWidthFamily"]);
 	}
 
 	std::string DirectWriteApplication::getSettingsFolder() {
