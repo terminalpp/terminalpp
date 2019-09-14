@@ -103,7 +103,8 @@ int main(int argc, char* argv[]) {
 	    tpp::Window * w = Application::Instance()->createWindow(DEFAULT_WINDOW_TITLE, config.sessionCols(), config.sessionRows(), config.fontSize());
 		w->setRootWindow(session);
 		w->show();
-
+		if (config.sessionFullscreen())
+		    w->setFullscreen(true);
     	Application::Instance()->mainLoop();
 		delete session;
 

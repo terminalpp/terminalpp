@@ -67,8 +67,8 @@ namespace tpp {
 			return get({"session", "rows"});
 		}
 
-		unsigned sessionFullscreen() const {
-			return get({"session", "fullScreen"});
+		bool sessionFullscreen() const {
+			return get({"session", "fullscreen"});
 		}
 		
 		helpers::JSON & json() {
