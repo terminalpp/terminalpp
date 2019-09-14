@@ -81,7 +81,8 @@ namespace tpp {
     void X11Application::updateDefaultSettings(helpers::JSON & json) {
 		helpers::JSON & cmd = json["session"]["command"];
 		// add the default shell of the current user
-		cmd.add(helpers::JSON(getpwuid(getuid())->pw_shell));
+		if (cmd.numElements() == 0)
+		    cmd.add(helpers::JSON(getpwuid(getuid())->pw_shell));
 	}
 
 	std::string X11Application::getSettingsFolder() {

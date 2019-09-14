@@ -75,20 +75,22 @@ namespace tpp {
 
 	void DirectWriteApplication::updateDefaultSettings(helpers::JSON & json) {
 		helpers::JSON & cmd = json["session"]["command"];
-		// if WSL is not present, default to cmd.exe
-		if (! isWSLPresent()) {
-			cmd.add(helpers::JSON("cmd.exe"));
-			json["session"]["pty"] = "local";
-		// otherwise the terminal will default to WSL and we only have to determine whether to use bypass or ConPTY
-		} else {
-			if (isBypassPresent()) {
-    			json["session"]["pty"] = "bypass";
-	    		cmd.add(helpers::JSON("wsl.exe"));
-	    		cmd.add(helpers::JSON("-e"));
-	    		cmd.add(helpers::JSON("tpp-bypass"));
+		if (cmd.numElements() == 0) {
+			// if WSL is not present, default to cmd.exe
+			if (! isWSLPresent()) {
+				cmd.add(helpers::JSON("cmd.exe"));
+				json["session"]["pty"] = "local";
+			// otherwise the terminal will default to WSL and we only have to determine whether to use bypass or ConPTY
 			} else {
-    			json["session"]["pty"] = "local";
-	    		cmd.add(helpers::JSON("wsl.exe"));
+				if (isBypassPresent()) {
+					json["session"]["pty"] = "bypass";
+					cmd.add(helpers::JSON("wsl.exe"));
+					cmd.add(helpers::JSON("-e"));
+					cmd.add(helpers::JSON("tpp-bypass"));
+				} else {
+					json["session"]["pty"] = "local";
+					cmd.add(helpers::JSON("wsl.exe"));
+				}
 			}
 		}
 		// determine the font, try the default one, if not found, try Consolas

@@ -1,14 +1,10 @@
-﻿- json addition and reading data should be simpler (see logfile)
-- like optional arguments, such as logfile, etc.
-
-## Bugs and missing features
+﻿## Bugs and missing features
 
 - add zoom out? and default zoom? 
 - add the extra attributes drawing
 - cell builders should use && as well so that we can use them on temporary objects
 - resizing the terminal does sometimes eats stuff
 - ssh plain does not display boxes in mc well
-- settings.json versioning
 
 ### Win32 Bugs
 

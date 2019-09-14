@@ -48,7 +48,7 @@ namespace tpp {
     "session" : {
         /* Determines whether local, or bypass PTY should be used. Useful only for Windows, ignored on other systems. 
          */
-        "pty" : "bypass",
+        "pty" : "",
         /* The command to execute in the session. 
          */
         "command" : [  ],
