@@ -8,8 +8,6 @@ namespace ui {
 
 	    Any representation is as good as any other, so we are reusing the Win32 virtual key mappings where appropriate for the key codes. This has the benefit of printable US keyboard keys being identical to their ASCII codes. 
 
-
-
 	 */
 	class Key {
 	public:

@@ -48,4 +48,20 @@ namespace ui {
 		}
 	}
 
+	void Widget::updateFocusStop(bool value) {
+		focusStop_ = value;
+		RootWindow * root = rootWindow();
+		if (root != nullptr) 
+		    focusStop_ ? root->addFocusStop(this) : root->removeFocusStop(this);
+	}
+
+	void Widget::updateFocusIndex(unsigned value) {
+		RootWindow * root = rootWindow();
+		if (focusStop_ && root)
+		    root->removeFocusStop(this);
+		focusIndex_ = value;
+		if (focusStop_ && root)
+		    root->addFocusStop(this);
+	}
+
 } // namespace ui

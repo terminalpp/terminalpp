@@ -192,24 +192,34 @@ namespace ui {
 			return enabled_;
 		}
 
+		/** Returns true if the widget has keyboard focus. 
+		 */
 		bool focused() const {
 			return focused_;
 		}
 
+		/** Returns true if the widget is a focus stop, i.e. if the widget can be explicitly selected by the user. 
+		 */
 		bool focusStop() const {
 			return focusStop_;
 		}
 
+		/** Returns the focus index, 
+		 
+		    Focus indexia a number that determines the order of the explicit focus acquisition by the user for focus stoppable elements. 
+		 */
 		unsigned focusIndex() const {
 			return focusIndex_;
 		}
 
-		/** Returns the x and y coordinates of the top-left corner of the widget in its parent 
+		/** Returns the x coordinate of the top-left corner of the widget in its parent 
 		 */
 		int x() const {
 			return x_;
 		}
 
+		/** Returns the y coordinate of the top-left corner of the widget in its parent 
+		 */
 		int y() const {
 			return y_;
 		}
@@ -268,6 +278,20 @@ namespace ui {
 		 */
 		void setFocused(bool value);
 
+		/** Sets whether the widget acts as keboard focus stop, i.e. if it can be explicitly focused by the user. 
+		 */
+		void setFocusStop(bool value) {
+			if (focusStop_ != value)
+			    updateFocusStop(value);
+		}
+
+		/** Sets the order of explicit keyboard focus activation. 
+		 */
+		void setFocusIndex(unsigned value) {
+			if (focusIndex_ != value)
+			    updateFocusIndex(value);
+		}
+
 		/** Moves the widget to the given coordinates relative to its parent.
 		 */
 		void move(int x, int y) {
@@ -290,7 +314,6 @@ namespace ui {
 			if (value != overlay_)
 				updateOverlay(value);
 		}
-
 
 		void setWidthHint(SizeHint value) {
 			if (widthHint_ != value) {
@@ -333,6 +356,9 @@ namespace ui {
 			else
 				trigger(onFocusOut);
 		}
+
+		virtual void updateFocusStop(bool value);
+		virtual void updateFocusIndex(unsigned value);
 
 		virtual void updateEnabled(bool value) {
 			enabled_ = value;

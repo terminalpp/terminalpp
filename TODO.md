@@ -30,7 +30,6 @@
 - onChange handler for generic changes
 - make canvas do more
 - mouseFocus, should it disapper when mouse moves from parent to child? 
-- determine how keyboard focus is obtained automatically
 - how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
 
 sudo apt install doxygen python3-pip

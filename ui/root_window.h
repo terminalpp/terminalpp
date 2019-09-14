@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 #include "container.h"
 
 namespace ui {
@@ -22,7 +24,6 @@ namespace ui {
 
         using Widget::setFocused;
         using Container::setLayout;
-        using Container::attachChild;
         using Widget::repaint;
         using Widget::resize;
 
@@ -52,6 +53,20 @@ namespace ui {
          */
         Color background() const {
             return background_;
+        }
+
+        void attachChild(Widget * child) override {
+            Container::attachChild(child);
+            if (child->focusStop())
+                addFocusStop(child);
+        }
+
+        void detachChild(Widget * child) override {
+            if (keyboardFocus_ == child)
+                focusWidget(child, false);
+            Container::detachChild(child);
+            if (child->focusStop())
+                removeFocusStop(child);
         }
 
     protected:
@@ -123,8 +138,6 @@ namespace ui {
         }
 
         /** Called by widget that wants to obtain keyboard focus. 
-         
-            TODO what to do if widget is removed from the hierarchy while focused?
          */
         void focusWidget(Widget * widget, bool value) {
             ASSERT(widget != nullptr);
@@ -141,10 +154,51 @@ namespace ui {
                     keyboardFocus_ = value ? widget : nullptr;
                 }
             // if the widget is root window, then just call own updateFocused method, which sets the focus of the root window and updates the focus of the active widget, if any
-         } else {
+            } else {
                 updateFocused(value);
             }
         }
+
+        /** Focuses next element in the explicit focus stops ring. 
+         
+            If no element is currently focused, or if the currently focused element does not belong to the focus stop ring, focuses the first element from the ring, otherwise focuses the next element from the focus ring, or the first one, if the currently focused element is the end of the ring. 
+
+            If the focus ring is empty, does nothing.
+         */ 
+        Widget * focusNext() {
+            if (keyboardFocus_ != nullptr) {
+                if (keyboardFocus_->focusStop()) {
+                    auto i = focusStops_.find(keyboardFocus_->focusIndex());
+                    ++i;
+                    if (i != focusStops_.end()) {
+                        focusWidget(i->second, true);
+                        return keyboardFocus_;
+                    }
+                }
+            }
+            auto i = focusStops_.begin();
+            if (i != focusStops_.end())
+                focusWidget(i->second, true);
+            return keyboardFocus_;
+        }
+
+        /** Adds new focus stop widget. 
+          
+            A helper method called when existing child updates its stop status to true, or when new child that is a focus stop has been attached. 
+         */
+        void addFocusStop(Widget * child) {
+            ASSERT(focusStops_.find(child->focusIndex_) == focusStops_.end()) << "Multiple focus index " << child->focusIndex();
+            focusStops_.insert(std::make_pair(child->focusIndex(), child));
+        }
+
+        /** Removes the focus stop widget. 
+         
+            A helper method called when child widget stops being the focus stop, or when a focus stop child is detached. 
+         */
+        void removeFocusStop(Widget * child) {
+            focusStops_.erase(child->focusIndex());
+        }
+
 
 		Widget* mouseFocusWidget(int col, int row);
 
@@ -207,6 +261,7 @@ namespace ui {
         Canvas::Buffer buffer_;
 
         Widget * keyboardFocus_;
+        std::map<unsigned, Widget *> focusStops_;
 
         unsigned mouseFocusLock_; 
 		int mouseCol_;
