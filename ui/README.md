@@ -1,7 +1,6 @@
-# Terminal User Interface Framework
+# ui - Terminal User Interface Framework
 
 A simple library which implements a text user interface capable of rendering in a terminal, supporting both mouse and keyboard inputs. 
-
 
 ## Mouse Events
 
