@@ -70,6 +70,12 @@ namespace ui {
 			return raw_ & CURLY_UNDERLINE;
 		}
 
+		/** Returns true if the cell has any of the borders enabled. 
+		 */
+		bool border() const {
+			return raw_ & (BORDER_LEFT | BORDER_TOP | BORDER_RIGHT | BORDER_BOTTOM);
+		}
+
 		bool borderLeft() const {
 			return raw_ & BORDER_LEFT;
 		}

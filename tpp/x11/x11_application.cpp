@@ -85,6 +85,11 @@ namespace tpp {
 		    cmd.add(helpers::JSON(getpwuid(getuid())->pw_shell));
 	}
 
+	void X11Application::alert(std::string const & message) {
+		if (system(STR("xmessage -center \"" << message << "\"").c_str()) != EXIT_SUCCESS) 
+            std::cout << message << std::endl;
+	}
+
 	std::string X11Application::getSettingsFolder() {
 		std::string localSettings(helpers::LocalSettingsDir() + "/terminalpp");
 		helpers::EnsurePath(localSettings);

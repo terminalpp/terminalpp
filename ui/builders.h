@@ -59,19 +59,35 @@ namespace ui {
 		return Builder<WIDGET>(new WIDGET());
 	}
 
+	#define PROPERTY_BUILDER(NAME, TYPE, PROPERTY_NAME, BASE_WIDGET) class NAME { \
+	    public: \
+		    explicit NAME(TYPE value): \
+			    value_(value) { \
+			} \
+		private: \
+		    TYPE value_; \
+			template<typename WIDGET> \
+			friend typename std::enable_if<std::is_base_of<BASE_WIDGET,WIDGET>::value, ui::Builder<WIDGET>>::type \
+			operator << (ui::Builder<WIDGET> widget, NAME const & property) { \
+			    widget->PROPERTY_NAME(property.value_); \
+				return widget; \
+			} \
+	}
+
+	PROPERTY_BUILDER(Visibility, bool, setVisible, Widget);
+	PROPERTY_BUILDER(Focus, bool, setFocus, Widget);
+	PROPERTY_BUILDER(FocusStop, bool, setFocusStop, Widget);
+	PROPERTY_BUILDER(FocusIndex, size_t, setFocusIndex, Widget);
+	PROPERTY_BUILDER(WidthHint, SizeHint const &, setWidthHint, Widget);
+	PROPERTY_BUILDER(HeightHint, SizeHint const &, setHeightHint, Widget);
+	
+
+
+
 	/** Wrapper classes for values so that the << operator can be properly overriden. 
 	
 	    I.e. we know that a boolean is for visibility and not for enabled, etc. In cases where the type itself is enough of a distincition, no wrapper classes are necessary. 
 	 */
-
-	class Visibility {
-	public:
-		explicit Visibility(bool value) :
-			value(value) {
-		}
-
-		bool const value;
-	}; // ui::Visibility
 
     struct GeometrySize {
         int const width;
@@ -97,32 +113,6 @@ namespace ui {
         return GeometryFull{width, height, x, y};
     }
 
-	class Focus {
-	public:
-	    explicit Focus(bool value) :
-		    value(value) {
-		}
-		bool const value;
-	}; // ui::Focus
-
-	class WidthHint {
-	public:
-		explicit WidthHint(SizeHint const& value) :
-			value(value) {
-		}
-
-		SizeHint const value;
-	}; // ui::WidthHint
-
-	class HeightHint {
-	public:
-		explicit HeightHint(SizeHint const& value) :
-			value(value) {
-		}
-
-		SizeHint const value;
-	}; // ui::HeightHint
-
 	class BackgroundBrushHolder {
 	public:
 		Brush const value;
@@ -138,12 +128,6 @@ namespace ui {
 	 */
 
 	template<typename WIDGET>
-	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, Visibility v) {
-		widget->setVisible(v.value);
-		return widget;
-	}
-
-	template<typename WIDGET>
 	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, GeometrySize g) {
         widget->resize(g.width, g.height);
 		return widget;
@@ -153,13 +137,6 @@ namespace ui {
 	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, GeometryFull g) {
         widget->setPosition(g.x, g.y);
         widget->resize(g.width, g.height);
-		return widget;
-	}
-
-
-	template<typename WIDGET>
-	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, Focus v) {
-		widget->setFocus(v.value);
 		return widget;
 	}
 
@@ -173,18 +150,6 @@ namespace ui {
 	template<typename WIDGET>
 	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, Point const& x) {
 		widget->move(x.x, x.y);
-		return widget;
-	}
-
-	template<typename WIDGET>
-	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, WidthHint const& wh) {
-		widget->setWidthHint(wh.value);
-		return widget;
-	}
-
-	template<typename WIDGET>
-	inline Builder<WIDGET> operator << (Builder<WIDGET> widget, HeightHint const& wh) {
-		widget->setHeightHint(wh.value);
 		return widget;
 	}
 

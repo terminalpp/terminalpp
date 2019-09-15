@@ -24,10 +24,13 @@ namespace tpp {
             return dynamic_cast<X11Application*>(Application::Instance());
         }
 
-        // TODO actually display the error in an X window
-        void alert(std::string const & message) override {
-            std::cout << message << std::endl;
-        }
+        /** Displays a GUI alert. 
+         
+            Because X11 does not have a simple function to display a message box, the method cheats and calls the `xmessage` command with the message as an argument which should display the message window anyways. 
+
+            In the unlikely case that `xmessage` command is not found, the error message will be written to the stdout as a last resort. 
+         */
+        void alert(std::string const & message) override;
 
         std::string getSettingsFolder() override;
 

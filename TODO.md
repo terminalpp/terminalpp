@@ -10,6 +10,9 @@
 
 ### X11 Bugs
 
+- message boxes are not drawn
+- transparency of the background does not seem to work
+
 # Code Fixes
 
 # Code Improvements 

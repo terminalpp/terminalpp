@@ -2,6 +2,15 @@
 
 A simple library which implements a text user interface capable of rendering in a terminal, supporting both mouse and keyboard inputs. 
 
+## Overview
+
+The ui toolkit consists of a few classes providing the basic functionality and implementations of several ui controls built on top of these. The basic classes, all of which are described later in greater detail, are:
+
+- `ui::Widget` - the base class for all visual components. Implements basic properties (visibility, position, size, etc.), events and methods (repainting, etc. ) common to every widget in the framework.
+- `ui::Canvas` - the canvas on which the widget draws its contents when repainted. A visible part of a canvas is backed by a buffer which actually holds the information for each cell.
+- `ui::Container` - while each widget can be a parent widget to others, the Container also keeps track of its own children so that they can be added and removed at runtime. Also defines the layout of the children so that they can be repositional automatically and react on the container size or position change. 
+- `ui::RootWindow` - a widget that wraps around a canvas buffer for the entire screen. Root window anso interface with renderers to define inform way of displaying the window's content to the user and relays the user events such as clipboard, mouse and keyboard. 
+- `ui::Renderer` determines the interface a rendering component of a root window must support
 
 ## Base Widget Implementation - `ui::widget`
 
