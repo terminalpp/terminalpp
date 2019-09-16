@@ -170,6 +170,8 @@ namespace ui {
 			visible_(true),
 			enabled_(true),
 			focused_(false),
+			focusStop_(false),
+			focusIndex_(0),
 			x_(0),
 			y_(0),
 			width_(0),
@@ -333,7 +335,7 @@ namespace ui {
 
 		bool forceOverlay() const {
 			return forceOverlay_;
-		}
+		}	
 
 		void setForceOverlay(bool value) {
 			if (forceOverlay_ != value) {
@@ -372,11 +374,15 @@ namespace ui {
 		}
 
 		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
+			if (!focused_ && focusStop_)
+			    setFocused(true);
 			MouseButtonPayload e{ col, row, button, modifiers };
 			trigger(onMouseUp, e);
 		}
 
 		virtual void mouseUp(int col, int row, MouseButton button, Key modifiers) {
+			if (!focused_ && focusStop_)
+			    setFocused(true);
 			MouseButtonPayload e{ col, row, button, modifiers };
 			trigger(onMouseUp, e);
 		}
@@ -392,6 +398,8 @@ namespace ui {
 		}
 
 		virtual void mouseWheel(int col, int row, int by, Key modifiers) {
+			if (!focused_ && focusStop_)
+			    setFocused(true);
 			MouseWheelPayload e{ col, row, by, modifiers };
 			trigger(onMouseWheel, e);
 		}

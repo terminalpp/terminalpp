@@ -1,3 +1,4 @@
+#!/bin/bash
 
 echo -e "__  __  __  __  __  __  __  __  __  __  __  __  __"
 echo -e "\033#6Double Width へようこそ\n"

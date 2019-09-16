@@ -1,4 +1,5 @@
-﻿## Bugs and missing features
+﻿
+## Bugs and missing features
 
 - add zoom out? and default zoom? 
 - add the extra attributes drawing

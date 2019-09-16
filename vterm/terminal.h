@@ -33,6 +33,8 @@ namespace vterm {
         typedef ui::Cursor Cursor;
 
         using Widget::setFocused;
+        using Widget::setFocusStop;
+        using Widget::setFocusIndex;
         using Widget::setEnabled;
 
         /** The terminal buffer holds information about the cells and cursor. 

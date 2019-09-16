@@ -9,6 +9,8 @@
 
 #include "config.h"
 
+#include "about_box.h"
+
 
 namespace tpp {
 
@@ -25,23 +27,22 @@ namespace tpp {
             using namespace ui;
             using namespace vterm;
             Create(this) 
-                << Layout::Horizontal()
-                << (Create(header_ = new Label())
-                    << HeightHint(SizeHint::Fixed())
-                    << Geometry(1, 1)
-                    << ui::Font().setDoubleWidth(false).setSize(1)
-                    << STR("t++ :" << helpers::Stamp::Stored())
-                    << OnMouseClick(CreateHandler<MouseButtonEvent, Session, &Session::headerClicked>(this))
-                )
+                << Layout::Maximized()
                 << (Create(terminal_ = new VT100(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
+                    << FocusIndex(0)
+                    << FocusStop(true)
                     << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
                     << OnNotification(CreateHandler<VoidEvent, Session, &Session::terminalNotification>(this))
                     << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
                     //<< OnLineScrolledOut(CreateHandler<LineScrollEvent, Session, &Session::lineScrolledOut>(this))
-                );
+                )
+                << (Create(about_ = new AboutBox())
+                  << Visible(false)
+                  << OnDismissed(CreateHandler<VoidEvent, Session, &Session::aboutBoxDismissed>(this))
+                )
+                ;
+
             focusWidget(terminal_, true);
-            headerTimer_.onTimer += CreateHandler<helpers::TimerEvent, Session, &Session::headerAutohide>(this);
-            headerTimer_.start(5000, false);
             if (! config.logFile().empty()) {
                 logFile_.open(config.logFile());
                 terminal_->onInput += CreateHandler<InputProcessedEvent, Session, &Session::terminalInputProcessed>(this);
@@ -50,14 +51,9 @@ namespace tpp {
 
     private:
 
-        void headerClicked(ui::MouseButtonEvent & e) {
+        void aboutBoxDismissed(ui::VoidEvent & e) {
             MARK_AS_UNUSED(e);
-            header_->setVisible(false);
-        }
-
-        void headerAutohide(helpers::TimerEvent & e) {
-            MARK_AS_UNUSED(e);
-            header_->setVisible(false);
+            terminal_->setFocused(true);
         }
 
         void terminalTitleChanged(ui::StringEvent & e) {
@@ -70,9 +66,7 @@ namespace tpp {
         }
 
         void ptyTerminated(vterm::ExitCodeEvent & e) {
-            headerTimer_.stop();
-            header_->setText(STR("Attached process terminated (code " << *e << ") - press a key to exit"));
-            header_->setVisible(true);
+            setTitle(STR("Attached process terminated (code " << *e << ") - press a key to exit"));
             setIcon(Icon::Notification);
             // disable the terminal
             terminal_->setEnabled(false);
@@ -108,15 +102,16 @@ namespace tpp {
                 closeRenderer();
             } else {
                 setIcon(Icon::Default);
-                ui::RootWindow::keyDown(k);
+                if (k == SHORTCUT_ABOUT)
+                    about_->show();
+                else
+                    ui::RootWindow::keyDown(k);
             }
         }
 
         vterm::PTY * pty_;
         vterm::Terminal * terminal_;
-        ui::Label * header_;
-
-        helpers::Timer headerTimer_;
+        AboutBox * about_;
 
         std::ofstream logFile_;
 

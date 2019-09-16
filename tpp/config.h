@@ -18,6 +18,7 @@
 #define SHORTCUT_ZOOM_OUT (ui::Key::Minus + ui::Key::Ctrl)
 #define SHORTCUT_FULLSCREEN (ui::Key::Enter + ui::Key::Alt)
 #define SHORTCUT_PASTE (ui::Key::V + ui::Key::Ctrl + ui::Key::Shift)
+#define SHORTCUT_ABOUT (ui::Key::F1 + ui::Key::Ctrl)
 
 namespace tpp {	
 	
