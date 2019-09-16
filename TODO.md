@@ -1,5 +1,4 @@
-﻿
-## Bugs and missing features
+﻿## Bugs and missing features
 
 - add zoom out? and default zoom? 
 - add the extra attributes drawing
@@ -31,6 +30,8 @@
 
 # UI
 
+- add showModal(Widget *) to root window, which would dim the background and then display the widget centered
+- allow container to reverse order of its elements (so that maximized and horizontal layouts can be used nicely with header lines both up and down)
 - onChange handler for generic changes
 - make canvas do more
 - mouseFocus, should it disapper when mouse moves from parent to child? 

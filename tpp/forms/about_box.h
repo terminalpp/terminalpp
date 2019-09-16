@@ -81,7 +81,7 @@ namespace tpp {
                 canvas.textOut(Point(x + 15, y + 4), STR(stamp.commit() << (stamp.clean() ? "" : "*")), Color::White(), ui::Font());
                 canvas.textOut(Point(x + 15, y + 5), stamp.time(), Color::White(), ui::Font());
             }
-            canvas.textOut(Point(x + 5, y + 7), STR("platform: " << ARCH << " " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION), Color::White(), ui::Font());
+            canvas.textOut(Point(x + 5, y + 7), STR("platform: " << ARCH << " " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()), Color::White(), ui::Font());
             canvas.textOut(Point(x + 20, y + 9), "Hit a key to dismiss", Color::White(), ui::Font());
         }
 

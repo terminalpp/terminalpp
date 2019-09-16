@@ -25,6 +25,14 @@ namespace helpers {
 			return time_;
 		}
 
+		std::string buildType() const {
+#if (defined NDEBUG)
+			return "release";
+#else
+			return "debug";
+#endif
+		}
+
 		/** Outputs the stamp as a C++ macro. 
 		 */
 		void outputCppMacro(std::ostream& s) const {
