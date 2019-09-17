@@ -7,7 +7,7 @@
 
 #include "vterm/vt100.h"
 
-#include "config.h"
+#include "../config.h"
 
 #include "about_box.h"
 

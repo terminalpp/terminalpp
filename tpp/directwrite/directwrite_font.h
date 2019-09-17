@@ -3,7 +3,7 @@
 
 #include "helpers/string.h"
 
-#include "config.h"
+#include "../config.h"
 
 #include "../font.h"
 #include "directwrite_application.h"
