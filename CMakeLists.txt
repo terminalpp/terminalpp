@@ -3,7 +3,7 @@
 #
 cmake_minimum_required (VERSION 3.5)
 
-project(tpp VERSION 0.2.1)
+project(tpp VERSION 0.2)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
 
@@ -138,3 +138,21 @@ if(WIN32)
         add_dependencies(assets assets-msi)
     endif()
 endif() 
+
+# Builds the snap package for linux
+#
+# Under development. 
+if(UNIX)
+    find_program(SNAP snapcraft)
+    if(SNAP)
+        message(STATUS "snapcraft found in ${SNAP}, snap package will be added to assets")
+        # create the build directory and configure the WiX configuration in it
+        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/snap/tpp.yaml ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/snapcraft.yaml @ONLY)
+        add_custom_target(assets-snap
+            COMMAND snapcraft
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets/snap
+            )
+        set_target_properties(assets-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_dependencies(assets assets-snap)
+    endif()
+endif()

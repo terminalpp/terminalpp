@@ -1,0 +1,37 @@
+name: tpp 
+base: core18
+version: '@PROJECT_VERSION@'
+summary: Cross-platform terminal emulator.
+description: |
+  tpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+parts:
+  tpp:
+    source: https://github.com/zduka/tpp.git
+    #source-tag: v@PROJECT_VERSION@
+    plugin: cmake
+    configflags: ["-DCMAKE_BUILD_TYPE=Debug"]
+    build-packages:
+      - g++
+      - libx11-dev
+      - libxft-dev
+    stage-packages:
+      - libfontconfig1
+      - libfreetype6
+      - libpng16-16
+      - libx11-6
+      - libxau6
+      - libxcb1
+      - libxdmcp6
+      - libxft2
+      - libxrender1
+
+apps:
+  tpp:
+      command: tpp
+      environment:
+          DISABLE_WAYLAND: 1
+          
