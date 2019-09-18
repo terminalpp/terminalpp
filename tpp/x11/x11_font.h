@@ -64,6 +64,15 @@ namespace tpp {
             X11Application * app = X11Application::Instance();
             double fontHeight = cellHeight;
             xftFont_ = MatchFont(pattern_);
+            if (xftFont_ == nullptr) {
+                FcValue fontName;
+                FcPatternGet(pattern_, FC_FAMILY, 0, &fontName);
+                Application::Alert(STR("Unable to load font family " << fontName.u.s << ", trying fallback"));
+                // for the fallback, just remove the font family from the pattern and see if we get *any* font
+                FcPatternDel(pattern_, FC_FAMILY);
+                xftFont_ = MatchFont(pattern_);
+                OSCHECK(xftFont_ != nullptr) << "Unable to initialize fallback font.";
+            }
             // if the font height is not the cellHeight, update the pixel size accordingly and get the font again
             if (static_cast<unsigned>(xftFont_->ascent + xftFont_->descent) != cellHeight) {
                 fontHeight = fontHeight * fontHeight / (xftFont_->ascent + xftFont_->descent);

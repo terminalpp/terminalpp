@@ -24,14 +24,6 @@ namespace tpp {
             return dynamic_cast<X11Application*>(Application::Instance());
         }
 
-        /** Displays a GUI alert. 
-         
-            Because X11 does not have a simple function to display a message box, the method cheats and calls the `xmessage` command with the message as an argument which should display the message window anyways. 
-
-            In the unlikely case that `xmessage` command is not found, the error message will be written to the stdout as a last resort. 
-         */
-        void alert(std::string const & message) override;
-
         std::string getSettingsFolder() override;
 
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;
@@ -57,6 +49,16 @@ namespace tpp {
         FcConfig * fcConfig() const {
             return fcConfig_;
         }
+
+    protected:
+    
+        /** Displays a GUI alert. 
+         
+            Because X11 does not have a simple function to display a message box, the method cheats and calls the `xmessage` command with the message as an argument which should display the message window anyways. 
+
+            In the unlikely case that `xmessage` command is not found, the error message will be written to the stdout as a last resort. 
+         */
+        void alert(std::string const & message) override;
 
     private:
         friend class X11Window;

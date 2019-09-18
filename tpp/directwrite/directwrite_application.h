@@ -32,11 +32,6 @@ namespace tpp {
             return localeName_;
         }
 
-        void alert(std::string const & message) override {
-            helpers::utf16_string text = helpers::UTF8toUTF16(message);
-        	MessageBox(nullptr, text.c_str(), L"t++", MB_ICONEXCLAMATION);
-        }
-
         std::string getSettingsFolder() override;
 
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;
@@ -50,6 +45,11 @@ namespace tpp {
 
         DirectWriteApplication(HINSTANCE hInstance);
 
+        void alert(std::string const & message) override {
+            helpers::utf16_string text = helpers::UTF8toUTF16(message);
+        	MessageBox(nullptr, text.c_str(), L"t++", MB_ICONEXCLAMATION | MB_TASKMODAL);
+        }
+
         /** Determines whether the WSL is installed or not. 
          */
         bool isWSLPresent() const;
@@ -57,8 +57,6 @@ namespace tpp {
         /** Determines if the ConPTY bypass is present in the WSL or not. 
          */
         bool isBypassPresent() const;
-
-        void updateSettingsFontName(ui::Font font, helpers::JSON & fontFamily);
 
         void updateDefaultSettings(helpers::JSON & json) override;
 

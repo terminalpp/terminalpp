@@ -66,9 +66,13 @@ namespace tpp {
 			BOOL fexists;
 			helpers::utf16_string fname = helpers::UTF8toUTF16(font.doubleWidth() ? Config::Instance().doubleWidthFontFamily() : Config::Instance().fontFamily());
 			app->systemFontCollection_->FindFamilyName(fname.c_str(), &findex, &fexists);
+			if (! fexists) {
+				Application::Alert(STR("Unable to load font family " << (font.doubleWidth() ? Config::Instance().doubleWidthFontFamily() : Config::Instance().fontFamily()) << ", trying fallback font (Consolas)"));
+				app->systemFontCollection_->FindFamilyName(L"Consolas", &findex, &fexists);
+				OSCHECK(fexists) << "Unable to initialize fallback font (Consolas)";
+			}
 			Microsoft::WRL::ComPtr<IDWriteFontFamily> ff;
 			app->systemFontCollection_->GetFontFamily(findex, &ff);
-			OSCHECK(ff.Get() != nullptr) << "Unable to find font family " << Config::Instance().fontFamily();
 			// now get the nearest font
 			Microsoft::WRL::ComPtr<IDWriteFont> drw;
 			ff->GetFirstMatchingFont(

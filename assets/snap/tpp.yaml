@@ -28,6 +28,7 @@ parts:
       - libxdmcp6
       - libxft2
       - libxrender1
+      - x11-utils
 
 apps:
   tpp:

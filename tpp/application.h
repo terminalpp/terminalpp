@@ -13,12 +13,12 @@ namespace tpp {
             return Singleton();
         }
 
-        virtual ~Application() {
+        static void Alert(std::string const & message) {
+            Instance()->alert(message);
         }
 
-        /** Displays an alert box with single button to dismiss. 
-         */
-        virtual void alert(std::string const & message) = 0;
+        virtual ~Application() {
+        }
 
         /** Returns the folder to which the terminal should store its settings. 
          */
@@ -38,6 +38,11 @@ namespace tpp {
             ASSERT(Singleton() == nullptr) << "Application assumed to be singleton";
             Singleton() = this;
         }
+
+        /** Displays an alert box with single button to dismiss. 
+         */
+        virtual void alert(std::string const & message) = 0;
+
 
         virtual void updateDefaultSettings(helpers::JSON & json) = 0;
 

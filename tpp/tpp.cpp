@@ -110,11 +110,11 @@ int main(int argc, char* argv[]) {
 
 	    return EXIT_SUCCESS;
 	} catch (helpers::Exception const& e) {
-		Application::Instance()->alert(STR(e));
+		Application::Alert(STR(e));
 	} catch (std::exception const& e) {
-		Application::Instance()->alert(e.what());
+		Application::Alert(e.what());
 	} catch (...) {
-		Application::Instance()->alert("Unknown error");
+		Application::Alert("Unknown error");
 	} 
 	return EXIT_FAILURE;
 }

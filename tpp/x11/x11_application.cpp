@@ -85,17 +85,11 @@ namespace tpp {
 		    cmd.add(helpers::JSON(getpwuid(getuid())->pw_shell));
 	}
 
-	void X11Application::alert(std::string const & message) {
-		if (system(STR("xmessage -center \"" << message << "\"").c_str()) != EXIT_SUCCESS) 
-            std::cout << message << std::endl;
-	}
-
 	std::string X11Application::getSettingsFolder() {
 		std::string localSettings(helpers::LocalSettingsDir() + "/terminalpp");
 		helpers::EnsurePath(localSettings);
 		return localSettings + "/";
 	}
-
 
     Window * X11Application::createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) {
 		return new X11Window(title, cols, rows, cellHeightPx);
@@ -123,6 +117,12 @@ namespace tpp {
 			LOG << "Main loop terminated.";
 		}
 	}
+
+	void X11Application::alert(std::string const & message) {
+		if (system(STR("xmessage -center \"" << message << "\"").c_str()) != EXIT_SUCCESS) 
+            std::cout << message << std::endl;
+	}
+
 
 	void X11Application::openInputMethod() {
 		// set the default machine locale instead of the "C" locale

@@ -204,13 +204,17 @@ namespace tpp {
     protected:
 
 		RendererWindow(int cols, int rows, unsigned cellWidthPx, unsigned baseCellHeightPx) :
-            Window(cols, rows, cellWidthPx, baseCellHeightPx) {
+            Window(cols, rows, cellWidthPx, baseCellHeightPx),
+            painting_{0} {
         }
 
         /** Draws the provided buffer in the window. 
          */
         void paint() override {
             if (!attached())
+                return;
+            // see if we are the first one to paint, terminate if not
+            if (++painting_ != 1)
                 return;
             #define initializeDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->initializeDraw(__VA_ARGS__)
             #define initializeGlyphRun(...) reinterpret_cast<IMPLEMENTATION*>(this)->initializeGlyphRun(__VA_ARGS__)
@@ -289,6 +293,11 @@ namespace tpp {
                 finalizeDraw();
             }
 			t.stop();
+            // if there were any paint requests while we were painting, request a repaint
+            if (--painting_ != 0) {
+                painting_ = 0;
+                requestRender(ui::Rect(cols_, rows_));
+            }
 			//std::cout << "Paint: " << t.value() << " ms\n" ;
             // and we are done
             #undef initializeDraw
@@ -302,6 +311,10 @@ namespace tpp {
             #undef drawGlyphRun
             #undef finalizeDraw
         }
+
+        /** Mutex guarding the paint method, making sure only one paint is executed and if paint requests are received while painting, they will be buffered and new paint issued to them after current paint finishes. 
+         */
+        std::atomic<unsigned> painting_;
 
         ui::Cell statusCell_;
 

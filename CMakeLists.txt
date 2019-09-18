@@ -174,6 +174,7 @@ if(UNIX)
         # create the build directory and configure the WiX configuration in it
         configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/snap/tpp.yaml ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/snapcraft.yaml @ONLY)
         add_custom_target(assets-snap
+            COMMAND snapcraft clean
             COMMAND snapcraft
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets/snap
             )

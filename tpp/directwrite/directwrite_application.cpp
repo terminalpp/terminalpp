@@ -60,19 +60,6 @@ namespace tpp {
 		return output.find("Terminal++ Bypass, version") == 0;
 	}
 
-	void DirectWriteApplication::updateSettingsFontName(ui::Font font, helpers::JSON & fontFamily) {
-		try {
-			Font<DirectWriteFont>::GetOrCreate(font, 0, Config::Instance().fontSize());
-		} catch (helpers::OSError const &) {
-			fontFamily = "Consolas";
-			try {
-				Font<DirectWriteFont>::GetOrCreate(font, 0, Config::Instance().fontSize());
-    		} catch (helpers::OSError const &) {
-				MessageBox(nullptr, L"Unable to determine default font. Please edit the settings file manually.", L"Error", MB_ICONSTOP);
-			}
-		}
-	}
-
 	void DirectWriteApplication::updateDefaultSettings(helpers::JSON & json) {
 		helpers::JSON & cmd = json["session"]["command"];
 		if (cmd.numElements() == 0) {
@@ -93,9 +80,6 @@ namespace tpp {
 				}
 			}
 		}
-		// determine the font, try the default one, if not found, try Consolas
-		updateSettingsFontName(ui::Font(), json["font"]["family"]);
-		updateSettingsFontName(ui::Font().setDoubleWidth(), json["font"]["doubleWidthFamily"]);
 	}
 
 	std::string DirectWriteApplication::getSettingsFolder() {
