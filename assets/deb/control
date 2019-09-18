@@ -1,0 +1,10 @@
+Package: tpp
+Version: @PROJECT_VERSION@
+Section: utils
+Depends: libx11-6, x11-utils, libxft2
+Priority: optional
+Architecture: all
+Maintainer: Zduka <zduka@outlook.com>
+Homepage: https://terminalpp.com/
+Installed-Size: 1024
+Description: Cross-platform terminal emulator.

@@ -139,6 +139,31 @@ if(WIN32)
     endif()
 endif() 
 
+# Debian package
+#
+# Creates a simple debian installation package which installs the tpp (no fonts) and registers it as an x-terminal-emulator alternative.
+#
+# For now, the size is not calculated, but kept at 1MB. 
+if(UNIX)
+    find_program(DPKG dpkg-deb)
+    if(DPKG)
+        message(STATUS "dpkg-deb found in ${DPKG}, deb package will be added to assets")
+        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/deb/control ${CMAKE_CURRENT_BINARY_DIR}/assets/deb/tpp/DEBIAN/control @ONLY)
+        add_custom_target(assets-deb
+            COMMAND mkdir -p tpp/usr/bin 
+            COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/tpp tpp/usr/bin/tpp
+            COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/assets/deb/postinst tpp/DEBIAN/postinst
+            COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/assets/deb/prerm tpp/DEBIAN/prerm
+            COMMAND chmod -R 0755 tpp
+            COMMAND dpkg-deb --build tpp
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets/deb
+        )
+        set_target_properties(assets-deb PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_dependencies(assets assets-deb)
+        add_dependencies(assets-deb tpp)
+    endif()
+endif()
+
 # Builds the snap package for linux
 #
 # Under development. 
