@@ -6,7 +6,7 @@ description: |
   tpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.
 
 grade: devel # must be 'stable' to release into candidate/stable channels
-confinement: devmode # use 'strict' once you have the right plugs and slots
+confinement: classic
 
 parts:
   tpp:
@@ -35,4 +35,5 @@ apps:
       command: tpp
       environment:
           DISABLE_WAYLAND: 1
+      
           
