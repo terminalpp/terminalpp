@@ -200,6 +200,7 @@ namespace ui {
 		24 bits text (RGB)
 		24 bits background (RGB)
 		32 bits decoration (RGBA)
+		32 bits border (RGBA)
 		8 bits font (bold, italics, 8 sizes, 3bits reserved)
         16 bits decorations
 		3 bits remanining (application specific, such as line end, modified, etc)
@@ -212,12 +213,12 @@ namespace ui {
 		/** Default cell constructor is white space on black background. 
 		 */
 		Cell():
-			big_{ 0xffffff0000000020, 0xffffffff00000000 } {
-			static_assert(sizeof(Cell) == 16, "Invalid cell size, padding must be adjusted");
+			big_{ 0xffffff0000000020, 0xffffffff00000000, 0x0000000000000000 } {
+			static_assert(sizeof(Cell) == 24, "Invalid cell size, padding must be adjusted");
 		}
 
 		Cell(Cell const & other):
-		    big_{other.big_[0], other.big_[1]} {
+		    big_{other.big_[0], other.big_[1], other.big_[2]} {
 		}
 
 
@@ -253,6 +254,10 @@ namespace ui {
 			return Color(small_[3]);
 		}
 
+		Color borderColor() const {
+			return Color(small_[4]);
+		}
+
 		Attributes attributes() const {
 			return Attributes(((small_[1] & 0xff) << 8) + (small_[2] & 0xff));
 		}
@@ -264,11 +269,11 @@ namespace ui {
 		}
 
 		bool operator == (Cell const & other) const {
-			return big_[0] == other.big_[0] && big_[1] == other.big_[1];
+			return big_[0] == other.big_[0] && big_[1] == other.big_[1] && big_[2] == other.big_[2];
 		}
 
 		bool operator != (Cell const & other) const {
-			return big_[0] != other.big_[0] || big_[1] != other.big_[1];
+			return big_[0] != other.big_[0] || big_[1] != other.big_[1] || big_[2] != other.big_[2];
 		}
 
 		/** Returns true if the cells has text cursor in it. 
@@ -339,6 +344,13 @@ namespace ui {
 			return cell;
 		}
 
+		/** Border color */
+		template<typename CELL>
+		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, BorderColorHolder color) {
+			cell.small_[4] = color.value.toRGBA();
+			return cell;
+		}
+
 		/** Sets the attributes of the cell. 
     	 */
 		template<typename CELL>
@@ -385,8 +397,8 @@ namespace ui {
 		}
 
 	    union {
-			uint64_t big_[2];
-			uint32_t small_[4];
+			uint64_t big_[3];
+			uint32_t small_[6];
 		};
 	}; // ui::Cell
 

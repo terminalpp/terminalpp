@@ -122,6 +122,10 @@ namespace ui {
 	    Color value;
 	};
 
+	struct BorderColorHolder {
+	    Color value;
+	};
+
 	inline ForegroundColorHolder Foreground(Color color) {
 		return ForegroundColorHolder{color};
 	}
@@ -132,6 +136,10 @@ namespace ui {
 
 	inline DecorationColorHolder DecorationColor(Color color) {
 		return DecorationColorHolder{color};
+	}
+
+	inline BorderColorHolder BorderColor(Color color) {
+		return BorderColorHolder{color};
 	}
 
 } // namespace ui

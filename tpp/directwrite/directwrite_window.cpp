@@ -57,6 +57,10 @@ namespace tpp {
 				D2D1::ColorF(D2D1::ColorF::White),
 				&decor_
 			)));
+			OSCHECK(SUCCEEDED(rt_->CreateSolidColorBrush(
+				D2D1::ColorF(0xffffff, 0.5),
+				&border_
+			)));
 			ZeroMemory(&glyphRun_, sizeof(DWRITE_GLYPH_RUN));
 
 			updateDirectWriteStructures(cols_);

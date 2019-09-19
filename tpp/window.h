@@ -223,6 +223,7 @@ namespace tpp {
             #define setForegroundColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setForegroundColor(__VA_ARGS__)
             #define setBackgroundColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setBackgroundColor(__VA_ARGS__)
             #define setDecorationColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setDecorationColor(__VA_ARGS__)
+            #define setBorderColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setBorderColor(__VA_ARGS__)
             #define setAttributes(...) reinterpret_cast<IMPLEMENTATION*>(this)->setAttributes(__VA_ARGS__)
             #define drawGlyphRun(...) reinterpret_cast<IMPLEMENTATION*>(this)->drawGlyphRun(__VA_ARGS__)
             #define finalizeDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
@@ -245,6 +246,7 @@ namespace tpp {
                     for (int col = 0, ce = std::min(cols_, buffer->cols()); col < ce;) {
                         // get the cell to be drawn
                         ui::Cell const & c = buffer->at(col, row);
+                        
                         // now we know the cell must be drawn, determine if the attributes of the cell changed since last cell drawn
                         if ((statusCell_ << c.codepoint()) != c) {
                             drawGlyphRun();
@@ -307,6 +309,7 @@ namespace tpp {
             #undef setForegroundColor
             #undef setBackgroundColor
             #undef setDecorationColor
+            #undef setBorderColor
             #undef setAttributes
             #undef drawGlyphRun
             #undef finalizeDraw
