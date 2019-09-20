@@ -41,7 +41,7 @@ namespace tpp {
                     return i;
 			}
 			// if the character we search the fallback for is double width increase the cell width now
-			cellWidth *= helpers::Char::ColumnWidth(codepoint);
+			//cellWidth *= helpers::Char::ColumnWidth(codepoint);
             T * f = new T(*dynamic_cast<T const *>(this), cellWidth, cellHeight, codepoint);
             fallbackCache.push_back(f);
             return f;

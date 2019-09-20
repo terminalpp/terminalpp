@@ -126,7 +126,6 @@ namespace tpp {
 
         void initializeGlyphRun(int col, int row) {
             textSize_ = 0;
-            textSizeCells_ = 0;
             textCol_ = col;
             textRow_ = row;
         }
@@ -144,7 +143,6 @@ namespace tpp {
                 text_[0].x = textCol_ * cellWidthPx_ + font_->offsetLeft();
                 text_[0].y = (textRow_ + 1 - font_->font().height()) * cellHeightPx_ + font_->ascent() + font_->offsetTop();
                 ++textSize_;
-                textSizeCells_ += helpers::Char::ColumnWidth(cell.codepoint());
                 drawGlyphRun();
                 initializeGlyphRun(col + font_->font().width(), row);
                 font_ = oldFont;
@@ -157,7 +155,6 @@ namespace tpp {
                     text_[textSize_].y = text_[textSize_ - 1].y;
                 }
                 text_[textSize_].glyph = glyph;
-                textSizeCells_ += helpers::Char::ColumnWidth(cell.codepoint());
                 ++textSize_;
             }
         }
@@ -209,19 +206,18 @@ namespace tpp {
             int fontHeight = statusCell_.font().height();
             // fill the background unless it is fully transparent
             if (bg_.color.alpha != 0)
-			    XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, (textRow_ + 1 - fontHeight) * cellHeightPx_, textSizeCells_ * cellWidthPx_ * fontWidth, cellHeightPx_ * fontHeight);
+			    XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, (textRow_ + 1 - fontHeight) * cellHeightPx_, textSize_ * cellWidthPx_ * fontWidth, cellHeightPx_ * fontHeight);
             // draw the text
             if (!attrs_.blink() || blinkVisible_)
                 XftDrawGlyphSpec(draw_, &fg_, font_->xftFont(), text_, textSize_);
             // deal with the attributes
             if (!attrs_.emptyDecorations()) {
                 if (attrs_.underline() && (!attrs_.blink() || blinkVisible_))
-					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->underlineOffset(), cellWidthPx_ * textSizeCells_, font_->underlineThickness());
+					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->underlineOffset(), cellWidthPx_ * textSize_, font_->underlineThickness());
                 if (attrs_.strikethrough() && (!attrs_.blink() || blinkVisible_))
-					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->strikethroughOffset(), cellWidthPx_ * textSizeCells_, font_->strikethroughThickness());
+					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->strikethroughOffset(), cellWidthPx_ * textSize_, font_->strikethroughThickness());
             }
             textSize_ = 0;
-            textSizeCells_ = 0;
         }
 
         void drawBorder(ui::Attributes attrs, int left, int top, int width) {
@@ -324,7 +320,6 @@ namespace tpp {
         unsigned textCol_;
         unsigned textRow_;
         unsigned textSize_;
-        unsigned textSizeCells_;
         ui::Attributes attrs_;
 
         std::mutex drawGuard_;

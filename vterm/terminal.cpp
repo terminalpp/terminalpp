@@ -255,6 +255,10 @@ namespace vterm {
     }
 
     /** TODO Selection works for CJK and double width characters, is a bit messy for double height characters, but not worth the time now, should be fixed when the selection is restructured and more pasting options are added. 
+     
+        Selection will insert spaces in double width characters which should span multiple columns as this feature is not supported by the renderer and so it is emulated in the terminal by inserting the spaces.
+
+        TODO perhaps change this to not space, but something else so that we can ignore it from the selection? Or ignore this corner case entirely.
      */
     std::string Terminal::selectionContents() {
         if (selection_.empty())
@@ -269,7 +273,7 @@ namespace vterm {
                 for (; p.x < selection_.end().x;) {
                     char32_t cp = buf->at(p.x, p.y).codepoint();
                     line << helpers::Char::FromCodepoint(cp);
-                    p.x += helpers::Char::ColumnWidth(cp) * buf->at(p.x, p.y).font().width();
+                    p.x += buf->at(p.x, p.y).font().width();
                 }
                 result += helpers::TrimRight(line.str());
             } else {
@@ -277,7 +281,7 @@ namespace vterm {
                 for (; p.x < buf->cols(); ) {
                     char32_t cp = buf->at(p.x, p.y).codepoint();
                     line << helpers::Char::FromCodepoint(cp);
-                    p.x += helpers::Char::ColumnWidth(cp) * buf->at(p.x, p.y).font().width();
+                    p.x += buf->at(p.x, p.y).font().width();
 
                 }
                 result += helpers::TrimRight(line.str());
@@ -288,7 +292,7 @@ namespace vterm {
                     for (p.x = 0; p.x < buf->cols(); ) {
                         char32_t cp = buf->at(p.x, p.y).codepoint();
                         line << helpers::Char::FromCodepoint(cp);
-                        p.x += helpers::Char::ColumnWidth(cp) * buf->at(p.x, p.y).font().width();
+                        p.x += buf->at(p.x, p.y).font().width();
                     }
                     result += helpers::TrimRight(line.str());
                 }
@@ -298,7 +302,7 @@ namespace vterm {
                 for (p.y = selection_.end().y - 1, p.x = 0; p.x < selection_.end().x;) {
                     char32_t cp = buf->at(p.x, p.y).codepoint();
                     line << helpers::Char::FromCodepoint(cp);
-                    p.x += helpers::Char::ColumnWidth(cp) * buf->at(p.x, p.y).font().width();
+                    p.x += buf->at(p.x, p.y).font().width();
                 }
                 result += helpers::TrimRight(line.str());
             }

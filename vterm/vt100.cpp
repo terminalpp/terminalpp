@@ -563,6 +563,39 @@ namespace vterm {
                         setLastCharPosition();
                         // move to next column
                         ++buffer_.cursor().pos.x;
+                        // if the character's column width is 2 and current font is not double width, update to double width font
+                        int columnWidth = c8->columnWidth();
+                        if (columnWidth == 2 && ! cell.font().doubleWidth()) {
+                            columnWidth = 1;
+                            cell << cell.font().setDoubleWidth(true);
+                        }
+                        // if the font's size is greater than 1, copy the character as required (if we are at the top row of double height characters, increase the size artificially)
+                        int charWidth = state_.doubleHeightTopLine ? cell.font().width() * 2 : cell.font().width();
+
+                        while (columnWidth > 0 && buffer_.cursor().pos.x < buffer_.cols()) {
+                            for (int i = 1; (i < charWidth) && buffer_.cursor().pos.x < buffer_.cols(); ++i) {
+                                Cell& cell2 = buffer_.at(buffer_.cursor().pos);
+                                // copy current cell properties
+                                cell2 = cell;
+                                // make sure the cell's font is normal size and width and display a space
+                                cell2 << cell.font().setSize(1).setDoubleWidth(0) << ' ';
+                                ++buffer_.cursor().pos.x;
+                            } 
+                            if (--columnWidth > 0 && buffer_.cursor().pos.x < buffer_.cols()) {
+                                Cell& cell2 = buffer_.at(buffer_.cursor().pos);
+                                // copy current cell properties
+                                cell2 = cell;
+                                cell2 <<  ' ';
+                                ++buffer_.cursor().pos.x;
+                            } 
+                        }
+                        /*
+
+                        
+                        int cWidth = c8->columnWidth();
+                        
+
+
                         // determine the proper character size and copy the character if necessary (this will be ignored by the renderer)
                         int charWidth = c8->columnWidth() * state_.cell.font().width();
                         // if we are in the top double height line, just increase the width
@@ -573,7 +606,7 @@ namespace vterm {
                             Cell& cell2 = buffer_.at(buffer_.cursor().pos.x, buffer_.cursor().pos.y);
                             cell2 = cell;
                             ++buffer_.cursor().pos.x;
-                        }
+                        } */
                     }
                 }
             }

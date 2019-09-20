@@ -162,7 +162,6 @@ namespace tpp {
 
         void initializeGlyphRun(int col, int row) {
             glyphRun_.glyphCount = 0;
-            textSizeCells_ = 0;
             glyphRunCol_ = col;
             glyphRunRow_ = row;
         }
@@ -183,7 +182,6 @@ namespace tpp {
                 const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidthPx_ * font_->font().width());
                 font_->fontFace()->GetGlyphIndices(&cp, 1, glyphIndices_);
                 glyphRun_.glyphCount = 1;
-                textSizeCells_ += helpers::Char::ColumnWidth(cell.codepoint());
                 drawGlyphRun();
                 // revert the font back to what we had before and reinitialize the glyphrun to start at next character
                 font_ = oldFont;
@@ -193,7 +191,6 @@ namespace tpp {
             } else {
                 const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidthPx_ * font_->font().width());
                 ++glyphRun_.glyphCount;
-                textSizeCells_ += helpers::Char::ColumnWidth(cell.codepoint());
             }
         }
 
@@ -246,7 +243,7 @@ namespace tpp {
 			D2D1_RECT_F rect = D2D1::RectF(
 				static_cast<FLOAT>(glyphRunCol_ * cellWidthPx_),
 				static_cast<FLOAT>((glyphRunRow_ + 1 - statusCell_.font().height()) * cellHeightPx_),
-				static_cast<FLOAT>((glyphRunCol_ + textSizeCells_ * statusCell_.font().width()) * cellWidthPx_),
+				static_cast<FLOAT>((glyphRunCol_ + glyphRun_.glyphCount * statusCell_.font().width()) * cellWidthPx_),
 				static_cast<FLOAT>((glyphRunRow_ + 1) * cellHeightPx_)
 			);
             // fill it with the background
@@ -271,19 +268,18 @@ namespace tpp {
 					D2D1_POINT_2F start = origin;
 					start.y -= font_->underlineOffset();
 					D2D1_POINT_2F end = start;
-					end.x += textSizeCells_ * cellWidthPx_;
+					end.x += glyphRun_.glyphCount * cellWidthPx_;
 					rt_->DrawLine(start, end, decor_.Get(), font_->underlineThickness());
                 }
                 if (attrs_.strikethrough() && (!attrs_.blink() || blinkVisible_)) {
 					D2D1_POINT_2F start = origin;
 					start.y -= font_->strikethroughOffset();
 					D2D1_POINT_2F end = start;
-					end.x += textSizeCells_ * cellWidthPx_;
+					end.x += glyphRun_.glyphCount * cellWidthPx_;
 					rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness());
                 }
             }
 			glyphRun_.glyphCount = 0;
-            textSizeCells_ = 0;
         }
 
         void drawBorder(ui::Attributes attrs, int left, int top, int width) {
@@ -360,7 +356,6 @@ namespace tpp {
         ui::Attributes attrs_;
 
 		DWRITE_GLYPH_RUN glyphRun_;
-        unsigned textSizeCells_;
 		UINT16 * glyphIndices_;
 		FLOAT * glyphAdvances_;
 		DWRITE_GLYPH_OFFSET * glyphOffsets_;

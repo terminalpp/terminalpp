@@ -71,6 +71,14 @@ namespace vterm {
                 return cells_[y][x];
             }
 
+            Cell const & at(ui::Point pos) const {
+                return at(pos.x, pos.y);
+            }
+
+            Cell & at(ui::Point pos) {
+                return at(pos.x, pos.y);
+            }
+
             Cursor const & cursor() const {
                 return cursor_;
             }
