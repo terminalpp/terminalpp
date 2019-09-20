@@ -75,7 +75,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DirectWriteApplication::Initialize(hInstance);
 #else
 int main(int argc, char* argv[]) {
-	X11Application::Initialize();
+    try {
+	    X11Application::Initialize();
+    } catch (helpers::Exception const & e) {
+        std::cerr << e << std::endl;
+        return EXIT_FAILURE;
+    }
 #endif
 	try {
     	Config const & config = Config::Initialize(argc, argv);

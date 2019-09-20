@@ -48,3 +48,5 @@ On Windows:
 
 https://msdn.microsoft.com/en-us/magazine/ee819134.aspx?f=255&MSPPError=-2147217396
 and use layered windows
+
+sudo snap install --classic snapcraft

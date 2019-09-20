@@ -28,8 +28,9 @@ namespace tpp {
 		selectionOwner_{nullptr} {
         XInitThreads();
 		xDisplay_ = XOpenDisplay(nullptr);
-		if (xDisplay_ == nullptr)
+		if (xDisplay_ == nullptr) {
 			THROW(helpers::Exception()) << "Unable to open X display";
+        }
 		xScreen_ = DefaultScreen(xDisplay_);
 
 		XSetErrorHandler(X11ErrorHandler);

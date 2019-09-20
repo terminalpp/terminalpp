@@ -173,12 +173,20 @@ if(UNIX)
         message(STATUS "snapcraft found in ${SNAP}, snap package will be added to assets")
         # create the build directory and configure the WiX configuration in it
         configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/snap/tpp.yaml ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/snapcraft.yaml @ONLY)
+        add_custom_target(assets-snap-copy-tpp
+            COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/source
+            COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/source
+            COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/source --exclude-from=.gitignore --exclude=.vscode --exclude=.git
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+        set_target_properties(assets-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
         add_custom_target(assets-snap
-            COMMAND snapcraft clean
+            #COMMAND snapcraft clean
             COMMAND snapcraft
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets/snap
-            )
+        )
         set_target_properties(assets-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_dependencies(assets-snap assets-snap-copy-tpp)
         add_dependencies(assets assets-snap)
     endif()
 endif()

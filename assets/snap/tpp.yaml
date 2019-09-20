@@ -9,8 +9,14 @@ grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: classic
 
 parts:
+  #tpp-gather:
+    #source: file://@CMAKE_CURRENT_SOURCE_DIR@
+    #plugin: dump
   tpp:
-    source: https://github.com/zduka/tpp.git
+    source: "./source"
+    source-type: local
+    #source: tpp-gather
+    #source: https://github.com/zduka/tpp.git
     #source-tag: v@PROJECT_VERSION@
     plugin: cmake
     configflags: ["-DCMAKE_BUILD_TYPE=Debug"]
