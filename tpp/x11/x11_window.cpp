@@ -383,6 +383,7 @@ namespace tpp {
             case KeyPress: {
 				unsigned modifiers = GetStateModifiers(e.xkey.state);
 				window->activeModifiers_ = ui::Key(ui::Key::Invalid, modifiers);
+                // see if the key corresponds to a printable characters for which keyChar should be generated
 				KeySym kSym;
                 char str[32];
                 Status status;
@@ -391,22 +392,20 @@ namespace tpp {
 					strLen = Xutf8LookupString(window->ic_, &e.xkey, str, sizeof str, &kSym, &status);
 				else
 					strLen = XLookupString(&e.xkey, str, sizeof str, &kSym, nullptr);
-                // if it is printable character and there were no modifiers other than shift pressed, we are dealing with printable character (backspace is not printable character)
-                if (strLen > 0 && (str[0] < 0 || str[0] >= 0x20) && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
-                    char * x = reinterpret_cast<char*>(& str);
-					helpers::Char const* c = helpers::Char::At(x, x + 32);
-					if (c != nullptr) {
-						window->keyChar(*c);
-					    break;
-                    }
-                }
-                // otherwise if the keysym was recognized, it is a keyDown event
+                // if the keysym was recognized, it is a keyDown event first
                 ui::Key key = GetKey(kSym, modifiers, true);
-				// if the modifiers were updated (i.e. the key is Shift, Ctrl, Alt or Win, updated active modifiers
+				// if the modifiers were updated (i.e. the key is Shift, Ctrl, Alt or Win, update active modifiers
 				if (modifiers != key.modifiers())
 					window->activeModifiers_ = ui::Key(ui::Key::Invalid, modifiers);
 				if (key != ui::Key::Invalid)
                     window->keyDown(key);
+                // if it is printable character and there were no modifiers other than shift pressed, we are dealing with printable character (backspace is not printable character)
+                if (strLen > 0 && (str[0] < 0 || str[0] >= 0x20) && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
+                    char * x = reinterpret_cast<char*>(& str);
+					helpers::Char const* c = helpers::Char::At(x, x + 32);
+					if (c != nullptr) 
+						window->keyChar(*c);
+                }
                 break;
             }
 			/* In case of key up event we must make sure the modifier keys are returned with their modifier bit enabled as well, so that they can be easily mathed to their corresponding key down events.

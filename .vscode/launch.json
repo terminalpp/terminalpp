@@ -19,7 +19,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/tpp/tpp",
+            "program": "${workspaceFolder}/build/tpp",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

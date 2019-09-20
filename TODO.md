@@ -1,5 +1,4 @@
 ﻿- clean shapes - rect, to provide the points for corners on demand
-- on linux, dismiss of the about box does not work
 - on both - double size characters extend blue background to places where it should not have happened (perhaps the draw rect should also set font size to normal?)
 
 ## Bugs and missing features
