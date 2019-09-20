@@ -110,6 +110,21 @@ namespace ui {
         }
     }
 
+    void Canvas::fill(Cell * cell, Brush const & brush) {
+        if (!cell)
+            return;
+        *cell << Background(brush.color.blendOver(cell->background()));
+        if (brush.fill == helpers::Char::NUL) {
+            *cell << Foreground(brush.color.blendOver(cell->foreground()))
+                << DecorationColor(brush.color.blendOver(cell->decorationColor()));
+        } else {
+            *cell << brush.fill 
+                << Foreground(brush.fillColor)
+                << brush.fillFont; 
+        }
+
+    }
+
 	void Canvas::textOut(Point start, std::string const& text, Color color, Font font) {
 		char const* i = text.c_str();
 		char const* e = i + text.size();
@@ -126,21 +141,44 @@ namespace ui {
 		}
 	}
 
-    void Canvas::fill(Cell * cell, Brush const & brush) {
-        if (!cell)
-            return;
-        *cell << Background(brush.color.blendOver(cell->background()));
-        if (brush.fill == helpers::Char::NUL) {
-            *cell << Foreground(brush.color.blendOver(cell->foreground()))
-                << DecorationColor(brush.color.blendOver(cell->decorationColor()));
-        } else {
-            *cell << brush.fill 
-                << Foreground(brush.fillColor)
-                << brush.fillFont; 
-        }
-
+    void Canvas::borderRect(Rect const & rect, Color color, bool thick) {
+        borderLineTop(rect.topLeft, rect.width(), color, thick);
+        borderLineBottom(Point(rect.topLeft.x, rect.bottomRight.y - 1), rect.width(), color, thick);
+        borderLineLeft(rect.topLeft, rect.height(), color, thick);
+        borderLineRight(Point(rect.bottomRight.x - 1, rect.topLeft.y), rect.height(), color, thick);
     }
 
+    void Canvas::borderLineTop(Point start, int width, Color color, bool thick) {
+        int end = start.x + width;
+        for (; start.x < end; ++start.x) {
+            if (Cell * cell = at(start)) 
+                (*cell) << BorderColor(color) << (cell->attributes().setBorderTop().setBorderThick(thick));
+        }
+    }
+
+    void Canvas::borderLineBottom(Point start, int width, Color color, bool thick) {
+        int end = start.x + width;
+        for (; start.x < end; ++start.x) {
+            if (Cell * cell = at(start)) 
+                (*cell) << BorderColor(color) << (cell->attributes().setBorderBottom().setBorderThick(thick));
+        }
+    }
+
+    void Canvas::borderLineLeft(Point start, int height, Color color, bool thick) {
+        int end = start.y + height;
+        for (; start.y < end; ++start.y) {
+            if (Cell * cell = at(start)) 
+                (*cell) << BorderColor(color) << (cell->attributes().setBorderLeft().setBorderThick(thick));
+        }
+    }
+
+    void Canvas::borderLineRight(Point start, int height, Color color, bool thick) {
+        int end = start.y + height;
+        for (; start.y < end; ++start.y) {
+            if (Cell * cell = at(start)) 
+                (*cell) << BorderColor(color) << (cell->attributes().setBorderRight().setBorderThick(thick));
+        }
+    }
 
 
 

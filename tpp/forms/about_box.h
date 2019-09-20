@@ -83,6 +83,8 @@ namespace tpp {
             }
             canvas.textOut(Point(x + 5, y + 7), STR("platform: " << ARCH << " " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()), Color::White(), ui::Font());
             canvas.textOut(Point(x + 20, y + 9), "Hit a key to dismiss", Color::White(), ui::Font());
+            // finally, draw the border
+            canvas.borderRect(Rect(x, y, x + 60, y + 10), ui::Color::White(), false);
         }
 
     private:

@@ -226,6 +226,7 @@ namespace tpp {
             #define setBorderColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setBorderColor(__VA_ARGS__)
             #define setAttributes(...) reinterpret_cast<IMPLEMENTATION*>(this)->setAttributes(__VA_ARGS__)
             #define drawGlyphRun(...) reinterpret_cast<IMPLEMENTATION*>(this)->drawGlyphRun(__VA_ARGS__)
+            #define drawBorder(...) reinterpret_cast<IMPLEMENTATION*>(this)->drawBorder(__VA_ARGS__)
             #define finalizeDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
 
             helpers::Stopwatch t;
@@ -246,7 +247,6 @@ namespace tpp {
                     for (int col = 0, ce = std::min(cols_, buffer->cols()); col < ce;) {
                         // get the cell to be drawn
                         ui::Cell const & c = buffer->at(col, row);
-                        
                         // now we know the cell must be drawn, determine if the attributes of the cell changed since last cell drawn
                         if ((statusCell_ << c.codepoint()) != c) {
                             drawGlyphRun();
@@ -292,6 +292,23 @@ namespace tpp {
                     }
                 }
                 lastCursorPosition_ = cursor.pos;
+                // finally, draw the border, which is done on the base cell level over the already drawn text
+                statusCell_ = buffer->at(0,0);
+                setBorderColor(statusCell_.borderColor());
+                int wThin = std::min(cellWidthPx_, cellHeightPx_) / 4;
+                int wThick = std::min(cellWidthPx_, cellHeightPx_) / 2;
+                for (int row = 0, re = std::min(rows_, buffer->rows()); row < re; ++row) {
+                    for (int col = 0, ce = std::min(cols_, buffer->cols()); col < ce; ++col) {
+                        ui::Cell const & c = buffer->at(col, row);
+                        if (statusCell_.borderColor() != c.borderColor()) {
+                            statusCell_ << ui::BorderColor(c.borderColor());
+                            setBorderColor(statusCell_.borderColor());
+                        }
+                        ui::Attributes attrs = c.attributes();
+                        if (attrs.border())
+                            drawBorder(attrs, col * cellWidthPx_, row * cellHeightPx_, attrs.borderThick() ? wThick : wThin);
+                    }
+                }
                 finalizeDraw();
             }
 			t.stop();
@@ -300,6 +317,7 @@ namespace tpp {
                 painting_ = 0;
                 requestRender(ui::Rect(cols_, rows_));
             }
+            
 			//std::cout << "Paint: " << t.value() << " ms\n" ;
             // and we are done
             #undef initializeDraw
@@ -312,6 +330,7 @@ namespace tpp {
             #undef setBorderColor
             #undef setAttributes
             #undef drawGlyphRun
+            #undef drawBorder
             #undef finalizeDraw
         }
 

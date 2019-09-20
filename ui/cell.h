@@ -96,10 +96,6 @@ namespace ui {
 			return raw_ & BORDER_THICK;
 		}
 
-		bool borderAbove() const {
-			return raw_ & BORDER_ABOVE;
-		}
-
 		bool blink() const {
 			return raw_ & BLINK;
 		}
@@ -115,6 +111,48 @@ namespace ui {
 		bool operator != (Attributes other) const {
 			return raw_ != other.raw_;
 		}
+
+		Attributes & setBorderLeft(bool value = true) {
+			if (value)
+			    raw_ |= BORDER_LEFT;
+			else
+			    raw_ &= ~ BORDER_LEFT;
+			return *this;
+		}
+
+		Attributes & setBorderTop(bool value = true) {
+			if (value)
+			    raw_ |= BORDER_TOP;
+			else
+			    raw_ &= ~ BORDER_TOP;
+			return *this;
+		}
+
+		Attributes & setBorderRight(bool value = true) {
+			if (value)
+			    raw_ |= BORDER_RIGHT;
+			else
+			    raw_ &= ~ BORDER_RIGHT;
+			return *this;
+		}
+
+		Attributes & setBorderBottom(bool value = true) {
+			if (value)
+			    raw_ |= BORDER_BOTTOM;
+			else
+			    raw_ &= ~ BORDER_BOTTOM;
+			return *this;
+		}
+
+		Attributes & setBorderThick(bool value = true) {
+			if (value)
+			    raw_ |= BORDER_THICK;
+			else
+			    raw_ &= ~ BORDER_THICK;
+			return *this;
+		}
+
+
 
 		Attributes operator + (Attributes other) const {
 			return Attributes(raw_ | other.raw_);
@@ -156,10 +194,6 @@ namespace ui {
 			return Attributes(BORDER_THICK);
 		}
 
-		static Attributes BorderAbove() {
-			return Attributes(BORDER_ABOVE);
-		}
-
 		static Attributes Blink() {
 			return Attributes(BLINK);
 		}
@@ -180,7 +214,6 @@ namespace ui {
 		static constexpr uint16_t BORDER_RIGHT = 1 << 5;
 		static constexpr uint16_t BORDER_BOTTOM = 1 << 6;
 		static constexpr uint16_t BORDER_THICK = 1 << 7;
-		static constexpr uint16_t BORDER_ABOVE = 1 << 8;
 		static constexpr uint16_t BLINK = 1 << 9;
 
 		static constexpr uint16_t END_OF_LINE = 1 << 15;
@@ -213,7 +246,7 @@ namespace ui {
 		/** Default cell constructor is white space on black background. 
 		 */
 		Cell():
-			big_{ 0xffffff0000000020, 0xffffffff00000000, 0x0000000000000000 } {
+			big_{ 0xffffff0000000020, 0xffffffff00000000, 0x0000000000ff0080 } {
 			static_assert(sizeof(Cell) == 24, "Invalid cell size, padding must be adjusted");
 		}
 

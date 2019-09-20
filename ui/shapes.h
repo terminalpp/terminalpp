@@ -91,6 +91,14 @@ namespace ui {
             return bottomRight.y - topLeft.y;
         }
 
+		Point bottomLeft() const {
+			return Point(topLeft.x, bottomRight.y);
+		}
+
+		Point topRight() const {
+			return Point(bottomRight.x, topLeft.y);
+		}
+
 		/** Returns true if the rectangle contains given point. 
 		 */
 		bool contains(Point point) const {

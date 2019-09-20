@@ -210,9 +210,6 @@ namespace tpp {
             // fill the background unless it is fully transparent
             if (bg_.color.alpha != 0)
 			    XftDrawRect(draw_, &bg_, textCol_ * cellWidthPx_, (textRow_ + 1 - fontHeight) * cellHeightPx_, textSizeCells_ * cellWidthPx_ * fontWidth, cellHeightPx_ * fontHeight);
-            // if the there is any border to be drawn and the border should not be drawn above the text, draw it now
-            if (statusCell_.attributes().border() && ! statusCell_.attributes().borderAbove())
-                drawBorders(textCol_ * cellWidthPx_, (textRow_ + 1 - fontHeight) * cellHeightPx_, textSizeCells_ * cellWidthPx_ * fontWidth);
             // draw the text
             if (!attrs_.blink() || blinkVisible_)
                 XftDrawGlyphSpec(draw_, &fg_, font_->xftFont(), text_, textSize_);
@@ -223,78 +220,60 @@ namespace tpp {
                 if (attrs_.strikethrough() && (!attrs_.blink() || blinkVisible_))
 					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->strikethroughOffset(), cellWidthPx_ * textSizeCells_, font_->strikethroughThickness());
             }
-            // if there is any border and the border should be drawn above the text, draw it now
-            if (statusCell_.attributes().border() && statusCell_.attributes().borderAbove())
-                drawBorders(textCol_ * cellWidthPx_, (textRow_ + 1 - fontHeight) * cellHeightPx_, textSizeCells_ * cellWidthPx_ * fontWidth);
             textSize_ = 0;
             textSizeCells_ = 0;
         }
 
-        void drawBorders(int left, int top, unsigned width) {
-            //ASSERT(statusCell_.attributes().border()); 
-            ui::Attributes attrs = statusCell_.attributes();
-            unsigned cw = cellWidthPx_ * statusCell_.font().width();
-            unsigned ch = cellHeightPx_ * statusCell_.font().height();
-            unsigned ht = attrs.borderThick() ? (cellHeightPx_ / 2) : (cellHeightPx_ / 4);
-            unsigned vt = attrs.borderThick() ? (cellWidthPx_ / 2) : (cellWidthPx_ / 4);
-            // if there text size in cells is twice the number of glyphs (double width glyphs), multiply cell width by two, otherwise assert that the text cells size is equal to number of glyphs (mixed single/double width characters not allowed in bordered cells)
-            if (textSizeCells_ == textSize_ * 2)
-                cw *= 2;
-            else
-                ASSERT(textSizeCells_ == textSize_);
-            // draw borders for each cell in question
-            for (unsigned i = 0; i < textSize_; ++i) {
-                // create the cellRectangle, prepared for top border
-                int cLeft = left + i * cw;
-                int cTop = top;
-                unsigned cWidth = width;
-                unsigned cHeight = ht;
-                // if top border is selected, draw the top line 
-                if (attrs.borderTop()) {
-                    XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-                // otherwise see if the left or right parts of the border should be drawn
-                } else {
-                    if (attrs.borderLeft()) {
-                        cWidth = vt;
-                        XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-                    }
-                    if (attrs.borderRight()) {
-                        cWidth = vt;
-                        cLeft = left + (i + 1) * cw - vt;
-                        XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-                    }
-                }
-                // check the left and right border in the middle part
-                cTop += ht;
-                cHeight = ch - 2 * ht;
+        void drawBorder(ui::Attributes attrs, int left, int top, int width) {
+            int cLeft = left;
+            int cTop = top;
+            int cWidth = cellWidthPx_;
+            int cHeight = width;
+            // if top border is selected, draw the top line 
+            if (attrs.borderTop()) {
+                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+            // otherwise see if the left or right parts of the border should be drawn
+            } else {
                 if (attrs.borderLeft()) {
-                    cLeft = left + i * cw;
-                    cWidth = vt;
+                    cWidth = width;
                     XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
                 }
                 if (attrs.borderRight()) {
-                    cWidth = vt;
-                    cLeft = left + (i + 1) * cw - vt;
+                    cWidth = width;
+                    cLeft = left + cellWidthPx_ - width;
                     XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
                 }
-                // check if the bottom part should be drawn, first by checking whether the whole bottom part should be drawn, if not then by separate checking the left and right corner
-                cTop = cTop + cHeight;
-                cHeight = top + ch - cTop;
-                if (attrs.borderBottom()) {
-                    cLeft = left + i * cw;
-                    cWidth = cw;
+            }
+            // check the left and right border in the middle part
+            cTop += width;
+            cHeight = cellHeightPx_ - 2 * width;
+            if (attrs.borderLeft()) {
+                cLeft = left;
+                cWidth = width;
+                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+            }
+            if (attrs.borderRight()) {
+                cWidth = width;
+                cLeft = left + cellWidthPx_ - width;
+                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+            }
+            // check if the bottom part should be drawn, first by checking whether the whole bottom part should be drawn, if not then by separate checking the left and right corner
+            cTop = top + cellHeightPx_ - width;
+            cHeight = width;
+            if (attrs.borderBottom()) {
+                cLeft = left;
+                cWidth = cellWidthPx_;
+                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+            } else {
+                if (attrs.borderLeft()) {
+                    cLeft = left;
+                    cWidth = width;
                     XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-                } else {
-                    if (attrs.borderLeft()) {
-                        cLeft = left + i * cw;
-                        cWidth = vt;
-                        XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-                    }
-                    if (attrs.borderRight()) {
-                        cWidth = vt;
-                        cLeft = left + (i + 1) * cw - vt;
-                        XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-                    }
+                }
+                if (attrs.borderRight()) {
+                    cWidth = width;
+                    cLeft = left + cellWidthPx_ - width;
+                    XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
                 }
             }
         }

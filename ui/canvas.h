@@ -61,6 +61,16 @@ namespace ui {
 		 */
 		void textOut(Point start, std::string const& text, Color color, Font font = Font());
 
+        /** Draws border around the specified rectangle with given color & thickness. 
+         */
+        void borderRect(Rect const & rect, Color color, bool thick = false);
+
+        void borderLineTop(Point start, int width, Color color, bool thick = false);
+        void borderLineBottom(Point start, int width, Color color, bool thick = false);
+
+        void borderLineLeft(Point start, int height, Color color, bool thick = false);
+        void borderLineRight(Point start, int height, Color color, bool thick = false);
+
         /** Copies the given buffer to specified coordinates. 
          
             The buffer must provide width(), height() and at() methods, alternatively the template can be manually specialized to a different type.

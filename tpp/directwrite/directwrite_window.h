@@ -251,9 +251,6 @@ namespace tpp {
 			);
             // fill it with the background
 			rt_->FillRectangle(rect, bg_.Get());
-            // if there is border to be drawn below the text, draw it now
-            if (statusCell_.attributes().border() && ! statusCell_.attributes().borderAbove())
-                drawBorders(rect);
 #ifdef SHOW_LINE_ENDINGS
             if (attrs_.endOfLine()) {
                 auto oldC = bg_->GetColor();
@@ -285,81 +282,60 @@ namespace tpp {
 					rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness());
                 }
             }
-            // if there is border to be drawn above the text, draw it now
-            if (statusCell_.attributes().border() && statusCell_.attributes().borderAbove())
-                drawBorders(rect);
 			glyphRun_.glyphCount = 0;
             textSizeCells_ = 0;
         }
 
-        /** Draws the cell borders (if any)
-         */
-        void drawBorders(D2D1_RECT_F const & rect) {
-            //ASSERT(statusCell_.attributes().border()); 
-            ui::Attributes attrs = statusCell_.attributes();
-            unsigned cw = cellWidthPx_ * statusCell_.font().width();
-            unsigned ht = attrs.borderThick() ? (cellHeightPx_ / 2) : (cellHeightPx_ / 4);
-            unsigned vt = attrs.borderThick() ? (cellWidthPx_ / 2) : (cellWidthPx_ / 4);
-            // if there text size in cells is twice the number of glyphs (double width glyphs), multiply cell width by two, otherwise assert that the text cells size is equal to number of glyphs (mixed single/double width characters not allowed in bordered cells)
-            if (textSizeCells_ == glyphRun_.glyphCount * 2)
-                cw *= 2;
-            else
-                ASSERT(textSizeCells_ == glyphRun_.glyphCount);
-            // draw borders for each cell in question
-            for (unsigned i = 0; i < glyphRun_.glyphCount; ++i) {
-                // create the cellRectangle, prepared for top border
-                D2D1_RECT_F cellRect = D2D1::RectF(
-                    rect.left + i * cw, 
-                    rect.top,
-                    rect.left + (i + 1) * cw,
-                    rect.top + ht
-                );
-                // if top border is selected, draw the top line 
-                if (attrs.borderTop()) {
-                    rt_->FillRectangle(cellRect, border_.Get());
-                // otherwise see if the left or right parts of the border should be drawn
-                } else {
-                    if (attrs.borderLeft()) {
-                        cellRect.right = cellRect.left + vt;
-                        rt_->FillRectangle(cellRect, border_.Get());
-                    }
-                    if (attrs.borderRight()) {
-                        cellRect.right = rect.left + (i + 1) * cw;
-                        cellRect.left = cellRect.right - vt;
-                        rt_->FillRectangle(cellRect, border_.Get());
-                    }
-                }
-                // check the left and right border in the middle part
-                cellRect.top = cellRect.bottom;
-                cellRect.bottom = rect.bottom - ht;
+        void drawBorder(ui::Attributes attrs, int left, int top, int width) {
+            float fLeft = static_cast<float>(left);
+            float fTop = static_cast<float>(top);
+            float fWidth = static_cast<float>(width);
+            D2D1_RECT_F rect = D2D1::RectF(fLeft, fTop, fLeft + cellWidthPx_, fTop + fWidth);
+            // if top border is selected, draw the top line 
+            if (attrs.borderTop()) {
+                rt_->FillRectangle(rect, border_.Get());
+            // otherwise see if the left or right parts of the border should be drawn
+            } else {
                 if (attrs.borderLeft()) {
-                    cellRect.left = rect.left + i * cw;
-                    cellRect.right = cellRect.left + vt;
-                    rt_->FillRectangle(cellRect, border_.Get());
+                    rect.right = fLeft + fWidth;
+                    rt_->FillRectangle(rect, border_.Get());
                 }
                 if (attrs.borderRight()) {
-                    cellRect.right = rect.left + (i + 1) * cw;
-                    cellRect.left = cellRect.right - vt;
-                    rt_->FillRectangle(cellRect, border_.Get());
+                    rect.right = fLeft + cellWidthPx_;
+                    rect.left = rect.right - fWidth;
+                    rt_->FillRectangle(rect, border_.Get());
                 }
-                // check if the bottom part should be drawn, first by checking whether the whole bottom part should be drawn, if not then by separate checking the left and right corner
-                cellRect.top = cellRect.bottom;
-                cellRect.bottom = rect.bottom;
-                if (attrs.borderBottom()) {
-                    cellRect.left = rect.left + i * cw;
-                    cellRect.right = rect.left + (i + 1) * cw;
-                    rt_->FillRectangle(cellRect, border_.Get());
-                } else {
-                    if (attrs.borderLeft()) {
-                        cellRect.left = rect.left + i * cw;
-                        cellRect.right = cellRect.left + vt;
-                        rt_->FillRectangle(cellRect, border_.Get());
-                    }
-                    if (attrs.borderRight()) {
-                        cellRect.right = rect.left + (i + 1) * cw;
-                        cellRect.left = cellRect.right - vt;
-                        rt_->FillRectangle(cellRect, border_.Get());
-                    }
+            }
+            // check the left and right border in the middle part
+            rect.top = rect.bottom;
+            rect.bottom = fTop + cellHeightPx_ - fWidth;
+            if (attrs.borderLeft()) {
+                rect.left = fLeft;
+                rect.right = fLeft + fWidth;
+                rt_->FillRectangle(rect, border_.Get());
+            }
+            if (attrs.borderRight()) {
+                rect.right = fLeft + cellWidthPx_;
+                rect.left = rect.right - fWidth;
+                rt_->FillRectangle(rect, border_.Get());
+            }
+            // check if the bottom part should be drawn, first by checking whether the whole bottom part should be drawn, if not then by separate checking the left and right corner
+            rect.top = rect.bottom;
+            rect.bottom = fTop + cellHeightPx_;
+            if (attrs.borderBottom()) {
+                rect.left = fLeft;
+                rect.right = fLeft + cellWidthPx_;;
+                rt_->FillRectangle(rect, border_.Get());
+            } else {
+                if (attrs.borderLeft()) {
+                    rect.left = fLeft;
+                    rect.right = fLeft + fWidth;
+                    rt_->FillRectangle(rect, border_.Get());
+                }
+                if (attrs.borderRight()) {
+                    rect.right = fLeft + cellWidthPx_;
+                    rect.left = rect.right - fWidth;
+                    rt_->FillRectangle(rect, border_.Get());
                 }
             }
         }

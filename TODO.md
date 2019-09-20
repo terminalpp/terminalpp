@@ -1,4 +1,6 @@
-﻿- actually make the border drawing its own pass, disable border other than above and make the border per cell as opposed to per displayed character
+﻿- make double width characters conversion in terminal, *not* in the renderer as it is now
+- clean shapes - rect, to provide the points for corners on demand
+- on linux, dismiss of the about box does not work
 
 ## Bugs and missing features
 
