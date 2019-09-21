@@ -1,4 +1,3 @@
-#include "stamp.h"
 #include "helpers/stamp.h"
 
 #include "ui/widgets/label.h"

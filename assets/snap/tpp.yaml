@@ -5,21 +5,17 @@ summary: Cross-platform terminal emulator.
 description: |
   tpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.
 
-grade: devel # must be 'stable' to release into candidate/stable channels
+grade: stable 
 confinement: classic
 
 parts:
-  #tpp-gather:
-    #source: file://@CMAKE_CURRENT_SOURCE_DIR@
-    #plugin: dump
   tpp:
     source: "./source"
     source-type: local
-    #source: tpp-gather
-    #source: https://github.com/zduka/tpp.git
-    #source-tag: v@PROJECT_VERSION@
     plugin: cmake
-    configflags: ["-DCMAKE_BUILD_TYPE=Debug"]
+    configflags: 
+      - "-DCMAKE_BUILD_TYPE=Release"
+      - "-DCMAKE_INSTALL_PREFIX=/usr"
     build-packages:
       - g++
       - libx11-dev
@@ -38,7 +34,7 @@ parts:
 
 apps:
   tpp:
-      command: tpp
+      command: usr/bin/tpp
       environment:
           DISABLE_WAYLAND: 1
       

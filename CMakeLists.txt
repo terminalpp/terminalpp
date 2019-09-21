@@ -59,7 +59,7 @@ add_executable(
 	tools/stamp.cpp
 )
 add_custom_target(tpp-create-stamp
-    COMMAND stamp ${CMAKE_CURRENT_SOURCE_DIR} stamp.h
+    COMMAND stamp ${CMAKE_CURRENT_SOURCE_DIR} tpp/stamp.h
 )
 add_dependencies(tpp-create-stamp stamp)
 
@@ -176,7 +176,7 @@ if(UNIX)
         add_custom_target(assets-snap-copy-tpp
             COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/source
             COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/source
-            COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/source --exclude-from=.gitignore --exclude=.vscode --exclude=.git
+            COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/source --exclude-from=.gitignore --exclude=.vscode
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         )
         set_target_properties(assets-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
