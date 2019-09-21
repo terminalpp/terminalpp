@@ -1,11 +1,11 @@
-name: tpp 
+name: '@PROJECT_NAME@'
 base: core18
 version: '@PROJECT_VERSION@'
-summary: Cross-platform terminal emulator.
-description: |
-  tpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.
+summary: '@CPACK_PACKAGE_DESCRIPTION_SUMMARY@'
+description: '@CPACK_PACKAGE_DESCRIPTION@'
+icon: './source/resources/images/logo-small.png'
 
-grade: stable 
+grade: devel # switch to stable once tested in the store 
 confinement: classic
 
 parts:
@@ -14,12 +14,13 @@ parts:
     source-type: local
     plugin: cmake
     configflags: 
-      - "-DCMAKE_BUILD_TYPE=Release"
+      - "-DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@"
       - "-DCMAKE_INSTALL_PREFIX=/usr"
     build-packages:
       - g++
       - libx11-dev
       - libxft-dev
+      - git
     stage-packages:
       - libfontconfig1
       - libfreetype6

@@ -3,7 +3,7 @@
 #
 cmake_minimum_required (VERSION 3.5)
 
-project(tpp VERSION 0.2)
+project(terminalpp VERSION 0.2)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
 
@@ -14,8 +14,23 @@ add_subdirectory("vterm")
 add_subdirectory("ui")
 add_subdirectory("docs")
 
-
 #include_directories("{$CMAKE_CURRENT_SOURCE_DIR}/tpp")
+
+# cpack settings - generic
+set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_VENDOR "Zduka")
+set(CPACK_PACKAGE_CONTACT "zduka <zduka@outlook.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Cross-platform terminal emulator.")
+set(CPACK_PACKAGE_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
+# debian specific
+set(CPACK_PACKAGE_DEBIAN_SECTION "utils")
+set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/postinst;${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/prerm")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libx11-6, x11-utils, libxft2")
+# rpm specific
+set(CPACK_RPM_PACKAGE_RELEASE 1)
+set(CPACK_RPM_PACKAGE_LICENSE "MIT")
 
 # Build checks
 #
@@ -24,7 +39,6 @@ if (UNIX)
     find_package(X11 REQUIRED)
     find_package(Threads REQUIRED)
     find_package(Freetype REQUIRED)
-    message(${LUTIL})
     include_directories(${X11_INCLUDE_DIR})
     include_directories(${FREETYPE_INCLUDE_DIRS})
     if (NOT X11_Xft_FOUND)
@@ -91,15 +105,15 @@ if(UNIX AND NOT APPLE)
     set_target_properties(icons PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
 
-# Assets
+# Packages
 #
-# The assets target generates assets such as msi or snap installers, etc. Since the generation of assets is not necessary for building from source, the assets target is only created if the required tools are found. 
+# The packages target generates packagessuch as msi or snap installers, deb or rpm packages, etc. Since the generation of packages is not necessary for building from source, the packages target is only populated if the required tools are found. 
 #
-# The assets target is first created empty and then the asset buildres register as its dependencies if they are available. 
+# The packages target is first created empty and then the buildres register as its dependencies if they are available. 
 #
-# All assets are stored in ${CMAKE_BUILD_DIR}/assets
-add_custom_target(assets)
-set_target_properties(assets PROPERTIES EXCLUDE_FROM_ALL TRUE)
+# All assets are stored in ${CMAKE_CURRENT_BINARY_DIR}
+add_custom_target(packages)
+set_target_properties(packages PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 # Linux make install settings
 #
@@ -115,10 +129,10 @@ if(WIN32)
     # Search for the wix toolkit    
     file(GLOB WIX_ROOT "C:/Program Files*/WiX Toolset v*/bin")
     if (WIX_ROOT) 
-        message(STATUS "WIX toolset found in ${WIX_ROOT}, msi package creation will be added to assets")
+        message(STATUS "WIX toolset found in ${WIX_ROOT}, msi package creation will be added to packages")
         # create the build directory and configure the WiX configuration in it
-        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/msi/tpp.wxs ${CMAKE_CURRENT_BINARY_DIR}/assets/msi/tpp.wxs @ONLY)
-        add_custom_target(assets-msi
+        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/msi/tpp.wxs ${CMAKE_CURRENT_BINARY_DIR}/packages/msi/tpp.wxs @ONLY)
+        add_custom_target(package-msi
             COMMAND ${WIX_ROOT}/candle.exe
                 -nologo 
                 -arch "x64" 
@@ -132,61 +146,57 @@ if(WIN32)
                 -out "tpp.msi" 
                 -sice:ICE61 -sice:ICE91 
                 "tpp.wixobj"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets/msi
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages/msi
         )        
-        set_target_properties(assets-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(assets assets-msi)
+        set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_dependencies(packages package-msi)
     endif()
 endif() 
 
-# Debian package
-#
-# Creates a simple debian installation package which installs the tpp (no fonts) and registers it as an x-terminal-emulator alternative.
-#
-# For now, the size is not calculated, but kept at 1MB. 
-if(UNIX)
-    find_program(DPKG dpkg-deb)
-    if(DPKG)
-        message(STATUS "dpkg-deb found in ${DPKG}, deb package will be added to assets")
-        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/deb/control ${CMAKE_CURRENT_BINARY_DIR}/assets/deb/tpp/DEBIAN/control @ONLY)
-        add_custom_target(assets-deb
-            COMMAND mkdir -p tpp/usr/bin 
-            COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/tpp tpp/usr/bin/tpp
-            COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/assets/deb/postinst tpp/DEBIAN/postinst
-            COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/assets/deb/prerm tpp/DEBIAN/prerm
-            COMMAND chmod -R 0755 tpp
-            COMMAND dpkg-deb --build tpp
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets/deb
-        )
-        set_target_properties(assets-deb PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(assets assets-deb)
-        add_dependencies(assets-deb tpp)
-    endif()
-endif()
-
 # Builds the snap package for linux
 #
-# Under development. 
+# The classic confinement is used as terminal with the strict confinement is most likely not what we want.
 if(UNIX)
     find_program(SNAP snapcraft)
     if(SNAP)
-        message(STATUS "snapcraft found in ${SNAP}, snap package will be added to assets")
+        message(STATUS "snapcraft found in ${SNAP}, snap package will be added to packages")
         # create the build directory and configure the WiX configuration in it
-        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/snap/tpp.yaml ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/snapcraft.yaml @ONLY)
-        add_custom_target(assets-snap-copy-tpp
-            COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/source
-            COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/source
-            COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/assets/snap/source --exclude-from=.gitignore --exclude=.vscode
+        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/snap/tpp.yaml ${CMAKE_CURRENT_BINARY_DIR}/snap/snapcraft.yaml @ONLY)
+        add_custom_target(package-snap-copy-tpp
+            COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/snap/source
+            COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/snap/source
+            COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/snap/source --exclude-from=.gitignore --exclude=.vscode
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         )
-        set_target_properties(assets-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_custom_target(assets-snap
-            #COMMAND snapcraft clean
+        set_target_properties(package-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_custom_target(package-snap
             COMMAND snapcraft
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets/snap
+            COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/terminalpp.snap
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/snap
         )
-        set_target_properties(assets-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(assets-snap assets-snap-copy-tpp)
-        add_dependencies(assets assets-snap)
+        set_target_properties(package-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_dependencies(package-snap package-snap-copy-tpp)
+        add_dependencies(packages package-snap)
     endif()
 endif()
+
+# Linux DEB and RPM packages
+#
+# CPack is used to produce these. If the required tools are found, the respective CPack generators are added.
+if(UNIX) 
+    find_program(DPKG "dpkg")
+    if(DPKG)
+        message(STATUS "dpkg found in ${DPKG}, DEB package will be added to packages")
+        set(CPACK_GENERATOR "${CPACK_GENERATOR}DEB;")
+        add_dependencies(packages package)
+    endif()
+    find_program(RPMBUILD "rpmbuild")
+    if (RPMBUILD)
+        message(STATUS "rpmbuild found in ${RPMBUILD}, RPM package will be added to packages")
+        set(CPACK_GENERATOR "${CPACK_GENERATOR}RPM;")
+        add_dependencies(packages package)
+    endif()
+endif()
+
+# Include cpack which adds the package target
+include(CPack)
