@@ -5,6 +5,8 @@
 
 //#define SHOW_LINE_ENDINGS
 
+#define BYPASS_FOLDER "~/.local/bin"
+#define BYPASS_PATH "~/.local/bin/tpp-bypass"
 
 #define DEFAULT_WINDOW_TITLE "t++"
 

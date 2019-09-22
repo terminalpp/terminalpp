@@ -77,6 +77,20 @@ namespace helpers {
 		return from.substr(0, end);
 	}
 
+	/** Returns true if given string starts with the prefix. 
+	 */
+	inline bool StartsWith(std::string const & value, std::string const & prefix) {
+        return value.find(prefix) == 0;
+    }
+    
+	/** Returns true if given string ends with the suffix. 
+	 */
+    inline bool EndsWith(std::string const & value, std::string const & suffix) {
+        if (suffix.size() > value.size())
+            return false;
+        return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
+    }
+
 	/** Splits the given string by given delimiter. 
 	 */
 	inline std::vector<std::string> Split(std::string const& what, std::string const& delimiter) {
@@ -90,6 +104,21 @@ namespace helpers {
 		}
 		return result;
 	}
+
+	/** Splits the given string by given delimiter and trims all substrings. 
+	 */
+	inline std::vector<std::string> SplitAndTrim(std::string const& what, std::string const& delimiter) {
+		std::vector<std::string> result;
+		for (size_t start = 0, e = what.size(); start < e; ) {
+			size_t next = what.find(delimiter, start);
+			if (next == std::string::npos)
+				next = what.size();
+			result.push_back(Trim(what.substr(start, next - start)));
+			start = next + delimiter.size();
+		}
+		return result;
+	}
+
 
 	/** Quotes the current string. 
 	 

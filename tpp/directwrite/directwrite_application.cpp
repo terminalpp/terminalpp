@@ -45,35 +45,63 @@ namespace tpp {
 		DirectWriteWindow::StartBlinkerThread();
     }
 
-	bool DirectWriteApplication::isWSLPresent() const {
+	std::string DirectWriteApplication::isWSLPresent() const {
 		helpers::ExitCode ec;
-		std::vector<std::string> lines = helpers::Split(helpers::Exec(helpers::Command("wsl.exe", {"-l"}),"", &ec), "\n");
-	    if (lines.size() < 2 || lines[0] != "Windows Subsystem for Linux Distributions:\r\r")
-		    return false;
-		else 
-		    return true;
+		std::vector<std::string> lines = helpers::SplitAndTrim(helpers::Exec(helpers::Command("wsl.exe", {"-l"}),"", &ec), "\n");
+	    if (lines.size() > 1 && lines[0] == "Windows Subsystem for Linux Distributions:") {
+			for (size_t i = 1, e = lines.size(); i != e; ++i) {
+				if (helpers::EndsWith(lines[i], "(Default)"))
+				    return helpers::Split(lines[i], " ")[0];
+			}
+		}
+		// nothing found, return empty string
+		return std::string{};
 	}
 
 	bool DirectWriteApplication::isBypassPresent() const {
 		helpers::ExitCode ec;
-		std::string output{helpers::Exec(helpers::Command("wsl.exe", {"-e", "tpp-bypass", "--version"}), "", &ec)};
+		std::string output{helpers::Exec(helpers::Command("wsl.exe", {"--", BYPASS_PATH, "--version"}), "", &ec)};
 		return output.find("Terminal++ Bypass, version") == 0;
+	}
+
+	bool DirectWriteApplication::installBypass(std::string const & wslDistribution) {
+		try {
+			std::string url = STR("https://github.com/zduka/tpp-bypass/releases/download/v1.0/tpp-bypass-" << wslDistribution);
+			helpers::Exec(helpers::Command("wsl.exe", {"--", "mkdir", "-p", BYPASS_FOLDER}), "");
+			helpers::Exec(helpers::Command("wsl.exe", {"--", "wget", "-O", BYPASS_PATH, url}), "");
+			helpers::Exec(helpers::Command("wsl.exe", {"--", "chmod", "+x", BYPASS_PATH}), "");
+		} catch (...) {
+			return false;
+		}
+		return isBypassPresent();
 	}
 
 	void DirectWriteApplication::updateDefaultSettings(helpers::JSON & json) {
 		helpers::JSON & cmd = json["session"]["command"];
 		if (cmd.numElements() == 0) {
 			// if WSL is not present, default to cmd.exe
-			if (! isWSLPresent()) {
+			std::string wslDefaultDistro{isWSLPresent()};
+			if (wslDefaultDistro.empty()) {
 				cmd.add(helpers::JSON("cmd.exe"));
 				json["session"]["pty"] = "local";
 			// otherwise the terminal will default to WSL and we only have to determine whether to use bypass or ConPTY
 			} else {
-				if (isBypassPresent()) {
+				bool hasBypass = isBypassPresent();
+				// if bypass is not present, ask whether it should be installed
+				if (!hasBypass) {
+					if (MessageBox(nullptr, L"WSL bypass was not found in your default distribution. Do you want terminal++ to install it? (if No, ConPTY will be used instead)", L"WSL Bypass not found", MB_ICONQUESTION + MB_YESNO) == IDYES) {
+						hasBypass = installBypass(wslDefaultDistro);
+						if (!hasBypass)
+						    MessageBox(nullptr, L"Bypass installation failed, most likely due to missing binary for your WSL distribution. Terminal++ will continue with ConPTY.", L"WSL Install bypass failure", MB_ICONSTOP + MB_OK);
+						else
+						    MessageBox(nullptr, L"WSL Bypass successfully installed", L"Success", MB_ICONINFORMATION + MB_OK);
+					}
+				}
+				if (hasBypass) {
 					json["session"]["pty"] = "bypass";
 					cmd.add(helpers::JSON("wsl.exe"));
-					cmd.add(helpers::JSON("-e"));
-					cmd.add(helpers::JSON("tpp-bypass"));
+					cmd.add(helpers::JSON("--"));
+					cmd.add(helpers::JSON(BYPASS_PATH));
 				} else {
 					json["session"]["pty"] = "local";
 					cmd.add(helpers::JSON("wsl.exe"));

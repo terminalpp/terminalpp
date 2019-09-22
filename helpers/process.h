@@ -221,7 +221,7 @@ namespace helpers {
 	 
 	    Empty path means current directory.
 	 */
-	inline std::string Exec(Command const& command, std::string const& path, helpers::ExitCode* exitCode = nullptr) {
+	inline std::string Exec(Command const& command, std::string const & path, helpers::ExitCode* exitCode = nullptr) {
 #ifdef ARCH_WINDOWS
 		helpers::ExitCode ec = EXIT_FAILURE;
 		std::string output;
@@ -280,7 +280,7 @@ namespace helpers {
 			output = result.str();
 			// a crude detection whether the output is given in UTF16, or UTF8 (ASCII)
 			if (output.size() > 1 && output[1] == 0)
-				output = UTF16toUTF8(reinterpret_cast<utf16_char const *>(output.c_str()));
+				output = UTF16toUTF8(std::wstring{reinterpret_cast<utf16_char const *>(output.c_str()), output.size() / 2}.c_str());
 		} 
 		if (exitCode != nullptr)
 			* exitCode = ec;
