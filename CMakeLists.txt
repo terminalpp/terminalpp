@@ -4,6 +4,7 @@
 cmake_minimum_required (VERSION 3.5)
 
 project(terminalpp VERSION 0.2.2)
+set(PROJECT_VERSION_INT 220)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
 
@@ -15,6 +16,7 @@ add_subdirectory("ui")
 add_subdirectory("docs")
 
 #include_directories("{$CMAKE_CURRENT_SOURCE_DIR}/tpp")
+
 
 # cpack settings - generic
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})

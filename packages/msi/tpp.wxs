@@ -1,20 +1,26 @@
-<?xml version="1.0" encoding="windows-1252"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-    <Product Name="Terminal++" Id="*" UpgradeCode="3e26832c-a36a-4b82-8432-8908666865be" Language="1033" Codepage="1252" Version="@PROJECT_VERSION@" Manufacturer="zduka">
-        <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine"/>
+    <Product Name="Terminal++" Id="*" UpgradeCode="3e26832c-a36a-4b82-8432-8908666865be" Language="1033" Codepage="1252" Version="@PROJECT_VERSION@" Manufacturer="@CPACK_PACKAGE_VENDOR@">
+        <Package InstallerVersion="@PROJECT_VERSION_INT@" Compressed="yes" InstallScope="perMachine"/>
         <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
         <Icon Id="ProductIcon" SourceFile="@CMAKE_CURRENT_SOURCE_DIR@\resources\images\tpp.ico"/>
         <WixVariable Id="WixUILicenseRtf" Value="@CMAKE_CURRENT_SOURCE_DIR@\resources\text\license.rtf"/>
         <Property Id="ARPPRODUCTICON" Value="ProductIcon"/>
         <MediaTemplate EmbedCab="yes"/>
-        <UIRef Id="WixUI_Minimal"/>
+        <UIRef Id="WixUI_FeatureTree"/>
 
-        <Feature Id="ProductFeature" Title="ConsoleApp" Level="1">
+        <Feature Id="FeatureTPP" Title="Terminal++ default session (default WSL if installed, cmd.exe otherwise)" Level="1" Absent="disallow" Display="hidden">
             <ComponentRef Id="TppExe"/>
             <ComponentRef Id="TppShortcut"/>
             <ComponentRef Id="ModifyPathEnv"/>
+        </Feature>
+        <Feature Id="FeatureCmd" Title="cmd.exe session shortcut" Absent="allow">
+            <ComponentRef Id="CmdShortcut"/>
+        </Feature>
+        <Feature Id="FeaturePowershell" Title="powershell session shortcut" Absent="allow">
+            <ComponentRef Id="PowershellShortcut"/>
         </Feature>
 
         <Feature Id="VCRedist" Title="Visual C++ 14.2 Runtime" AllowAdvertise="no" Display="hidden" Level="1">
@@ -45,7 +51,21 @@
                 <Shortcut 
                     Id="TppShortcutFile" Name="Terminal++" Description="Minimalist, fast, cross-platform terminal emulator." Target="[TppProgramFiles]tpp.exe"/>
                 <RemoveFolder Id="TppProgramMenu" On="uninstall"/>
-                <RegistryValue Root="HKCU" Key="Software\Microsoft\Tpp" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+                <RegistryValue Root="HKCU" Key="Software\Microsoft\Terminalpp" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+            <!-- cmd.exe shortcut -->
+            <Component Id="CmdShortcut" Guid="9734f922-b9ac-4b22-b171-c290f228eb1a">
+                <Shortcut 
+                    Id="CmdShortcutFile" Name="Terminal++ (cmd.exe)" Description="Terminal++ cmd.exe session" Target="[TppProgramFiles]tpp.exe" Arguments="--use-conpty -e cmd.exe"/>
+                    <RemoveFolder Id="CmdProgramMenu" On="uninstall"/>
+                    <RegistryValue Root="HKCU" Key="Software\Microsoft\TerminalppCmd" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+            <!-- powershell shortcut -->
+            <Component Id="PowershellShortcut" Guid="01ec43e8-e52f-4b6d-a617-dc6fd2aba60b">
+                <Shortcut 
+                    Id="PowershellShortcutFile" Name="Terminal++ (ps)" Description="Terminal++ powershell session" Target="[TppProgramFiles]tpp.exe" Arguments="--use-conpty -e powershell.exe"/>
+                    <RemoveFolder Id="PowershellProgramMenu" On="uninstall"/>
+                    <RegistryValue Root="HKCU" Key="Software\Microsoft\TerminalppPs" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
             </Component>
         </DirectoryRef>
 
@@ -57,7 +77,7 @@
         </DirectoryRef>
 
         <DirectoryRef Id="TARGETDIR">
-            <Merge Id="VCRedist" SourceFile="@CMAKE_CURRENT_SOURCE_DIR@\assets\msi\vcredist\Microsoft_VC142_CRT_x64.msm" DiskId="1" Language="0"/>
+            <Merge Id="VCRedist" SourceFile="@CMAKE_CURRENT_SOURCE_DIR@\packages\msi\vcredist\Microsoft_VC142_CRT_x64.msm" DiskId="1" Language="0"/>
         </DirectoryRef>        
     </Product>
 </Wix>
