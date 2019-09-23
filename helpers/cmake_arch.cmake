@@ -39,3 +39,7 @@ if(MSVC)
 else()
   add_compile_options(-std=c++17 -Wall -Wextra -pedantic)
 endif()
+
+# add project name and version as set by cmake to macros as well
+add_definitions(-DPROJECT_NAME=\"${PROJECT_NAME}\")
+add_definitions(-DPROJECT_VERSION=\"${PROJECT_VERSION}\")

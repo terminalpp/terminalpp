@@ -3,7 +3,7 @@
 namespace tpp {
 
     char const * JSONSettingsVersion() {
-        return "0.22";
+        return PROJECT_VERSION;
     }
 
     /** Contains the default settings for the terminal as a raw JSON literal so that they can be easily edited. 
