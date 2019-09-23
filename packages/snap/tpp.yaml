@@ -3,7 +3,6 @@ base: core18
 version: '@PROJECT_VERSION@'
 summary: '@CPACK_PACKAGE_DESCRIPTION_SUMMARY@'
 description: '@CPACK_PACKAGE_DESCRIPTION@'
-icon: './source/resources/images/logo-small.png'
 
 grade: devel # switch to stable once tested in the store 
 confinement: classic
