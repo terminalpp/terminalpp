@@ -27,11 +27,11 @@ set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
 # debian specific
 set(CPACK_PACKAGE_DEBIAN_SECTION "utils")
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/postinst;${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/prerm")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libx11-6, x11-utils, libxft2")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libfontconfig1, libfreetype6, libpng16-16, libx11-6, libxau6, libxcb1, libxdmcp6, libxft2, libxrender1, x11-utils")
 # rpm specific
 set(CPACK_RPM_PACKAGE_RELEASE 1)
 set(CPACK_RPM_PACKAGE_LICENSE "MIT")
-
+set(CPACK_RPM_PACKAGE_REQUIRES "libfontconfig1, libfreetype6, libpng16-16, libx11-6, libXau6, libxcb1, libxdmcp6, libxft2, libxrender1, xmessage")
 # Build checks
 #
 # Only on Linux, check for the required libraries. 
