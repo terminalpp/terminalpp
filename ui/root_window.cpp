@@ -74,13 +74,12 @@ namespace ui {
 					// double click
 					target->mouseDoubleClick(pos.x, pos.y, button, modifiers);
 					mouseClickWidget_ = nullptr;
-					return;
 				} else {
 					// single click
 					target->mouseClick(pos.x, pos.y, button, modifiers);
 					mouseDoubleClickPrevious_ = end;
-					return;
 				}
+				return;
 			}
 		} 
 		mouseClickWidget_ = nullptr;
