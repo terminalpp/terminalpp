@@ -76,8 +76,8 @@ add_executable(
 )
 add_custom_target(tpp-create-stamp
     COMMAND stamp ${CMAKE_CURRENT_SOURCE_DIR} tpp/stamp.h
+    DEPENDS stamp
 )
-add_dependencies(tpp-create-stamp stamp)
 
 # Resources preparation - icons 
 #
@@ -102,8 +102,8 @@ if(UNIX AND NOT APPLE)
         COMMAND xIconCpp tppIconNotification ${CMAKE_SOURCE_DIR}/tpp/x11/tppIconNotification.cpp tpp.rgba 16 24 32 64
         COMMAND rm tpp.rgba
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/images
+        DEPENDS xIconCpp
     )
-    add_dependencies(icons xIconCpp)
     set_target_properties(icons PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
 
@@ -175,9 +175,9 @@ if(UNIX)
             COMMAND snapcraft
             COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/terminalpp.snap
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/snap
+            DEPENDS package-snap-copy-tpp
         )
         set_target_properties(package-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(package-snap package-snap-copy-tpp)
         add_dependencies(packages package-snap)
     endif()
 endif()
@@ -190,15 +190,25 @@ if(UNIX)
     if(DPKG)
         message(STATUS "dpkg found in ${DPKG}, DEB package will be added to packages")
         set(CPACK_GENERATOR "${CPACK_GENERATOR}DEB;")
-        add_dependencies(packages package)
+        add_dependencies(packages package-build)
     endif()
     find_program(RPMBUILD "rpmbuild")
     if (RPMBUILD)
         message(STATUS "rpmbuild found in ${RPMBUILD}, RPM package will be added to packages")
         set(CPACK_GENERATOR "${CPACK_GENERATOR}RPM;")
-        add_dependencies(packages package)
+        add_dependencies(packages package-build)
     endif()
 endif()
+
+# there is an issue with CMake that does not allow targets depend on special targets such as package. This workaround simply creates a package-build target which explicitly builds the packages by calling cmake. But since it is a user target we can then depend on it
+add_custom_target(package-build
+    COMMAND "${CMAKE_COMMAND}" --build . --target package
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    COMMENT "Building CPack packages"
+    DEPENDS tpp
+    VERBATIM
+)
+set_target_properties(package-build PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 # Include cpack which adds the package target
 include(CPack)
