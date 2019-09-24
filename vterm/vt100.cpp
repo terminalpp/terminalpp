@@ -670,8 +670,8 @@ namespace vterm {
 			 */
 			case 'M':
 				LOG(SEQ) << "RI: move cursor 1 line up";
-				if (buffer_.cursor().pos.y == 0) {
-					buffer_.insertLines(1, 0, state_.scrollEnd, state_.cell);
+				if (buffer_.cursor().pos.y == state_.scrollStart) {
+					buffer_.insertLines(1, state_.scrollStart, state_.scrollEnd, state_.cell);
 				} else {
 					setCursor(buffer_.cursor().pos.x, buffer_.cursor().pos.y - 1);
 				}
