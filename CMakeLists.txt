@@ -33,7 +33,7 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "libfontconfig1, libfreetype6, libpng16-16, lib
 # rpm specific
 set(CPACK_RPM_PACKAGE_RELEASE 1)
 set(CPACK_RPM_PACKAGE_LICENSE "MIT")
-set(CPACK_RPM_PACKAGE_REQUIRES "libfontconfig1, libfreetype6, libpng16-16, libx11-6, libXau6, libxcb1, libxdmcp6, libxft2, libxrender1, xmessage")
+set(CPACK_RPM_PACKAGE_REQUIRES "fontconfig, libfreetype6, libpng16-16, libX11-6, libXau6, libxcb1, libXdmcp6, libXft2, libXrender1, xmessage")
 # Build checks
 #
 # Only on Linux, check for the required libraries. 

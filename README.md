@@ -8,11 +8,18 @@
 
 *Terminal++* or `tpp` is a minimalist cross-platform terminal emulator that is capable of emulating much of the commonly used `xterm` supported control sequences. 
 
-> Please note that `tpp` is in a very early alpha stage and there may (and will be) rough edges. That said, it has been used by a few people as their daily driver for nearly a month now with only minor issues. 
+> Please note that `tpp` is in an  alpha stage and there may (and will be) rough edges. That said, it has been used by a few people as their daily driver with only minor issues. Notably the font detection is lacking and unless you have the Iosevka font tpp uses by default the terminal might look very ugly before you edit the settings file. 
 
 # Configuration
 
 The terminal settings can either be specified in the settings JSON file (it is a pseudo JSON with comments for clarity). Some of these can then be overriden on the commandline for each particular instance. Keyboard shortcuts cannot be configured at the moment.
+
+The settings are stored under the following paths on different platforms:
+
+- Windows: `%APP_DATA%\\Local\\terminalpp\\settings.json`
+- Linux: `~/.config/terminalpp/settings.json`
+
+Upon first execution of `tpp`, default settings will be created, which can later be edited by hand. 
 
 ## Keybindings
 
@@ -21,6 +28,7 @@ These are default keybinding settings:
 `Ctrl +` and `Ctrl -` to increase / decrease zoom. 
 `Ctrl Shift V` to paste from clipboard.
 `Alt Space` to toggle full-screen mode.
+`Ctrl+F1` displays the about box with version information
 
 ## Command-line options
 
@@ -34,35 +42,21 @@ To show a list of command-line options and their meanings, run the terminal from
 
 Iosevka is also the first font `tpp` will try to use. If not found, defaults to `Consolas` on Windows and system font on Linux. This can be changed at any time either on the commandline, or in the settings.json
 
-# Platform Support
+# Platform Specific Notes
 
 `tpp` is supported natively on Windows and Linux. It runs on Apple computers as well, although the support is experimental and an X server is required for `tpp` to work at all. 
 
 ## Windows
 
-On Windows, Windows 10 1903 and above are supported. `tpp` works with default `cmd.exe` prompt, Powershell and most importantly the Windows Subsystem for Linux (WSL). Accelerated rendering via DirectWrite is used. An installer is available. Settings are stored in `%APP_DATA%\\local\\terminalpp\\settings.json`.
-
-To force `tpp` to use `cmd.exe` use the following:
-
-    tpp --use-conpty -e cmd.exe
-
-To force powershell, run:
-
-    tpp --use-conpty -e powershell.exe
-
-To force WSL with ConPTY, use:
-
-    tpp --use-conpty -e wsl.exe
-
-And finally, to force WSL with the bypass, use (assuming bypass is enabled in settings.json):
-
-    tpp -e wsl.exe tpp-bypass
+On Windows, Windows 10 1903 and above are supported. `tpp` works with default `cmd.exe` prompt, Powershell and most importantly the Windows Subsystem for Linux (WSL). Accelerated rendering via DirectWrite is used. An `msi` installer is available in the release assets.
 
 ### ConPTY Bypass
 
 If `tpp` is used with WSL, the [`tpp-bypass`](https://github.com/zduka/tpp-bypass) app can be used inside WSL to bypass the ConPTY terminal driver in Windows. This has numerous benefits such as full support for all escape sequences (i.e. mouse works) and speed (with the bypass enabled, `tpp` is the fastest terminal emulator on windows*). 
 
-If the bypass is installed *before* `tpp`, `tpp` will automatically use it, otherwise it must be confifured manually. It is therefore recommended to install bypass before `tpp`. For installation, follow the instructions on the bypass' [website](https://github.com/zduka/tpp-bypass).
+If `wsl` is detected, `tpp` will attempt to install the bypass upon its first execution by downloading the binary appropriate for given `wsl` distribution. 
+
+> Alternatively, the bypass can be downloaded from the repository above, built and installed manually as `~/.local/bin/tpp-bypass` where `tpp` will find it. Note that bypass check is only performed on first execution (i.e. when no settings.json exists).
 
 ### Building from sources
 
@@ -75,7 +69,7 @@ To build under Windows, [Visual Studio](https://visualstudio.microsoft.com) and 
 
 Then type the following to start the terminal:
 
-    \tpp\Release\tpp.exe
+    Release\tpp.exe
 
 ### Running `tpp` in WSL
 
@@ -83,9 +77,11 @@ This is entirely possible if X server is installed on Windows, but should not be
 
 ## Linux
 
-Although tested only on Ubuntu (native and WSL), all linux distributions should work just fine since `tpp` has minimal dependencies. On Linux, the configuration file is under `~/.config/tpp/settings.json` and `X11` with `xft` are used for the rendering. This can be pretty fast still due to `render` X server extension. 
+Although tested only on Ubuntu and OpenSUSE Leap (native and WSL), all linux distributions should work just fine since `tpp` has minimal dependencies. On Linux, `X11` with `xft` are used for the rendering. This can be pretty fast still due to `render` X server extension. 
 
-At the moment, no installation packages are provided, but installing from sources is very simple:
+`deb`, `rpm` and `snap` packages are provided from the release assets.
+
+> Currently, the snap package can only be downloaded and installed with the `--dangerous --classic` options as the app has not yet been approved for the snapstore. 
 
 ### Building from sources
 
@@ -97,11 +93,11 @@ Create the build directory and run `cmake`:
 
     mkdir build
     cmake .. -DCMAKE_BUILD_TYPE=Release
-    make -j8
+    make
 
 You can now execute the terminal by typing in the `build` directory:
 
-    tpp/tpp
+    ./tpp
 
 ## Apple
 
