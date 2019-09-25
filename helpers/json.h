@@ -512,6 +512,23 @@ namespace helpers {
             }
         }
 
+        /** Returns true if the element is empty. 
+         
+            Can only be used for strings, arrays and objects.
+         */
+        bool empty() const {
+            switch (kind_) {
+                case Kind::String:
+                    return valueStr_.empty();
+                case Kind::Array:
+                    return valueArray_.empty();
+                case Kind::Object:
+                    return valueObject_.empty();
+                default:
+                    THROW(JSONError()) << "Unable to determine emptiness of JSON element of type " << kind_;
+            }
+        }
+
         std::string const & comment() const {
             return comment_;
         }

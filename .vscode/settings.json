@@ -57,6 +57,7 @@
         "xloctime": "cpp",
         "xmemory": "cpp",
         "xstddef": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "xtree": "cpp"
     }
 }

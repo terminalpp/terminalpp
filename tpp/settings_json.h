@@ -38,8 +38,8 @@ namespace tpp {
     /* The font used to redner the terminal and its size.
      */
     "font" : {
-        "family" : "Iosevka Term",
-        "doubleWidthFamily" : "SpaceMono NF",
+        "family" : "",
+        "doubleWidthFamily" : "",
         "size" : 18
     },
 

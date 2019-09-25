@@ -65,6 +65,8 @@ namespace tpp {
 
         X11Application();
 
+        std::string getDefaultValidFont();
+
         void updateDefaultSettings(helpers::JSON & json) override;
 
         void openInputMethod();

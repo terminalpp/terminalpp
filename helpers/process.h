@@ -308,7 +308,9 @@ namespace helpers {
 					close(toCmd[1]) == 0 &&
 					close(fromCmd[0]) == 0
 				) << "Unable to change standard output for process " << command;
-				OSCHECK(chdir(path.c_str()) == 0) << "Cannot change dir to " << path << " for command " << command;
+				// change directory only if the path is not empty (current dir)
+				if (!path.empty())
+				    OSCHECK(chdir(path.c_str()) == 0) << "Cannot change dir to " << path << " for command " << command;
 				char** argv = command.toArgv();
 				// execvp never returns
 				OSCHECK(execvp(command.command().c_str(), argv) != -1) << "Unable to execute command" << command;

@@ -77,6 +77,12 @@ namespace tpp {
 	}
 
 	void DirectWriteApplication::updateDefaultSettings(helpers::JSON & json) {
+		// if font has not been specified, use Consolas, which should be preinstalled on all Windows installations (?)
+		if (json["font"]["family"].empty())
+		    json["font"]["family"] = "Consolas";
+		if (json["font"]["doubleWidthFamily"].empty())
+		    json["font"]["doubleWidthFamily"] = "Consolas";
+		// determine the command 
 		helpers::JSON & cmd = json["session"]["command"];
 		if (cmd.numElements() != 0) {
 		    if (MessageBox(nullptr, L"The session command settings will be reinitialized and previous data lost. OK proceeds, Cancel terminates the execution.",L"Session Command Reset", MB_ICONWARNING + MB_OKCANCEL) == IDCANCEL)

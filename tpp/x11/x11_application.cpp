@@ -79,9 +79,33 @@ namespace tpp {
 		xDisplay_ = nullptr;
 	}
 
+	std::string X11Application::getDefaultValidFont() {
+		char const * fonts[] = { "Monospace", "DejaVu Sans Mono", "Nimbus Mono", "Liberation Mono", nullptr };
+		char const ** f = fonts;
+		while (*f != nullptr) {
+			std::string found{helpers::Exec(helpers::Command("fc-list", { *f }), "")};
+			if (! found.empty())
+			    return *f;
+			++f;
+		}
+		return std::string{};
+	}
+
     void X11Application::updateDefaultSettings(helpers::JSON & json) {
-		helpers::JSON & cmd = json["session"]["command"];
+		// if no font has been specified, determine default font 
+		if (json["font"]["family"].empty() || json["font"]["doubleWidthFamily"].empty()) {
+			std::string defaultFont = getDefaultValidFont();
+			if (!defaultFont.empty()) {
+				if (json["font"]["family"].empty())
+					json["font"]["family"] = defaultFont;
+				if (json["font"]["doubleWidthFamily"].empty())
+					json["font"]["doubleWidthFamily"] = defaultFont;
+			} else {
+				alert("Cannot guess valid font - please specify manually for best results");
+			}
+		}
 		// add the default shell of the current user
+		helpers::JSON & cmd = json["session"]["command"];
 		if (cmd.numElements() == 0)
 		    cmd.add(helpers::JSON(getpwuid(getuid())->pw_shell));
 	}
@@ -115,7 +139,6 @@ namespace tpp {
             }
 		} catch (Terminate const& e) {
 			// do nothing
-			LOG << "Main loop terminated.";
 		}
 	}
 
