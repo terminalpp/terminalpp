@@ -25,7 +25,7 @@ set(CPACK_PACKAGE_VENDOR "Zduka")
 set(CPACK_PACKAGE_CONTACT "zduka <zduka@outlook.com>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Cross-platform terminal emulator.")
 set(CPACK_PACKAGE_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
+set(CPACK_PACKAGE_FILE_NAME "${PACKAGE_NAME}_${PACKAGE_VERSION}")
 # debian specific
 set(CPACK_PACKAGE_DEBIAN_SECTION "utils")
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/postinst;${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/prerm")
@@ -145,10 +145,11 @@ if(WIN32)
                 -nologo
                 -ext WixUIExtension
                 -ext WixUtilExtension 
-                -out "tpp.msi" 
+                -out "../${PROJECT_NAME}_${PROJECT_VERSION}.msi" 
                 -sice:ICE61 -sice:ICE91 
                 "tpp.wixobj"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages/msi
+            DEPENDS tpp
         )        
         set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
         add_dependencies(packages package-msi)
@@ -174,30 +175,12 @@ if(UNIX)
         add_custom_target(package-snap
             COMMAND snapcraft clean
             COMMAND snapcraft
-            COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/terminalpp.snap
+            COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/packages/${PROJECT_NAME}_${PROJECT_VERSION}.snap
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/snap
             DEPENDS package-snap-copy-tpp
         )
         set_target_properties(package-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
         add_dependencies(packages package-snap)
-    endif()
-endif()
-
-# Linux DEB and RPM packages
-#
-# CPack is used to produce these. If the required tools are found, the respective CPack generators are added.
-if(UNIX) 
-    find_program(DPKG "dpkg")
-    if(DPKG)
-        message(STATUS "dpkg found in ${DPKG}, DEB package will be added to packages")
-        set(CPACK_GENERATOR "${CPACK_GENERATOR}DEB;")
-        add_dependencies(packages package-build)
-    endif()
-    find_program(RPMBUILD "rpmbuild")
-    if (RPMBUILD)
-        message(STATUS "rpmbuild found in ${RPMBUILD}, RPM package will be added to packages")
-        set(CPACK_GENERATOR "${CPACK_GENERATOR}RPM;")
-        add_dependencies(packages package-build)
     endif()
 endif()
 
@@ -210,6 +193,38 @@ add_custom_target(package-build
     VERBATIM
 )
 set_target_properties(package-build PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+# Linux DEB and RPM packages
+#
+# CPack is used to produce these. If the required tools are found, the respective CPack generators are added.
+if(UNIX) 
+    find_program(DPKG "dpkg")
+    if(DPKG)
+        message(STATUS "dpkg found in ${DPKG}, DEB package will be added to packages")
+        set(CPACK_GENERATOR "${CPACK_GENERATOR}DEB;")
+        add_custom_target(package-deb-copy
+            COMMAND mkdir -p packages
+            COMMAND mv ${PACKAGE_NAME}_${PACKAGE_VERSION}.deb packages/${PROJECT_NAME}_${PROJECT_VERSION}.deb
+            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+            DEPENDS package-build
+        )
+        set_target_properties(package-deb-copy PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_dependencies(packages package-deb-copy)
+    endif()
+    find_program(RPMBUILD "rpmbuild")
+    if (RPMBUILD)
+        message(STATUS "rpmbuild found in ${RPMBUILD}, RPM package will be added to packages")
+        set(CPACK_GENERATOR "${CPACK_GENERATOR}RPM;")
+        add_custom_target(package-rpm-copy
+            COMMAND mkdir -p packages
+            COMMAND mv ${PACKAGE_NAME}_${PACKAGE_VERSION}.rpm packages/${PROJECT_NAME}_${PROJECT_VERSION}.rpm
+            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+            DEPENDS package-build
+        )
+        set_target_properties(package-rpm-copy PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_dependencies(packages package-rpm-copy)
+    endif()
+endif()
 
 # Include cpack which adds the package target
 include(CPack)
