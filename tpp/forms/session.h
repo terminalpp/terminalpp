@@ -1,4 +1,4 @@
-#include "helpers/stamp.h"
+#pragma once 
 
 #include "ui/widgets/label.h"
 #include "ui/root_window.h"
