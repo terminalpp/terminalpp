@@ -34,6 +34,13 @@ namespace ui {
             repaint();
         }
 
+        Widget * mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        Widget * mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        void mouseClick(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        void mouseDoubleClick(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        void mouseWheel(int col, int row, int by, ui::Key modifiers) override;
+        void mouseMove(int col, int row, ui::Key modifiers) override;
+
 		void setLayout(Layout* value) {
 			ASSERT(value != nullptr) << "use Layout::None instead";
 			if (layout_ != value) {
@@ -86,15 +93,19 @@ namespace ui {
 
 		/** Returns the target for the given mouse coordinates. 
 		 
-		    If the coordinates are outside of the container, returns nullptr.
+		    If there is a child that lies under the coordinates, returns that child and updates the coordinates to relative coordinates inside that child. Otherwise leaves the coordinates untouched and returns nullptr.
 		 */
-		Widget* getMouseTarget(int col, int row) override {
-            if (!visibleRegion_.contains(col, row))
-                return nullptr;
-			for (auto i = children().rbegin(), e = children().rend(); i != e; ++i)
-				if ((*i)->visibleRegion_.contains(col, row))
-					return (*i)->getMouseTarget(col, row);
-			return this;
+		Widget* getMouseTarget(int & col, int & row) {
+			ASSERT(visibleRegion_.contains(col, row));
+			for (auto i = children().rbegin(), e = children().rend(); i != e; ++i) {
+				if ((*i)->visibleRegion_.contains(col, row)) {
+					Widget * result = *i;
+					col -= result->x();
+					row -= result->y();
+					return result;
+				}
+			}
+			return nullptr;
 		}
 
 		/** Schedules layout of all components on the next repaint event without actually triggering the repaint itself. 

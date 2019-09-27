@@ -254,8 +254,8 @@ namespace vterm {
 
         // mouse events to deal with the selection
 
-        void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        void mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        ui::Widget * mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        ui::Widget * mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         void mouseMove(int col, int row, ui::Key modifiers) override;
 
         /** When selection is invalidated, we request repaint so that the selection is no longer displayed. 

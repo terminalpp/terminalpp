@@ -33,18 +33,22 @@ namespace ui {
 		    renderer_->requestRender(rect);
 	}
 
-    void RootWindow::mouseDown(int col, int row, MouseButton button, Key modifiers) {
-		Widget* target = mouseFocusWidget(col, row);
-		// nothing to dispatch if there is no mouse target (i.e. pointer outside of the window and no locked target)
-		if (target == nullptr)
-		    return;
-		++mouseFocusLock_;
-		Point pos = screenToWidgetCoordinates(target, col, row);
-		if (target == this)
-			Widget::mouseDown(pos.x, pos.y, button, modifiers);
-		else
-			target->mouseDown(pos.x, pos.y, button, modifiers);
-		// set the mouse click start and button
+    Widget * RootWindow::mouseDown(int col, int row, MouseButton button, Key modifiers) {
+		Widget * target;
+		if (++mouseFocusLock_ > 1) {
+			target = mouseFocus_;
+			if (target != nullptr) {
+				screenToWidgetCoordinates(mouseFocus_, col, row);
+				mouseFocus_->mouseDown(col, row, button, modifiers);
+			}
+		} else {
+			if (!visibleRegion_.contains(col, row)) {
+				mouseFocusLock_ = 0;
+				return nullptr;
+			}
+			target = Container::mouseDown(col, row, button, modifiers);
+			mouseFocus_ = target;
+		}
 		mouseClickStart_ = helpers::SteadyClockMillis();
 		mouseClickButton_ = button;
 		// if the target is different than previous mouse click widget, update it and clear the double click timer
@@ -52,61 +56,56 @@ namespace ui {
 			mouseClickWidget_ = target;
 			mouseDoubleClickPrevious_ = 0;
 		}
+		// return the mouse target calculated
+		return target;
     }
 
-    void RootWindow::mouseUp(int col, int row, MouseButton button, Key modifiers) {
-		Widget* target = mouseFocusWidget(col, row);
-		// nothing to dispatch if there is no mouse target (i.e. pointer outside of the window and no locked target)
-		if (target == nullptr)
-		    return;
-		ASSERT(mouseFocusLock_-- > 0);
-		Point pos = screenToWidgetCoordinates(target, col, row);
-		if (target == this)
-			Widget::mouseUp(pos.x, pos.y, button, modifiers);
-		else
-			target->mouseUp(pos.x, pos.y, button, modifiers);
-		// check if we have click
-		if (target == mouseClickWidget_ && mouseClickButton_ == button) {
-			size_t end = helpers::SteadyClockMillis();
-			// it's at least a click, check if it is double click instead
-			if (end - mouseClickStart_ <= MOUSE_CLICK_MAX_DURATION) {
-				if (mouseDoubleClickPrevious_ != 0 && mouseClickStart_ - mouseDoubleClickPrevious_ <= MOUSE_DOUBLE_CLICK_MAX_INTERVAL) {
-					// double click
-					target->mouseDoubleClick(pos.x, pos.y, button, modifiers);
-					mouseClickWidget_ = nullptr;
-				} else {
-					// single click
-					target->mouseClick(pos.x, pos.y, button, modifiers);
-					mouseDoubleClickPrevious_ = end;
-				}
-				return;
-			}
-		} 
-		mouseClickWidget_ = nullptr;
+    Widget * RootWindow::mouseUp(int col, int row, MouseButton button, Key modifiers) {
+		ASSERT(mouseFocusLock_ > 0);
+		mouseFocusLock_--;
+		if (mouseFocus_ != nullptr) {
+			screenToWidgetCoordinates(mouseFocus_, col, row);
+			mouseFocus_->mouseUp(col, row, button, modifiers);
+			// see if we have single or double click
+			if (mouseClickButton_ == button) {
+				size_t end = helpers::SteadyClockMillis();
+				if (end - mouseClickStart_ <= MOUSE_CLICK_MAX_DURATION) {
+					if (mouseDoubleClickPrevious_ != 0 && mouseClickStart_ - mouseDoubleClickPrevious_ < MOUSE_DOUBLE_CLICK_MAX_INTERVAL) {
+						// double click
+						mouseFocus_->mouseDoubleClick(col, row, button, modifiers);
+						mouseClickWidget_ = nullptr;
+					} else {
+						// single click
+						mouseFocus_->mouseClick(col, row, button, modifiers);
+						mouseDoubleClickPrevious_ = end;
+					}
+				} 
+				// that's it - no need to do anything with mouseClick widget here, it has either expired, or it is valid, or it was cleared by a double click happening already
+			} 			
+		}
+		return mouseFocus_;
     }
 
     void RootWindow::mouseWheel(int col, int row, int by, Key modifiers) {
-		Widget* target = mouseFocusWidget(col, row);
-		// nothing to dispatch if there is no mouse target (i.e. pointer outside of the window and no locked target)
-		if (target == nullptr)
-		    return;
-		Point pos = screenToWidgetCoordinates(target, col, row);
-		if (target == this)
-			Widget::mouseWheel(pos.x, pos.y, by, modifiers);
-		else
-			target->mouseWheel(pos.x, pos.y, by, modifiers);
+		if (mouseFocusLock_ > 0 && mouseFocus_ != nullptr) {
+			screenToWidgetCoordinates(mouseFocus_, col, row);
+		    mouseFocus_->mouseWheel(col, row, by, modifiers);
+		} else {
+			if (!visibleRegion_.contains(col, row))
+			    return;
+		    Container::mouseWheel(col, row, by, modifiers);
+		}
     }
 
     void RootWindow::mouseMove(int col, int row, Key modifiers) {
-		Widget* target = mouseFocusWidget(col, row);
-		// nothing to dispatch if there is no mouse target (i.e. pointer outside of the window and no locked target)
-		if (target == nullptr)
-		    return;
-		Point pos = screenToWidgetCoordinates(target, col, row);
-		if (target == this)
-			Widget::mouseMove(pos.x, pos.y, modifiers);
-		else
-			target->mouseMove(pos.x, pos.y, modifiers);
+		if (mouseFocusLock_ > 0 && mouseFocus_ != nullptr) {
+			screenToWidgetCoordinates(mouseFocus_, col, row);
+		    mouseFocus_->mouseMove(col, row, modifiers);
+		} else {
+			if (!visibleRegion_.contains(col, row))
+				return;
+			Container::mouseMove(col, row, modifiers);
+		}
     }
 
     void RootWindow::keyChar(helpers::Char c) {
@@ -136,28 +135,6 @@ namespace ui {
         if (! destroying_)
             visibleRegion_ = Canvas::VisibleRegion(this);
     }
-
-	Widget* RootWindow::mouseFocusWidget(int col, int row) {
-		if (mouseFocus_ != nullptr && mouseFocusLock_ > 0)
-		    return mouseFocus_;
-		if (mouseFocus_ == nullptr || mouseCol_ != col || mouseRow_ != row) {
-			Widget* newFocus = nullptr;
-			{
-				Canvas::Buffer::Ptr ptr(buffer_); // lock the buffer in non priority mode
-				newFocus = getMouseTarget(col, row);
-			}
-			if (mouseFocus_ != newFocus) {
-				if (mouseFocus_ != nullptr)
-					mouseFocus_->mouseLeave();
-				mouseFocus_ = newFocus;
-				if (mouseFocus_ != nullptr)
-				    mouseFocus_->mouseEnter();
-			}
-			mouseCol_ = col;
-			mouseRow_ = row;
-		}
-		return mouseFocus_;
-	}
 
 	void RootWindow::updateTitle(std::string const & title) {
 		title_ = title;

@@ -1,5 +1,10 @@
 ﻿- borders should be thin, thick, full
+- selection should be cancelled when window gets defocused
+- slection update when mouse above window top does not work - but then selection needs to be reworked
+- returning WIdget from mouseUp is perhaps not necessary as in that case we have locked mouse anyways so the mouse up widget will be used. 
+
 - clean shapes - rect, to provide the points for corners on demand
+
 
 ## Bugs and missing features
 

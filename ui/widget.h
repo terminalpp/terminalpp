@@ -373,18 +373,20 @@ namespace ui {
 			    trigger(onDisabled);
 		}
 
-		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
+		virtual Widget * mouseDown(int col, int row, MouseButton button, Key modifiers) {
 			if (!focused_ && focusStop_)
 			    setFocused(true);
 			MouseButtonPayload e{ col, row, button, modifiers };
 			trigger(onMouseUp, e);
+			return this;
 		}
 
-		virtual void mouseUp(int col, int row, MouseButton button, Key modifiers) {
+		virtual Widget * mouseUp(int col, int row, MouseButton button, Key modifiers) {
 			if (!focused_ && focusStop_)
 			    setFocused(true);
 			MouseButtonPayload e{ col, row, button, modifiers };
 			trigger(onMouseUp, e);
+			return this;
 		}
 
 		virtual void mouseClick(int col, int row, MouseButton button, Key modifiers) {
@@ -516,12 +518,14 @@ namespace ui {
 			overlay_ = value;
 		}
 
+		/*
 		virtual Widget* getMouseTarget(int col, int row) {
 			MARK_AS_UNUSED(col);
 			MARK_AS_UNUSED(row);
 			ASSERT(visibleRegion_.contains(col, row));
 			return this;
 		}
+		*/
 
 		/** Updated trigger function for events which takes the Widget as base class for event sender.
 		 */

@@ -216,7 +216,7 @@ namespace vterm {
             canvas.fill(ui::Rect(width(), height()), ui::Brush(ui::Color::Black().setAlpha(128)));
     }
 
-    void Terminal::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    ui::Widget * Terminal::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         if (modifiers == 0) {
             if (button == ui::MouseButton::Left) {
                 if (!selection_.empty())
@@ -231,17 +231,17 @@ namespace vterm {
                 requestRepaint();
             }
         }
-        Widget::mouseDown(col, row, button, modifiers);
+        return Widget::mouseDown(col, row, button, modifiers);
     }
 
-    void Terminal::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    ui::Widget * Terminal::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         if (modifiers == 0) {
             if (button == ui::MouseButton::Left) {
                 updateSelectionRegionStop();
                 setSelection(selectionContents());
             }
         }
-        Widget::mouseUp(col, row, button, modifiers);
+        return Widget::mouseUp(col, row, button, modifiers);
     }
 
     void Terminal::mouseMove(int col, int row, ui::Key modifiers) {

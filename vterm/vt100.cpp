@@ -378,7 +378,7 @@ namespace vterm {
         Widget::updateSize(width, height);
     }
 
-    void VT100::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    ui::Widget * VT100::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         ASSERT(mouseButtonsDown_ <= 3);
         ++mouseButtonsDown_;
 		if (mouseMode_ != MouseMode::Off) {
@@ -386,10 +386,10 @@ namespace vterm {
             sendMouseEvent(mouseLastButton_, col, row, 'M');
             LOG(SEQ) << "Button " << button << " down at " << col << ";" << row;
         }
-        Terminal::mouseDown(col, row, button, modifiers);
+        return Terminal::mouseDown(col, row, button, modifiers);
     }
 
-    void VT100::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    ui::Widget * VT100::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         ASSERT(mouseButtonsDown_ > 0);
         --mouseButtonsDown_;
 		if (mouseMode_ != MouseMode::Off) {
@@ -397,7 +397,7 @@ namespace vterm {
             sendMouseEvent(mouseLastButton_, col, row, 'm');
             LOG(SEQ) << "Button " << button << " up at " << col << ";" << row;
         }
-        Terminal::mouseUp(col, row, button, modifiers);
+        return Terminal::mouseUp(col, row, button, modifiers);
     }
 
     void VT100::mouseWheel(int col, int row, int by, ui::Key modifiers) {

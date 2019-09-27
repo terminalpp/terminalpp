@@ -106,8 +106,8 @@ namespace ui {
             return cursor_;
         }
 
-        void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
-        void mouseUp(int col, int row, MouseButton button, Key modifiers) override;
+        Widget * mouseDown(int col, int row, MouseButton button, Key modifiers) override;
+        Widget * mouseUp(int col, int row, MouseButton button, Key modifiers) override;
         void mouseWheel(int col, int row, int by, Key modifiers) override;
         void mouseMove(int col, int row, Key modifiers) override;
 
@@ -206,14 +206,11 @@ namespace ui {
 
 			Note that these may be negative, or bigger than the widget itself if the mouse is outside of the widget's area and the mouse target is locked.
 		 */
-		Point screenToWidgetCoordinates(Widget * w, unsigned col, unsigned row) {
+		void screenToWidgetCoordinates(Widget * w, int & col, int & row) {
 			Canvas::VisibleRegion const& wr = w->visibleRegion_;
             ASSERT(wr.valid) << "An invalid widget is rather bad at receiving mouse coordinates";
-			Point result(
-				wr.region.left() + (col - wr.windowOffset.x),
-				wr.region.top() + (row - wr.windowOffset.y)
-			);
-			return result;
+            col = wr.region.left() + (col - wr.windowOffset.x);
+            row = wr.region.top() + (row - wr.windowOffset.y);
 		}
 
         void setTitle(std::string const & title) {

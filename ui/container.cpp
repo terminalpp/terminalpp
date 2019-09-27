@@ -9,6 +9,54 @@ namespace ui {
 		relayout_(true) {
 	}
 
+	Widget * Container::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+		Widget * target = getMouseTarget(col, row);
+		if (target != nullptr)
+		    return target->mouseDown(col, row, button, modifiers);
+		// if there is no target in children, the container itself is the target
+		return Widget::mouseDown(col, row, button, modifiers);
+	}
+
+	Widget * Container::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+		Widget * target = getMouseTarget(col, row);
+		if (target != nullptr)
+		    return target->mouseDown(col, row, button, modifiers);
+		// if there is no target in children, the container itself is the target
+		return Widget::mouseUp(col, row, button, modifiers);
+	}
+
+	void Container::mouseClick(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+		Widget * target = getMouseTarget(col, row);
+		if (target != nullptr)
+		    return target->mouseClick(col, row, button, modifiers);
+		// if there is no target in children, the container itself is the target
+		return Widget::mouseClick(col, row, button, modifiers);
+	}
+
+	void Container::mouseDoubleClick(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+		Widget * target = getMouseTarget(col, row);
+		if (target != nullptr)
+		    return target->mouseDoubleClick(col, row, button, modifiers);
+		// if there is no target in children, the container itself is the target
+		return Widget::mouseDoubleClick(col, row, button, modifiers);
+	}
+
+	void Container::mouseWheel(int col, int row, int by, Key modifiers) {
+		Widget * target = getMouseTarget(col, row);
+		if (target != nullptr)
+		    return target->mouseWheel(col, row, by, modifiers);
+		// if there is no target in children, the container itself is the target
+		return Widget::mouseWheel(col, row, by, modifiers);
+	}
+
+	void Container::mouseMove(int col, int row, Key modifiers) {
+		Widget * target = getMouseTarget(col, row);
+		if (target != nullptr)
+		    return target->mouseMove(col, row, modifiers);
+		// if there is no target in children, the container itself is the target
+		return Widget::mouseMove(col, row, modifiers);
+	}
+
 	void Container::paint(Canvas& canvas) {
 		Canvas clientCanvas = getClientCanvas(canvas);
 		if (relayout_) {
