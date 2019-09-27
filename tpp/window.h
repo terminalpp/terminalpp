@@ -79,6 +79,9 @@ namespace tpp {
         virtual void paint() = 0;
 
         virtual void setFocus(bool value) {
+            // if the window is loosing its focus, reset active modifiers (otherwise things like dangling ALT from ALT-TAB app switch are possible) 
+            if (! value)
+                activeModifiers_ = ui::Key::Invalid;
             ui::Renderer::setFocus(value);
         }
 

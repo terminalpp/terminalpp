@@ -331,27 +331,11 @@ namespace tpp {
 				    return 0;
 				break;
 			}
-			/* In case of key up event we must make sure the modifier keys are returned with their modifier bit enabled as well, so that they can be easily mathed to their corresponding key down events.
+			/* The modifier part of the key corresponds to the state of the modifiers *after* the key has been released. 
 			 */
 			case WM_SYSKEYUP:
 			case WM_KEYUP: {
 				ui::Key k = GetKey(static_cast<unsigned>(wParam));
-				switch(k.code()) {
-					case ui::Key::ShiftKey:
-					    k = k + ui::Key::Shift;
-						break;
-					case ui::Key::CtrlKey:
-					    k = k + ui::Key::Ctrl;
-						break;
-					case ui::Key::AltKey:
-					    k = k + ui::Key::Alt;
-						break;
-					case ui::Key::WinKey:
-					    k = k + ui::Key::Win;
-						break;
-					default:
-						break;
-				}
 				window->keyUp(k);
 				break;
 			}

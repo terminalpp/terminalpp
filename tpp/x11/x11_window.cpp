@@ -408,7 +408,7 @@ namespace tpp {
                 }
                 break;
             }
-			/* In case of key up event we must make sure the modifier keys are returned with their modifier bit enabled as well, so that they can be easily mathed to their corresponding key down events.
+			/* The modifiers of the key correspond to the state *after* it was released. I.e. released ctrl-key will not have ctrl-modifier enabled.
 			 */
             case KeyRelease: {
 				unsigned modifiers = GetStateModifiers(e.xkey.state);
@@ -418,25 +418,8 @@ namespace tpp {
 				// if the modifiers were updated (i.e. the key is Shift, Ctrl, Alt or Win, updated active modifiers
 				if (modifiers != key.modifiers())
 					window->activeModifiers_ = ui::Key(ui::Key::Invalid, modifiers);
-				if (key != ui::Key::Invalid) {
-                    switch(key.code()) {
-                        case ui::Key::ShiftKey:
-                            key = key + ui::Key::Shift;
-                            break;
-                        case ui::Key::CtrlKey:
-                            key = key + ui::Key::Ctrl;
-                            break;
-                        case ui::Key::AltKey:
-                            key = key + ui::Key::Alt;
-                            break;
-                        case ui::Key::WinKey:
-                            key = key + ui::Key::Win;
-                            break;
-                        default:
-                            break;
-                    }
+				if (key != ui::Key::Invalid)
                     window->keyUp(key);
-                }
                 break;
             }
             case ButtonPress: 

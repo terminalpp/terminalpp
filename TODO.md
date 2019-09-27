@@ -1,4 +1,5 @@
-﻿- clean shapes - rect, to provide the points for corners on demand
+﻿- borders should be thin, thick, full
+- clean shapes - rect, to provide the points for corners on demand
 
 ## Bugs and missing features
 

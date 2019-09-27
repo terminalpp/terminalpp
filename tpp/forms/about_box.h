@@ -54,11 +54,11 @@ namespace tpp {
 
         void keyDown(ui::Key k) override {
             if (lastKey_ == ui::Key::Invalid)
-                lastKey_ = k;
+                lastKey_ = k.code();
         }
 
         void keyUp(ui::Key k) override {
-            if (k == lastKey_) {
+            if (k.code() == lastKey_) {
                 lastKey_ = ui::Key::Invalid;
                 setVisible(false);
                 trigger(onDismissed);
@@ -88,7 +88,7 @@ namespace tpp {
         }
 
     private:
-        ui::Key lastKey_;
+        unsigned lastKey_;
     }; // tpp::AboutBox
 
     EVENT_BUILDER(OnDismissed, ui::VoidEvent, onDismissed, AboutBox);

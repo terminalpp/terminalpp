@@ -35,7 +35,6 @@ namespace ui {
 			raw_(code | modifiers) {
 			ASSERT((code & 0xffff0000) == 0);
 			ASSERT((modifiers & 0xfff0ffff) == 0);
-
 		}
 
 		unsigned code() const {
