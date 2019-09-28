@@ -153,11 +153,11 @@ namespace ui {
 		    renderer_->requestClose();
 	}
 
-	void RootWindow::requestClipboardPaste(Clipboard * sender) {
+	void RootWindow::requestClipboardContents(Widget * sender) {
 		if (pasteRequestTarget_ == nullptr) {
 			pasteRequestTarget_ = sender;
 			if (renderer_) 
-			    renderer_->requestClipboardPaste();
+			    renderer_->requestClipboardContents();
 			else
 			    LOG << "Paste request w/o renderer";
 		} else {
@@ -165,11 +165,11 @@ namespace ui {
 		}
 	}
 
-	void RootWindow::requestSelectionPaste(Clipboard * sender) {
+	void RootWindow::requestSelectionContents(Widget * sender) {
 		if (pasteRequestTarget_ == nullptr) {
 			pasteRequestTarget_ = sender;
 			if (renderer_) 
-			    renderer_->requestSelectionPaste();
+			    renderer_->requestSelectionContents();
 			else
 			    LOG << "Paste request w/o renderer";
 		} else {
@@ -212,11 +212,13 @@ namespace ui {
 	}
 
 	void RootWindow::paste(std::string const & contents) {
-		if (pasteRequestTarget_) {
+		if (pasteRequestTarget_ != nullptr) {
 		    pasteRequestTarget_->paste(contents);
 			pasteRequestTarget_ = nullptr;
+		} else if (keyboardFocus_ != nullptr) {
+			keyboardFocus_->paste(contents);
 		} else {
-			LOG << "Paste event received w/o active request";
+			LOG << "Paste event received w/o active request or focused widget";
 		}
 	}
 

@@ -155,12 +155,12 @@ namespace tpp {
 		Window::updateSizePx(widthPx_, heightPx_);
     }
 
-    void X11Window::requestClipboardPaste() {
+    void X11Window::requestClipboardContents() {
         X11Application * app = X11Application::Instance();
 		XConvertSelection(display_, app->clipboardName_, app->formatStringUTF8_, app->clipboardName_, window_, CurrentTime);
     }
 
-    void X11Window::requestSelectionPaste() {
+    void X11Window::requestSelectionContents() {
         X11Application * app = X11Application::Instance();
 		XConvertSelection(display_, app->primaryName_, app->formatStringUTF8_, app->primaryName_, window_, CurrentTime);
     }

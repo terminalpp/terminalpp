@@ -64,4 +64,17 @@ namespace ui {
 		    root->addFocusStop(this);
 	}
 
+    void Widget::requestClipboardContents() {
+        RootWindow * root = rootWindow();
+        if (root)
+            root->requestClipboardContents(this);
+    }
+
+    void Widget::requestSelectionContents() {
+        RootWindow * root = rootWindow();
+        if (root)
+            root->requestSelectionContents(this);
+    }
+
+
 } // namespace ui

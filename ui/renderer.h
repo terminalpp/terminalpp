@@ -41,9 +41,9 @@ namespace ui {
 
         virtual void setIcon(RootWindow::Icon icon) = 0;
 
-        virtual void requestClipboardPaste() = 0;
+        virtual void requestClipboardContents() = 0;
 
-        virtual void requestSelectionPaste() = 0;
+        virtual void requestSelectionContents() = 0;
 
         /** Sets the contents of the clipboard to the given text. 
          */

@@ -113,9 +113,9 @@ namespace tpp {
 
         // renderer clipboard interface 
 
-        void requestClipboardPaste() override;
+        void requestClipboardContents() override;
 
-        void requestSelectionPaste() override;
+        void requestSelectionContents() override;
 
         void setClipboard(std::string const & contents) override;
 

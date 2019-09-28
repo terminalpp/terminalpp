@@ -4,18 +4,6 @@
 
 namespace ui {
 
-    void Clipboard::requestClipboardPaste() {
-        RootWindow * root = rootWindow();
-        if (root)
-            root->requestClipboardPaste(this);
-    }
-
-    void Clipboard::requestSelectionPaste() {
-        RootWindow * root = rootWindow();
-        if (root)
-            root->requestSelectionPaste(this);
-    }
-
     void Clipboard::setClipboard(std::string const & contents) {
         RootWindow * root = rootWindow();
         if (root)

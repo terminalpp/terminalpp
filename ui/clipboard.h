@@ -92,14 +92,6 @@ namespace ui {
             selectionStart_{-1,-1} {
         }
 
-        /** Requests the paste of clipboard data. 
-         */
-        void requestClipboardPaste();
-
-        /** Requests the paste of selection data. 
-         */
-        void requestSelectionPaste();
-
         void setClipboard(std::string const & contents);
 
         void setSelection(std::string const & contents);
@@ -109,10 +101,6 @@ namespace ui {
             Does nothing if the selection is empty already. 
          */
         void clearSelection();
-
-        /** Called when the clipboard or selection contents becomes available. 
-         */
-        virtual void paste(std::string const & contents) = 0;
 
         /** Triggered if the selection should be cleared due to external forces. 
          */ 

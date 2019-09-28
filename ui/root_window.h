@@ -239,13 +239,13 @@ namespace ui {
         friend class Clipboard;
         friend class Renderer;
 
-        virtual void requestClipboardPaste(Clipboard * sender);
-        virtual void requestSelectionPaste(Clipboard * sender);
+        virtual void requestClipboardContents(Widget * sender);
+        virtual void requestSelectionContents(Widget * sender);
         virtual void setClipboard(Clipboard * sender, std::string const & contents);
         virtual void setSelection(Clipboard * sender, std::string const & contents);
         virtual void clearSelection(Clipboard * sender);
 
-        virtual void paste(std::string const & contents);
+        void paste(std::string const & contents);
 
         virtual void invalidateSelection();
 
@@ -271,7 +271,7 @@ namespace ui {
 
         Cursor cursor_;
 
-        Clipboard * pasteRequestTarget_;
+        Widget * pasteRequestTarget_;
         Clipboard * selectionOwner_;
 
         std::string title_;

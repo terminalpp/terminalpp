@@ -224,7 +224,7 @@ namespace vterm {
                 updateSelectionRegionStart(ui::Point(col, row));
                 requestRepaint();
             } else if (button == ui::MouseButton::Wheel) {
-                requestSelectionPaste();                
+                requestSelectionContents();                
             } else if (button == ui::MouseButton::Right && ! selection_.empty()) {
                 setClipboard(selectionContents());
                 clearSelection();

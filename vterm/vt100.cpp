@@ -428,7 +428,7 @@ namespace vterm {
     void VT100::keyDown(ui::Key key) {
         // TODO this is ugly, fix help, make nice, etc, etc, etc, etc, etc. 
         if (key == (ui::Key::V + ui::Key::Ctrl + ui::Key::Shift)) {
-            requestClipboardPaste();
+            requestClipboardContents();
             return;
         }
 		std::string const* seq = GetSequenceForKey(key);

@@ -373,6 +373,21 @@ namespace ui {
 			    trigger(onDisabled);
 		}
 
+		/** Requests the contents of the clipboard to be sent back to the widget via the paste method. 
+		 */
+		void requestClipboardContents();
+
+		/** Requests the contents of the selection to be sent back to the widget via the paste method. 
+		 */
+		void requestSelectionContents();
+
+		/** Whenever user or widget requested clipboard or selection contents is received, the paste method is called with the contents. 
+		 */
+		virtual void paste(std::string const & contents) {
+			MARK_AS_UNUSED(contents);
+			// do nothing by default
+		}
+
 		virtual Widget * mouseDown(int col, int row, MouseButton button, Key modifiers) {
 			if (!focused_ && focusStop_)
 			    setFocused(true);
@@ -517,15 +532,6 @@ namespace ui {
 		virtual void updateOverlay(bool value) {
 			overlay_ = value;
 		}
-
-		/*
-		virtual Widget* getMouseTarget(int col, int row) {
-			MARK_AS_UNUSED(col);
-			MARK_AS_UNUSED(row);
-			ASSERT(visibleRegion_.contains(col, row));
-			return this;
-		}
-		*/
 
 		/** Updated trigger function for events which takes the Widget as base class for event sender.
 		 */

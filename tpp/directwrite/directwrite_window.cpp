@@ -113,7 +113,7 @@ namespace tpp {
 		Window::updateSizePx(widthPx_, heightPx_);
 	}
 
-	void DirectWriteWindow::requestClipboardPaste() {
+	void DirectWriteWindow::requestClipboardContents() {
 		std::string result;
 		if (OpenClipboard(nullptr)) {
 			HANDLE clip = GetClipboardData(CF_UNICODETEXT);
@@ -130,7 +130,7 @@ namespace tpp {
         paste(result);
 	}
 
-	void DirectWriteWindow::requestSelectionPaste() {
+	void DirectWriteWindow::requestSelectionContents() {
 		DirectWriteApplication * app = DirectWriteApplication::Instance();
 		if (!app->selection_.empty())
 		    paste(app->selection_);
