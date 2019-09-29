@@ -370,7 +370,7 @@ namespace tpp {
 				break;
 			}
 			case WM_MOUSEMOVE:
-				window->mouseMove(MOUSE_X, MOUSE_Y);
+				window->mouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 				break;
 			/** Send when mouse capture has been lost (either explicitly, or implicitly). 
 

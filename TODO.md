@@ -1,6 +1,6 @@
 ﻿- borders should be thin, thick, full
+- selectionowner for scrollbox should be updated
 - selection should be cancelled when window gets defocused
-- slection update when mouse above window top does not work - but then selection needs to be reworked
 - maybe return widget from other mouse things as well (not just mouse down and up)
 
 - clean shapes - rect, to provide the points for corners on demand

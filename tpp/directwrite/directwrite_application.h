@@ -2,6 +2,7 @@
 #if (defined ARCH_WINDOWS)
 
 #include "windows.h"
+#include "windowsx.h"
 #include <dwrite_2.h> 
 #include <d2d1_2.h>
 #include <wrl.h>

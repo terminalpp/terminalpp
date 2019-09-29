@@ -3,6 +3,10 @@
 #include "shapes.h"
 #include "widget.h"
 
+/** @page uiselection ui - Selection & Clipboard
+
+ */
+
 namespace ui {
 
     /** Determines selection coordinates on a widget. 
@@ -144,10 +148,9 @@ namespace ui {
             selectionStart_ = Point{col, row};
         }
 
-        void selectionUpdate(int col, int row) {
+        virtual void selectionUpdate(int col, int row) {
             if (! updating_)
                 return;
-            // TODO this is wrong when scrolling gets into picture
             if (col < 0)
                 col = 0;
             else if (col >= width())

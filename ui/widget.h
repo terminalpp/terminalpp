@@ -8,6 +8,15 @@
 #include "mouse.h"
 #include "key.h"
 
+/** @page uiwidget ui - Widget
+  
+    \brief Basic information about the ui::Widget class and its usage. 
+
+	The ui::Widget is the base class of all user elements visible in the interface. 
+
+
+ */
+
 namespace ui {
 
 	/** Size hint provides hints about the width and height of a widget to the layouting engine. 
