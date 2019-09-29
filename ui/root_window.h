@@ -2,6 +2,7 @@
 
 #include <map>
 
+#include "selection.h"
 #include "container.h"
 
 namespace ui {
@@ -109,7 +110,7 @@ namespace ui {
         Widget * mouseDown(int col, int row, MouseButton button, Key modifiers) override;
         Widget * mouseUp(int col, int row, MouseButton button, Key modifiers) override;
         void mouseWheel(int col, int row, int by, Key modifiers) override;
-        void mouseMove(int col, int row, Key modifiers) override;
+        Widget * mouseMove(int col, int row, Key modifiers) override;
 
         void keyChar(helpers::Char c) override;
         void keyDown(Key k) override;
@@ -236,18 +237,39 @@ namespace ui {
     private:
 
         friend class Canvas;
-        friend class Clipboard;
+        friend class SelectionOwner;
         friend class Renderer;
 
+        // Clipboard & selection paste request and response
+
+        /** Handles clipboard and selection paste requests. 
+         */
         virtual void requestClipboardContents(Widget * sender);
         virtual void requestSelectionContents(Widget * sender);
-        virtual void setClipboard(Clipboard * sender, std::string const & contents);
-        virtual void setSelection(Clipboard * sender, std::string const & contents);
-        virtual void clearSelection(Clipboard * sender);
-
         void paste(std::string const & contents);
 
-        virtual void invalidateSelection();
+        // Clipboard and selection updates
+
+        /** Informs the renderer that clipboard contents should be updated to given text. 
+         */
+        virtual void setClipboard(std::string const & contents);
+
+        /** Informs the renderer that selection has changed to given contents and owner. 
+         */
+        virtual void registerSelection(SelectionOwner * sender, std::string const & contents);
+
+        /** Called when ui side wants to clear selection it owns explicitly. 
+         
+            First the selection is invalidated on the UI side and then the renderer is informed that it should clear its selection information as well. 
+         */
+        virtual void clearSelection();
+
+        /** Called by the renderer when the selection has been invalidated. 
+
+            No need to inform the renderer, but selection owner has to be notified that its selection has been invalidated and the selection owner should be cleared.  
+         */
+        virtual void selectionInvalidated();
+
 
         bool destroying_;
 
@@ -272,7 +294,7 @@ namespace ui {
         Cursor cursor_;
 
         Widget * pasteRequestTarget_;
-        Clipboard * selectionOwner_;
+        SelectionOwner * selectionOwner_;
 
         std::string title_;
         Icon icon_;

@@ -178,7 +178,7 @@ namespace tpp {
         X11Application * app = X11Application::Instance();
         // if there is a selection ownership by other window, let it invalidate its selection first
         if (app->selectionOwner_)
-            app->selectionOwner_->invalidateSelection();
+            app->selectionOwner_->selectionInvalidated();
         // set the contents
 		app->selection_ = contents;
 		app->selectionOwner_ = this;
@@ -203,7 +203,7 @@ namespace tpp {
         // if the app already does not know about any selection, the event can be ignored
         if (app->selectionOwner_ != nullptr) {
             // tell the owner of the selection to invalidate its selection
-            app->selectionOwner_->invalidateSelection();
+            app->selectionOwner_->selectionInvalidated();
             // invalidate the selection in the app
             app->selectionOwner_ = nullptr;
             app->selection_.clear();

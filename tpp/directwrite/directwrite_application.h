@@ -6,7 +6,7 @@
 #include <d2d1_2.h>
 #include <wrl.h>
 
-#include "ui/clipboard.h"
+#include "ui/selection.h"
 
 #include "../application.h"
 #include "../font.h"

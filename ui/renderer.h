@@ -3,7 +3,7 @@
 #include "helpers/helpers.h"
 
 #include "widget.h"
-#include "clipboard.h"
+#include "selection.h"
 #include "root_window.h"
 
 namespace ui {
@@ -140,9 +140,9 @@ namespace ui {
                 rootWindow_->paste(contents);
         }
 
-        void invalidateSelection() {
+        void selectionInvalidated() {
             if (attached())
-                rootWindow_->invalidateSelection(); 
+                rootWindow_->selectionInvalidated(); 
         }
 
     private:

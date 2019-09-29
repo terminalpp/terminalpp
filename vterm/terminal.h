@@ -4,7 +4,7 @@
 
 #include "ui/canvas.h"
 #include "ui/widget.h"
-#include "ui/clipboard.h"
+#include "ui/selection.h"
 #include "ui/builders.h"
 
 #include "pty.h"
@@ -26,7 +26,7 @@ namespace vterm {
 
     typedef helpers::EventPayload<InputBuffer, ui::Widget> InputProcessedEvent;
 
-    class Terminal : public virtual ui::Widget, public ui::Clipboard {
+    class Terminal : public virtual ui::Widget, public ui::SelectionOwner {
     public:
 
         typedef ui::Cell Cell;
@@ -256,20 +256,24 @@ namespace vterm {
 
         ui::Widget * mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         ui::Widget * mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        void mouseMove(int col, int row, ui::Key modifiers) override;
+        ui::Widget * mouseMove(int col, int row, ui::Key modifiers) override;
 
         /** When selection is invalidated, we request repaint so that the selection is no longer displayed. 
          */
-        void invalidateSelection() override {
+        /*void invalidateSelection() override {
             Clipboard::invalidateSelection();
             requestRepaint();
-        }
+        } */
 
         /** Returns the contents of the selection. 
          
             Trims the right of each line.
          */
-        std::string selectionContents();
+        std::string getSelectionContents() override;
+
+        void selectionUpdated() override {
+            requestRepaint();
+        }
 
         // terminal interface
 
@@ -318,6 +322,10 @@ namespace vterm {
 
         /* Terminal title */
         std::string title_;
+
+        /** Determines whether mouse selection update is in progress or not. 
+         */
+        bool mouseSelectionUpdate_;
 
     }; // vterm::Terminal
 

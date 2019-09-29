@@ -39,7 +39,7 @@ namespace ui {
         void mouseClick(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         void mouseDoubleClick(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         void mouseWheel(int col, int row, int by, ui::Key modifiers) override;
-        void mouseMove(int col, int row, ui::Key modifiers) override;
+        Widget * mouseMove(int col, int row, ui::Key modifiers) override;
 
 		void setLayout(Layout* value) {
 			ASSERT(value != nullptr) << "use Layout::None instead";

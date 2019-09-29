@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shapes.h"
+#include "widget.h"
 
 namespace ui {
 
@@ -46,7 +47,7 @@ namespace ui {
 
         /** Returns true if the selection is empty. 
          */
-        bool empty() {
+        bool empty() const {
             return start_.y == end_.y;
         }
 
@@ -72,5 +73,116 @@ namespace ui {
         Point end_;
 
     }; // ui::Selection
+
+    /** Provides basic API for selection & clipboard handling. 
+     
+        The renderer caches the clipboard and selection buffer contents and remembers the ownership of selection. 
+     */
+    class SelectionOwner : public virtual Widget {
+    public:
+
+        /** Returns the current selection region coordinates.
+         */
+        Selection const & selection() const {
+            return selection_;
+        }
+
+        /** Returns the selection contents. 
+         
+            This method has to be overriden in children to provide the mechanism how to obtain the selection contents from given selection. 
+         */
+        virtual std::string getSelectionContents() = 0;
+
+        /** Clears the selection held. 
+         
+            Clears the selection rectangle visualization and informs the root window that selection has been cleared, which in turn informs the renderer that selection ownership has been released. 
+         */
+        void clearSelection();
+
+
+    protected:
+
+        friend class RootWindow;
+
+        SelectionOwner():
+            updating_{false} {
+        }
+
+        /** Informs the root window that clipboard contents has changed to the current selection. 
+         */
+        void setClipboard();
+
+        /** Informs the root window that the clipboard contents has changed to the given string regardless of the selection status. 
+         */
+        void setClipboard(std::string const & value);
+
+        /** Informs the root window that selection should now be held by the current widget. 
+         */
+        void registerSelection();
+
+
+        /** Called whenever the selection rectangle is updated so that it can be redrawn. 
+         
+            Calls the repaint() method by default, but can be overriden in children once the selection contents mechanism is known. 
+         */
+        virtual void selectionUpdated() {
+            repaint();
+        }
+
+        /** Called when the selection should be invalidated. 
+         */
+        virtual void selectionInvalidated() {
+            selection_.clear();
+            selectionUpdated();
+        }
+
+        void startSelectionUpdate(int col, int row) {
+            ASSERT(! updating_);
+            if (!selection_.empty())
+                clearSelection();
+            updating_ = true;
+            selectionStart_ = Point{col, row};
+        }
+
+        void selectionUpdate(int col, int row) {
+            if (! updating_)
+                return;
+            // TODO this is wrong when scrolling gets into picture
+            if (col < 0)
+                col = 0;
+            else if (col >= width())
+                col = width() - 1;
+            if (row < 0)
+                row = 0;
+            else if (row >= height())
+                row = height() - 1;
+            // update the selection and call for repaint
+            selection_ = Selection::Create(selectionStart_, Point{col, row});
+            selectionUpdated();
+        }
+
+        void endSelectionUpdate(int col, int row) {
+            MARK_AS_UNUSED(col);
+            MARK_AS_UNUSED(row);
+            if (! updating_)
+                return;
+            updating_ = false;
+            registerSelection();
+        }
+
+        virtual void paintSelection(Canvas & canvas) {
+            if (selection_.empty())
+                return;
+            ui::Brush selBrush(ui::Color(192, 192, 255, 128));
+            canvas.fill(selection(), selBrush); 
+        }
+
+    private:
+        Selection selection_;
+        bool updating_;
+
+        Point selectionStart_;
+
+    };
 
 } // namespace ui

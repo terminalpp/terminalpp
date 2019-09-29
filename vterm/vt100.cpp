@@ -410,13 +410,13 @@ namespace vterm {
         Terminal::mouseWheel(col, row, by, modifiers);
     }
 
-    void VT100::mouseMove(int col, int row, ui::Key modifiers) {
+    ui::Widget * VT100::mouseMove(int col, int row, ui::Key modifiers) {
         if (mouseMode_ != MouseMode::Off && (mouseMode_ != MouseMode::ButtonEvent || mouseButtonsDown_ != 0)) {
             // mouse move adds 32 to the last known button press
             sendMouseEvent(mouseLastButton_ + 32, col, row, 'M');
             LOG(SEQ) << "Mouse moved to " << col << ";" << row;
         }
-        Terminal::mouseMove(col, row, modifiers);
+        return Terminal::mouseMove(col, row, modifiers);
     }
 
     void VT100::keyChar(helpers::Char c) {

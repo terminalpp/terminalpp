@@ -421,9 +421,10 @@ namespace ui {
 			trigger(onMouseWheel, e);
 		}
 
-		virtual void mouseMove(int col, int row, Key modifiers) {
+		virtual Widget * mouseMove(int col, int row, Key modifiers) {
 			MouseMovePayload e{ col, row, modifiers };
 			trigger(onMouseMove, e);
+			return this;
 		}
 
 		virtual void mouseEnter() {

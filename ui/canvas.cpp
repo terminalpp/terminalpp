@@ -1,4 +1,4 @@
-#include "clipboard.h"
+#include "selection.h"
 #include "root_window.h"
 
 #include "canvas.h"

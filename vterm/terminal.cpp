@@ -160,7 +160,8 @@ namespace vterm {
         buffer_{width, height},
         pty_{pty},
         fps_{fps},
-        repaint_{false} {
+        repaint_{false},
+        mouseSelectionUpdate_{false} {
         pty_->resize(width, height);
         ptyReader_ = std::thread([this, ptyBufferSize](){
             std::unique_ptr<char> holder(new char[ptyBufferSize]);
@@ -204,10 +205,7 @@ namespace vterm {
     void Terminal::paint(ui::Canvas & canvas) {
         Buffer::Ptr buffer = this->buffer(/* priority */true);
         canvas.copyBuffer(0,0,* buffer);
-        if (!selection_.empty()) {
-            ui::Brush selBrush(ui::Color(192, 192, 255, 128));
-            canvas.fill(selection_, selBrush); 
-        }
+        paintSelection(canvas);
         if (focused())
             canvas.setCursor(buffer->cursor());
         else
@@ -219,16 +217,12 @@ namespace vterm {
     ui::Widget * Terminal::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         if (modifiers == 0) {
             if (button == ui::MouseButton::Left) {
-                if (!selection_.empty())
-                    clearSelection();
-                updateSelectionRegionStart(ui::Point(col, row));
-                requestRepaint();
+                startSelectionUpdate(col, row);
             } else if (button == ui::MouseButton::Wheel) {
                 requestSelectionContents();                
-            } else if (button == ui::MouseButton::Right && ! selection_.empty()) {
-                setClipboard(selectionContents());
+            } else if (button == ui::MouseButton::Right && ! selection().empty()) {
+                setClipboard();
                 clearSelection();
-                requestRepaint();
             }
         }
         return Widget::mouseDown(col, row, button, modifiers);
@@ -236,22 +230,16 @@ namespace vterm {
 
     ui::Widget * Terminal::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         if (modifiers == 0) {
-            if (button == ui::MouseButton::Left) {
-                updateSelectionRegionStop();
-                setSelection(selectionContents());
-            }
+            if (button == ui::MouseButton::Left)
+                endSelectionUpdate(col, row);
         }
         return Widget::mouseUp(col, row, button, modifiers);
     }
 
-    void Terminal::mouseMove(int col, int row, ui::Key modifiers) {
-        if (modifiers == 0) {
-            if (updatingSelectionRegion()) {
-                updateSelectionRegion(ui::Point(col, row));
-                requestRepaint();
-            }
-        }
-        Widget::mouseMove(col, row, modifiers);
+    ui::Widget * Terminal::mouseMove(int col, int row, ui::Key modifiers) {
+        if (modifiers == 0) 
+            selectionUpdate(col, row);
+        return Widget::mouseMove(col, row, modifiers);
     }
 
     /** TODO Selection works for CJK and double width characters, is a bit messy for double height characters, but not worth the time now, should be fixed when the selection is restructured and more pasting options are added. 
@@ -260,24 +248,25 @@ namespace vterm {
 
         TODO perhaps change this to not space, but something else so that we can ignore it from the selection? Or ignore this corner case entirely.
      */
-    std::string Terminal::selectionContents() {
-        if (selection_.empty())
+    std::string Terminal::getSelectionContents() {
+        ui::Selection s = selection();
+        if (s.empty())
             return std::string{};
         std::string result;
         std::stringstream line;
         {
             // get the buffer pointer
             Buffer::Ptr buf = buffer();
-            if (selection_.start().y + 1 == selection_.end().y) {
-                ui::Point p = selection_.start();
-                for (; p.x < selection_.end().x;) {
+            if (s.start().y + 1 == s.end().y) {
+                ui::Point p = s.start();
+                for (; p.x < s.end().x;) {
                     char32_t cp = buf->at(p.x, p.y).codepoint();
                     line << helpers::Char::FromCodepoint(cp);
                     p.x += buf->at(p.x, p.y).font().width();
                 }
                 result += helpers::TrimRight(line.str());
             } else {
-                ui::Point p = selection_.start();
+                ui::Point p = s.start();
                 for (; p.x < buf->cols(); ) {
                     char32_t cp = buf->at(p.x, p.y).codepoint();
                     line << helpers::Char::FromCodepoint(cp);
@@ -285,7 +274,7 @@ namespace vterm {
 
                 }
                 result += helpers::TrimRight(line.str());
-                for (p.y = selection_.start().y + 1; p.y < selection_.end().y - 1; ++p.y) {
+                for (p.y = s.start().y + 1; p.y < s.end().y - 1; ++p.y) {
                     line.str("");
                     line.clear();
                     line << std::endl;
@@ -299,7 +288,7 @@ namespace vterm {
                 line.str("");
                 line.clear();
                 line << std::endl;
-                for (p.y = selection_.end().y - 1, p.x = 0; p.x < selection_.end().x;) {
+                for (p.y = s.end().y - 1, p.x = 0; p.x < s.end().x;) {
                     char32_t cp = buf->at(p.x, p.y).codepoint();
                     line << helpers::Char::FromCodepoint(cp);
                     p.x += buf->at(p.x, p.y).font().width();

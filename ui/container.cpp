@@ -49,7 +49,7 @@ namespace ui {
 		return Widget::mouseWheel(col, row, by, modifiers);
 	}
 
-	void Container::mouseMove(int col, int row, Key modifiers) {
+	Widget * Container::mouseMove(int col, int row, Key modifiers) {
 		Widget * target = getMouseTarget(col, row);
 		if (target != nullptr)
 		    return target->mouseMove(col, row, modifiers);
