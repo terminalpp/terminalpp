@@ -13,6 +13,7 @@
 - history sucks - only shows text, other information should be captured too
 
 - when terminal is resized the stuff that does not fit should go to history as well - this may be hard if we resize in the presence of double buffers - maybe terminal's on line out always adds the line, but VT100 decides to only call it when not in alternate mode... 
+- scrolling when resized asserts... 
 
 ## Bugs and missing features
 

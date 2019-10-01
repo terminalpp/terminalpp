@@ -17,7 +17,10 @@ namespace ui {
 			scrollLeft_(0),
 			scrollTop_(0),
 			clientWidth_(width()),
-			clientHeight_(height()) {
+			clientHeight_(height()),
+			scrollbarInactiveColor_(Color::White().setAlpha(64)),
+			scrollbarActiveColor_(Color::Red().setAlpha(128)),
+			scrollbarActive_(false) {
 		}
 
 		Rect clientRect() const override {
@@ -51,6 +54,12 @@ namespace ui {
 			scrollTop_ = scrollTop;
 		}
 
+		Widget * mouseMove(int col, int row, Key modifiers) override {
+    	    scrollbarActive_ = col == width() - 1;
+			return nullptr;
+		}
+		
+
 		void updateSize(int width, int height) override {
 		    setClientArea(std::max(width, clientWidth_), std::max(height, clientHeight_));
 		}
@@ -78,6 +87,38 @@ namespace ui {
 			setScrollOffset(Point{scrollLeft_, x});			    
 		}
 
+		/** Draws the vertical scrollbar overlay. 
+		 */ 
+		void drawVerticalScrollbarOverlay(Canvas & canvas) {
+			ui::Color color{scrollbarActive_ ? scrollbarActiveColor_ : scrollbarInactiveColor_};
+			// the right line
+			canvas.borderLineRight(Point{canvas.width() - 1, 0}, canvas.height(), color, false);
+			// calculate the position of the slider
+			std::pair<int, int> slider{sliderPlacement(canvas.height(), clientHeight_, scrollTop_, canvas.height())};
+			canvas.borderLineRight(Point{canvas.width() - 1, slider.first}, slider.second, color, true);
+		}
+
+		/** Draws the horizontal scrollbar overlay. 
+		 */ 
+		void drawHorizontalScrollbarOverlay(Canvas & canvas) {
+			ui::Color color{scrollbarActive_ ? scrollbarActiveColor_ : scrollbarInactiveColor_};
+			// the right line
+			canvas.borderLineBottom(Point{0, canvas.height() - 1}, canvas.width(), color, false);
+			// calculate the position of the slider
+			std::pair<int, int> slider{sliderPlacement(canvas.width(), clientWidth_, scrollLeft_, canvas.width())};
+			canvas.borderLineBottom(Point{slider.first, canvas.height() - 1}, slider.second, color, true);
+		}
+
+		std::pair<int, int> sliderPlacement(int maxWidth, int maxVal, int pos, int size) {
+			int sliderSize = std::max(1, size * maxWidth / maxVal);
+			int sliderStart = pos * maxWidth / maxVal;
+			if (pos + size == maxVal)
+			    sliderStart = maxWidth - sliderSize;
+			else
+			    sliderStart = std::min(sliderStart, maxWidth - sliderSize);
+			return std::make_pair(sliderStart, sliderSize);
+		}
+
 	private:
 
 		int scrollLeft_;
@@ -85,6 +126,12 @@ namespace ui {
 
 		int clientWidth_;
 		int clientHeight_;
+
+	    Color scrollbarInactiveColor_;
+		Color scrollbarActiveColor_;
+
+		bool scrollbarActive_;
+
 	};
 
 

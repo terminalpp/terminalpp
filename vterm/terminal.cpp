@@ -172,7 +172,7 @@ namespace vterm {
         repaint_{false},
         mouseSelectionUpdate_{false},
         scrollable_{true},
-        historySizeLimit_{100} {
+        historySizeLimit_{1000} {
         pty_->resize(width, height);
         ptyReader_ = std::thread([this, ptyBufferSize](){
             std::unique_ptr<char> holder(new char[ptyBufferSize]);
@@ -234,6 +234,7 @@ namespace vterm {
                clientCanvas.fill(ui::Rect{0, i, width(), i + 1}, ui::Color::Black());
                clientCanvas.textOut(ui::Point{0, i}, history_[i], ui::Color::Cyan());
            }
+           drawVerticalScrollbarOverlay(canvas);
         }
         // paint the selection, if any
         paintSelection(clientCanvas);
@@ -267,6 +268,7 @@ namespace vterm {
     ui::Widget * Terminal::mouseMove(int col, int row, ui::Key modifiers) {
         if (modifiers == 0) 
             selectionUpdate(col, row);
+        ScrollBox::mouseMove(col, row, modifiers);
         return Widget::mouseMove(col, row, modifiers);
     }
 
