@@ -375,6 +375,7 @@ namespace vterm {
         }
         pty()->resize(width, height);
         // skip terminal as it only updates the buffer which we do above anyways
+        ScrollBox::updateSize(width, height);
         Widget::updateSize(width, height);
     }
 
@@ -1472,11 +1473,10 @@ namespace vterm {
     }
 
     void VT100::deleteLines(int lines, int top, int bottom, Cell const & fill) {
-        if (! alternateBufferMode_ && onLineScrolledOut.attachedHandlers() > 0 && top == 0) {
-            buffer_.unlock();
-            trigger(onLineScrolledOut, lines);
-            buffer_.lock();
-        } 
+        // if lines are deleted from the top row and alternate buffer is not enabled, notify the terminal history that given number of lines is about to be scrolled out
+        if (! alternateBufferMode_ && top == 0)
+            lineScrolledOut(lines);
+        // delete the lines
         buffer_.deleteLines(lines, top, bottom, fill);
     }
 

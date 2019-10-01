@@ -8,12 +8,52 @@
 #include "mouse.h"
 #include "key.h"
 
-/** @page uiwidget ui - Widget
+/** \page uiwidget ui - Widget
   
     \brief Basic information about the ui::Widget class and its usage. 
 
 	The ui::Widget is the base class of all user elements visible in the interface. 
 
+	\section widgetPosSize Position, Size and Rectangles
+
+	The position and size of widget and its children/parents is determined by the following rectangles and point. Each widget defines these via the functions described below and with the exception of ui::Widget::Rect(), these can be overriden in child classes to specify extra behavior (see the notes below for examples):
+
+	ui::Widget::rect() returns the widget's rectangle in its parent's client coordinates (see below). The rectangle is composed of the `x` and `y` offsets of the widget and its `width` and `height`. 
+
+	ui::Widget::childRect() returns the rectangle of the widget's area that is available for the widget's children to draw on. Its implementation defaults to a rectangle `[0,0,width,height]`, which means that the entire area of the widget is available for its children. 
+
+	> Widgets with features such as borders should overwrite this method to restrict the children available area only to subset of their own. For instance if a widget with `rect` of `[100,100,10,10]` wants to have 2 rows border at the top and 1 cell border on all other sides, its `childRect` would be `[1,2,9,9]`. 
+
+	ui::Widget::clientRect() returns the area the widget presents to its children. The client rectangle should always start at `[0,0]`, while its width and height can be smaller, equal to, or greater than the `childRect`'s dimensions. If the `clientRect` is greater than `childRect`, scrolling may be used to determine which part of the `clientRect` will map to the visible area of the widget. 
+
+	ui::Widget::scrollOffset() returns the scrolling offset. The scrolling offset determines the point in the `clientRect` that corresponds to the op-left corner of the `childRect`. 
+
+	> A scrollable widget with `rect` of `[100,100,10,10]` has width and height of `10` cells and its top-left corner will be displayed at the `[100,100]` coordinates of its parent's clientRect. The `childRect` will again be `[1,2,9,9]`, corresponding to border of 2 rows at the top and 1 row/cell at other sides. The `clientRect` is `[0,0,100,100]`, which means that although the widget is capable of drawing only `8` cols by `7` rows, it presents an area of `[100,100]` cells and rows to its client. If the `scrollOffset` is `[0,0]` (the default), then only first 8 cols and 7 rows will be visible. If however the `scrollOffset` is `[10,20]`, then the visible rectangle of `clientRect` will be `[10,20,18,27]`.
+	
+    \section widgetDrawing Drawing the Widgets
+
+	Drawing of the widget is done in their ui::Widget::paint() method, which takes a Canvas as an argument. The Widget class and other base UI classes make sure that repainting occurs when it should and only the necessary part of the screen is updated at each paint event, details of which are given later in this section. 
+
+	\subsection widgetCanvas Canvas
+
+	The ui::Canvas class provides the basic drawing tools, such as text, borders, fills, etc. Furthermore the Canvas also keeps track of its visible region, i.e. the subset of the canvas that is visible, and therefore is backed by proper screen buffer cells. Only updates to the visible region of the canvas will actually have observable effect, but canvas users do not have to worry about which region is visible. 
+
+	> For performance reasons, large widgets may choose to limit their drawing to the visible area only, but this is not required. 
+
+	Each widget remembers its visible canvas region and when painting should occur, uses it to create actual canvas object, which is then passed to the ui::Widget::paint() method.
+
+	> For more details on drawing tools available, see the documentation of the `ui::Canvas` class itself. 
+	
+    \subsection widgetInvalidation Invalidating a widget
+
+
+
+
+	ui::Widget::getClientCanvas()
+
+	When the widget is drawn, the children of the widget should be drawn next, if any. The children may not necessarily be drawn using the same canvas as the widget and the task of this method is to return the canvas on which the children should be drawn given the widget's own canvas as an argument. 
+
+	The default implementation is to return the widget's own canvas, but the method is overriden in subclasses for purposes such as scrollable contents (in which case the client canvas has to be moved according to the scrolling offset), or when the widget contains borders (so that the client canvas does not allow drawing over them). 
 
  */
 
@@ -243,16 +283,45 @@ namespace ui {
 			return height_;
 		}
 
+		/** Returns the rectangle of the widget in its parent's client rectangle. 
+		 */
+		Rect rect() const {
+			return Rect{x_, y_, x_ + width_, y_ + height_};
+		}
+
+		/** Returns the subset of the widget's canvas rectangle that is available to widget's children. 
+		 
+		    The default implementation returns the entire rectangle of the widget. 
+		 */
+		virtual Rect childRect() const {
+			return Rect{width_, height_};
+		}
+
+		/** The rectange presented to the children. 
+		 
+		    Can be bigger, or even smaller than the childRect dimensions.
+
+			The default implementation is the magnitude of the childRect. 
+
+			TODO can it be non-negative too? I think yes... 
+		 */
+		virtual Rect clientRect() const {
+			Rect r{childRect()};
+			return Rect{r.width(), r.height()};
+		}
+
+		/** Returns the rectangle visible when scrolling position is taken into account. 
+		 */
+		virtual Point scrollOffset() const {
+			return Point{0,0};
+		}
+
 		SizeHint widthHint() const {
 			return widthHint_;
 		}
 
 		SizeHint heightHint() const {
 			return heightHint_;
-		}
-
-		Rect rect() const {
-			return Rect(x_, y_, x_ + width_, y_ + height_);
 		}
 
 		/** Repaints the widget.
@@ -463,10 +532,17 @@ namespace ui {
 		void paintChild(Widget * child, Canvas& clientCanvas);
 
 		/** Given a canvas for the full widget, returns a canvas for the client area only. 
+		 
+		    First creates the canvas for the child
 		 */
-		virtual Canvas getClientCanvas(Canvas& canvas) {
-			return Canvas(canvas, 0, 0, width(), height());
-		}
+		Canvas getClientCanvas(Canvas& canvas) {
+			// create the child canvas
+			Canvas result{canvas, childRect()};
+			// resize the canvas and offset it
+			result.updateRect(clientRect());
+			result.scroll(scrollOffset());
+			return result;
+		} 
 
 		/** Invalidates the widget and request its parent repaint,
 

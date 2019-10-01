@@ -1,11 +1,13 @@
 #pragma once
 #include <type_traits>
 #include <thread>
+#include <deque>
 
 #include "ui/canvas.h"
 #include "ui/widget.h"
 #include "ui/selection.h"
 #include "ui/builders.h"
+#include "ui/widgets/scrollbox.h"
 
 #include "pty.h"
 
@@ -26,7 +28,7 @@ namespace vterm {
 
     typedef helpers::EventPayload<InputBuffer, ui::Widget> InputProcessedEvent;
 
-    class Terminal : public virtual ui::Widget, public ui::SelectionOwner {
+    class Terminal : public ui::ScrollBox, public ui::SelectionOwner {
     public:
 
         typedef ui::Cell Cell;
@@ -113,6 +115,12 @@ namespace vterm {
                 */
             void deleteLines(int lines, int top, int bottom, Cell const & fill);
 
+            /** Returns the given line as a string.
+             
+                TODO This should preserve the attributes somehow.
+             */
+            std::string getLine(int line);
+
         private:
 
             /** Fills the specified row with given character. 
@@ -189,6 +197,14 @@ namespace vterm {
             repainter_.join();
         }
 
+        ui::Point scrollOffset() const override {
+            return ui::ScrollBox::scrollOffset();
+        }
+
+        ui::Rect clientRect() const override {
+            return ui::ScrollBox::clientRect();
+        }
+
     protected:
 
         /** Creates the terminal with the given PTY. 
@@ -244,6 +260,7 @@ namespace vterm {
                 b->resize(width, height);
             }
             pty_->resize(width, height);
+            ui::ScrollBox::updateSize(width, height);
             ui::Widget::updateSize(width, height);
         }
 
@@ -256,6 +273,14 @@ namespace vterm {
 
         ui::Widget * mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         ui::Widget * mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+
+        void mouseWheel(int col, int row, int by, ui::Key modifiers) override {
+            if (scrollable_ && ! history_.empty()) {
+                scrollVertical(-by);
+                requestRepaint();
+            }
+        }
+
         ui::Widget * mouseMove(int col, int row, ui::Key modifiers) override;
 
         /** When selection is invalidated, we request repaint so that the selection is no longer displayed. 
@@ -301,6 +326,37 @@ namespace vterm {
             trigger(onNotification);
         }
 
+        void enableScrolling(bool value) {
+            if (scrollable_ != value) {
+                scrollable_ = value;
+            }
+        }
+
+        virtual void lineScrolledOut(int lines) {
+            if (! scrollable_)
+                return;
+            if (historySizeLimit_ > 0) {
+                for (int i = 0; i < lines; ++i) {
+                    std::string line = buffer_.getLine(i);
+
+                    history_.push_back(line);
+                    if (history_.size() > historySizeLimit_) {
+                        history_.pop_front();
+                    } else {
+                        setClientArea(width(), buffer_.rows() + static_cast<int>(history_.size())); 
+                        // TODO only scroll if we were at the top
+                        setScrollOffset(scrollOffset() + ui::Point{0, 1});
+                    }
+                }
+            }
+
+            if (onLineScrolledOut.attachedHandlers() > 0) {
+                buffer_.unlock();
+                trigger(onLineScrolledOut, lines);
+                buffer_.lock();
+            }
+        }
+
         /* Cells and cursor. */
         Buffer buffer_;
 
@@ -326,6 +382,14 @@ namespace vterm {
         /** Determines whether mouse selection update is in progress or not. 
          */
         bool mouseSelectionUpdate_;
+
+        /** Determines whethet the terminal is scrollable, or not. 
+         */
+        bool scrollable_;
+
+        int historySizeLimit_;
+
+        std::deque<std::string> history_;
 
     }; // vterm::Terminal
 

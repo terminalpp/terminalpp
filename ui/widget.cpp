@@ -39,7 +39,7 @@ namespace ui {
 		if (!child->visible_)
 			return;
 		if (!child->visibleRegion_.valid) {
-			Canvas childCanvas(clientCanvas, child->x_, child->y_, child->width_, child->height_);
+			Canvas childCanvas(clientCanvas, child->rect());
 			child->visibleRegion_ = childCanvas.visibleRegion_;
 			child->paint(childCanvas);
 		} else {

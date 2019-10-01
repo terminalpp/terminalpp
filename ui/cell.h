@@ -28,6 +28,14 @@ namespace ui {
             visible(true) {
         }
 
+		/** Creates a new cursor with position updated by the given point. 
+		 */
+		Cursor operator + (Point const & p) const {
+			Cursor result(*this);
+			result.pos += p;
+			return result;
+		}
+
         /** Shorthand for creating an invisible cursor description. 
          */
         static Cursor Invisible() {

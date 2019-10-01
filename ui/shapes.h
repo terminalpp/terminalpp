@@ -33,6 +33,10 @@ namespace ui {
 			return *this;
 		}
 
+		Point operator + (Point const & other) const {
+			return Point{ x + other.x, y + other.y};
+		}
+
 		friend std::ostream& operator << (std::ostream& s, Point const& p) {
 			s << "[" << p.x << "," << p.y << "]";
 			return s;

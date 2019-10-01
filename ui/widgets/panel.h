@@ -16,15 +16,20 @@ namespace ui {
 			border_(0, 0, 0, 0) {
 		}
 
+		Rect childRect() const override {
+			return Rect{border_.left, border_.top, width() - border_.right, height() - border_.bottom };
+		}
+
 		/** The clientWidth and clientHeight return the size of the widget that is available for children (i.e. excluding the border of the control.
 		 */
+		/*
 		int clientWidth() const {
 			return std::max(width() - border_.left - border_.right, 0);
 		}
 
 		int clientHeight() const {
 			return std::max(height() - border_.top - border_.bottom, 0);
-		}
+		} */
 
 	protected:
 
@@ -39,13 +44,6 @@ namespace ui {
 				repaint();
 			}
 		}
-
-		/** Given a canvas for the full widget, returns a canvas for the client area only.
-		 */
-		Canvas getClientCanvas(Canvas& canvas) override{
-			return Canvas(canvas, border_.left, border_.top, clientWidth(), clientHeight());
-		}
-
 
 		/** Updates the value of the widget's border and invalidates the widget.
 		 */

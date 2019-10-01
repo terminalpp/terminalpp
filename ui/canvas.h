@@ -27,7 +27,13 @@ namespace ui {
 
         /** Given existing canvas, creates a canvas encompassing the given subset of the original canvas. 
          */
-        Canvas(Canvas & from, int left, int top, int width, int height);
+        //Canvas(Canvas & from, int left, int top, int width, int height);
+
+        Canvas(Canvas & from, Rect subset);
+
+        Canvas(Canvas const & from);
+
+        //Canvas(Canvas && from);
 
         ~Canvas();
 
@@ -79,10 +85,13 @@ namespace ui {
         void copyBuffer(int x, int y, BUFFER const & buffer) {
             int xe = std::min(x + buffer.width(), width()) - x;
             int ye = std::min(y + buffer.height(), height()) - y;
-            for (int by = 0; by < ye; ++by)
-                for (int bx = 0; bx < xe; ++bx)
-                    if (Cell * c = at(Point(x + bx, y + by))) 
-                        *c = buffer.at(bx, by);
+            for (int by = 0; by < ye; ++by) {
+                if (at(Point(x, y + by))) {
+                    for (int bx = 0; bx < xe; ++bx)
+                        if (Cell * c = at(Point(x + bx, y + by))) 
+                            *c = buffer.at(bx, by);
+                }
+            }
         }
 
     private:
@@ -121,7 +130,9 @@ namespace ui {
 
             VisibleRegion(RootWindow * root);
 
-            VisibleRegion(VisibleRegion const & from, int left, int top, int width, int height);
+            //VisibleRegion(VisibleRegion const & from, int left, int top, int width, int height);
+
+            VisibleRegion(VisibleRegion const & from, Rect subset);
 
 			/** Returns the given point in canvas coordinates translated to the screen coordinates. 
 			 */
@@ -148,6 +159,19 @@ namespace ui {
         };
 
         Canvas(VisibleRegion const & visibleRegion, int width, int height);
+
+        /** Updates the size of the canvas without adjusting its visible region at all. 
+         */
+        void updateRect(Rect const & rect) {
+            width_ = rect.width();
+            height_ = rect.height();
+        }
+
+        /** Scrolls the canvas, i.e. moves the visible region by the given offset. 
+         */
+        void scroll(Point offset) {
+            visibleRegion_.region += offset;
+        }
 
         /** Fills given cell, if exists with given brush. 
          */

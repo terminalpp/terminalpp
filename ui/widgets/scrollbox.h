@@ -10,23 +10,49 @@ namespace ui {
 
 		TODO should there be some non public scrollable widget like Container, etc? 
 	 */
-	class ScrollBox : public PublicContainer {
+	class ScrollBox : public virtual Widget {
 	public:
 
 		ScrollBox() :
-			PublicContainer(),
-			scrollWidth_(1),
-			scrollHeight_(1),
 			scrollLeft_(0),
-			scrollTop_(0) {
+			scrollTop_(0),
+			clientWidth_(width()),
+			clientHeight_(height()) {
 		}
 
-		virtual int scrollWidth() const {
-			return scrollWidth_;
+		Rect clientRect() const override {
+			return Rect{clientWidth_, clientHeight_};
 		}
 
-		virtual int scrollHeight() const {
-			return scrollHeight_;
+		/** Returns the visible rectangle. 
+		 */
+		Point scrollOffset() const override {
+			return Point{scrollLeft_, scrollTop_};
+		}
+
+	protected:
+
+		/** Sets the scroll offset, i.e. the coordiates of the top-left corner of the visible area.
+		 */
+		void setScrollOffset(Point const & offset) {
+			if (scrollLeft_ != offset.x || scrollTop_ != offset.y)
+				updateScrollOffset(offset.x, offset.y);
+		}
+
+		void setClientArea(int clientWidth, int clientHeight) {
+			if (clientWidth_ != clientWidth || clientHeight_ != clientHeight) {
+				clientWidth_ = clientWidth;
+				clientHeight_ = clientHeight;
+			}
+		}
+
+		virtual void updateScrollOffset(int scrollLeft, int scrollTop) {
+			scrollLeft_ = scrollLeft;
+			scrollTop_ = scrollTop;
+		}
+
+		void updateSize(int width, int height) override {
+		    setClientArea(std::max(width, clientWidth_), std::max(height, clientHeight_));
 		}
 
 		int scrollLeft() const {
@@ -37,47 +63,28 @@ namespace ui {
 			return scrollTop_;
 		}
 
-		/** Sets the scroll size, i.e. the canvas of the widget whose portion is displayed in the client area.
-		 */
-		void setScrollSize(int width, int height) {
-			if (scrollWidth_ != width || scrollHeight_ != height)
-				updateScrollSize(width, height);
+		int clientWidth() const {
+			return clientWidth_;
 		}
 
-		/** Sets the scroll offset, i.e. the coordiates of the top-left corner of the visible area.
-		 */
-		void setScrollOffset(int left, int top) {
-			if (scrollLeft_ != left || scrollTop_ != top)
-				updateScrollOffset(left, top);
+		int clientHeight() const {
+			return clientHeight_;
 		}
 
-	protected:
-
-
-		virtual void updateScrollSize(int scrollWidth, int scrollHeight) {
-			scrollWidth_ = scrollWidth;
-			scrollHeight_ = scrollHeight;
-			scheduleRelayout();
-			invalidate();
-		}
-
-		virtual void updateScrollOffset(int scrollLeft, int scrollTop) {
-			scrollLeft_ = scrollLeft;
-			scrollTop_ = scrollTop;
-			invalidate();
-		}
-
-		Canvas getClientCanvas(Canvas& canvas) override {
-			return Canvas(canvas, -scrollLeft_, -scrollTop_, scrollWidth_, scrollHeight_);
+		void scrollVertical(int diff) {
+			int x = scrollTop_ + diff;
+			x = std::max(x, 0);
+			x = std::min(x, clientHeight_ - childRect().height());
+			setScrollOffset(Point{scrollLeft_, x});			    
 		}
 
 	private:
 
-		int scrollWidth_;
-		int scrollHeight_;
 		int scrollLeft_;
 		int scrollTop_;
 
+		int clientWidth_;
+		int clientHeight_;
 	};
 
 

@@ -1,10 +1,18 @@
 ﻿- borders should be thin, thick, full
-- selectionowner for scrollbox should be updated
 - selection should be cancelled when window gets defocused
 - maybe return widget from other mouse things as well (not just mouse down and up)
 
 - clean shapes - rect, to provide the points for corners on demand
 
+- how to deal with scrollbars - i.e. who and when and how draws them? (and reacts to them visually) - perhaps have them as extra widgets (which is a bit wasteful if they keep the same info as the scrollable object, or maybe the scrollable object can point to them?)
+
+- how to deal with repaint requests - there should be an extra method that requests a repaint when appropriate, but the widget itself can determine when to do it, as opposed to repaint which repaints immediately - maybe the immediate repaint should not be force-able if overriden in the widget? 
+
+- selection does not work with history at the moment
+
+- history sucks - only shows text, other information should be captured too
+
+- when terminal is resized the stuff that does not fit should go to history as well - this may be hard if we resize in the presence of double buffers - maybe terminal's on line out always adds the line, but VT100 decides to only call it when not in alternate mode... 
 
 ## Bugs and missing features
 

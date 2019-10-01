@@ -80,6 +80,15 @@ namespace vterm {
         }
     }
 
+    std::string Terminal::Buffer::getLine(int line) {
+        ASSERT(line >= 0 && line < rows_);
+        Cell * row = cells_[line];
+        std::stringstream result;
+        for (int i = 0; i < cols_; ++i)
+            result << helpers::Char::FromCodepoint(row[i].codepoint());
+        return result.str();
+    }
+
     void Terminal::Buffer::fillRow(Cell* row, Cell const& fill, unsigned cols) {
         row[0] = fill;
         size_t i = 1;
@@ -161,7 +170,9 @@ namespace vterm {
         pty_{pty},
         fps_{fps},
         repaint_{false},
-        mouseSelectionUpdate_{false} {
+        mouseSelectionUpdate_{false},
+        scrollable_{true},
+        historySizeLimit_{100} {
         pty_->resize(width, height);
         ptyReader_ = std::thread([this, ptyBufferSize](){
             std::unique_ptr<char> holder(new char[ptyBufferSize]);
@@ -203,13 +214,30 @@ namespace vterm {
     }
 
     void Terminal::paint(ui::Canvas & canvas) {
-        Buffer::Ptr buffer = this->buffer(/* priority */true);
-        canvas.copyBuffer(0,0,* buffer);
-        paintSelection(canvas);
-        if (focused())
-            canvas.setCursor(buffer->cursor());
-        else
-            canvas.setCursor(ui::Cursor::Invisible());
+        // determine the client canvas - either the proper client canvas if scrolling is available, or the child canvas
+        ui::Canvas clientCanvas{scrollable_ ? getClientCanvas(canvas) : canvas};
+        int terminalOffset = scrollable_ ? history_.size() : 0;
+        // draw the terminal if it is visible
+        if (! scrollable_ || scrollTop() + height() > terminalOffset ) {
+            Buffer::Ptr buffer = this->buffer(/* priority */true);
+            clientCanvas.copyBuffer(0, terminalOffset, *buffer);
+            // draw the cursor too
+            if (focused()) 
+                clientCanvas.setCursor(buffer->cursor() + ui::Point{0, terminalOffset});
+            else 
+                clientCanvas.setCursor(ui::Cursor::Invisible());
+        }
+        // if the terminal is scrollable, and there is any history, the scrollbar must be drawn and the history (if there is any visible)
+        if (scrollable_ && history_.size() > 0) {
+           ASSERT(clientCanvas.height() == terminalOffset + height());
+           for (int i = scrollTop(); i < terminalOffset; ++i) {
+               clientCanvas.fill(ui::Rect{0, i, width(), i + 1}, ui::Color::Black());
+               clientCanvas.textOut(ui::Point{0, i}, history_[i], ui::Color::Cyan());
+           }
+        }
+        // paint the selection, if any
+        paintSelection(clientCanvas);
+        // and finally, if the terminal is not enabled, dim its window accordingly
         if (!enabled())
             canvas.fill(ui::Rect(width(), height()), ui::Brush(ui::Color::Black().setAlpha(128)));
     }
@@ -219,7 +247,7 @@ namespace vterm {
             if (button == ui::MouseButton::Left) {
                 startSelectionUpdate(col, row);
             } else if (button == ui::MouseButton::Wheel) {
-                requestSelectionContents();                
+                requestSelectionContents(); 
             } else if (button == ui::MouseButton::Right && ! selection().empty()) {
                 setClipboard();
                 clearSelection();

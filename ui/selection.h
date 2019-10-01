@@ -5,6 +5,12 @@
 
 /** @page uiselection ui - Selection & Clipboard
 
+    How to do selection on scrollbox? 
+
+    Ideally I would have widget to return the scroll properties, but actually not keep them, i.e. it would always return 0,0, width, height. 
+
+    Then scrollbox would actually change this - since vcall is cheap. 
+
  */
 
 namespace ui {
@@ -145,10 +151,10 @@ namespace ui {
             if (!selection_.empty())
                 clearSelection();
             updating_ = true;
-            selectionStart_ = Point{col, row};
+            selectionStart_ = Point{col, row} + scrollOffset();
         }
 
-        virtual void selectionUpdate(int col, int row) {
+        void selectionUpdate(int col, int row) {
             if (! updating_)
                 return;
             if (col < 0)
@@ -160,7 +166,7 @@ namespace ui {
             else if (row >= height())
                 row = height() - 1;
             // update the selection and call for repaint
-            selection_ = Selection::Create(selectionStart_, Point{col, row});
+            selection_ = Selection::Create(selectionStart_, Point{col, row} + scrollOffset());
             selectionUpdated();
         }
 

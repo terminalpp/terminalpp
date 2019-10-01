@@ -58,7 +58,7 @@ namespace ui {
 	}
 
 	void Container::paint(Canvas& canvas) {
-		Canvas clientCanvas = getClientCanvas(canvas);
+		Canvas clientCanvas{getClientCanvas(canvas)};
 		if (relayout_) {
 			layout_->relayout(this, clientCanvas);
 			if (!overlay_)
