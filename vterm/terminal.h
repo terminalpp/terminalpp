@@ -266,28 +266,37 @@ namespace vterm {
 
         void updateFocused(bool value) override {
             Widget::updateFocused(value);
-            requestRepaint();
+            repaint();
         }
 
         // mouse events to deal with the selection
 
-        ui::Widget * mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        ui::Widget * mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        void mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
 
         void mouseWheel(int col, int row, int by, ui::Key modifiers) override {
+            MARK_AS_UNUSED(col);
+            MARK_AS_UNUSED(row);
+            MARK_AS_UNUSED(modifiers);
             if (scrollable_ && ! history_.empty()) {
                 scrollVertical(-by);
-                requestRepaint();
-            }
+                repaint();
+            } 
+            ui::Widget::mouseWheel(col, row, by, modifiers);
         }
 
-        ui::Widget * mouseMove(int col, int row, ui::Key modifiers) override;
+        void mouseMove(int col, int row, ui::Key modifiers) override;
+
+        void mouseOut() override {
+            ui::ScrollBox::mouseOut();
+        }
+
 
         /** When selection is invalidated, we request repaint so that the selection is no longer displayed. 
          */
         /*void invalidateSelection() override {
             Clipboard::invalidateSelection();
-            requestRepaint();
+            repaint();
         } */
 
         /** Returns the contents of the selection. 
@@ -297,14 +306,15 @@ namespace vterm {
         std::string getSelectionContents() override;
 
         void selectionUpdated() override {
-            requestRepaint();
+            repaint();
+        }
+
+        void repaint() override {
+            repaint_ = true;
         }
 
         // terminal interface
 
-        void requestRepaint() {
-            repaint_ = true;
-        }
 
         /** Called by the terminal when new input data is available from the pty. 
          

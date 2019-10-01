@@ -34,12 +34,14 @@ namespace ui {
             repaint();
         }
 
+		/*
         Widget * mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         Widget * mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         void mouseClick(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         void mouseDoubleClick(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        void mouseWheel(int col, int row, int by, ui::Key modifiers) override;
+        Widget * mouseWheel(int col, int row, int by, ui::Key modifiers) override;
         Widget * mouseMove(int col, int row, ui::Key modifiers) override;
+		*/
 
 		void setLayout(Layout* value) {
 			ASSERT(value != nullptr) << "use Layout::None instead";
@@ -93,19 +95,15 @@ namespace ui {
 
 		/** Returns the target for the given mouse coordinates. 
 		 
-		    If there is a child that lies under the coordinates, returns that child and updates the coordinates to relative coordinates inside that child. Otherwise leaves the coordinates untouched and returns nullptr.
 		 */
-		Widget* getMouseTarget(int & col, int & row) {
+		Widget* getMouseTarget(int col, int row) override {
 			ASSERT(visibleRegion_.contains(col, row));
+			// go from rbegin so that greatest z-index widget at given coordinates will be selected
 			for (auto i = children().rbegin(), e = children().rend(); i != e; ++i) {
-				if ((*i)->visibleRegion_.contains(col, row)) {
-					Widget * result = *i;
-					col -= result->x();
-					row -= result->y();
-					return result;
-				}
+				if ((*i)->visibleRegion_.contains(col, row))
+				    return *i;
 			}
-			return nullptr;
+			return this;
 		}
 
 		/** Schedules layout of all components on the next repaint event without actually triggering the repaint itself. 
@@ -141,8 +139,8 @@ namespace ui {
 		using Widget::onMouseDoubleClick;
 		using Widget::onMouseWheel;
 		using Widget::onMouseMove;
-		using Widget::onMouseEnter;
-		using Widget::onMouseLeave;
+		using Widget::onMouseOver;
+		using Widget::onMouseOut;
 
 		// Methods from Widget
 

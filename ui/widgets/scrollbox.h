@@ -54,9 +54,21 @@ namespace ui {
 			scrollTop_ = scrollTop;
 		}
 
-		Widget * mouseMove(int col, int row, Key modifiers) override {
-    	    scrollbarActive_ = col == width() - 1;
-			return nullptr;
+		void mouseMove(int col, int row, Key modifiers) override {
+			MARK_AS_UNUSED(row);
+			MARK_AS_UNUSED(modifiers);
+			bool x = col == width() - 1;
+			if (x != scrollbarActive_) {
+        	    scrollbarActive_ = x;
+				repaint();
+			}
+		}
+
+		void mouseOut() override {
+			if (scrollbarActive_) {
+				scrollbarActive_ = false;
+				repaint();
+			}
 		}
 		
 

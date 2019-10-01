@@ -107,10 +107,20 @@ namespace ui {
             return cursor_;
         }
 
-        Widget * mouseDown(int col, int row, MouseButton button, Key modifiers) override;
-        Widget * mouseUp(int col, int row, MouseButton button, Key modifiers) override;
+        void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
+        void mouseUp(int col, int row, MouseButton button, Key modifiers) override;
         void mouseWheel(int col, int row, int by, Key modifiers) override;
-        Widget * mouseMove(int col, int row, Key modifiers) override;
+        void mouseMove(int col, int row, Key modifiers) override;
+
+        void checkMouseOverAndOut(Widget * target) {
+            if (target != lastMouseTarget_) {
+                if (lastMouseTarget_ != nullptr)
+                    lastMouseTarget_->mouseOut();
+                lastMouseTarget_ = target;
+                if (lastMouseTarget_ != nullptr)
+                    lastMouseTarget_->mouseOver();
+            }
+        }
 
         void keyChar(helpers::Char c) override;
         void keyDown(Key k) override;
@@ -125,6 +135,9 @@ namespace ui {
             // if there is keyboard focused widget, update its state as well
             if (keyboardFocus_ != nullptr)
                 keyboardFocus_->updateFocused(value);
+            // trigger mouse out for last mouse target
+            if (!value)
+                checkMouseOverAndOut(nullptr);
         }
 
         void invalidateContents() override;
@@ -200,9 +213,6 @@ namespace ui {
             focusStops_.erase(child->focusIndex());
         }
 
-
-		Widget* mouseFocusWidget(int col, int row);
-
 		/** Takes screen coordinates and converts them to the widget's coordinates.
 
 			Note that these may be negative, or bigger than the widget itself if the mouse is outside of the widget's area and the mouse target is locked.
@@ -212,7 +222,18 @@ namespace ui {
             ASSERT(wr.valid) << "An invalid widget is rather bad at receiving mouse coordinates";
             col = wr.region.left() + (col - wr.windowOffset.x);
             row = wr.region.top() + (row - wr.windowOffset.y);
-		}
+		} 
+
+        Widget * getTransitiveMouseTarget(int & col, int & row) {
+            Widget * result = this;
+            while (true) {
+                Widget * next = result->getMouseTarget(col, row);
+                if (result == next)
+                    return result;
+                else
+                    result = next;
+            }
+        }
 
         void setTitle(std::string const & title) {
             if (title_ != title) {
@@ -282,10 +303,19 @@ namespace ui {
         Widget * keyboardFocus_;
         std::map<unsigned, Widget *> focusStops_;
 
+        /** Determins the last widget that was a mouse target so that we can determine when to generate mouseOver and mouseOut events. 
+         */
+        Widget * lastMouseTarget_;
+
+        /** Mouse focus is locked when any button is down, and regardless of the movement, the same widget that had mouse focus when the first button was pressed down will receive the mouse events. 
+         */
+		Widget* mouseFocus_;
+
+        /** Determines the number of pressed buttons to know when the mouse focus lock is to be acquired and released. 
+         */
         unsigned mouseFocusLock_; 
 		int mouseCol_;
 		int mouseRow_;
-		Widget* mouseFocus_;
 		Widget* mouseClickWidget_;
 		MouseButton mouseClickButton_;
 		size_t mouseClickStart_;

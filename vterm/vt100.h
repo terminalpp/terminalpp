@@ -33,10 +33,10 @@ namespace vterm {
 
         void updateSize(int width, int height) override;
 
-        ui::Widget * mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        ui::Widget * mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        void mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
         void mouseWheel(int col, int row, int by, ui::Key modifiers) override;
-        ui::Widget * mouseMove(int col, int row, ui::Key modifiers) override;
+        void mouseMove(int col, int row, ui::Key modifiers) override;
         void keyChar(helpers::Char c) override;
         void keyDown(ui::Key key) override;
         void keyUp(ui::Key key) override;

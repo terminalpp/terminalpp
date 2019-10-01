@@ -34,6 +34,8 @@
 
 	Drawing of the widget is done in their ui::Widget::paint() method, which takes a Canvas as an argument. The Widget class and other base UI classes make sure that repainting occurs when it should and only the necessary part of the screen is updated at each paint event, details of which are given later in this section. 
 
+
+
 	\subsection widgetCanvas Canvas
 
 	The ui::Canvas class provides the basic drawing tools, such as text, borders, fills, etc. Furthermore the Canvas also keeps track of its visible region, i.e. the subset of the canvas that is visible, and therefore is backed by proper screen buffer cells. Only updates to the visible region of the canvas will actually have observable effect, but canvas users do not have to worry about which region is visible. 
@@ -201,8 +203,8 @@ namespace ui {
 		Event<MouseButtonEvent> onMouseDoubleClick;
 		Event<MouseWheelEvent> onMouseWheel;
 		Event<MouseMoveEvent> onMouseMove;
-		Event<VoidEvent> onMouseEnter;
-		Event<VoidEvent> onMouseLeave;
+		Event<VoidEvent> onMouseOver;
+		Event<VoidEvent> onMouseOut;
 
 
 		// keyboard events
@@ -328,7 +330,7 @@ namespace ui {
 
 			Only repaints the widget if the visibleRegion is valid. If the visible region is invalid, does nothing because when the region was invalidated, the repaint was automatically triggered, so there is either repaint pending, or in progress.
 		 */
-		void repaint();
+		virtual void repaint();
 
     protected:
 
@@ -466,20 +468,18 @@ namespace ui {
 			// do nothing by default
 		}
 
-		virtual Widget * mouseDown(int col, int row, MouseButton button, Key modifiers) {
+		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
 			if (!focused_ && focusStop_)
 			    setFocused(true);
 			MouseButtonPayload e{ col, row, button, modifiers };
 			trigger(onMouseUp, e);
-			return this;
 		}
 
-		virtual Widget * mouseUp(int col, int row, MouseButton button, Key modifiers) {
+		virtual void mouseUp(int col, int row, MouseButton button, Key modifiers) {
 			if (!focused_ && focusStop_)
 			    setFocused(true);
 			MouseButtonPayload e{ col, row, button, modifiers };
 			trigger(onMouseUp, e);
-			return this;
 		}
 
 		virtual void mouseClick(int col, int row, MouseButton button, Key modifiers) {
@@ -499,18 +499,17 @@ namespace ui {
 			trigger(onMouseWheel, e);
 		}
 
-		virtual Widget * mouseMove(int col, int row, Key modifiers) {
+		virtual void mouseMove(int col, int row, Key modifiers) {
 			MouseMovePayload e{ col, row, modifiers };
 			trigger(onMouseMove, e);
-			return this;
 		}
 
-		virtual void mouseEnter() {
-			trigger(onMouseEnter);
+		virtual void mouseOver() {
+			trigger(onMouseOver);
 		}
 
-		virtual void mouseLeave() {
-			trigger(onMouseLeave);
+		virtual void mouseOut() {
+			trigger(onMouseOut);
 		}
 
 		virtual void keyChar(helpers::Char c) {
@@ -617,6 +616,13 @@ namespace ui {
 
 		virtual void updateOverlay(bool value) {
 			overlay_ = value;
+		}
+
+		/** Given mouse coordinates, determine the immediate child that is the target of the mouse event. If no such child can be found, returns itself. 
+		 */
+		virtual Widget * getMouseTarget(int col, int row) {
+			ASSERT(visibleRegion_.contains(col, row));
+			return this;
 		}
 
 		/** Updated trigger function for events which takes the Widget as base class for event sender.
@@ -773,8 +779,8 @@ namespace ui {
 		using Widget::onMouseDoubleClick;
 		using Widget::onMouseWheel;
 		using Widget::onMouseMove;
-		using Widget::onMouseEnter;
-		using Widget::onMouseLeave;
+		using Widget::onMouseOver;
+		using Widget::onMouseOut;
 
 		// Methods 
 

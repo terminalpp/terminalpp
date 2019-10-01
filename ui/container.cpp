@@ -9,7 +9,8 @@ namespace ui {
 		relayout_(true) {
 	}
 
-	Widget * Container::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+/*
+	 Container::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
 		Widget * target = getMouseTarget(col, row);
 		if (target != nullptr)
 		    return target->mouseDown(col, row, button, modifiers);
@@ -41,7 +42,7 @@ namespace ui {
 		return Widget::mouseDoubleClick(col, row, button, modifiers);
 	}
 
-	void Container::mouseWheel(int col, int row, int by, Key modifiers) {
+	Widget * Container::mouseWheel(int col, int row, int by, Key modifiers) {
 		Widget * target = getMouseTarget(col, row);
 		if (target != nullptr)
 		    return target->mouseWheel(col, row, by, modifiers);
@@ -56,6 +57,7 @@ namespace ui {
 		// if there is no target in children, the container itself is the target
 		return Widget::mouseMove(col, row, modifiers);
 	}
+	*/
 
 	void Container::paint(Canvas& canvas) {
 		Canvas clientCanvas{getClientCanvas(canvas)};

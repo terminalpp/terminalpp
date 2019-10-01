@@ -207,7 +207,8 @@ namespace vterm {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000 / fps_));
                 if (repaint_) {
                     repaint_ = false;
-                    repaint();
+                    // trigger immediate repaint by calling widget's repaint implementation
+                    Widget::repaint();
                 }
             }
         });
@@ -216,7 +217,7 @@ namespace vterm {
     void Terminal::paint(ui::Canvas & canvas) {
         // determine the client canvas - either the proper client canvas if scrolling is available, or the child canvas
         ui::Canvas clientCanvas{scrollable_ ? getClientCanvas(canvas) : canvas};
-        int terminalOffset = scrollable_ ? history_.size() : 0;
+        int terminalOffset = scrollable_ ? static_cast<int>(history_.size()) : 0;
         // draw the terminal if it is visible
         if (! scrollable_ || scrollTop() + height() > terminalOffset ) {
             Buffer::Ptr buffer = this->buffer(/* priority */true);
@@ -243,7 +244,7 @@ namespace vterm {
             canvas.fill(ui::Rect(width(), height()), ui::Brush(ui::Color::Black().setAlpha(128)));
     }
 
-    ui::Widget * Terminal::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    void Terminal::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         if (modifiers == 0) {
             if (button == ui::MouseButton::Left) {
                 startSelectionUpdate(col, row);
@@ -254,22 +255,22 @@ namespace vterm {
                 clearSelection();
             }
         }
-        return Widget::mouseDown(col, row, button, modifiers);
+        Widget::mouseDown(col, row, button, modifiers);
     }
 
-    ui::Widget * Terminal::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    void Terminal::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         if (modifiers == 0) {
             if (button == ui::MouseButton::Left)
                 endSelectionUpdate(col, row);
         }
-        return Widget::mouseUp(col, row, button, modifiers);
+        Widget::mouseUp(col, row, button, modifiers);
     }
 
-    ui::Widget * Terminal::mouseMove(int col, int row, ui::Key modifiers) {
+    void Terminal::mouseMove(int col, int row, ui::Key modifiers) {
         if (modifiers == 0) 
             selectionUpdate(col, row);
         ScrollBox::mouseMove(col, row, modifiers);
-        return Widget::mouseMove(col, row, modifiers);
+        Widget::mouseMove(col, row, modifiers);
     }
 
     /** TODO Selection works for CJK and double width characters, is a bit messy for double height characters, but not worth the time now, should be fixed when the selection is restructured and more pasting options are added. 

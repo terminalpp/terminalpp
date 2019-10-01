@@ -26,8 +26,11 @@ namespace tpp {
             using namespace ui;
             using namespace vterm;
             Create(this) 
+                /*
+                << Layout::Horizontal()
+                << (Create(new ui::Label()))
+                */
                 << Layout::Maximized()
-                //<< (Create(new ui::Label()))
                 << (Create(terminal_ = new VT100(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
                     << FocusIndex(0)
                     << FocusStop(true)
@@ -82,9 +85,9 @@ namespace tpp {
             logFile_.write(e->buffer, e->size);
         }
 
-        ui::Widget * mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override {
+        void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override {
             setIcon(Icon::Default);
-            return ui::RootWindow::mouseDown(col, row, button, modifiers);
+            ui::RootWindow::mouseDown(col, row, button, modifiers);
         }
 
         void mouseWheel(int col, int row, int by, ui::Key modifiers) override {

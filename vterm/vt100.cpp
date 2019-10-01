@@ -379,7 +379,7 @@ namespace vterm {
         Widget::updateSize(width, height);
     }
 
-    ui::Widget * VT100::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    void VT100::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         ASSERT(mouseButtonsDown_ <= 3);
         ++mouseButtonsDown_;
 		if (mouseMode_ != MouseMode::Off) {
@@ -387,10 +387,10 @@ namespace vterm {
             sendMouseEvent(mouseLastButton_, col, row, 'M');
             LOG(SEQ) << "Button " << button << " down at " << col << ";" << row;
         }
-        return Terminal::mouseDown(col, row, button, modifiers);
+        Terminal::mouseDown(col, row, button, modifiers);
     }
 
-    ui::Widget * VT100::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    void VT100::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
         ASSERT(mouseButtonsDown_ > 0);
         --mouseButtonsDown_;
 		if (mouseMode_ != MouseMode::Off) {
@@ -398,7 +398,7 @@ namespace vterm {
             sendMouseEvent(mouseLastButton_, col, row, 'm');
             LOG(SEQ) << "Button " << button << " up at " << col << ";" << row;
         }
-        return Terminal::mouseUp(col, row, button, modifiers);
+        Terminal::mouseUp(col, row, button, modifiers);
     }
 
     void VT100::mouseWheel(int col, int row, int by, ui::Key modifiers) {
@@ -411,13 +411,13 @@ namespace vterm {
         Terminal::mouseWheel(col, row, by, modifiers);
     }
 
-    ui::Widget * VT100::mouseMove(int col, int row, ui::Key modifiers) {
+    void VT100::mouseMove(int col, int row, ui::Key modifiers) {
         if (mouseMode_ != MouseMode::Off && (mouseMode_ != MouseMode::ButtonEvent || mouseButtonsDown_ != 0)) {
             // mouse move adds 32 to the last known button press
             sendMouseEvent(mouseLastButton_ + 32, col, row, 'M');
             LOG(SEQ) << "Mouse moved to " << col << ";" << row;
         }
-        return Terminal::mouseMove(col, row, modifiers);
+        Terminal::mouseMove(col, row, modifiers);
     }
 
     void VT100::keyChar(helpers::Char c) {
@@ -481,7 +481,7 @@ namespace vterm {
                     /* Parse the escape sequence */
                     case helpers::Char::ESC: {
                         if (! parseEscapeSequence(x, bufferEnd)) {
-                            requestRepaint();
+                            repaint();
                             return x - buffer;
                         }
                         break;
@@ -590,29 +590,11 @@ namespace vterm {
                                 ++buffer_.cursor().pos.x;
                             } 
                         }
-                        /*
-
-                        
-                        int cWidth = c8->columnWidth();
-                        
-
-
-                        // determine the proper character size and copy the character if necessary (this will be ignored by the renderer)
-                        int charWidth = c8->columnWidth() * state_.cell.font().width();
-                        // if we are in the top double height line, just increase the width
-                        if (state_.doubleHeightTopLine)
-                            charWidth *= 2;
-                        // copy the character
-                        while (--charWidth > 0 && buffer_.cursor().pos.x < buffer_.cols()) {
-                            Cell& cell2 = buffer_.at(buffer_.cursor().pos.x, buffer_.cursor().pos.y);
-                            cell2 = cell;
-                            ++buffer_.cursor().pos.x;
-                        } */
                     }
                 }
             }
         }
-        requestRepaint();
+        repaint();
         return bufferSize;
     }
 

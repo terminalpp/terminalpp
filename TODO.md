@@ -4,9 +4,7 @@
 
 - clean shapes - rect, to provide the points for corners on demand
 
-- how to deal with scrollbars - i.e. who and when and how draws them? (and reacts to them visually) - perhaps have them as extra widgets (which is a bit wasteful if they keep the same info as the scrollable object, or maybe the scrollable object can point to them?)
-
-- how to deal with repaint requests - there should be an extra method that requests a repaint when appropriate, but the widget itself can determine when to do it, as opposed to repaint which repaints immediately - maybe the immediate repaint should not be force-able if overriden in the widget? 
+- mouse out does not work when mousing out of the window
 
 - selection does not work with history at the moment
 
