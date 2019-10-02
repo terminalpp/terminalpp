@@ -260,6 +260,8 @@ namespace vterm {
                 b->resize(width, height);
             }
             pty_->resize(width, height);
+            // resize the client canvas
+            setClientArea(width, buffer_.rows() + static_cast<int>(history_.size())); 
             ui::ScrollBox::updateSize(width, height);
             ui::Widget::updateSize(width, height);
         }

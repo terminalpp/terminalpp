@@ -373,10 +373,7 @@ namespace vterm {
             alternateBuffer_.resize(width, height);
             alternateState_.resize(width, height);
         }
-        pty()->resize(width, height);
-        // skip terminal as it only updates the buffer which we do above anyways
-        ScrollBox::updateSize(width, height);
-        Widget::updateSize(width, height);
+        Terminal::updateSize(width, height);
     }
 
     void VT100::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
