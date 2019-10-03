@@ -11,6 +11,13 @@
 
 #include "pty.h"
 
+/** \page vterm Terminal Widget
+ 
+    \brief Widget capable of displaying terminal contents via attached PTY. 
+
+    \section vtermHistory Terminal History
+*/
+
 namespace vterm {
 
     typedef helpers::EventPayload<helpers::ExitCode, ui::Widget> ExitCodeEvent;
@@ -185,6 +192,27 @@ namespace vterm {
             return title_;
         }
 
+        /** Returns the limit of lines that are retained outside of the terminal window. 
+         */
+        size_t historySizeLimit() const {
+            return historySizeLimit_;
+        }
+
+        /** Sets the maximum number of lines past the terminal window the terminal is allowed to remember. 
+         
+            If set to 0, no scrollback is allowed.
+         */
+        void setHistoriSizeLimit(size_t value) {
+            if (value != historySizeLimit_) {
+                historySizeLimit_ = value;
+                // remove excess history data
+                while (history_.size() > historySizeLimit_)
+                    history_.pop_front();
+                // resize window properly
+                updateClientRect();
+            }
+        }
+
         /** Deletes the terminal and the attached PTY. 
          
             Waits for the reading and process exit terminating threads to finalize. 
@@ -338,12 +366,6 @@ namespace vterm {
             trigger(onNotification);
         }
 
-        void enableScrolling(bool value) {
-            if (scrollable_ != value) {
-                scrollable_ = value;
-            }
-        }
-
         virtual void lineScrolledOut(int lines) {
             if (! scrollable_)
                 return;
@@ -355,7 +377,7 @@ namespace vterm {
                     if (history_.size() > historySizeLimit_) {
                         history_.pop_front();
                     } else {
-                        setClientArea(width(), buffer_.rows() + static_cast<int>(history_.size())); 
+                        updateClientRect();
                         // TODO only scroll if we were at the top
                         setScrollOffset(scrollOffset() + ui::Point{0, 1});
                     }
@@ -366,6 +388,20 @@ namespace vterm {
                 buffer_.unlock();
                 trigger(onLineScrolledOut, lines);
                 buffer_.lock();
+            }
+        }
+
+        /** Updates the client rectangle based on the history size and terminal height. 
+         */
+        void updateClientRect() {
+            setClientArea(width(), buffer_.rows() + static_cast<int>(history_.size())); 
+        }
+
+        /** Enables or disables showing the terminal history. 
+         */
+        void enableScrolling(bool value = true) {
+            if (scrollable_ != value) {
+                scrollable_ = value;
             }
         }
 

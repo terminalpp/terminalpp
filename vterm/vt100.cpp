@@ -1074,6 +1074,8 @@ namespace vterm {
 							alternateBuffer_ = buffer_;
 							std::swap(state_, alternateState_);
 							invalidateLastCharPosition();
+                            // disable terminal history for alternate mode
+                            enableScrolling(false);
 						}
                         state_.cell << ui::Foreground(palette_->defaultForeground()) 
                                     << ui::DecorationColor(palette_->defaultForeground()) 
@@ -1088,7 +1090,9 @@ namespace vterm {
 						if (alternateBufferMode_) {
 							buffer_ = alternateBuffer_;
 							std::swap(state_, alternateState_);
-						}
+                            // enable history for normal mode
+	                        enableScrolling();
+					    }
 						LOG(SEQ) << "Alternate screen off";
 					}
 					alternateBufferMode_ = value;

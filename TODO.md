@@ -1,16 +1,51 @@
-﻿- borders should be thin, thick, full
-- selection should be cancelled when window gets defocused
-- maybe return widget from other mouse things as well (not just mouse down and up)
+﻿# Roadmap
 
-- clean shapes - rect, to provide the points for corners on demand
+The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-- selection does not work with history at the moment
+### v0.4 (alpha)
+
+- support terminal history, scrolling, selection from it, etc. 
+
+### v0.5
+
+- support for opening remote files by extra escape sequences (basic)
+- will open settings.json for editing when requested
+- ideally snap store will be vetted by this time
+- Windows Store version as well
+
+### v0.6
+
+- multiple sessions
+
+### v1.0
+
+- polish and bugfixing of stuff added up to v0.6
+
+### v1.1
+
+- systray support
+
+# Work Items
+
+## Current
 
 - history sucks - only shows text, other information should be captured too
+- selection does not work with history at the moment
 
 - when terminal is resized the stuff that does not fit should go to history as well - this may be hard if we resize in the presence of double buffers - maybe terminal's on line out always adds the line, but VT100 decides to only call it when not in alternate mode... 
 
+- borders should be thin, thick, full
+- selection should be cancelled when window gets defocused
+
+- clean shapes - rect, to provide the points for corners on demand
+
+
 - when widget is removed from hierarchy, it must return keyboard and mouse focus
+
+- should client & scroll rects & stuff be protected by default?
+
+## Old stuffs
+
 
 ## Bugs and missing features
 
