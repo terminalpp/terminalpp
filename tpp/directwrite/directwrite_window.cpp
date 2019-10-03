@@ -16,7 +16,8 @@ namespace tpp {
 			glyphIndices_(nullptr),
 			glyphAdvances_(nullptr),
 			glyphOffsets_(nullptr),
-			mouseButtonsDown_(0) {
+			mouseButtonsDown_(0),
+			mouseLeaveTracked_(false) {
 			helpers::utf16_string t = helpers::UTF8toUTF16(title);
 			hWnd_ = CreateWindowExW(
 				WS_EX_LEFT, // the default
@@ -109,8 +110,8 @@ namespace tpp {
 		DirectWriteFont * f = DirectWriteFont::GetOrCreate(ui::Font(), 0, static_cast<unsigned>(baseCellHeightPx_ * value));
 		cellWidthPx_ = f->widthPx();
 		cellHeightPx_ = f->heightPx();
-		Window::updateZoom(value);
-		Window::updateSizePx(widthPx_, heightPx_);
+		Super::updateZoom(value);
+		Super::updateSizePx(widthPx_, heightPx_);
 	}
 
 	void DirectWriteWindow::requestClipboardContents() {
@@ -371,6 +372,13 @@ namespace tpp {
 			}
 			case WM_MOUSEMOVE:
 				window->mouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+				break;
+			/* Triggered when mouse leaves the window (the mouse leave tracking was previously turned on in mouseMove window method) 
+ 			 */
+			case WM_MOUSELEAVE:
+			    ASSERT(window->mouseLeaveTracked_);
+				window->mouseLeaveTracked_ = false;
+				window->mouseLeave();
 				break;
 			/** Send when mouse capture has been lost (either explicitly, or implicitly). 
 

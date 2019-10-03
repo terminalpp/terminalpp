@@ -4,13 +4,13 @@
 
 - clean shapes - rect, to provide the points for corners on demand
 
-- mouse out does not work when mousing out of the window
-
 - selection does not work with history at the moment
 
 - history sucks - only shows text, other information should be captured too
 
 - when terminal is resized the stuff that does not fit should go to history as well - this may be hard if we resize in the presence of double buffers - maybe terminal's on line out always adds the line, but VT100 decides to only call it when not in alternate mode... 
+
+- when widget is removed from hierarchy, it must return keyboard and mouse focus
 
 ## Bugs and missing features
 

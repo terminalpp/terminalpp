@@ -116,6 +116,16 @@ namespace ui {
                 rootWindow_->mouseMove(col, row, modifiers);
         }
 
+        void mouseEnter() {
+            if (attached())
+                rootWindow_->mouseEnter();
+        }
+
+        void mouseLeave() {
+            if (attached())
+                rootWindow_->mouseLeave();
+        }
+
         /** Keyboard events. 
          */
         void keyChar(helpers::Char c) {

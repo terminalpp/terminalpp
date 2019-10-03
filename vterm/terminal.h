@@ -399,7 +399,7 @@ namespace vterm {
          */
         bool scrollable_;
 
-        int historySizeLimit_;
+        size_t historySizeLimit_;
 
         std::deque<std::string> history_;
 

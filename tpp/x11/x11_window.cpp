@@ -44,7 +44,7 @@ namespace tpp {
 		/* this routine determines which types of input are allowed in
 		   the input.  see the appropriate section for details...
 		*/
-		XSelectInput(display_, window_, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask);
+		XSelectInput(display_, window_, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask);
 
 		/* X11 in itself does not deal with window close requests, but this enables sending of the WM_DELETE_WINDOW message when the close button is send and the application can decide what to do instead. 
 
@@ -464,6 +464,16 @@ namespace tpp {
 				window->activeModifiers_ = ui::Key(ui::Key::Invalid, GetStateModifiers(e.xbutton.state));
 				window->mouseMove(e.xmotion.x, e.xmotion.y);
                 break;
+            /* Mouse enters the window. 
+             */
+            case EnterNotify:
+                window->mouseEnter();
+                break;
+            /* Mouse leaves the window. 
+             */
+            case LeaveNotify:
+                window->mouseLeave();
+                break;
 			/** Called when we are notified that clipboard contents is available for previously requested paste.
 			
 			    Get the clipboard contents and call terminal's paste event. 
@@ -539,7 +549,6 @@ namespace tpp {
 			/** If we lose ownership, clear the clipboard contents with the application, or if we lose primary ownership, just clear the selection.   
 			 */
 			case SelectionClear: {
-                LOG << "Selection clear received"; 
 				X11Application* app = X11Application::Instance();
                 if (e.xselectionclear.selection == app->clipboardName_)
     				app->clipboard_.clear();

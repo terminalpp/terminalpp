@@ -65,6 +65,8 @@ namespace tpp {
 
     protected:
 
+        typedef RendererWindow<DirectWriteWindow, HWND> Super;
+
         DirectWriteWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);
 
         void updateSizePx(unsigned widthPx, unsigned heightPx) override {
@@ -74,14 +76,14 @@ namespace tpp {
 				D2D1_SIZE_U size = D2D1::SizeU(widthPx, heightPx);
 				rt_->Resize(size);
 			}
-            Window::updateSizePx(widthPx, heightPx);
+            Super::updateSizePx(widthPx, heightPx);
 			repaint();
         }
 
         void updateSize(int cols, int rows) override {
 			if (rt_ != nullptr) 
                 updateDirectWriteStructures(cols);
-            Window::updateSize(cols, rows);
+            Super::updateSize(cols, rows);
 			repaint();
         }
 
@@ -94,21 +96,41 @@ namespace tpp {
           
             Starts mouse capture if no mouse button has been pressed previously, which allows the terminal window to track mouse movement outside of the window if at least one mouse button is pressed. 
          */ 
-        virtual void mouseDown(int x, int y, ui::MouseButton button) override {
+        void mouseDown(int x, int y, ui::MouseButton button) override {
             if (++mouseButtonsDown_ == 1)
                 SetCapture(hWnd_);
-            Window::mouseDown(x, y, button);
+            Super::mouseDown(x, y, button);
         }
 
         /** Registers mouse button up. 
           
             If there are no more pressed buttons left, releases the mouse capture previously obtained. 
          */
-        virtual void mouseUp(int x, int y, ui::MouseButton button) override {
+        void mouseUp(int x, int y, ui::MouseButton button) override {
             // just a bit of defensive programming to make sure if weird capture events wreak havoc the terminal is safe(ish)
             if (mouseButtonsDown_ > 0 && --mouseButtonsDown_ == 0)
                 ReleaseCapture();
-            Window::mouseUp(x, y, button);
+            Super::mouseUp(x, y, button);
+        }
+
+        /** Mouse moves. 
+         
+            Triggers the root window's mouse move event, but also triggers the mouseEnter if this is the first mouse move on the window and register for mouse leave event in such case. 
+
+            This is because in Win32 there is no mouse enter event (first mouse move is effectively mouse enter) and mouse leave is only returned if the application explicitly asks for its tracking (which is valid only for one mouse leave trigger and therefore must be renewed everytime mouse enters the window).
+         */
+        void mouseMove(int x, int y) override {
+            // enable tracking if not enabled, also do mouseEnter on the root window? 
+            if (! mouseLeaveTracked_) {
+                mouseEnter();
+                TRACKMOUSEEVENT tm;
+                tm.cbSize = sizeof(tm);
+                tm.dwFlags = TME_LEAVE;
+                tm.hwndTrack = hWnd_;
+                mouseLeaveTracked_ = TrackMouseEvent(&tm);
+                ASSERT(mouseLeaveTracked_);
+            }
+            Super::mouseMove(x, y);
         }
 
         // renderer clipboard interface 
@@ -365,6 +387,7 @@ namespace tpp {
         /* Number of mouse buttons currently pressed so that we know when to set & release mouse capture.
          */
         unsigned mouseButtonsDown_;
+        bool mouseLeaveTracked_;
 
         static ui::Key GetKey(unsigned vk);
 

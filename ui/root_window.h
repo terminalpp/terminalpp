@@ -112,6 +112,14 @@ namespace ui {
         void mouseWheel(int col, int row, int by, Key modifiers) override;
         void mouseMove(int col, int row, Key modifiers) override;
 
+        virtual void mouseEnter() {
+            // do nothing - we will receive mouse move event too, but other may want to override
+        }
+
+        virtual void mouseLeave() {
+            checkMouseOverAndOut(nullptr);
+        }
+
         void checkMouseOverAndOut(Widget * target) {
             if (target != lastMouseTarget_) {
                 if (lastMouseTarget_ != nullptr)
