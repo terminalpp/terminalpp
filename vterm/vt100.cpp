@@ -363,6 +363,14 @@ namespace vterm {
         palette_(palette) {
     }
 
+    ui::Color VT100::defaultForeground() const {
+        return palette_->defaultForeground();
+    }
+    
+    ui::Color VT100::defaultBackground() const {
+        return palette_->defaultBackground();
+    }
+
     void VT100::updateSize(int width, int height) {
         {
             Buffer::Ptr b = buffer(true); // grab priority lock

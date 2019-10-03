@@ -207,7 +207,7 @@ namespace vterm {
                 historySizeLimit_ = value;
                 // remove excess history data
                 while (history_.size() > historySizeLimit_)
-                    history_.pop_front();
+                    popHistoryLine();
                 // resize window properly
                 updateClientRect();
             }
@@ -223,6 +223,8 @@ namespace vterm {
             ptyReader_.join();
             ptyListener_.join();
             repainter_.join();
+            while (! history_.empty())
+                popHistoryLine();
         }
 
         ui::Point scrollOffset() const override {
@@ -240,6 +242,14 @@ namespace vterm {
             Starts the process exit monitoring thread and the receiving thread to read input from the pty. 
          */
         Terminal(int width, int height, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
+
+        virtual ui::Color defaultForeground() const {
+            return ui::Color::White();
+        }
+
+        virtual ui::Color defaultBackground() const {
+            return ui::Color::Black();
+        }
 
         /** Returns the locked buffer. 
          */
@@ -366,30 +376,9 @@ namespace vterm {
             trigger(onNotification);
         }
 
-        virtual void lineScrolledOut(int lines) {
-            if (! scrollable_)
-                return;
-            if (historySizeLimit_ > 0) {
-                for (int i = 0; i < lines; ++i) {
-                    std::string line = buffer_.getLine(i);
-
-                    history_.push_back(line);
-                    if (history_.size() > historySizeLimit_) {
-                        history_.pop_front();
-                    } else {
-                        updateClientRect();
-                        // TODO only scroll if we were at the top
-                        setScrollOffset(scrollOffset() + ui::Point{0, 1});
-                    }
-                }
-            }
-
-            if (onLineScrolledOut.attachedHandlers() > 0) {
-                buffer_.unlock();
-                trigger(onLineScrolledOut, lines);
-                buffer_.lock();
-            }
-        }
+        /** Appends the selected top lines to the terminal history. 
+         */
+        virtual void lineScrolledOut(int lines);
 
         /** Updates the client rectangle based on the history size and terminal height. 
          */
@@ -404,6 +393,16 @@ namespace vterm {
                 scrollable_ = value;
             }
         }
+
+        /** Removes from the terminal history the oldest line.
+         */
+        void popHistoryLine();
+
+        /** Adds new line to the terminal history. 
+         
+            The method assumes the buffer lock to be valid and that its argument is a pointer to the array of cells of the line, i.e. that its width is the buffer's number of cells. It then trims all empty cells on the right and copies the rest to the line.
+         */
+        void addHistoryLine(Cell const * line);
 
         /* Cells and cursor. */
         Buffer buffer_;
@@ -437,7 +436,9 @@ namespace vterm {
 
         size_t historySizeLimit_;
 
-        std::deque<std::string> history_;
+        /* Historic lines, for each line we remember its size and the actual cells.
+         */
+        std::deque<std::pair<int, Cell *>> history_;
 
     }; // vterm::Terminal
 

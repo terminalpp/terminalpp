@@ -232,8 +232,10 @@ namespace vterm {
         if (scrollable_ && history_.size() > 0) {
            ASSERT(clientCanvas.height() == terminalOffset + height());
            for (int i = scrollTop(); i < terminalOffset; ++i) {
-               clientCanvas.fill(ui::Rect{0, i, width(), i + 1}, ui::Color::Black());
-               clientCanvas.textOut(ui::Point{0, i}, history_[i], ui::Color::Cyan());
+               clientCanvas.fill(ui::Rect{0, i, width(), i + 1}, defaultBackground());
+               Cell * row = history_[i].second;
+               for (int col = 0, ce = history_[i].first; col < ce; ++col)
+                   clientCanvas.set(ui::Point{col, i}, row[col]);
            }
            drawVerticalScrollbarOverlay(canvas);
         }
@@ -328,6 +330,54 @@ namespace vterm {
             }
         }
         return result;
+    }
+
+    void Terminal::lineScrolledOut(int lines) {
+        if (! scrollable_)
+            return;
+        if (historySizeLimit_ > 0) {
+            for (int i = 0; i < lines; ++i) {
+                std::string line = buffer_.getLine(i);
+
+                addHistoryLine(&buffer_.at(0, i));
+                if (history_.size() > historySizeLimit_) {
+                    popHistoryLine();
+                } else {
+                    updateClientRect();
+                    // TODO only scroll if we were at the top
+                    setScrollOffset(scrollOffset() + ui::Point{0, 1});
+                }
+            }
+        }
+
+        if (onLineScrolledOut.attachedHandlers() > 0) {
+            buffer_.unlock();
+            trigger(onLineScrolledOut, lines);
+            buffer_.lock();
+        }
+    }
+
+    void Terminal::popHistoryLine() {
+        ASSERT(! history_.empty());
+        delete [] history_.front().second;
+        history_.pop_front();
+    }
+
+    void Terminal::addHistoryLine(Cell const * line) {
+        int x = buffer_.cols() - 1;
+        ui::Color bg = defaultBackground();
+        while (x > 0) {
+            Cell const & c = line[x];
+            if (c.codepoint() != ' ')
+                break;
+            if (c.background() != bg)
+                break;
+            --x;
+        }
+        ++x;
+        Cell * row = new Cell[x];
+        memcpy(row, line, sizeof(Cell) * x);
+        history_.push_back(std::make_pair(x, row));
     }
 
 } // namespace vterm

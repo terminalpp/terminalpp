@@ -61,6 +61,14 @@ namespace ui {
          */
         void fill(Selection const & sel, Brush const & brush);
 
+        /** Sets the cell at given coordinates to the given template. 
+         */
+        void set(Point const & p, Cell const & cell) {
+            Cell * c = at(p);
+            if (c != nullptr)
+                *c = cell;
+        }
+
 		/** Displays the given text. 
 
 		    TODO this is stupid api, should change

@@ -31,6 +31,9 @@ namespace vterm {
 
         class OSCSequence;
 
+        ui::Color defaultForeground() const override;
+        ui::Color defaultBackground() const override;
+
         void updateSize(int width, int height) override;
 
         void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;

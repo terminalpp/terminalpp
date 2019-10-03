@@ -29,8 +29,8 @@ The following is very short description of the versions planned and their main n
 
 ## Current
 
-- history sucks - only shows text, other information should be captured too
-- selection does not work with history at the moment
+- selection does not work with history at the moment (does not read from history at all)
+- selection won't scroll the terminal so that more than the window can be selected
 
 - when terminal is resized the stuff that does not fit should go to history as well - this may be hard if we resize in the presence of double buffers - maybe terminal's on line out always adds the line, but VT100 decides to only call it when not in alternate mode... 
 
