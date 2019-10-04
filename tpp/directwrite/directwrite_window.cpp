@@ -376,7 +376,7 @@ namespace tpp {
 			/* Triggered when mouse leaves the window (the mouse leave tracking was previously turned on in mouseMove window method) 
  			 */
 			case WM_MOUSELEAVE:
-			    ASSERT(window->mouseLeaveTracked_);
+			    //ASSERT(window->mouseLeaveTracked_);
 				window->mouseLeaveTracked_ = false;
 				window->mouseLeave();
 				break;

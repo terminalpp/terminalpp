@@ -51,9 +51,9 @@ namespace vterm {
         delete [] cells_;
     }
 
-    void Terminal::Buffer::resize(int cols, int rows) {
+    void Terminal::Buffer::resize(int cols, int rows, Terminal * terminal) {
         if (cols_ != cols || rows_ != rows) {
-            resizeCells(cols, rows);
+            resizeCells(cols, rows, terminal);
             cols_ = cols;
             rows_ = rows;
         }
@@ -101,7 +101,7 @@ namespace vterm {
         memcpy(row + i, row, sizeof(Cell) * (cols - i));
     }
 
-	void Terminal::Buffer::resizeCells(int newCols, int newRows) {
+	void Terminal::Buffer::resizeCells(int newCols, int newRows, Terminal * terminal) {
 		// create the new cells 
 		Cell** newCells = new Cell * [newRows];
 		for (int i = 0; i < newRows; ++i)
@@ -141,6 +141,9 @@ namespace vterm {
 				// scroll the new lines if necessary
 				if (cursor_.pos.y == newRows) {
 					Cell* r = newCells[0];
+                    // scroll the line out so that it will be added to the terminal's history
+                    if (terminal != nullptr)
+                        terminal->lineScrolledOut(r, newCols);
 					memmove(newCells, newCells + 1, sizeof(Cell*) * (newRows - 1));
 					newCells[newRows - 1] = r;
 					fillRow(r, Cell(), newCols);
@@ -309,27 +312,23 @@ namespace vterm {
         return result.str();
     }
 
-    void Terminal::lineScrolledOut(int lines) {
-        if (! scrollable_)
+    void Terminal::lineScrolledOut(Cell * line, int cols) {
+        if (! scrollable_) 
             return;
         if (historySizeLimit_ > 0) {
-            for (int i = 0; i < lines; ++i) {
-                std::string line = buffer_.getLine(i);
-
-                addHistoryLine(&buffer_.at(0, i));
-                if (history_.size() > historySizeLimit_) {
-                    popHistoryLine();
-                } else {
-                    updateClientRect();
-                    // TODO only scroll if we were at the top
-                    setScrollOffset(scrollOffset() + ui::Point{0, 1});
-                }
+            addHistoryLine(line, cols);
+            if (history_.size() > historySizeLimit_) {
+                popHistoryLine();
+            } else {
+                updateClientRect();
+                // TODO only scroll if we were at the top
+                setScrollOffset(scrollOffset() + ui::Point{0, 1});
             }
         }
 
         if (onLineScrolledOut.attachedHandlers() > 0) {
             buffer_.unlock();
-            trigger(onLineScrolledOut, lines);
+            trigger(onLineScrolledOut);
             buffer_.lock();
         }
     }
@@ -340,8 +339,8 @@ namespace vterm {
         history_.pop_front();
     }
 
-    void Terminal::addHistoryLine(Cell const * line) {
-        int x = buffer_.cols() - 1;
+    void Terminal::addHistoryLine(Cell const * line, int cols) {
+        int x = cols - 1;
         ui::Color bg = defaultBackground();
         while (x > 0) {
             Cell const & c = line[x];
@@ -355,6 +354,27 @@ namespace vterm {
         Cell * row = new Cell[x];
         memcpy(row, line, sizeof(Cell) * x);
         history_.push_back(std::make_pair(x, row));
+    }
+
+    void Terminal::resizeHistory(int newCols) {
+        for (auto i = history_.begin(), e = history_.end(); i != e; ) {
+            if (i->first > newCols) {
+                int restSize = i->first - newCols;
+                Cell * line = new Cell[newCols];
+                Cell * rest = new Cell[restSize];
+                memcpy(line, i->second, sizeof(Cell) * newCols);
+                memcpy(rest, i->second + newCols, sizeof(Cell) * restSize);
+                delete [] i->second;
+                i->first = newCols;
+                i->second = line;
+                i = history_.insert(++i, std::make_pair(restSize, rest));
+                e = history_.end(); // all iterators invalidated by insert above
+            } else {
+                ++i;
+            }
+        }
+        while (history_.size() > historySizeLimit_)
+            popHistoryLine();
     }
 
 } // namespace vterm

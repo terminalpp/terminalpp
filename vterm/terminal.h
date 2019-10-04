@@ -22,8 +22,6 @@ namespace vterm {
 
     typedef helpers::EventPayload<helpers::ExitCode, ui::Widget> ExitCodeEvent;
 
-    typedef helpers::EventPayload<unsigned, ui::Widget> LineScrollEvent;
-
     /** The input buffer of the terminal and its length. 
      
         TODO this looks very generic and perhaps can exist in some generic place too.
@@ -108,7 +106,11 @@ namespace vterm {
                 lock_.unlock();
             }
 
-            void resize(int cols, int rows);
+            /** Resizes the buffer. 
+             
+                The terminal to which the buffer belongs can be provided as an optional argument, in which case any lines that would be deleted after the resize would be added to the history of the specified terminal. 
+             */
+            void resize(int cols, int rows, Terminal * terminal);
 
             /** Inserts given number of lines at given top row.
                 
@@ -142,7 +144,7 @@ namespace vterm {
 
                 The line is the copied. 
             */
-            void resizeCells(int newCols, int newRows);
+            void resizeCells(int newCols, int newRows, Terminal * terminal);
 
 
             /* Size of the buffer and the array of the cells. */
@@ -174,7 +176,7 @@ namespace vterm {
          
             It is assumed that the topmost line is always the line scrolled out. 
          */
-        helpers::Event<LineScrollEvent> onLineScrolledOut;
+        helpers::Event<ui::VoidEvent> onLineScrolledOut;
 
         /** Triggered when new input has been processed by the terminal. 
          */
@@ -295,8 +297,9 @@ namespace vterm {
         void updateSize(int width, int height) override {
             {
                 Buffer::Ptr b = buffer(true); // grab priority lock
-                b->resize(width, height);
+                b->resize(width, height, this);
             }
+            resizeHistory(width);
             pty_->resize(width, height);
             // resize the client canvas
             setClientArea(width, buffer_.rows() + static_cast<int>(history_.size())); 
@@ -378,7 +381,7 @@ namespace vterm {
 
         /** Appends the selected top lines to the terminal history. 
          */
-        virtual void lineScrolledOut(int lines);
+        virtual void lineScrolledOut(Cell * line, int cols);
 
         /** Updates the client rectangle based on the history size and terminal height. 
          */
@@ -402,7 +405,9 @@ namespace vterm {
          
             The method assumes the buffer lock to be valid and that its argument is a pointer to the array of cells of the line, i.e. that its width is the buffer's number of cells. It then trims all empty cells on the right and copies the rest to the line.
          */
-        void addHistoryLine(Cell const * line);
+        void addHistoryLine(Cell const * line, int cols);
+
+        void resizeHistory(int newCols);
 
         /* Cells and cursor. */
         Buffer buffer_;
@@ -446,7 +451,7 @@ namespace vterm {
     EVENT_BUILDER(OnTitleChange, ui::StringEvent, onTitleChange, Terminal);
     EVENT_BUILDER(OnNotification, ui::VoidEvent, onNotification, Terminal);
     EVENT_BUILDER(OnPTYTerminated, ExitCodeEvent, onPTYTerminated, Terminal);
-    EVENT_BUILDER(OnLineScrolledOut, LineScrollEvent, onLineScrolledOut, Terminal);
+    EVENT_BUILDER(OnLineScrolledOut, ui::VoidEvent, onLineScrolledOut, Terminal);
     EVENT_BUILDER(OnInput, InputProcessedEvent, onInput, Terminal);
 
 } // namespace vterm

@@ -77,10 +77,6 @@ namespace tpp {
             closeOnKeyDown_ = true;
         }
 
-        void lineScrolledOut(vterm::LineScrollEvent & e) {
-            LOG << "Scrolled " << *e << " lines";
-        }
-
         void terminalInputProcessed(vterm::InputProcessedEvent & e) {
             logFile_.write(e->buffer, e->size);
         }

@@ -29,8 +29,7 @@ The following is very short description of the versions planned and their main n
 
 ## Current
 
-
-- when terminal is resized the stuff that does not fit should go to history as well - this may be hard if we resize in the presence of double buffers - maybe terminal's on line out always adds the line, but VT100 decides to only call it when not in alternate mode... 
+- add comments to the recent selection & history & resizing, etc.
 
 - borders should be thin, thick, full
 - selection should be cancelled when window gets defocused

@@ -622,6 +622,8 @@ namespace ui {
 		 */
 		virtual Widget * getMouseTarget(int col, int row) {
 			ASSERT(visibleRegion_.contains(col, row));
+			MARK_AS_UNUSED(col);
+			MARK_AS_UNUSED(row);
 			return this;
 		}
 

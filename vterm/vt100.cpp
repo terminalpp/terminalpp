@@ -374,11 +374,11 @@ namespace vterm {
     void VT100::updateSize(int width, int height) {
         {
             Buffer::Ptr b = buffer(true); // grab priority lock
-            b->resize(width, height);
+            b->resize(width, height, alternateBufferMode_ ? nullptr : this);
             // resize the real buffer
             state_.resize(width, height);
             // resize the alternate buffer and state
-            alternateBuffer_.resize(width, height);
+            alternateBuffer_.resize(width, height, alternateBufferMode_ ? this : nullptr);
             alternateState_.resize(width, height);
         }
         Terminal::updateSize(width, height);
@@ -1465,10 +1465,17 @@ namespace vterm {
 
     void VT100::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         // if lines are deleted from the top row and alternate buffer is not enabled, notify the terminal history that given number of lines is about to be scrolled out
-        if (! alternateBufferMode_ && top == 0)
+        while (lines-- > 0) {
+            if (top == 0)
+                lineScrolledOut(&buffer_.at(0,0), buffer_.cols());
+            buffer_.deleteLines(1, top, bottom, fill);
+        }
+        /*
+        if (top == 0)
             lineScrolledOut(lines);
         // delete the lines
         buffer_.deleteLines(lines, top, bottom, fill);
+        */
     }
 
 
