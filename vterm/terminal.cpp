@@ -283,53 +283,30 @@ namespace vterm {
      */
     std::string Terminal::getSelectionContents() {
         ui::Selection s = selection();
-        if (s.empty())
-            return std::string{};
-        std::string result;
-        std::stringstream line;
+        std::stringstream result;
         {
-            // get the buffer pointer
-            Buffer::Ptr buf = buffer();
-            if (s.start().y + 1 == s.end().y) {
-                ui::Point p = s.start();
-                for (; p.x < s.end().x;) {
-                    char32_t cp = buf->at(p.x, p.y).codepoint();
-                    line << helpers::Char::FromCodepoint(cp);
-                    p.x += buf->at(p.x, p.y).font().width();
+            Buffer::Ptr buf = buffer(); // lock the buffer (and therefore the history as well)
+            int bufferStart = scrollable_ ? static_cast<int>(history_.size()) : 0;
+            for (int y = s.start().y, ye = s.end().y; y < ye; ++y) {
+                // determine the start (inclusive) and end (exclusive) column for the selection on current row
+                int cStart = (y == s.start().y) ? s.start().x : 0;
+                int cEnd = (y == s.end().y - 1) ? s.end().x : buf->cols();
+                // update the column end based on the size of the line (if reading from history)
+                cEnd = std::min(cEnd, (y >= bufferStart) ? buf->cols() : history_[y].first);
+                // get the array of cells that corresponds to the current line (be it from buffer or history)
+                Cell const * rowCells = (y >= bufferStart) ? & buf->at(0, y - bufferStart) : history_[y].second;
+                
+                // now create a UTF-8 string for the current line
+                std::stringstream line;
+                for (int i = cStart; i < cEnd; ) {
+                    line << helpers::Char::FromCodepoint(rowCells[i].codepoint());
+                    i += rowCells[i].font().width();
                 }
-                result += helpers::TrimRight(line.str());
-            } else {
-                ui::Point p = s.start();
-                for (; p.x < buf->cols(); ) {
-                    char32_t cp = buf->at(p.x, p.y).codepoint();
-                    line << helpers::Char::FromCodepoint(cp);
-                    p.x += buf->at(p.x, p.y).font().width();
-
-                }
-                result += helpers::TrimRight(line.str());
-                for (p.y = s.start().y + 1; p.y < s.end().y - 1; ++p.y) {
-                    line.str("");
-                    line.clear();
-                    line << std::endl;
-                    for (p.x = 0; p.x < buf->cols(); ) {
-                        char32_t cp = buf->at(p.x, p.y).codepoint();
-                        line << helpers::Char::FromCodepoint(cp);
-                        p.x += buf->at(p.x, p.y).font().width();
-                    }
-                    result += helpers::TrimRight(line.str());
-                }
-                line.str("");
-                line.clear();
-                line << std::endl;
-                for (p.y = s.end().y - 1, p.x = 0; p.x < s.end().x;) {
-                    char32_t cp = buf->at(p.x, p.y).codepoint();
-                    line << helpers::Char::FromCodepoint(cp);
-                    p.x += buf->at(p.x, p.y).font().width();
-                }
-                result += helpers::TrimRight(line.str());
+                // trim the line if it ended with empty characters
+                result << helpers::TrimRight(line.str()) << std::endl;
             }
         }
-        return result;
+        return result.str();
     }
 
     void Terminal::lineScrolledOut(int lines) {

@@ -29,23 +29,27 @@ The following is very short description of the versions planned and their main n
 
 ## Current
 
-- selection does not work with history at the moment (does not read from history at all)
-- selection won't scroll the terminal so that more than the window can be selected
 
 - when terminal is resized the stuff that does not fit should go to history as well - this may be hard if we resize in the presence of double buffers - maybe terminal's on line out always adds the line, but VT100 decides to only call it when not in alternate mode... 
 
 - borders should be thin, thick, full
 - selection should be cancelled when window gets defocused
+- selection won't scroll the terminal so that more than the window can be selected
 
-- clean shapes - rect, to provide the points for corners on demand
+
+
 
 
 - when widget is removed from hierarchy, it must return keyboard and mouse focus
 
-- should client & scroll rects & stuff be protected by default?
+
+
+
 
 ## Old stuffs
 
+- should client & scroll rects & stuff be protected by default?
+- clean shapes - rect, to provide the points for corners on demand
 
 ## Bugs and missing features
 
