@@ -204,7 +204,7 @@ namespace vterm {
          
             If set to 0, no scrollback is allowed.
          */
-        void setHistoriSizeLimit(size_t value) {
+        void setHistorySizeLimit(size_t value) {
             if (value != historySizeLimit_) {
                 historySizeLimit_ = value;
                 // remove excess history data
@@ -447,6 +447,8 @@ namespace vterm {
 
     }; // vterm::Terminal
 
+
+    PROPERTY_BUILDER(HistorySizeLimit, size_t, setHistorySizeLimit, Terminal);
 
     EVENT_BUILDER(OnTitleChange, ui::StringEvent, onTitleChange, Terminal);
     EVENT_BUILDER(OnNotification, ui::VoidEvent, onNotification, Terminal);

@@ -163,9 +163,6 @@ namespace vterm {
 		cursor_.pos.y += (oldCursorRow - stopRow);
 	}
 
-
-
-
     // Terminal 
 
     Terminal::Terminal(int width, int height, PTY * pty, unsigned fps, size_t ptyBufferSize):
@@ -175,7 +172,7 @@ namespace vterm {
         repaint_{false},
         mouseSelectionUpdate_{false},
         scrollable_{true},
-        historySizeLimit_{1000} {
+        historySizeLimit_{0} {
         pty_->resize(width, height);
         ptyReader_ = std::thread([this, ptyBufferSize](){
             std::unique_ptr<char> holder(new char[ptyBufferSize]);

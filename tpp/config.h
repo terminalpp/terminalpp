@@ -73,6 +73,10 @@ namespace tpp {
 		bool sessionFullscreen() const {
 			return get({"session", "fullscreen"});
 		}
+
+		unsigned sessionHistoryLimit() const {
+			return get({"session", "historyLimit"});
+		}
 		
 		helpers::JSON & json() {
 			return json_;

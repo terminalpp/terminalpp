@@ -37,6 +37,7 @@ The following is very short description of the versions planned and their main n
 - add comments to the autoscroller and explain it in the widget's info
 
 - borders should be thin, thick, full
+- ALT + SPACE produces system sound - figure out how to turn it off (is nothing with the fullscreen code per se)
 
 ## Old stuffs
 

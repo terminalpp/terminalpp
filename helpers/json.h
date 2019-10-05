@@ -710,6 +710,22 @@ namespace helpers {
             }
         }
 
+        bool operator == (bool other) const {
+            return kind_ == Kind::Boolean && valueBool_ == other;
+        }
+
+        bool operator == (int other) const {
+            return kind_ == Kind::Integer && valueInt_ == other;
+        }
+
+        bool operator == (double other) const {
+            return kind_ == Kind::String && valueDouble_ == other;
+        }
+
+        bool operator == (std::string const & other) const {
+            return kind_ == Kind::String && valueStr_ == other;
+        }
+
         void emit(std::ostream & s, unsigned tabWidth = 4) const {
             emitComment(s, tabWidth, 0);
             emit(s, tabWidth, 0);

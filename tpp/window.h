@@ -283,7 +283,8 @@ namespace tpp {
                 }
                 // draw the cursor by creating a cell corresponding to how the cursor should be displayed
                 ui::Cursor const & cursor = cursorToRender();
-                if (cursor.visible == true && buffer->at(cursor.pos).isCursor()) {
+                // it is possible that cursor is outside of the terminal window, in which case it is not rendered
+                if (cursor.visible == true && cursor.pos.x < buffer->cols() && cursor.pos.y < buffer->rows() && buffer->at(cursor.pos).isCursor()) {
                     if (cursor.blink && cursor.pos != lastCursorPosition_)
                         cursorBlinkVisible_ = true;
                     if (! cursor.blink || cursorBlinkVisible_) {

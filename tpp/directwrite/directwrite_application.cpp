@@ -84,7 +84,7 @@ namespace tpp {
 		    json["font"]["doubleWidthFamily"] = "Consolas";
 		// determine the command 
 		helpers::JSON & cmd = json["session"]["command"];
-		if (cmd.numElements() != 0) {
+		if (cmd.numElements() != 0 && json["version"] == "0.2") {
 		    if (MessageBox(nullptr, L"The session command settings will be reinitialized and previous data lost. OK proceeds, Cancel terminates the execution.",L"Session Command Reset", MB_ICONWARNING + MB_OKCANCEL) == IDCANCEL)
 			    THROW(helpers::Exception()) << "Terminal++ execution cancelled";
 			cmd.clear();
