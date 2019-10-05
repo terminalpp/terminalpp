@@ -227,6 +227,13 @@ namespace helpers {
 		return (what >= fromValue && what <= toValue);
 	}
 
-
+    template<typename T>
+    T ClipToRange(T const & value, T const & min, T const & max) {
+        if (value < min)
+            return min;
+        if (value > max)
+            return max;
+        return value;
+    }
 
 } // namespace helpers

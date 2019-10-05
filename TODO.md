@@ -33,20 +33,10 @@ The following is very short description of the versions planned and their main n
 
 ## Current
 
-- selection won't scroll the terminal so that more than the window can be selected
-
 - add comments to the recent selection & history & resizing, etc.
+- add comments to the autoscroller and explain it in the widget's info
 
 - borders should be thin, thick, full
-
-
-
-
-
-
-
-
-
 
 ## Old stuffs
 

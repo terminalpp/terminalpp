@@ -692,6 +692,10 @@ namespace ui {
             }
         }
 
+		/** Returns the mouse coordinates inside the widget. 
+		 */
+		Point getMouseCoordinates() const;
+
 	private:
 
 		friend class Layout;

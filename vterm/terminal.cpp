@@ -272,8 +272,10 @@ namespace vterm {
     }
 
     void Terminal::mouseMove(int col, int row, ui::Key modifiers) {
-        if (modifiers == 0) 
+        if (modifiers == 0) {
             selectionUpdate(col, row);
+            calculateVerticalAutoScroll(col, row);
+        }
         ScrollBox::mouseMove(col, row, modifiers);
         Widget::mouseMove(col, row, modifiers);
     }

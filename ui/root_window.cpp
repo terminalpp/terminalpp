@@ -17,6 +17,7 @@ namespace ui {
 		lastMouseTarget_{nullptr},
 		mouseFocus_{nullptr},
 		mouseFocusLock_{0},
+		mouseCoords_{-1,-1},
 		mouseClickWidget_{nullptr},
 		mouseClickButton_{MouseButton::Left}, // does not matter
 		mouseClickStart_{0},
@@ -35,6 +36,7 @@ namespace ui {
 	}
 
     void RootWindow::mouseDown(int col, int row, MouseButton button, Key modifiers) {
+		mouseCoords_ = Point{col, row};
 		if (++mouseFocusLock_ > 1) {
 			if (mouseFocus_ != nullptr) {
 				screenToWidgetCoordinates(mouseFocus_, col, row);
@@ -61,6 +63,7 @@ namespace ui {
     }
 
     void RootWindow::mouseUp(int col, int row, MouseButton button, Key modifiers) {
+		mouseCoords_ = Point{col, row};
 		ASSERT(mouseFocusLock_ > 0);
 		mouseFocusLock_--;
 		if (mouseFocus_ != nullptr) {
@@ -86,6 +89,7 @@ namespace ui {
     }
 
     void RootWindow::mouseWheel(int col, int row, int by, Key modifiers) {
+		mouseCoords_ = Point{col, row};
 		if (mouseFocusLock_ > 0 && mouseFocus_ != nullptr) {
 			screenToWidgetCoordinates(mouseFocus_, col, row);
 		    mouseFocus_->mouseWheel(col, row, by, modifiers);
@@ -100,6 +104,7 @@ namespace ui {
     }
 
     void RootWindow::mouseMove(int col, int row, Key modifiers) {
+		mouseCoords_ = Point{col, row};
 		if (mouseFocusLock_ > 0 && mouseFocus_ != nullptr) {
 			screenToWidgetCoordinates(mouseFocus_, col, row);
 		    mouseFocus_->mouseMove(col, row, modifiers);

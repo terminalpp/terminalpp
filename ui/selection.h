@@ -154,6 +154,8 @@ namespace ui {
             selectionStart_ = Point{col, row} + scrollOffset();
         }
 
+        /** Updates the selection. 
+         */
         void selectionUpdate(int col, int row) {
             if (! updating_)
                 return;
@@ -161,7 +163,7 @@ namespace ui {
                 col = 0;
             else if (col >= width())
                 col = width() - 1;
-            if (row < 0)
+            if (row < 0) 
                 row = 0;
             else if (row >= height())
                 row = height() - 1;
@@ -186,7 +188,7 @@ namespace ui {
             canvas.fill(selection(), selBrush); 
         }
 
-        /** Cancells selection update in progress. 
+        /** Cancels selection update in progress. 
          
             If mouseOut even is reported in the middle of updating the selection, the selection is cancelled. Note that normally, mouse leave should not be received until the selection update is done as the mouse is supposed to be locked. 
          */

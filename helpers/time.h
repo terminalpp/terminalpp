@@ -82,105 +82,133 @@ namespace helpers {
 		size_t value_;
 	};
 
-	class Timer;
 
-	typedef EventPayload<bool, Timer> TimerEvent;
-
-	/** A simple timer class.
-
-	    Triggers the onTimer event in specified interval, or recurrently. The event timer itself may change whether the timer should continue, or not by changing its value.
-
-		Synchronization is a bit involved and uses a mutex and a compare and swap on the thread's activity. The lock is held by the timer, while the activity flag is held by the thread, which allows for safe stopping and destruction of the timer without the need to wait the specified interval. See start & stop methods for details. 
+	/** Very simple timer class.
+	 
+	    Executes the given handler with given duration. The handler is a function taking no arguments and returning bool. If the handlers returns true, it will be rescheduled after the specified interval, otherwise the timer will be stopped. 
 	 */
-	class Timer : public Object {
+	class Timer {
 	public:
-	    Event<TimerEvent> onTimer;
-
 		Timer():
-		    killSwitch_(nullptr),
-			active_(false) {
+		    data_{new Data()} {
+			data_->attach();
 		}
 
-		~Timer() override {
+		~Timer() {
 			stop();
+			data_->detach();
 		}
 
-		void start(size_t durationMs, bool recurrent = true) {
-			std::lock_guard<std::mutex> g(m_);
-			ASSERT(active_ == false) << "Timer already running";
-			// join the finished thread if necessary
-			if (t_.joinable())
-			    t_.join();
-			active_ = true;
-			t_ = std::thread([this, durationMs, recurrent](){
-				int expectedActive = 1;
-				std::atomic<int> active(true);
-				killSwitch_ = & active;
-				while (active == 1) {
-					std::this_thread::sleep_for(std::chrono::milliseconds(durationMs));
-					TimerEvent e(this, recurrent);
-					// cas active to 2 so that timer can't delete itself and the event while we use it
-					if (active.compare_exchange_strong(expectedActive, 2)) {
-						std::lock_guard<std::mutex> g(m_);
-    					onTimer.trigger(e);
-						// if between cas and the lock timer wanted to stop, its killSwitch will be nullptr, and it will be waiting for us to terminate (i.e. set to inactive), otherwise set to active
-						active = killSwitch_ == nullptr ? 0 : expectedActive;
+		bool running() const {
+			std::lock_guard<std::mutex> g(data_->m);
+			return data_->running;
+		}
+
+		size_t interval() const {
+			std::lock_guard<std::mutex> g(data_->m);
+			return data_->interval;
+		}
+
+		void setInterval(size_t ms) {
+			std::lock_guard<std::mutex> g(data_->m);
+			data_->interval = ms;
+		}
+
+		void setHandler(std::function<bool()> handler) {
+			std::lock_guard<std::mutex> g(data_->m);
+			data_->handler = handler;
+		}
+
+		/** Starts the timer. 
+		 
+		    If the timer is already running, terminates the old thread first. This is perhaps not completely efficient, but saves us a lot of concurrency worries. 
+		 */
+		void start() {
+			std::lock_guard<std::mutex> g(data_->m);
+			if (data_->running)
+			    ++data_->threadId;
+			size_t tid = data_->threadId;
+			data_->attach();
+			Data * data = data_;
+			std::thread t{[data, tid](){
+				size_t interval = 0;
+				std::function<bool()> handler;
+				while (true) {
+					{
+						std::lock_guard<std::mutex> g(data->m);
+						// we have been stopped, exit the thread
+						if (data->threadId != tid)
+						    return;
+						interval = data->interval;
+						handler = data->handler;
 					}
-					if (! *e)
-					    break;
+					// if the handler indicates termination, terminate the thread
+					if (! handler()) {
+						std::lock_guard<std::mutex> g(data->m);
+						// indicate we have stopped and exit the thread
+						if (data->threadId == tid)
+						    data->running = false;
+						return;
+					}
+					// otherwise sleep for the requested period
+					std::this_thread::sleep_for(std::chrono::milliseconds(interval));
 				}
-				// if we can CAS active to inactive, we must inform it that we have terminated by setting killSwitch to nullptr (active to false just to be on safe side).
-				if (active.compare_exchange_strong(expectedActive, 0)) {
-					std::lock_guard<std::mutex> g(m_);
-					killSwitch_ = nullptr;
-					active_ = false;
-				}
-			});
-			// a simple busy-wait before the thread fills in the killSwitch ptr
-			while (killSwitch_ == nullptr)
-				std::this_thread::yield();
+				data->detach();
+			}};
+			t.detach();
+			data_->running = true;
 		}
 
+		/** Stops the timer. 
+		 */
 		void stop() {
-			{
-				// first obtain lock and then check if active, if not just make sure to join the thread if necessary
-				std::lock_guard<std::mutex> g(m_);
-				if (active_ == false) {
-					// make sure the thread is joined, if possible (or we get abortion)
-					if (t_.joinable())
-					    t_.join();
-				    return;
-			    }
-				int active = 1;
-				// if active, check if we can CAS the thread to deactivate, and if we can, the thread will ignore timer update when it exits and therefore we have to set timer killSwitch to nullptr and active to false to show no-one runs and detach the thread so that it exits when it feels like (guaranteed it won't touch this ptr)
-				if (killSwitch_->compare_exchange_strong(active, 0)) {
-					t_.detach();
-					active_ = false;
-					killSwitch_ = nullptr;
-					return;
-				}
-				// if not successful in the CAS, set killswitch to nullptr and join with the terminating thread, after which we set the active to false. KillSwitch is set to null inside the lock to tell the disable to the thread (in case its active settings is 2, i.e. currently triggering)
-    			killSwitch_ = nullptr;
-			}
-			t_.join();
-			active_ = false;
-		}
-
-		bool running() {
-			return active_;
+			std::lock_guard<std::mutex> g(data_->m);
+			if (data_->running)
+			    ++data_->threadId;
 		}
 
 	private:
 
-		std::mutex m_;
-	    std::thread t_;
+		/** Internal data of the timer. 
+		 
+		    The data is allocated on heap and is reference counted, which is a simple way to make sure that if the timer is deleted we do not have to wait for the timer thread to terminate as well (this could be painful if the interval is large). 
+		 */
+	    class Data {
+		public:
+		    std::mutex m;
+		    volatile size_t threadId;
+			volatile size_t interval;
+			bool running;
+    	    std::function<bool()> handler;
 
-		volatile std::atomic<int> * killSwitch_;
+			Data():
+			    threadId{0},
+				interval{1000},
+				running{false},
+				ptrCount_{0} {
+			}
 
-		bool active_ = false;
+			void attach() {
+				++ptrCount_;
+			}
 
-	};
+			void detach() {
+				m.lock();
+				--ptrCount_;
+				if (--ptrCount_ == 0) {
+					m.unlock();
+				    delete this;
+				} else {
+				    m.unlock();
+				}
+			}
+		private:
+			size_t ptrCount_;
 
+		};
 
+		Data * data_;
+
+	}; 
 
 } // namespace helpers

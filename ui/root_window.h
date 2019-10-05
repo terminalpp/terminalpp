@@ -247,7 +247,7 @@ namespace ui {
 
 			Note that these may be negative, or bigger than the widget itself if the mouse is outside of the widget's area and the mouse target is locked.
 		 */
-		void screenToWidgetCoordinates(Widget * w, int & col, int & row) {
+		void screenToWidgetCoordinates(Widget const * w, int & col, int & row) {
 			Canvas::VisibleRegion const& wr = w->visibleRegion_;
             ASSERT(wr.valid) << "An invalid widget is rather bad at receiving mouse coordinates";
             col = wr.region.left() + (col - wr.windowOffset.x);
@@ -344,8 +344,9 @@ namespace ui {
         /** Determines the number of pressed buttons to know when the mouse focus lock is to be acquired and released. 
          */
         unsigned mouseFocusLock_; 
-		int mouseCol_;
-		int mouseRow_;
+        /** Last known mouse coordinates. 
+         */
+        Point mouseCoords_;
 		Widget* mouseClickWidget_;
 		MouseButton mouseClickButton_;
 		size_t mouseClickStart_;

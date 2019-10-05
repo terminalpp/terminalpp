@@ -330,6 +330,13 @@ namespace vterm {
 
         void mouseMove(int col, int row, ui::Key modifiers) override;
 
+        /** Updates the selection when autoscroll is activated. 
+         */
+        void autoScrollStep() override {
+            ui::Point m = getMouseCoordinates();
+            selectionUpdate(m.x, m.y);
+        }
+
         void mouseOut() override {
             ui::SelectionOwner::mouseOut();
             ui::ScrollBox::mouseOut();

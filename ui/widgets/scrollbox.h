@@ -1,5 +1,7 @@
 #pragma once
 
+#include "helpers/time.h"
+
 #include "../container.h"
 
 namespace ui {
@@ -20,7 +22,32 @@ namespace ui {
 			clientHeight_(height()),
 			scrollbarInactiveColor_(Color::White().setAlpha(64)),
 			scrollbarActiveColor_(Color::Red().setAlpha(128)),
-			scrollbarActive_(false) {
+			scrollbarActive_(false),
+		    autoScrollIncrement_{0,0} {
+			autoScrollTimer_.setInterval(50);
+			autoScrollTimer_.setHandler([this]() {
+				Point i{scrollLeft_, scrollTop_};
+				i += autoScrollIncrement_;
+				Point max = scrollOffsetMax();
+				bool cont = true;
+				if (i.x < 0) {
+					i.x = 0;
+					cont = false;
+				}  else if (i.x > max.x) {
+					i.x = max.x;
+					cont = false;
+				}
+				if (i.y < 0) {
+					i.y = 0;
+					cont = false;
+				} else if (i.y > max.y) {
+					i.y = max.y;
+					cont = false;
+				}
+				setScrollOffset(i);
+				autoScrollStep();
+				return cont;
+			});
 		}
 
 		Rect clientRect() const override {
@@ -52,6 +79,7 @@ namespace ui {
 		virtual void updateScrollOffset(int scrollLeft, int scrollTop) {
 			scrollLeft_ = scrollLeft;
 			scrollTop_ = scrollTop;
+			repaint();
 		}
 
 		void mouseMove(int col, int row, Key modifiers) override {
@@ -131,6 +159,44 @@ namespace ui {
 			return std::make_pair(sliderStart, sliderSize);
 		}
 
+		/** Returns the maximum reasonable values for the scroll offset. 
+		 */
+		Point scrollOffsetMax() {
+			Rect child = childRect();
+			Rect client = clientRect();
+			return Point(client.width() - child.width(), client.height() - child.height());
+		}
+
+		void setAutoScroll(Point increment) {
+			if (increment != autoScrollIncrement_) {
+				if (autoScrollIncrement_ == Point{0,0}) 
+					autoScrollTimer_.start();
+				else if (increment == Point{0, 0}) 
+				    autoScrollTimer_.stop();
+				autoScrollIncrement_ = increment;
+			}
+		}
+
+		/** Determines proper values for vertical auto scroll. 
+		 
+		    Expects mouse coordinates as input. If the mouse is above, or below the widget, autoscroll will be enabled. 
+		 */
+		void calculateVerticalAutoScroll(int col, int row) {
+			MARK_AS_UNUSED(col);
+            if (row < 0)
+                setAutoScroll(ui::Point{0,-1});
+            else if (row > height())
+                setAutoScroll(ui::Point{0, 1});
+			else
+			    setAutoScroll(ui::Point{0,0});
+		}
+
+		/** Triggered when autoscrolling scrolls the widget. 
+		 */
+		virtual void autoScrollStep() {
+			// do nothing
+		}
+
 	private:
 
 		int scrollLeft_;
@@ -143,6 +209,10 @@ namespace ui {
 		Color scrollbarActiveColor_;
 
 		bool scrollbarActive_;
+
+        Point autoScrollIncrement_;
+		helpers::Timer autoScrollTimer_;
+		size_t autoScrollDelay_;
 
 	};
 
