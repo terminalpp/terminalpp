@@ -186,6 +186,18 @@ namespace ui {
             canvas.fill(selection(), selBrush); 
         }
 
+        /** Cancells selection update in progress. 
+         
+            If mouseOut even is reported in the middle of updating the selection, the selection is cancelled. Note that normally, mouse leave should not be received until the selection update is done as the mouse is supposed to be locked. 
+         */
+        void mouseOut() override {
+            if (updating_) {
+                updating_ = false;
+                selection_.clear();
+                selectionUpdated();
+            }
+        }
+
     private:
         Selection selection_;
         bool updating_;

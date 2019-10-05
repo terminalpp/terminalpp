@@ -25,6 +25,10 @@ The following is very short description of the versions planned and their main n
 
 - systray support
 
+### Later
+
+- keyboard shortcuts, actions, better settings than JSON, etc. 
+
 # Work Items
 
 ## Current

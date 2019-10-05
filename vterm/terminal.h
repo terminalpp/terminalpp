@@ -331,16 +331,9 @@ namespace vterm {
         void mouseMove(int col, int row, ui::Key modifiers) override;
 
         void mouseOut() override {
+            ui::SelectionOwner::mouseOut();
             ui::ScrollBox::mouseOut();
         }
-
-
-        /** When selection is invalidated, we request repaint so that the selection is no longer displayed. 
-         */
-        /*void invalidateSelection() override {
-            Clipboard::invalidateSelection();
-            repaint();
-        } */
 
         /** Returns the contents of the selection. 
          
