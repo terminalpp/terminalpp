@@ -711,11 +711,11 @@ namespace ui {
                 Canvas::Buffer::Ptr guard_;
         }; // PaintLockGuard
 
-        void detachRootWindow() {
-            visibleRegion_.root = nullptr;
-            for (Widget * child : children_)
-                child->detachRootWindow();
-        }
+		/** Detaches the wdget from its root window. 
+		 
+		    Informs the root window that the widget is to be detached, then detaches its children transitively and finally detaches the widget itself. 
+		 */
+        void detachRootWindow();
 
 		/* Parent widget or none. 
 		 */

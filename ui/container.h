@@ -34,15 +34,6 @@ namespace ui {
             repaint();
         }
 
-		/*
-        Widget * mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        Widget * mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        void mouseClick(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        void mouseDoubleClick(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        Widget * mouseWheel(int col, int row, int by, ui::Key modifiers) override;
-        Widget * mouseMove(int col, int row, ui::Key modifiers) override;
-		*/
-
 		void setLayout(Layout* value) {
 			ASSERT(value != nullptr) << "use Layout::None instead";
 			if (layout_ != value) {

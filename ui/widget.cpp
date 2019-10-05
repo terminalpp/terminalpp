@@ -76,5 +76,15 @@ namespace ui {
             root->requestSelectionContents(this);
     }
 
+	void Widget::detachRootWindow() {
+		// don't do anything if the widget is already detached from its root window
+		if (visibleRegion_.root == nullptr)
+			return;
+		visibleRegion_.root->widgetDetached(this);
+		for (Widget * child : children_)
+			child->detachRootWindow();
+		visibleRegion_.root = nullptr;
+	}
+
 
 } // namespace ui

@@ -148,6 +148,28 @@ namespace ui {
                 checkMouseOverAndOut(nullptr);
         }
 
+        /** Notifies the root window that a widget has been detached within it. 
+         
+            The root window must then make sure that any of its internal mentions (such as keyboard or mouse focus and selection ownership) are cleared properly. 
+         */
+        virtual void widgetDetached(Widget * widget) {
+            if (widget->focusStop_)
+                removeFocusStop(widget);
+            if (keyboardFocus_ == widget)
+                focusWidget(widget, false);
+            if (lastMouseTarget_ == widget)
+                checkMouseOverAndOut(nullptr);
+            if (mouseFocus_ == widget) 
+                mouseFocus_ = nullptr;
+            if (mouseClickWidget_ == widget)
+                mouseClickWidget_ = nullptr;
+            if (pasteRequestTarget_ == widget)
+                pasteRequestTarget_ = nullptr;
+            SelectionOwner * wse = dynamic_cast<SelectionOwner *>(widget);
+            if (wse != nullptr && selectionOwner_ == wse)
+                clearSelection();
+        }
+
         void invalidateContents() override;
 
         void updateSize(int width, int height) override {
