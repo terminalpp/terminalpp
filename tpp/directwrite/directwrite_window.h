@@ -97,9 +97,9 @@ namespace tpp {
             Starts mouse capture if no mouse button has been pressed previously, which allows the terminal window to track mouse movement outside of the window if at least one mouse button is pressed. 
          */ 
         void mouseDown(int x, int y, ui::MouseButton button) override {
-            if (++mouseButtonsDown_ == 1)
-                SetCapture(hWnd_);
             Super::mouseDown(x, y, button);
+            if (mouseButtonsDown_ == 1)
+                SetCapture(hWnd_);
         }
 
         /** Registers mouse button up. 
@@ -107,10 +107,9 @@ namespace tpp {
             If there are no more pressed buttons left, releases the mouse capture previously obtained. 
          */
         void mouseUp(int x, int y, ui::MouseButton button) override {
-            // just a bit of defensive programming to make sure if weird capture events wreak havoc the terminal is safe(ish)
-            if (mouseButtonsDown_ > 0 && --mouseButtonsDown_ == 0)
-                ReleaseCapture();
             Super::mouseUp(x, y, button);
+            if (mouseButtonsDown_ == 0)
+                ReleaseCapture();
         }
 
         /** Mouse moves. 
@@ -384,9 +383,8 @@ namespace tpp {
 		int glyphRunCol_;
 		int glyphRunRow_;
 
-        /* Number of mouse buttons currently pressed so that we know when to set & release mouse capture.
+        /** Determines whether the mouse leave action is currentlty being tracked. 
          */
-        unsigned mouseButtonsDown_;
         bool mouseLeaveTracked_;
 
         static ui::Key GetKey(unsigned vk);

@@ -54,6 +54,8 @@ namespace tpp {
 
     protected:
 
+        typedef RendererWindow<X11Window, x11::Window> Super;
+
         X11Window(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);
 
         void updateSizePx(unsigned widthPx, unsigned heightPx) override {
@@ -90,6 +92,41 @@ namespace tpp {
         void clearSelection() override;
 
         void yieldSelection();
+
+
+        /** Passes the mouse button release event to the attached root window. 
+         
+            If there is a pending mouse out event while the mouse was locked with the button down and this was the last button to be released, triggers the mouseLeave event after the button up as well. 
+         */
+        void mouseUp(int x, int y, ui::MouseButton button) override {
+            Super::mouseUp(x, y, button);
+            if (pendingMouseOut_ && mouseButtonsDown_ == 0) {
+                pendingMouseOut_ = false;
+                Super::mouseLeave();
+            }
+        }
+
+        /** Triggers the mouse enter event. 
+         
+            If the mouse is locked (i.e. at least one mouse button is down), does not trigger the event, but clears the pending mouse out. 
+         */
+        void mouseEnter() {
+            if (mouseButtonsDown_ == 0)
+                Super::mouseEnter();
+            else
+                pendingMouseOut_ = false;
+        }
+
+        /** Triggers the mouse leave event. 
+         
+            If the mouse is locked, does not trigger the event immediately, but sets the pending mouse out event flag so that it will be triggered when the mouse lock is cleared. 
+         */
+        void mouseLeave() {
+            if (mouseButtonsDown_ == 0)
+                Super::mouseLeave();
+            else
+                pendingMouseOut_ = true;
+        }
 
     private:
 
@@ -332,6 +369,10 @@ namespace tpp {
         /** The widget which requested data to be pasted. 
          */
         ui::Clipboard * pasteTarget_;
+
+        /** If mouse out without corresponding mouse in was issued while mouse was locked (at least one button pressed), the mouseOut has to be issued after the mouse is released. 
+         */
+        bool pendingMouseOut_;
 
 		/** Given current state as reported from X11, translates it to vterm::Key modifiers
 		 */

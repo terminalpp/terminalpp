@@ -36,7 +36,6 @@ The following is very short description of the versions planned and their main n
 - add comments to the recent selection & history & resizing, etc.
 
 - borders should be thin, thick, full
-- selection should be cancelled when window gets defocused
 - selection won't scroll the terminal so that more than the window can be selected
 
 

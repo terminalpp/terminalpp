@@ -16,7 +16,6 @@ namespace tpp {
 			glyphIndices_(nullptr),
 			glyphAdvances_(nullptr),
 			glyphOffsets_(nullptr),
-			mouseButtonsDown_(0),
 			mouseLeaveTracked_(false) {
 			helpers::utf16_string t = helpers::UTF8toUTF16(title);
 			hWnd_ = CreateWindowExW(

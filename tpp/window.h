@@ -70,6 +70,7 @@ namespace tpp {
 			cellHeightPx_(cellHeightPx),
 			zoom_(1.0),
 			fullscreen_(false),
+            mouseButtonsDown_(0),
             blinkVisible_(true),
             cursorBlinkVisible_(true) {
 		}
@@ -117,11 +118,14 @@ namespace tpp {
         // interface to ui's root element
 
         virtual void mouseDown(int x, int y, ui::MouseButton button) {
+            ++mouseButtonsDown_;
             convertMouseCoordsToCells(x, y);
             ui::Renderer::mouseDown(x, y, button, activeModifiers_);
         }
 
         virtual void mouseUp(int x, int y, ui::MouseButton button) {
+            ASSERT(mouseButtonsDown_ > 0);
+            --mouseButtonsDown_;
             convertMouseCoordsToCells(x, y);
             ui::Renderer::mouseUp(x, y, button, activeModifiers_);
         }
@@ -190,6 +194,10 @@ namespace tpp {
         bool fullscreen_;
 
         ui::Key activeModifiers_;
+
+        /* Number of mouse buttons currently pressed so that we know when to set & release mouse capture.
+         */
+        unsigned mouseButtonsDown_;
 
         /* Determines if the blinking text and cursor are currently visible, or not. 
          */

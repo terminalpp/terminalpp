@@ -6,6 +6,24 @@
 #include "selection.h"
 #include "root_window.h"
 
+/** \page uirenderer ui - Renderer
+  
+    \brief Each UI root window can be attached to a Renderer, which is responsible for both rendering the window's contents when appropriate and for notifying the window of any I/O events (key presses, mouse, clipboard, etc.).
+
+    \section rendererUserInput User Input
+
+    \subsection rendererMouse Mouse
+
+    Mouse movement, button press & release, wheel up & down are reported as well as when the mouse enters and leaves the root window's area. Mouse events are only returned when the mouse is captured by the root window, which happens either when the mouse is directly above the window (its cells), or when the mouse is locked - in which case the mouse can be anywhere on the screen, but the events will still be sent to the window. 
+
+    Mouse is locked if a button was pressed while the mouse was captured by the window for as long as at least one button is still pressed. When mouse is locked, the enter & leave events are not received (whether mouse is within the window can be determined from the coordinates accompanying any other mouse events).
+
+    TODO mouseEnter should happen before the first Move - check that it does.
+
+    \subsection rendererKeyboard Keyboard 
+
+ */
+
 namespace ui {
 
     /** Base class for user interface renderers.
