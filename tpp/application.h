@@ -17,6 +17,12 @@ namespace tpp {
             Instance()->alert(message);
         }
 
+        /** Opens given local filename using the system viewer or editor. 
+         */
+        static void Open(std::string const & localFile, bool edit = false) {
+            Instance()->openLocalFile(localFile, edit);
+        }
+
         virtual ~Application() {
         }
 
@@ -42,6 +48,12 @@ namespace tpp {
         /** Displays an alert box with single button to dismiss. 
          */
         virtual void alert(std::string const & message) = 0;
+
+        /** Opens given local filename using the system viewer or editor. 
+         
+            Application implementations must provide native implementation of this functionality. 
+         */
+        virtual void openLocalFile(std::string const & filename, bool edit) = 0;
 
 
         virtual void updateDefaultSettings(helpers::JSON & json) = 0;

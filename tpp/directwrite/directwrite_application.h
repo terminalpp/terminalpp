@@ -47,8 +47,30 @@ namespace tpp {
         DirectWriteApplication(HINSTANCE hInstance);
 
         void alert(std::string const & message) override {
-            helpers::utf16_string text = helpers::UTF8toUTF16(message);
+            helpers::utf16_string text{helpers::UTF8toUTF16(message)};
         	MessageBox(nullptr, text.c_str(), L"t++", MB_ICONEXCLAMATION | MB_TASKMODAL);
+        }
+
+        /** Opens local file in default viewer/editor
+         
+            Simply uses the ShellExecute function to perform the default action on given file. 
+         */
+        void openLocalFile(std::string const & filename, bool edit) override {
+            helpers::utf16_string f{helpers::UTF8toUTF16(filename)};
+            HINSTANCE result = ShellExecute(
+                0, // handle to parent window, null since we want own process
+                edit ? L"edit" : nullptr, // what to do with the file - this will choose the default action
+                f.c_str(), // the file to open
+                0, // no parameters since the local file is not an executable
+                0, // working directory - leave the same as us for now
+                SW_SHOWDEFAULT // whatever is the action for the associated program
+            );
+            // a bit ugly error checking (Win16 backwards compatribility as per MSDN)
+            #pragma warning(push)
+            #pragma warning(disable: 4302 4311)
+            if ((int)result <= 32) 
+                alert(STR("Unable to determine proper viewer for file: " << filename));
+            #pragma warning(pop)
         }
 
         /** Determines whether the WSL is installed or not. 

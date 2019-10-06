@@ -16,11 +16,12 @@
 
 /** Keyboard shortcuts for various actions.
  */
+#define SHORTCUT_FULLSCREEN (ui::Key::Enter + ui::Key::Alt)
+#define SHORTCUT_ABOUT (ui::Key::F1 + ui::Key::Alt)
+#define SHORTCUT_SETTINGS (ui::Key::F10 + ui::Key::Alt)
 #define SHORTCUT_ZOOM_IN (ui::Key::Equals + ui::Key::Ctrl)
 #define SHORTCUT_ZOOM_OUT (ui::Key::Minus + ui::Key::Ctrl)
-#define SHORTCUT_FULLSCREEN (ui::Key::Enter + ui::Key::Alt)
 #define SHORTCUT_PASTE (ui::Key::V + ui::Key::Ctrl + ui::Key::Shift)
-#define SHORTCUT_ABOUT (ui::Key::F1 + ui::Key::Ctrl)
 
 namespace tpp {	
 	
@@ -94,6 +95,8 @@ namespace tpp {
 		 */
 	    static Config const & Initialize(int argc, char * argv[]);
 
+		static void OpenSettingsInEditor();
+
 	private:
 
 		/** Internally, the configuration is held in a JSON. 
@@ -124,6 +127,10 @@ namespace tpp {
 		void updateToNewVersion();
 
 		void copyMissingSettingsFrom(helpers::JSON & settings, helpers::JSON & defaults);
+
+		/** Returns the location of the settings file. 
+		 */
+		static std::string GetSettingsLocation();
 
 	    static Config * & Singleton_() {
 			static Config * singleton = nullptr;

@@ -60,6 +60,14 @@ namespace tpp {
          */
         void alert(std::string const & message) override;
 
+        /** Opens the given local file using the default viewer/editor. 
+         
+            Internally, `xdg-open` is used to determine the file to open. If edit is true, then default system editor will be launched inside the default x terminal. 
+
+            TODO this is perhaps not the best option, but works fine-ish for now and linux default programs are a bit of a mess if tpp were to support it all. 
+         */
+        void openLocalFile(std::string const & filename, bool edit) override;
+
     private:
         friend class X11Window;
 

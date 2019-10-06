@@ -5,11 +5,15 @@ The following is very short description of the versions planned and their main n
 ### v0.4 (alpha)
 
 - support terminal history, scrolling, selection from it, etc. 
+- will open settings.json for editing when requested
+
+- add comments to the recent selection & history & resizing, etc.
+- add comments to the autoscroller and explain it in the widget's info
 
 ### v0.5
 
+- borders should be thin, thick, full
 - support for opening remote files by extra escape sequences (basic)
-- will open settings.json for editing when requested
 - ideally snap store will be vetted by this time
 - Windows Store version as well
 
@@ -31,13 +35,6 @@ The following is very short description of the versions planned and their main n
 
 # Work Items
 
-## Current
-
-- add comments to the recent selection & history & resizing, etc.
-- add comments to the autoscroller and explain it in the widget's info
-
-- borders should be thin, thick, full
-- ALT + SPACE produces system sound - figure out how to turn it off (is nothing with the fullscreen code per se)
 
 ## Old stuffs
 

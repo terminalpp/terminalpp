@@ -149,6 +149,9 @@ namespace tpp {
             // TODO make these nicer actions
             if (key == SHORTCUT_FULLSCREEN) {
                 setFullscreen(!fullscreen());
+            // open settings in editor
+            } else if (key == SHORTCUT_SETTINGS) {
+                Config::OpenSettingsInEditor();
             // zoom in
             } else if (key == SHORTCUT_ZOOM_IN) {
                 if (zoom() < 10)

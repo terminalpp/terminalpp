@@ -37,6 +37,10 @@ namespace tpp {
 		return * config;
 	}
 
+	void Config::OpenSettingsInEditor() {
+		Application::Open(GetSettingsLocation(), /* edit = */ true);
+	}
+
 	void Config::processCommandLineArguments(int argc, char * argv[]) {
 		// initialize the arguments
 #if (defined ARCH_WINDOWS)
@@ -121,7 +125,7 @@ namespace tpp {
 	}
 
 	void Config::saveSettings() {
-		std::string settingsFile(Application::Instance()->getSettingsFolder() + "settings.json");
+		std::string settingsFile{GetSettingsLocation()};
 		std::ofstream sf(settingsFile);
 		sf << json_;
 	}
@@ -150,8 +154,12 @@ namespace tpp {
 		}
 	}
 
+	std::string Config::GetSettingsLocation() {
+		return Application::Instance()->getSettingsFolder() + "settings.json";
+	}
+
 	helpers::JSON Config::ReadSettings() {
-		std::string settingsFile(Application::Instance()->getSettingsFolder() + "settings.json");
+		std::string settingsFile{GetSettingsLocation()};
 		std::ifstream sf(settingsFile);
 		if (sf.good()) {
 			helpers::JSON result(helpers::JSON::Parse(sf));

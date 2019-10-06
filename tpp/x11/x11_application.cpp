@@ -147,6 +147,15 @@ namespace tpp {
             std::cout << message << std::endl;
 	}
 
+	void X11Application::openLocalFile(std::string const & filename, bool edit) {
+		if (edit) {
+			if (system(STR("x-terminal-emulator -e editor \"" << filename << "\" &").c_str()) != EXIT_SUCCESS)
+				alert(STR("unable to open file " << filename << " with default editor"));
+		} else {
+			if (system(STR("xdg-open \"" << filename << "\"").c_str()) != EXIT_SUCCESS)
+				alert(STR("xdg-open not found or unable to open file:\n" << filename));
+		}
+	}
 
 	void X11Application::openInputMethod() {
 		// set the default machine locale instead of the "C" locale
