@@ -91,7 +91,7 @@ namespace ui {
 			ASSERT(visibleRegion_.contains(col, row));
 			// go from rbegin so that greatest z-index widget at given coordinates will be selected
 			for (auto i = children().rbegin(), e = children().rend(); i != e; ++i) {
-				if ((*i)->visibleRegion_.contains(col, row))
+				if ((*i)->visible() && (*i)->visibleRegion_.contains(col, row))
 				    return *i;
 			}
 			return this;
