@@ -172,6 +172,7 @@ namespace vterm {
         repaint_{false},
         mouseSelectionUpdate_{false},
         scrollable_{true},
+        scrollBarActive_{false},
         historySizeLimit_{0} {
         pty_->resize(width, height);
         ptyReader_ = std::thread([this, ptyBufferSize](){
@@ -219,7 +220,7 @@ namespace vterm {
         ui::Canvas clientCanvas{scrollable_ ? getClientCanvas(canvas) : canvas};
         int terminalOffset = scrollable_ ? static_cast<int>(history_.size()) : 0;
         // draw the terminal if it is visible
-        if (! scrollable_ || scrollTop() + height() > terminalOffset ) {
+        if (! scrollable_ || scrollOffset().y + height() > terminalOffset ) {
             Buffer::Ptr buffer = this->buffer(/* priority */true);
             clientCanvas.copyBuffer(0, terminalOffset, *buffer);
             // draw the cursor too
@@ -231,13 +232,13 @@ namespace vterm {
         // if the terminal is scrollable, and there is any history, the scrollbar must be drawn and the history (if there is any visible)
         if (scrollable_ && history_.size() > 0) {
            ASSERT(clientCanvas.height() == terminalOffset + height());
-           for (int i = scrollTop(); i < terminalOffset; ++i) {
+           for (int i = scrollOffset().y; i < terminalOffset; ++i) {
                clientCanvas.fill(ui::Rect{0, i, width(), i + 1}, defaultBackground());
                Cell * row = history_[i].second;
                for (int col = 0, ce = history_[i].first; col < ce; ++col)
                    clientCanvas.set(ui::Point{col, i}, row[col]);
            }
-           drawVerticalScrollbarOverlay(canvas);
+           drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? ui::Color::Red().setAlpha(128) : ui::Color::White().setAlpha(64));
         }
         // paint the selection, if any
         paintSelection(clientCanvas);
@@ -270,10 +271,16 @@ namespace vterm {
 
     void Terminal::mouseMove(int col, int row, ui::Key modifiers) {
         if (modifiers == 0) {
-            selectionUpdate(col, row);
-            calculateVerticalAutoScroll(col, row);
+            if (SelectionOwner::updating()) {
+                selectionUpdate(col, row);
+                calculateVerticalAutoScroll(col, row);
+            }
+            bool x = col == width() - 1;
+            if (x != scrollBarActive_) {
+                scrollBarActive_ = x;
+                repaint();
+            }
         }
-        ScrollBox::mouseMove(col, row, modifiers);
         Widget::mouseMove(col, row, modifiers);
     }
 

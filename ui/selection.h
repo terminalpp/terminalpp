@@ -200,6 +200,12 @@ namespace ui {
             }
         }
 
+        /** Returns true if the selection is currently being updated. 
+         */
+        bool updating() const {
+            return updating_;
+        }
+
     private:
         Selection selection_;
         bool updating_;

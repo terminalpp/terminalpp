@@ -331,13 +331,21 @@ namespace vterm {
             MARK_AS_UNUSED(row);
             MARK_AS_UNUSED(modifiers);
             if (scrollable_ && ! history_.empty()) {
-                scrollVertical(-by);
+                scrollBy(ui::Point{0,-by});
                 repaint();
             } 
             ui::Widget::mouseWheel(col, row, by, modifiers);
         }
 
         void mouseMove(int col, int row, ui::Key modifiers) override;
+
+        void mouseOut() override {
+            if (scrollBarActive_) {
+                scrollBarActive_ = false;
+                repaint();
+            }
+            ui::SelectionOwner::mouseOut();
+        }
 
         /** When a keydown is pressed, the terminal prompt is scrolled in view automatically. 
          */
@@ -352,11 +360,6 @@ namespace vterm {
         void autoScrollStep() override {
             ui::Point m = getMouseCoordinates();
             selectionUpdate(m.x, m.y);
-        }
-
-        void mouseOut() override {
-            ui::SelectionOwner::mouseOut();
-            ui::ScrollBox::mouseOut();
         }
 
         /** Returns the contents of the selection. 
@@ -455,6 +458,10 @@ namespace vterm {
         /** Determines whethet the terminal is scrollable, or not. 
          */
         bool scrollable_;
+
+        /** Determines if the history scrollbar is active or not (mouse over it)
+         */
+        bool scrollBarActive_;
 
         size_t historySizeLimit_;
 

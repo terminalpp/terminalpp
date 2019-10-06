@@ -8,43 +8,31 @@ namespace ui {
 
 	/** A container which allows its contents to be scrolled. 
 
-	    TODO how would Scrollbars fit into this? The idea now is that a scroll box can have scrollbars as special properties, these will not be children in the proper sense, but extra widgets. However, this messes up the overlay detection in the layouts. 
+	    ScrollBox explicitly specifies its client width and height as well as scroll offset and these are properly reported in the widget's rectangles. This has the effect of the widget's children being properly scrolled so that the top-left corner of child canvas corresponds to the client canvas at the scroll offset. 
 
-		TODO should there be some non public scrollable widget like Container, etc? 
+		## Autoscrolling
+
+		The ScrollBox provides a configurable auto scrolling feature which can be started by calling setAutoScroll() method and providing it with the desired one step increment. A new thread will be spawned which would periodically scroll the widget until the end in any direction. If the function is called with empty increment, the auto scrolling is stopped. The interval between auto scrolling steps can be set via the setAutoScrollDelay() method. The autoScrollStep() protected method can be overriden if the child requires an action to be taken at each auto scroll step. 
+
+		## Scrollbars
+
+		The scrollbox itself has no provision for scrollbar widgets, although these can be added externally using appropriate layouts and paired with the scrollbox. 
+
+		The scrollbox however provides methods for drawing simple scrollbar overlays using the cell border attributes and various other helper methods such as the sliderPlacement() method for determining proper slider dimension and placement. 
+
+		> Note that at the moment, use of scrollbar widgets taking up space is discouraged and no such widgets are provided by the framework. 
 	 */
 	class ScrollBox : public virtual Widget {
 	public:
 
 		ScrollBox() :
-			scrollLeft_(0),
-			scrollTop_(0),
+			scrollOffset_{0,0},
 			clientWidth_(width()),
 			clientHeight_(height()),
-			scrollbarInactiveColor_(Color::White().setAlpha(64)),
-			scrollbarActiveColor_(Color::Red().setAlpha(128)),
-			scrollbarActive_(false),
 		    autoScrollIncrement_{0,0} {
 			autoScrollTimer_.setInterval(50);
 			autoScrollTimer_.setHandler([this]() {
-				Point i{scrollLeft_, scrollTop_};
-				i += autoScrollIncrement_;
-				Point max = scrollOffsetMax();
-				bool cont = true;
-				if (i.x < 0) {
-					i.x = 0;
-					cont = false;
-				}  else if (i.x > max.x) {
-					i.x = max.x;
-					cont = false;
-				}
-				if (i.y < 0) {
-					i.y = 0;
-					cont = false;
-				} else if (i.y > max.y) {
-					i.y = max.y;
-					cont = false;
-				}
-				setScrollOffset(i);
+				bool cont = scrollBy(autoScrollIncrement_);
 				autoScrollStep();
 				return cont;
 			});
@@ -57,16 +45,45 @@ namespace ui {
 		/** Returns the visible rectangle. 
 		 */
 		Point scrollOffset() const override {
-			return Point{scrollLeft_, scrollTop_};
+			return scrollOffset_;
 		}
 
 	protected:
 
 		/** Sets the scroll offset, i.e. the coordiates of the top-left corner of the visible area.
+		 
+		    Scrolling past the visible area of the widget is not supported and if the desired offset is outside these bounds it is clipped before setting and the function returns false. If the requested offset is a valid scroll offset, true is returned. 
+
+			Note that regardless of the value returned, the scroll offset will be updated unless the clipped value would be the same. 
 		 */
-		void setScrollOffset(Point const & offset) {
-			if (scrollLeft_ != offset.x || scrollTop_ != offset.y)
-				updateScrollOffset(offset.x, offset.y);
+		bool setScrollOffset(Point offset) {
+			Point max = scrollOffsetMax();
+			bool result = true;
+			if (offset.x < 0) {
+				offset.x = 0;
+				result = false;
+			}  else if (offset.x > max.x) {
+				offset.x = max.x;
+				result = false;
+			}
+			if (offset.y < 0) {
+				offset.y = 0;
+				result = false;
+			} else if (offset.y > max.y) {
+				offset.y = max.y;
+				result = false;
+			}
+			if (scrollOffset_ != offset)
+				updateScrollOffset(offset);
+			return result;
+		}
+
+		/** Scrolls the contents by the given vector. 
+		 
+		    This is just a shorthand call to setScrollOffset, so the same applies here - if the offset is outside proper bounds, it is clipped and false is returned, otherwise the function returns true. 
+		 */
+		bool scrollBy(Point const & by) {
+			return setScrollOffset(scrollOffset_ + by);
 		}
 
 		void setClientArea(int clientWidth, int clientHeight) {
@@ -76,40 +93,13 @@ namespace ui {
 			}
 		}
 
-		virtual void updateScrollOffset(int scrollLeft, int scrollTop) {
-			scrollLeft_ = scrollLeft;
-			scrollTop_ = scrollTop;
+		virtual void updateScrollOffset(Point const & value) {
+			scrollOffset_ = value;
 			repaint();
 		}
 
-		void mouseMove(int col, int row, Key modifiers) override {
-			MARK_AS_UNUSED(row);
-			MARK_AS_UNUSED(modifiers);
-			bool x = col == width() - 1;
-			if (x != scrollbarActive_) {
-        	    scrollbarActive_ = x;
-				repaint();
-			}
-		}
-
-		void mouseOut() override {
-			if (scrollbarActive_) {
-				scrollbarActive_ = false;
-				repaint();
-			}
-		}
-		
-
 		void updateSize(int width, int height) override {
 		    setClientArea(std::max(width, clientWidth_), std::max(height, clientHeight_));
-		}
-
-		int scrollLeft() const {
-			return scrollLeft_;
-		}
-
-		int scrollTop() const {
-			return scrollTop_;
 		}
 
 		int clientWidth() const {
@@ -120,38 +110,32 @@ namespace ui {
 			return clientHeight_;
 		}
 
-		void scrollVertical(int diff) {
-			int x = scrollTop_ + diff;
-			x = std::max(x, 0);
-			x = std::min(x, clientHeight_ - childRect().height());
-			setScrollOffset(Point{scrollLeft_, x});			    
-		}
-
 		/** Draws the vertical scrollbar overlay. 
 		 */ 
-		void drawVerticalScrollbarOverlay(Canvas & canvas) {
-			ui::Color color{scrollbarActive_ ? scrollbarActiveColor_ : scrollbarInactiveColor_};
+		void drawVerticalScrollbarOverlay(Canvas & canvas, Color color) {
 			// the right line
 			canvas.borderLineRight(Point{canvas.width() - 1, 0}, canvas.height(), color, false);
 			// calculate the position of the slider
-			std::pair<int, int> slider{sliderPlacement(canvas.height(), clientHeight_, scrollTop_, canvas.height())};
+			std::pair<int, int> slider{sliderPlacement(canvas.height(), clientHeight_, scrollOffset_.y, canvas.height())};
 			canvas.borderLineRight(Point{canvas.width() - 1, slider.first}, slider.second, color, true);
 		}
 
 		/** Draws the horizontal scrollbar overlay. 
 		 */ 
-		void drawHorizontalScrollbarOverlay(Canvas & canvas) {
-			ui::Color color{scrollbarActive_ ? scrollbarActiveColor_ : scrollbarInactiveColor_};
+		void drawHorizontalScrollbarOverlay(Canvas & canvas, Color color) {
 			// the right line
 			canvas.borderLineBottom(Point{0, canvas.height() - 1}, canvas.width(), color, false);
 			// calculate the position of the slider
-			std::pair<int, int> slider{sliderPlacement(canvas.width(), clientWidth_, scrollLeft_, canvas.width())};
+			std::pair<int, int> slider{sliderPlacement(canvas.width(), clientWidth_, scrollOffset_.x, canvas.width())};
 			canvas.borderLineBottom(Point{slider.first, canvas.height() - 1}, slider.second, color, true);
 		}
 
 		std::pair<int, int> sliderPlacement(int maxWidth, int maxVal, int pos, int size) {
 			int sliderSize = std::max(1, size * maxWidth / maxVal);
 			int sliderStart = pos * maxWidth / maxVal;
+			// make sure that slider starts at the top only if we are really at the top
+			if (sliderStart == 0 && pos != 0)
+			    sliderStart = 1;
 			if (pos + size == maxVal)
 			    sliderStart = maxWidth - sliderSize;
 			else
@@ -177,6 +161,24 @@ namespace ui {
 			}
 		}
 
+		/** Returns true if the auto scroll feature is currently on. 
+		 */
+		bool autoScrollRunning() const {
+			return autoScrollTimer_.running();
+		}
+
+		/** Returns the auto scroll step delay. 
+		 */
+		size_t autoScrollDelay() const {
+			return autoScrollTimer_.interval();
+		}
+
+		/** Sets the interval of the auto scroller steps in milliseconds. 
+		 */
+		void setAutoScrollDelay(size_t value) {
+			autoScrollTimer_.setInterval(value);
+		}
+
 		/** Determines proper values for vertical auto scroll. 
 		 
 		    Expects mouse coordinates as input. If the mouse is above, or below the widget, autoscroll will be enabled. 
@@ -192,6 +194,8 @@ namespace ui {
 		}
 
 		/** Triggered when autoscrolling scrolls the widget. 
+		 
+		    Should be implemented in children if any action is required on the scroll step. 
 		 */
 		virtual void autoScrollStep() {
 			// do nothing
@@ -199,20 +203,13 @@ namespace ui {
 
 	private:
 
-		int scrollLeft_;
-		int scrollTop_;
+		Point scrollOffset_;
 
 		int clientWidth_;
 		int clientHeight_;
 
-	    Color scrollbarInactiveColor_;
-		Color scrollbarActiveColor_;
-
-		bool scrollbarActive_;
-
         Point autoScrollIncrement_;
 		helpers::Timer autoScrollTimer_;
-		size_t autoScrollDelay_;
 
 	};
 

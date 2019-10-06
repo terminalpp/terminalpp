@@ -7,9 +7,6 @@ The following is very short description of the versions planned and their main n
 - support terminal history, scrolling, selection from it, etc. 
 - will open settings.json for editing when requested
 
-- add comments to the recent selection & history & resizing, etc.
-- add comments to the autoscroller and explain it in the widget's info
-
 ### v0.5
 
 - borders should be thin, thick, full
@@ -21,13 +18,13 @@ The following is very short description of the versions planned and their main n
 
 - multiple sessions
 
-### v1.0
-
-- polish and bugfixing of stuff added up to v0.6
-
-### v1.1
+### v0.7
 
 - systray support
+
+### v1.0
+
+- polish and bugfixing of stuff, some beta releases and "testing"
 
 ### Later
 

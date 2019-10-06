@@ -171,8 +171,8 @@ namespace tpp {
 			return;
 		XSetLocaleModifiers("@im=");
 		xIm_ = XOpenIM(xDisplay_, nullptr, nullptr, nullptr);
-		if (xIm_ != nullptr)
-			return;
+		//if (xIm_ != nullptr)
+		//	return;
 		//OSCHECK(false) << "Cannot open input device (XOpenIM failed)";
 	}
 
