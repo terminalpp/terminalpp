@@ -53,7 +53,7 @@ namespace tpp {
 
         /** Opens local file in default viewer/editor
          
-            Simply uses the ShellExecute function to perform the default action on given file. 
+            Simply uses the ShellExecute function to perform the default action on given file. If edit is set, it first tries to open the file in edit mode, if that fails due to no association, it tries opening with the default action instead. 
          */
         void openLocalFile(std::string const & filename, bool edit) override {
             helpers::utf16_string f{helpers::UTF8toUTF16(filename)};
@@ -68,8 +68,12 @@ namespace tpp {
             // a bit ugly error checking (Win16 backwards compatribility as per MSDN)
             #pragma warning(push)
             #pragma warning(disable: 4302 4311)
-            if ((int)result <= 32) 
-                alert(STR("Unable to determine proper viewer for file: " << filename));
+            if ((int)result <= 32) {
+                if (edit && (int)result == SE_ERR_NOASSOC)
+                    openLocalFile(filename, false);
+                else
+                    alert(STR("Unable to determine proper viewer for file: " << filename));
+            } 
             #pragma warning(pop)
         }
 
