@@ -3,8 +3,8 @@
 #
 cmake_minimum_required (VERSION 3.5)
 
-project(terminalpp VERSION 0.3.1)
-set(PROJECT_VERSION_INT 310)
+project(terminalpp VERSION 0.4)
+set(PROJECT_VERSION_INT 400)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
 

@@ -2,11 +2,6 @@
 
 The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-### v0.4 (alpha)
-
-- support terminal history, scrolling, selection from it, etc. 
-- will open settings.json for editing when requested
-
 ### v0.5
 
 - borders should be thin, thick, full
@@ -30,7 +25,15 @@ The following is very short description of the versions planned and their main n
 
 - keyboard shortcuts, actions, better settings than JSON, etc. 
 
-# Work Items
+# Changelog
+
+### v0.4
+
+- support terminal history, scrolling, selection from it, etc. 
+- will open settings.json for editing when requested
+
+
+
 
 
 ## Old stuffs
