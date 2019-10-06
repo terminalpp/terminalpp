@@ -215,6 +215,15 @@ namespace vterm {
             }
         }
 
+        /** Makes sure the terminal is scrolled so that the prompt is visible. 
+         
+            For the terminal, it simply scrolls past the history. 
+         */
+        void scrollToPrompt() {
+            if (scrollable_ && history_.size() > 0)
+                setScrollOffset(ui::Point{0, static_cast<int>(history_.size())});
+        }
+
         /** Deletes the terminal and the attached PTY. 
          
             Waits for the reading and process exit terminating threads to finalize. 
@@ -329,6 +338,14 @@ namespace vterm {
         }
 
         void mouseMove(int col, int row, ui::Key modifiers) override;
+
+        /** When a keydown is pressed, the terminal prompt is scrolled in view automatically. 
+         */
+        void keyDown(ui::Key key) override {
+            MARK_AS_UNUSED(key);
+            scrollToPrompt();
+        }
+
 
         /** Updates the selection when autoscroll is activated. 
          */
