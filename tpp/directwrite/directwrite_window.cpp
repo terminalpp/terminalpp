@@ -312,6 +312,21 @@ namespace tpp {
 			case WM_UNICHAR:
 				UNREACHABLE;
 				break;
+			/* If a system character is intercepted, do nothing & bypass the default implementation.
+			 
+			    This silences sounds played when alt + enter was pressed multiple times and some other weird behavior. 
+
+				TODO Maybe a better way how to distinguish when to pass the character to the default handler and when to ignore it based on whether the shortcut is actually used?
+			 */
+			case WM_SYSCHAR:
+			    switch (wParam) {
+					case helpers::Char::LF:
+					case helpers::Char::CR:
+					    return 0;
+					default:
+					    break;
+				}
+			    break;
 			case WM_CHAR:
 				if (wParam >= 0x20)
 					window->keyChar(helpers::Char::FromCodepoint(static_cast<unsigned>(wParam)));
