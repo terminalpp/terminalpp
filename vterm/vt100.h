@@ -22,9 +22,7 @@ namespace vterm {
 		static constexpr char const* const SEQ_UNKNOWN = "VT100_UNKNOWN";
 		static constexpr char const* const SEQ_WONT_SUPPORT = "VT100_WONT_SUPPORT";
 
-
         VT100(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
-
 
     protected:
         class CSISequence;
@@ -86,6 +84,12 @@ namespace vterm {
         /** Parses the operating system sequence. 
          */
         void parseOSCSequence(OSCSequence & seq);
+
+        /** Parses the t++ specific control sequences. 
+
+            See the extra documentation for more details.  
+         */
+        void parseTPPSequence(OSCSequence & seq);
 
         /** Parses font size specifiers (double width, double height DEC modes) (ESC # x)
          */
@@ -415,8 +419,21 @@ namespace vterm {
     class VT100::OSCSequence {
     public:
 
+        /** Default OSC commands supported by other terminals. 
+         */
+        static constexpr char OSC = 0;
+
+        /** The t++ specific commands. 
+         */
+        static constexpr char TPP = '+';
+
         OSCSequence():
+            kind_{OSC},
             num_{INVALID} {
+        }
+
+        char kind() const {
+            return kind_;
         }
 
         int num() const {
@@ -441,6 +458,8 @@ namespace vterm {
 
     private:
 
+        char kind_;
+
         int num_;
         std::string value_;
 
@@ -453,7 +472,10 @@ namespace vterm {
             else if (!seq.isComplete()) 
                 s << "Incomplete CSI Sequence";
             else 
-                s << "\x1b]" << seq.num() << ';' << seq.value();
+                if (seq.kind() == OSC)
+                    s << "\x1b]" << seq.num() << ';' << seq.value();
+                else
+                    s << "\x1b]" << seq.kind() << seq.num() << ';' << seq.value();
             return s;
         }
 

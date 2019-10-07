@@ -5,8 +5,7 @@
 
 #include "vt100.h"
 
-
-
+#include "tpp_sequences.h"
 
 namespace vterm {
 
@@ -305,6 +304,14 @@ namespace vterm {
         if (x == end) {
             result.num_ = INCOMPLETE;
             return result;
+        }
+        // check the kind first
+        if (*x == TPP) {
+            result.kind_ = TPP;
+            if (++x == end) {
+                result.num_ = INCOMPLETE;
+                return result;
+            }
         }
         // now parse the number
         if (helpers::IsDecimalDigit(*x)) {
@@ -634,8 +641,18 @@ namespace vterm {
                 // if the sequence is not complete, return false and do not advance the buffer
                 if (!seq.isComplete())
                     return false;
-                // otherwise parse the CSI sequence
-                parseOSCSequence(seq);
+                // otherwise parse the OSC sequence
+                switch (seq.kind()) {
+                    case OSCSequence::OSC:
+                        parseOSCSequence(seq);
+                        break;
+                    case OSCSequence::TPP:
+                        parseTPPSequence(seq);
+                        break;
+                    default:
+                        LOG(SEQ_UNKNOWN) << "Unknown OSC sequence kind detected " << seq;
+                        break;
+                }
 				break;
             }
 			/* Save Cursor. */
@@ -1284,6 +1301,7 @@ namespace vterm {
     }
 
     void VT100::parseOSCSequence(OSCSequence & seq) {
+        ASSERT(seq.kind() == OSCSequence::OSC);
         switch (seq.num()) {
             /* OSC 0 - change the terminal title.
              */
@@ -1307,6 +1325,21 @@ namespace vterm {
                 NOT_IMPLEMENTED;
             default:
         		LOG(SEQ_UNKNOWN) << "Invalid OSC sequence: " << seq;
+        }
+    }
+
+    void VT100::parseTPPSequence(OSCSequence & seq) {
+        ASSERT(seq.kind() == OSCSequence::TPP);
+        switch (seq.num()) {
+            /* TPP 0 - get terminal capabilities
+
+             */
+            case TPP_CAPABILITIES:
+                LOG(SEQ) << "t++ terminal capabilities request";
+                send("\033]+0;0\007");
+                break;
+            default:
+        		LOG(SEQ_UNKNOWN) << "Invalid t++ sequence: " << seq;
         }
     }
 
