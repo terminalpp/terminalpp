@@ -63,7 +63,20 @@ namespace tpp {
         "fullscreen" : false,
         /* Determines the maximum number of lines the terminal will remember in the history of the buffer. If set to 0, terminal history is disabled. 
          */
-        "historyLimit" : 10000
+        "historyLimit" : 10000,
+        /* Definition of the palette used for the session.
+         */
+        "palette" : {
+            /* Overrides the predefined palette. Up to 256 colors can be specified in HTML format. These colors will override the default xterm palette used. 
+             */
+            "colors" : [],
+            /* Specifies the index of the default foreground color in the palette. 
+             */
+            "defaultForeground" : 15,
+            /* Specifies the index of the default background color in the palette.
+             */
+            "defaultBackground" : 0
+        }
     }
 }
         )json";

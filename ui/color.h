@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "helpers/helpers.h"
+#include "helpers/string.h"
 
 namespace ui {
 
@@ -94,6 +95,25 @@ namespace ui {
 		static Color DarkCyan() { return Color(0, 128, 128); }
 		static Color DarkYellow() { return Color(128, 128, 0); }
 		static Color DarkGray() { return Color(128, 128, 128); }
+
+		/** Parses a color from its HTML definition.
+
+		    The color string must be either RGB or RGBA format and should be preceded with `#` according to the specification. However the permissive parser does not require the hash prefix.   
+		 */
+		static Color FromHTML(std::string const & colorCode) {
+			unsigned start = colorCode[0] == '#' ? 1 : 0;
+			if (colorCode.size() - start < 6)
+			    THROW(helpers::IOError()) << "Exepected at least RRGGBB color definition but " << colorCode << " found.";
+			unsigned char r = static_cast<unsigned char>(helpers::ParseHexNumber(colorCode.c_str() + start, 2));
+			unsigned char g = static_cast<unsigned char>(helpers::ParseHexNumber(colorCode.c_str() + start + 2, 2));
+			unsigned char b = static_cast<unsigned char>(helpers::ParseHexNumber(colorCode.c_str() + start + 4, 2));
+			unsigned char a = 0xff;
+			if (colorCode.size() - start == 8)
+				a = static_cast<unsigned char>(helpers::ParseHexNumber(colorCode.c_str() + start + 6, 2));
+			else if (colorCode.size() - start != 6)
+			    THROW(helpers::IOError()) << "Exepected at least RRGGBBAA color definition but " << colorCode << " found.";
+			return Color(r, g, b ,a);
+		}
 
     private:
         friend class Cell;

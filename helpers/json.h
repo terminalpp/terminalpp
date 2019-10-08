@@ -537,19 +537,19 @@ namespace helpers {
             comment_ = value;
         }
 
-        operator bool() const {
+        bool toBool() const {
             if (kind_ != Kind::Boolean)
                 THROW(JSONError()) << "Cannot obtain boolean value from element holding " << kind_;
             return valueBool_;
-        } 
+        }
 
-        operator int() const {
+        int toInt() const {
             if (kind_ != Kind::Integer)
                 THROW(JSONError()) << "Cannot obtain integer value from element holding " << kind_;
             return valueInt_;
-        } 
+        }
 
-        operator unsigned() const {
+        unsigned toUnsigned() const {
             if (kind_ != Kind::Integer)
                 THROW(JSONError()) << "Cannot obtain integer value from element holding " << kind_;
             if (valueInt_ < 0)
@@ -557,16 +557,36 @@ namespace helpers {
             return valueInt_;
         }
 
-        operator double () const {
+        double toDouble() const {
             if (kind_ != Kind::Double)
                 THROW(JSONError()) << "Cannot obtain double value from element holding " << kind_;
             return valueDouble_;
-        } 
+        }
 
-        operator std::string const & () const {
+        std::string const & toString() const {
             if (kind_ != Kind::String)
                 THROW(JSONError()) << "Cannot obtain string value from element holding " << kind_;
             return valueStr_;
+        }
+
+        operator bool() const {
+            return toBool();
+        } 
+
+        operator int() const {
+            return toInt();
+        } 
+
+        operator unsigned() const {
+            return toUnsigned();
+        }
+
+        operator double () const {
+            return toDouble();
+        } 
+
+        operator std::string const & () const {
+            return toString();
         } 
 
         JSON const & operator [] (size_t index) const {

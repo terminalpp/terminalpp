@@ -3,6 +3,8 @@
 #include "helpers/process.h"
 #include "helpers/json.h"
 
+#include "vterm/vt100.h"
+
 //#define SHOW_LINE_ENDINGS
 
 #define BYPASS_FOLDER "~/.local/bin"
@@ -77,6 +79,18 @@ namespace tpp {
 
 		unsigned sessionHistoryLimit() const {
 			return get({"session", "historyLimit"});
+		}
+
+		vterm::VT100::Palette sessionPalette() const {
+			vterm::VT100::Palette result{vterm::VT100::Palette::XTerm256()};
+			result.setDefaultForegroundIndex(get({"session","palette", "defaultForeground"}).toUnsigned());
+			result.setDefaultBackgroundIndex(get({"session","palette", "defaultBackground"}).toUnsigned());
+			helpers::JSON const & colors = get({"session", "palette", "colors"});
+			if (colors.numElements() > 256)
+			    THROW(helpers::JSONError()) << "Maximum of 256 colors can be specified for session palette, but " << colors.numElements() << " found";
+			for (size_t i = 0, e = colors.numElements(); i != e; ++i)
+			    result.setColor(i, ui::Color::FromHTML(colors[i]));
+			return result;
 		}
 		
 		helpers::JSON & json() {

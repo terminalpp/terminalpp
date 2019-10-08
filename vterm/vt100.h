@@ -276,6 +276,19 @@ namespace vterm {
             return colors_[defaultBg_];
         }
 
+        void setDefaultForegroundIndex(size_t value) {
+            defaultFg_ = value;
+        }
+
+        void setDefaultBackgroundIndex(size_t value) {
+            defaultBg_ = value;
+        }
+
+        void setColor(size_t index, ui::Color color) {
+            ASSERT(index < size_);
+            colors_[index] = color;
+        }
+
         ui::Color operator [] (size_t index) const {
             ASSERT(index < size_);
             return colors_[index];

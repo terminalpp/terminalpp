@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
 
 		// Create the palette & the pty - TODO this should be more systematic
-		vterm::VT100::Palette palette(vterm::VT100::Palette::XTerm256());
+		vterm::VT100::Palette palette{config.sessionPalette()};
 		vterm::PTY * pty;
 #if (defined ARCH_WINDOWS)
 		if (config.sessionPTY() != "bypass") 

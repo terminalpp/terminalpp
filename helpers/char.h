@@ -243,6 +243,14 @@ namespace helpers {
 		return InRangeInclusive(what, '0', '9');
 	}
 
+	/** Determines if given character is a hexadecimal digit. 
+	 
+	    Numbers and letters `a`-`f` and `A`-`F` are recognized as hexadecimal digits. 
+	 */
+	inline bool IsHexadecimalDigit(char what) {
+		return InRangeInclusive(what, '0', '9') || InRangeInclusive(what, 'a', 'f') || InRangeInclusive(what, 'A', 'F');
+	}
+
 	/** Determines whether given character whitespace or not. 
 
 	    New line, carriage return, space and tab are considered whitespace characters. 
@@ -261,8 +269,6 @@ namespace helpers {
 	/** Converts given character containing hexadecimal digit (upper and lower case variants of a-f are supported) to its value.
 	 */
 	inline unsigned HexCharToNumber(char what) {
-		if (!(InRangeInclusive(what, '0', '9') || InRangeInclusive(what, 'A', 'F') || InRangeInclusive(what, 'a', 'f')))
-			ASSERT(false);
 		ASSERT(InRangeInclusive(what, '0', '9') || InRangeInclusive(what, 'A', 'F') || InRangeInclusive(what, 'a', 'f')) << "Not a hexadecimal number: " << what << " (ASCII: " << static_cast<unsigned>(what) << ")";
 		if (what <= '9')
 			return what - '0';
@@ -270,6 +276,19 @@ namespace helpers {
 			return what - 'A' + 10;
 		return
 			what - 'a' + 10;
+	}
+
+	/** Parses a number from selected number of hexadecimal digits. 
+	 */
+	inline unsigned ParseHexNumber(char const * what, size_t numDigits) {
+		unsigned result = 0;
+		while (numDigits-- > 0) {
+			if (!IsHexadecimalDigit(*what))
+			    THROW(IOError()) << "Expected hexadecimal digit, but " << *what << " found.";
+			result = result * 16 + HexCharToNumber(*what);
+			++what; 
+		}
+		return result;
 	}
 
 	/** Converts given number in range 0-15 to a hex digit (0..9a..f).

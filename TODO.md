@@ -12,6 +12,7 @@ The following is very short description of the versions planned and their main n
 
 ### v0.5
 
+- session palette can be customized in `settings.json`
 - borders should be thin, thick, full
 - support for opening remote files by extra escape sequences (basic)
 - ideally snap store will be vetted by this time
