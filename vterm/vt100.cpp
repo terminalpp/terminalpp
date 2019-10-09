@@ -1035,10 +1035,11 @@ namespace vterm {
 					continue;
 				/* DECAWM - autowrap mode on/off */
 				case 7:
-					if (value)
+					if (value) {
 						LOG(SEQ) << "autowrap mode enable (by default)";
-					else
+                    } else {
 						LOG(SEQ_UNKNOWN) << "CSI?7l, DECAWM does not support being disabled";
+                    }
 					continue;
 				// cursor blinking
 				case 12:
