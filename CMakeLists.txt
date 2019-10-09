@@ -7,6 +7,8 @@ project(terminalpp VERSION 0.4.1)
 set(PROJECT_VERSION_INT 410)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(".")
 
@@ -59,6 +61,7 @@ elseif(UNIX)
     target_link_libraries(tpp ${X11_LIBRARIES} ${X11_Xft_LIB})  
     target_link_libraries(tpp ${CMAKE_THREAD_LIBS_INIT})
     target_link_libraries(tpp ${FREETYPE_LIBRARIES})
+    target_link_libraries(tpp stdc++fs)    
     # TODO newer cmake version supports FindFontconfig which should be used instead (3.14 upwards)
     target_link_libraries(tpp fontconfig)
 endif()

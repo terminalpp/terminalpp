@@ -112,7 +112,6 @@ namespace tpp {
 
 	std::string X11Application::getSettingsFolder() {
 		std::string localSettings(helpers::LocalSettingsDir() + "/terminalpp");
-		helpers::EnsurePath(localSettings);
 		return localSettings + "/";
 	}
 

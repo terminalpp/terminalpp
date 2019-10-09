@@ -58,6 +58,9 @@
         "xmemory": "cpp",
         "xstddef": "cpp",
         "future": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "filesystem": "cpp",
+        "locale": "cpp",
+        "xlocmes": "cpp"
     }
 }

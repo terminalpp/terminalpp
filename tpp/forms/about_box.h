@@ -65,7 +65,7 @@ namespace tpp {
             }
         }
 
-        void paint(ui::Canvas & canvas) {
+        void paint(ui::Canvas & canvas) override {
             using namespace ui;
             canvas.fill(Rect(canvas.width(), canvas.height()), Brush(Color::Black().setAlpha(128)));
             int x = (canvas.width() - 60) / 2;

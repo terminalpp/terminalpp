@@ -896,13 +896,6 @@ namespace helpers {
 
     }; // helpers::JSON
 
-
-    // implicit casts
-
-
-
-
-
     // parser
     
     class JSON::Parser {

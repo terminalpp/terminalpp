@@ -297,7 +297,7 @@ namespace ui {
          */
         virtual void requestClipboardContents(Widget * sender);
         virtual void requestSelectionContents(Widget * sender);
-        void paste(std::string const & contents);
+        void paste(std::string const & contents) override;
 
         // Clipboard and selection updates
 

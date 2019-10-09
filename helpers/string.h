@@ -8,6 +8,16 @@
 
 namespace helpers {
 
+	/** Creates a random alphanumeric string of given length. 
+	 */
+	inline std::string CreateRandomAlphanumericString(size_t numChars) {
+		char const * possibilities = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		std::stringstream s;
+		while (numChars-- > 0)
+		    s << possibilities[rand() % 62];
+		return s.str();
+	}
+
 	inline std::string ConvertNonPrintableCharacters(std::string const& from) {
 		std::stringstream str;
 		for (char c : from) {

@@ -123,7 +123,6 @@ namespace tpp {
 
 	std::string DirectWriteApplication::getSettingsFolder() {
 		std::string localSettings(helpers::LocalSettingsDir() + "\\terminalpp");
-		helpers::EnsurePath(localSettings);
 		return localSettings + "\\";
 	}
 

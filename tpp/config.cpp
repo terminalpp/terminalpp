@@ -1,4 +1,5 @@
 #include <fstream>
+#include <filesystem>
 
 #include "settings_json.h"
 
@@ -21,6 +22,8 @@ namespace tpp {
 		    json = CreateDefaultSettings();
 		    config = new Config(std::move(json));
 			Application::Instance()->updateDefaultSettings(config->json_);
+			// make sure the folder exists before we store the settings
+			std::filesystem::create_directories(Application::Singleton()->getSettingsFolder());
 			config->saveSettings();
 		} else {
 		    config = new Config(std::move(json));

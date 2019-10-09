@@ -5,7 +5,7 @@
 
 #include "vt100.h"
 
-#include "tpp_sequences.h"
+#include "tpp-lib/sequences.h"
 
 namespace vterm {
 
@@ -1334,9 +1334,9 @@ namespace vterm {
             /* TPP 0 - get terminal capabilities
 
              */
-            case TPP_CAPABILITIES:
+            case tpp::Sequence::CAPABILITIES:
                 LOG(SEQ) << "t++ terminal capabilities request";
-                send("\033]+0;0\007");
+                send(tpp::SupportedCapabilitiesResponse());
                 break;
             default:
         		LOG(SEQ_UNKNOWN) << "Invalid t++ sequence: " << seq;

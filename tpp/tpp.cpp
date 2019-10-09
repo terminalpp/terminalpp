@@ -41,6 +41,8 @@
 
 #include "helpers/json.h"
 
+#include "helpers/filesystem.h"
+
 using namespace tpp;
 
 void reportError(std::string const & message) {
