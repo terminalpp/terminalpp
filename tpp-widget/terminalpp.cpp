@@ -3,15 +3,15 @@
 
 #include "ui/key.h"
 
-#include "vt100.h"
+#include "terminalpp.h"
 
 #include "tpp-lib/sequences.h"
 
-namespace vterm {
+namespace ui {
 
     namespace {
 
-        std::unordered_map<ui::Key, std::string> InitializeVT100KeyMap() {
+        std::unordered_map<Key, std::string> InitializeVT100KeyMap() {
             #define KEY(K, ...) ASSERT(km.find(K) == km.end()) << "Key " << K << " altrady defined"; km.insert(std::make_pair(K, STR(__VA_ARGS__)))
             #define VT_MODIFIERS(K, SEQ1, SEQ2) KEY(Key(K) + Key::Shift, SEQ1 << 2 << SEQ2); \
                                                 KEY(Key(K) + Key::Alt, SEQ1 << 3 << SEQ2); \
@@ -23,7 +23,7 @@ namespace vterm {
 
             using namespace ui;
 
-            std::unordered_map<ui::Key, std::string> km;
+            std::unordered_map<Key, std::string> km;
             // first add letter keys in their modifications
             for (unsigned k = 'A'; k <= 'Z'; ++k) {
                 // ctrl + letter and ctrl + shift + letter are the same
@@ -140,53 +140,53 @@ namespace vterm {
 
     } // anonymous namespace
 
-    // VT100::Palette
-    VT100::Palette VT100::Palette::Colors16() {
+    // TerminalPP::Palette
+    TerminalPP::Palette TerminalPP::Palette::Colors16() {
 		return Palette{
-			ui::Color::Black(), // 0
-			ui::Color::DarkRed(), // 1
-			ui::Color::DarkGreen(), // 2
-			ui::Color::DarkYellow(), // 3
-			ui::Color::DarkBlue(), // 4
-			ui::Color::DarkMagenta(), // 5
-			ui::Color::DarkCyan(), // 6
-			ui::Color::Gray(), // 7
-			ui::Color::DarkGray(), // 8
-			ui::Color::Red(), // 9
-			ui::Color::Green(), // 10
-			ui::Color::Yellow(), // 11
-			ui::Color::Blue(), // 12
-			ui::Color::Magenta(), // 13
-			ui::Color::Cyan(), // 14
-			ui::Color::White() // 15
+			Color::Black(), // 0
+			Color::DarkRed(), // 1
+			Color::DarkGreen(), // 2
+			Color::DarkYellow(), // 3
+			Color::DarkBlue(), // 4
+			Color::DarkMagenta(), // 5
+			Color::DarkCyan(), // 6
+			Color::Gray(), // 7
+			Color::DarkGray(), // 8
+			Color::Red(), // 9
+			Color::Green(), // 10
+			Color::Yellow(), // 11
+			Color::Blue(), // 12
+			Color::Magenta(), // 13
+			Color::Cyan(), // 14
+			Color::White() // 15
 		};
     }
 
-    VT100::Palette VT100::Palette::XTerm256() {
+    TerminalPP::Palette TerminalPP::Palette::XTerm256() {
         Palette result(256);
         // first the basic 16 colors
-		result[0] =	ui::Color::Black();
-		result[1] =	ui::Color::DarkRed();
-		result[2] =	ui::Color::DarkGreen();
-		result[3] =	ui::Color::DarkYellow();
-		result[4] =	ui::Color::DarkBlue();
-		result[5] =	ui::Color::DarkMagenta();
-		result[6] =	ui::Color::DarkCyan();
-		result[7] =	ui::Color::Gray();
-		result[8] =	ui::Color::DarkGray();
-		result[9] =	ui::Color::Red();
-		result[10] = ui::Color::Green();
-		result[11] = ui::Color::Yellow();
-		result[12] = ui::Color::Blue();
-		result[13] = ui::Color::Magenta();
-		result[14] = ui::Color::Cyan();
-		result[15] = ui::Color::White();
+		result[0] =	Color::Black();
+		result[1] =	Color::DarkRed();
+		result[2] =	Color::DarkGreen();
+		result[3] =	Color::DarkYellow();
+		result[4] =	Color::DarkBlue();
+		result[5] =	Color::DarkMagenta();
+		result[6] =	Color::DarkCyan();
+		result[7] =	Color::Gray();
+		result[8] =	Color::DarkGray();
+		result[9] =	Color::Red();
+		result[10] = Color::Green();
+		result[11] = Color::Yellow();
+		result[12] = Color::Blue();
+		result[13] = Color::Magenta();
+		result[14] = Color::Cyan();
+		result[15] = Color::White();
 		// now do the xterm color cube
 		unsigned i = 16;
 		for (unsigned r = 0; r < 256; r += 40) {
 			for (unsigned g = 0; g < 256; g += 40) {
 				for (unsigned b = 0; b < 256; b += 40) {
-					result[i] = ui::Color(
+					result[i] = Color(
 						static_cast<unsigned char>(r),
 						static_cast<unsigned char>(g),
 						static_cast<unsigned char>(b)
@@ -203,32 +203,32 @@ namespace vterm {
 		}
 		// and finally do the grayscale
 		for (unsigned char x = 8; x <= 238; x += 10) {
-			result[i] = ui::Color(x, x, x);
+			result[i] = Color(x, x, x);
 			++i;
 		}
         return result;
     }
 
-    VT100::Palette::Palette(std::initializer_list<ui::Color> colors, size_t defaultFg, size_t defaultBg):
+    TerminalPP::Palette::Palette(std::initializer_list<Color> colors, size_t defaultFg, size_t defaultBg):
         size_(colors.size()),
         defaultFg_(defaultFg),
         defaultBg_(defaultBg),
-        colors_(new ui::Color[colors.size()]) {
+        colors_(new Color[colors.size()]) {
         ASSERT(defaultFg < size_ && defaultBg < size_);
 		unsigned i = 0;
-		for (ui::Color c : colors)
+		for (Color c : colors)
 			colors_[i++] = c;
     }
 
-    VT100::Palette::Palette(Palette const & from):
+    TerminalPP::Palette::Palette(Palette const & from):
         size_(from.size_),
         defaultFg_(from.defaultFg_),
         defaultBg_(from.defaultBg_),
-        colors_(new ui::Color[from.size_]) {
-		memcpy(colors_, from.colors_, sizeof(ui::Color) * size_);
+        colors_(new Color[from.size_]) {
+		memcpy(colors_, from.colors_, sizeof(Color) * size_);
     }
 
-    VT100::Palette::Palette(Palette && from):
+    TerminalPP::Palette::Palette(Palette && from):
         size_(from.size_),
         defaultFg_(from.defaultFg_),
         defaultBg_(from.defaultBg_),
@@ -239,9 +239,9 @@ namespace vterm {
 
 
 
-    // VT100::CSISequence
+    // TerminalPP::CSISequence
 
-    VT100::CSISequence VT100::CSISequence::Parse(char * & start, char const * end) {
+    TerminalPP::CSISequence TerminalPP::CSISequence::Parse(char * & start, char const * end) {
         CSISequence result;
         char * x = start;
         // if we are at the end, return incomplete
@@ -296,9 +296,9 @@ namespace vterm {
         return result;
     }
 
-    // VT100::OSCSequence
+    // TerminalPP::OSCSequence
 
-    VT100::OSCSequence VT100::OSCSequence::Parse(char * & start, char const * end) {
+    TerminalPP::OSCSequence TerminalPP::OSCSequence::Parse(char * & start, char const * end) {
         OSCSequence result;
         char * x = start;
         if (x == end) {
@@ -349,12 +349,12 @@ namespace vterm {
         return result;
     }
 
-    // VT100
+    // TerminalPP
 
-    std::unordered_map<ui::Key, std::string> VT100::KeyMap_(InitializeVT100KeyMap());
+    std::unordered_map<Key, std::string> TerminalPP::KeyMap_(InitializeVT100KeyMap());
 
 
-    VT100::VT100(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize):
+    TerminalPP::TerminalPP(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize):
         Terminal{width, height, pty, fps, ptyBufferSize},
         state_{width, height, palette->defaultForeground(), palette->defaultBackground()},
         mouseMode_{MouseMode::Off},
@@ -370,15 +370,15 @@ namespace vterm {
         palette_(palette) {
     }
 
-    ui::Color VT100::defaultForeground() const {
+    Color TerminalPP::defaultForeground() const {
         return palette_->defaultForeground();
     }
     
-    ui::Color VT100::defaultBackground() const {
+    Color TerminalPP::defaultBackground() const {
         return palette_->defaultBackground();
     }
 
-    void VT100::updateSize(int width, int height) {
+    void TerminalPP::updateSize(int width, int height) {
         {
             Buffer::Ptr b = buffer(true); // grab priority lock
             b->resize(width, height, alternateBufferMode_ ? nullptr : this);
@@ -391,7 +391,7 @@ namespace vterm {
         Terminal::updateSize(width, height);
     }
 
-    void VT100::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    void TerminalPP::mouseDown(int col, int row, MouseButton button, Key modifiers) {
         ASSERT(mouseButtonsDown_ <= 3);
         ++mouseButtonsDown_;
 		if (mouseMode_ != MouseMode::Off) {
@@ -402,7 +402,7 @@ namespace vterm {
         Terminal::mouseDown(col, row, button, modifiers);
     }
 
-    void VT100::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    void TerminalPP::mouseUp(int col, int row, MouseButton button, Key modifiers) {
         ASSERT(mouseButtonsDown_ > 0);
         --mouseButtonsDown_;
 		if (mouseMode_ != MouseMode::Off) {
@@ -413,17 +413,17 @@ namespace vterm {
         Terminal::mouseUp(col, row, button, modifiers);
     }
 
-    void VT100::mouseWheel(int col, int row, int by, ui::Key modifiers) {
+    void TerminalPP::mouseWheel(int col, int row, int by, Key modifiers) {
 		if (mouseMode_ != MouseMode::Off) {
     		// mouse wheel adds 64 to the value
-            mouseLastButton_ = encodeMouseButton((by > 0) ? ui::MouseButton::Left : ui::MouseButton::Right, modifiers) + 64;
+            mouseLastButton_ = encodeMouseButton((by > 0) ? MouseButton::Left : MouseButton::Right, modifiers) + 64;
             sendMouseEvent(mouseLastButton_, col, row, 'M');
             LOG(SEQ) << "Wheel offset " << by << " at " << col << ";" << row;
         }
         Terminal::mouseWheel(col, row, by, modifiers);
     }
 
-    void VT100::mouseMove(int col, int row, ui::Key modifiers) {
+    void TerminalPP::mouseMove(int col, int row, Key modifiers) {
         if (mouseMode_ != MouseMode::Off && (mouseMode_ != MouseMode::ButtonEvent || mouseButtonsDown_ != 0)) {
             // mouse move adds 32 to the last known button press
             sendMouseEvent(mouseLastButton_ + 32, col, row, 'M');
@@ -432,27 +432,27 @@ namespace vterm {
         Terminal::mouseMove(col, row, modifiers);
     }
 
-    void VT100::keyChar(helpers::Char c) {
+    void TerminalPP::keyChar(helpers::Char c) {
 		ASSERT(c.codepoint() >= 32);
         send(c.toCharPtr(), c.size());
         Terminal::keyChar(c);
     }
 
-    void VT100::keyDown(ui::Key key) {
+    void TerminalPP::keyDown(Key key) {
         // TODO this is ugly, fix help, make nice, etc, etc, etc, etc, etc. 
-        if (key == (ui::Key::V + ui::Key::Ctrl + ui::Key::Shift)) {
+        if (key == (Key::V + Key::Ctrl + Key::Shift)) {
             requestClipboardContents();
             return;
         }
 		std::string const* seq = GetSequenceForKey(key);
 		if (seq != nullptr) {
 			switch (key.code()) {
-			case ui::Key::Up:
-			case ui::Key::Down:
-			case ui::Key::Left:
-			case ui::Key::Right:
-			case ui::Key::Home:
-			case ui::Key::End:
+			case Key::Up:
+			case Key::Down:
+			case Key::Left:
+			case Key::Right:
+			case Key::Home:
+			case Key::End:
 				if (key.modifiers() == 0 && cursorMode_ == CursorMode::Application) {
 					std::string sa(*seq);
 					sa[1] = 'O';
@@ -469,11 +469,11 @@ namespace vterm {
         Terminal::keyDown(key);
     }
 
-    void VT100::keyUp(ui::Key key) {
+    void TerminalPP::keyUp(Key key) {
         Terminal::keyUp(key);
     }
 
-    void VT100::paste(std::string const & contents) {
+    void TerminalPP::paste(std::string const & contents) {
         if (bracketedPaste_) {
 			send("\033[200~", 6);
 			send(contents);
@@ -483,7 +483,7 @@ namespace vterm {
         }
     }
 
-    size_t VT100::processInput(char * buffer, size_t bufferSize) {
+    size_t TerminalPP::processInput(char * buffer, size_t bufferSize) {
         {
             Buffer::Ptr guard(this->buffer()); // non-priority lock the buffer
             char * bufferEnd = buffer + bufferSize;
@@ -530,7 +530,7 @@ namespace vterm {
 						++x;
 						// determine if region should be scrolled
 						if (++buffer_.cursor().pos.y == state_.scrollEnd) {
-							deleteLines(1, state_.scrollStart, state_.scrollEnd, (ui::Cell(state_.cell) << ui::Attributes()));
+							deleteLines(1, state_.scrollStart, state_.scrollEnd, (Cell(state_.cell) << Attributes()));
 							--buffer_.cursor().pos.y;
 						}
 						updateCursorPosition();
@@ -610,7 +610,7 @@ namespace vterm {
         return bufferSize;
     }
 
-    bool VT100::parseEscapeSequence(char * & buffer, char const * bufferEnd) {
+    bool TerminalPP::parseEscapeSequence(char * & buffer, char const * bufferEnd) {
         ASSERT(*buffer == helpers::Char::ESC);
         char *x = buffer;
         ++x;
@@ -657,13 +657,13 @@ namespace vterm {
             }
 			/* Save Cursor. */
 			case '7':
-				state_.cursorStack.push_back(ui::Point(buffer_.cursor().pos.x, buffer_.cursor().pos.y));
+				state_.cursorStack.push_back(Point(buffer_.cursor().pos.x, buffer_.cursor().pos.y));
 				LOG(SEQ) << "DECSC: Cursor position saved";
 				break;
 			/* Restore Cursor. */
 			case '8':
 				if (!state_.cursorStack.empty()) {
-					ui::Point p = state_.cursorStack.back();
+					Point p = state_.cursorStack.back();
 					setCursor(p.x, p.y);
 					state_.cursorStack.pop_back();
 					LOG(SEQ) << "DECRC: Cursor position restored";
@@ -721,7 +721,7 @@ namespace vterm {
         return true;
     }
 
-    void VT100::parseCSISequence(CSISequence & seq) {
+    void TerminalPP::parseCSISequence(CSISequence & seq) {
         switch (seq.firstByte()) {
             // the "normal" CSI sequences
             case 0: 
@@ -797,16 +797,16 @@ namespace vterm {
                         switch (seq[0]) {
                             case 0:
                                 updateCursorPosition();
-                                fillRect(ui::Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
-                                fillRect(ui::Rect(0, buffer_.cursor().pos.y + 1, buffer_.cols(), buffer_.rows()), state_.cell);
+                                fillRect(Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(Rect(0, buffer_.cursor().pos.y + 1, buffer_.cols(), buffer_.rows()), state_.cell);
                                 return;
                             case 1:
                                 updateCursorPosition();
-                                fillRect(ui::Rect(0, 0, buffer_.cols(), buffer_.cursor().pos.y), state_.cell);
-                                fillRect(ui::Rect(0, buffer_.cursor().pos.y, buffer_.cursor().pos.x + 1, buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(Rect(0, 0, buffer_.cols(), buffer_.cursor().pos.y), state_.cell);
+                                fillRect(Rect(0, buffer_.cursor().pos.y, buffer_.cursor().pos.x + 1, buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             case 2:
-                                fillRect(ui::Rect(buffer_.cols(), buffer_.rows()), state_.cell);
+                                fillRect(Rect(buffer_.cols(), buffer_.rows()), state_.cell);
                                 return;
                             default:
                                 break;
@@ -823,15 +823,15 @@ namespace vterm {
                         switch (seq[0]) {
                             case 0:
                                 updateCursorPosition();
-                                fillRect(ui::Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             case 1:
                                 updateCursorPosition();
-                                fillRect(ui::Rect(0, buffer_.cursor().pos.y, buffer_.cursor().pos.x + 1, buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(Rect(0, buffer_.cursor().pos.y, buffer_.cursor().pos.x + 1, buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             case 2:
                                 updateCursorPosition();
-                                fillRect(ui::Rect(0, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(Rect(0, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             default:
                                 break;
@@ -882,18 +882,18 @@ namespace vterm {
                         // erase from first line
                         int n = static_cast<unsigned>(seq[0]);
                         int l = std::min(buffer_.cols() - buffer_.cursor().pos.x, n);
-                        fillRect(ui::Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cursor().pos.x + l, buffer_.cursor().pos.y + 1), state_.cell);
+                        fillRect(Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cursor().pos.x + l, buffer_.cursor().pos.y + 1), state_.cell);
                         n -= l;
                         // while there is enough stuff left to be larger than a line, erase entire line
                         l = buffer_.cursor().pos.y + 1;
                         while (n >= buffer_.cols() && l < buffer_.rows()) {
-                            fillRect(ui::Rect(0, l, buffer_.cols(), l + 1), state_.cell);
+                            fillRect(Rect(0, l, buffer_.cols(), l + 1), state_.cell);
                             ++l;
                             n -= buffer_.cols();
                         }
                         // if there is still something to erase, erase from the beginning
                         if (n != 0 && l < buffer_.rows())
-                            fillRect(ui::Rect(0, l, n, l + 1), state_.cell);
+                            fillRect(Rect(0, l, n, l + 1), state_.cell);
                         return;
                     }
                     /* CSI <n> c - primary device attributes.
@@ -1019,7 +1019,7 @@ namespace vterm {
 		LOG(SEQ_UNKNOWN) << " Unknown CSI sequence " << seq;
     }
 
-    void VT100::parseCSIGetterOrSetter(CSISequence & seq, bool value) {
+    void TerminalPP::parseCSIGetterOrSetter(CSISequence & seq, bool value) {
 		for (size_t i = 0; i < seq.numArgs(); ++i) {
 			int id = seq[i];
 			switch (id) {
@@ -1103,13 +1103,13 @@ namespace vterm {
                             // disable terminal history for alternate mode
                             enableScrolling(false);
 						}
-                        state_.cell << ui::Foreground(palette_->defaultForeground()) 
-                                    << ui::DecorationColor(palette_->defaultForeground()) 
-                                    << ui::Background(palette_->defaultBackground())
-                                    << ui::Font()
-                                    << ui::Attributes();
-						fillRect(ui::Rect(buffer_.cols(), buffer_.rows()), state_.cell);
-						buffer_.cursor() = ui::Cursor();
+                        state_.cell << Foreground(palette_->defaultForeground()) 
+                                    << DecorationColor(palette_->defaultForeground()) 
+                                    << Background(palette_->defaultBackground())
+                                    << Font()
+                                    << Attributes();
+						fillRect(Rect(buffer_.cols(), buffer_.rows()), state_.cell);
+						buffer_.cursor() = Cursor();
 						LOG(SEQ) << "Alternate screen on";
 					} else {
 						// go back from alternate buffer
@@ -1135,22 +1135,22 @@ namespace vterm {
 		}
     }
 
-    void VT100::parseCSISaveOrRestore(CSISequence & seq) {
+    void TerminalPP::parseCSISaveOrRestore(CSISequence & seq) {
 		for (size_t i = 0; i < seq.numArgs(); ++i)
 			LOG(SEQ_WONT_SUPPORT) << "Private mode " << (seq.finalByte() == 's' ? "save" : "restore") << ", id " << seq[i];
     }
 
-    void VT100::parseSGR(CSISequence & seq) {
+    void TerminalPP::parseSGR(CSISequence & seq) {
         seq.setDefault(0, 0);
 		for (size_t i = 0; i < seq.numArgs(); ++i) {
 			switch (seq[i]) {
 				/* Resets all attributes. */
 				case 0:
-                    state_.cell << ui::Font() 
-                                << ui::Foreground(palette_->defaultForeground())
-                                << ui::DecorationColor(palette_->defaultForeground())
-                                << ui::Background(palette_->defaultBackground())
-                                << ui::Attributes();
+                    state_.cell << Font() 
+                                << Foreground(palette_->defaultForeground())
+                                << DecorationColor(palette_->defaultForeground())
+                                << Background(palette_->defaultBackground())
+                                << Attributes();
 					LOG(SEQ) << "font fg bg reset";
 					break;
 				/* Bold / bright foreground. */
@@ -1169,26 +1169,26 @@ namespace vterm {
 					break;
 				/* Underline */
 				case 4:
-                    state_.cell += ui::Attributes::Underline();
+                    state_.cell += Attributes::Underline();
 					LOG(SEQ) << "underline set";
 					break;
 				/* Blinking text */
 				case 5:
-                    state_.cell += ui::Attributes::Blink();
+                    state_.cell += Attributes::Blink();
 					LOG(SEQ) << "blink set";
 					break;
 				/* Inverse and inverse off */
 				case 7:
 				case 27: {
-                    ui::Color bg = state_.cell.foreground();
-                    ui::Color fg = state_.cell.background();
-                    state_.cell << ui::Foreground(fg) << ui::DecorationColor(fg) << ui::Background(bg); 
+                    Color bg = state_.cell.foreground();
+                    Color fg = state_.cell.background();
+                    state_.cell << Foreground(fg) << DecorationColor(fg) << Background(bg); 
 					LOG(SEQ) << "toggle inverse mode";
 					break;
                 }
 				/* Strikethrough */
 				case 9:
-                    state_.cell += ui::Attributes::Strikethrough();
+                    state_.cell += Attributes::Strikethrough();
 					LOG(SEQ) << "strikethrough";
 					break;
 				/* Bold off */
@@ -1208,62 +1208,62 @@ namespace vterm {
 					break;
 				/* Disable underline. */
 				case 24:
-                    state_.cell -= ui::Attributes::Underline();
+                    state_.cell -= Attributes::Underline();
 					LOG(SEQ) << "undeline off";
 					break;
 				/* Disable blinking. */
 				case 25:
-                    state_.cell -= ui::Attributes::Blink();
+                    state_.cell -= Attributes::Blink();
 					LOG(SEQ) << "blink off";
 					break;
 				/* Disable strikethrough. */
 				case 29:
-                    state_.cell -= ui::Attributes::Strikethrough();
+                    state_.cell -= Attributes::Strikethrough();
 					LOG(SEQ) << "Strikethrough off";
 					break;
 				/* 30 - 37 are dark foreground colors, handled in the default case. */
 				/* 38 - extended foreground color */
 				case 38: {
-                    ui::Color fg = parseSGRExtendedColor(seq, i);
-                    state_.cell << ui::Foreground(fg) << ui::DecorationColor(fg);    
+                    Color fg = parseSGRExtendedColor(seq, i);
+                    state_.cell << Foreground(fg) << DecorationColor(fg);    
 					LOG(SEQ) << "fg set to " << fg;
 					break;
                 }
 				/* Foreground default. */
 				case 39:
-                    state_.cell << ui::Foreground(palette_->defaultForeground())
-                                << ui::DecorationColor(palette_->defaultForeground());
+                    state_.cell << Foreground(palette_->defaultForeground())
+                                << DecorationColor(palette_->defaultForeground());
 					LOG(SEQ) << "fg reset";
 					break;
 				/* 40 - 47 are dark background color, handled in the default case. */
 				/* 48 - extended background color */
 				case 48: {
-                    ui::Color bg = parseSGRExtendedColor(seq, i);
-                    state_.cell << ui::Background(bg);    
+                    Color bg = parseSGRExtendedColor(seq, i);
+                    state_.cell << Background(bg);    
 					LOG(SEQ) << "bg set to " << bg;
 					break;
                 }
 				/* Background default */
 				case 49:
-					state_.cell << ui::Background(palette_->defaultBackground());
+					state_.cell << Background(palette_->defaultBackground());
 					LOG(SEQ) << "bg reset";
 					break;
 				/* 90 - 97 are bright foreground colors, handled in the default case. */
 				/* 100 - 107 are bright background colors, handled in the default case. */
 				default:
 					if (seq[i] >= 30 && seq[i] <= 37) {
-						state_.cell << ui::Foreground(palette_->at(seq[i] - 30))
-                                    << ui::DecorationColor(palette_->at(seq[i] - 30));
+						state_.cell << Foreground(palette_->at(seq[i] - 30))
+                                    << DecorationColor(palette_->at(seq[i] - 30));
 						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 30);
 					} else if (seq[i] >= 40 && seq[i] <= 47) {
-						state_.cell << ui::Background(palette_->at(seq[i] - 40));
+						state_.cell << Background(palette_->at(seq[i] - 40));
 						LOG(SEQ) << "bg set to " << palette_->at(seq[i] - 40);
 					} else if (seq[i] >= 90 && seq[i] <= 97) {
-						state_.cell << ui::Foreground(palette_->at(seq[i] - 82))
-                                    << ui::DecorationColor(palette_->at(seq[i] - 82));
+						state_.cell << Foreground(palette_->at(seq[i] - 82))
+                                    << DecorationColor(palette_->at(seq[i] - 82));
 						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 82);
 					} else if (seq[i] >= 100 && seq[i] <= 107) {
-						state_.cell << ui::Background(palette_->at(seq[i] - 92));
+						state_.cell << Background(palette_->at(seq[i] - 92));
 						LOG(SEQ) << "bg set to " << palette_->at(seq[i] - 92);
 					} else {
 						LOG(SEQ_UNKNOWN) << "Invalid SGR code: " << seq;
@@ -1273,7 +1273,7 @@ namespace vterm {
 		}
     }
 
-    ui::Color VT100::parseSGRExtendedColor(CSISequence & seq, size_t & i) {
+    Color TerminalPP::parseSGRExtendedColor(CSISequence & seq, size_t & i) {
 		++i;
 		if (i < seq.numArgs()) {
 			switch (seq[i++]) {
@@ -1291,17 +1291,17 @@ namespace vterm {
 						break;
 					if (seq[i - 2] > 255 || seq[i - 1] > 255 || seq[i] > 255) // invalid color spec
 						break;
-					return ui::Color(seq[i - 2] & 0xff, seq[i - 1] & 0xff, seq[i] & 0xff);
+					return Color(seq[i - 2] & 0xff, seq[i - 1] & 0xff, seq[i] & 0xff);
 				/* everything else is an error */
 				default:
 					break;
 			}
 		}
 		LOG(SEQ_UNKNOWN) << "Invalid extended color: " << seq;
-		return ui::Color::White();
+		return Color::White();
     }
 
-    void VT100::parseOSCSequence(OSCSequence & seq) {
+    void TerminalPP::parseOSCSequence(OSCSequence & seq) {
         ASSERT(seq.kind() == OSCSequence::OSC);
         switch (seq.num()) {
             /* OSC 0 - change the terminal title.
@@ -1329,13 +1329,12 @@ namespace vterm {
         }
     }
 
-    void VT100::parseTPPSequence(OSCSequence & seq) {
+    void TerminalPP::parseTPPSequence(OSCSequence & seq) {
         ASSERT(seq.kind() == OSCSequence::TPP);
         switch (seq.num()) {
-            /* TPP 0 - get terminal capabilities
-
+            /* Returns the terminal capabilities.
              */
-            case tpp::Sequence::CAPABILITIES:
+            case tpp::OSCSequence::Capabilities:
                 LOG(SEQ) << "t++ terminal capabilities request";
                 send(tpp::SupportedCapabilitiesResponse());
                 break;
@@ -1344,7 +1343,7 @@ namespace vterm {
         }
     }
 
-    void VT100::parseFontSizeSpecifier(char kind) {
+    void TerminalPP::parseFontSizeSpecifier(char kind) {
         switch (kind) {
             /* DECDHL - double height line, top half
 
@@ -1384,24 +1383,24 @@ namespace vterm {
         }
     }
 
-	unsigned VT100::encodeMouseButton(ui::MouseButton btn, ui::Key modifiers) {
+	unsigned TerminalPP::encodeMouseButton(MouseButton btn, Key modifiers) {
 		unsigned result =
-			((modifiers | ui::Key::Shift) ? 4 : 0) +
-			((modifiers | ui::Key::Alt) ? 8 : 0) +
-			((modifiers | ui::Key::Ctrl) ? 16 : 0);
+			((modifiers | Key::Shift) ? 4 : 0) +
+			((modifiers | Key::Alt) ? 8 : 0) +
+			((modifiers | Key::Ctrl) ? 16 : 0);
 		switch (btn) {
-			case ui::MouseButton::Left:
+			case MouseButton::Left:
 				return result;
-			case ui::MouseButton::Right:
+			case MouseButton::Right:
 				return result + 1;
-			case ui::MouseButton::Wheel:
+			case MouseButton::Wheel:
 				return result + 2;
 			default:
 				UNREACHABLE;
 		}
 	}
 
-	void VT100::sendMouseEvent(unsigned button, int col, int row, char end) {
+	void TerminalPP::sendMouseEvent(unsigned button, int col, int row, char end) {
 		// first increment col & row since terminal starts from 1
 		++col;
 		++row;
@@ -1440,12 +1439,12 @@ namespace vterm {
 		}
 	}
 
-    void VT100::updateCursorPosition() {
+    void TerminalPP::updateCursorPosition() {
         int c = buffer_.cols();
         while (buffer_.cursor().pos.x >= c) {
             buffer_.cursor().pos.x -= c;
             if (++buffer_.cursor().pos.y == state_.scrollEnd) {
-                deleteLines(1, state_.scrollStart, state_.scrollEnd, ui::Cell(state_.cell) << ui::Attributes());
+                deleteLines(1, state_.scrollStart, state_.scrollEnd, Cell(state_.cell) << Attributes());
                 --buffer_.cursor().pos.y;
             }
         }
@@ -1455,14 +1454,14 @@ namespace vterm {
             buffer_.cursor().pos.y = buffer_.rows() - 1;
     }
 
-    void VT100::setCursor(int col, int row) {
+    void TerminalPP::setCursor(int col, int row) {
 		buffer_.cursor().pos.x = col;
 		buffer_.cursor().pos.y = row;
 		// invalidate the last character position
 		invalidateLastCharPosition();
     }
 
-    void VT100::fillRect(ui::Rect const& rect, ui::Cell const & cell) {
+    void TerminalPP::fillRect(Rect const& rect, Cell const & cell) {
 		LOG(SEQ) << "fillRect " << rect;
 		for (int row = rect.top(); row < rect.bottom(); ++row) {
 			for (int col = rect.left(); col < rect.right(); ++col) {
@@ -1472,7 +1471,7 @@ namespace vterm {
 		}
     }
 
-    void VT100::deleteCharacters(unsigned num) {
+    void TerminalPP::deleteCharacters(unsigned num) {
 		unsigned r = buffer_.cursor().pos.y;
 		for (unsigned c = buffer_.cursor().pos.x, e = buffer_.cols() - num; c < e; ++c) {
 			Cell& cell = buffer_.at(c, r);
@@ -1484,7 +1483,7 @@ namespace vterm {
 		}
     }
 
-    void VT100::insertCharacters(unsigned num) {
+    void TerminalPP::insertCharacters(unsigned num) {
 		unsigned r = buffer_.cursor().pos.y;
 		// first copy the characters
 		for (unsigned c = buffer_.cols() - 1, e = buffer_.cursor().pos.x + num; c >= e; --c) {
@@ -1497,7 +1496,7 @@ namespace vterm {
 		}
     }
 
-    void VT100::deleteLines(int lines, int top, int bottom, Cell const & fill) {
+    void TerminalPP::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         // if lines are deleted from the top row and alternate buffer is not enabled, notify the terminal history that given number of lines is about to be scrolled out
         while (lines-- > 0) {
             if (top == 0)

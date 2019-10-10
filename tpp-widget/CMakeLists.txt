@@ -3,16 +3,16 @@
 #
 cmake_minimum_required (VERSION 3.5)
 
-project(libvterm)
+project(libtppwidget)
 
 file(GLOB_RECURSE SRC "*.cpp" "*.h")
 
 if(WIN32)
-    add_library(libvterm ${SRC})
+    add_library(libtppwidget ${SRC})
 elseif(UNIX)
 	find_library(LUTIL util)
-    add_library(libvterm ${SRC})
-	target_link_libraries(libvterm PUBLIC ${LUTIL})
+    add_library(libtppwidget ${SRC})
+	target_link_libraries(libtppwidget PUBLIC ${LUTIL})
 else()
     message(FATAL_ERROR "Only Windows and Linux are supported for now")
 endif()

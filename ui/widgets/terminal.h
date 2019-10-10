@@ -3,13 +3,14 @@
 #include <thread>
 #include <deque>
 
-#include "ui/canvas.h"
-#include "ui/widget.h"
-#include "ui/selection.h"
-#include "ui/builders.h"
-#include "ui/widgets/scrollbox.h"
+#include "helpers/process.h"
 
-#include "pty.h"
+#include "../canvas.h"
+#include "../widget.h"
+#include "../selection.h"
+#include "../builders.h"
+#include "scrollbox.h"
+
 
 /** \page vterm Terminal Widget
  
@@ -18,9 +19,47 @@
     \section vtermHistory Terminal History
 */
 
-namespace vterm {
+namespace ui {
 
-    typedef helpers::EventPayload<helpers::ExitCode, ui::Widget> ExitCodeEvent;
+    /** The pseudoterminal connection interface. 
+
+        A pseudoterminal connection provides the simplest possible interface to the target process. 
+     */
+    class PTY {
+    public:
+        /** Sends the given buffer to the target process. 
+         */
+        virtual void send(char const * buffer, size_t bufferSize) = 0;
+
+        /** Receives up to bufferSize bytes which are stored in the provided buffer.
+         
+            Returns the number of bytes received. If there are no data available, blocks until the data is ready and then returns them. 
+
+            If the attached process is terminated, should return immediately with 0 bytes read. 
+         */
+        virtual size_t receive(char * buffer, size_t bufferSize) = 0;
+
+        /** Terminates the target process and returns immediately. 
+         
+            If the target process has already terminated, simply returns. 
+         */
+        virtual void terminate() = 0;
+
+        /** Waits for the attached process to terminate and returns its exit code. 
+         */
+        virtual helpers::ExitCode waitFor() = 0;
+
+        virtual void resize(int cols, int rows) = 0;
+
+		/** Virtual destructor. 
+		 */
+		virtual ~PTY() {
+		}
+
+    }; // ui::PTY
+
+
+    typedef helpers::EventPayload<helpers::ExitCode, Widget> ExitCodeEvent;
 
     /** The input buffer of the terminal and its length. 
      
@@ -31,13 +70,10 @@ namespace vterm {
         size_t size;
     };
 
-    typedef helpers::EventPayload<InputBuffer, ui::Widget> InputProcessedEvent;
+    typedef helpers::EventPayload<InputBuffer, Widget> InputProcessedEvent;
 
-    class Terminal : public ui::ScrollBox, public ui::SelectionOwner {
+    class Terminal : public ScrollBox, public SelectionOwner {
     public:
-
-        typedef ui::Cell Cell;
-        typedef ui::Cursor Cursor;
 
         using Widget::setFocused;
         using Widget::setFocusStop;
@@ -78,11 +114,11 @@ namespace vterm {
                 return cells_[y][x];
             }
 
-            Cell const & at(ui::Point pos) const {
+            Cell const & at(Point pos) const {
                 return at(pos.x, pos.y);
             }
 
-            Cell & at(ui::Point pos) {
+            Cell & at(Point pos) {
                 return at(pos.x, pos.y);
             }
 
@@ -168,15 +204,15 @@ namespace vterm {
          */
         helpers::Event<ExitCodeEvent> onPTYTerminated;
 
-        helpers::Event<ui::StringEvent> onTitleChange;
+        helpers::Event<StringEvent> onTitleChange;
 
-        helpers::Event<ui::VoidEvent> onNotification;
+        helpers::Event<VoidEvent> onNotification;
 
         /** Triggered when a terminal line has been scrolled out. 
          
             It is assumed that the topmost line is always the line scrolled out. 
          */
-        helpers::Event<ui::VoidEvent> onLineScrolledOut;
+        helpers::Event<VoidEvent> onLineScrolledOut;
 
         /** Triggered when new input has been processed by the terminal. 
          */
@@ -221,7 +257,7 @@ namespace vterm {
          */
         void scrollToPrompt() {
             if (scrollable_ && history_.size() > 0)
-                setScrollOffset(ui::Point{0, static_cast<int>(history_.size())});
+                setScrollOffset(Point{0, static_cast<int>(history_.size())});
         }
 
         /** Deletes the terminal and the attached PTY. 
@@ -238,12 +274,12 @@ namespace vterm {
                 popHistoryLine();
         }
 
-        ui::Point scrollOffset() const override {
-            return ui::ScrollBox::scrollOffset();
+        Point scrollOffset() const override {
+            return ScrollBox::scrollOffset();
         }
 
-        ui::Rect clientRect() const override {
-            return ui::ScrollBox::clientRect();
+        Rect clientRect() const override {
+            return ScrollBox::clientRect();
         }
 
     protected:
@@ -254,12 +290,12 @@ namespace vterm {
          */
         Terminal(int width, int height, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
 
-        virtual ui::Color defaultForeground() const {
-            return ui::Color::White();
+        virtual Color defaultForeground() const {
+            return Color::White();
         }
 
-        virtual ui::Color defaultBackground() const {
-            return ui::Color::Black();
+        virtual Color defaultBackground() const {
+            return Color::Black();
         }
 
         /** Returns the locked buffer. 
@@ -274,7 +310,7 @@ namespace vterm {
 
         /** Copies the contents of the terminal's buffer to the ui canvas. 
          */
-        void paint(ui::Canvas & canvas) override;
+        void paint(Canvas & canvas) override;
 
         /** Updates the FPS ratio of the terminal. 
          
@@ -312,8 +348,8 @@ namespace vterm {
             pty_->resize(width, height);
             // resize the client canvas
             setClientArea(width, buffer_.rows() + static_cast<int>(history_.size())); 
-            ui::ScrollBox::updateSize(width, height);
-            ui::Widget::updateSize(width, height);
+            ScrollBox::updateSize(width, height);
+            Widget::updateSize(width, height);
         }
 
         void updateFocused(bool value) override {
@@ -323,33 +359,33 @@ namespace vterm {
 
         // mouse events to deal with the selection
 
-        void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        void mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
+        void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
+        void mouseUp(int col, int row, MouseButton button, Key modifiers) override;
 
-        void mouseWheel(int col, int row, int by, ui::Key modifiers) override {
+        void mouseWheel(int col, int row, int by, Key modifiers) override {
             MARK_AS_UNUSED(col);
             MARK_AS_UNUSED(row);
             MARK_AS_UNUSED(modifiers);
             if (scrollable_ && ! history_.empty()) {
-                scrollBy(ui::Point{0,-by});
+                scrollBy(Point{0,-by});
                 repaint();
             } 
-            ui::Widget::mouseWheel(col, row, by, modifiers);
+            Widget::mouseWheel(col, row, by, modifiers);
         }
 
-        void mouseMove(int col, int row, ui::Key modifiers) override;
+        void mouseMove(int col, int row, Key modifiers) override;
 
         void mouseOut() override {
             if (scrollBarActive_) {
                 scrollBarActive_ = false;
                 repaint();
             }
-            ui::SelectionOwner::mouseOut();
+            SelectionOwner::mouseOut();
         }
 
         /** When a keydown is pressed, the terminal prompt is scrolled in view automatically. 
          */
-        void keyDown(ui::Key key) override {
+        void keyDown(Key key) override {
             MARK_AS_UNUSED(key);
             scrollToPrompt();
         }
@@ -358,7 +394,7 @@ namespace vterm {
         /** Updates the selection when autoscroll is activated. 
          */
         void autoScrollStep() override {
-            ui::Point m = getMouseCoordinates();
+            Point m = getMouseCoordinates();
             selectionUpdate(m.x, m.y);
         }
 
@@ -469,23 +505,10 @@ namespace vterm {
          */
         std::deque<std::pair<int, Cell *>> history_;
 
-    }; // vterm::Terminal
-
-
-    PROPERTY_BUILDER(HistorySizeLimit, size_t, setHistorySizeLimit, Terminal);
-
-    EVENT_BUILDER(OnTitleChange, ui::StringEvent, onTitleChange, Terminal);
-    EVENT_BUILDER(OnNotification, ui::VoidEvent, onNotification, Terminal);
-    EVENT_BUILDER(OnPTYTerminated, ExitCodeEvent, onPTYTerminated, Terminal);
-    EVENT_BUILDER(OnLineScrolledOut, ui::VoidEvent, onLineScrolledOut, Terminal);
-    EVENT_BUILDER(OnInput, InputProcessedEvent, onInput, Terminal);
-
-} // namespace vterm
-
-namespace ui {
+    }; // ui::Terminal
 
     template<>
-    inline void ui::Canvas::copyBuffer<vterm::Terminal::Buffer>(int x, int y, vterm::Terminal::Buffer const & buffer) {
+    inline void Canvas::copyBuffer<Terminal::Buffer>(int x, int y, Terminal::Buffer const & buffer) {
         int xe = std::min(x + buffer.cols(), width()) - x;
         int ye = std::min(y + buffer.rows(), height()) - y;
         for (int by = 0; by < ye; ++by)
@@ -494,4 +517,12 @@ namespace ui {
                     *c = buffer.at(bx, by);
     }
 
-}
+    PROPERTY_BUILDER(HistorySizeLimit, size_t, setHistorySizeLimit, Terminal);
+
+    EVENT_BUILDER(OnTitleChange, StringEvent, onTitleChange, Terminal);
+    EVENT_BUILDER(OnNotification, VoidEvent, onNotification, Terminal);
+    EVENT_BUILDER(OnPTYTerminated, ExitCodeEvent, onPTYTerminated, Terminal);
+    EVENT_BUILDER(OnLineScrolledOut, VoidEvent, onLineScrolledOut, Terminal);
+    EVENT_BUILDER(OnInput, InputProcessedEvent, onInput, Terminal);
+
+} // namespace ui

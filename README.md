@@ -2,7 +2,6 @@
 
 [![Windows Build](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/1?label=windows&logo=azure-pipelines)](https://dev.azure.com/zduka/tpp/_build?definitionId=1)
 [![Linux Build](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/2?label=linux&logo=azure-pipelines)](https://dev.azure.com/zduka/tpp/_build?definitionId=2)
-[![MacOS Build](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/3?label=macos&logo=azure-pipelines)](https://dev.azure.com/zduka/tpp/_build?definitionId=3)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/587d39b5db9e4742bb6ce05f86863439)](https://www.codacy.com/app/zduka/tpp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=zduka/tpp&amp;utm_campaign=Badge_Grade)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/zduka/tpp.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zduka/tpp/context:cpp)
 
@@ -103,7 +102,7 @@ You can now execute the terminal by typing in the `build` directory:
 
 When X server is installed, follow the Linux guide above. 
 
-> Note that unlike Windows and Linux, Apple version is almost untested.
+> Note that unlike Windows and Linux, Apple version is untested. Also, since std::filesystem is available only since 10.15 and there are no 10.15 workers on azure. Not even build on OSX is tested at the moment.
 
 # Performance (*)
 

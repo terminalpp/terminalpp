@@ -4,12 +4,12 @@
 
 namespace tpp {
 
-    class Sequence {
+    class OSCSequence {
     public:
-        static constexpr int CAPABILITIES = 0;
-        static constexpr int CREATE_FILE = 1;
-        static constexpr int SEND = 2;
-        static constexpr int OPEN = 3;
+        static constexpr int Capabilities = 0;
+        static constexpr int CreateFile = 1;
+        static constexpr int Send = 2;
+        static constexpr int Open = 3;
     };
 
     /** Returns the t++ capabilities identifier as supported by this implementation. 

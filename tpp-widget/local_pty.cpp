@@ -19,7 +19,7 @@
 #include "local_pty.h"
 
 
-namespace vterm {
+namespace tpp {
 
 #if (defined ARCH_WINDOWS)
 

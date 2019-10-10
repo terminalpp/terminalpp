@@ -3,7 +3,7 @@
 #include "helpers/process.h"
 #include "helpers/json.h"
 
-#include "vterm/vt100.h"
+#include "tpp-widget/terminalpp.h"
 
 //#define SHOW_LINE_ENDINGS
 
@@ -81,8 +81,8 @@ namespace tpp {
 			return get({"session", "historyLimit"});
 		}
 
-		vterm::VT100::Palette sessionPalette() const {
-			vterm::VT100::Palette result{vterm::VT100::Palette::XTerm256()};
+		ui::TerminalPP::Palette sessionPalette() const {
+			ui::TerminalPP::Palette result{ui::TerminalPP::Palette::XTerm256()};
 			result.setDefaultForegroundIndex(get({"session","palette", "defaultForeground"}).toUnsigned());
 			result.setDefaultBackgroundIndex(get({"session","palette", "defaultBackground"}).toUnsigned());
 			helpers::JSON const & colors = get({"session", "palette", "colors"});

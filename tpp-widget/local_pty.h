@@ -5,11 +5,11 @@
     #include "sys/types.h"
 #endif
 
-#include "pty.h"
+#include "ui/widgets/terminal.h"
 
-namespace vterm {
+namespace tpp {
 
-    class LocalPTY : public PTY {
+    class LocalPTY : public ui::PTY {
     public:
         LocalPTY(helpers::Command const & command);
 		LocalPTY(helpers::Command const& command, helpers::Environment const& env);

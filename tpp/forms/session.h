@@ -4,7 +4,7 @@
 #include "ui/root_window.h"
 #include "ui/builders.h"
 
-#include "vterm/vt100.h"
+#include "tpp-widget/terminalpp.h"
 
 #include "../config.h"
 
@@ -19,19 +19,18 @@ namespace tpp {
      */
     class Session : public ui::RootWindow {
     public:
-        Session(vterm::PTY * pty, vterm::VT100::Palette * palette):
+        Session(ui::PTY * pty, ui::TerminalPP::Palette * palette):
             pty_(pty),
             closeOnKeyDown_(false) {
             Config const & config = Config::Instance();
             using namespace ui;
-            using namespace vterm;
             Create(this) 
                 /*
                 << Layout::Horizontal()
                 << (Create(new ui::Label()))
                 */
                 << Layout::Maximized()
-                << (Create(terminal_ = new VT100(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
+                << (Create(terminal_ = new TerminalPP(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
                     << FocusIndex(0)
                     << FocusStop(true)
                     << HistorySizeLimit(config.sessionHistoryLimit())
@@ -69,7 +68,7 @@ namespace tpp {
             setIcon(Icon::Notification);
         }
 
-        void ptyTerminated(vterm::ExitCodeEvent & e) {
+        void ptyTerminated(ui::ExitCodeEvent & e) {
             setTitle(STR("Attached process terminated (code " << *e << ") - press a key to exit"));
             setIcon(Icon::Notification);
             // disable the terminal
@@ -78,7 +77,7 @@ namespace tpp {
             closeOnKeyDown_ = true;
         }
 
-        void terminalInputProcessed(vterm::InputProcessedEvent & e) {
+        void terminalInputProcessed(ui::InputProcessedEvent & e) {
             logFile_.write(e->buffer, e->size);
         }
 
@@ -109,8 +108,8 @@ namespace tpp {
             }
         }
 
-        vterm::PTY * pty_;
-        vterm::Terminal * terminal_;
+        ui::PTY * pty_;
+        ui::Terminal * terminal_;
         AboutBox * about_;
 
         std::ofstream logFile_;

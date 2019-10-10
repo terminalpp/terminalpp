@@ -7,14 +7,14 @@
 
 #include "windows.h"
 
-#include "pty.h"
+#include "ui/widgets/terminal.h"
 
-namespace vterm {
+namespace tpp {
 
     /** Virtual terminal using WSL instead of ConPTY.
      
      */
-    class BypassPTY : public PTY {
+    class BypassPTY : public ui::PTY {
     public:
         BypassPTY(helpers::Command const & command);
 

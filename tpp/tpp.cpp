@@ -32,10 +32,9 @@
 #include "ui/builders.h"
 #include "ui/layout.h"
 
-#include "vterm/terminal.h"
-#include "vterm/bypass_pty.h"
-#include "vterm/local_pty.h"
-#include "vterm/vt100.h"
+#include "tpp-widget/bypass_pty.h"
+#include "tpp-widget/local_pty.h"
+#include "tpp-widget/terminalpp.h"
 #include <thread>
 
 
@@ -91,15 +90,15 @@ int main(int argc, char* argv[]) {
 		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
 
 		// Create the palette & the pty - TODO this should be more systematic
-		vterm::VT100::Palette palette{config.sessionPalette()};
-		vterm::PTY * pty;
+		ui::TerminalPP::Palette palette{config.sessionPalette()};
+		ui::PTY * pty;
 #if (defined ARCH_WINDOWS)
 		if (config.sessionPTY() != "bypass") 
-		    pty = new vterm::LocalPTY(config.sessionCommand());
+		    pty = new LocalPTY(config.sessionCommand());
 		else
-		    pty = new vterm::BypassPTY(config.sessionCommand());
+		    pty = new BypassPTY(config.sessionCommand());
 #else
-		pty = new vterm::LocalPTY(config.sessionCommand());
+		pty = new LocalPTY(config.sessionCommand());
 #endif
 
 		// create the session

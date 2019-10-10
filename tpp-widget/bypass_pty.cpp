@@ -5,7 +5,7 @@
 
 #include "bypass_pty.h"
 
-namespace vterm {
+namespace tpp {
 
     BypassPTY::BypassPTY(helpers::Command const & command):
         command_{command},

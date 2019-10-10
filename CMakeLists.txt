@@ -13,7 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(".")
 
 # Include sub-projects.
-add_subdirectory("vterm")
+#add_subdirectory("tpp-lib")
+add_subdirectory("tpp-widget")
 add_subdirectory("ui")
 add_subdirectory("docs")
 
@@ -66,7 +67,7 @@ elseif(UNIX)
     target_link_libraries(tpp fontconfig)
 endif()
 # finally, add the libraries
-target_link_libraries(tpp libvterm libui)
+target_link_libraries(tpp libtppwidget libui)
 # add the dependency on stamp creation tool (see below)
 add_dependencies(tpp tpp-create-stamp)
 

@@ -2,7 +2,7 @@
 
 #include "terminal.h"
 
-namespace vterm {
+namespace ui {
 
     // Terminal::Buffer
 
@@ -215,9 +215,9 @@ namespace vterm {
         });
     }
 
-    void Terminal::paint(ui::Canvas & canvas) {
+    void Terminal::paint(Canvas & canvas) {
         // determine the client canvas - either the proper client canvas if scrolling is available, or the child canvas
-        ui::Canvas clientCanvas{scrollable_ ? getClientCanvas(canvas) : canvas};
+        Canvas clientCanvas{scrollable_ ? getClientCanvas(canvas) : canvas};
         int terminalOffset = scrollable_ ? static_cast<int>(history_.size()) : 0;
         // draw the terminal if it is visible
         if (! scrollable_ || scrollOffset().y + height() > terminalOffset ) {
@@ -225,35 +225,35 @@ namespace vterm {
             clientCanvas.copyBuffer(0, terminalOffset, *buffer);
             // draw the cursor too
             if (focused()) 
-                clientCanvas.setCursor(buffer->cursor() + ui::Point{0, terminalOffset});
+                clientCanvas.setCursor(buffer->cursor() + Point{0, terminalOffset});
             else 
-                clientCanvas.setCursor(ui::Cursor::Invisible());
+                clientCanvas.setCursor(Cursor::Invisible());
         }
         // if the terminal is scrollable, and there is any history, the scrollbar must be drawn and the history (if there is any visible)
         if (scrollable_ && history_.size() > 0) {
            ASSERT(clientCanvas.height() == terminalOffset + height());
            for (int i = scrollOffset().y; i < terminalOffset; ++i) {
-               clientCanvas.fill(ui::Rect{0, i, width(), i + 1}, defaultBackground());
+               clientCanvas.fill(Rect{0, i, width(), i + 1}, defaultBackground());
                Cell * row = history_[i].second;
                for (int col = 0, ce = history_[i].first; col < ce; ++col)
-                   clientCanvas.set(ui::Point{col, i}, row[col]);
+                   clientCanvas.set(Point{col, i}, row[col]);
            }
-           drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? ui::Color::Red().setAlpha(128) : ui::Color::White().setAlpha(64));
+           drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? Color::Red().setAlpha(128) : Color::White().setAlpha(64));
         }
         // paint the selection, if any
         paintSelection(clientCanvas);
         // and finally, if the terminal is not enabled, dim its window accordingly
         if (!enabled())
-            canvas.fill(ui::Rect(width(), height()), ui::Brush(ui::Color::Black().setAlpha(128)));
+            canvas.fill(Rect(width(), height()), Brush(Color::Black().setAlpha(128)));
     }
 
-    void Terminal::mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    void Terminal::mouseDown(int col, int row, MouseButton button, Key modifiers) {
         if (modifiers == 0) {
-            if (button == ui::MouseButton::Left) {
+            if (button == MouseButton::Left) {
                 startSelectionUpdate(col, row);
-            } else if (button == ui::MouseButton::Wheel) {
+            } else if (button == MouseButton::Wheel) {
                 requestSelectionContents(); 
-            } else if (button == ui::MouseButton::Right && ! selection().empty()) {
+            } else if (button == MouseButton::Right && ! selection().empty()) {
                 setClipboard();
                 clearSelection();
             }
@@ -261,15 +261,15 @@ namespace vterm {
         Widget::mouseDown(col, row, button, modifiers);
     }
 
-    void Terminal::mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) {
+    void Terminal::mouseUp(int col, int row, MouseButton button, Key modifiers) {
         if (modifiers == 0) {
-            if (button == ui::MouseButton::Left)
+            if (button == MouseButton::Left)
                 endSelectionUpdate(col, row);
         }
         Widget::mouseUp(col, row, button, modifiers);
     }
 
-    void Terminal::mouseMove(int col, int row, ui::Key modifiers) {
+    void Terminal::mouseMove(int col, int row, Key modifiers) {
         if (modifiers == 0) {
             if (SelectionOwner::updating()) {
                 selectionUpdate(col, row);
@@ -291,7 +291,7 @@ namespace vterm {
         TODO perhaps change this to not space, but something else so that we can ignore it from the selection? Or ignore this corner case entirely.
      */
     std::string Terminal::getSelectionContents() {
-        ui::Selection s = selection();
+        Selection s = selection();
         std::stringstream result;
         {
             Buffer::Ptr buf = buffer(); // lock the buffer (and therefore the history as well)
@@ -328,7 +328,7 @@ namespace vterm {
             } else {
                 updateClientRect();
                 // TODO only scroll if we were at the top
-                setScrollOffset(scrollOffset() + ui::Point{0, 1});
+                setScrollOffset(scrollOffset() + Point{0, 1});
             }
         }
 
@@ -347,7 +347,7 @@ namespace vterm {
 
     void Terminal::addHistoryLine(Cell const * line, int cols) {
         int x = cols - 1;
-        ui::Color bg = defaultBackground();
+        Color bg = defaultBackground();
         while (x > 0) {
             Cell const & c = line[x];
             if (c.codepoint() != ' ')

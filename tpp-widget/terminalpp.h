@@ -2,16 +2,16 @@
 
 #include <vector>
 
-#include "terminal.h"
+#include "ui/widgets/terminal.h"
 
-namespace vterm {
+namespace ui {
 
 
     /** Terminal understanding the ANSI escape sequences. 
      
         Should this be named differently? 
      */
-    class VT100 : public Terminal {
+    class TerminalPP : public Terminal {
     public:
 
         class Palette;
@@ -22,25 +22,25 @@ namespace vterm {
 		static constexpr char const* const SEQ_UNKNOWN = "VT100_UNKNOWN";
 		static constexpr char const* const SEQ_WONT_SUPPORT = "VT100_WONT_SUPPORT";
 
-        VT100(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
+        TerminalPP(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
 
     protected:
         class CSISequence;
 
         class OSCSequence;
 
-        ui::Color defaultForeground() const override;
-        ui::Color defaultBackground() const override;
+        Color defaultForeground() const override;
+        Color defaultBackground() const override;
 
         void updateSize(int width, int height) override;
 
-        void mouseDown(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        void mouseUp(int col, int row, ui::MouseButton button, ui::Key modifiers) override;
-        void mouseWheel(int col, int row, int by, ui::Key modifiers) override;
-        void mouseMove(int col, int row, ui::Key modifiers) override;
+        void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
+        void mouseUp(int col, int row, MouseButton button, Key modifiers) override;
+        void mouseWheel(int col, int row, int by, Key modifiers) override;
+        void mouseMove(int col, int row, Key modifiers) override;
         void keyChar(helpers::Char c) override;
-        void keyDown(ui::Key key) override;
-        void keyUp(ui::Key key) override;
+        void keyDown(Key key) override;
+        void keyUp(Key key) override;
         void paste(std::string const & contents) override;
 
         size_t processInput(char * buffer, size_t bufferSize) override;
@@ -79,7 +79,7 @@ namespace vterm {
 
         /** Parses the SGR extended color specification, i.e. either TrueColor RGB values, or 256 palette specification.
          */
-        ui::Color parseSGRExtendedColor(CSISequence & seq, size_t & i);
+        Color parseSGRExtendedColor(CSISequence & seq, size_t & i);
 
         /** Parses the operating system sequence. 
          */
@@ -95,7 +95,7 @@ namespace vterm {
          */
         void parseFontSizeSpecifier(char kind);
 
-        unsigned encodeMouseButton(ui::MouseButton btn, ui::Key modifiers);
+        unsigned encodeMouseButton(MouseButton btn, Key modifiers);
         void sendMouseEvent(unsigned button, int col, int row, char end);
 
         /** Updates cursor position before modifying the cell it points to. 
@@ -112,7 +112,7 @@ namespace vterm {
 
 		/** Fills the given rectangle with character, colors and font.
 		 */
-		void fillRect(ui::Rect const& rect, ui::Cell const & cell);
+		void fillRect(Rect const& rect, Cell const & cell);
 
 		void deleteCharacters(unsigned num);
 		void insertCharacters(unsigned num);
@@ -131,7 +131,7 @@ namespace vterm {
 		void markLastCharPosition() {
 			if (state_.lastCharCol >= 0 && state_.lastCharCol < buffer_.cols() &&
                 state_.lastCharRow >= 0 && state_.lastCharRow < buffer_.rows()) 
-				buffer_.at(state_.lastCharCol, state_.lastCharRow) += ui::Attributes::EndOfLine();
+				buffer_.at(state_.lastCharCol, state_.lastCharRow) += Attributes::EndOfLine();
 		}
 
 		void setLastCharPosition() {
@@ -144,23 +144,23 @@ namespace vterm {
             Normal,
             ButtonEvent,
             All
-        }; // VT100::MouseMode
+        }; // TerminalPP::MouseMode
 
         enum class MouseEncoding {
             Default,
             UTF8,
             SGR
-        }; // VT100::MouseEncoding
+        }; // TerminalPP::MouseEncoding
 
         enum class CursorMode {
             Normal,
             Application
-        }; // VT100::CursorMode
+        }; // TerminalPP::CursorMode
 
         enum class KeypadMode {
             Normal, 
             Application
-        }; // VT100::KeypadMode
+        }; // TerminalPP::KeypadMode
 
         struct State {
 
@@ -170,7 +170,7 @@ namespace vterm {
             int scrollEnd;
             
             /* Cell containing space and current fg, bg, decorations, etc. settings */
-            ui::Cell cell;
+            Cell cell;
 
             /* Location of the last valid character printed so that if followed by return, it can be set as line terminating. */
             int lastCharCol;
@@ -183,16 +183,16 @@ namespace vterm {
             bool doubleHeightTopLine;
 
             /* Stack of loaded & saved cursor positions. */
-            std::vector<ui::Point> cursorStack;
+            std::vector<Point> cursorStack;
 
-            State(int cols, int rows, ui::Color fg, ui::Color bg):
+            State(int cols, int rows, Color fg, Color bg):
                 scrollStart{0},
                 scrollEnd{rows},
                 cell{},
                 lastCharCol{-1},
                 lastCharRow{0},
                 doubleHeightTopLine(false) {
-                cell << ' ' << ui::Foreground(fg) << ui::Background(bg) << ui::DecorationColor(fg);
+                cell << ' ' << Foreground(fg) << Background(bg) << DecorationColor(fg);
                 MARK_AS_UNUSED(cols);
             }
 
@@ -202,7 +202,7 @@ namespace vterm {
                 scrollEnd = rows;
             }
 
-        }; // VT100::State
+        }; // TerminalPP::State
 
         State state_;
 
@@ -226,7 +226,7 @@ namespace vterm {
         /* The palette used for the terminal. */
         Palette const * palette_;        
 
-        std::string const * GetSequenceForKey(ui::Key key) {
+        std::string const * GetSequenceForKey(Key key) {
             auto i = KeyMap_.find(key);
             if (i == KeyMap_.end())
                 return nullptr;
@@ -234,13 +234,13 @@ namespace vterm {
                 return &(i->second);
         }
 
-        static std::unordered_map<ui::Key, std::string> KeyMap_;
+        static std::unordered_map<Key, std::string> KeyMap_;
 
     }; // vterm::VT100
 
     /** Palette
      */
-    class VT100::Palette {
+    class TerminalPP::Palette {
     public:
 
         static Palette Colors16();
@@ -250,11 +250,11 @@ namespace vterm {
             size_(size),
             defaultFg_(defaultFg),
             defaultBg_(defaultBg),
-            colors_(new ui::Color[size]) {
+            colors_(new Color[size]) {
             ASSERT(defaultFg < size && defaultBg < size);
         }
 
-        Palette(std::initializer_list<ui::Color> colors, size_t defaultFg = 15, size_t defaultBg = 0);
+        Palette(std::initializer_list<Color> colors, size_t defaultFg = 15, size_t defaultBg = 0);
 
         Palette(Palette const & from);
 
@@ -268,11 +268,11 @@ namespace vterm {
             return size_;
         }
 
-        ui::Color defaultForeground() const {
+        Color defaultForeground() const {
             return colors_[defaultFg_];
         }
 
-        ui::Color defaultBackground() const {
+        Color defaultBackground() const {
             return colors_[defaultBg_];
         }
 
@@ -284,25 +284,25 @@ namespace vterm {
             defaultBg_ = value;
         }
 
-        void setColor(size_t index, ui::Color color) {
+        void setColor(size_t index, Color color) {
             ASSERT(index < size_);
             colors_[index] = color;
         }
 
-        ui::Color operator [] (size_t index) const {
+        Color operator [] (size_t index) const {
             ASSERT(index < size_);
             return colors_[index];
         } 
 
-        ui::Color & operator [] (size_t index) {
+        Color & operator [] (size_t index) {
             ASSERT(index < size_);
             return colors_[index];
         } 
 
-        ui::Color at(size_t index) const {
+        Color at(size_t index) const {
             return (*this)[index];
         }
-        ui::Color & at(size_t index) {
+        Color & at(size_t index) {
             return (*this)[index];
         }
 
@@ -311,16 +311,16 @@ namespace vterm {
         size_t size_;
         size_t defaultFg_;
         size_t defaultBg_;
-        ui::Color * colors_;
+        Color * colors_;
 
-    }; // VT100::Palette
+    }; // TerminalPP::Palette
 
 
     /** Desrcibes parsed CSI sequence.
 
         The CSI sequence may have a first character and a last character which determine the kind of sequence and an arbitrary number of integer arguments.
      */
-    class VT100::CSISequence {
+    class TerminalPP::CSISequence {
     public:
 
         CSISequence():
@@ -427,9 +427,9 @@ namespace vterm {
             return s;
         }
 
-    }; // VT100::CSISequence
+    }; // TerminalPP::CSISequence
 
-    class VT100::OSCSequence {
+    class TerminalPP::OSCSequence {
     public:
 
         /** Default OSC commands supported by other terminals. 
@@ -493,6 +493,6 @@ namespace vterm {
         }
 
 
-    }; // VT100::OSCSequence
+    }; // TerminalPP::OSCSequence
 
 } // namespace vterm
