@@ -1,0 +1,12 @@
+cmake_minimum_required (VERSION 3.5)
+
+if(UNIX AND NOT APPLE) 
+    project(tpp-ropen)
+    add_compile_options(-std=c++17 -Wall -Wextra -pedantic)
+    #find_package(Threads REQUIRED)
+    #find_library(LUTIL util)
+    file(GLOB_RECURSE SRC "*.cpp" "*.h")
+    add_executable(ropen ${SRC})
+    target_link_libraries(ropen libtpp)
+    install(TARGETS ropen DESTINATION bin)
+endif()

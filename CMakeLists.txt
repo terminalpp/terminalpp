@@ -13,10 +13,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(".")
 
 # Include sub-projects.
-#add_subdirectory("tpp-lib")
+add_subdirectory("tpp-lib")
 add_subdirectory("tpp-widget")
 add_subdirectory("ui")
 add_subdirectory("docs")
+add_subdirectory("ropen")
 
 #include_directories("{$CMAKE_CURRENT_SOURCE_DIR}/tpp")
 

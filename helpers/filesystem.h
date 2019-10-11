@@ -22,6 +22,16 @@
 
 namespace helpers {
 
+    inline std::string GetFilenameFromPath(std::string const & path) {
+#if (defined ARCH_WINDOWS)
+        std::filesystem::path p(UTF8toUTF16(path));
+        return p.filename().u8string();
+#else
+        std::filesystem::path p(path);
+        return p.filename();
+#endif
+    }
+
     /** Returns the directory in which local application settings should be stored on given platform. 
      */
     inline std::string LocalSettingsDir() {

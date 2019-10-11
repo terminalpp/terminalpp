@@ -1333,11 +1333,15 @@ namespace ui {
         ASSERT(seq.kind() == OSCSequence::TPP);
         switch (seq.num()) {
             /* Returns the terminal capabilities.
+
+               For now only returns version 1. In the future this should be parametrized by various capabilities that may or may not be implemented. 
              */
             case tpp::OSCSequence::Capabilities:
                 LOG(SEQ) << "t++ terminal capabilities request";
-                send(tpp::SupportedCapabilitiesResponse());
+                send("\033]+0;0\007");
                 break;
+            case tpp::OSCSequence::Send:
+            case tpp::OSCSequence::Open:
             default:
         		LOG(SEQ_UNKNOWN) << "Invalid t++ sequence: " << seq;
         }
