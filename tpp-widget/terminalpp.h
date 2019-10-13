@@ -2,6 +2,9 @@
 
 #include <vector>
 
+#include "helpers/filesystem.h"
+
+#include "tpp-lib/sequence.h"
 #include "ui/widgets/terminal.h"
 
 namespace ui {
@@ -28,6 +31,27 @@ namespace ui {
         class CSISequence;
 
         class OSCSequence;
+
+        /** Describes a locally stored remote file. 
+         */
+        class RemoteFile {
+        public:
+            std::string const localPath;
+            size_t const size;
+
+            /** Creates remote file for given path. 
+             */
+            RemoteFile(std::string const & remotePath, size_t size);
+
+        private:
+            std::ifstream writer_;
+
+            static helpers::TemporaryFolder & TempDir() {
+                helpers::TemporaryFolder tmp;
+                return tmp;
+            }
+
+        }; // terminalpp::RemoteFile
 
         Color defaultForeground() const override;
         Color defaultBackground() const override;
@@ -89,7 +113,7 @@ namespace ui {
 
             See the extra documentation for more details.  
          */
-        void parseTPPSequence(OSCSequence & seq);
+        void parseTppSequence(tpp::Sequence & seq);
 
         /** Parses font size specifiers (double width, double height DEC modes) (ESC # x)
          */
@@ -224,7 +248,10 @@ namespace ui {
         State alternateState_;
 
         /* The palette used for the terminal. */
-        Palette const * palette_;        
+        Palette const * palette_;  
+
+        std::unordered_map<std::string, RemoteFile *> remoteFilesMap_;      
+        std::vector<RemoteFile *> remoteFiles_;
 
         std::string const * GetSequenceForKey(Key key) {
             auto i = KeyMap_.find(key);
@@ -236,7 +263,7 @@ namespace ui {
 
         static std::unordered_map<Key, std::string> KeyMap_;
 
-    }; // vterm::VT100
+    }; // ui::terminalpp
 
     /** Palette
      */
@@ -328,11 +355,11 @@ namespace ui {
             finalByte_{0} {
         }
 
-        bool isValid() const {
+        bool valid() const {
             return firstByte_ != INVALID;
         }
 
-        bool isComplete() const {
+        bool complete() const {
             return firstByte_ != INCOMPLETE;
         }
 
@@ -406,9 +433,9 @@ namespace ui {
         }
 
         friend std::ostream & operator << (std::ostream & s, CSISequence const & seq) {
-            if (!seq.isValid()) {
+            if (!seq.valid()) {
                 s << "Invalid CSI Sequence";
-            } else if (!seq.isComplete()) {
+            } else if (!seq.complete()) {
                 s << "Incomplete CSI Sequence";
             } else {
                 s << "\x1b[";
@@ -432,21 +459,8 @@ namespace ui {
     class TerminalPP::OSCSequence {
     public:
 
-        /** Default OSC commands supported by other terminals. 
-         */
-        static constexpr char OSC = 0;
-
-        /** The t++ specific commands. 
-         */
-        static constexpr char TPP = '+';
-
         OSCSequence():
-            kind_{OSC},
             num_{INVALID} {
-        }
-
-        char kind() const {
-            return kind_;
         }
 
         int num() const {
@@ -457,11 +471,11 @@ namespace ui {
             return value_;
         }
 
-        bool isValid() const {
+        bool valid() const {
             return num_ != INVALID;
         }
 
-        bool isComplete() const {
+        bool complete() const {
             return num_ != INCOMPLETE;
         }
 
@@ -471,8 +485,6 @@ namespace ui {
 
     private:
 
-        char kind_;
-
         int num_;
         std::string value_;
 
@@ -480,15 +492,12 @@ namespace ui {
         static constexpr int INCOMPLETE = -2;
 
         friend std::ostream & operator << (std::ostream & s, OSCSequence const & seq) {
-            if (!seq.isValid()) 
-                s << "Invalid CSI Sequence";
-            else if (!seq.isComplete()) 
-                s << "Incomplete CSI Sequence";
+            if (!seq.valid()) 
+                s << "Invalid OSC Sequence";
+            else if (!seq.complete()) 
+                s << "Incomplete OSC Sequence";
             else 
-                if (seq.kind() == OSC)
-                    s << "\x1b]" << seq.num() << ';' << seq.value();
-                else
-                    s << "\x1b]" << seq.kind() << seq.num() << ';' << seq.value();
+                s << "\x1b]" << seq.num() << ';' << seq.value();
             return s;
         }
 

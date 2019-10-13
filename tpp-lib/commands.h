@@ -3,19 +3,33 @@
 #include <iostream>
 #include <string>
 
+#include "sequence.h"
+#include "encoder.h"
+
+/* TODO eventually I want to have an abstraction over the input/output stuff here which for now is assumed to be stdin/stdout. 
+ */
+
 namespace tpp {
 
 
 
-    /** Describes the capabilities of attached terminal. 
-     */
-    class Capabilities {
-    public:
-        
 
-    };
+#if (defined ARCH_LINUX)
 
-    Capabilities GetCapabilities(std::ostream & out = std::cout, std::istream & in = std::cin);
+    response::Capabilities GetCapabilities(size_t timeout = 100);
+
+    int NewFile(std::string const & filename, size_t size, size_t timeout = 100);
+
+    void Send(int fileId, char const * data, size_t numBytes, Encoder & encoder);
+
+    inline void Send(int fileId, char const * data, size_t numBytes) {
+        Encoder enc;
+        Send(fileId, data, numBytes, enc);
+    }
+
+    void Open(int fileId);
+    
+#endif
 
 
 

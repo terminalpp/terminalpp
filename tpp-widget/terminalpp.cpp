@@ -5,8 +5,6 @@
 
 #include "terminalpp.h"
 
-#include "tpp-lib/sequences.h"
-
 namespace ui {
 
     namespace {
@@ -290,7 +288,7 @@ namespace ui {
 		else
 			result.firstByte_ = INVALID;
         // log the sequence if invalid
-        if (! result.isValid())
+        if (! result.valid())
 			LOG(SEQ_UNKNOWN) << "Unknown, possibly invalid CSI sequence: \x1b" << std::string(start - 1 , x - start + 1);
         start = x;
         return result;
@@ -305,15 +303,7 @@ namespace ui {
             result.num_ = INCOMPLETE;
             return result;
         }
-        // check the kind first
-        if (*x == TPP) {
-            result.kind_ = TPP;
-            if (++x == end) {
-                result.num_ = INCOMPLETE;
-                return result;
-            }
-        }
-        // now parse the number
+        // parse the number
         if (helpers::IsDecimalDigit(*x)) {
             int arg = 0;
             do {
@@ -321,9 +311,9 @@ namespace ui {
             } while (x != end && helpers::IsDecimalDigit(*x));
             // if there is no semicolon, keep the INVALID in the number, but continue parsing to BEL or ST
             if (x != end && *x == ';') {
-                ++x;
-                result.num_ = arg;
-            }
+                    ++x;
+                    result.num_ = arg;
+            } 
         }
         // parse the value, which is terminated by either BEL, or ST, which is ESC followed by backslash
         char * valueStart = x;
@@ -349,6 +339,13 @@ namespace ui {
         return result;
     }
 
+    // TerminalPP::RemoteFile
+
+    TerminalPP::RemoteFile::RemoteFile(std::string const & localPath, size_t size):
+        localPath(localPath),
+        size(size) {
+    }
+
     // TerminalPP
 
     std::unordered_map<Key, std::string> TerminalPP::KeyMap_(InitializeVT100KeyMap());
@@ -367,7 +364,7 @@ namespace ui {
         alternateBufferMode_{false},
         alternateBuffer_{width, height},
         alternateState_{width, height, palette->defaultForeground(), palette->defaultBackground()},
-        palette_(palette) {
+        palette_{palette} {
     }
 
     Color TerminalPP::defaultForeground() const {
@@ -623,10 +620,10 @@ namespace ui {
             case '[': {
                 CSISequence seq{CSISequence::Parse(x, bufferEnd)};
                 // if the sequence is not valid, it has been reported already and we should just exit
-                if (!seq.isValid())
+                if (!seq.valid())
                     break;
                 // if the sequence is not complete, return false and do not advance the buffer
-                if (!seq.isComplete())
+                if (!seq.complete())
                     return false;
                 // otherwise parse the CSI sequence
                 parseCSISequence(seq);
@@ -634,24 +631,23 @@ namespace ui {
             }
 			/* Operating system command. */
 			case ']': {
-                OSCSequence seq{OSCSequence::Parse(x, bufferEnd)};
-                // if the sequence is not valid, it has been reported already and we should just exit
-                if (!seq.isValid())
-                    break;
-                // if the sequence is not complete, return false and do not advance the buffer
-                if (!seq.isComplete())
-                    return false;
-                // otherwise parse the OSC sequence
-                switch (seq.kind()) {
-                    case OSCSequence::OSC:
-                        parseOSCSequence(seq);
+                if (x != bufferEnd && *x == '+') {
+                    ++x;
+                    tpp::Sequence seq(tpp::Sequence::Parse(x, bufferEnd));
+                    if (!seq.valid())
                         break;
-                    case OSCSequence::TPP:
-                        parseTPPSequence(seq);
+                    if (!seq.complete())
+                        return false;
+                    parseTppSequence(seq);
+                } else {
+                    OSCSequence seq{OSCSequence::Parse(x, bufferEnd)};
+                    // if the sequence is not valid, it has been reported already and we should just exit
+                    if (!seq.valid())
                         break;
-                    default:
-                        LOG(SEQ_UNKNOWN) << "Unknown OSC sequence kind detected " << seq;
-                        break;
+                    // if the sequence is not complete, return false and do not advance the buffer
+                    if (!seq.complete())
+                        return false;
+                    parseOSCSequence(seq);
                 }
 				break;
             }
@@ -1302,7 +1298,6 @@ namespace ui {
     }
 
     void TerminalPP::parseOSCSequence(OSCSequence & seq) {
-        ASSERT(seq.kind() == OSCSequence::OSC);
         switch (seq.num()) {
             /* OSC 0 - change the terminal title.
              */
@@ -1329,19 +1324,25 @@ namespace ui {
         }
     }
 
-    void TerminalPP::parseTPPSequence(OSCSequence & seq) {
-        ASSERT(seq.kind() == OSCSequence::TPP);
-        switch (seq.num()) {
+    void TerminalPP::parseTppSequence(tpp::Sequence & seq) {
+        switch (seq.id()) {
             /* Returns the terminal capabilities.
 
                For now only returns version 1. In the future this should be parametrized by various capabilities that may or may not be implemented. 
              */
-            case tpp::OSCSequence::Capabilities:
+            case tpp::Sequence::Capabilities:
                 LOG(SEQ) << "t++ terminal capabilities request";
                 send("\033]+0;0\007");
                 break;
-            case tpp::OSCSequence::Send:
-            case tpp::OSCSequence::Open:
+            case tpp::Sequence::NewFile:
+                LOG(SEQ) << "t++ new file request";
+                break;
+            case tpp::Sequence::Send:
+                LOG(SEQ) << "t++ send request";
+                break;
+            case tpp::Sequence::Open:
+                LOG(SEQ) << "t++ file open request";
+                break;
             default:
         		LOG(SEQ_UNKNOWN) << "Invalid t++ sequence: " << seq;
         }

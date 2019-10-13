@@ -11,12 +11,9 @@ namespace tpp {
     
     class Encoder {
     public:
-        Encoder(std::string const & prefix):
-            prefixSize_(prefix.size()),
-            buffer_(prefix.begin(), prefix.end()) {
-        }
+        Encoder() = default;
 
-        void encode(char * data, size_t length) {
+        void encode(char const * data, size_t length) {
             clear();
             while (length-- > 0) {
                 switch (*data) {
@@ -47,12 +44,11 @@ namespace tpp {
         }
 
         void clear() {
-            buffer_.resize(prefixSize_);
+            buffer_.clear();
         }
 
     protected:
 
-        size_t prefixSize_;
         std::vector<char> buffer_;
 
     }; // tpp::Encoder

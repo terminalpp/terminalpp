@@ -13,13 +13,12 @@ The following is very short description of the versions planned and their main n
 ### v0.5
 
 - session palette can be customized in `settings.json`
+
 - borders should be thin, thick, full
 - support for opening remote files by extra escape sequences (basic)
+- comment the new remote files code well
 - ideally snap store will be vetted by this time
 - Windows Store version as well
-
-? - how to structure the projects properly (vterm, t++ client lib, etc)
-? - who should deal with the extra sequences? do I event want to keep vt100 around, should it be vterm? or is it really a t++? 
 
 ### v0.6
 
