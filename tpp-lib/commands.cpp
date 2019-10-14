@@ -6,6 +6,7 @@
 #include <thread>
 
 #include "helpers/helpers.h"
+#include "helpers/filesystem.h"
 
 #include "raw_mode.h"
 #include "sequence.h"
@@ -29,9 +30,13 @@ namespace tpp {
         return response::Capabilities(Sequence::WaitAndRead(STDIN_FILENO, timeout));
     }
 
-    int NewFile(std::string const & filename, size_t size, size_t timeout) {
+    int NewFile(std::string const & path, size_t size, size_t timeout) {
         {
-            std::string x(STR(TPP_ESCAPE << Sequence::NewFile << ";" << size << ";" << filename << TPP_END));
+            std::string x(STR(TPP_ESCAPE << Sequence::NewFile << ";" 
+                << size << ";" 
+                << helpers::GetHostname() << ";"
+                << helpers::GetFilename(path) << ";"
+                << path << TPP_END));
             ::write(STDOUT_FILENO, x.c_str(), x.size());
         }
         response::NewFile x{Sequence::WaitAndRead(STDIN_FILENO, timeout)};
@@ -39,15 +44,15 @@ namespace tpp {
     }
 
     void Send(int fileId, char const * data, size_t numBytes, Encoder & enc) {
-        std::string x(STR(TPP_ESCAPE << Sequence::Send << ";" << fileId));
+        std::string x(STR(TPP_ESCAPE << Sequence::Send << ";" << fileId << ";"));
         ::write(STDOUT_FILENO, x.c_str(), x.size());
         enc.encode(data, numBytes);
         enc.append(helpers::Char::BEL);
         ::write(STDOUT_FILENO, enc.buffer(), enc.size());
     }
 
-    void Open(int fileId) {
-        std::string x(STR(TPP_ESCAPE << Sequence::Open << ";" << fileId << TPP_END));
+    void OpenFile(int fileId) {
+        std::string x(STR(TPP_ESCAPE << Sequence::OpenFile << ";" << fileId << TPP_END));
         ::write(STDOUT_FILENO, x.c_str(), x.size());
     }
 #endif

@@ -2,6 +2,7 @@
 #include "helpers/log.h"
 
 #include "ui/key.h"
+#include "tpp-lib/encoder.h"
 
 #include "terminalpp.h"
 
@@ -341,9 +342,38 @@ namespace ui {
 
     // TerminalPP::RemoteFile
 
-    TerminalPP::RemoteFile::RemoteFile(std::string const & localPath, size_t size):
-        localPath(localPath),
-        size(size) {
+    TerminalPP::RemoteFile::RemoteFile(int id, std::string const & localFolder, tpp::request::NewFile const & req):
+        id_(id),
+        size_(req.size()) {
+        size_t lastPeriod = req.filename().rfind('.');
+        if (lastPeriod == std::string::npos)
+            lastPeriod = req.filename().size();
+        std::string filename = req.filename().substr(0, lastPeriod);
+        std::string extension = (lastPeriod + 1 < req.filename().size()) ? req.filename().substr(lastPeriod + 1) : "";
+        // determine the local path 
+        localPath_ = helpers::JoinPath(localFolder, req.hostname() + "-" + filename + "." + extension);
+        int i = 0;
+        while (true) {
+            if (! helpers::PathExists(localPath_))
+                break;
+            ++i;
+            localPath_ = helpers::JoinPath(localFolder, STR(req.hostname() << "-" << filename << "(" << i << ")." << extension));
+        }
+        reset(req.size());
+    }
+
+    void TerminalPP::RemoteFile::appendData(tpp::request::Send const & req) {
+        char const * x = req.data();
+        char const * e = x + req.size();
+        while (x < e) {
+            writer_ << tpp::Encoder::Decode(x);
+            ++written_;
+        }
+        ASSERT(x == e) << "Invalid input data";
+        if (written_ == size_) {
+            writer_.flush();
+            writer_.close();
+        }
     }
 
     // TerminalPP
@@ -364,7 +394,8 @@ namespace ui {
         alternateBufferMode_{false},
         alternateBuffer_{width, height},
         alternateState_{width, height, palette->defaultForeground(), palette->defaultBackground()},
-        palette_{palette} {
+        palette_{palette},
+        remoteFilesFolder_{"c:\\delete"} {
     }
 
     Color TerminalPP::defaultForeground() const {
@@ -638,7 +669,7 @@ namespace ui {
                         break;
                     if (!seq.complete())
                         return false;
-                    parseTppSequence(seq);
+                    parseTppSequence(std::move(seq));
                 } else {
                     OSCSequence seq{OSCSequence::Parse(x, bufferEnd)};
                     // if the sequence is not valid, it has been reported already and we should just exit
@@ -1324,7 +1355,7 @@ namespace ui {
         }
     }
 
-    void TerminalPP::parseTppSequence(tpp::Sequence & seq) {
+    void TerminalPP::parseTppSequence(tpp::Sequence && seq) {
         switch (seq.id()) {
             /* Returns the terminal capabilities.
 
@@ -1334,18 +1365,65 @@ namespace ui {
                 LOG(SEQ) << "t++ terminal capabilities request";
                 send("\033]+0;0\007");
                 break;
-            case tpp::Sequence::NewFile:
+            case tpp::Sequence::NewFile: {
                 LOG(SEQ) << "t++ new file request";
+                int fileId = tppNewFile(tpp::request::NewFile{std::move(seq)});
+                send(STR("\033]+" << tpp::Sequence::NewFile << ';' << fileId << helpers::Char::BEL));
                 break;
-            case tpp::Sequence::Send:
+            }
+            case tpp::Sequence::Send: {
                 LOG(SEQ) << "t++ send request";
+                tpp::request::Send req{std::move(seq)};
+                if (req.valid() && static_cast<size_t>(req.fileId()) < remoteFiles_.size()) {
+                    RemoteFile * rf = remoteFiles_[req.fileId()];
+                    if (rf->available()) 
+                        LOG(SEQ_UNKNOWN) << "t++ send data to file that is already available";
+                    else
+                        rf->appendData(req);
+                }
                 break;
-            case tpp::Sequence::Open:
+            }
+            case tpp::Sequence::OpenFile: {
                 LOG(SEQ) << "t++ file open request";
+                tpp::request::OpenFile req{std::move(seq)};
+                if (req.valid() && static_cast<size_t>(req.fileId()) < remoteFiles_.size()) {
+                    RemoteFile * rf = remoteFiles_[req.fileId()];
+                    if (! rf->available()) {
+                        LOG(SEQ_UNKNOWN) << "t++ OpenFile id " << req.fileId() << " not available";
+                    } else {
+                        // TODO OpenFile event
+                    }
+                } else {
+                    LOG(SEQ_UNKNOWN) << "t++ OpenFile request for non-existent file id " << req.fileId();
+                }
                 break;
+            }
             default:
         		LOG(SEQ_UNKNOWN) << "Invalid t++ sequence: " << seq;
         }
+    }
+
+    int TerminalPP::tppNewFile(tpp::request::NewFile const & req) {
+        if (! req.valid())
+            return -1;
+        std::string fullName(req.hostname() + ";" + req.remotePath());
+        // determine if the file already exists
+        auto i = remoteFilesMap_.find(fullName);
+        if (i != remoteFilesMap_.end()) {
+            i->second->reset(req.size());
+        // or if new file has to be created
+        } else {
+            // if the remote files is empty, create new temporary directory
+            if (remoteFilesFolder_.empty()) {
+                helpers::TemporaryFolder tf("tpp-",false);
+                remoteFilesFolder_ = tf.path();
+            }
+            // create the remote file within the folder
+            RemoteFile * rf = new RemoteFile(static_cast<int>(remoteFiles_.size()), remoteFilesFolder_, req);
+            remoteFiles_.push_back(rf);
+            i = remoteFilesMap_.insert(std::make_pair(fullName, rf)).first;
+        }
+        return i->second->id();
     }
 
     void TerminalPP::parseFontSizeSpecifier(char kind) {

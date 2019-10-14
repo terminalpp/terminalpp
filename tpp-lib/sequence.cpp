@@ -29,6 +29,9 @@ namespace tpp {
             do {
                 id = id * 10 + helpers::DecCharToNumber(*x++);
             } while (x != end && helpers::IsDecimalDigit(*x));
+            // skip the ';' after the id if present
+            if (x != end && *x == ';')
+                ++x;
             result.id_ = id;
         }
         // read the contents
@@ -142,13 +145,44 @@ namespace tpp {
             size_{0} {
             if (id() == Sequence::NewFile) {
                 std::vector<std::string> parts = helpers::Split(payload(), ";");
-                if (parts.size() >= 2) {
+                if (parts.size() >= 4) {
                     try {
                         size_ = std::stoul(parts[0]);
-                        filename_ = parts[1];
+                        hostname_ = parts[1];
+                        filename_ = parts[2];
+                        remotePath_ = parts[3];
                     } catch (...) {
                         // do nothing
                     }
+                }
+            }
+        }
+
+        Send::Send(Sequence && from):
+            Sequence(std::move(from)),
+            fileId_{-1},
+            data_{nullptr},
+            size_{0} {
+            if (id() == Sequence::Send) {
+                size_t dataStart = payload().find(';');
+                try {
+                    fileId_ = std::stoi(payload().substr(0, dataStart));
+                    data_ = payload().c_str() + dataStart + 1;
+                    size_ = payload().size() - dataStart - 1;
+                } catch (...) {
+                    // do nothing
+                }
+            }
+        }
+
+        OpenFile::OpenFile(Sequence && from):
+            Sequence(std::move(from)),
+            fileId_(-1) {
+            if (id() == Sequence::OpenFile) {
+                try {
+                    fileId_ = std::stoi(payload());
+                } catch (...) {
+                    // do nothing
                 }
             }
         }

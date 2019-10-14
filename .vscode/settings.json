@@ -61,6 +61,9 @@
         "xtree": "cpp",
         "filesystem": "cpp",
         "locale": "cpp",
-        "xlocmes": "cpp"
+        "xlocmes": "cpp",
+        "codecvt": "cpp",
+        "map": "cpp",
+        "xlocbuf": "cpp"
     }
 }

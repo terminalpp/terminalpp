@@ -18,7 +18,7 @@ namespace tpp {
 
     response::Capabilities GetCapabilities(size_t timeout = 100);
 
-    int NewFile(std::string const & filename, size_t size, size_t timeout = 100);
+    int NewFile(std::string const & path, size_t size, size_t timeout = 100);
 
     void Send(int fileId, char const * data, size_t numBytes, Encoder & encoder);
 
@@ -27,7 +27,7 @@ namespace tpp {
         Send(fileId, data, numBytes, enc);
     }
 
-    void Open(int fileId);
+    void OpenFile(int fileId);
     
 #endif
 

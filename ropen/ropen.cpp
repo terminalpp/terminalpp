@@ -22,7 +22,7 @@ int TransferFile(std::string const & filename, size_t messageLength) {
     f.seekg(0, std::ios_base::end);
     size_t numBytes = f.tellg();
     f.seekg(0, std::ios_base::beg);
-    std::cout << "Transferring file " << filename << ", " << numBytes << " bytes" << std::endl;
+    std::cout << "Transferring file " << filename << ", " << numBytes << " bytes\r\n";
 
     // obtain the file descriptor
     int fileId = tpp::NewFile(filename, numBytes);
@@ -43,7 +43,7 @@ int TransferFile(std::string const & filename, size_t messageLength) {
     }
 
     // instruct the terminal to open the given file descriptor
-    tpp::Open(fileId);
+    tpp::OpenFile(fileId);
 
     return EXIT_SUCCESS;
 }

@@ -3,6 +3,7 @@
 #include <fileapi.h>
 #include <ShlObj_core.h>
 #else
+#include <limits.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -18,11 +19,31 @@
 
     Adds extra filesystem routines such as creation of unique folders, temporary folder, etc. and wraps around the std::filesystem with UTF8 strings instead of the platform specific paths, which are used under the hood. 
  
+    To include thsi header, the the `stdc++fs` library must be included, such as typing the following in CMakeLists:
+
+    target_link_libraries(PROJECT stdc++fs)    
+
  */
 
 namespace helpers {
 
-    inline std::string GetFilenameFromPath(std::string const & path) {
+    /** Returns the hostname of the current computer. 
+     */
+    inline std::string GetHostname() {
+#if (defined ARCH_WINDOWS)
+        TCHAR buffer[MAX_COMPUTERNAME_LENGTH + 1];
+        DWORD bufSize = MAX_COMPUTERNAME_LENGTH + 1;
+        OSCHECK(GetComputerName(buffer, &bufSize));
+        buffer[bufSize] = 0;
+        return UTF16toUTF8(buffer);
+#else
+        char buffer[HOST_NAME_MAX];
+        gethostname(buffer, HOST_NAME_MAX);
+        return std::string(buffer);
+#endif
+    }
+
+    inline std::string GetFilename(std::string const & path) {
 #if (defined ARCH_WINDOWS)
         std::filesystem::path p(UTF8toUTF16(path));
         return p.filename().u8string();
@@ -30,6 +51,27 @@ namespace helpers {
         std::filesystem::path p(path);
         return p.filename();
 #endif
+    }
+
+    inline std::string JoinPath(std::string const & first, std::string const & second) {
+#if (defined ARCH_WINDOWS)
+        std::filesystem::path p(UTF8toUTF16(first));
+        p.append(UTF8toUTF16(second));
+        return p.u8string();
+#else
+        std::filesystem::path p(first);
+        p.append(second);
+        return p.u8string();
+#endif
+    }
+
+    inline bool PathExists(std::string const path) {
+#if (defined ARCH_WINDOWS)
+        std::filesystem::path p(UTF8toUTF16(path));
+#else
+        std::filesystem::path p(path);
+#endif
+        return std::filesystem::exists(p);
     }
 
     /** Returns the directory in which local application settings should be stored on given platform. 

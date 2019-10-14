@@ -36,21 +36,42 @@ namespace ui {
          */
         class RemoteFile {
         public:
-            std::string const localPath;
-            size_t const size;
-
             /** Creates remote file for given path. 
              */
-            RemoteFile(std::string const & remotePath, size_t size);
+            RemoteFile(int id, std::string const & localFolder, tpp::request::NewFile const & req);
 
-        private:
-            std::ifstream writer_;
-
-            static helpers::TemporaryFolder & TempDir() {
-                helpers::TemporaryFolder tmp;
-                return tmp;
+            int id() const {
+                return id_;
             }
 
+            std::string const & localPath() const {
+                return localPath_;
+            }
+
+            size_t size() const {
+                return size_;
+            }
+
+            bool available() const {
+                return size_ > 0 && written_ == size_;
+            }
+
+            void reset(size_t size) {
+                size_ = size;
+                written_ = 0;
+                writer_ = std::ofstream(localPath_, std::ios::binary);
+                ASSERT(writer_.good());
+            }
+
+            void appendData(tpp::request::Send const & req);
+
+
+        private:
+            int id_;
+            std::string localPath_;
+            size_t size_;
+            std::ofstream writer_;
+            size_t written_;
         }; // terminalpp::RemoteFile
 
         Color defaultForeground() const override;
@@ -113,7 +134,11 @@ namespace ui {
 
             See the extra documentation for more details.  
          */
-        void parseTppSequence(tpp::Sequence & seq);
+        void parseTppSequence(tpp::Sequence && seq);
+
+        /** Checks if the requested file already exists and updates it, otherwise creates new local file. 
+         */
+        int tppNewFile(tpp::request::NewFile const & req);
 
         /** Parses font size specifiers (double width, double height DEC modes) (ESC # x)
          */
@@ -252,6 +277,10 @@ namespace ui {
 
         std::unordered_map<std::string, RemoteFile *> remoteFilesMap_;      
         std::vector<RemoteFile *> remoteFiles_;
+
+        /** Folder where the remote files are to be stored locally. 
+         */
+        std::string remoteFilesFolder_;
 
         std::string const * GetSequenceForKey(Key key) {
             auto i = KeyMap_.find(key);

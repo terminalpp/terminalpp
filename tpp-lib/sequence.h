@@ -21,7 +21,7 @@ namespace tpp {
         static constexpr int Capabilities = 0;
         static constexpr int NewFile = 1;
         static constexpr int Send = 2;
-        static constexpr int Open = 3;
+        static constexpr int OpenFile = 3;
 
         bool complete() const {
             return id_ >= 0;
@@ -76,17 +76,75 @@ namespace tpp {
         public:
             NewFile(Sequence &&);
 
+            bool valid() const {
+                return size_ > 0;
+            }
+
             size_t size() const {
                 return size_;
+            }
+
+            std::string const & hostname() const {
+                return hostname_;
             }
 
             std::string const & filename() const {
                 return filename_; 
             }
 
+            std::string const & remotePath() const {
+                return remotePath_;
+            }
+
         private:
             size_t size_;
             std::string filename_;
+            std::string hostname_;
+            std::string remotePath_;
+        }; 
+
+        class Send : public Sequence {
+        public:
+            Send(Sequence && seq);
+
+            bool valid() const {
+                return fileId_ != -1;
+            }
+
+            int fileId() const {
+                return fileId_;
+            }
+
+            /** Raw encoded data. 
+             */
+            char const * data() const {
+                return data_;
+            }
+
+            size_t size() const {
+                return size_;
+            }
+
+        private:
+            int fileId_;
+            char const * data_;
+            size_t size_;
+        };
+
+        class OpenFile : public Sequence {
+        public:
+            OpenFile(Sequence && seq);
+
+            bool valid() const {
+                return fileId_ >= 0;
+            }
+
+            int fileId() const {
+                return fileId_;
+            }
+
+        private:
+            int fileId_;
         }; 
 
     } // tpp::request

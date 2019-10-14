@@ -47,6 +47,16 @@ namespace tpp {
             buffer_.clear();
         }
 
+        static char Decode(char const * & buffer) {
+            if (*buffer != '`') {
+                return *(buffer++);
+            } else {
+                char result = static_cast<char>(helpers::ParseHexNumber(buffer + 1, 2));
+                buffer += 3;
+                return result;                
+            }
+        }
+
     protected:
 
         std::vector<char> buffer_;
