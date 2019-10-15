@@ -9,6 +9,57 @@
 
 namespace ui {
 
+    class NewRemoteFile {
+    public:
+        std::string const & hostname;
+        std::string const & filename;
+        std::string const & remotePath;
+        size_t const size;
+        int fileId;
+    protected:
+        friend class TerminalPP;
+
+        NewRemoteFile(std::string const & hostname, std::string const & filename, std::string const & remotePath, size_t size):
+            hostname(hostname),
+            filename(filename),
+            remotePath(remotePath),
+            size(size),
+            fileId(-1) {
+        }
+    };
+
+    typedef helpers::EventPayload<NewRemoteFile, Widget> NewRemoteFileEvent;
+
+    class RemoteData {
+    public:
+        int const fileId;
+        char const * const data;
+        size_t const size;
+    protected:
+        friend class TerminalPP;
+        RemoteData(int fileId, char const * data, size_t size):
+            fileId(fileId),
+            data(data),
+            size(size) {
+        }
+    };
+
+    typedef helpers::EventPayload<RemoteData, Widget> RemoteDataEvent;
+
+    class OpenRemoteFile {
+    public:
+        int const fileId;
+
+    protected:
+        friend class TerminalPP;
+
+        OpenRemoteFile(int fileId):
+            fileId(fileId) {
+        }
+    };
+
+    typedef helpers::EventPayload<OpenRemoteFile, Widget> OpenRemoteFileEvent;
+
 
     /** Terminal understanding the ANSI escape sequences. 
      
@@ -23,58 +74,19 @@ namespace ui {
 
 		static constexpr char const* const SEQ = "VT100";
 		static constexpr char const* const SEQ_UNKNOWN = "VT100_UNKNOWN";
+		static constexpr char const* const SEQ_ERROR = "VT100_ERROR";
 		static constexpr char const* const SEQ_WONT_SUPPORT = "VT100_WONT_SUPPORT";
 
         TerminalPP(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
 
-        helpers::Event<StringEvent> onRemoteFileOpen;
+        helpers::Event<NewRemoteFileEvent> onNewRemoteFile;
+        helpers::Event<RemoteDataEvent> onRemoteData;
+        helpers::Event<OpenRemoteFileEvent> onOpenRemoteFile;
 
     protected:
         class CSISequence;
 
         class OSCSequence;
-
-        /** Describes a locally stored remote file. 
-         */
-        class RemoteFile {
-        public:
-            /** Creates remote file for given path. 
-             */
-            RemoteFile(int id, std::string const & localFolder, tpp::request::NewFile const & req);
-
-            int id() const {
-                return id_;
-            }
-
-            std::string const & localPath() const {
-                return localPath_;
-            }
-
-            size_t size() const {
-                return size_;
-            }
-
-            bool available() const {
-                return size_ > 0 && written_ == size_;
-            }
-
-            void reset(size_t size) {
-                size_ = size;
-                written_ = 0;
-                writer_ = std::ofstream(localPath_, std::ios::binary);
-                ASSERT(writer_.good());
-            }
-
-            void appendData(tpp::request::Send const & req);
-
-
-        private:
-            int id_;
-            std::string localPath_;
-            size_t size_;
-            std::ofstream writer_;
-            size_t written_;
-        }; // terminalpp::RemoteFile
 
         Color defaultForeground() const override;
         Color defaultBackground() const override;
@@ -137,10 +149,6 @@ namespace ui {
             See the extra documentation for more details.  
          */
         void parseTppSequence(tpp::Sequence && seq);
-
-        /** Checks if the requested file already exists and updates it, otherwise creates new local file. 
-         */
-        int tppNewFile(tpp::request::NewFile const & req);
 
         /** Parses font size specifiers (double width, double height DEC modes) (ESC # x)
          */
@@ -277,13 +285,6 @@ namespace ui {
         /* The palette used for the terminal. */
         Palette const * palette_;  
 
-        std::unordered_map<std::string, RemoteFile *> remoteFilesMap_;      
-        std::vector<RemoteFile *> remoteFiles_;
-
-        /** Folder where the remote files are to be stored locally. 
-         */
-        std::string remoteFilesFolder_;
-
         std::string const * GetSequenceForKey(Key key) {
             auto i = KeyMap_.find(key);
             if (i == KeyMap_.end())
@@ -373,7 +374,9 @@ namespace ui {
 
     }; // TerminalPP::Palette
 
-    EVENT_BUILDER(OnRemoteFileOpen, StringEvent, onRemoteFileOpen, TerminalPP);
+    EVENT_BUILDER(OnNewRemoteFile, NewRemoteFileEvent, onNewRemoteFile, TerminalPP);
+    EVENT_BUILDER(OnRemoteData, RemoteDataEvent, onRemoteData, TerminalPP);
+    EVENT_BUILDER(OnOpenRemoteFile, OpenRemoteFileEvent, onOpenRemoteFile, TerminalPP);
 
     /** Desrcibes parsed CSI sequence.
 

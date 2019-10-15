@@ -76,6 +76,13 @@ namespace tpp {
             /* Specifies the index of the default background color in the palette.
              */
             "defaultBackground" : 0
+        },
+        /* Settings for opening remote files from the terminal locally. 
+         */
+        "remoteFiles" : {
+            /* Directory to which the remote files should be downloaded. If empty, temporary directory will be used. 
+             */
+            "dir" : ""
         }
     }
 }

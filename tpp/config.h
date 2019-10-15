@@ -81,6 +81,10 @@ namespace tpp {
 			return get({"session", "historyLimit"});
 		}
 
+		std::string const & sessionRemoteFilesDir() const {
+			return get({"session", "remoteFiles", "dir"});
+		}
+
 		ui::TerminalPP::Palette sessionPalette() const {
 			ui::TerminalPP::Palette result{ui::TerminalPP::Palette::XTerm256()};
 			result.setDefaultForegroundIndex(get({"session","palette", "defaultForeground"}).toUnsigned());

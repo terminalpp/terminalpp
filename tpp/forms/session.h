@@ -7,6 +7,7 @@
 #include "tpp-widget/terminalpp.h"
 
 #include "../config.h"
+#include "../remote_files.h"
 
 #include "about_box.h"
 
@@ -37,7 +38,9 @@ namespace tpp {
                     << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
                     << OnNotification(CreateHandler<VoidEvent, Session, &Session::terminalNotification>(this))
                     << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
-                    << OnRemoteFileOpen(CreateHandler<StringEvent, Session, &Session::terminalRemoteFileOpen>(this))
+                    << OnNewRemoteFile(CreateHandler<NewRemoteFileEvent, Session, &Session::newRemoteFile>(this))
+                    << OnRemoteData(CreateHandler<RemoteDataEvent, Session, &Session::remoteData>(this))
+                    << OnOpenRemoteFile(CreateHandler<OpenRemoteFileEvent, Session, &Session::openRemoteFile>(this))
                     //<< OnLineScrolledOut(CreateHandler<LineScrollEvent, Session, &Session::lineScrolledOut>(this))
                 )
                 << (Create(about_ = new AboutBox())
@@ -64,8 +67,22 @@ namespace tpp {
             setTitle(*e);
         }
 
-        void terminalRemoteFileOpen(ui::StringEvent & e) {
-            Application::Open(*e);
+        void newRemoteFile(ui::NewRemoteFileEvent & e) {
+            RemoteFile * f = remoteFiles_.newFile(e->hostname, e->filename, e->remotePath, e->size);
+            e->fileId = f->id();
+        }
+
+        void remoteData(ui::RemoteDataEvent & e) {
+            RemoteFile * f = remoteFiles_.get(e->fileId);
+            f->appendData(e->data, e->size);
+        }
+
+        /** Opens the remote file which has been copied to the given local path.
+         */
+        void openRemoteFile(ui::OpenRemoteFileEvent & e) {
+            RemoteFile * f = remoteFiles_.get(e->fileId);
+            ASSERT(f->available());
+            Application::Open(f->localPath());
         }
 
         void terminalNotification(ui::VoidEvent & e) {
@@ -120,6 +137,8 @@ namespace tpp {
         std::ofstream logFile_;
 
         bool closeOnKeyDown_;
+
+        RemoteFiles remoteFiles_;
 
     }; // tpp::Session
 

@@ -340,42 +340,6 @@ namespace ui {
         return result;
     }
 
-    // TerminalPP::RemoteFile
-
-    TerminalPP::RemoteFile::RemoteFile(int id, std::string const & localFolder, tpp::request::NewFile const & req):
-        id_(id),
-        size_(req.size()) {
-        size_t lastPeriod = req.filename().rfind('.');
-        if (lastPeriod == std::string::npos)
-            lastPeriod = req.filename().size();
-        std::string filename = req.filename().substr(0, lastPeriod);
-        std::string extension = (lastPeriod + 1 < req.filename().size()) ? req.filename().substr(lastPeriod + 1) : "";
-        // determine the local path 
-        localPath_ = helpers::JoinPath(localFolder, req.hostname() + "-" + filename + "." + extension);
-        int i = 0;
-        while (true) {
-            if (! helpers::PathExists(localPath_))
-                break;
-            ++i;
-            localPath_ = helpers::JoinPath(localFolder, STR(req.hostname() << "-" << filename << "(" << i << ")." << extension));
-        }
-        reset(req.size());
-    }
-
-    void TerminalPP::RemoteFile::appendData(tpp::request::Send const & req) {
-        char const * x = req.data();
-        char const * e = x + req.size();
-        while (x < e) {
-            writer_ << tpp::Encoder::Decode(x);
-            ++written_;
-        }
-        ASSERT(x == e) << "Invalid input data";
-        if (written_ == size_) {
-            writer_.flush();
-            writer_.close();
-        }
-    }
-
     // TerminalPP
 
     std::unordered_map<Key, std::string> TerminalPP::KeyMap_(InitializeVT100KeyMap());
@@ -394,8 +358,7 @@ namespace ui {
         alternateBufferMode_{false},
         alternateBuffer_{width, height},
         alternateState_{width, height, palette->defaultForeground(), palette->defaultBackground()},
-        palette_{palette},
-        remoteFilesFolder_{"c:\\delete"} {
+        palette_{palette} {
     }
 
     Color TerminalPP::defaultForeground() const {
@@ -531,7 +494,13 @@ namespace ui {
                         ++x;
                         // temporarily unlock the buffer as we are triggering the event, which is not high performance code
                         buffer_.unlock();
-                        notify();
+                        try {
+                            notify();
+                        } catch (std::exception const & e) {
+                            LOG(SEQ_ERROR) << e.what();
+                        } catch (...) {
+                            LOG(SEQ_ERROR) << "unknown error";
+                        }
                         buffer_.lock();
                         break;
                     }
@@ -1335,7 +1304,13 @@ namespace ui {
             case 0:
     			LOG(SEQ) << "Title change to " << seq.value();
                 buffer_.unlock();
-                setTitle(seq.value());
+                try {
+                    setTitle(seq.value());
+                } catch (std::exception const & e) {
+                    LOG(SEQ_ERROR) << e.what();
+                } catch (...) {
+                    LOG(SEQ_ERROR) << "unknown error";
+                }
                 buffer_.lock();
                 break;
             /* OSC 52 - set clipboard to given value. 
@@ -1343,7 +1318,13 @@ namespace ui {
             case 52:
                 LOG(SEQ) << "Clipboard set to " << seq.value();
                 buffer_.unlock();
-                setClipboard(seq.value());
+                try {
+                    setClipboard(seq.value());
+                } catch (std::exception const & e) {
+                    LOG(SEQ_ERROR) << e.what();
+                } catch (...) {
+                    LOG(SEQ_ERROR) << "unknown error";
+                }
                 buffer_.lock();
                 break;
             /* OSC 112 - reset cursor color. 
@@ -1367,65 +1348,55 @@ namespace ui {
                 break;
             case tpp::Sequence::NewFile: {
                 LOG(SEQ) << "t++ new file request";
-                int fileId = tppNewFile(tpp::request::NewFile{std::move(seq)});
-                send(STR("\033]+" << tpp::Sequence::NewFile << ';' << fileId << helpers::Char::BEL));
+                tpp::request::NewFile req{std::move(seq)};
+                NewRemoteFile event{req.hostname(), req.filename(), req.remotePath(), req.size()};
+                buffer_.unlock();
+                try {
+                    trigger(onNewRemoteFile, event);
+                } catch (std::exception const & e) {
+                    LOG(SEQ_ERROR) << e.what();
+                } catch (...) {
+                    LOG(SEQ_ERROR) << "unknown error";
+                }
+                buffer_.lock();
+                send(STR("\033]+" << tpp::Sequence::NewFile << ';' << event.fileId << helpers::Char::BEL));
                 break;
             }
             case tpp::Sequence::Send: {
                 LOG(SEQ) << "t++ send request";
                 tpp::request::Send req{std::move(seq)};
-                if (req.valid() && static_cast<size_t>(req.fileId()) < remoteFiles_.size()) {
-                    RemoteFile * rf = remoteFiles_[req.fileId()];
-                    if (rf->available()) 
-                        LOG(SEQ_UNKNOWN) << "t++ send data to file that is already available";
-                    else
-                        rf->appendData(req);
+                if (req.valid()) {
+                    buffer_.unlock();
+                    try {
+                        trigger(onRemoteData, RemoteData{req.fileId(), req.data(), req.size()});
+                    } catch (std::exception const & e) {
+                        LOG(SEQ_ERROR) << e.what();
+                    } catch (...) {
+                        LOG(SEQ_ERROR) << "unknown error";
+                    }
+                    buffer_.lock();
                 }
                 break;
             }
             case tpp::Sequence::OpenFile: {
                 LOG(SEQ) << "t++ file open request";
                 tpp::request::OpenFile req{std::move(seq)};
-                if (req.valid() && static_cast<size_t>(req.fileId()) < remoteFiles_.size()) {
-                    RemoteFile * rf = remoteFiles_[req.fileId()];
-                    if (! rf->available()) {
-                        LOG(SEQ_UNKNOWN) << "t++ OpenFile id " << req.fileId() << " not available";
-                    } else {
-                        buffer_.unlock();
-                        trigger(onRemoteFileOpen, rf->localPath());
-                        buffer_.lock();
+                if (req.valid()) {
+                    buffer_.unlock();
+                    try {
+                        trigger(onOpenRemoteFile, OpenRemoteFile{req.fileId()});
+                    } catch (std::exception const & e) {
+                        LOG(SEQ_ERROR) << e.what();
+                    } catch (...) {
+                        LOG(SEQ_ERROR) << "unknown error";
                     }
-                } else {
-                    LOG(SEQ_UNKNOWN) << "t++ OpenFile request for non-existent file id " << req.fileId();
+                    buffer_.lock();
                 }
                 break;
             }
             default:
         		LOG(SEQ_UNKNOWN) << "Invalid t++ sequence: " << seq;
         }
-    }
-
-    int TerminalPP::tppNewFile(tpp::request::NewFile const & req) {
-        if (! req.valid())
-            return -1;
-        std::string fullName(req.hostname() + ";" + req.remotePath());
-        // determine if the file already exists
-        auto i = remoteFilesMap_.find(fullName);
-        if (i != remoteFilesMap_.end()) {
-            i->second->reset(req.size());
-        // or if new file has to be created
-        } else {
-            // if the remote files is empty, create new temporary directory
-            if (remoteFilesFolder_.empty()) {
-                helpers::TemporaryFolder tf("tpp-",false);
-                remoteFilesFolder_ = tf.path();
-            }
-            // create the remote file within the folder
-            RemoteFile * rf = new RemoteFile(static_cast<int>(remoteFiles_.size()), remoteFilesFolder_, req);
-            remoteFiles_.push_back(rf);
-            i = remoteFilesMap_.insert(std::make_pair(fullName, rf)).first;
-        }
-        return i->second->id();
     }
 
     void TerminalPP::parseFontSizeSpecifier(char kind) {

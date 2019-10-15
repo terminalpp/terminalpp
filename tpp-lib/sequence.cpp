@@ -11,8 +11,7 @@
 
 #include "sequence.h"
 #include "raw_mode.h"
-
-
+#include "encoder.h"
 
 namespace tpp {
 
@@ -169,6 +168,13 @@ namespace tpp {
                     fileId_ = std::stoi(payload().substr(0, dataStart));
                     data_ = payload().c_str() + dataStart + 1;
                     size_ = payload().size() - dataStart - 1;
+                    // and now decode the payload data (we know the decoded size is <= so we can decode in place)
+                    char const * r = data_;
+                    size_t w = dataStart + 1;
+                    char const * e = data_ + size_;
+                    while (r < e) 
+                        payload_[w++] = Encoder::Decode(r);
+                    size_ = w - dataStart - 1;
                 } catch (...) {
                     // do nothing
                 }

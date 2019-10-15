@@ -157,7 +157,7 @@ namespace ui {
 	typedef helpers::EventPayload<MouseWheelPayload, ui::Widget> MouseWheelEvent;
 	typedef helpers::EventPayload<MouseMovePayload, ui::Widget> MouseMoveEvent;
 
-	typedef helpers::EventPayload<std::string, ui::Widget> StringEvent;
+	typedef helpers::EventPayload<std::string const, ui::Widget> StringEvent;
 
 	/** Base class for all UI widgets. 
 
@@ -639,7 +639,16 @@ namespace ui {
 		/** Updated trigger function for events which takes the Widget as base class for event sender.
 		 */
 		template<typename EVENT>
-		void trigger(EVENT& e, typename EVENT::Payload::Payload const& payload) {
+		void trigger(EVENT& e, typename EVENT::Payload::Payload & payload) {
+			static_assert(std::is_same<typename EVENT::Payload::Sender, Widget >::value, "Only events with sender being ui::Widget should be used");
+			typename EVENT::Payload p(this, payload);
+			e.trigger(p);
+		}
+
+		/** Updated trigger function for events which takes the Widget as base class for event sender.
+		 */
+		template<typename EVENT>
+		void trigger(EVENT& e, typename EVENT::Payload::Payload && payload) {
 			static_assert(std::is_same<typename EVENT::Payload::Sender, Widget >::value, "Only events with sender being ui::Widget should be used");
 			typename EVENT::Payload p(this, payload);
 			e.trigger(p);

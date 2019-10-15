@@ -38,7 +38,14 @@ namespace helpers {
 			SFINAE makes sure that this method is used only for events with void payloads.
 		 */
 		template<typename EVENT>
-		void trigger(EVENT & e, typename EVENT::Payload::Payload const & payload) {
+		void trigger(EVENT & e, typename EVENT::Payload::Payload & payload) {
+			static_assert(std::is_same<typename EVENT::Payload::Sender, Object >::value, "Only events with sender being Object should be used");
+			typename EVENT::Payload p(this, payload);
+			e.trigger(p);
+		}
+
+		template<typename EVENT>
+		void trigger(EVENT & e, typename EVENT::Payload::Payload && payload) {
 			static_assert(std::is_same<typename EVENT::Payload::Sender, Object >::value, "Only events with sender being Object should be used");
 			typename EVENT::Payload p(this, payload);
 			e.trigger(p);

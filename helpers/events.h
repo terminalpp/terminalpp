@@ -155,7 +155,7 @@ namespace helpers {
 			return dynamic_cast<T*>(sender_);
 		}
 
-		EventPayload(SENDER * sender, PAYLOAD const & payload) :
+		EventPayload(SENDER * sender, PAYLOAD & payload) :
 			sender_(sender),
 			payload_(payload),
 			doDispatch_(true) {
@@ -182,7 +182,7 @@ namespace helpers {
 	private:
 		friend class Event<EventPayload<PAYLOAD, SENDER>>;
 		SENDER * const sender_;
-		PAYLOAD payload_;
+		PAYLOAD & payload_;
 		bool doDispatch_;
 	};
 
