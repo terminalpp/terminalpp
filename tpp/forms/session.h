@@ -37,6 +37,7 @@ namespace tpp {
                     << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
                     << OnNotification(CreateHandler<VoidEvent, Session, &Session::terminalNotification>(this))
                     << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
+                    << OnRemoteFileOpen(CreateHandler<StringEvent, Session, &Session::terminalRemoteFileOpen>(this))
                     //<< OnLineScrolledOut(CreateHandler<LineScrollEvent, Session, &Session::lineScrolledOut>(this))
                 )
                 << (Create(about_ = new AboutBox())
@@ -61,6 +62,10 @@ namespace tpp {
 
         void terminalTitleChanged(ui::StringEvent & e) {
             setTitle(*e);
+        }
+
+        void terminalRemoteFileOpen(ui::StringEvent & e) {
+            Application::Open(*e);
         }
 
         void terminalNotification(ui::VoidEvent & e) {
@@ -109,7 +114,7 @@ namespace tpp {
         }
 
         ui::PTY * pty_;
-        ui::Terminal * terminal_;
+        ui::TerminalPP * terminal_;
         AboutBox * about_;
 
         std::ofstream logFile_;

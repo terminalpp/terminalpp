@@ -27,6 +27,8 @@ namespace ui {
 
         TerminalPP(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
 
+        helpers::Event<StringEvent> onRemoteFileOpen;
+
     protected:
         class CSISequence;
 
@@ -371,6 +373,7 @@ namespace ui {
 
     }; // TerminalPP::Palette
 
+    EVENT_BUILDER(OnRemoteFileOpen, StringEvent, onRemoteFileOpen, TerminalPP);
 
     /** Desrcibes parsed CSI sequence.
 

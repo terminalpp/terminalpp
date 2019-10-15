@@ -1391,7 +1391,9 @@ namespace ui {
                     if (! rf->available()) {
                         LOG(SEQ_UNKNOWN) << "t++ OpenFile id " << req.fileId() << " not available";
                     } else {
-                        // TODO OpenFile event
+                        buffer_.unlock();
+                        trigger(onRemoteFileOpen, rf->localPath());
+                        buffer_.lock();
                     }
                 } else {
                     LOG(SEQ_UNKNOWN) << "t++ OpenFile request for non-existent file id " << req.fileId();
