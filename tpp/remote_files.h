@@ -62,7 +62,7 @@ namespace tpp {
         RemoteFile * newFile(std::string const & hostname, std::string const & filename, std::string const & remotePath, size_t size);
 
         RemoteFile * get(int fileId) {
-            if (fileId < 0 || fileId >= remoteFiles_.size())
+            if (fileId < 0 || fileId >= static_cast<int>(remoteFiles_.size()))
                 THROW(helpers::Exception()) << "Remote file id " << fileId << " not found.";
             return remoteFiles_[fileId];
         }
@@ -76,4 +76,4 @@ namespace tpp {
 
     }; // tpp::RemoteFiles
 
-};
+} // namespace tpp

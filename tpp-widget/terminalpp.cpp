@@ -2,7 +2,6 @@
 #include "helpers/log.h"
 
 #include "ui/key.h"
-#include "tpp-lib/encoder.h"
 
 #include "terminalpp.h"
 

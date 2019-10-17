@@ -40,18 +40,22 @@ namespace tpp {
         }
 
         static Sequence Parse(char * & start, char const * end); 
-
+/*
 #if (defined ARCH_UNIX)
         static Sequence Read(int fileno);
         static Sequence WaitAndRead(int fileno, size_t timeout);
 #endif
+*/
 
     protected:
+
 
         int id_;
         std::string payload_;
 
     private:
+    
+        friend class Terminal;
 
         Sequence():
             id_{Invalid},

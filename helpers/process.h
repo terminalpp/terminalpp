@@ -190,7 +190,7 @@ namespace helpers {
 		/** Applies the changes in the environment to the actual environment of the current process. 
 		 */
 		void apply() {
-#ifdef ARCH_WINDOWS
+#if (defined ARCH_WINDOWS)
 			NOT_IMPLEMENTED;
 #else
 			for (auto i : map_) {
@@ -211,6 +211,15 @@ namespace helpers {
 		Environment(std::unordered_map<std::string, std::string> const& from) {
 			for (auto i : from)
 				map_[i.first] = i.second;
+		}
+
+		static char const * Get(std::string const & name) {
+#if (defined ARCH_WINDOWS)
+            MARK_AS_UNUSED(name);
+			NOT_IMPLEMENTED;
+#else
+			return getenv(name.c_str());
+#endif
 		}
 
 	private:

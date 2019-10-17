@@ -9,9 +9,9 @@
 #include "helpers/char.h"
 #include "helpers/string.h"
 
+#include "terminal.h"
+
 #include "sequence.h"
-#include "raw_mode.h"
-#include "encoder.h"
 
 namespace tpp {
 
@@ -47,6 +47,7 @@ namespace tpp {
         return result;
     }
 
+/*
 #if (defined ARCH_UNIX)
     Sequence Sequence::Read(int fileno) {
         Sequence result{};
@@ -136,7 +137,7 @@ namespace tpp {
     }
 
 #endif
-
+*/
     namespace request {
 
         NewFile::NewFile(Sequence && from):
@@ -173,7 +174,7 @@ namespace tpp {
                     size_t w = dataStart + 1;
                     char const * e = data_ + size_;
                     while (r < e) 
-                        payload_[w++] = Encoder::Decode(r);
+                        payload_[w++] = Terminal::Decode(r);
                     size_ = w - dataStart - 1;
                 } catch (...) {
                     // do nothing
