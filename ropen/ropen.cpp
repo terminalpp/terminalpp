@@ -43,16 +43,13 @@ int TransferFile(tpp::Terminal & t, std::string const & filename, size_t message
     
     // read the file
 
-    std::cout << "\033[K"; // clear the line
+    std::cout << "\033[K" << std::flush; // clear the line
     char * buffer = new char[messageLength];
     size_t sentBytes = 0;
     while (sentBytes < numBytes) {
         f.read(buffer, messageLength);
         size_t chunkSize = f.gcount();
-        if (!t.transmit(fileId, buffer, chunkSize)) {
-            std::cerr << "Transmission timeout\r";
-            return EXIT_FAILURE;
-        }
+        t.transmit(fileId, buffer, chunkSize);
         sentBytes += chunkSize;
         ProgressBar(sentBytes, numBytes);
         std::cout <<  "    \r" << std::flush;

@@ -77,7 +77,7 @@ namespace ui {
 		static constexpr char const* const SEQ_ERROR = "VT100_ERROR";
 		static constexpr char const* const SEQ_WONT_SUPPORT = "VT100_WONT_SUPPORT";
 
-        TerminalPP(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
+        TerminalPP(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240); // 1Mb buffer size
 
         helpers::Event<NewRemoteFileEvent> onNewRemoteFile;
         helpers::Event<RemoteDataEvent> onRemoteData;

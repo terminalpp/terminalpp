@@ -42,13 +42,13 @@ namespace tpp {
         virtual size_t readBlocking(char * buffer, size_t bufferSize) = 0;
         virtual size_t readNonBlocking(char * buffer, size_t bufferSize) = 0;
         
-        Sequence readSequence(size_t timeout = 0);
+        Sequence readSequence();
 
         response::Capabilities getCapabilities();
 
         int newFile(std::string const & path, size_t size);
 
-        bool transmit(int fileId, char const * data, size_t numBytes, size_t ackTimeout = 1000);
+        void transmit(int fileId, char const * data, size_t numBytes);
 
         void openFile(int fileId);
 
@@ -64,7 +64,7 @@ namespace tpp {
 
     protected:
 
-        bool waitForSequence(size_t timeout);
+        bool waitForSequence();
 
 
     private:
@@ -111,6 +111,7 @@ namespace tpp {
         bool blocking_;
         termios backup_;
         bool insideTmux_;
+        size_t sentSequences_;
     };
 
 #endif

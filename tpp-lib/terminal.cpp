@@ -17,10 +17,10 @@ namespace tpp {
 
     } // anonymous namespace
 
-    Sequence Terminal::readSequence(size_t timeout) {
+    Sequence Terminal::readSequence() {
         Sequence result{};
         // first wait for the tpp sequence to start, discarding any non-tpp traffic, if timeout, return invalid sequence
-        if (! waitForSequence(timeout)) 
+        if (! waitForSequence()) 
             return result;
         // now parse the id
         char c;
@@ -73,18 +73,15 @@ namespace tpp {
         return response::NewFile{readSequence()}.fileId();
     }
 
-    bool Terminal::transmit(int fileId, char const * data, size_t numBytes, size_t ackTimeout) {
-        {
-            beginSequence();
-            std::string x(STR(TPP_START << Sequence::Data << ";" << fileId << ";"));
-            send(x.c_str(), x.size());
-            encodeBuffer(data, numBytes);
-            send(buffer_.data(), buffer_.size());
-            send(TPP_END, 1);
-            endSequence();
-            buffer_.clear();
-        }
-        return readSequence(ackTimeout).id() == Sequence::Ack;
+    void Terminal::transmit(int fileId, char const * data, size_t numBytes) {
+        beginSequence();
+        std::string x(STR(TPP_START << Sequence::Data << ";" << fileId << ";"));
+        send(x.c_str(), x.size());
+        encodeBuffer(data, numBytes);
+        send(buffer_.data(), buffer_.size());
+        send(TPP_END, 1);
+        endSequence();
+        buffer_.clear();
     }
 
     void Terminal::openFile(int fileId) {
@@ -92,10 +89,10 @@ namespace tpp {
         sendSequence(x.c_str(), x.size());
     }
 
-    bool Terminal::waitForSequence(size_t timeout) {
+    bool Terminal::waitForSequence() {
         int state = 0; // 0 = nothing, 1 = ESC parsed, 2 = ] parsed, 3 = + parsed 
         char c;
-        int t = (timeout == 0) ? timeout_ : timeout;
+        int t = timeout_;
         while (true) {
             switch (readNonBlocking(&c, 1)) {
                 case NoInputAvailable:
@@ -163,7 +160,8 @@ namespace tpp {
         in_(in),
         out_(out),
         blocking_(true),
-        insideTmux_(false) {
+        insideTmux_(false),
+        sentSequences_(0) {
         tcgetattr(in_, & backup_);
         termios raw = backup_;
         raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
@@ -179,8 +177,13 @@ namespace tpp {
     }
 
     void StdTerminal::beginSequence() {
-        if (insideTmux_)
+        if (insideTmux_) {
+            if (++sentSequences_ == 500) {
+                getCapabilities();
+                sentSequences_ = 0;
+            }
             ::write(out_, "\033Ptmux;", 7);
+        }
     }
 
     void StdTerminal::endSequence() {
