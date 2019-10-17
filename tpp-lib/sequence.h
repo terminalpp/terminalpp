@@ -19,9 +19,10 @@ namespace tpp {
         static constexpr int Invalid = -2;
         static constexpr int Incomplete = -1;
         static constexpr int Capabilities = 0;
-        static constexpr int NewFile = 1;
-        static constexpr int Send = 2;
-        static constexpr int OpenFile = 3;
+        static constexpr int Ack = 1;
+        static constexpr int NewFile = 2;
+        static constexpr int Data = 3;
+        static constexpr int OpenFile = 4;
 
         bool complete() const {
             return id_ >= 0;
@@ -40,21 +41,14 @@ namespace tpp {
         }
 
         static Sequence Parse(char * & start, char const * end); 
-/*
-#if (defined ARCH_UNIX)
-        static Sequence Read(int fileno);
-        static Sequence WaitAndRead(int fileno, size_t timeout);
-#endif
-*/
 
     protected:
-
 
         int id_;
         std::string payload_;
 
     private:
-    
+
         friend class Terminal;
 
         Sequence():
@@ -107,9 +101,9 @@ namespace tpp {
             std::string remotePath_;
         }; 
 
-        class Send : public Sequence {
+        class Data : public Sequence {
         public:
-            Send(Sequence && seq);
+            Data(Sequence && seq);
 
             bool valid() const {
                 return fileId_ != -1;
@@ -170,6 +164,15 @@ namespace tpp {
 
         private:
             int version_;
+        };
+
+        class Ack : public Sequence {
+        public:
+            Ack(Sequence && from);
+
+            bool valid() const {
+                return id_ == Sequence::Ack;
+            }
         };
 
         class NewFile : public Sequence {

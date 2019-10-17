@@ -42,13 +42,13 @@ namespace tpp {
         virtual size_t readBlocking(char * buffer, size_t bufferSize) = 0;
         virtual size_t readNonBlocking(char * buffer, size_t bufferSize) = 0;
         
-        Sequence readSequence();
+        Sequence readSequence(size_t timeout = 0);
 
         response::Capabilities getCapabilities();
 
         int newFile(std::string const & path, size_t size);
 
-        void send(int fileId, char const * data, size_t numBytes);
+        bool transmit(int fileId, char const * data, size_t numBytes, size_t ackTimeout = 1000);
 
         void openFile(int fileId);
 
@@ -64,7 +64,7 @@ namespace tpp {
 
     protected:
 
-        bool waitForSequence();
+        bool waitForSequence(size_t timeout);
 
 
     private:

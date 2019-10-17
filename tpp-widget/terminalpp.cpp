@@ -1361,19 +1361,23 @@ namespace ui {
                 send(STR("\033]+" << tpp::Sequence::NewFile << ';' << event.fileId << helpers::Char::BEL));
                 break;
             }
-            case tpp::Sequence::Send: {
+            case tpp::Sequence::Data: {
                 LOG(SEQ) << "t++ send request";
-                tpp::request::Send req{std::move(seq)};
+                tpp::request::Data req{std::move(seq)};
                 if (req.valid()) {
+                    bool ok = false;
                     buffer_.unlock();
                     try {
                         trigger(onRemoteData, RemoteData{req.fileId(), req.data(), req.size()});
+                        ok = true;
                     } catch (std::exception const & e) {
                         LOG(SEQ_ERROR) << e.what();
                     } catch (...) {
                         LOG(SEQ_ERROR) << "unknown error";
                     }
                     buffer_.lock();
+                    if (ok)
+                        send(STR("\033]+" << tpp::Sequence::Ack << helpers::Char::BEL));
                 }
                 break;
             }

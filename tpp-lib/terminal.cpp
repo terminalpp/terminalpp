@@ -17,10 +17,10 @@ namespace tpp {
 
     } // anonymous namespace
 
-    Sequence Terminal::readSequence() {
+    Sequence Terminal::readSequence(size_t timeout) {
         Sequence result{};
         // first wait for the tpp sequence to start, discarding any non-tpp traffic, if timeout, return invalid sequence
-        if (! waitForSequence()) 
+        if (! waitForSequence(timeout)) 
             return result;
         // now parse the id
         char c;
@@ -73,15 +73,18 @@ namespace tpp {
         return response::NewFile{readSequence()}.fileId();
     }
 
-    void Terminal::send(int fileId, char const * data, size_t numBytes) {
-        beginSequence();
-        std::string x(STR(TPP_START << Sequence::Send << ";" << fileId << ";"));
-        send(x.c_str(), x.size());
-        encodeBuffer(data, numBytes);
-        send(buffer_.data(), buffer_.size());
-        send(TPP_END, 1);
-        endSequence();
-        buffer_.clear();
+    bool Terminal::transmit(int fileId, char const * data, size_t numBytes, size_t ackTimeout) {
+        {
+            beginSequence();
+            std::string x(STR(TPP_START << Sequence::Data << ";" << fileId << ";"));
+            send(x.c_str(), x.size());
+            encodeBuffer(data, numBytes);
+            send(buffer_.data(), buffer_.size());
+            send(TPP_END, 1);
+            endSequence();
+            buffer_.clear();
+        }
+        return readSequence(ackTimeout).id() == Sequence::Ack;
     }
 
     void Terminal::openFile(int fileId) {
@@ -89,10 +92,10 @@ namespace tpp {
         sendSequence(x.c_str(), x.size());
     }
 
-    bool Terminal::waitForSequence() {
+    bool Terminal::waitForSequence(size_t timeout) {
         int state = 0; // 0 = nothing, 1 = ESC parsed, 2 = ] parsed, 3 = + parsed 
         char c;
-        int t = timeout_;
+        int t = (timeout == 0) ? timeout_ : timeout;
         while (true) {
             switch (readNonBlocking(&c, 1)) {
                 case NoInputAvailable:
