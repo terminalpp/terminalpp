@@ -1,5 +1,6 @@
 #if (defined ARCH_LINUX)
 
+#include <iostream>
 #include <limits>
 #include <thread>
 
@@ -178,7 +179,7 @@ namespace tpp {
 
     void StdTerminal::beginSequence() {
         if (insideTmux_) {
-            if (++sentSequences_ == 500) {
+            if (++sentSequences_ == 100) {
                 getCapabilities();
                 sentSequences_ = 0;
             }
