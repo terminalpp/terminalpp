@@ -301,7 +301,4 @@ namespace helpers {
 			return static_cast<char>('a' + what - 10);
 	}
 
-
-
-
 } // namespace helpers

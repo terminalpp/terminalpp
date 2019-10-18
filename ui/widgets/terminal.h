@@ -70,7 +70,12 @@ namespace ui {
         size_t size;
     };
 
+    struct InputError : public InputBuffer {
+        std::string error;
+    };
+
     typedef helpers::EventPayload<InputBuffer, Widget> InputProcessedEvent;
+    typedef helpers::EventPayload<InputError, Widget> InputErrorEvent;
 
     class Terminal : public ScrollBox, public SelectionOwner {
     public:
@@ -217,6 +222,7 @@ namespace ui {
         /** Triggered when new input has been processed by the terminal. 
          */
         helpers::Event<InputProcessedEvent> onInput;
+        helpers::Event<InputErrorEvent> onInputError;
 
         // methods
 
@@ -524,5 +530,6 @@ namespace ui {
     EVENT_BUILDER(OnPTYTerminated, ExitCodeEvent, onPTYTerminated, Terminal);
     EVENT_BUILDER(OnLineScrolledOut, VoidEvent, onLineScrolledOut, Terminal);
     EVENT_BUILDER(OnInput, InputProcessedEvent, onInput, Terminal);
+    EVENT_BUILDER(OnInputError, InputErrorEvent, onInputError, Terminal);
 
 } // namespace ui

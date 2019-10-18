@@ -187,9 +187,14 @@ namespace ui {
 				// otherwise add any pending data from previous cycle
                 read += (writeStart - ptyBuffer);
                 // process the input
-                size_t processed = processInput(ptyBuffer, read);
-                // trigger the input processed event
-                trigger(onInput, InputBuffer{ptyBuffer, processed});
+                size_t processed = read;
+                try {
+                    processed = processInput(ptyBuffer, read);
+                    // trigger the input processed event
+                    trigger(onInput, InputBuffer{ptyBuffer, processed});
+                } catch (std::exception const & e) {
+                    trigger(onInputError, InputError{ptyBuffer, processed, e.what()});
+                }
                 // if not everything was processed, copy the unprocessed part at the beginning and set writeStart_ accordingly
                 if (processed != read) {
                     memcpy(ptyBuffer, ptyBuffer + processed, read - processed);

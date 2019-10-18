@@ -41,6 +41,7 @@ namespace tpp {
                     << OnNewRemoteFile(CreateHandler<NewRemoteFileEvent, Session, &Session::newRemoteFile>(this))
                     << OnRemoteData(CreateHandler<RemoteDataEvent, Session, &Session::remoteData>(this))
                     << OnOpenRemoteFile(CreateHandler<OpenRemoteFileEvent, Session, &Session::openRemoteFile>(this))
+                    << OnInputError(CreateHandler<InputErrorEvent, Session, &Session::terminalInputError>(this))
                     //<< OnLineScrolledOut(CreateHandler<LineScrollEvent, Session, &Session::lineScrolledOut>(this))
                 )
                 << (Create(about_ = new AboutBox())
@@ -81,8 +82,11 @@ namespace tpp {
          */
         void openRemoteFile(ui::OpenRemoteFileEvent & e) {
             RemoteFile * f = remoteFiles_.get(e->fileId);
-            ASSERT(f->available());
-            Application::Open(f->localPath());
+            if (f->available()) {
+                Application::Open(f->localPath());
+            } else {
+                Application::Alert(STR("Incomplete file " << f->localPath() << " received. Unable to open"));
+            }
         }
 
         void terminalNotification(ui::VoidEvent & e) {
@@ -128,6 +132,10 @@ namespace tpp {
                 else
                     ui::RootWindow::keyDown(k);
             }
+        }
+
+        void terminalInputError(ui::InputErrorEvent & e) {
+            Application::Alert(e->error);
         }
 
         ui::PTY * pty_;

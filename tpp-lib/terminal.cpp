@@ -136,10 +136,12 @@ namespace tpp {
 
     void Terminal::encodeBuffer(char const * data, size_t numBytes) {
         buffer_.clear();
-        while (numBytes-- > 0) {
+        char const * end = data + numBytes;
+        while (data != end) {
             switch (*data) {
                 case helpers::Char::BEL:
                 case helpers::Char::ESC:
+                case 0:
                 case '`':
                     buffer_.push_back('`');
                     buffer_.push_back(helpers::ToHexDigit(*data >> 4));
