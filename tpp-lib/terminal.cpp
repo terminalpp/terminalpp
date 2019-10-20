@@ -76,7 +76,7 @@ namespace tpp {
 
     void Terminal::transmit(int fileId, char const * data, size_t numBytes) {
         beginSequence();
-        std::string x(STR(TPP_START << Sequence::Data << ";" << fileId << ";"));
+        std::string x{STR(TPP_START << Sequence::Data << ";" << fileId << ";")};
         send(x.c_str(), x.size());
         encodeBuffer(data, numBytes);
         send(buffer_.data(), buffer_.size());
@@ -144,12 +144,12 @@ namespace tpp {
                 case 0:
                 case '`':
                     buffer_.push_back('`');
-                    buffer_.push_back(helpers::ToHexDigit(*data >> 4));
-                    buffer_.push_back(helpers::ToHexDigit(*data & 0xf));
+                    buffer_.push_back(helpers::ToHexDigit(static_cast<unsigned char>(*data) >> 4));
+                    buffer_.push_back(helpers::ToHexDigit(static_cast<unsigned char>(*data) & 0xf));
                     break;
                 default:
-                    buffer_.push_back(*data);
-            }
+                    buffer_.push_back(data[0]);
+            } 
             ++data;
         }
     }
@@ -181,7 +181,7 @@ namespace tpp {
 
     void StdTerminal::beginSequence() {
         if (insideTmux_) {
-            if (++sentSequences_ == 100) {
+            if (++sentSequences_ == 50) {
                 getCapabilities();
                 sentSequences_ = 0;
             }

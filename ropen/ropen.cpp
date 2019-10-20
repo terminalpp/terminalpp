@@ -42,8 +42,10 @@ int TransferFile(tpp::Terminal & t, std::string const & filename, size_t message
     }
     
     // read the file
+    std::cout << "Transmitting...\r";
 
-    std::cout << "\033[K" << std::flush; // clear the line
+    //std::cout << "\033[K" << std::flush; // clear the line
+    std::cout << "\r";
     char * buffer = new char[messageLength];
     size_t sentBytes = 0;
     while (sentBytes < numBytes) {
@@ -64,16 +66,22 @@ int TransferFile(tpp::Terminal & t, std::string const & filename, size_t message
 int main(int argc, char * argv[]) {
     tpp::StdTerminal t;
     int result = EXIT_FAILURE;
-    if (argc != 2) {
-        std::cerr << "Filename not specified.\r";
-    } else {
-        tpp::response::Capabilities cap{t.getCapabilities()};
-        if (!cap.valid()) {
-            std::cerr << "Unable to open the file - not attached to terminal++\r";
+    try {
+        if (argc != 2) {
+            std::cerr << "Filename not specified.\r";
         } else {
-            std::cerr << "terminal++: version " << cap.version() << " detected\r";
-            result = TransferFile(t, argv[1], 1024);
+            tpp::response::Capabilities cap{t.getCapabilities()};
+            if (!cap.valid()) {
+                std::cerr << "Unable to open the file - not attached to terminal++\r";
+            } else {
+                std::cerr << "terminal++: version " << cap.version() << " detected\r";
+                result = TransferFile(t, argv[1], 1024);
+            }
         }
+    } catch (std::exception const & e) {
+        std::cerr << "Error: " << e.what() << "\r\n";
+    } catch (...) {
+        std::cerr << "Unknown Error \r\n";
     }
     std::cout << "\r\n";
     return result;

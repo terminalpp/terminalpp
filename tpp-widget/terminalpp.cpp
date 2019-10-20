@@ -676,6 +676,13 @@ namespace ui {
 					setCursor(buffer_.cursor().pos.x, buffer_.cursor().pos.y - 1);
 				}
 				break;
+            /* Device Control String (DCS). 
+
+             */
+            /*
+            case 'P':
+                break;
+            */
     		/* Character set specification - ignored, we just have to parse it. */
 			case '(':
 			case ')':

@@ -64,6 +64,7 @@
         "xlocmes": "cpp",
         "codecvt": "cpp",
         "map": "cpp",
-        "xlocbuf": "cpp"
+        "xlocbuf": "cpp",
+        "concepts": "cpp"
     }
 }
