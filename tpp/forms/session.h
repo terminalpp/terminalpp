@@ -75,6 +75,10 @@ namespace tpp {
 
         void remoteData(ui::RemoteDataEvent & e) {
             RemoteFile * f = remoteFiles_.get(e->fileId);
+            if (e->size != 1024) {
+                LOG << "Data received " << e->size;
+            }
+                
             f->appendData(e->data, e->size);
         }
 

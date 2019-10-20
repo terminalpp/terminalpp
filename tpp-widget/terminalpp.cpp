@@ -630,24 +630,14 @@ namespace ui {
             }
 			/* Operating system command. */
 			case ']': {
-                if (x != bufferEnd && *x == '+') {
-                    ++x;
-                    tpp::Sequence seq(tpp::Sequence::Parse(x, bufferEnd));
-                    if (!seq.valid())
-                        break;
-                    if (!seq.complete())
-                        return false;
-                    parseTppSequence(std::move(seq));
-                } else {
-                    OSCSequence seq{OSCSequence::Parse(x, bufferEnd)};
-                    // if the sequence is not valid, it has been reported already and we should just exit
-                    if (!seq.valid())
-                        break;
-                    // if the sequence is not complete, return false and do not advance the buffer
-                    if (!seq.complete())
-                        return false;
-                    parseOSCSequence(seq);
-                }
+                OSCSequence seq{OSCSequence::Parse(x, bufferEnd)};
+                // if the sequence is not valid, it has been reported already and we should just exit
+                if (!seq.valid())
+                    break;
+                // if the sequence is not complete, return false and do not advance the buffer
+                if (!seq.complete())
+                    return false;
+                parseOSCSequence(seq);
 				break;
             }
 			/* Save Cursor. */
@@ -677,12 +667,18 @@ namespace ui {
 				}
 				break;
             /* Device Control String (DCS). 
-
              */
-            /*
             case 'P':
+                if (x != bufferEnd && *x == '+') {
+                    ++x;
+                    tpp::Sequence seq(tpp::Sequence::Parse(x, bufferEnd));
+                    if (!seq.valid())
+                        break;
+                    if (!seq.complete())
+                        return false;
+                    parseTppSequence(std::move(seq));
+                }
                 break;
-            */
     		/* Character set specification - ignored, we just have to parse it. */
 			case '(':
 			case ')':
@@ -1350,7 +1346,7 @@ namespace ui {
              */
             case tpp::Sequence::Capabilities:
                 LOG(SEQ) << "t++ terminal capabilities request";
-                send("\033]+0;0\007");
+                send("\033P+0;0\007");
                 break;
             case tpp::Sequence::NewFile: {
                 LOG(SEQ) << "t++ new file request";
@@ -1365,7 +1361,7 @@ namespace ui {
                     LOG(SEQ_ERROR) << "unknown error";
                 }
                 buffer_.lock();
-                send(STR("\033]+" << tpp::Sequence::NewFile << ';' << event.fileId << helpers::Char::BEL));
+                send(STR("\033P+" << tpp::Sequence::NewFile << ';' << event.fileId << helpers::Char::BEL));
                 break;
             }
             case tpp::Sequence::Data: {

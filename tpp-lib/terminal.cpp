@@ -13,7 +13,7 @@ namespace tpp {
 
     namespace {
 
-        constexpr char const * TPP_START = "\033]+";
+        constexpr char const * TPP_START = "\033P+";
         constexpr char const * TPP_END = "\007";
 
     } // anonymous namespace
@@ -108,7 +108,7 @@ namespace tpp {
                         case '\033':
                             state = 1;
                             break;
-                        case ']':
+                        case 'P':
                             if (state == 1) {
                                 state = 2;
                             } else {
