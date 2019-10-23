@@ -30,21 +30,40 @@ namespace ui {
 
     typedef helpers::EventPayload<NewRemoteFile, Widget> NewRemoteFileEvent;
 
+    // TODO Or maybe give the sequence? 
     class RemoteData {
     public:
         int const fileId;
+        bool valid;
         char const * const data;
         size_t const size;
+        size_t const offset;
     protected:
         friend class TerminalPP;
-        RemoteData(int fileId, char const * data, size_t size):
+        RemoteData(int fileId, bool valid, char const * data, size_t size, size_t offset):
             fileId(fileId),
+            valid(valid),
             data(data),
-            size(size) {
+            size(size),
+            offset(offset) {
         }
     };
 
     typedef helpers::EventPayload<RemoteData, Widget> RemoteDataEvent;
+
+    class TransferStatus {
+    public:
+        int const fileId;
+        size_t transferredBytes;
+    protected:
+        friend class TerminalPP;
+        TransferStatus(int fileId):
+            fileId{fileId},
+            transferredBytes{0} {
+        }
+    };
+
+    typedef helpers::EventPayload<TransferStatus, Widget> TransferStatusEvent;
 
     class OpenRemoteFile {
     public:
@@ -81,6 +100,7 @@ namespace ui {
 
         helpers::Event<NewRemoteFileEvent> onNewRemoteFile;
         helpers::Event<RemoteDataEvent> onRemoteData;
+        helpers::Event<TransferStatusEvent> onTransferStatus;
         helpers::Event<OpenRemoteFileEvent> onOpenRemoteFile;
 
     protected:
@@ -376,6 +396,7 @@ namespace ui {
 
     EVENT_BUILDER(OnNewRemoteFile, NewRemoteFileEvent, onNewRemoteFile, TerminalPP);
     EVENT_BUILDER(OnRemoteData, RemoteDataEvent, onRemoteData, TerminalPP);
+    EVENT_BUILDER(OnTransferStatus, TransferStatusEvent, onTransferStatus, TerminalPP);
     EVENT_BUILDER(OnOpenRemoteFile, OpenRemoteFileEvent, onOpenRemoteFile, TerminalPP);
 
     /** Desrcibes parsed CSI sequence.

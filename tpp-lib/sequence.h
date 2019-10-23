@@ -19,9 +19,9 @@ namespace tpp {
         static constexpr int Invalid = -2;
         static constexpr int Incomplete = -1;
         static constexpr int Capabilities = 0;
-        static constexpr int Ack = 1;
-        static constexpr int NewFile = 2;
-        static constexpr int Data = 3;
+        static constexpr int NewFile = 1;
+        static constexpr int Data = 2;
+        static constexpr int TransferStatus = 3;
         static constexpr int OpenFile = 4;
 
         bool complete() const {
@@ -123,11 +123,34 @@ namespace tpp {
                 return size_;
             }
 
+            /** Offset at which the data should be stored. 
+             */
+            size_t offset() const {
+                return offset_;
+            }
+
         private:
             int fileId_;
             char const * data_;
             size_t size_;
+            size_t offset_;
         };
+
+        class TransferStatus : public Sequence {
+        public:
+            TransferStatus(Sequence && seq);
+
+            bool valid() const {
+                return fileId_ >= 0;
+            }
+
+            int fileId() const {
+                return fileId_;
+            }
+
+        private:
+            int fileId_;
+        }; 
 
         class OpenFile : public Sequence {
         public:
@@ -166,15 +189,6 @@ namespace tpp {
             int version_;
         };
 
-        class Ack : public Sequence {
-        public:
-            Ack(Sequence && from);
-
-            bool valid() const {
-                return id_ == Sequence::Ack;
-            }
-        };
-
         class NewFile : public Sequence {
         public:
             NewFile(Sequence && from);
@@ -189,6 +203,27 @@ namespace tpp {
 
         private:
             int fileId_;
+        };
+
+        class TransferStatus : public Sequence {
+        public:
+            TransferStatus(Sequence && from);
+
+            bool valid() const {
+                return fileId_ >= 0;
+            }
+
+            int fileId() const {
+                return fileId_;
+            }
+
+            size_t transmittedBytes() const {
+                return transmittedBytes_;
+            }
+        private:
+            int fileId_;
+            size_t transmittedBytes_;
+
         };
 
     } // tpp::response

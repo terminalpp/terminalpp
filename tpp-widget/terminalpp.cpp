@@ -669,7 +669,9 @@ namespace ui {
             /* Device Control String (DCS). 
              */
             case 'P':
-                if (x != bufferEnd && *x == '+') {
+                if (x == bufferEnd)
+                    return false;
+                if (*x == '+') {
                     ++x;
                     tpp::Sequence seq(tpp::Sequence::Parse(x, bufferEnd));
                     if (!seq.valid())
@@ -1370,13 +1372,33 @@ namespace ui {
                 if (req.valid()) {
                     buffer_.unlock();
                     try {
-                        trigger(onRemoteData, RemoteData{req.fileId(), req.data(), req.size()});
+                        trigger(onRemoteData, RemoteData{req.fileId(), req.valid(), req.data(), req.size(), req.offset()});
                     } catch (std::exception const & e) {
                         LOG(SEQ_ERROR) << e.what();
                     } catch (...) {
                         LOG(SEQ_ERROR) << "unknown error";
                     }
                     buffer_.lock();
+                }
+                break;
+            }
+            case tpp::Sequence::TransferStatus: {
+                LOG(SEQ) << "t++ transfer status";
+                tpp::request::TransferStatus req{std::move(seq)};
+                if (req.valid()) {
+                    LOG << "status";
+                    TransferStatus event{req.fileId()};
+                    buffer_.unlock();
+                    try {
+                        trigger(onTransferStatus, event);
+                    } catch (std::exception const & e) {
+                        LOG(SEQ_ERROR) << e.what();
+                    } catch (...) {
+                        LOG(SEQ_ERROR) << "unknown error";
+                    }
+                    buffer_.lock();
+                    LOG << "Status sent, transferred bytes " << event.transferredBytes;
+                    send(STR("\033P+" << tpp::Sequence::TransferStatus << ";" << event.fileId << ";" << event.transferredBytes << helpers::Char::BEL));
                 }
                 break;
             }

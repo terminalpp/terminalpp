@@ -156,9 +156,11 @@ namespace helpers {
         }
     }; // helpers::OSError
 
-
 	class IOError : public Exception {
 	};
+
+    class TimeoutError : public Exception {
+    };
 
 #ifdef ARCH_WINDOWS
 	/** 

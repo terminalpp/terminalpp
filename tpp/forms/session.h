@@ -40,6 +40,7 @@ namespace tpp {
                     << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
                     << OnNewRemoteFile(CreateHandler<NewRemoteFileEvent, Session, &Session::newRemoteFile>(this))
                     << OnRemoteData(CreateHandler<RemoteDataEvent, Session, &Session::remoteData>(this))
+                    << OnTransferStatus(CreateHandler<TransferStatusEvent, Session, &Session::transferStatus>(this))
                     << OnOpenRemoteFile(CreateHandler<OpenRemoteFileEvent, Session, &Session::openRemoteFile>(this))
                     << OnInputError(CreateHandler<InputErrorEvent, Session, &Session::terminalInputError>(this))
                     //<< OnLineScrolledOut(CreateHandler<LineScrollEvent, Session, &Session::lineScrolledOut>(this))
@@ -68,6 +69,7 @@ namespace tpp {
             setTitle(*e);
         }
 
+        // TODO check that file exists actually
         void newRemoteFile(ui::NewRemoteFileEvent & e) {
             RemoteFile * f = remoteFiles_.newFile(e->hostname, e->filename, e->remotePath, e->size);
             e->fileId = f->id();
@@ -75,11 +77,15 @@ namespace tpp {
 
         void remoteData(ui::RemoteDataEvent & e) {
             RemoteFile * f = remoteFiles_.get(e->fileId);
-            if (e->size != 1024) {
-                LOG << "Data received " << e->size;
-            }
-                
-            f->appendData(e->data, e->size);
+            if (e->offset == f->transferredBytes())
+                f->appendData(e->data, e->size);
+            else
+                LOG << "error";
+        }
+
+        void transferStatus(ui::TransferStatusEvent & e) {
+            RemoteFile * f = remoteFiles_.get(e->fileId);
+            e->transferredBytes = f->transferredBytes();
         }
 
         /** Opens the remote file which has been copied to the given local path.

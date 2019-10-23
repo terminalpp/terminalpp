@@ -26,11 +26,20 @@ namespace tpp {
         static constexpr size_t InputEoF = 0;
 
         Terminal():
-            timeout_(100) {
+            timeout_(500) {
         }
 
         virtual ~Terminal() {
         }
+
+        size_t timeout() const {
+            return timeout_;
+        }
+
+        void setTimeout(size_t value) {
+            timeout_ = value;
+        }
+
         virtual void beginSequence() = 0;
         virtual void endSequence() = 0;
         void sendSequence(char const * buffer, size_t numBytes) {
@@ -48,14 +57,21 @@ namespace tpp {
 
         int newFile(std::string const & path, size_t size);
 
-        void transmit(int fileId, char const * data, size_t numBytes);
+        void transmit(int fileId, size_t offset, char const * data, size_t numBytes);
+
+        /** Returns the number of bytes correctly received for the given file. 
+         */
+        size_t transferStatus(int fileId);
 
         void openFile(int fileId);
 
-        static char Decode(char const * & buffer) {
+        static char Decode(char const * & buffer, char const * end) {
+            ASSERT(buffer != end);
             if (*buffer != '`') {
                 return *(buffer++);
             } else {
+                if (buffer + 3 > end)
+                    THROW(helpers::IOError()) << "Not enough data to decode quoted value";
                 char result = static_cast<char>(helpers::ParseHexNumber(buffer + 1, 2));
                 buffer += 3;
                 return result;                
@@ -64,7 +80,7 @@ namespace tpp {
 
     protected:
 
-        bool waitForSequence();
+        void waitForSequence();
 
 
     private:
@@ -111,7 +127,6 @@ namespace tpp {
         bool blocking_;
         termios backup_;
         bool insideTmux_;
-        size_t sentSequences_;
     };
 
 #endif

@@ -36,6 +36,12 @@ namespace tpp {
         // read the contents
         char * valueStart = x;
         while (x != end) {
+            // ESC character cannot appear in the payload, if it does, we are leaking real escape codes and should stop.
+            if (*x == helpers::Char::ESC) {
+                result.id_ = Invalid;
+                start = x;
+                return result;
+            }
             if (*x == helpers::Char::BEL) {
                 result.payload_ = std::string{valueStart, static_cast<size_t>(x - valueStart)};
                 start = ++x;
@@ -73,18 +79,31 @@ namespace tpp {
             data_{nullptr},
             size_{0} {
             if (id() == Sequence::Data) {
-                size_t dataStart = payload().find(';');
+                // determine the delimiters for the fileId and transmitted size
+                // TODO perhaps this should be a better parser in the end
+                size_t dataSizeStart = payload().find(';') + 1;
+                if (dataSizeStart == std::string::npos)
+                    return; // invalid
+                size_t dataOffsetStart = payload().find(';', dataSizeStart) + 1; 
+                if (dataOffsetStart == std::string::npos)
+                    return; // invalid
+                size_t dataStart = payload().find(';', dataOffsetStart) + 1;
+                if (dataStart == std::string::npos)
+                    return; // invalid
                 try {
                     fileId_ = std::stoi(payload().substr(0, dataStart));
-                    data_ = payload().c_str() + dataStart + 1;
-                    size_ = payload().size() - dataStart - 1;
-                    // and now decode the payload data (we know the decoded size is <= so we can decode in place)
+                    size_ = std::stoul(payload().substr(dataSizeStart, dataOffsetStart - dataSizeStart));
+                    offset_ = std::stoul(payload().substr(dataOffsetStart, dataStart - dataOffsetStart));
+                    // decode the contents
+                    data_ = payload().c_str() + dataStart;
+                    size_t w = dataStart;
                     char const * r = data_;
-                    size_t w = dataStart + 1;
-                    char const * e = data_ + size_;
+                    char const * e = payload().c_str() + payload().size();
                     while (r < e) 
-                        payload_[w++] = Terminal::Decode(r);
-                    size_ = w - dataStart - 1;
+                        payload_[w++] = Terminal::Decode(r, e);
+                    // if different length of data was received than advertised, the packet is invalid
+                    if (w - dataStart  != size_)
+                        fileId_ = -1;
                 } catch (...) {
                     // do nothing
                 }
@@ -95,6 +114,18 @@ namespace tpp {
             Sequence(std::move(from)),
             fileId_(-1) {
             if (id() == Sequence::OpenFile) {
+                try {
+                    fileId_ = std::stoi(payload());
+                } catch (...) {
+                    // do nothing
+                }
+            }
+        }
+
+        TransferStatus::TransferStatus(Sequence && from):
+            Sequence(std::move(from)),
+            fileId_(-1) {
+            if (id() == Sequence::TransferStatus) {
                 try {
                     fileId_ = std::stoi(payload());
                 } catch (...) {
@@ -122,12 +153,6 @@ namespace tpp {
             }
         }
 
-        Ack::Ack(Sequence && from):
-            Sequence(std::move(from)) {
-            // do nothing - if seq id is ack, the ack is valid
-        }
-
-
         NewFile::NewFile(Sequence && from):
             Sequence(std::move(from)),
             fileId_{-1} {
@@ -138,6 +163,23 @@ namespace tpp {
                         fileId_ = std::stoi(parts[0]);
                     } catch (...) {
                         // do nothing, keep version -1 (invalid)
+                    }
+                }
+            }
+        }
+
+        TransferStatus::TransferStatus(Sequence && from):
+            Sequence{std::move(from)},
+            fileId_{-1},
+            transmittedBytes_{0} {
+            if (id() == Sequence::TransferStatus) {
+                std::vector<std::string> parts = helpers::Split(payload(), ";");
+                if (parts.size() >= 2) {
+                    try {
+                        fileId_ = std::stoi(parts[0]);
+                        transmittedBytes_ = std::stoul(parts[1]);
+                    } catch (...) {
+                        // do nothing
                     }
                 }
             }

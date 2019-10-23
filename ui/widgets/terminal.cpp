@@ -176,32 +176,41 @@ namespace ui {
         historySizeLimit_{0} {
         pty_->resize(width, height);
         ptyReader_ = std::thread([this, ptyBufferSize](){
-            std::unique_ptr<char> holder(new char[ptyBufferSize]);
-            char * ptyBuffer = holder.get();
-            char * writeStart = holder.get();
-            while (true) {
-                size_t read = pty_->receive(writeStart, ptyBufferSize - (writeStart - ptyBuffer));
-				// if 0 bytes were read, terminate the thread
-                if (read == 0)
-                    break;
-				// otherwise add any pending data from previous cycle
-                read += (writeStart - ptyBuffer);
-                // process the input
-                size_t processed = read;
-                try {
-                    processed = processInput(ptyBuffer, read);
-                    // trigger the input processed event
-                    trigger(onInput, InputBuffer{ptyBuffer, processed});
-                } catch (std::exception const & e) {
-                    trigger(onInputError, InputError{ptyBuffer, processed, e.what()});
+            try {
+                std::unique_ptr<char> holder(new char[ptyBufferSize]);
+                char * ptyBuffer = holder.get();
+                char * writeStart = holder.get();
+                while (true) {
+                    size_t read = pty_->receive(writeStart, ptyBufferSize - (writeStart - ptyBuffer));
+                    // if 0 bytes were read, terminate the thread
+                    if (read == 0)
+                        break;
+                    // otherwise add any pending data from previous cycle
+                    read += (writeStart - ptyBuffer);
+                    // process the input
+                    size_t processed = read;
+                    try {
+                        processed = processInput(ptyBuffer, read);
+                        // trigger the input processed event
+                        trigger(onInput, InputBuffer{ptyBuffer, processed});
+                    } catch (std::exception const & e) {
+                        trigger(onInputError, InputError{ptyBuffer, processed, e.what()});
+                    }
+                    // if not everything was processed, copy the unprocessed part at the beginning and set writeStart_ accordingly
+                    if (processed != read) {
+                        memcpy(ptyBuffer, ptyBuffer + processed, read - processed);
+                        writeStart = ptyBuffer + read - processed;
+                        // check against buffer overflow here
+                        if (writeStart == ptyBuffer + ptyBufferSize) {
+                            LOG << "Buffer overflow. Discarding";
+                            writeStart = ptyBuffer;
+                        }
+                    } else {
+                        writeStart = ptyBuffer;
+                    }
                 }
-                // if not everything was processed, copy the unprocessed part at the beginning and set writeStart_ accordingly
-                if (processed != read) {
-                    memcpy(ptyBuffer, ptyBuffer + processed, read - processed);
-                    writeStart = ptyBuffer + read - processed;
-                } else {
-                    writeStart = ptyBuffer;
-                }
+            } catch (...) {
+                LOG << "Error in reader";
             }
         });
         ptyListener_ = std::thread([this](){

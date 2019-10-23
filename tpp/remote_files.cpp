@@ -8,10 +8,10 @@ namespace tpp {
     // RemoteFile
 
     RemoteFile::RemoteFile(std::string const & localDir, int id, std::string const & hostname, std::string const & filename, std::string const & remotePath, size_t size):
-        id_(id),
-        hostname_(hostname),
-        remotePath_(remotePath),
-        size_(size) {
+        id_{id},
+        hostname_{hostname},
+        remotePath_{remotePath},
+        size_{size} {
         // determine the filename and extension
         size_t lastPeriod = filename.rfind('.');
         if (lastPeriod == std::string::npos)

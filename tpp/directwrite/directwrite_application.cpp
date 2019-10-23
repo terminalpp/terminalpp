@@ -139,7 +139,7 @@ namespace tpp {
     }
 
     void DirectWriteApplication::attachConsole() {
-		    OSCHECK(AllocConsole()) << "No parent process console and cannot allocate one";
+		OSCHECK(AllocConsole()) << "No parent process console and cannot allocate one";
 /*
 		if (AttachConsole(ATTACH_PARENT_PROCESS) == 0) {
 			if (GetLastError() != ERROR_INVALID_HANDLE)

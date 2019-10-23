@@ -31,6 +31,10 @@ namespace tpp {
 
         void appendData(char const * data, size_t numBytes);
 
+        size_t transferredBytes() const {
+            return written_;
+        }
+
     private:
         friend class RemoteFiles;
 

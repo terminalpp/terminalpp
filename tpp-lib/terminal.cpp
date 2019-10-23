@@ -19,11 +19,10 @@ namespace tpp {
     } // anonymous namespace
 
     Sequence Terminal::readSequence() {
-        Sequence result{};
-        // first wait for the tpp sequence to start, discarding any non-tpp traffic, if timeout, return invalid sequence
-        if (! waitForSequence()) 
-            return result;
+        // first wait for the tpp sequence to start, discarding any non-tpp traffic
+        waitForSequence();
         // now parse the id
+        Sequence result{};
         char c;
         int id = 0;
         while (true) {
@@ -74,9 +73,9 @@ namespace tpp {
         return response::NewFile{readSequence()}.fileId();
     }
 
-    void Terminal::transmit(int fileId, char const * data, size_t numBytes) {
+    void Terminal::transmit(int fileId, size_t offset, char const * data, size_t numBytes) {
         beginSequence();
-        std::string x{STR(TPP_START << Sequence::Data << ";" << fileId << ";")};
+        std::string x{STR(TPP_START << Sequence::Data << ";" << fileId << ";" << numBytes << ";" << offset << ";")};
         send(x.c_str(), x.size());
         encodeBuffer(data, numBytes);
         send(buffer_.data(), buffer_.size());
@@ -85,12 +84,23 @@ namespace tpp {
         buffer_.clear();
     }
 
+    size_t Terminal::transferStatus(int fileId) {
+        {
+            std::string x(STR(TPP_START << Sequence::TransferStatus << ";" << fileId << TPP_END));
+            sendSequence(x.c_str(), x.size());
+        }
+        response::TransferStatus response{readSequence()};
+        ASSERT(response.valid());
+        ASSERT(response.fileId() == fileId);
+        return response.transmittedBytes();
+    }
+
     void Terminal::openFile(int fileId) {
         std::string x(STR(TPP_START << Sequence::OpenFile << ";" << fileId << TPP_END));
         sendSequence(x.c_str(), x.size());
     }
 
-    bool Terminal::waitForSequence() {
+    void Terminal::waitForSequence() {
         int state = 0; // 0 = nothing, 1 = ESC parsed, 2 = ] parsed, 3 = + parsed 
         char c;
         int t = timeout_;
@@ -98,11 +108,11 @@ namespace tpp {
             switch (readNonBlocking(&c, 1)) {
                 case NoInputAvailable:
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                    if (--t == 0) 
-                        return false;
-                    break;
+                    if (--t > 0) 
+                        break;
+                    // fallthrough
                 case InputEoF:
-                    return false;
+                    THROW(helpers::TimeoutError()) << "t++ sequence wait timeout";
                 default: {
                     switch (c) {
                         case '\033':
@@ -113,12 +123,12 @@ namespace tpp {
                                 state = 2;
                             } else {
                                 state = 0;
-                                ASSERT(false) << "Non TPP sequence on input";
+                                ASSERT(false) << "Non TPP sequence on input";  
                             }
                             break;
                         case '+':
                             if (state == 2) {
-                                return true;
+                                return;
                             } else {
                                 state = 0;
                                 ASSERT(false) << "Non TPP sequence on input";
@@ -131,7 +141,6 @@ namespace tpp {
                 }
             }
         }
-        return false;
     }
 
     void Terminal::encodeBuffer(char const * data, size_t numBytes) {
@@ -163,8 +172,7 @@ namespace tpp {
         in_(in),
         out_(out),
         blocking_(true),
-        insideTmux_(false),
-        sentSequences_(0) {
+        insideTmux_(false) {
         tcgetattr(in_, & backup_);
         termios raw = backup_;
         raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
@@ -180,13 +188,8 @@ namespace tpp {
     }
 
     void StdTerminal::beginSequence() {
-        if (insideTmux_) {
-            if (++sentSequences_ == 50) {
-                getCapabilities();
-                sentSequences_ = 0;
-            }
+        if (insideTmux_) 
             ::write(out_, "\033Ptmux;", 7);
-        }
     }
 
     void StdTerminal::endSequence() {
