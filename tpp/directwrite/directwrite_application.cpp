@@ -139,8 +139,6 @@ namespace tpp {
     }
 
     void DirectWriteApplication::attachConsole() {
-		OSCHECK(AllocConsole()) << "No parent process console and cannot allocate one";
-/*
 		if (AttachConsole(ATTACH_PARENT_PROCESS) == 0) {
 			if (GetLastError() != ERROR_INVALID_HANDLE)
 			  OSCHECK(false) << "Error when attaching to parent process console";
@@ -151,7 +149,6 @@ namespace tpp {
 			ShowWindow(GetConsoleWindow(), SW_HIDE);
 #endif
 		}
-		*/
         // this is ok, console cannot be detached, so we are fine with keeping the file handles forewer,
         // nor do we need to FreeConsole at any point
         FILE* fpstdin = stdin, * fpstdout = stdout, * fpstderr = stderr;

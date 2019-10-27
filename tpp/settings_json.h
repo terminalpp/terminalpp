@@ -61,6 +61,9 @@ namespace tpp {
         /* Determines whether the window should start fullscreen or not.
          */
         "fullscreen" : false,
+        /* Determines the behavior of the session when the attached command terminates.
+         */
+        "waitAfterPtyTerminated" : false,
         /* Determines the maximum number of lines the terminal will remember in the history of the buffer. If set to 0, terminal history is disabled. 
          */
         "historyLimit" : 10000,

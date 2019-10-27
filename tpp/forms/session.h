@@ -105,12 +105,16 @@ namespace tpp {
         }
 
         void ptyTerminated(ui::ExitCodeEvent & e) {
-            setTitle(STR("Attached process terminated (code " << *e << ") - press a key to exit"));
-            setIcon(Icon::Notification);
             // disable the terminal
             terminal_->setEnabled(false);
-            // close the window upon next key down
-            closeOnKeyDown_ = true;
+            if (*e != EXIT_SUCCESS || Config::Instance().sessionWaitAfterPtyTerminated()) {
+                setTitle(STR("Attached process terminated (code " << *e << ") - press a key to exit"));
+                setIcon(Icon::Notification);
+                // close the window upon next key down
+                closeOnKeyDown_ = true;
+            } else {
+                closeRenderer();
+            }
         }
 
         void terminalInputProcessed(ui::InputProcessedEvent & e) {

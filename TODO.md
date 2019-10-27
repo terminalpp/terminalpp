@@ -13,6 +13,7 @@ The following is very short description of the versions planned and their main n
 ### v0.5
 
 - session palette can be customized in `settings.json`
+- terminal wait on terminated PTY is customized in `settings.json`
 - support for opening remote files by extra escape sequences (basic)
 
 - nicer ropen & in its own project & packages, etc.
@@ -63,7 +64,7 @@ The following is very short description of the versions planned and their main n
 ### v0.4
 
 - support terminal history, scrolling, selection from it, etc. 
-- will open settings.json for editing when requested
+- will open `settings.json` for editing when requested
 
 ### v0.3
 

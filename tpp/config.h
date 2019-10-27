@@ -96,6 +96,10 @@ namespace tpp {
 			    result.setColor(i, ui::Color::FromHTML(colors[i]));
 			return result;
 		}
+
+		bool sessionWaitAfterPtyTerminated() const {
+			return get({"session","waitAfterPtyTerminated"});
+		}
 		
 		helpers::JSON & json() {
 			return json_;

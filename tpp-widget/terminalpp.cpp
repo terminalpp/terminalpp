@@ -1386,7 +1386,6 @@ namespace ui {
                 LOG(SEQ) << "t++ transfer status";
                 tpp::request::TransferStatus req{std::move(seq)};
                 if (req.valid()) {
-                    LOG << "status";
                     TransferStatus event{req.fileId()};
                     buffer_.unlock();
                     try {
@@ -1397,7 +1396,6 @@ namespace ui {
                         LOG(SEQ_ERROR) << "unknown error";
                     }
                     buffer_.lock();
-                    LOG << "Status sent, transferred bytes " << event.transferredBytes;
                     send(STR("\033P+" << tpp::Sequence::TransferStatus << ";" << event.fileId << ";" << event.transferredBytes << helpers::Char::BEL));
                 }
                 break;

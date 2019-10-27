@@ -6,7 +6,6 @@ namespace tpp {
 
     /** A Terminal++ escape sequence. 
      
-        Terminal++ escape sequences mask as special OSC sequences so that they are ignored by incompatible terminals. 
      */
     class Sequence {
     public:
