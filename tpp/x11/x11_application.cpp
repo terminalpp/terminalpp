@@ -151,7 +151,7 @@ namespace tpp {
 			if (system(STR("x-terminal-emulator -e editor \"" << filename << "\" &").c_str()) != EXIT_SUCCESS)
 				alert(STR("unable to open file " << filename << " with default editor"));
 		} else {
-			if (system(STR("xdg-open \"" << filename << "\"").c_str()) != EXIT_SUCCESS)
+			if (system(STR("xdg-open \"" << filename << "\" &").c_str()) != EXIT_SUCCESS)
 				alert(STR("xdg-open not found or unable to open file:\n" << filename));
 		}
 	}
