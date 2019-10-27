@@ -2,12 +2,14 @@
 
 Thank you for your interest in `tpp`!
 
-## Bugs
+## Reporting Bugs
 
-For reporting bugs, please use the issue tracker at GitHub. Make sure that the issue is minimal and reproducible, i.e. provide set of steps that recreate the bug. Make sure to specify the platform used in detail. 
+Please use the issue tracker at Github for this (make sure to indicate the issue is labelled as *bug*). Make sure that the issue is reasonably minimal and reproducible, i.e. provide set of steps that recreate the bug. Make sure to specify your operating system and the precise version of `tpp` used (this can be obtained by running `tpp --version`). Also add the relevant settings of the configuration file. 
 
-For bugfixes, please use pull requests. 
+## Requesting New Features
 
-## New Features
+If there is a feature you would like `tpp` to support, please use the issues on Github as well, explain the feature you want in enough detail and label the issue as *enhancement*. 
 
-Please use pull-requests. Unless the feature already has an issue confirmed by the authors, it is best to check first whether a feature is wanted. 
+## Fixing Bugs & Implementing New Features
+
+For both, please use pull requests. Make sure that a corresponding issue exists and in case of enhancements that the issue was reviewed by `tpp` authors and approved. 

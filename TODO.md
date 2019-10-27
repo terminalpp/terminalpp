@@ -15,7 +15,6 @@ The following is very short description of the versions planned and their main n
 - session palette can be customized in `settings.json`
 - support for opening remote files by extra escape sequences (basic)
 
-
 - nicer ropen & in its own project & packages, etc.
 - borders should be thin, thick, full
 - comment the new remote files code well
