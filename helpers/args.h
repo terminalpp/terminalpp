@@ -188,8 +188,24 @@ namespace helpers {
 
 		/** Determines whether unknown arguments are supported or not.
 		 */
-		static void AllowUnknownArguments(bool value = true) {
+		static bool AllowUnknownArguments() {
+			return ArgumentsList().allowUnknownArgs;
+		}
+
+		static void SetAllowUnknownArguments(bool value = true) {
 			ArgumentsList().allowUnknownArgs = value;
+			if (value)
+			    ArgumentsList().defaultArgument = nullptr;
+		}
+
+		/** Determines the default argument, i.e. the argument to be used when no argument name was specified. 
+		 */
+		static BaseArg * DefaultArgument() {
+			return ArgumentsList().defaultArgument;
+		}
+
+		static void SetDefaultArgument(BaseArg & argument) {
+			ArgumentsList().defaultArgument = & argument;
 		}
 
 		/** Returns a map of unknown arguments and their values in case unknown arguments are allowed by the implementation. 
@@ -292,6 +308,7 @@ namespace helpers {
 			std::vector<BaseArg*> byPosition;
 			std::unordered_map<std::string, std::string> unknownArgs;
 			bool allowUnknownArgs = false;
+			BaseArg * defaultArgument = nullptr;
 		}; // Arguments::Impl
 
 		static Impl& ArgumentsList() {
@@ -339,11 +356,16 @@ namespace helpers {
 							break;
 						}
 					arg = args.byAlias.find(argName);
-					if (arg == args.byAlias.end()) {
-						if (! args.allowUnknownArgs)
-							THROW(ArgumentError()) << "Unrecognized argument " << argName;
-						// if unknown arguments are allowed, we have one
-						args.unknownArgs.insert(std::make_pair(argName, (argValue == nullptr) ? std::string() : std::string(argValue)));
+					if (argValue == nullptr && arg == args.byAlias.end()) {
+						if (args.defaultArgument != nullptr) {
+							args.defaultArgument->parse(argv[i]);
+							args.defaultArgument->specified_ = true;
+						} else {
+							if (! args.allowUnknownArgs)
+								THROW(ArgumentError()) << "Unrecognized argument " << argName;
+							// if unknown arguments are allowed, we have one
+							args.unknownArgs.insert(std::make_pair(argName, (argValue == nullptr) ? std::string() : std::string(argValue)));
+						}
 						// and move to next argument
 						++i;
 						continue;
