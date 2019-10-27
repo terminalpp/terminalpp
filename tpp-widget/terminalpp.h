@@ -103,6 +103,18 @@ namespace ui {
         helpers::Event<TransferStatusEvent> onTransferStatus;
         helpers::Event<OpenRemoteFileEvent> onOpenRemoteFile;
 
+        /** Determines whether the bold font is rendered in bright colors or not. 
+         
+            This settings only affects text that is selected bold, and its color is then set to one of the predefined colors (0-7). If enabled, the bright color indices (8-15) will be used instead.  
+         */
+        bool boldIsBright() const {
+            return boldIsBright_;
+        }
+
+        void setBoldIsBright(bool value = true) {
+            boldIsBright_ = value;
+        }
+
     protected:
         class CSISequence;
 
@@ -305,7 +317,10 @@ namespace ui {
         /* The palette used for the terminal. */
         Palette const * palette_;  
 
-        std::string const * GetSequenceForKey(Key key) {
+        /* Sequences & rendering options. */
+        bool boldIsBright_;
+
+        static std::string const * GetSequenceForKey(Key key) {
             auto i = KeyMap_.find(key);
             if (i == KeyMap_.end())
                 return nullptr;
@@ -393,6 +408,9 @@ namespace ui {
         Color * colors_;
 
     }; // TerminalPP::Palette
+
+
+    PROPERTY_BUILDER(BoldIsBright, bool, setBoldIsBright, TerminalPP);
 
     EVENT_BUILDER(OnNewRemoteFile, NewRemoteFileEvent, onNewRemoteFile, TerminalPP);
     EVENT_BUILDER(OnRemoteData, RemoteDataEvent, onRemoteData, TerminalPP);

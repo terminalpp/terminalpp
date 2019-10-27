@@ -100,6 +100,10 @@ namespace tpp {
 		bool sessionWaitAfterPtyTerminated() const {
 			return get({"session","waitAfterPtyTerminated"});
 		}
+
+		bool sessionSequencesBoldIsBright() const {
+			return get({"session","sequences", "boldIsBright"});
+		}
 		
 		helpers::JSON & json() {
 			return json_;

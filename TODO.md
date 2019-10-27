@@ -14,6 +14,7 @@ The following is very short description of the versions planned and their main n
 
 - session palette can be customized in `settings.json`
 - terminal wait on terminated PTY is customized in `settings.json`
+- bold text can be forced to render in bright colors
 - support for opening remote files by extra escape sequences (basic)
 
 - nicer ropen & in its own project & packages, etc.

@@ -80,6 +80,13 @@ namespace tpp {
              */
             "defaultBackground" : 0
         },
+        /* Behavior for terminal escape sequences. 
+         */
+        "sequences" : {
+            /* If true, bold text is rendered in bright colors. 
+             */
+            "boldIsBright" : false
+        },
         /* Settings for opening remote files from the terminal locally. 
          */
         "remoteFiles" : {

@@ -35,6 +35,7 @@ namespace tpp {
                     << FocusIndex(0)
                     << FocusStop(true)
                     << HistorySizeLimit(config.sessionHistoryLimit())
+                    << BoldIsBright(config.sessionSequencesBoldIsBright())
                     << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
                     << OnNotification(CreateHandler<VoidEvent, Session, &Session::terminalNotification>(this))
                     << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))

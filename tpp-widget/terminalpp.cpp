@@ -357,7 +357,8 @@ namespace ui {
         alternateBufferMode_{false},
         alternateBuffer_{width, height},
         alternateState_{width, height, palette->defaultForeground(), palette->defaultBackground()},
-        palette_{palette} {
+        palette_{palette},
+        boldIsBright_{false} {
     }
 
     Color TerminalPP::defaultForeground() const {
@@ -1252,8 +1253,11 @@ namespace ui {
 				/* 100 - 107 are bright background colors, handled in the default case. */
 				default:
 					if (seq[i] >= 30 && seq[i] <= 37) {
-						state_.cell << Foreground(palette_->at(seq[i] - 30))
-                                    << DecorationColor(palette_->at(seq[i] - 30));
+                        int colorIndex = seq[i] - 30;
+                        if (boldIsBright_ && state_.cell.font().bold())
+                            colorIndex += 8;
+						state_.cell << Foreground(palette_->at(colorIndex))
+                                    << DecorationColor(palette_->at(colorIndex));
 						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 30);
 					} else if (seq[i] >= 40 && seq[i] <= 47) {
 						state_.cell << Background(palette_->at(seq[i] - 40));
