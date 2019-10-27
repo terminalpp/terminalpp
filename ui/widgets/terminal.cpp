@@ -170,7 +170,6 @@ namespace ui {
         pty_{pty},
         fps_{fps},
         repaint_{false},
-        mouseSelectionUpdate_{false},
         scrollable_{true},
         scrollBarActive_{false},
         historySizeLimit_{0} {

@@ -258,11 +258,6 @@ namespace ui {
 			static_assert(sizeof(Cell) == 24, "Invalid cell size, padding must be adjusted");
 		}
 
-		Cell(Cell const & other):
-		    big_{other.big_[0], other.big_[1], other.big_[2]} {
-		}
-
-
 		/** Returns the codepoint stored in the cell. 
 		 */
 	    char32_t codepoint() const {
@@ -301,12 +296,6 @@ namespace ui {
 
 		Attributes attributes() const {
 			return Attributes(((small_[1] & 0xff) << 8) + (small_[2] & 0xff));
-		}
-
-		Cell & operator = (Cell const & other) {
-			big_[0] = other.big_[0];
-			big_[1] = other.big_[1];
-			return *this;
 		}
 
 		bool operator == (Cell const & other) const {

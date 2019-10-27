@@ -72,6 +72,11 @@ namespace ui {
 
     struct InputError : public InputBuffer {
         std::string error;
+
+        InputError(char const * buffer, size_t size, std::string const &error):
+            InputBuffer{buffer, size},
+            error(error) {
+        }
     };
 
     typedef helpers::EventPayload<InputBuffer, Widget> InputProcessedEvent;
@@ -492,10 +497,6 @@ namespace ui {
 
         /* Terminal title */
         std::string title_;
-
-        /** Determines whether mouse selection update is in progress or not. 
-         */
-        bool mouseSelectionUpdate_;
 
         /** Determines whethet the terminal is scrollable, or not. 
          */
