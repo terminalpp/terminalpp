@@ -54,6 +54,11 @@ namespace tpp {
         return result;
     }
 
+    Sequence::AckResponse::AckResponse(Sequence && seq) {
+        if (seq.id_ != Kind::Ack || !seq.payload_.empty())
+            THROW(SequenceError()) << "Invalid ack response " << seq;
+    }
+
     Sequence::CapabilitiesRequest::CapabilitiesRequest(Sequence && seq) {
         if (seq.id_ != Kind::Capabilities || !seq.payload_.empty())
             THROW(SequenceError()) << "Invalid capabilities request sequence " << seq;

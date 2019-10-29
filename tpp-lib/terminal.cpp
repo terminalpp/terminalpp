@@ -97,6 +97,7 @@ namespace tpp {
     void Terminal::openFile(int fileId) {
         std::string x(STR(TPP_START << Sequence::Kind::OpenFile << ";" << fileId << TPP_END));
         sendSequence(x.c_str(), x.size());
+        Sequence::AckResponse{readSequence()};
     }
 
     void Terminal::waitForSequence() {

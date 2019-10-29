@@ -32,7 +32,7 @@ namespace tpp {
         static constexpr size_t InputEoF = 0;
 
         Terminal():
-            timeout_(500) {
+            timeout_(1000) {
         }
 
         virtual ~Terminal() {
@@ -48,18 +48,38 @@ namespace tpp {
             timeout_ = value;
         }
 
+        /** Reads a `t++` sequence from the terminal, ignoring any non-tpp input. 
+         
+            Throws the helpers::Timeout error if no `t++` sequence appears before the timeout. 
+         */
         Sequence readSequence();
 
+        /** Queries the capabilities of the terminal. 
+         
+            Throws the helpers::Timeout error on timeout, which means no `terminal++` is attached. 
+         */
         Sequence::CapabilitiesResponse getCapabilities();
 
+        /** Requests the connection id for new local file to be transmitted to the server. 
+         
+            Requires the local path and size of the file. 
+         */
         Sequence::NewFileResponse newFile(std::string const & path, size_t size);
 
+        /** Transmits given block of data. 
+         */
         void transmit(int fileId, size_t offset, char const * data, size_t numBytes);
 
+        /** Returns the transfer status of the specified connection id. 
+         */
         Sequence::TransferStatusResponse transferStatus(int fileId);
 
+        /** Instructs the attached `terminal++` to open the file associated with given connection id. 
+         */
         void openFile(int fileId);
 
+        /** Decodes single character from `t++` encoded data, advancing the buffer read accordingly. 
+         */
         static char Decode(char const * & buffer, char const * end) {
             ASSERT(buffer != end);
             if (*buffer != '`') {

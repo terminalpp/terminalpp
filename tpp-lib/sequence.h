@@ -42,7 +42,7 @@
 
     tpp::Sequence::Kind::OpenFile
 
-    Once the file is transmitted entirely, the `OpenFile` instructs the terminal to open the file using the terminal's system local viewer. 
+    Once the file is transmitted entirely, the `OpenFile` instructs the terminal to open the file using the terminal's system local viewer. Once the message is received, the `Ack` message is sent back and should be accepted by the client.
 
     \section tppseqencoding `t++` Encoding Scheme
 
@@ -65,13 +65,15 @@ namespace tpp {
         enum class Kind : int {
             Invalid = -2, 
             Incomplete = -1, 
-            Capabilities = 0,
+            Ack = 0, 
+            Capabilities,
             NewFile,
             Data,
             TransferStatus,
             OpenFile
         }; 
 
+        class AckResponse;
         class CapabilitiesRequest;
         class CapabilitiesResponse;
         class NewFileRequest;
@@ -129,6 +131,11 @@ namespace tpp {
             s << "T++ sequence id " << static_cast<int>(seq.id()) << ", payload: " << seq.payload();
             return s;
         } 
+    };
+
+    class Sequence::AckResponse {
+    public:
+        AckResponse(Sequence && seq);
     };
 
     class Sequence::CapabilitiesRequest {

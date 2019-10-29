@@ -1353,7 +1353,7 @@ namespace ui {
                 */
                 case tpp::Sequence::Kind::Capabilities:
                     LOG(SEQ) << "t++ terminal capabilities request";
-                    send("\033P+0;0\007");
+                    send(STR("\033P+"<< tpp::Sequence::Kind::Capabilities << ";0\007"));
                     break;
                 case tpp::Sequence::Kind::NewFile: {
                     LOG(SEQ) << "t++ new file request";
@@ -1408,6 +1408,7 @@ namespace ui {
                 case tpp::Sequence::Kind::OpenFile: {
                     LOG(SEQ) << "t++ file open request";
                     tpp::Sequence::OpenFileRequest req{std::move(seq)};
+                    send(STR("\033P+" << tpp::Sequence::Kind::Ack << helpers::Char::BEL));
                     buffer_.unlock();
                     try {
                         trigger(onTppOpenFile, req);
