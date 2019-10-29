@@ -182,6 +182,13 @@ namespace ui {
 		}
 	}
 
+    void Canvas::borderClear(Rect const & rect) {
+        for (int y = rect.top(), ye = rect.bottom(); y < ye; ++y)
+            for (int x = rect.left(), xe = rect.right(); x < xe; ++x)
+                if (Cell * cell = at(Point{x, y}))
+                    (*cell) << cell->attributes().setBorderTop(false).setBorderLeft(false).setBorderBottom(false).setBorderRight(false);
+    }
+
     void Canvas::borderRect(Rect const & rect, Color color, bool thick) {
         borderLineTop(rect.topLeft, rect.width(), color, thick);
         borderLineBottom(Point(rect.topLeft.x, rect.bottomRight.y - 1), rect.width(), color, thick);

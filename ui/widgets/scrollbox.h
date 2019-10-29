@@ -112,22 +112,28 @@ namespace ui {
 
 		/** Draws the vertical scrollbar overlay. 
 		 */ 
-		void drawVerticalScrollbarOverlay(Canvas & canvas, Color color) {
+		void drawVerticalScrollbarOverlay(Canvas & canvas, Color color, bool thick = false) {
+			canvas.borderClear(Rect{canvas.width() -1, 0, canvas.width(), canvas.height()});
 			// the right line
-			canvas.borderLineRight(Point{canvas.width() - 1, 0}, canvas.height(), color, false);
+			canvas.borderLineRight(Point{canvas.width() - 1, 0}, canvas.height(), color, thick);
 			// calculate the position of the slider
 			std::pair<int, int> slider{sliderPlacement(canvas.height(), clientHeight_, scrollOffset_.y, canvas.height())};
 			canvas.borderLineRight(Point{canvas.width() - 1, slider.first}, slider.second, color, true);
+			if (thick)
+				canvas.borderLineLeft(Point{canvas.width() - 1, slider.first}, slider.second, color, true);
 		}
 
 		/** Draws the horizontal scrollbar overlay. 
 		 */ 
-		void drawHorizontalScrollbarOverlay(Canvas & canvas, Color color) {
+		void drawHorizontalScrollbarOverlay(Canvas & canvas, Color color, bool thick = false) {
+			canvas.borderClear(Rect{0, canvas.height() - 1, canvas.width(), canvas.height()});
 			// the right line
-			canvas.borderLineBottom(Point{0, canvas.height() - 1}, canvas.width(), color, false);
+			canvas.borderLineBottom(Point{0, canvas.height() - 1}, canvas.width(), color, thick);
 			// calculate the position of the slider
 			std::pair<int, int> slider{sliderPlacement(canvas.width(), clientWidth_, scrollOffset_.x, canvas.width())};
 			canvas.borderLineBottom(Point{slider.first, canvas.height() - 1}, slider.second, color, true);
+			if (thick)
+				canvas.borderLineTop(Point{slider.first, canvas.height() - 1}, slider.second, color, true);
 		}
 
 		std::pair<int, int> sliderPlacement(int maxWidth, int maxVal, int pos, int size) {

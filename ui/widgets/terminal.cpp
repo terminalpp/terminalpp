@@ -251,7 +251,7 @@ namespace ui {
                for (int col = 0, ce = history_[i].first; col < ce; ++col)
                    clientCanvas.set(Point{col, i}, row[col]);
            }
-           drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? Color::Red().setAlpha(128) : Color::White().setAlpha(64));
+           drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? Color::Red().setAlpha(128) : Color::White().setAlpha(64), scrollBarActive_);
         }
         // paint the selection, if any
         paintSelection(clientCanvas);

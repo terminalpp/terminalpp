@@ -75,6 +75,12 @@ namespace ui {
 		 */
 		void textOut(Point start, std::string const& text, Color color, Font font = Font());
 
+        /** Clears the given rectangle of any visible borders. 
+         
+            Disables the top, left, bottom and right borders, but leaves border color and thickness unchanged. 
+         */
+        void borderClear(Rect const & rect);
+
         /** Draws border around the specified rectangle with given color & thickness. 
          */
         void borderRect(Rect const & rect, Color color, bool thick = false);

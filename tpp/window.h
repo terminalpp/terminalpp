@@ -320,8 +320,17 @@ namespace tpp {
                             setBorderColor(statusCell_.borderColor());
                         }
                         ui::Attributes attrs = c.attributes();
-                        if (attrs.border())
-                            drawBorder(attrs, col * cellWidthPx_, row * cellHeightPx_, attrs.borderThick() ? wThick : wThin);
+                        if (attrs.border()) {
+                            if (attrs.borderThick() && attrs.borderLeft() && attrs.borderRight()) {
+                                // We don't expect width to be greater than height, in which case the left & top should instead be top & bottom...
+                                ASSERT(cellWidthPx_ <= cellHeightPx_);
+                                attrs.setBorderRight(false).setBorderTop(false).setBorderBottom(false);
+                                drawBorder(attrs, col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_);
+                            } else {
+                                drawBorder(attrs, col * cellWidthPx_, row * cellHeightPx_, attrs.borderThick() ? wThick : wThin);
+                            }
+
+                        }
                     }
                 }
                 finalizeDraw();
