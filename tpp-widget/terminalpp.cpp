@@ -675,10 +675,10 @@ namespace ui {
                 if (*x == '+') {
                     ++x;
                     tpp::Sequence seq(tpp::Sequence::Parse(x, bufferEnd));
-                    if (!seq.valid())
-                        break;
                     if (!seq.complete())
                         return false;
+                    if (!seq.valid())
+                        break;
                     parseTppSequence(std::move(seq));
                 }
                 break;
@@ -1345,84 +1345,86 @@ namespace ui {
     }
 
     void TerminalPP::parseTppSequence(tpp::Sequence && seq) {
-        switch (seq.id()) {
-            /* Returns the terminal capabilities.
+        try {
+            switch (seq.id()) {
+                /* Returns the terminal capabilities.
 
-               For now only returns version 1. In the future this should be parametrized by various capabilities that may or may not be implemented. 
-             */
-            case tpp::Sequence::Capabilities:
-                LOG(SEQ) << "t++ terminal capabilities request";
-                send("\033P+0;0\007");
-                break;
-            case tpp::Sequence::NewFile: {
-                LOG(SEQ) << "t++ new file request";
-                tpp::request::NewFile req{std::move(seq)};
-                NewRemoteFile event{req.hostname(), req.filename(), req.remotePath(), req.size()};
-                buffer_.unlock();
-                try {
-                    trigger(onNewRemoteFile, event);
-                } catch (std::exception const & e) {
-                    LOG(SEQ_ERROR) << e.what();
-                } catch (...) {
-                    LOG(SEQ_ERROR) << "unknown error";
-                }
-                buffer_.lock();
-                send(STR("\033P+" << tpp::Sequence::NewFile << ';' << event.fileId << helpers::Char::BEL));
-                break;
-            }
-            case tpp::Sequence::Data: {
-                LOG(SEQ) << "t++ send request";
-                tpp::request::Data req{std::move(seq)};
-                if (req.valid()) {
+                For now only returns version 1. In the future this should be parametrized by various capabilities that may or may not be implemented. 
+                */
+                case tpp::Sequence::Kind::Capabilities:
+                    LOG(SEQ) << "t++ terminal capabilities request";
+                    send("\033P+0;0\007");
+                    break;
+                case tpp::Sequence::Kind::NewFile: {
+                    LOG(SEQ) << "t++ new file request";
+                    TppNewFilePayload event{
+                        tpp::Sequence::NewFileRequest{std::move(seq)},
+                        tpp::Sequence::NewFileResponse{}
+                    };
                     buffer_.unlock();
                     try {
-                        trigger(onRemoteData, RemoteData{req.fileId(), req.valid(), req.data(), req.size(), req.offset()});
+                        trigger(onTppNewFile, event);
                     } catch (std::exception const & e) {
                         LOG(SEQ_ERROR) << e.what();
                     } catch (...) {
                         LOG(SEQ_ERROR) << "unknown error";
                     }
                     buffer_.lock();
+                    send(STR("\033P+" << tpp::Sequence::Kind::NewFile << ';' << event.response.fileId << helpers::Char::BEL));
+                    break;
                 }
-                break;
-            }
-            case tpp::Sequence::TransferStatus: {
-                LOG(SEQ) << "t++ transfer status";
-                tpp::request::TransferStatus req{std::move(seq)};
-                if (req.valid()) {
-                    TransferStatus event{req.fileId()};
+                case tpp::Sequence::Kind::Data: {
+                    LOG(SEQ) << "t++ send request";
+                    tpp::Sequence::DataRequest req{std::move(seq)};
                     buffer_.unlock();
                     try {
-                        trigger(onTransferStatus, event);
+                        trigger(onTppData, req);
                     } catch (std::exception const & e) {
                         LOG(SEQ_ERROR) << e.what();
                     } catch (...) {
                         LOG(SEQ_ERROR) << "unknown error";
                     }
                     buffer_.lock();
-                    send(STR("\033P+" << tpp::Sequence::TransferStatus << ";" << event.fileId << ";" << event.transferredBytes << helpers::Char::BEL));
+                    break;
                 }
-                break;
-            }
-            case tpp::Sequence::OpenFile: {
-                LOG(SEQ) << "t++ file open request";
-                tpp::request::OpenFile req{std::move(seq)};
-                if (req.valid()) {
+                case tpp::Sequence::Kind::TransferStatus: {
+                    LOG(SEQ) << "t++ transfer status";
+                    TppTransferStatusPayload event{
+                        tpp::Sequence::TransferStatusRequest{std::move(seq)},
+                        tpp::Sequence::TransferStatusResponse{}
+                    };
                     buffer_.unlock();
                     try {
-                        trigger(onOpenRemoteFile, OpenRemoteFile{req.fileId()});
+                        trigger(onTppTransferStatus, event);
                     } catch (std::exception const & e) {
                         LOG(SEQ_ERROR) << e.what();
                     } catch (...) {
                         LOG(SEQ_ERROR) << "unknown error";
                     }
                     buffer_.lock();
+                    send(STR("\033P+" << tpp::Sequence::Kind::TransferStatus << ";" << event.response.fileId << ";" << event.response.transmittedBytes << helpers::Char::BEL));
+                    break;
                 }
-                break;
+                case tpp::Sequence::Kind::OpenFile: {
+                    LOG(SEQ) << "t++ file open request";
+                    tpp::Sequence::OpenFileRequest req{std::move(seq)};
+                    buffer_.unlock();
+                    try {
+                        trigger(onTppOpenFile, req);
+                    } catch (std::exception const & e) {
+                        LOG(SEQ_ERROR) << e.what();
+                    } catch (...) {
+                        LOG(SEQ_ERROR) << "unknown error";
+                    }
+                    buffer_.lock();
+                    break;
+                }
+                default:
+                    LOG(SEQ_UNKNOWN) << "Invalid t++ sequence: " << seq;
             }
-            default:
-        		LOG(SEQ_UNKNOWN) << "Invalid t++ sequence: " << seq;
-        }
+        } catch (tpp::SequenceError const & e) {
+            LOG(SEQ_ERROR) << e;
+        } 
     }
 
     void TerminalPP::parseFontSizeSpecifier(char kind) {

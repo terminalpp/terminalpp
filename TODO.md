@@ -17,11 +17,16 @@ The following is very short description of the versions planned and their main n
 - bold text can be forced to render in bright colors
 - support for opening remote files by extra escape sequences (basic)
 
-- nicer ropen & in its own project & packages, etc.
+- documentation for terminal in tpp-lib
+- OpenFile Sequence should have ACK associated with it
+- nicer ropen & in its own project & packages, etc. - or think about releases, wrt bypass as well
 - borders should be thin, thick, full
-- comment the new remote files code well
 - ideally snap store will be vetted by this time
 - Windows Store version as well
+
+Maybe not necessary now: 
+
+- the tpp terminal should use the `<<` and `>>` notation so that it can be used instead of std::cout & std::cin
 
 ### v0.6
 

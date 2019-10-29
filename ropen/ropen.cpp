@@ -66,9 +66,11 @@ namespace tpp {
         }
 
         void checkCapabilities() {
-            tpp::response::Capabilities cap{t_.getCapabilities()};
-            if (!cap.valid()) 
+            try {
+                Sequence::CapabilitiesResponse cap{t_.getCapabilities()};
+            } catch (SequenceError const & e) {
                 THROW(helpers::IOError()) << "Unable to connect to terminal++";
+            }
         }
 
         /** Initializes the transmission and obtains the file id. 
@@ -81,7 +83,7 @@ namespace tpp {
             totalBytes_ = s_.tellg();
             s_.seekg(0, std::ios_base::beg);
 
-            fileId_ = t_.newFile(localFile_, totalBytes_);
+            fileId_ = t_.newFile(localFile_, totalBytes_).fileId;
         }
 
         void transfer() {
@@ -107,12 +109,12 @@ namespace tpp {
                 // TODO how many retrials we want
                 for (size_t i = 0; i < 5; ++i) {
                     try {
-                        size_t transferred = t_.transferStatus(fileId_);
-                        if (transferred != sentBytes_) {
+                        size_t transmitted = t_.transferStatus(fileId_).transmittedBytes;
+                        if (transmitted != sentBytes_) {
                             // decrease packet limit
                             if (packetLimit_ > 8)
                                 packetLimit_ >>= 1;
-                            sentBytes_ = transferred;
+                            sentBytes_ = transmitted;
                             s_.clear();
                             s_.seekg(sentBytes_);
                         } else if (packetLimit_ < GOOD_PACKET_LIMIT) {
@@ -162,13 +164,11 @@ namespace tpp {
 
 } // namespace tpp
 
-
 int main(int argc, char * argv[]) {
     using namespace tpp;
     try {
         helpers::Arguments::SetDefaultArgument(Filename);
-        // TODO add version properly
-        // helpers::Arguments::SetVersion
+        helpers::Arguments::SetVersion(PROJECT_VERSION);
         helpers::Arguments::Parse(argc, argv);
         StdTerminal t;
         t.setTimeout(*Timeout);

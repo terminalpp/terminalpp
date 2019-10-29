@@ -1,9 +1,8 @@
-#if (defined ARCH_LINUX)
-
 #include <iostream>
 #include <limits>
 #include <thread>
 
+#include "helpers/helpers.h"
 #include "helpers/filesystem.h"
 #include "helpers/process.h"
 
@@ -29,11 +28,11 @@ namespace tpp {
             if (readBlocking(&c, 1) == 0)
                 return result; // EOF - invalid
             if (c == ';') {
-                result.id_ = id;
+                result.id_ = static_cast<Sequence::Kind>(id);
                 break;
             }
             if (c == helpers::Char::BEL) {
-                result.id_ = id;
+                result.id_ = static_cast<Sequence::Kind>(id);
                 return result;
             }
             if (helpers::IsDecimalDigit(c))
@@ -44,7 +43,7 @@ namespace tpp {
         // and the payload
         while (true) {
             if (readBlocking(&c, 1) == 0) {
-                result.id_ = Sequence::Invalid;
+                result.id_ = Sequence::Kind::Invalid;
                 return result;
             }
             if (c == helpers::Char::BEL)
@@ -53,29 +52,29 @@ namespace tpp {
         }
     }
 
-    response::Capabilities Terminal::getCapabilities() {
+    Sequence::CapabilitiesResponse Terminal::getCapabilities() {
         {
-            std::string x(STR(TPP_START << Sequence::Capabilities << TPP_END));
+            std::string x(STR(TPP_START << Sequence::Kind::Capabilities << TPP_END));
             sendSequence(x.c_str(), x.size());
         }
-        return response::Capabilities{readSequence()};
+        return Sequence::CapabilitiesResponse{readSequence()};
     }
 
-    int Terminal::newFile(std::string const & path, size_t size) {
+    Sequence::NewFileResponse Terminal::newFile(std::string const & path, size_t size) {
         {
-            std::string x(STR(TPP_START << Sequence::NewFile << ";" 
+            std::string x(STR(TPP_START << Sequence::Kind::NewFile << ";" 
                 << size << ";" 
                 << helpers::GetHostname() << ";"
                 << helpers::GetFilename(path) << ";"
                 << path << TPP_END));
             sendSequence(x.c_str(), x.size());
         }
-        return response::NewFile{readSequence()}.fileId();
+        return Sequence::NewFileResponse{readSequence()};
     }
 
     void Terminal::transmit(int fileId, size_t offset, char const * data, size_t numBytes) {
         beginSequence();
-        std::string x{STR(TPP_START << Sequence::Data << ";" << fileId << ";" << numBytes << ";" << offset << ";")};
+        std::string x{STR(TPP_START << Sequence::Kind::Data << ";" << fileId << ";" << numBytes << ";" << offset << ";")};
         send(x.c_str(), x.size());
         encodeBuffer(data, numBytes);
         send(buffer_.data(), buffer_.size());
@@ -84,31 +83,31 @@ namespace tpp {
         buffer_.clear();
     }
 
-    size_t Terminal::transferStatus(int fileId) {
+    Sequence::TransferStatusResponse Terminal::transferStatus(int fileId) {
         {
-            std::string x(STR(TPP_START << Sequence::TransferStatus << ";" << fileId << TPP_END));
+            std::string x(STR(TPP_START << Sequence::Kind::TransferStatus << ";" << fileId << TPP_END));
             sendSequence(x.c_str(), x.size());
         }
-        response::TransferStatus response{readSequence()};
-        ASSERT(response.valid());
-        ASSERT(response.fileId() == fileId);
-        return response.transmittedBytes();
+        Sequence::TransferStatusResponse response{readSequence()};
+        if (response.fileId != fileId)
+            THROW(SequenceError()) << "Transfer status response file (" << response.fileId << ")does not match the request (" << fileId << ")";
+        return response;
     }
 
     void Terminal::openFile(int fileId) {
-        std::string x(STR(TPP_START << Sequence::OpenFile << ";" << fileId << TPP_END));
+        std::string x(STR(TPP_START << Sequence::Kind::OpenFile << ";" << fileId << TPP_END));
         sendSequence(x.c_str(), x.size());
     }
 
     void Terminal::waitForSequence() {
         int state = 0; // 0 = nothing, 1 = ESC parsed, 2 = ] parsed, 3 = + parsed 
         char c;
-        int t = timeout_;
+        size_t t = timeout_;
         while (true) {
             switch (readNonBlocking(&c, 1)) {
                 case NoInputAvailable:
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                    if (--t > 0) 
+                    if (t-- > 0) 
                         break;
                     // fallthrough
                 case InputEoF:
@@ -123,6 +122,7 @@ namespace tpp {
                                 state = 2;
                             } else {
                                 state = 0;
+                                // only here because I do not expect such things to happen, but technically the protocol should be ok and just swallow the non-tpp sequences
                                 ASSERT(false) << "Non TPP sequence on input";  
                             }
                             break;
@@ -131,11 +131,13 @@ namespace tpp {
                                 return;
                             } else {
                                 state = 0;
+                                // only here because I do not expect such things to happen, but technically the protocol should be ok and just swallow the non-tpp sequences
                                 ASSERT(false) << "Non TPP sequence on input";
                             }
                             break;
                         default:
                             state = 0;
+                                // only here because I do not expect such things to happen, but technically the protocol should be ok and just swallow the non-tpp sequences
                             ASSERT(false) << "Non TPP sequence on input";
                     }
                 }
@@ -239,4 +241,3 @@ namespace tpp {
 #endif
 
 } // namespace tpp
-#endif

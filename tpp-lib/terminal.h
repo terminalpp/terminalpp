@@ -18,6 +18,12 @@
 namespace tpp {
 
     /** The terminal is an abstraction over the PTY. 
+
+        It defines the basic API necessary to implement the reading and writing of `t++` extra escape sequences and then provides methods for transmitting each command and its associated response (if any). 
+
+        Actual terminal implementation should inherit from the tpp::Terminal class and implement the holes for the basic I/O functionality.  
+
+        TODO the terminal should ideally support also `<<` and so on so that it can be used instead of std::cout.
      */
     class Terminal {
     public:
@@ -32,6 +38,8 @@ namespace tpp {
         virtual ~Terminal() {
         }
 
+        /** Determines the timeout in milliseconds the server has to respond to any of the messages. 
+         */
         size_t timeout() const {
             return timeout_;
         }
@@ -40,28 +48,15 @@ namespace tpp {
             timeout_ = value;
         }
 
-        virtual void beginSequence() = 0;
-        virtual void endSequence() = 0;
-        void sendSequence(char const * buffer, size_t numBytes) {
-            beginSequence();
-            send(buffer, numBytes);
-            endSequence();
-        }
-        virtual void send(char const * buffer, size_t numBytes) = 0;
-        virtual size_t readBlocking(char * buffer, size_t bufferSize) = 0;
-        virtual size_t readNonBlocking(char * buffer, size_t bufferSize) = 0;
-        
         Sequence readSequence();
 
-        response::Capabilities getCapabilities();
+        Sequence::CapabilitiesResponse getCapabilities();
 
-        int newFile(std::string const & path, size_t size);
+        Sequence::NewFileResponse newFile(std::string const & path, size_t size);
 
         void transmit(int fileId, size_t offset, char const * data, size_t numBytes);
 
-        /** Returns the number of bytes correctly received for the given file. 
-         */
-        size_t transferStatus(int fileId);
+        Sequence::TransferStatusResponse transferStatus(int fileId);
 
         void openFile(int fileId);
 
@@ -80,8 +75,18 @@ namespace tpp {
 
     protected:
 
-        void waitForSequence();
+        virtual void beginSequence() = 0;
+        virtual void endSequence() = 0;
+        void sendSequence(char const * buffer, size_t numBytes) {
+            beginSequence();
+            send(buffer, numBytes);
+            endSequence();
+        }
+        virtual void send(char const * buffer, size_t numBytes) = 0;
+        virtual size_t readBlocking(char * buffer, size_t bufferSize) = 0;
+        virtual size_t readNonBlocking(char * buffer, size_t bufferSize) = 0;
 
+        void waitForSequence();
 
     private:
 

@@ -15,11 +15,12 @@
 
 namespace tpp {
 
+
     Sequence Sequence::Parse(char * & start, char const * end) {
         Sequence result{};
         char * x = start;
         if (x == end) {
-            result.id_ = Incomplete;
+            result.id_ = Kind::Incomplete;
             return result;
         }
         // read the id
@@ -31,14 +32,14 @@ namespace tpp {
             // skip the ';' after the id if present
             if (x != end && *x == ';')
                 ++x;
-            result.id_ = id;
+            result.id_ = static_cast<Kind>(id);
         }
         // read the contents
         char * valueStart = x;
         while (x != end) {
             // ESC character cannot appear in the payload, if it does, we are leaking real escape codes and should stop.
             if (*x == helpers::Char::ESC) {
-                result.id_ = Invalid;
+                result.id_ = Kind::Invalid;
                 start = x;
                 return result;
             }
@@ -49,144 +50,160 @@ namespace tpp {
             }
             ++x;
         }
-        result.id_ = Incomplete;
+        result.id_ = Kind::Incomplete;
         return result;
     }
 
-    namespace request {
+    Sequence::CapabilitiesRequest::CapabilitiesRequest(Sequence && seq) {
+        if (seq.id_ != Kind::Capabilities || !seq.payload_.empty())
+            THROW(SequenceError()) << "Invalid capabilities request sequence " << seq;
+    }
 
-        NewFile::NewFile(Sequence && from):
-            Sequence(std::move(from)),
-            size_{0} {
-            if (id() == Sequence::NewFile) {
-                std::vector<std::string> parts = helpers::Split(payload(), ";");
-                if (parts.size() >= 4) {
-                    try {
-                        size_ = std::stoul(parts[0]);
-                        hostname_ = parts[1];
-                        filename_ = parts[2];
-                        remotePath_ = parts[3];
-                    } catch (...) {
-                        // do nothing
-                    }
-                }
-            }
+    Sequence::CapabilitiesResponse::CapabilitiesResponse(Sequence && seq) {
+        if (seq.id_ != Kind::Capabilities)
+            THROW(SequenceError()) << "Invalid capabilities response sequence " << seq;
+        ContentsParser cp(std::move(seq));
+        version = cp.parseInt();
+        cp.checkEoF();
+    }
+
+    Sequence::NewFileRequest::NewFileRequest(Sequence && seq) {
+        if (seq.id_ != Kind::NewFile)
+            THROW(SequenceError()) << "Invalid new file request sequence " << seq;
+        ContentsParser cp(std::move(seq));
+        size = cp.parseUnsigned();
+        hostname = cp.parseString();
+        filename = cp.parseString();
+        remotePath = cp.parseString();
+        cp.checkEoF();
+    }
+
+    Sequence::NewFileResponse::NewFileResponse(Sequence && seq) {
+        if (seq.id_ != Kind::NewFile)
+            THROW(SequenceError()) << "Invalid new file response sequence " << seq;
+        ContentsParser cp(std::move(seq));
+        fileId = cp.parseInt();
+        cp.checkEoF();
+    }
+
+    Sequence::DataRequest::DataRequest(Sequence && seq) {
+        if (seq.id_ != Kind::Data)
+            THROW(SequenceError()) << "Invalid data request sequence " << seq;
+        ContentsParser cp(std::move(seq));
+        fileId = cp.parseInt();
+        size_t size = cp.parseUnsigned();
+        offset = cp.parseUnsigned();
+        data = cp.parseEncodedData();
+        if (size != data.size())
+            THROW(SequenceError()) << "Data packet size mismatch";
+        cp.checkEoF();
+    }
+
+    Sequence::TransferStatusRequest::TransferStatusRequest(Sequence && seq) {
+        if (seq.id_ != Kind::TransferStatus)
+            THROW(SequenceError()) << "Invalid transfer status request sequence " << seq;
+        ContentsParser cp(std::move(seq));
+        fileId = cp.parseInt();
+        cp.checkEoF();
+    }
+
+    Sequence::TransferStatusResponse::TransferStatusResponse(Sequence && seq) {
+        if (seq.id_ != Kind::TransferStatus)
+            THROW(SequenceError()) << "Invalid transfer status response sequence " << seq;
+        ContentsParser cp(std::move(seq));
+        fileId = cp.parseInt();
+        transmittedBytes = cp.parseUnsigned();
+        cp.checkEoF();
+    }
+
+    Sequence::OpenFileRequest::OpenFileRequest(Sequence && seq) {
+        if (seq.id_ != Kind::OpenFile)
+            THROW(SequenceError()) << "Invalid open file request sequence " << seq;
+        ContentsParser cp(std::move(seq));
+        fileId = cp.parseInt();
+        cp.checkEoF();
+    }
+
+    int Sequence::ContentsParser::parseInt() {
+        if (i_ >= payload_.size())
+            THROW(SequenceError()) << "Integer expected, but EoF found in sequence " << payload_;
+        int result = 0;
+        int multiplier = 1;
+        if (payload_[i_] == '-') {
+            multiplier = -1;
+            ++i_;
+            if (i_ >= payload_.size())
+                THROW(SequenceError()) << "Integer expected, but EoF found in sequence " << payload_;
+            if (payload_[i_] == ';')
+                THROW(SequenceError()) << "Integer expected, but only sign found " << payload_;
         }
-
-        Data::Data(Sequence && from):
-            Sequence(std::move(from)),
-            fileId_{-1},
-            data_{nullptr},
-            size_{0} {
-            if (id() == Sequence::Data) {
-                // determine the delimiters for the fileId and transmitted size
-                // TODO perhaps this should be a better parser in the end
-                size_t dataSizeStart = payload().find(';') + 1;
-                if (dataSizeStart == std::string::npos)
-                    return; // invalid
-                size_t dataOffsetStart = payload().find(';', dataSizeStart) + 1; 
-                if (dataOffsetStart == std::string::npos)
-                    return; // invalid
-                size_t dataStart = payload().find(';', dataOffsetStart) + 1;
-                if (dataStart == std::string::npos)
-                    return; // invalid
-                try {
-                    fileId_ = std::stoi(payload().substr(0, dataStart));
-                    size_ = std::stoul(payload().substr(dataSizeStart, dataOffsetStart - dataSizeStart));
-                    offset_ = std::stoul(payload().substr(dataOffsetStart, dataStart - dataOffsetStart));
-                    // decode the contents
-                    data_ = payload().c_str() + dataStart;
-                    size_t w = dataStart;
-                    char const * r = data_;
-                    char const * e = payload().c_str() + payload().size();
-                    while (r < e) 
-                        payload_[w++] = Terminal::Decode(r, e);
-                    // if different length of data was received than advertised, the packet is invalid
-                    if (w - dataStart  != size_)
-                        fileId_ = -1;
-                } catch (...) {
-                    // do nothing
-                }
+        bool ok = false;
+        while (i_ < payload_.size()) {
+            if (payload_[i_] == ';') {
+                ++i_;
+                break;
             }
+            if (! helpers::IsDecimalDigit(payload_[i_]))
+                THROW(SequenceError()) << "Expected number, but " << payload_[i_] << " found in sequence " << payload_;
+            result = result * 10 + helpers::DecCharToNumber(payload_[i_++]);
+            ok = true;
         }
+        if (! ok)
+            THROW(SequenceError()) << "Empty integer value not allowed " << payload_;
+        return result * multiplier;
+    }
 
-        OpenFile::OpenFile(Sequence && from):
-            Sequence(std::move(from)),
-            fileId_(-1) {
-            if (id() == Sequence::OpenFile) {
-                try {
-                    fileId_ = std::stoi(payload());
-                } catch (...) {
-                    // do nothing
-                }
+    size_t Sequence::ContentsParser::parseUnsigned() {
+        if (i_ >= payload_.size())
+            THROW(SequenceError()) << "Unsigned expected, but EoF found in sequence " << payload_;
+        size_t result = 0;
+        bool ok = false;
+        while (i_ < payload_.size()) {
+            if (payload_[i_] == ';') {
+                ++i_;
+                break;
             }
+            if (! helpers::IsDecimalDigit(payload_[i_]))
+                THROW(SequenceError()) << "Expected number, but " << payload_[i_] << " found in sequence " << payload_;
+            result = result * 10 + helpers::DecCharToNumber(payload_[i_++]);
+            ok = true;
         }
+        if (! ok)
+            THROW(SequenceError()) << "Empty integer value not allowed " << payload_;
+        return result;
+    }
 
-        TransferStatus::TransferStatus(Sequence && from):
-            Sequence(std::move(from)),
-            fileId_(-1) {
-            if (id() == Sequence::TransferStatus) {
-                try {
-                    fileId_ = std::stoi(payload());
-                } catch (...) {
-                    // do nothing
-                }
-            }
+    std::string Sequence::ContentsParser::parseString() {
+        if (i_ >= payload_.size())
+            THROW(SequenceError()) << "string expected, but EoF found in sequence " << payload_;
+        size_t nextSemicolon = payload_.find(';', i_);
+        if (nextSemicolon == std::string::npos) {
+            std::string result = payload_.substr(i_);
+            i_ = payload_.size();
+            return result;
+        } else {
+            std::string result = payload_.substr(i_, nextSemicolon - i_);
+            i_ = nextSemicolon + 1;
+            return result;
         }
+    }
 
-    } // namespace tpp::request
-
-    namespace response {
-
-        Capabilities::Capabilities(Sequence && from):
-            Sequence(std::move(from)),
-            version_{-1} {
-            if (id() == Sequence::Capabilities) {
-                std::vector<std::string> parts = helpers::Split(payload(), ";");
-                if (parts.size() > 0) {
-                    try {
-                        version_ = std::stoi(parts[0]);
-                    } catch (...) {
-                        // do nothing, keep version -1 (invalid)
-                    }
-                }
-            }
+    std::string Sequence::ContentsParser::parseEncodedData() {
+        std::string result{std::move(payload_)};
+        char const * r = result.c_str() + i_;
+        size_t w = 0;
+        char const * e = result.c_str() + result.size();
+        while (r < e) {
+            result[w++] = Terminal::Decode(r, e);
         }
+        result.resize(w);
+        i_ = 0;
+        return result;
+    }
 
-        NewFile::NewFile(Sequence && from):
-            Sequence(std::move(from)),
-            fileId_{-1} {
-            if (id() == Sequence::NewFile) {
-                std::vector<std::string> parts = helpers::Split(payload(), ";");
-                if (parts.size() > 0) {
-                    try {
-                        fileId_ = std::stoi(parts[0]);
-                    } catch (...) {
-                        // do nothing, keep version -1 (invalid)
-                    }
-                }
-            }
-        }
-
-        TransferStatus::TransferStatus(Sequence && from):
-            Sequence{std::move(from)},
-            fileId_{-1},
-            transmittedBytes_{0} {
-            if (id() == Sequence::TransferStatus) {
-                std::vector<std::string> parts = helpers::Split(payload(), ";");
-                if (parts.size() >= 2) {
-                    try {
-                        fileId_ = std::stoi(parts[0]);
-                        transmittedBytes_ = std::stoul(parts[1]);
-                    } catch (...) {
-                        // do nothing
-                    }
-                }
-            }
-        }
-
-    } // namespace tpp::response
-
-
+    void Sequence::ContentsParser::checkEoF() {
+        if (i_ != payload_.size())
+            THROW(SequenceError()) << "expected end of sequence"; 
+    }
 
 } // namespace tpp

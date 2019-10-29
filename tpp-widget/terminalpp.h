@@ -9,6 +9,24 @@
 
 namespace ui {
 
+    class TppNewFilePayload {
+    public:
+        tpp::Sequence::NewFileRequest request;
+        tpp::Sequence::NewFileResponse response;
+    };
+
+    class TppTransferStatusPayload {
+    public:
+        tpp::Sequence::TransferStatusRequest request;
+        tpp::Sequence::TransferStatusResponse response;
+    };
+
+    typedef helpers::EventPayload<TppNewFilePayload, Widget> TppNewFileEvent;
+    typedef helpers::EventPayload<tpp::Sequence::DataRequest, Widget> TppDataEvent;
+    typedef helpers::EventPayload<TppTransferStatusPayload, Widget> TppTransferStatusEvent;
+    typedef helpers::EventPayload<tpp::Sequence::OpenFileRequest, Widget> TppOpenFileEvent;
+
+/*
     class NewRemoteFile {
     public:
         std::string const & hostname;
@@ -79,6 +97,8 @@ namespace ui {
 
     typedef helpers::EventPayload<OpenRemoteFile, Widget> OpenRemoteFileEvent;
 
+    */
+
 
     /** Terminal understanding the ANSI escape sequences. 
      
@@ -98,10 +118,10 @@ namespace ui {
 
         TerminalPP(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240); // 1Mb buffer size
 
-        helpers::Event<NewRemoteFileEvent> onNewRemoteFile;
-        helpers::Event<RemoteDataEvent> onRemoteData;
-        helpers::Event<TransferStatusEvent> onTransferStatus;
-        helpers::Event<OpenRemoteFileEvent> onOpenRemoteFile;
+        helpers::Event<TppNewFileEvent> onTppNewFile;
+        helpers::Event<TppDataEvent> onTppData;
+        helpers::Event<TppTransferStatusEvent> onTppTransferStatus;
+        helpers::Event<TppOpenFileEvent> onTppOpenFile;
 
         /** Determines whether the bold font is rendered in bright colors or not. 
          
@@ -412,10 +432,10 @@ namespace ui {
 
     PROPERTY_BUILDER(BoldIsBright, bool, setBoldIsBright, TerminalPP);
 
-    EVENT_BUILDER(OnNewRemoteFile, NewRemoteFileEvent, onNewRemoteFile, TerminalPP);
-    EVENT_BUILDER(OnRemoteData, RemoteDataEvent, onRemoteData, TerminalPP);
-    EVENT_BUILDER(OnTransferStatus, TransferStatusEvent, onTransferStatus, TerminalPP);
-    EVENT_BUILDER(OnOpenRemoteFile, OpenRemoteFileEvent, onOpenRemoteFile, TerminalPP);
+    EVENT_BUILDER(OnTppNewFile, TppNewFileEvent, onTppNewFile, TerminalPP);
+    EVENT_BUILDER(OnTppData, TppDataEvent, onTppData, TerminalPP);
+    EVENT_BUILDER(OnTppTransferStatus, TppTransferStatusEvent, onTppTransferStatus, TerminalPP);
+    EVENT_BUILDER(OnTppOpenFile, TppOpenFileEvent, onTppOpenFile, TerminalPP);
 
     /** Desrcibes parsed CSI sequence.
 

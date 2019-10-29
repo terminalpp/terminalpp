@@ -31,7 +31,7 @@ namespace tpp {
 
         void appendData(char const * data, size_t numBytes);
 
-        size_t transferredBytes() const {
+        size_t transmittedBytes() const {
             return written_;
         }
 
@@ -44,6 +44,7 @@ namespace tpp {
             size_ = size;
             written_ = 0;
             writer_ = std::ofstream(localPath_, std::ios::binary);
+            // TODO on windows, this is not the case and the file may be used if the viewer still works
             ASSERT(writer_.good());
         }
 
