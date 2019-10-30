@@ -4,6 +4,6 @@ build-release/
 build-win/
 /tpp/stamp.h
 build-test-win/
-website/
-ropen/
-bypass/
+#website/
+#ropen/
+#bypass/

@@ -12,32 +12,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(".")
 
+#set(PACKAGE_INSTALL ropen)
+
 # Include sub-projects.
 add_subdirectory("tpp-lib")
 add_subdirectory("tpp-widget")
 add_subdirectory("ui")
 add_subdirectory("docs")
 add_subdirectory("ropen")
+add_subdirectory("bypass")
 
 #include_directories("{$CMAKE_CURRENT_SOURCE_DIR}/tpp")
 
 
-# cpack settings - generic
-set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
-set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_PACKAGE_VENDOR "Zduka")
-set(CPACK_PACKAGE_CONTACT "zduka <zduka@outlook.com>")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Cross-platform terminal emulator.")
-set(CPACK_PACKAGE_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.")
-set(CPACK_PACKAGE_FILE_NAME "${PACKAGE_NAME}_${PACKAGE_VERSION}")
-# debian specific
-set(CPACK_PACKAGE_DEBIAN_SECTION "utils")
-set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/postinst;${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/prerm")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libfontconfig1, libfreetype6, libpng16-16, libx11-6, libxau6, libxcb1, libxdmcp6, libxft2, libxrender1, x11-utils")
-# rpm specific
-set(CPACK_RPM_PACKAGE_RELEASE 1)
-set(CPACK_RPM_PACKAGE_LICENSE "MIT")
-set(CPACK_RPM_PACKAGE_REQUIRES "fontconfig, libfreetype6, libpng16-16, libX11-6, libXau6, libxcb1, libXdmcp6, libXft2, libXrender1, xmessage")
 # Build checks
 #
 # Only on Linux, check for the required libraries. 
@@ -114,80 +101,13 @@ endif()
 
 # Packages
 #
-# The packages target generates packagessuch as msi or snap installers, deb or rpm packages, etc. Since the generation of packages is not necessary for building from source, the packages target is only populated if the required tools are found. 
+# The packages target generates packages such as msi or snap installers, deb or rpm packages, etc. Since the generation of packages is not necessary for building from source, the packages target is only populated if the required tools are found. 
 #
 # The packages target is first created empty and then the buildres register as its dependencies if they are available. 
 #
-# All assets are stored in ${CMAKE_CURRENT_BINARY_DIR}
+# All assets are stored in ${CMAKE_CURRENT_BINARY_DIR}/packages
 add_custom_target(packages)
 set_target_properties(packages PROPERTIES EXCLUDE_FROM_ALL TRUE)
-
-# Linux make install settings
-#
-# This is not really an asset, but this is where it belongs the best
-if(UNIX)
-    install(TARGETS tpp DESTINATION bin)
-endif()
-
-# WiX powered MSI installer creation (Windows)
-#
-# Creates the MSI installer (classic Windows desktop installer). 
-if(WIN32)
-    # Search for the wix toolkit    
-    file(GLOB WIX_ROOT "C:/Program Files*/WiX Toolset v*/bin")
-    if (WIX_ROOT) 
-        message(STATUS "WIX toolset found in ${WIX_ROOT}, msi package creation will be added to packages")
-        # create the build directory and configure the WiX configuration in it
-        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/msi/tpp.wxs ${CMAKE_CURRENT_BINARY_DIR}/packages/msi/tpp.wxs @ONLY)
-        add_custom_target(package-msi
-            COMMAND ${WIX_ROOT}/candle.exe
-                -nologo 
-                -arch "x64" 
-                -ext WixUIExtension -ext WixUtilExtension 
-                -out "tpp.wixobj" 
-                "tpp.wxs"
-            COMMAND ${WIX_ROOT}/light.exe 
-                -nologo
-                -ext WixUIExtension
-                -ext WixUtilExtension 
-                -out "../${PROJECT_NAME}_${PROJECT_VERSION}.msi" 
-                -sice:ICE61 -sice:ICE91 
-                "tpp.wixobj"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages/msi
-            DEPENDS tpp
-        )        
-        set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(packages package-msi)
-    endif()
-endif() 
-
-# Builds the snap package for linux
-#
-# The classic confinement is used as terminal with the strict confinement is most likely not what we want.
-if(UNIX)
-    find_program(SNAP snapcraft)
-    if(SNAP)
-        message(STATUS "snapcraft found in ${SNAP}, snap package will be added to packages")
-        # create the build directory and configure the WiX configuration in it
-        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/snap/tpp.yaml ${CMAKE_CURRENT_BINARY_DIR}/snap/snapcraft.yaml @ONLY)
-        add_custom_target(package-snap-copy-tpp
-            COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/snap/source
-            COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/snap/source
-            COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/snap/source --exclude-from=.gitignore --exclude=.vscode
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        )
-        set_target_properties(package-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_custom_target(package-snap
-            COMMAND snapcraft clean
-            COMMAND snapcraft
-            COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/packages/${PROJECT_NAME}_${PROJECT_VERSION}.snap
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/snap
-            DEPENDS package-snap-copy-tpp
-        )
-        set_target_properties(package-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(packages package-snap)
-    endif()
-endif()
 
 # there is an issue with CMake that does not allow targets depend on special targets such as package. This workaround simply creates a package-build target which explicitly builds the packages by calling cmake. But since it is a user target we can then depend on it
 add_custom_target(package-build
@@ -207,29 +127,118 @@ if(UNIX)
     if(DPKG)
         message(STATUS "dpkg found in ${DPKG}, DEB package will be added to packages")
         set(CPACK_GENERATOR "${CPACK_GENERATOR}DEB;")
-        add_custom_target(package-deb-copy
-            COMMAND mkdir -p packages
-            COMMAND mv ${PACKAGE_NAME}_${PACKAGE_VERSION}.deb packages/${PROJECT_NAME}_${PROJECT_VERSION}.deb
-            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-            DEPENDS package-build
-        )
-        set_target_properties(package-deb-copy PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(packages package-deb-copy)
+        add_dependencies(packages package-build)
     endif()
     find_program(RPMBUILD "rpmbuild")
     if (RPMBUILD)
         message(STATUS "rpmbuild found in ${RPMBUILD}, RPM package will be added to packages")
         set(CPACK_GENERATOR "${CPACK_GENERATOR}RPM;")
-        add_custom_target(package-rpm-copy
-            COMMAND mkdir -p packages
-            COMMAND mv ${PACKAGE_NAME}_${PACKAGE_VERSION}.rpm packages/${PROJECT_NAME}_${PROJECT_VERSION}.rpm
-            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-            DEPENDS package-build
-        )
-        set_target_properties(package-rpm-copy PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(packages package-rpm-copy)
+        add_dependencies(packages package-build)
     endif()
 endif()
 
+
 # Include cpack which adds the package target
-include(CPack)
+# cpack settings - generic
+set(CPACK_PACKAGE_NAME ${PACKAGE_INSTALL})
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}_${CPACK_PACKAGE_VERSION}")
+set(CPACK_PACKAGE_VENDOR "Zduka")
+set(CPACK_PACKAGE_CONTACT "zduka <zduka@outlook.com>")
+# debian specific
+set(CPACK_PACKAGE_DEBIAN_SECTION "utils")
+# rpm specific
+set(CPACK_RPM_PACKAGE_RELEASE 1)
+set(CPACK_RPM_PACKAGE_LICENSE "MIT")
+
+if(PACKAGE_INSTALL STREQUAL terminalpp)
+    message(STATUS "terminalpp project package will be built")
+    if(UNIX)
+        install(TARGETS tpp DESTINATION bin COMPONENT tpp)
+    endif()
+
+    # WiX powered MSI installer creation (Windows)
+    #
+    # Creates the MSI installer (classic Windows desktop installer). 
+    if(WIN32)
+        # Search for the wix toolkit    
+        file(GLOB WIX_ROOT "C:/Program Files*/WiX Toolset v*/bin")
+        if (WIX_ROOT) 
+            message(STATUS "WIX toolset found in ${WIX_ROOT}, msi package creation will be added to packages")
+            # create the build directory and configure the WiX configuration in it
+            configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/msi/tpp.wxs ${CMAKE_CURRENT_BINARY_DIR}/packages/msi/tpp.wxs @ONLY)
+            add_custom_target(package-msi
+                COMMAND ${WIX_ROOT}/candle.exe
+                    -nologo 
+                    -arch "x64" 
+                    -ext WixUIExtension -ext WixUtilExtension 
+                    -out "tpp.wixobj" 
+                    "tpp.wxs"
+                COMMAND ${WIX_ROOT}/light.exe 
+                    -nologo
+                    -ext WixUIExtension
+                    -ext WixUtilExtension 
+                    -out "../${PROJECT_NAME}_${PROJECT_VERSION}.msi" 
+                    -sice:ICE61 -sice:ICE91 
+                    "tpp.wixobj"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages/msi
+                DEPENDS tpp
+            )        
+            set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
+            add_dependencies(packages package-msi)
+        endif()
+    endif() 
+
+    # Builds the snap package for linux
+    #
+    # The classic confinement is used as terminal with the strict confinement is most likely not what we want.
+    if(UNIX)
+        find_program(SNAP snapcraft)
+        if(SNAP)
+            message(STATUS "snapcraft found in ${SNAP}, snap package will be added to packages")
+            # create the build directory and configure the WiX configuration in it
+            configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/snap/tpp.yaml ${CMAKE_CURRENT_BINARY_DIR}/snap/snapcraft.yaml @ONLY)
+            add_custom_target(package-snap-copy-tpp
+                COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/snap/source
+                COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/snap/source
+                COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/snap/source --exclude-from=.gitignore --exclude=.vscode
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            )
+            set_target_properties(package-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
+            add_custom_target(package-snap
+                COMMAND snapcraft clean
+                COMMAND snapcraft
+                COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/packages/${PROJECT_NAME}_${PROJECT_VERSION}.snap
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/snap
+                DEPENDS package-snap-copy-tpp
+            )
+            set_target_properties(package-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
+            add_dependencies(packages package-snap)
+        endif()
+    endif()
+
+    # cpack settings - generic
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Cross-platform terminal emulator.")
+    set(CPACK_PACKAGE_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.")
+    # debian specific
+    set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/postinst;${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/prerm")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libfontconfig1, libfreetype6, libpng16-16, libx11-6, libxau6, libxcb1, libxdmcp6, libxft2, libxrender1, x11-utils")
+    # rpm specific
+    set(CPACK_RPM_PACKAGE_REQUIRES "fontconfig, libfreetype6, libpng16-16, libX11-6, libXau6, libxcb1, libXdmcp6, libXft2, libXrender1, xmessage")
+elseif(PACKAGE_INSTALL STREQUAL tpp-ropen)
+    message(STATUS "ropen project package will be built")
+    # cpack settings - generic
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Remote file opener.")
+    set(CPACK_PACKAGE_DESCRIPTION "Allows terminal++ sessions to open remote files and view them locally by transmitting the file in the existing terminal connection.")
+elseif(PACKAGE_INSTALL STREQUAL tpp-bypass)
+    message(STATUS "bypass project package will be built")
+    # cpack settings - generic
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "ConPTY Bypass.")
+    set(CPACK_PACKAGE_DESCRIPTION "Bypasses terminal IO to standard input and output to bypass the ConPTY on Windows when WSL is used. ")
+endif()
+
+if(PACKAGE_INSTALL)
+    set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/packages")
+    include(CPack)
+endif()
+

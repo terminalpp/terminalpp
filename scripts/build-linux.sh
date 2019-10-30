@@ -1,9 +1,6 @@
 #!/bin/bash
 # install dependencies
-sudo apt update
-sudo apt install libx11-dev libxft-dev g++-8
-# install dev dependencies
-sudo apt install imagemagick
+bash scripts/setup-linux.sh
 # create build dirs and build the application
 mkdir -p build
 cd build
@@ -15,3 +12,13 @@ cmake --build .
 cd ../release
 cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
 cmake --build .
+
+# build the packages
+cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=terminalpp
+cmake --build . --target packages
+cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=tpp-ropen
+cmake --build . --target packages
+cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=tpp-bypass
+cmake --build . --target packages
+
+
