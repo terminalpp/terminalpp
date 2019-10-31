@@ -1,4 +1,6 @@
 #!/bin/bash
+# fetch subprojects
+bash scripts/setup-repos.sh
 # install dependencies
 bash scripts/setup-linux.sh
 # create build dirs and build the application
