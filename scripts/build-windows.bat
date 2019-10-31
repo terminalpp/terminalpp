@@ -1,5 +1,4 @@
-call scripts/setup-repos.sh
-call scripts/setup-windows.bat
+call scripts\setup-repos.sh
 mkdir build
 cd build
 cmake ..
