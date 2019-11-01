@@ -2,8 +2,5 @@
 build/
 build-release/
 build-win/
-/tpp/stamp.h
+/terminalpp/stamp.h
 build-test-win/
-#website/
-#ropen/
-#bypass/
