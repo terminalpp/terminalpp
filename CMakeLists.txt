@@ -20,7 +20,7 @@ add_subdirectory("tpp-widget")
 add_subdirectory("ui")
 add_subdirectory("docs")
 add_subdirectory("ropen")
-add_subdirectory("bypass")
+add_subdirectory("tpp-bypass")
 
 #include_directories("{$CMAKE_CURRENT_SOURCE_DIR}/tpp")
 
