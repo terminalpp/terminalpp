@@ -2,7 +2,7 @@
 
 [![Windows Build](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/1?label=windows&logo=azure-pipelines)](https://dev.azure.com/zduka/tpp/_build?definitionId=1)
 [![Linux Build](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/2?label=linux&logo=azure-pipelines)](https://dev.azure.com/zduka/tpp/_build?definitionId=2)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/587d39b5db9e4742bb6ce05f86863439)](https://www.codacy.com/app/zduka/tpp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=zduka/tpp&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd4f07b095634b9d90bbb9edb11fc12c)](https://www.codacy.com/manual/zduka/tpp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=terminalpp/tpp&amp;utm_campaign=Badge_Grade)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/zduka/tpp.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zduka/tpp/context:cpp)
 
 *Terminal++* or `tpp` is a minimalist cross-platform terminal emulator that is capable of emulating much of the commonly used `xterm` supported control sequences. 

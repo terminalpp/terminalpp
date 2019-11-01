@@ -66,9 +66,15 @@ add_executable(
     stamp
 	tools/stamp.cpp
 )
+
 add_custom_target(tpp-create-stamp
-    COMMAND stamp ${CMAKE_CURRENT_SOURCE_DIR} terminalpp/stamp.h
     DEPENDS stamp
+)
+
+add_custom_command(
+    TARGET tpp-create-stamp
+    POST_BUILD
+    COMMAND stamp ${CMAKE_CURRENT_SOURCE_DIR} terminalpp/stamp.h
 )
 
 # Resources preparation - icons 
