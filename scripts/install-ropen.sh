@@ -1,3 +1,4 @@
+#!/bin/bash
 # fetch subprojects
 bash scripts/setup-repos.sh
 # install dependencies
