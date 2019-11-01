@@ -66,7 +66,7 @@ namespace tpp {
 
 	bool DirectWriteApplication::installBypass(std::string const & wslDistribution) {
 		try {
-			std::string url = STR("https://github.com/zduka/tpp-bypass/releases/download/v1.0/tpp-bypass-" << wslDistribution);
+			std::string url = STR("https://github.com/terminalpp/bypass/releases/download/v0.1/tpp-bypass-" << wslDistribution);
 			helpers::Exec(helpers::Command("wsl.exe", {"--", "mkdir", "-p", BYPASS_FOLDER}), "");
 			helpers::Exec(helpers::Command("wsl.exe", {"--", "wget", "-O", BYPASS_PATH, url}), "");
 			helpers::Exec(helpers::Command("wsl.exe", {"--", "chmod", "+x", BYPASS_PATH}), "");
