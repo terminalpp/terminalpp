@@ -1,0 +1,15 @@
+extraction:
+  cpp:
+    prepare:
+      packages:
+        - g++-8 
+        - libx11-dev
+        - libxft-dev
+    after_prepare:
+        - bash ./scripts/setup-repos.sh
+    configure:
+      command:
+        - cmake . -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
+    index:
+      build_command:
+        - make -j2 -s        

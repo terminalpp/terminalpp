@@ -42,9 +42,9 @@ endif()
 # tpp executable
 #
 # On Windows, this is simply a Win32 GUI application created from the given sources and resources file. On Linux the situation is more complex as the build scripts tries to localize all required libraries and then build the app. 
-file(GLOB_RECURSE SRC "tpp/*.cpp" "tpp/*.h")
+file(GLOB_RECURSE SRC "terminalpp/*.cpp" "terminalpp/*.h")
 if(WIN32)
-    add_executable(tpp WIN32 ${SRC} "tpp/directwrite/tpp.rc")
+    add_executable(tpp WIN32 ${SRC} "terminalpp/directwrite/tpp.rc")
 elseif(UNIX)
     add_executable(tpp ${SRC})
     target_link_libraries(tpp ${X11_LIBRARIES} ${X11_Xft_LIB})  
@@ -67,7 +67,7 @@ add_executable(
 	tools/stamp.cpp
 )
 add_custom_target(tpp-create-stamp
-    COMMAND stamp ${CMAKE_CURRENT_SOURCE_DIR} tpp/stamp.h
+    COMMAND stamp ${CMAKE_CURRENT_SOURCE_DIR} terminalpp/stamp.h
     DEPENDS stamp
 )
 
@@ -88,10 +88,10 @@ if(UNIX AND NOT APPLE)
         COMMAND convert -background transparent ${CMAKE_CURRENT_SOURCE_DIR}/resources/images/logo.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 tpp.ico
         COMMAND convert -background transparent ${CMAKE_CURRENT_SOURCE_DIR}/resources/images/logo-notification.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 tpp-notification.ico
         COMMAND convert tpp.ico -depth 8 tpp.rgba
-        COMMAND xIconCpp tppIcon ${CMAKE_CURRENT_SOURCE_DIR}/tpp/x11/tppIcon.cpp tpp.rgba 16 24 32 64
+        COMMAND xIconCpp tppIcon ${CMAKE_CURRENT_SOURCE_DIR}/terminalpp/x11/tppIcon.cpp tpp.rgba 16 24 32 64
         COMMAND rm tpp.rgba
         COMMAND convert tpp-notification.ico -depth 8 tpp.rgba
-        COMMAND xIconCpp tppIconNotification ${CMAKE_SOURCE_DIR}/tpp/x11/tppIconNotification.cpp tpp.rgba 16 24 32 64
+        COMMAND xIconCpp tppIconNotification ${CMAKE_SOURCE_DIR}/terminalpp/x11/tppIconNotification.cpp tpp.rgba 16 24 32 64
         COMMAND rm tpp.rgba
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/images
         DEPENDS xIconCpp

@@ -17,7 +17,6 @@ The following is very short description of the versions planned and their main n
 - bold text can be forced to render in bright colors
 - support for opening remote files by extra escape sequences (basic)
 
-- make sure bypass and ropen are well integrated, update the readmes, etc.
 - nicer ropen & in its own project & packages, etc. - or think about releases, wrt bypass as well
 - ideally snap store will be vetted by this time
 - Windows Store version as well
