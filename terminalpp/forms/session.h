@@ -81,7 +81,7 @@ namespace tpp {
             if (e->offset == f->transmittedBytes())
                 f->appendData(e->data.c_str(), e->data.size());
             else
-                LOG << "error";
+                LOG() << "error";
         }
 
         void transferStatus(ui::TppTransferStatusEvent & e) {

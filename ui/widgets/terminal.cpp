@@ -201,7 +201,7 @@ namespace ui {
                         writeStart = ptyBuffer + read - processed;
                         // check against buffer overflow here
                         if (writeStart == ptyBuffer + ptyBufferSize) {
-                            LOG << "Buffer overflow. Discarding";
+                            LOG() << "Buffer overflow. Discarding";
                             writeStart = ptyBuffer;
                         }
                     } else {
@@ -209,7 +209,7 @@ namespace ui {
                     }
                 }
             } catch (...) {
-                LOG << "Error in reader";
+                LOG() << "Error in reader";
             }
         });
         ptyListener_ = std::thread([this](){

@@ -195,7 +195,7 @@ namespace tpp {
             // tell the x server that the selection was cleared
             XSetSelectionOwner(display_, app->primaryName_, x11::None, CurrentTime);
         } else {
-			LOG << "Window renderer clear selection does not match stored selection owner.";
+			LOG() << "Window renderer clear selection does not match stored selection owner.";
         }
     }
 
@@ -544,7 +544,7 @@ namespace tpp {
 					0, // event mask
 					reinterpret_cast<XEvent*>(&response)
 				))
-					LOG << "Error sending selection notify";
+					LOG() << "Error sending selection notify";
 				break;
 			}
 			/** If we lose ownership, clear the clipboard contents with the application, or if we lose primary ownership, just clear the selection.   

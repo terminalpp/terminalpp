@@ -14,282 +14,199 @@
 
 #include "helpers.h"
 
-#ifdef NDEBUG
-#define LOG if (false) ::helpers::Log::CreateWriter(__FILE__, __LINE__)
-#else 
-#define LOG ::helpers::Log::CreateWriter(__FILE__, __LINE__)
-#endif
+#define LOG(...) if (::helpers::Logger::GetLog(__VA_ARGS__).enabled()) ::helpers::Logger::GetLog(__VA_ARGS__).createMessage(__FILE__, __LINE__)
 
 namespace helpers {
 
-	class Logger;
-
-
-	Logger & CerrLogger();
-
-	class Log {
+    class Log {
 	public:
+	    class Message;
 
-		/** Log message. 
-
-		    Each message contains information about its origin in the source code, the time at which it was created and its text. It is the responsibility of the selected logger to actually deal with the message according to its own settings. 
+	    /** Defines the API for log messages to be written to the log. 
 		 */
-		class Message {
-		public:
-			char const * file;
-			size_t line;
-			std::time_t time;
-			std::string text;
-
-			Message(char const * file, size_t line, std::string const & text = "") :
-				file(file),
-				line(line),
-				time(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())),
-				text(text) {
-			}
-		};
-
 		class Writer {
 		public:
+		    virtual std::ostream & beginMessage(Message const & message) = 0;
+			virtual void endMessage(Message const & message) = 0;
+		};
 
-			Writer(Writer const &) = delete;
-
-			Writer(Writer && from) noexcept :
-				m_(from.m_),
-				logger_(from.logger_),
-				s_(std::move(from.s_)) {
-				from.logger_ = nullptr;
+		/** Log message. 
+		 */
+	    class Message {
+		public:
+		    Log & log() const {
+				ASSERT(log_ != nullptr);
+				return *log_;
 			}
 
-			/** When the writer object is deleted, the message is finalized and sent to the logger.
-			 */
-			~Writer();
-
-			/** The call operator allows to select a logger. 
-			 */
-			Writer & operator () (std::function<Logger &()> logger) {
-				logger_ = & logger();
-				return *this;
+			char const * file() const {
+				return file_;
 			}
 
-			Writer & operator () (std::string const & loggerName) {
-				auto & regLoggers = RegisteredLoggers();
-				auto i = regLoggers.find(loggerName);
-				if (i == regLoggers.end())
-					logger_ = nullptr;
-				else
-					logger_ = i->second;
-				return *this;
+			size_t line() const {
+				return line_;
 			}
 
-			/** Log writer supports all the operations of a stringstream. 
-			 */
+			std::time_t const & time() const {
+				return time_;
+			}
+
 			template<typename T>
-			Writer & operator << (T const & what) {
-				if (logger_ != nullptr)
-					s_ << what;
+			Message & operator << (T const & what) {
+				(*s_) << what;
 				return *this;
 			}
+
+			Message(Message const &) = delete;
+
+			Message(Message && from):
+			    log_(from.log_),
+				file_(from.file_),
+				line_(from.line_),
+				time_(from.time_),
+				s_(from.s_) {
+				from.log_ = nullptr;
+			}
+
+			Message & operator = (Message const &) = delete;
+			Message & operator = (Message &&) = delete;
+
+			~Message();
 
 		private:
-
 			friend class Log;
 
-			/** Creates the log writer object for given logger.
-			 */
-			Writer(char const * file, size_t line, Logger & logger) :
-				m_(file, line),
-				logger_(& logger) {
-			}
+			Message(Log * log, char const * file, size_t line);
 
+		    Log * log_;
+			char const * const file_;
+			size_t const line_;
+			std::time_t time_;
+			std::ostream * s_;
 
-			/** The message created with the writer. 
-			 */
-			Message m_;
+		}; // Log::Message
 
-			/** Logger (object actually responsible for logging the message). 
-			 */
-			Logger * logger_;
-
-			/** String stream where the log message is constructed. 
-			 */
-			std::stringstream s_;
-
-		}; // Log::Writer
-
-		/** Creates new log writer. 
-
-		    The log writer starts with the default cerr logger, but this can be overriden using the `()` operator after the `LOG` macro.
+		/** Creates new log. 
 		 */
-		static Writer CreateWriter(char const * file, size_t line) {
-			return Writer(file, line, CerrLogger());
+		Log(std::string const & name):
+		    name_(name),
+			writer_(nullptr) {
 		}
 
-		/** Registers a logger for given log level. 
-
-		    
+	    /** Name of the log. 
 		 */
-		static void RegisterLogger(Logger * logLevel) {
-			Instance().registeredLoggers_.push_back(logLevel);
+	    std::string const & name() const {
+			return name_;
 		}
 
+		Writer & writer() const {
+			ASSERT(writer_ != nullptr) << "Cannot get writer for disabled log";
+			return *writer_;
+		}
+
+		void setWriter(Writer & writer) {
+			writer_ = & writer;
+		}
+
+		/** Determines whether the log is enabled, or not. 
+		 
+		    Logging to a disabled log has no effect and negligible performance overhead of checking this flag.
+		 */
+		bool enabled() const {
+			return writer_ != nullptr;
+		}
+
+		/** Disables the log by clearing its writer. 
+		 */
+		void disable() {
+			writer_ = nullptr;
+		}
+
+		/** Creates new message for the log. 
+		 */
+		Message createMessage(char const * file, size_t line) {
+			ASSERT(writer_ != nullptr) << "Cannot create message for disabled log";
+			return Message(this, file, line);
+		}
 
 	private:
-		friend class Logger;
-
-		/** Log destructor, which is only called on the singleton in Instance method deletes all registered loggers. 
-		 */
-		~Log();
-
-		/** All loggers are registered in a map so that they can be selected by their name without the need of having the logger static functions in sight. 
-		 */
-		static std::unordered_map<std::string, Logger *> & RegisteredLoggers() {
-			static std::unordered_map<std::string, Logger *> registeredLoggers;
-			return registeredLoggers;
-		}
-
-		static Log & Instance() {
-			static Log log;
-			return log;
-		}
-
-		std::vector<Logger *> registeredLoggers_;
-
+	    std::string name_;
+		Writer * writer_;
 	};
 
 	class Logger {
 	public:
+	    class OStreamWriter : public Log::Writer {
+		public:
 
-		/** Each logger has a name.
-		 */
-		std::string const name;
+			OStreamWriter(std::ostream & s, bool displayLocation = true, bool displayTime = true, bool displayName = true):
+			    s_(s),
+				displayLocation_(displayLocation),
+				displayTime_(displayTime),
+				displayName_(displayName) {
+			}
 
-
-		virtual void log(Log::Message const & m) = 0;
-
-		/** Destructor removes the logger from the register. 
-		 */
-		virtual ~Logger() {
-			Log::RegisteredLoggers().erase(name);
-		}
-
-	protected:
-		/** When logger is created, it is registered under its unique name. 
-		 */
-		Logger(std::string const & name) :
-			name(name) {
-			auto & regLoggers = Log::RegisteredLoggers();
-			auto i = regLoggers.find(name);
-			ASSERT(i == regLoggers.end()) << "Logger " << name << " already registered";
-			regLoggers[name] = this;
-		}
-	};
-
-	inline Log::Writer::~Writer() {
-		if (logger_ != nullptr) {
-			m_.text = s_.str();
-			logger_->log(m_);
-		}
-	}
-
-	inline Log::~Log() {
-		for (auto l : registeredLoggers_)
-			delete l;
-	}
-
-
-	class StreamLogger : public Logger {
-	public:
-
-		StreamLogger(std::string const & name, std::ostream & s, bool printTime = false, bool printName = true, bool printLocation = false) :
-			Logger(name),
-			printTime_(printTime),
-			printName_(printName),
-			printLocation_(printLocation),
-			raw_(false),
-			s_(&s) {
-		}
-
-		StreamLogger(std::string const & name, bool printTime = false, bool printName = true, bool printLocation = false) :
-			Logger(name),
-			printTime_(printTime),
-			printName_(printName),
-			printLocation_(printLocation),
-			raw_(false),
-			s_(nullptr) {
-		}
-
-		void log(Log::Message const & m) override {
-			if (s_ != nullptr) {
-				std::lock_guard<std::mutex> g(m_);
-				if (raw_) {
-					(*s_) << m.text;
-					return;
-				}
-				// actually print the message
-				if (printTime_) {
+		    std::ostream & beginMessage(Log::Message const & message) override {
+				if (displayTime_) {
 					tm t;
 #ifdef ARCH_WINDOWS
-					localtime_s(&t, &m.time);
+					localtime_s(&t, &message.time());
 #else
-					localtime_r(&m.time, &t);
+					localtime_r(&message.time(), &t);
 #endif
-					(*s_) << std::put_time(&t, "%c") << " ";
+					s_ << std::put_time(&t, "%c") << " ";
 				}
-				if (printName_)
-					(*s_) << '[' << name << "] ";
-				(*s_) << m.text;
-				if (printLocation_)
-					(*s_) << " (" << m.file << ":" << m.line << ")";
-				(*s_) << std::endl;
+				if (displayName_ && ! message.log().name().empty())
+				    s_ << "[" << message.log().name() << "] ";
+				if (displayLocation_)
+					s_ << " (" << message.file() << ":" << message.line() << ")";
+
+				return s_;
 			}
+
+			void endMessage(Log::Message const & message) override {
+				MARK_AS_UNUSED(message);
+				s_ << std::endl;
+			}
+
+		private:
+		    std::ostream & s_;
+			bool displayLocation_;
+			bool displayTime_;
+			bool displayName_;
+		}; // Logger::OStreamWriter
+
+		static Log::Writer & StdOutWriter() {
+			static OStreamWriter writer(std::cout);
+			return writer;
 		}
 
-		StreamLogger * printTime(bool value = true) {
-			printTime_ = value;
-			return this;
+		static Log & DefaultLog() {
+			static Log defaultLog("");
+			return defaultLog;
 		}
 
-		StreamLogger * printName(bool value = true) {
-			printName_ = value;
-			return this;
+		static Log & GetLog() {
+		    return DefaultLog();
 		}
 
-		StreamLogger * printLocation(bool value = true) {
-			printLocation_ = value;
-			return this;
+		static Log & GetLog(Log & log) {
+			return log;
 		}
-
-		StreamLogger* raw(bool value = true) {
-			raw_ = value;
-			return this;
-		}
-
-		StreamLogger * toFile(std::string const & filename) {
-			f_.open(filename);
-			if (!f_.good())
-				THROW(IOError()) << "Unable to open file " << filename << " for log level " << name;
-			s_ = &f_;
-			return this;
-		}
-
-	protected:
-
-		bool printTime_;
-		bool printName_;
-		bool printLocation_;
-		bool raw_;
-
-		std::mutex m_;
-		std::ostream * s_;
-		std::ofstream f_;
 	};
 
-	/** Default logger which outputs all messages to the standard error. 
-	 */
-	inline Logger & CerrLogger() {
-		static StreamLogger logger("default", std::cerr, true, false, false);
-		return logger;
+	inline Log::Message::Message(Log * log, char const * file, size_t line):
+	    log_(log),
+		file_(file),
+		line_(line),
+		time_(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())),
+		s_(nullptr) {
+			s_ = & log_->writer_->beginMessage(*this);
+	}
+
+	inline Log::Message::~Message() {
+		if (log_ != nullptr)
+		    log_->writer_->endMessage(*this);
 	}
 
 } // namespace helpers

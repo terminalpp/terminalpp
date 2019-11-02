@@ -175,7 +175,7 @@ namespace tpp {
 			app->selectionOwner_ = nullptr;
 			app->selection_.clear();
 		} else {
-			LOG << "Window renderer clear selection does not match stored selection owner.";
+			LOG() << "Window renderer clear selection does not match stored selection owner.";
 		}
 	}
 
@@ -411,7 +411,7 @@ namespace tpp {
 						break;
 					}					
 				    default:
-					    LOG("Win32") << "Invalid user message " << wParam;
+					    LOG() << "Invalid user message " << wParam;
 				}
 				break;
         }

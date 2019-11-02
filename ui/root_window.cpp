@@ -169,9 +169,9 @@ namespace ui {
 			if (renderer_) 
 			    renderer_->requestClipboardContents();
 			else
-			    LOG << "Paste request w/o renderer";
+			    LOG() << "Paste request w/o renderer";
 		} else {
-			LOG << "Paste request clash";
+			LOG() << "Paste request clash";
 		}
 	}
 
@@ -181,9 +181,9 @@ namespace ui {
 			if (renderer_) 
 			    renderer_->requestSelectionContents();
 			else
-			    LOG << "Paste request w/o renderer";
+			    LOG() << "Paste request w/o renderer";
 		} else {
-			LOG << "Paste request clash";
+			LOG() << "Paste request clash";
 		}
 	}
 
@@ -194,7 +194,7 @@ namespace ui {
 		} else if (keyboardFocus_ != nullptr) {
 			keyboardFocus_->paste(contents);
 		} else {
-			LOG << "Paste event received w/o active request or focused widget";
+			LOG() << "Paste event received w/o active request or focused widget";
 		}
 	}
 
@@ -203,7 +203,7 @@ namespace ui {
 		if (renderer_) 
 			renderer_->setClipboard(contents);
 		else
-			LOG << "Set clipboard event in an unattached root window";
+			LOG() << "Set clipboard event in an unattached root window";
 	}
 
 	void RootWindow::registerSelection(SelectionOwner * sender, std::string const & contents) {
@@ -216,7 +216,7 @@ namespace ui {
 			// let the renderer know the selection value
 			renderer_->setSelection(contents);
 		} else {
-			LOG << "Set Selection event when no renderer attached";
+			LOG() << "Set Selection event when no renderer attached";
 		}
 	}
 
@@ -225,7 +225,7 @@ namespace ui {
 		if (renderer_)
 		    renderer_->clearSelection();
 		else
-			LOG << "Clear selection event without renderer";
+			LOG() << "Clear selection event without renderer";
 	}
 
 	void RootWindow::selectionInvalidated() {
@@ -233,7 +233,7 @@ namespace ui {
 			selectionOwner_->selectionInvalidated();
 			selectionOwner_ = nullptr;
 		} else {
-			LOG << "invalidate selection w/o selection owner present";
+			LOG() << "invalidate selection w/o selection owner present";
 		}
 	}
 

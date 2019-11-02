@@ -14,7 +14,7 @@ namespace tpp {
 
         int X11ErrorHandler(Display * display, XErrorEvent * e) {
             MARK_AS_UNUSED(display);
-            LOG << "X error: " << static_cast<unsigned>(e->error_code);
+            LOG() << "X error: " << static_cast<unsigned>(e->error_code);
             return 0;
         }
 

@@ -18,6 +18,7 @@ The following is very short description of the versions planned and their main n
 - support for opening remote files by extra escape sequences (basic)
 
 - update documentation generation into the website
+- add logging to file option & logging command line args, registering logs in logger
 - ideally snap store will be vetted by this time
 - Windows Store version as well
 
@@ -47,7 +48,6 @@ Maybe not necessary now:
 - add showModal(Widget *) to root window, which would dim the background and then display the widget centered
 - clean shapes - rect, to provide the points for corners on demand
 - add zoom out? and default zoom? 
-- improve logging - the logging overhead is gigantic, find a way to lower it
 - add JSON schema and validator support
 - add tests
 - allow container to reverse order of its elements (so that maximized and horizontal layouts can be used nicely with header lines both up and down)

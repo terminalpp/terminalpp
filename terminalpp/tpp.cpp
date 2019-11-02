@@ -85,10 +85,13 @@ int main(int argc, char* argv[]) {
     }
 #endif
 	try {
+
     	Config const & config = Config::Initialize(argc, argv);
-		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ, std::cout));
-		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_UNKNOWN, std::cout));
-		//helpers::Log::RegisterLogger(new helpers::StreamLogger(vterm::VT100::SEQ_WONT_SUPPORT, std::cout));
+		/*
+		helpers::Log::RegisterLogger(new helpers::StreamLogger(ui::TerminalPP::SEQ, std::cout));
+		helpers::Log::RegisterLogger(new helpers::StreamLogger(ui::TerminalPP::SEQ_UNKNOWN, std::cout));
+		helpers::Log::RegisterLogger(new helpers::StreamLogger(ui::TerminalPP::SEQ_WONT_SUPPORT, std::cout));
+		*/
 
 		// Create the palette & the pty - TODO this should be more systematic
 		ui::TerminalPP::Palette palette{config.sessionPalette()};

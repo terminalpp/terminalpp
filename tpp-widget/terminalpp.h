@@ -111,10 +111,10 @@ namespace ui {
 
         // log levels
 
-		static constexpr char const* const SEQ = "VT100";
-		static constexpr char const* const SEQ_UNKNOWN = "VT100_UNKNOWN";
-		static constexpr char const* const SEQ_ERROR = "VT100_ERROR";
-		static constexpr char const* const SEQ_WONT_SUPPORT = "VT100_WONT_SUPPORT";
+        static helpers::Log SEQ;
+        static helpers::Log SEQ_UNKNOWN;
+        static helpers::Log SEQ_ERROR;
+        static helpers::Log SEQ_WONT_SUPPORT;
 
         TerminalPP(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240); // 1Mb buffer size
 

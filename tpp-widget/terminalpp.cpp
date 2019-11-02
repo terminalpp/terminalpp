@@ -341,6 +341,11 @@ namespace ui {
 
     // TerminalPP
 
+    helpers::Log TerminalPP::SEQ("VT100");
+    helpers::Log TerminalPP::SEQ_UNKNOWN("VT100_UNKNOWN");
+    helpers::Log TerminalPP::SEQ_ERROR("VT100_ERROR");
+    helpers::Log TerminalPP::SEQ_WONT_SUPPORT("VT100_WONT_SUPPORT");
+
     std::unordered_map<Key, std::string> TerminalPP::KeyMap_(InitializeVT100KeyMap());
 
 
