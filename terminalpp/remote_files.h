@@ -44,9 +44,16 @@ namespace tpp {
             size_ = size;
             written_ = 0;
             writer_ = std::ofstream(localPath_, std::ios::binary);
-            // TODO on windows, this is not the case and the file may be used if the viewer still works
+            while (! writer_.good()) {
+                getAvailableLocalPath();
+                writer_ = std::ofstream(localPath_, std::ios::binary);
+            }
             ASSERT(writer_.good());
         }
+
+        /** If the local file already exists (or cannot be written to), increased the version of the file. 
+         */
+        void getAvailableLocalPath();
 
         int id_;
         std::string hostname_;

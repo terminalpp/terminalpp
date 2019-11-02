@@ -20,13 +20,7 @@ namespace tpp {
         std::string ext = (lastPeriod + 1 < filename.size()) ? filename.substr(lastPeriod + 1) : "";
         // determine the local path 
         localPath_ = helpers::JoinPath(localDir, hostname + "-" + fname + "." + ext);
-        int i = 0;
-        while (true) {
-            if (! helpers::PathExists(localPath_))
-                break;
-            ++i;
-            localPath_ = helpers::JoinPath(localDir, STR(hostname << "-" << fname << "(" << i << ")." << ext));
-        }
+        getAvailableLocalPath();
         // reset the file for writing
         reset(size);
     }
@@ -38,6 +32,21 @@ namespace tpp {
         if (written_ == size_) {
             writer_.flush();
             writer_.close();
+        }
+    }
+
+    void RemoteFile::getAvailableLocalPath() {
+        size_t lastPeriod = localPath_.rfind('.');
+        if (lastPeriod == std::string::npos)
+            lastPeriod = localPath_.size();
+        std::string fname = localPath_.substr(0, lastPeriod);
+        std::string ext = (lastPeriod + 1 < localPath_.size()) ? localPath_.substr(lastPeriod + 1) : "";
+        int i = 1;
+        while (true) {
+            if (! helpers::PathExists(localPath_))
+                break;
+            ++i;
+            localPath_ = STR(fname << "(" << i << ")." << ext);
         }
     }
 
