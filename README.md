@@ -3,7 +3,7 @@
 [![Windows Build](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/1?label=windows&logo=azure-pipelines)](https://dev.azure.com/zduka/tpp/_build?definitionId=1)
 [![Linux Build](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/2?label=linux&logo=azure-pipelines)](https://dev.azure.com/zduka/tpp/_build?definitionId=2)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd4f07b095634b9d90bbb9edb11fc12c)](https://www.codacy.com/manual/zduka/tpp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=terminalpp/tpp&amp;utm_campaign=Badge_Grade)
-[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/zduka/tpp.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zduka/tpp/context:cpp)
+[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/terminalpp/tpp.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/terminalpp/tpp/context:cpp)
 
 This is the main development repository for the `terminal++` and its suppport repositories. 
 
@@ -32,17 +32,24 @@ Alternatively the platform specific build scripts can be used. These create the 
 
 # Installing
 
-> TODO installing ropen and perhaps an install script for tpp too
+> Since `cpack` is not able to create multiple packages during a single build, multiple conditional builds must be executed. 
 
+Depending on your OS run either:
 
-# Performance (*)
+    scripts/build-linux.sh
 
-> Take the following section with a *big* grain of salt since the benchmark used is hardly representative or proper terminal workload. All it shows is peak performance of some terminal parts under very atrificial conditions. We are only using it because alacritty, which claims to be the fastest terminal out there uses it. 
+or:
+    
+    scripts/build-windows.sh
 
-Although raw peformance is not the main design goal of `tpp`, it is reasonably performant under both Windows and Linux. The terminal framerate is limited (configurable, but defaults to 60 FPS).
+These scripts build the terminal & friends from source and will installation packages if appropriate tools are available on the system (`msi` for Windows, `snap`, `deb` and `rpm` for Linux). 
 
-For lack of proper benchmarks, the [`vtebench`](https://github.com/jwilm/vtebench) from `alacritty` was used to test the basic performance. The `alt-screen-random-write`, `scrolling` and `scrolling-in-region` benchmarks are used because `tpp` does not support wide unicode characters yet. 
+The packages will be stored in the folder `build/release/packages`. 
 
-Informally, `tpp` with bypass trashes everyone else on Windows being at least 25x faster than the second best terminal (Alacritty). Note that the bypass is the key here since it seems that for many other terminals ConPTY is the bottleneck. 
+## Manual installation
 
-On Linux, `tpp` comparable to `alacritty` and they swap places as the fastest terminal depending on the benchmark used. 
+You can use the `-DPACKAGE_INSTALL` `cmake` argument to determine which packages should be created (`terminalpp`, `tpp-ropen` and `tpp-bypass`). You can then install the selected programs via the command:
+
+    sudo cmake --build . --target install
+
+> Note that on Windows there is no manual installation option.
