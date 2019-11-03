@@ -14,6 +14,14 @@
 
 #include "helpers.h"
 
+/** \page helpersLog Logging
+ 
+    \brief Basic support for logging stuff to cout, files and more, with small overhead. 
+
+	\section helpersLogArgs Command-line arguments support
+
+ */
+
 #define LOG(...) if (::helpers::Logger::GetLog(__VA_ARGS__).enabled()) ::helpers::Logger::GetLog(__VA_ARGS__).createMessage(__FILE__, __LINE__)
 
 namespace helpers {
@@ -28,6 +36,8 @@ namespace helpers {
 		public:
 		    virtual std::ostream & beginMessage(Message const & message) = 0;
 			virtual void endMessage(Message const & message) = 0;
+			virtual ~Writer() {
+			}
 		};
 
 		/** Log message. 
@@ -88,10 +98,9 @@ namespace helpers {
 
 		/** Creates new log. 
 		 */
-		Log(std::string const & name):
-		    name_(name),
-			writer_(nullptr) {
-		}
+		Log(std::string const & name);
+
+		~Log();
 
 	    /** Name of the log. 
 		 */
@@ -104,7 +113,7 @@ namespace helpers {
 			return *writer_;
 		}
 
-		void setWriter(Writer & writer) {
+		void enable(Writer & writer) {
 			writer_ = & writer;
 		}
 
@@ -136,6 +145,13 @@ namespace helpers {
 
 	class Logger {
 	public:
+
+		/** A simple std::ostream based log message writer. 
+		 
+		    Writes all log messages into the given stream, allows to specify what parts of the message are to be printed, such as the location in the source, timestamp and logname. 
+
+			The logger is also protected by a mutex so that only one message can be reported at one time. Note that a non-recursive mutex is used so that the application fails if a log message is being generated as part of another log message as this is considered a bad practice. 
+		 */
 	    class OStreamWriter : public Log::Writer {
 		public:
 
@@ -147,6 +163,8 @@ namespace helpers {
 			}
 
 		    std::ostream & beginMessage(Log::Message const & message) override {
+				// can't use RAII here				
+				m_.lock();
 				if (displayTime_) {
 					tm t;
 #ifdef ARCH_WINDOWS
@@ -158,23 +176,44 @@ namespace helpers {
 				}
 				if (displayName_ && ! message.log().name().empty())
 				    s_ << "[" << message.log().name() << "] ";
-				if (displayLocation_)
-					s_ << " (" << message.file() << ":" << message.line() << ")";
-
 				return s_;
 			}
 
 			void endMessage(Log::Message const & message) override {
 				MARK_AS_UNUSED(message);
+				if (displayLocation_)
+					s_ << " (" << message.file() << ":" << message.line() << ")";
 				s_ << std::endl;
+				// finally, unlock the mutex
+				m_.unlock();
 			}
 
-		private:
+		protected:
 		    std::ostream & s_;
 			bool displayLocation_;
 			bool displayTime_;
 			bool displayName_;
+			std::mutex m_;
 		}; // Logger::OStreamWriter
+
+		/** Appends the messages to the given filename. 
+		 
+		    When creates, opens a stream to the provided filename and throws helpers::IOError on fialure.
+		 */
+		class FileWriter : public OStreamWriter {
+		public:
+		    FileWriter(std::string const & filename, bool displayLocation = true, bool displayTime = true, bool displayName = true):
+			    OStreamWriter(* new std::ofstream(filename, std::ofstream::app), displayLocation, displayTime, displayName) {
+				if (! s_.good())
+				    THROW(IOError()) << "Unable to open log file " << filename;
+			}
+
+			~FileWriter() {
+				// this is safe because the OStreamWriter destructor does not touch the stream at all
+				delete & s_;
+			}
+
+		}; // Logger::FileWriter
 
 		static Log::Writer & StdOutWriter() {
 			static OStreamWriter writer(std::cout);
@@ -186,6 +225,19 @@ namespace helpers {
 			return defaultLog;
 		}
 
+		static void EnableAll(Log::Writer & writer, bool update = false) {
+			std::unordered_map<std::string, Log *> & logs = RegisteredLogs();
+			for (auto i : logs) {
+				if (update || ! i.second->enabled())
+				    i.second->enable(writer);
+			}
+		}
+
+		static void Enable(Log::Writer & writer, std::initializer_list<std::reference_wrapper<Log>> logs) {
+			for (auto i : logs)
+			    i.get().enable(writer);
+		}
+
 		static Log & GetLog() {
 		    return DefaultLog();
 		}
@@ -193,7 +245,15 @@ namespace helpers {
 		static Log & GetLog(Log & log) {
 			return log;
 		}
-	};
+
+	private:
+		friend class Log;
+	    
+		static std::unordered_map<std::string, Log *> & RegisteredLogs() {
+			static std::unordered_map<std::string, Log *> logs;
+			return logs;
+		}
+	}; // helpers::Logger
 
 	inline Log::Message::Message(Log * log, char const * file, size_t line):
 	    log_(log),
@@ -208,5 +268,21 @@ namespace helpers {
 		if (log_ != nullptr)
 		    log_->writer_->endMessage(*this);
 	}
+
+	/** Creates new log. 
+	 */
+	inline Log::Log(std::string const & name):
+		name_(name),
+		writer_(nullptr) {
+		std::unordered_map<std::string, Log *> & logs = Logger::RegisteredLogs();
+		ASSERT(logs.find(name_) == logs.end()) << "Log " << name_ << " already exists";
+		logs.insert(std::make_pair(name_, this));
+	}
+
+	inline Log::~Log() {
+		std::unordered_map<std::string, Log *> & logs = Logger::RegisteredLogs();
+		logs.erase(logs.find(name_));
+	}
+
 
 } // namespace helpers

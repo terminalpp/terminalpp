@@ -17,14 +17,16 @@ The following is very short description of the versions planned and their main n
 - bold text can be forced to render in bright colors
 - support for opening remote files by extra escape sequences (basic)
 
+- delete old logs when too many of them
 - update documentation generation into the website
-- add logging to file option & logging command line args, registering logs in logger
 - ideally snap store will be vetted by this time
 - Windows Store version as well
 
 Maybe not necessary now: 
 
 - the tpp terminal should use the `<<` and `>>` notation so that it can be used instead of std::cout & std::cin
+
+- logging command line so that log can be controlled from it easily
 
 ### v0.6
 

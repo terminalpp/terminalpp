@@ -58,11 +58,7 @@ namespace tpp {
         if (i != map_.end()) {
             i->second->reset(size);
         } else {
-            // if the remote files is empty, create new temporary directory
-            if (remoteFilesFolder_.empty()) {
-                helpers::TemporaryFolder tf("tpp-",false);
-                remoteFilesFolder_ = tf.path();
-            }
+            ASSERT(!remoteFilesFolder_.empty());
             RemoteFile * rf = new RemoteFile(remoteFilesFolder_, static_cast<int>(remoteFiles_.size()), hostname, filename, remotePath, size);
             remoteFiles_.push_back(rf);
             i = map_.insert(std::make_pair(fullName, rf)).first;

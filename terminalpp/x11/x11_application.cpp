@@ -104,6 +104,18 @@ namespace tpp {
 				alert("Cannot guess valid font - please specify manually for best results");
 			}
 		}
+		// if no log has been specified, create one in the tmp folder
+		if (json["log"]["dir"].empty()) {
+			std::string d = helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"log");
+			helpers::CreatePath(d);
+			json["log"]["dir"] = d;
+		}
+		// if no directory has been set for the remote files, create one in the tmp folder
+		if (json["session"]["remoteFiles"]["dir"].empty()) {
+			std::string d = helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles");
+			helpers::CreatePath(d);
+			json["session"]["remoteFiles"]["dir"] = d; 
+		}
 		// add the default shell of the current user
 		helpers::JSON & cmd = json["session"]["command"];
 		if (cmd.numElements() == 0)

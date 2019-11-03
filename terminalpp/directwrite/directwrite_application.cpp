@@ -89,6 +89,18 @@ namespace tpp {
 			    THROW(helpers::Exception()) << "Terminal++ execution cancelled";
 			cmd.clear();
 		}
+		// if no log has been specified, create one in the tmp folder
+		if (json["log"]["dir"].empty()) {
+			std::string d = helpers::JoinPath(helpers::TempDir(), "terminalpp");
+			helpers::CreatePath(d);
+			json["log"]["dir"] = d;
+		}
+		// if no directory has been set for the remote files, create one in the tmp folder
+		if (json["session"]["remoteFiles"]["dir"].empty()) {
+			std::string d = helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles");
+			helpers::CreatePath(d);
+			json["session"]["remoteFiles"]["dir"] = d; 
+		}
 		if (cmd.numElements() == 0) {
 			// if WSL is not present, default to cmd.exe
 			std::string wslDefaultDistro{isWSLPresent()};

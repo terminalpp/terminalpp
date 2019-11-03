@@ -22,7 +22,8 @@ namespace tpp {
     public:
         Session(ui::PTY * pty, ui::TerminalPP::Palette * palette):
             pty_(pty),
-            closeOnKeyDown_(false) {
+            closeOnKeyDown_(false),
+            remoteFiles_(Config::Instance().sessionRemoteFilesDir()) {
             Config const & config = Config::Instance();
             using namespace ui;
             Create(this) 
@@ -53,8 +54,8 @@ namespace tpp {
                 ;
 
             focusWidget(terminal_, true);
-            if (! config.logFile().empty()) {
-                logFile_.open(config.logFile());
+            if (! config.sessionLog().empty()) {
+                logFile_.open(config.sessionLog());
                 terminal_->onInput += CreateHandler<InputProcessedEvent, Session, &Session::terminalInputProcessed>(this);
             }
         }

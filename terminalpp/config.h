@@ -34,8 +34,8 @@ namespace tpp {
 			return get({"version"});
 		}
 
-		std::string const & logFile() const {
-			return get({"log", "file"});
+		std::string const & logDir() const {
+			return get({"log", "dir"});
 		}
 
 		unsigned rendererFps() const {
@@ -103,6 +103,10 @@ namespace tpp {
 
 		bool sessionSequencesBoldIsBright() const {
 			return get({"session","sequences", "boldIsBright"});
+		}
+
+		std::string const & sessionLog() const {
+			return get({"session", "log"});
 		}
 		
 		helpers::JSON & json() {

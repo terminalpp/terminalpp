@@ -79,6 +79,10 @@ namespace tpp {
             return remoteFiles_[fileId];
         }
 
+        RemoteFiles(std::string const & folder):
+            remoteFilesFolder_(folder) {
+        }
+
     private:
         std::unordered_map<std::string, RemoteFile *> map_;
 

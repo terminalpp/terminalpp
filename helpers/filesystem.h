@@ -74,6 +74,14 @@ namespace helpers {
         return std::filesystem::exists(p);
     }
 
+    /** Creates the given path. 
+     
+        Returns true if the path had to be created, false if it already exists.
+     */
+    inline bool CreatePath(std::string const & path) {
+        return std::filesystem::create_directories(path);
+    }
+
     /** Returns the directory in which local application settings should be stored on given platform. 
      */
     inline std::string LocalSettingsDir() {

@@ -4,6 +4,7 @@
 #include "helpers/char.h"
 #include "helpers/args.h"
 #include "helpers/time.h"
+#include "helpers/filesystem.h"
 
 #include "config.h"
 
@@ -85,14 +86,10 @@ int main(int argc, char* argv[]) {
     }
 #endif
 	try {
-
     	Config const & config = Config::Initialize(argc, argv);
-		/*
-		helpers::Log::RegisterLogger(new helpers::StreamLogger(ui::TerminalPP::SEQ, std::cout));
-		helpers::Log::RegisterLogger(new helpers::StreamLogger(ui::TerminalPP::SEQ_UNKNOWN, std::cout));
-		helpers::Log::RegisterLogger(new helpers::StreamLogger(ui::TerminalPP::SEQ_WONT_SUPPORT, std::cout));
-		*/
-
+		helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.logDir(), "log-"));
+		helpers::Logger::Enable(log, { helpers::Logger::DefaultLog(), ui::TerminalPP::SEQ_ERROR, ui::TerminalPP::SEQ_UNKNOWN });
+		LOG() << "t++ started";
 		// Create the palette & the pty - TODO this should be more systematic
 		ui::TerminalPP::Palette palette{config.sessionPalette()};
 		ui::PTY * pty;
@@ -121,10 +118,13 @@ int main(int argc, char* argv[]) {
 	    return EXIT_SUCCESS;
 	} catch (helpers::Exception const& e) {
 		Application::Alert(STR(e));
+		LOG() << "Error: " << e;
 	} catch (std::exception const& e) {
 		Application::Alert(e.what());
+		LOG() << "Error: " << e.what();
 	} catch (...) {
 		Application::Alert("Unknown error");
+		LOG() << "Error: Unknown error";
 	} 
 	return EXIT_FAILURE;
 }

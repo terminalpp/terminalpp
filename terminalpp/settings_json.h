@@ -22,9 +22,9 @@ namespace tpp {
     /* Log properties.
      */
     "log" : {
-        /* File to which all terminal input should be logged.
+        /* Directory where to keep the log files.
          */
-        "file" : ""
+        "dir" : ""
     },
     
     /* Renderer settings. 
@@ -93,7 +93,10 @@ namespace tpp {
             /* Directory to which the remote files should be downloaded. If empty, temporary directory will be used. 
              */
             "dir" : ""
-        }
+        },
+        /* File to which all terminal input should be logged.
+         */
+        "log" : ""
     }
 }
         )json";
