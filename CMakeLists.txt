@@ -3,8 +3,8 @@
 #
 cmake_minimum_required (VERSION 3.5)
 
-project(terminalpp VERSION 0.4.5)
-set(PROJECT_VERSION_INT 450)
+project(terminalpp VERSION 0.4.6)
+set(PROJECT_VERSION_INT 460)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
 set(CMAKE_CXX_STANDARD 17)
@@ -12,15 +12,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(".")
 
-#set(PACKAGE_INSTALL ropen)
+if(NOT DEFINED PACKAGE_INSTALL)
+    set(PACKAGE_INSTALL terminalpp)
+endif()
 
 # Include sub-projects.
 add_subdirectory("tpp-lib")
 add_subdirectory("tpp-widget")
 add_subdirectory("ui")
 add_subdirectory("docs")
-add_subdirectory("ropen")
-add_subdirectory("tpp-bypass")
+# optional subprojects - only include them if we actually have them
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ropen/CMakeLists.txt")
+    add_subdirectory("ropen")
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tpp-bypass/CMakeLists.txt")
+    add_subdirectory("tpp-bypass")
+endif()
 
 #include_directories("{$CMAKE_CURRENT_SOURCE_DIR}/tpp")
 
@@ -167,8 +174,12 @@ if(PACKAGE_INSTALL STREQUAL terminalpp)
     #
     # Creates the MSI installer (classic Windows desktop installer). 
     if(WIN32)
-        # Search for the wix toolkit    
-        file(GLOB WIX_ROOT "C:/Program Files*/WiX Toolset v*/bin")
+        # Search for the wix toolkit 
+        if (DEFINED $ENV{WIX})
+            set(WIX_ROOT $ENV{WIX})
+        else()   
+            file(GLOB WIX_ROOT "C:/Program Files*/WiX Toolset v*/bin")
+        endif()
         if (WIX_ROOT) 
             message(STATUS "WIX toolset found in ${WIX_ROOT}, msi package creation will be added to packages")
             # create the build directory and configure the WiX configuration in it

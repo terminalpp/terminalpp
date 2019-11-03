@@ -77,6 +77,8 @@ namespace tpp {
 	}
 
 	void DirectWriteApplication::updateDefaultSettings(helpers::JSON & json) {
+		Application::updateDefaultSettings(json);
+
 		// if font has not been specified, use Consolas, which should be preinstalled on all Windows installations (?)
 		if (json["font"]["family"].empty())
 		    json["font"]["family"] = "Consolas";
@@ -88,18 +90,6 @@ namespace tpp {
 		    if (MessageBox(nullptr, L"The session command settings will be reinitialized and previous data lost. OK proceeds, Cancel terminates the execution.",L"Session Command Reset", MB_ICONWARNING + MB_OKCANCEL) == IDCANCEL)
 			    THROW(helpers::Exception()) << "Terminal++ execution cancelled";
 			cmd.clear();
-		}
-		// if no log has been specified, create one in the tmp folder
-		if (json["log"]["dir"].empty()) {
-			std::string d = helpers::JoinPath(helpers::TempDir(), "terminalpp");
-			helpers::CreatePath(d);
-			json["log"]["dir"] = d;
-		}
-		// if no directory has been set for the remote files, create one in the tmp folder
-		if (json["session"]["remoteFiles"]["dir"].empty()) {
-			std::string d = helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles");
-			helpers::CreatePath(d);
-			json["session"]["remoteFiles"]["dir"] = d; 
 		}
 		if (cmd.numElements() == 0) {
 			// if WSL is not present, default to cmd.exe

@@ -11,12 +11,10 @@ jobs:
     - uses: actions/checkout@v1
     - name: fetch-subprojects
       run: |
-        git clone https://github.com/terminalpp/website
-        git clone https://github.com/terminalpp/tpp-bypass
-        git clone https://github.com/terminalpp/ropen
+        git clone --verbose https://github.com/terminalpp/website
     - name: configure
       run: |
-        mkdir -p build
+        mkdir build
         cd build
         cmake ..
     - name: build-debug

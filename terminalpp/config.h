@@ -38,6 +38,10 @@ namespace tpp {
 			return get({"log", "dir"});
 		}
 
+		unsigned logMaxFiles() const {
+			return get({"log", "maxFiles"});
+		}
+
 		unsigned rendererFps() const {
 			return get({"renderer", "fps"});
 		}

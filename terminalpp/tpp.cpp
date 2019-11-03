@@ -87,8 +87,18 @@ int main(int argc, char* argv[]) {
 #endif
 	try {
     	Config const & config = Config::Initialize(argc, argv);
+		// make sure the log & remote files directories exist
+		helpers::CreatePath(config.logDir());
+		helpers::CreatePath(config.sessionRemoteFilesDir());
+		// check that the logs directory does not overgrow the max number of files allowed
+		helpers::EraseOldestFiles(config.logDir(), config.logMaxFiles());
+		// create log writer & enable the selected logs
 		helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.logDir(), "log-"));
-		helpers::Logger::Enable(log, { helpers::Logger::DefaultLog(), ui::TerminalPP::SEQ_ERROR, ui::TerminalPP::SEQ_UNKNOWN });
+		helpers::Logger::Enable(log, { 
+			helpers::Logger::DefaultLog(),
+			ui::TerminalPP::SEQ_ERROR,
+			ui::TerminalPP::SEQ_UNKNOWN
+		});
 		LOG() << "t++ started";
 		// Create the palette & the pty - TODO this should be more systematic
 		ui::TerminalPP::Palette palette{config.sessionPalette()};

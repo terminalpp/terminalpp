@@ -92,6 +92,7 @@ namespace tpp {
 	}
 
     void X11Application::updateDefaultSettings(helpers::JSON & json) {
+		Application::updateDefaultSettings(json);
 		// if no font has been specified, determine default font 
 		if (json["font"]["family"].empty() || json["font"]["doubleWidthFamily"].empty()) {
 			std::string defaultFont = getDefaultValidFont();
@@ -103,18 +104,6 @@ namespace tpp {
 			} else {
 				alert("Cannot guess valid font - please specify manually for best results");
 			}
-		}
-		// if no log has been specified, create one in the tmp folder
-		if (json["log"]["dir"].empty()) {
-			std::string d = helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"log");
-			helpers::CreatePath(d);
-			json["log"]["dir"] = d;
-		}
-		// if no directory has been set for the remote files, create one in the tmp folder
-		if (json["session"]["remoteFiles"]["dir"].empty()) {
-			std::string d = helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles");
-			helpers::CreatePath(d);
-			json["session"]["remoteFiles"]["dir"] = d; 
 		}
 		// add the default shell of the current user
 		helpers::JSON & cmd = json["session"]["command"];

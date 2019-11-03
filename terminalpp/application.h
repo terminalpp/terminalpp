@@ -56,7 +56,7 @@ namespace tpp {
         virtual void openLocalFile(std::string const & filename, bool edit) = 0;
 
 
-        virtual void updateDefaultSettings(helpers::JSON & json) = 0;
+        virtual void updateDefaultSettings(helpers::JSON & json);
 
     private:
 

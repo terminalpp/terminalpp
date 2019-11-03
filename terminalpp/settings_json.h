@@ -24,7 +24,10 @@ namespace tpp {
     "log" : {
         /* Directory where to keep the log files.
          */
-        "dir" : ""
+        "dir" : "",
+        /* Maximum number of log files that are to be kept. 
+         */
+        "maxFiles" : 100
     },
     
     /* Renderer settings. 

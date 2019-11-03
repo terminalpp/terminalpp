@@ -1,5 +1,6 @@
 #pragma once
 #if (defined ARCH_WINDOWS)
+#include <windows.h>
 #include <fileapi.h>
 #include <ShlObj_core.h>
 #else
@@ -11,6 +12,7 @@
 #endif
 
 #include <filesystem>
+#include <algorithm>
 
 #include "helpers.h"
 #include "string.h"
@@ -129,6 +131,35 @@ namespace helpers {
 #else
                 return p.c_str();
 #endif
+        }
+    }
+
+    /** Makes sure that the given folder contains no more than maxFiles.
+     
+        Erases the oldest files if the number of files exceeds the given number.
+     */ 
+    inline void EraseOldestFiles(std::string const & folder, size_t maxFiles) {
+        typedef std::pair<long long, std::filesystem::path> FileDesc;
+        std::vector<FileDesc> files;
+        for(auto& p: std::filesystem::directory_iterator(folder)) {
+            if (p.is_regular_file())
+                files.push_back(std::make_pair(p.last_write_time().time_since_epoch().count(), p.path()));
+        }
+        size_t numFiles = files.size();
+        if (numFiles > maxFiles) {
+            std::sort(files.begin(), files.end(), [](FileDesc const & a, FileDesc const & b) {
+                return a.first < b.first;
+            });
+            for (FileDesc const & f : files) {
+                try {
+                    std::filesystem::remove(f.second);
+                    --numFiles;
+                } catch (...) {
+                    // don't do anything, just don't delete the file
+                }
+                if (numFiles <= maxFiles)
+                    break;
+            }
         }
     }
 
