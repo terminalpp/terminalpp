@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: Build & Create Packages
 
 on: [push]
 
@@ -9,5 +9,45 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: build
-      run: bash scripts/build-linux.sh
+    - name: install-packages
+      run: |
+        sudo apt update
+        sudo apt install cmake libx11-dev libxft-dev g++-8
+    - name: fetch-subprojects
+      run: |
+        git clone https://github.com/terminalpp/website
+        git clone https://github.com/terminalpp/tpp-bypass
+        git clone https://github.com/terminalpp/ropen
+    - name: configure-debug
+      run: |
+        mkdir -p build/debug
+        cd build/debug
+        cmake ../.. -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
+    - name: build-debug
+      run: |
+        cd build/debug
+        cmake --build . 
+    - name: configure-release
+      run: |
+        mkdir -p build/release
+        cd build/release
+        cmake ../.. -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DCMAKE_BUILD_TYPE=Release
+    - name: build-release
+      run: |
+        cd build/release
+        cmake --build . 
+    - name: build-terminalpp-packages
+      run: |
+        cd build/release
+        cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=terminalpp
+        cmake --build . --target packages
+    - name: build-ropen-packages
+      run: |
+        cd build/release
+        cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=tpp-ropen
+        cmake --build . --target packages
+    - name: build-bypass-packages
+      run: |
+        cd build/release
+        cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=tpp-bypass
+        cmake --build . --target packages
