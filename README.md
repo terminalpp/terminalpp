@@ -23,33 +23,39 @@ This is the main development repository for the `terminal++` and its suppport re
 
 `tpp` has very minimal dependencies. On Windows latest [Visual Studio](https://visualstudio.microsoft.com) must be installed (or [Visual Studio Code](https://code.microsoft.com) with `c++` support) and [cmake](https://cmake.org), while the packagres required on Linux can be automatically installed via the `scripts/setup-linux.sh`.
 
-## Build Scripts
+## Building via CMake
 
-Alternatively the platform specific build scripts can be used. These create the appropriate build directories (`build/debug` and `build/release`), clone all the subprojects, install the dependencies and finallu build all the repositories, generating all installation packages possible at given machine. These scripts are:
+The whole build process on all platforms is automated via `cmake`. The following are examples on how to create release build for the supported platforms:
 
-- `scripts/build-linux.sh` for Ubuntu (tested on `18.04`)
-- `scripts/build-windows.bat` for Windows
+> A good way to start is to look at the CI configurations in `.github/workflows` folder where build steps for each supported platform are detailed. 
 
-# Installing
+### Windows
+
+    mkdir build
+    cd build
+    cmake .. 
+    cmake --build . --config Release
+
+### Linux
+
+    mkdir -p build/release
+    cd build/release
+    cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
+
+## Building Installation packages
+
+By default, installation packages for `terminalpp` are created for the given platform and subject to the availability of the package creation tools (`WIX` toolset for Windows, `snapcraft`, and DEB and RPM tools on Linux).
+
+To create them, build the `packages` target:
+
+    cmake --build . --target packages
 
 > Since `cpack` is not able to create multiple packages during a single build, multiple conditional builds must be executed. 
 
-Depending on your OS run either:
+To build installation packages for `ropen` and `bypass`, the project must be reconfigured with the `-DPACKAGE_INSTALL=tpp-ropen` or `-DCPACKAGE_INSTALL=tpp-bypass` respectively. 
 
-    scripts/build-linux.sh
+### Manual installation
 
-or:
-    
-    scripts/build-windows.sh
-
-These scripts build the terminal & friends from source and will installation packages if appropriate tools are available on the system (`msi` for Windows, `snap`, `deb` and `rpm` for Linux). 
-
-The packages will be stored in the folder `build/release/packages`. 
-
-## Manual installation
-
-You can use the `-DPACKAGE_INSTALL` `cmake` argument to determine which packages should be created (`terminalpp`, `tpp-ropen` and `tpp-bypass`). You can then install the selected programs via the command:
+Once the package to be creates has been selected via `-DPACKAGE_INSTALL` (or left default), the default `install` target can be used to install the respective applications (Linux only):
 
     sudo cmake --build . --target install
-
-> Note that on Windows there is no manual installation option.

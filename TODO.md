@@ -17,7 +17,6 @@ The following is very short description of the versions planned and their main n
 - bold text can be forced to render in bright colors
 - support for opening remote files by extra escape sequences (basic)
 
-- delete old logs when too many of them
 - update documentation generation into the website
 - ideally snap store will be vetted by this time
 - Windows Store version as well
