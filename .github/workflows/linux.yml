@@ -1,4 +1,4 @@
-name: Build & Create Packages
+name: Build & Create Packages - Linux
 
 on: [push]
 
