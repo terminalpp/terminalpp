@@ -29,9 +29,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tpp-bypass/CMakeLists.txt")
     add_subdirectory("tpp-bypass")
 endif()
 
-#include_directories("{$CMAKE_CURRENT_SOURCE_DIR}/tpp")
-
-
 # Build checks
 #
 # Only on Linux, check for the required libraries. 
@@ -155,7 +152,7 @@ endif()
 # cpack settings - generic
 set(CPACK_PACKAGE_NAME ${PACKAGE_INSTALL})
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}_${CPACK_PACKAGE_VERSION}")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
 set(CPACK_PACKAGE_VENDOR "Zduka")
 set(CPACK_PACKAGE_CONTACT "zduka <zduka@outlook.com>")
 # debian specific
@@ -195,7 +192,7 @@ if(PACKAGE_INSTALL STREQUAL terminalpp)
                     -nologo
                     -ext WixUIExtension
                     -ext WixUtilExtension 
-                    -out "../${PROJECT_NAME}_${PROJECT_VERSION}.msi" 
+                    -out "../${PROJECT_NAME}.msi" 
                     -sice:ICE61 -sice:ICE91 
                     "tpp.wixobj"
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages/msi

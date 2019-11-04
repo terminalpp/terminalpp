@@ -13,6 +13,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install cmake libx11-dev libxft-dev g++-8
+        #sudo snap install --classic snapcraft        
     - name: fetch-subprojects
       run: |
         git clone --verbose https://github.com/terminalpp/website
@@ -51,3 +52,27 @@ jobs:
         cd build/release
         cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=tpp-bypass
         cmake --build . --target packages
+    - uses: actions/upload-artifact@master
+      with:
+        name: terminalpp.deb
+        path: build/release/packages/terminalpp.deb
+    - uses: actions/upload-artifact@master
+      with:
+        name: terminalpp.rpm
+        path: build/release/packages/terminalpp.rpm
+    - uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass.deb
+        path: build/release/packages/tpp-bypass.deb
+    - uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass.rpm
+        path: build/release/packages/tpp-bypass.rpm
+    - uses: actions/upload-artifact@master
+      with:
+        name: tpp-ropen.deb
+        path: build/release/packages/tpp-ropen.deb
+    - uses: actions/upload-artifact@master
+      with:
+        name: tpp-ropen.rpm
+        path: build/release/packages/tpp-ropen.rpm
