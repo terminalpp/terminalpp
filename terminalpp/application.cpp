@@ -12,5 +12,4 @@ namespace tpp {
             json["session"]["remoteFiles"]["dir"] = helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles");
     }
 
-
 } // namespace tpp
