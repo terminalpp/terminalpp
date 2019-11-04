@@ -1,7 +1,8 @@
 # Terminal++
 
-[![Windows Build](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/1?label=windows&logo=azure-pipelines)](https://dev.azure.com/zduka/tpp/_build?definitionId=1)
-[![Linux Build](https://img.shields.io/azure-devops/build/zduka/2f98ce80-ca6f-4b09-aaeb-d40acaf97702/2?label=linux&logo=azure-pipelines)](https://dev.azure.com/zduka/tpp/_build?definitionId=2)
+
+[![Windows build](https://github.com/terminalpp/tpp/workflows/windows-build/badge.svg)](https://github.com/terminalpp/tpp/actions?query=workflow%3Awindows-build)
+[![Linux build](https://github.com/terminalpp/tpp/workflows/linux-build/badge.svg)](https://github.com/terminalpp/tpp/actions?query=workflow%3Alinux-build)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd4f07b095634b9d90bbb9edb11fc12c)](https://www.codacy.com/manual/zduka/tpp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=terminalpp/tpp&amp;utm_campaign=Badge_Grade)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/terminalpp/tpp.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/terminalpp/tpp/context:cpp)
 

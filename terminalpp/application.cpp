@@ -10,7 +10,7 @@ namespace tpp {
         // if no directory has been set for the remote files, create one in the tmp folder
         if (json["session"]["remoteFiles"]["dir"].empty()) 
             json["session"]["remoteFiles"]["dir"] = helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles");
-    };
+    }
 
 
 } // namespace tpp

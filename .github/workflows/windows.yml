@@ -1,4 +1,4 @@
-name: Build & Create Packages - Windows
+name: windows-build
 
 on: [push]
 
