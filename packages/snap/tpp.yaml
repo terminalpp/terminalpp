@@ -15,8 +15,10 @@ parts:
     configflags: 
       - "-DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@"
       - "-DCMAKE_INSTALL_PREFIX=/usr"
+      - "-DCMAKE_C_COMPILER=gcc-8"
+      - "-DCMAKE_CXX_COMPILER=g++-8"
     build-packages:
-      - g++
+      - g++-8
       - libx11-dev
       - libxft-dev
       - git
