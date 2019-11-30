@@ -167,6 +167,16 @@ if(PACKAGE_INSTALL STREQUAL terminalpp)
         install(TARGETS tpp DESTINATION bin COMPONENT tpp)
     endif()
 
+    # cpack settings - generic
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Cross-platform terminal emulator.")
+    set(CPACK_PACKAGE_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.")
+    # debian specific
+    set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/postinst;${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/prerm")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libfontconfig1, libfreetype6, libpng16-16, libx11-6, libxau6, libxcb1, libxdmcp6, libxft2, libxrender1, x11-utils")
+    # rpm specific
+    set(CPACK_RPM_PACKAGE_REQUIRES "fontconfig, libfreetype6, libpng16-16, libX11-6, libXau6, libxcb1, libXdmcp6, libXft2, libXrender1, xmessage")
+
+
     # WiX powered MSI installer creation (Windows)
     #
     # Creates the MSI installer (classic Windows desktop installer). 
@@ -231,14 +241,6 @@ if(PACKAGE_INSTALL STREQUAL terminalpp)
         endif()
     endif()
 
-    # cpack settings - generic
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Cross-platform terminal emulator.")
-    set(CPACK_PACKAGE_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.")
-    # debian specific
-    set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/postinst;${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/prerm")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libfontconfig1, libfreetype6, libpng16-16, libx11-6, libxau6, libxcb1, libxdmcp6, libxft2, libxrender1, x11-utils")
-    # rpm specific
-    set(CPACK_RPM_PACKAGE_REQUIRES "fontconfig, libfreetype6, libpng16-16, libX11-6, libXau6, libxcb1, libXdmcp6, libXft2, libXrender1, xmessage")
 elseif(PACKAGE_INSTALL STREQUAL tpp-ropen)
     message(STATUS "ropen project package will be built")
     # cpack settings - generic
