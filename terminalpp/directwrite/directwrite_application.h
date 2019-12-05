@@ -87,6 +87,11 @@ namespace tpp {
          */
         bool isBypassPresent() const;
 
+        /** Determins the actual version of the provided WSL distribution. 
+         */
+    	void DirectWriteApplication::updateDistributionVersion(std::string & wslDistribution);
+
+
         /** Installs the bypass for given WSL distribution. 
          
             Returns true if the installation was successful, false otherwise. The bypass is installed by downloading the appropriate bypass binary from github releases and installing it into BYPASS_FOLDER (set in config.h).

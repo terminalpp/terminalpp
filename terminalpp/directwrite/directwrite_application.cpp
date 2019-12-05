@@ -64,6 +64,24 @@ namespace tpp {
 		return output.find("Terminal++ Bypass, version") == 0;
 	}
 
+	void DirectWriteApplication::updateDistributionVersion(std::string & wslDistribution) {
+		if (wslDistribution == "Ubuntu") {
+    		helpers::ExitCode ec;
+			std::vector<std::string> lines = helpers::SplitAndTrim(
+				helpers::Exec(helpers::Command("wsl.exe", {"--", "lsb_release", "-a"}), "", &ec),
+				"\n"
+			);
+			for (std::string const & line : lines) {
+				if (helpers::StartsWith(line, "Release:")) {
+					std::string ver = helpers::Trim(line.substr(9));
+					wslDistribution = wslDistribution + "-" + ver;
+					break;
+				}
+			}
+		}
+
+	}
+
 	bool DirectWriteApplication::installBypass(std::string const & wslDistribution) {
 		try {
 			std::string url = STR("https://github.com/terminalpp/bypass/releases/download/v0.1/tpp-bypass-" << wslDistribution);
@@ -103,6 +121,9 @@ namespace tpp {
 				// if bypass is not present, ask whether it should be installed
 				if (!hasBypass) {
 					if (MessageBox(nullptr, L"WSL bypass was not found in your default distribution. Do you want terminal++ to install it? (if No, ConPTY will be used instead)", L"WSL Bypass not found", MB_ICONQUESTION + MB_YESNO) == IDYES) {
+						// update the version of the distro, if necessary
+						updateDistributionVersion(wslDefaultDistro);
+						// attempt to install the bypass
 						hasBypass = installBypass(wslDefaultDistro);
 						if (!hasBypass)
 						    MessageBox(nullptr, L"Bypass installation failed, most likely due to missing binary for your WSL distribution. Terminal++ will continue with ConPTY.", L"WSL Install bypass failure", MB_ICONSTOP + MB_OK);
