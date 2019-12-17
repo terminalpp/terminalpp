@@ -8,209 +8,163 @@
 
 namespace helpers {
 
-	/** Encapsulation around event handler function or method.
-
-	    If the handler is a function, the function pointer is kept inside with the target object being set to nullptr, in case of methods, this is more complicated as a method pointer does not have fixed (or even defined) size. What we therefore do is use the method pointer as a template argument of a wrapper function, whose pointer we store together with the object to be called. When triggered, the object and payload are passed to the wrapper function.
-
-		TODO Creating a handler is now a mouthful, it would be really nice if this can be simplified using template deductions (notably the method case), but I am not even sure if such magic is possible in C++. 
+	/** 
 	 */
-	template<typename PAYLOAD>
-	class EventHandler {
-	public:
-
-		/** Event handlers can be compared for equality, i.e. whether they point to the same target function, or method & object. 
-		 */
-		bool operator == (EventHandler<PAYLOAD> const & other) const {
-			return (f_ == other.f_) && (object_ == other.object_);
-		}
-
-		bool operator != (EventHandler<PAYLOAD> const & other) const {
-			return (f_ != other.f_) || (object_ != other.object_);
-		}
-
-		/** Triggers the handler. 
-		 */
-		void operator() (PAYLOAD & payload) {
-			if (object_ == nullptr)
-				(*f_)(payload);
-			else
-				(*w_)(object_, payload);
-		}
-
-	private:
-		typedef void (*FunctionPtr) (PAYLOAD &); 
-		typedef void (* WrapperPtr)(void *, PAYLOAD &);
-
-		template<typename P>
-		friend EventHandler<P> CreateHandler(void (*fptr)(P &));
-
-		template<typename P, typename C, void(C::*M)(P &)>
-		friend EventHandler<P> CreateHandler(C* target);
-
-		EventHandler(FunctionPtr f):
-			object_(nullptr),
-			f_(f) {
-			static_assert(sizeof(FunctionPtr) == sizeof(WrapperPtr), "Function and wrapper are of the same size");
-		}
-
-		EventHandler(void * object, WrapperPtr w):
-			object_(object),
-			w_(w) {
-			static_assert(sizeof(FunctionPtr) == sizeof(WrapperPtr), "Function and wrapper are of the same size");
-			ASSERT(object != nullptr) << "When calling a method, target object must not be null";
-		}
-
-		template<typename C, void(C::*M)(PAYLOAD &)>
-		static void Wrapper(void * object, PAYLOAD & p) {
-			C * target = static_cast<C*>(object);
-			(*target.*M)(p);
-		} 
-
-		void * object_;
-		
-		union {
-			FunctionPtr f_;
-			WrapperPtr w_;
-		};
-	}; 
-
-	/** Creates event handler from given function pointer. 
-	 
-	    The function pointer is the argument to the method. If template deduction does not work, the payload type must be specified, i.e. :
-
-		    EventHandler<Payload> h = CreateHandler<Payload>([](Payload & e){ ... });
-	 */
-	template<typename PAYLOAD>
-	inline EventHandler<PAYLOAD> CreateHandler(void (*fptr)(PAYLOAD &)) {
-		return EventHandler<PAYLOAD>(fptr);
-	}
-
-	/** Creates event handler from given method pointer. 
-	 
-	    Note that the method pointer is template argument, while the target object is argument to the function. Since I did not figure out how to force C++ to deduce the template argument, creation of a handler from own method is rather verbose, i.e. if class Foo has instance foo and method bar, and the event payload is called Payload, we must do the following:
-
-		    EventHandler<Payload> h = CreateHandler<Payload, Foo, &Foo::bar>(&foo);
-
-	 */
-	template<typename PAYLOAD, typename C, void(C::*M)(PAYLOAD &)>
-	inline EventHandler<PAYLOAD> CreateHandler(C * target) {
-		return EventHandler<PAYLOAD>(static_cast<void*>(target), & EventHandler<PAYLOAD>::template Wrapper<C,M>);
-	} 
-
-	template<typename PAYLOAD>
+    template<typename PAYLOAD, typename SENDER>
 	class Event {
 	public:
+		typedef SENDER sender_type;
 
-		typedef PAYLOAD Payload;
+	    class Payload {
+		public:
+		    typedef PAYLOAD payload_type;
+    		typedef SENDER sender_type;
 
-		Event & operator += (EventHandler<PAYLOAD> const & handler) {
-			handlers_.emplace_back(handler);
+		    SENDER * sender() const {
+				return sender_;
+			}
+
+			/** Dereferencing event payload returns the payload object itself.
+			 */
+			PAYLOAD & operator * () {
+				return payload_;
+			}
+
+			PAYLOAD * operator -> () {
+				return &payload_;
+			}
+
+		private:
+		    friend class Event;
+
+			Payload(PAYLOAD & payload, SENDER * sender):
+			    payload_(payload),
+				sender_(sender) {
+			}
+
+			PAYLOAD & payload_;
+			SENDER * sender_;
+
+		}; 
+
+		bool attached() const {
+			if (handler_)
+			    return true;
+			else
+			    return false;
+		}
+
+		void clear() {
+			handler_ = nullptr;
+		}
+
+		Event & operator = (std::function<void(Payload &)> fun) {
+			handler_ = fun;
 			return *this;
 		}
 
-		Event & operator -= (EventHandler<PAYLOAD> const & handler) {
-			for (auto i = handlers_.begin(), e = handlers_.end(); i != e; ++i) {
-				if (*i == handler) {
-					handlers_.erase(i);
-					return *this;
-				}
-			}
-			UNREACHABLE;
+		void setHandler(std::function<void(Payload &)> fun) {
+			handler_ = fun;
 		}
 
-		/** NOTE Idellhy this method would only be accessible by the sender classes, however in C++ it is not possible to friend template argument, the reasons of which are unknown to me.
-		 */
-		void trigger(PAYLOAD & payload) {
-			for (auto & h : handlers_) {
-				if (!payload.doDispatch_)
-					break;
-				h(payload);
+		template<typename C>
+		void setHandler(void(C::*method)(Payload &), C * object) {
+			handler_ = std::bind(method, object, std::placeholders::_1);
+		}
+
+		void operator() (SENDER * sender, PAYLOAD & payload) {
+			if (handler_) {
+				Payload p{payload, sender};
+				handler_(p);
 			}
 		}
 
-		/** Returns number of attached handlers.
-		 
-		    Ideally would be protected like trigger, but eh. 
-		 */
-		size_t attachedHandlers() const {
-			return handlers_.size();
+		void operator() (SENDER * sender, PAYLOAD const & payload) {
+			if (handler_) {
+				PAYLOAD p{payload};
+				Payload pp{p, sender};
+				handler_(pp);
+			}
+		}
+
+		void operator() (SENDER * sender, PAYLOAD && payload) {
+			if (handler_) {
+				Payload p{payload, sender};
+				handler_(p);
+			}
 		}
 
 	private:
+	    std::function<void(Payload &)> handler_;
 
-		std::vector<EventHandler<PAYLOAD>> handlers_;
+	}; // Event<PAYLOAD, SENDER>
 
-	};
 
-	class Object;
 
-	template<typename PAYLOAD, typename SENDER>
-	class EventPayload {
+    template<typename SENDER>
+	class Event<void, SENDER> {
 	public:
-		typedef SENDER Sender;
-		typedef PAYLOAD Payload;
+		typedef SENDER sender_type;
 
-		template<typename T = SENDER>
-		T * sender() const {
-			return dynamic_cast<T*>(sender_);
+	    class Payload {
+		public:
+		    typedef void payload_type;
+    		typedef SENDER sender_type;
+
+		    SENDER * sender() const {
+				return sender_;
+			}
+
+		private:
+		    friend class Event;
+
+			Payload(SENDER * sender):
+				sender_(sender) {
+			}
+
+			SENDER * sender_;
+
+		}; 
+
+		void reset() {
+			handler_ = nullptr;
 		}
 
-		EventPayload(SENDER * sender, PAYLOAD & payload) :
-			sender_(sender),
-			payload_(payload),
-			doDispatch_(true) {
+		bool attached() const {
+			if (handler_)
+			    return true;
+			else
+			    return false;
 		}
 
-		/** Stops dispatching the current event.
-
-			When an event handler calls the stopDispatch() method, no further dispatch events will be generated.
-		 */
-		void stopDispatch() {
-			doDispatch_ = false;
+		void clear() {
+			handler_ = nullptr;
 		}
 
-		/** Dereferencing event payload returns the payload object itself.
-		 */
-		PAYLOAD & operator * () {
-			return payload_;
+		Event & operator = (std::function<void(Payload &)> fun) {
+			handler_ = fun;
+			return *this;
 		}
 
-		PAYLOAD * operator -> () {
-			return &payload_;
+		void setHandler(std::function<void(Payload &)> fun) {
+			handler_ = fun;
+		}
+
+		template<typename C>
+		void setHandler(void(C::*method)(Payload &), C * object) {
+			handler_ = std::bind(method, object, std::placeholders::_1);
+		}
+
+		void operator() (SENDER * sender) {
+			if (handler_) {
+				Payload p{sender};
+			    handler_(p);
+			}
 		}
 
 	private:
-		friend class Event<EventPayload<PAYLOAD, SENDER>>;
-		SENDER * const sender_;
-		PAYLOAD & payload_;
-		bool doDispatch_;
-	};
+	    std::function<void(Payload &)> handler_;
 
-	template<typename SENDER>
-	class EventPayload<void, SENDER> {
-	public:
-		typedef SENDER Sender;
-
-		template<typename T = SENDER>
-		T * sender() const {
-			return dynamic_cast<T>(sender_);
-		}
-
-		EventPayload(SENDER * sender) :
-			sender_(sender),
-			doDispatch_(true) {
-		}
-		/** Stops dispatching the current event.
-
-			When an event handler calls the stopDispatch() method, no further dispatch events will be generated.
-		 */
-		void stopDispatch() {
-			doDispatch_ = false;
-		}
-	private:
-		friend class Event<EventPayload<void, SENDER>>;
-		SENDER * const sender_;
-		bool doDispatch_;
-	};
+	}; // Event<void, SENDER>
 
 } // namespace helpers

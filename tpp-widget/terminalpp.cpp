@@ -1362,13 +1362,13 @@ namespace ui {
                     break;
                 case tpp::Sequence::Kind::NewFile: {
                     LOG(SEQ) << "t++ new file request";
-                    TppNewFilePayload event{
+                    TppNewFileEvent event{
                         tpp::Sequence::NewFileRequest{std::move(seq)},
                         tpp::Sequence::NewFileResponse{}
                     };
                     buffer_.unlock();
                     try {
-                        trigger(onTppNewFile, event);
+                        onTppNewFile(this, event);
                     } catch (std::exception const & e) {
                         LOG(SEQ_ERROR) << e.what();
                     } catch (...) {
@@ -1383,7 +1383,7 @@ namespace ui {
                     tpp::Sequence::DataRequest req{std::move(seq)};
                     buffer_.unlock();
                     try {
-                        trigger(onTppData, req);
+                        onTppData(this, req);
                     } catch (std::exception const & e) {
                         LOG(SEQ_ERROR) << e.what();
                     } catch (...) {
@@ -1394,13 +1394,13 @@ namespace ui {
                 }
                 case tpp::Sequence::Kind::TransferStatus: {
                     LOG(SEQ) << "t++ transfer status";
-                    TppTransferStatusPayload event{
+                    TppTransferStatusEvent event{
                         tpp::Sequence::TransferStatusRequest{std::move(seq)},
                         tpp::Sequence::TransferStatusResponse{}
                     };
                     buffer_.unlock();
                     try {
-                        trigger(onTppTransferStatus, event);
+                        onTppTransferStatus(this, event);
                     } catch (std::exception const & e) {
                         LOG(SEQ_ERROR) << e.what();
                     } catch (...) {
@@ -1416,7 +1416,7 @@ namespace ui {
                     send(STR("\033P+" << tpp::Sequence::Kind::Ack << helpers::Char::BEL));
                     buffer_.unlock();
                     try {
-                        trigger(onTppOpenFile, req);
+                        onTppOpenFile(this, req);
                     } catch (std::exception const & e) {
                         LOG(SEQ_ERROR) << e.what();
                     } catch (...) {

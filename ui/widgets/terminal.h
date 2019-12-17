@@ -59,28 +59,24 @@ namespace ui {
     }; // ui::PTY
 
 
-    typedef helpers::EventPayload<helpers::ExitCode, Widget> ExitCodeEvent;
-
     /** The input buffer of the terminal and its length. 
      
         TODO this looks very generic and perhaps can exist in some generic place too.
      */
-    struct InputBuffer {
+    struct InputProcessedEvent {
         char const * buffer;
         size_t size;
     };
 
-    struct InputError : public InputBuffer {
+    struct InputErrorEvent : public InputProcessedEvent {
         std::string error;
 
-        InputError(char const * buffer, size_t size, std::string const &error):
-            InputBuffer{buffer, size},
+        InputErrorEvent(char const * buffer, size_t size, std::string const &error):
+            InputProcessedEvent{buffer, size},
             error(error) {
         }
     };
 
-    typedef helpers::EventPayload<InputBuffer, Widget> InputProcessedEvent;
-    typedef helpers::EventPayload<InputError, Widget> InputErrorEvent;
 
     class Terminal : public ScrollBox, public SelectionOwner {
     public:
@@ -212,22 +208,22 @@ namespace ui {
          
             Note that when the terminal is deleted, its PTY is forcibly terminated at first, so the event will fire precisely once in the terminal lifetime. 
          */
-        helpers::Event<ExitCodeEvent> onPTYTerminated;
+        Event<helpers::ExitCode> onPTYTerminated;
 
-        helpers::Event<StringEvent> onTitleChange;
+        Event<std::string> onTitleChange;
 
-        helpers::Event<VoidEvent> onNotification;
+        Event<void> onNotification;
 
         /** Triggered when a terminal line has been scrolled out. 
          
             It is assumed that the topmost line is always the line scrolled out. 
          */
-        helpers::Event<VoidEvent> onLineScrolledOut;
+        Event<void> onLineScrolledOut;
 
         /** Triggered when new input has been processed by the terminal. 
          */
-        helpers::Event<InputProcessedEvent> onInput;
-        helpers::Event<InputErrorEvent> onInputError;
+        Event<InputProcessedEvent> onInput;
+        Event<InputErrorEvent> onInputError;
 
         // methods
 
@@ -435,15 +431,15 @@ namespace ui {
         /** Called when the attached PTY has terminated. 
          */
         virtual void ptyTerminated(helpers::ExitCode exitCode) {
-            trigger(onPTYTerminated, exitCode);
+            onPTYTerminated(this, exitCode);
         }
 
         virtual void updateTitle(std::string const & title) {
-            trigger(onTitleChange, title);
+            onTitleChange(this, title);
         }
 
         virtual void notify() {
-            trigger(onNotification);
+            onNotification(this);
         }
 
         /** Appends the selected top lines to the terminal history. 
@@ -525,12 +521,5 @@ namespace ui {
     }
 
     PROPERTY_BUILDER(HistorySizeLimit, size_t, setHistorySizeLimit, Terminal);
-
-    EVENT_BUILDER(OnTitleChange, StringEvent, onTitleChange, Terminal);
-    EVENT_BUILDER(OnNotification, VoidEvent, onNotification, Terminal);
-    EVENT_BUILDER(OnPTYTerminated, ExitCodeEvent, onPTYTerminated, Terminal);
-    EVENT_BUILDER(OnLineScrolledOut, VoidEvent, onLineScrolledOut, Terminal);
-    EVENT_BUILDER(OnInput, InputProcessedEvent, onInput, Terminal);
-    EVENT_BUILDER(OnInputError, InputErrorEvent, onInputError, Terminal);
 
 } // namespace ui

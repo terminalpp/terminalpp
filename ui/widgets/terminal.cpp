@@ -191,9 +191,9 @@ namespace ui {
                     try {
                         processed = processInput(ptyBuffer, read);
                         // trigger the input processed event
-                        trigger(onInput, InputBuffer{ptyBuffer, processed});
+                        onInput(this, InputProcessedEvent{ptyBuffer, processed});
                     } catch (std::exception const & e) {
-                        trigger(onInputError, InputError{ptyBuffer, processed, e.what()});
+                        onInputError(this, InputErrorEvent{ptyBuffer, processed, e.what()});
                     }
                     // if not everything was processed, copy the unprocessed part at the beginning and set writeStart_ accordingly
                     if (processed != read) {
@@ -345,9 +345,9 @@ namespace ui {
             }
         }
 
-        if (onLineScrolledOut.attachedHandlers() > 0) {
+        if (onLineScrolledOut.attached()) {
             buffer_.unlock();
-            trigger(onLineScrolledOut);
+            onLineScrolledOut(this);
             buffer_.lock();
         }
     }

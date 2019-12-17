@@ -14,6 +14,7 @@ The following is very short description of the versions planned and their main n
 
 - simple tests framework in helpers, tests target added
 - reentrant lock in helpers
+- simpler events (single handler, std::function, method and fptr handlers)
 
 
 ##### TODO

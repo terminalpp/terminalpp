@@ -27,7 +27,7 @@ namespace tpp {
             setFocused(true);
         }
 
-        helpers::Event<ui::VoidEvent> onDismissed;
+        ui::Event<void> onDismissed;
 
         using Widget::setVisible;
 
@@ -37,7 +37,7 @@ namespace tpp {
             Widget::updateFocused(value);
             if (visible() && value == false) {
                 setVisible(false);
-                trigger(onDismissed);
+                onDismissed(this);
             }
         }
 
@@ -48,7 +48,7 @@ namespace tpp {
             MARK_AS_UNUSED(modifiers);
             if (lastKey_ == ui::Key::Invalid) {
                 setVisible(false);
-                trigger(onDismissed);
+                onDismissed(this);
             }
         }
 
@@ -61,7 +61,7 @@ namespace tpp {
             if (k.code() == lastKey_) {
                 lastKey_ = ui::Key::Invalid;
                 setVisible(false);
-                trigger(onDismissed);
+                onDismissed(this);
             }
         }
 
@@ -90,7 +90,5 @@ namespace tpp {
     private:
         unsigned lastKey_;
     }; // tpp::AboutBox
-
-    EVENT_BUILDER(OnDismissed, ui::VoidEvent, onDismissed, AboutBox);
 
 } // namespace tpp

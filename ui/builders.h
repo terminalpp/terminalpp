@@ -6,8 +6,6 @@
 
 namespace ui {
 
-    using helpers::CreateHandler;
-
 	/** The UI builder. 
 
 	    The builder just encapsulates an arbitrary widget, retaining its type in a smart pointer like structure. For more details on how it is used see the documentation to the Create functions below. 
@@ -183,24 +181,5 @@ namespace ui {
 		return widget;
 	}
 
-
-	// events
-
-#define EVENT_BUILDER(NAME, PAYLOAD, EVENT_NAME, BASE_WIDGET) class NAME { \
-    public: \
-	    explicit NAME(helpers::EventHandler<PAYLOAD> const & handler): \
-		    handler_(handler) { \
-		} \
-	private: \
-	    helpers::EventHandler<PAYLOAD> handler_; \
-		template<typename WIDGET> \
-		friend typename std::enable_if<std::is_base_of<BASE_WIDGET, WIDGET>::value, ui::Builder<WIDGET>>::type \
-		operator << (ui::Builder<WIDGET> widget, NAME const & e) { \
-		    widget->EVENT_NAME += e.handler_; \
-			return widget; \
-		} \
-}
-    
-	EVENT_BUILDER(OnMouseClick, MouseButtonEvent, onMouseClick, Widget);
 
 }  // namespace ui

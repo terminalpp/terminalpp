@@ -9,22 +9,20 @@
 
 namespace ui {
 
-    class TppNewFilePayload {
+    class TppNewFileEvent {
     public:
         tpp::Sequence::NewFileRequest request;
         tpp::Sequence::NewFileResponse response;
     };
 
-    class TppTransferStatusPayload {
+    class TppTransferStatusEvent {
     public:
         tpp::Sequence::TransferStatusRequest request;
         tpp::Sequence::TransferStatusResponse response;
     };
 
-    typedef helpers::EventPayload<TppNewFilePayload, Widget> TppNewFileEvent;
-    typedef helpers::EventPayload<tpp::Sequence::DataRequest, Widget> TppDataEvent;
-    typedef helpers::EventPayload<TppTransferStatusPayload, Widget> TppTransferStatusEvent;
-    typedef helpers::EventPayload<tpp::Sequence::OpenFileRequest, Widget> TppOpenFileEvent;
+    typedef tpp::Sequence::DataRequest TppDataEvent;
+    typedef tpp::Sequence::OpenFileRequest TppOpenFileEvent;
 
 /*
     class NewRemoteFile {
@@ -118,10 +116,10 @@ namespace ui {
 
         TerminalPP(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240); // 1Mb buffer size
 
-        helpers::Event<TppNewFileEvent> onTppNewFile;
-        helpers::Event<TppDataEvent> onTppData;
-        helpers::Event<TppTransferStatusEvent> onTppTransferStatus;
-        helpers::Event<TppOpenFileEvent> onTppOpenFile;
+        Event<TppNewFileEvent> onTppNewFile;
+        Event<TppDataEvent> onTppData;
+        Event<TppTransferStatusEvent> onTppTransferStatus;
+        Event<TppOpenFileEvent> onTppOpenFile;
 
         /** Determines whether the bold font is rendered in bright colors or not. 
          
@@ -431,11 +429,6 @@ namespace ui {
 
 
     PROPERTY_BUILDER(BoldIsBright, bool, setBoldIsBright, TerminalPP);
-
-    EVENT_BUILDER(OnTppNewFile, TppNewFileEvent, onTppNewFile, TerminalPP);
-    EVENT_BUILDER(OnTppData, TppDataEvent, onTppData, TerminalPP);
-    EVENT_BUILDER(OnTppTransferStatus, TppTransferStatusEvent, onTppTransferStatus, TerminalPP);
-    EVENT_BUILDER(OnTppOpenFile, TppOpenFileEvent, onTppOpenFile, TerminalPP);
 
     /** Desrcibes parsed CSI sequence.
 

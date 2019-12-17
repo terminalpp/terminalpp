@@ -1,7 +1,7 @@
 #pragma once
 
 #include "helpers/helpers.h"
-#include "helpers/object.h"
+#include "helpers/events.h"
 #include "helpers/log.h"
 
 #include "canvas.h"
@@ -122,20 +122,20 @@ namespace ui {
 		unsigned raw_;
 	};
 
-	template<typename T>
-	using Event = helpers::Event<T>;
-
 	class Widget;
 
-	class MouseButtonPayload {
+	template<typename P, typename T = Widget>
+	using Event = helpers::Event<P, T>;
+
+	class MouseButtonEvent {
 	public:
-		int x;
+		int x;	
 		int y;
 		MouseButton button;
 		Key modifiers;
 	};
 
-	class MouseWheelPayload {
+	class MouseWheelEvent {
 	public:
 		int x;
 		int y;
@@ -143,59 +143,50 @@ namespace ui {
 		Key modifiers;
 	};
 
-	class MouseMovePayload {
+	class MouseMoveEvent {
 	public:
 		int x;
 		int y;
 		Key modifiers;
 	};
 
-	typedef helpers::EventPayload<void, ui::Widget> VoidEvent;
-    typedef helpers::EventPayload<Rect, ui::Widget> RectEvent;
-
-	typedef helpers::EventPayload<MouseButtonPayload, ui::Widget> MouseButtonEvent;
-	typedef helpers::EventPayload<MouseWheelPayload, ui::Widget> MouseWheelEvent;
-	typedef helpers::EventPayload<MouseMovePayload, ui::Widget> MouseMoveEvent;
-
-	typedef helpers::EventPayload<std::string const, ui::Widget> StringEvent;
-
 	/** Base class for all UI widgets. 
 
 	    The widget manages the basic properties of every ui element, namely the position, size, visibility, drawing of its contents and events corresponding to this functionality as well as basic input & output events from the terminal (mouse, keyboard and clipboard). 
 	 */
-	class Widget : public helpers::Object {
+	class Widget {
 	protected:
 
 		// events
 
 		/** Triggered when visibility changes to true. 
 		 */
-		Event<VoidEvent> onShow;
+		Event<void> onShow;
 
 		/** Triggered when visibility changes to false. 
 		 */
-		Event<VoidEvent> onHide;
+		Event<void> onHide;
 
 		/** Triggered when the widget's size has been updated. 
 		 */
-		Event<VoidEvent> onResize;
+		Event<void> onResize;
 
 		/** Triggered when the widget's position has been updated. 
 		 */
-		Event<VoidEvent> onMove;
+		Event<void> onMove;
 
 		/** Triggered when the widget has obtained focus, i.e. it will receive keyboard events. 
 		 */
-		Event<VoidEvent> onFocusIn;
+		Event<void> onFocusIn;
 
 		/** Triggered when the widget has lost focus, i.e. it will no longer receive keyboard events. 
 		 */
-		Event<VoidEvent> onFocusOut;
+		Event<void> onFocusOut;
 
 		/** Triggered when the widget has been enabled or disabled. 
 		 */
-		Event<VoidEvent> onEnabled;
-		Event<VoidEvent> onDisabled;
+		Event<void> onEnabled;
+		Event<void> onDisabled;
 
 		Event<MouseButtonEvent> onMouseDown;
 		Event<MouseButtonEvent> onMouseUp;
@@ -203,15 +194,15 @@ namespace ui {
 		Event<MouseButtonEvent> onMouseDoubleClick;
 		Event<MouseWheelEvent> onMouseWheel;
 		Event<MouseMoveEvent> onMouseMove;
-		Event<VoidEvent> onMouseOver;
-		Event<VoidEvent> onMouseOut;
+		Event<void> onMouseOver;
+		Event<void> onMouseOut;
 
 
 		// keyboard events
 
 	public:
 
-        ~Widget() override;
+        virtual ~Widget();
 
 		Widget():
 			parent_(nullptr),
@@ -426,17 +417,17 @@ namespace ui {
 		virtual void updateVisible(bool value) {
 			visible_ = value;
 			if (value)
-				trigger(onShow);
+			    onShow(this);
 			else
-				trigger(onHide);
+			    onHide(this);
 		}
 
 		virtual void updateFocused(bool value) {
 			focused_ = value;
 			if (value)
-				trigger(onFocusIn);
+				onFocusIn(this);
 			else
-				trigger(onFocusOut);
+				onFocusOut(this);
 		}
 
 		virtual void updateFocusStop(bool value);
@@ -448,9 +439,9 @@ namespace ui {
 			if (!enabled_)
 			    setFocused(false);
 			if (enabled_)
-			    trigger(onEnabled);
+			    onEnabled(this);
 			else 
-			    trigger(onDisabled);
+			    onDisabled(this);
 		}
 
 		/** Requests the contents of the clipboard to be sent back to the widget via the paste method. 
@@ -471,45 +462,39 @@ namespace ui {
 		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
 			if (!focused_ && focusStop_)
 			    setFocused(true);
-			MouseButtonPayload e{ col, row, button, modifiers };
-			trigger(onMouseUp, e);
+			onMouseUp(this, MouseButtonEvent{ col, row, button, modifiers });
 		}
 
 		virtual void mouseUp(int col, int row, MouseButton button, Key modifiers) {
 			if (!focused_ && focusStop_)
 			    setFocused(true);
-			MouseButtonPayload e{ col, row, button, modifiers };
-			trigger(onMouseUp, e);
+			onMouseUp(this, MouseButtonEvent{ col, row, button, modifiers });
 		}
 
 		virtual void mouseClick(int col, int row, MouseButton button, Key modifiers) {
-			MouseButtonPayload e{ col, row, button, modifiers };
-			trigger(onMouseClick, e);
+			onMouseClick(this, MouseButtonEvent{ col, row, button, modifiers });
 		}
 
 		virtual void mouseDoubleClick(int col, int row, MouseButton button, Key modifiers) {
-			MouseButtonPayload e{ col, row, button, modifiers };
-			trigger(onMouseDoubleClick, e);
+			onMouseDoubleClick(this, MouseButtonEvent{ col, row, button, modifiers });
 		}
 
 		virtual void mouseWheel(int col, int row, int by, Key modifiers) {
 			if (!focused_ && focusStop_)
 			    setFocused(true);
-			MouseWheelPayload e{ col, row, by, modifiers };
-			trigger(onMouseWheel, e);
+			onMouseWheel(this, MouseWheelEvent{ col, row, by, modifiers });
 		}
 
 		virtual void mouseMove(int col, int row, Key modifiers) {
-			MouseMovePayload e{ col, row, modifiers };
-			trigger(onMouseMove, e);
+			onMouseMove(this, MouseMoveEvent{ col, row, modifiers });
 		}
 
 		virtual void mouseOver() {
-			trigger(onMouseOver);
+			onMouseOver(this);
 		}
 
 		virtual void mouseOut() {
-			trigger(onMouseOut);
+			onMouseOut(this);
 		}
 
 		virtual void keyChar(helpers::Char c) {
@@ -583,7 +568,7 @@ namespace ui {
 			x_ = x;
 			y_ = y;
 			invalidate();
-			trigger(onMove);
+			onMove(this);
 		}
 
 		/** Updates the size of the widget. 
@@ -595,7 +580,7 @@ namespace ui {
 			width_ = width;
 			height_ = height;
 			invalidate();
-			trigger(onResize);
+			onResize(this);
 		}
 
 		/** Re-layouts the control within its parent. 
@@ -625,33 +610,6 @@ namespace ui {
 			MARK_AS_UNUSED(col);
 			MARK_AS_UNUSED(row);
 			return this;
-		}
-
-		/** Updated trigger function for events which takes the Widget as base class for event sender.
-		 */
-		template<typename EVENT>
-		void trigger(EVENT& e) {
-			static_assert(std::is_same<typename EVENT::Payload::Sender, Widget >::value, "Only events with sender being ui::Widget should be used");
-			typename EVENT::Payload p(this);
-			e.trigger(p);
-		}
-
-		/** Updated trigger function for events which takes the Widget as base class for event sender.
-		 */
-		template<typename EVENT>
-		void trigger(EVENT& e, typename EVENT::Payload::Payload & payload) {
-			static_assert(std::is_same<typename EVENT::Payload::Sender, Widget >::value, "Only events with sender being ui::Widget should be used");
-			typename EVENT::Payload p(this, payload);
-			e.trigger(p);
-		}
-
-		/** Updated trigger function for events which takes the Widget as base class for event sender.
-		 */
-		template<typename EVENT>
-		void trigger(EVENT& e, typename EVENT::Payload::Payload && payload) {
-			static_assert(std::is_same<typename EVENT::Payload::Sender, Widget >::value, "Only events with sender being ui::Widget should be used");
-			typename EVENT::Payload p(this, payload);
-			e.trigger(p);
 		}
 
 		/** Returns the root window of the widget, or nullptr if the window is not attached.

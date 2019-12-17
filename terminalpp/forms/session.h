@@ -37,47 +37,48 @@ namespace tpp {
                     << FocusStop(true)
                     << HistorySizeLimit(config.sessionHistoryLimit())
                     << BoldIsBright(config.sessionSequencesBoldIsBright())
-                    << OnTitleChange(CreateHandler<StringEvent, Session, &Session::terminalTitleChanged>(this))
-                    << OnNotification(CreateHandler<VoidEvent, Session, &Session::terminalNotification>(this))
-                    << OnPTYTerminated(CreateHandler<ExitCodeEvent, Session, &Session::ptyTerminated>(this))
-                    << OnTppNewFile(CreateHandler<TppNewFileEvent, Session, &Session::newRemoteFile>(this))
-                    << OnTppData(CreateHandler<TppDataEvent, Session, &Session::remoteData>(this))
-                    << OnTppTransferStatus(CreateHandler<TppTransferStatusEvent, Session, &Session::transferStatus>(this))
-                    << OnTppOpenFile(CreateHandler<TppOpenFileEvent, Session, &Session::openRemoteFile>(this))
-                    << OnInputError(CreateHandler<InputErrorEvent, Session, &Session::terminalInputError>(this))
-                    //<< OnLineScrolledOut(CreateHandler<LineScrollEvent, Session, &Session::lineScrolledOut>(this))
                 )
                 << (Create(about_ = new AboutBox())
                   << Visible(false)
-                  << OnDismissed(CreateHandler<VoidEvent, Session, &Session::aboutBoxDismissed>(this))
                 )
                 ;
+            terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
+            terminal_->onNotification.setHandler(&Session::terminalNotification, this);
+            terminal_->onPTYTerminated.setHandler(&Session::ptyTerminated, this);
+            terminal_->onTppNewFile.setHandler(&Session::newRemoteFile, this);
+            terminal_->onTppData.setHandler(&Session::remoteData, this);
+            terminal_->onTppTransferStatus.setHandler(&Session::transferStatus, this);
+            terminal_->onTppOpenFile.setHandler(&Session::openRemoteFile, this);
+            terminal_->onInputError.setHandler(&Session::terminalInputError, this);
+
+            about_->onDismissed.setHandler(&Session::aboutBoxDismissed, this);
+
 
             focusWidget(terminal_, true);
             if (! config.sessionLog().empty()) {
                 logFile_.open(config.sessionLog());
-                terminal_->onInput += CreateHandler<InputProcessedEvent, Session, &Session::terminalInputProcessed>(this);
+                terminal_->onInput.setHandler(&Session::terminalInputProcessed, this);
             }
         }
 
     private:
 
-        void aboutBoxDismissed(ui::VoidEvent & e) {
+        void aboutBoxDismissed(ui::Event<void>::Payload & e) {
             MARK_AS_UNUSED(e);
             terminal_->setFocused(true);
         }
 
-        void terminalTitleChanged(ui::StringEvent & e) {
+        void terminalTitleChanged(ui::Event<std::string>::Payload & e) {
             setTitle(*e);
         }
 
         // TODO check that file exists actually
-        void newRemoteFile(ui::TppNewFileEvent & e) {
+        void newRemoteFile(ui::Event<ui::TppNewFileEvent>::Payload & e) {
             RemoteFile * f = remoteFiles_.newFile(e->request.hostname, e->request.filename, e->request.remotePath, e->request.size);
             e->response.fileId = f->id();
         }
 
-        void remoteData(ui::TppDataEvent & e) {
+        void remoteData(ui::Event<ui::TppDataEvent>::Payload & e) {
             RemoteFile * f = remoteFiles_.get(e->fileId);
             if (e->offset == f->transmittedBytes())
                 f->appendData(e->data.c_str(), e->data.size());
@@ -85,7 +86,7 @@ namespace tpp {
                 LOG() << "error";
         }
 
-        void transferStatus(ui::TppTransferStatusEvent & e) {
+        void transferStatus(ui::Event<ui::TppTransferStatusEvent>::Payload & e) {
             RemoteFile * f = remoteFiles_.get(e->request.fileId);
             e->response.fileId = e->request.fileId;
             e->response.transmittedBytes = f->transmittedBytes();
@@ -93,7 +94,7 @@ namespace tpp {
 
         /** Opens the remote file which has been copied to the given local path.
          */
-        void openRemoteFile(ui::TppOpenFileEvent & e) {
+        void openRemoteFile(ui::Event<ui::TppOpenFileEvent>::Payload & e) {
             RemoteFile * f = remoteFiles_.get(e->fileId);
             if (f->available()) {
                 Application::Open(f->localPath());
@@ -102,12 +103,12 @@ namespace tpp {
             }
         }
 
-        void terminalNotification(ui::VoidEvent & e) {
+        void terminalNotification(ui::Event<void>::Payload & e) {
             MARK_AS_UNUSED(e);
             setIcon(Icon::Notification);
         }
 
-        void ptyTerminated(ui::ExitCodeEvent & e) {
+        void ptyTerminated(ui::Event<helpers::ExitCode>::Payload & e) {
             // disable the terminal
             terminal_->setEnabled(false);
             if (*e != EXIT_SUCCESS || Config::Instance().sessionWaitAfterPtyTerminated()) {
@@ -120,7 +121,7 @@ namespace tpp {
             }
         }
 
-        void terminalInputProcessed(ui::InputProcessedEvent & e) {
+        void terminalInputProcessed(ui::Event<ui::InputProcessedEvent>::Payload & e) {
             logFile_.write(e->buffer, e->size);
         }
 
@@ -151,7 +152,7 @@ namespace tpp {
             }
         }
 
-        void terminalInputError(ui::InputErrorEvent & e) {
+        void terminalInputError(ui::Event<ui::InputErrorEvent>::Payload & e) {
             Application::Alert(e->error);
         }
 
