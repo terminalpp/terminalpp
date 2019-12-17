@@ -1,19 +1,11 @@
 #pragma once
 
 #include "shapes.h"
-#include "widget.h"
-
-/** @page uiselection ui - Selection & Clipboard
-
-    How to do selection on scrollbox? 
-
-    Ideally I would have widget to return the scroll properties, but actually not keep them, i.e. it would always return 0,0, width, height. 
-
-    Then scrollbox would actually change this - since vcall is cheap. 
-
- */
+#include "canvas.h"
+#include "root_window.h"
 
 namespace ui {
+
 
     /** Determines selection coordinates on a widget. 
 
@@ -73,7 +65,8 @@ namespace ui {
             return end_;
         }
 
-    protected:
+    private:
+
         Selection(Point const & start, Point const & end):
             start_(start),
             end_(end) {
@@ -84,134 +77,119 @@ namespace ui {
 
     }; // ui::Selection
 
-    /** Provides basic API for selection & clipboard handling. 
+    /** Widget mixin for selection ownership and manipulation. 
      
-        The renderer caches the clipboard and selection buffer contents and remembers the ownership of selection. 
+        Each widget that wishes to support user selections should inherit from the this class as well. 
+
+        > Note that simply being able to receive clipboard or selection contents is feature present in every widget using the Widget::paste() method. 
+
      */
-    class SelectionOwner : public virtual Widget {
+    template<typename T>
+    class SelectionOwner {
     public:
 
-        /** Returns the current selection region coordinates.
-         */
+        SelectionOwner():
+            selectionStart_{-1,-1} {
+        }
+
         Selection const & selection() const {
             return selection_;
         }
 
         /** Returns the selection contents. 
          
-            This method has to be overriden in children to provide the mechanism how to obtain the selection contents from given selection. 
+            Should return empty string if the selection is empty or invalid. 
          */
-        virtual std::string getSelectionContents() = 0;
-
-        /** Clears the selection held. 
-         
-            Clears the selection rectangle visualization and informs the root window that selection has been cleared, which in turn informs the renderer that selection ownership has been released. 
-         */
-        void clearSelection();
-
+        virtual std::string getSelectionContents() const = 0;
 
     protected:
 
-        friend class RootWindow;
-
-        SelectionOwner():
-            updating_{false} {
+        /** Returns true if the selection update is in progress. 
+         */
+        bool updatingSelection() const {
+            return selectionStart_.x != -1;
         }
 
-        /** Informs the root window that clipboard contents has changed to the current selection. 
-         */
-        void setClipboard();
-
-        /** Informs the root window that the clipboard contents has changed to the given string regardless of the selection status. 
-         */
-        void setClipboard(std::string const & value);
-
-        /** Informs the root window that selection should now be held by the current widget. 
-         */
-        void registerSelection();
-
-
-        /** Called whenever the selection rectangle is updated so that it can be redrawn. 
+        /** Starts the selection update. 
          
-            Calls the repaint() method by default, but can be overriden in children once the selection contents mechanism is known. 
+            If the widget already has a non-empty selection, clears the selection first and then resets the selection process.
          */
-        virtual void selectionUpdated() {
-            repaint();
-        }
-
-        /** Called when the selection should be invalidated. 
-         */
-        virtual void selectionInvalidated() {
-            selection_.clear();
-            selectionUpdated();
-        }
-
-        void startSelectionUpdate(int col, int row) {
-            ASSERT(! updating_);
-            if (!selection_.empty())
+        void startSelection(Point start) {
+            if (! selection_.empty())
                 clearSelection();
-            updating_ = true;
-            selectionStart_ = Point{col, row} + scrollOffset();
+            if (! updatingSelection() && ! selection_.empty())
+                clearSelection();
+            selectionStart_ = start;
         }
 
-        /** Updates the selection. 
-         */
-        void selectionUpdate(int col, int row) {
-            if (! updating_)
+        virtual void updateSelection(Point end, Point clientSize) {
+            // don't do anything if we are not updating the selection
+            if (! updatingSelection())
                 return;
-            if (col < 0)
-                col = 0;
-            else if (col >= width())
-                col = width() - 1;
-            if (row < 0) 
-                row = 0;
-            else if (row >= height())
-                row = height() - 1;
+            end.x = std::max(0, end.x);
+            end.x = std::min(clientSize.x - 1, end.x);
+            end.y = std::max(0, end.y);
+            end.y = std::min(clientSize.y - 1, end.y);
             // update the selection and call for repaint
-            selection_ = Selection::Create(selectionStart_, Point{col, row} + scrollOffset());
-            selectionUpdated();
+            selection_ = Selection::Create(selectionStart_, end);
+            static_cast<T*>(this)->repaint();
         }
 
-        void endSelectionUpdate(int col, int row) {
-            MARK_AS_UNUSED(col);
-            MARK_AS_UNUSED(row);
-            if (! updating_)
-                return;
-            updating_ = false;
-            registerSelection();
-        }
-
-        virtual void paintSelection(Canvas & canvas) {
-            if (selection_.empty())
-                return;
-            ui::Brush selBrush(ui::Color(192, 192, 255, 128));
-            canvas.fill(selection(), selBrush); 
-        }
-
-        /** Cancels selection update in progress. 
-         
-            If mouseOut even is reported in the middle of updating the selection, the selection is cancelled. Note that normally, mouse leave should not be received until the selection update is done as the mouse is supposed to be locked. 
+        /** Finishes the selection update, obtains its contents and registers itself as the selection owner. 
          */
-        void mouseOut() override {
-            if (updating_) {
-                updating_ = false;
-                selection_.clear();
-                selectionUpdated();
+        void endSelection() {
+            selectionStart_.x = -1;
+            if (! selection_.empty()) {
+                std::string contents{getSelectionContents()};
+                RootWindow * rw = static_cast<T*>(this)->rootWindow();
+                ASSERT(rw != nullptr);
+                if (rw != nullptr) 
+                    rw->setSelection(static_cast<T*>(this), contents);
             }
         }
 
-        /** Returns true if the selection is currently being updated. 
+        void cancelSelection() {
+            if (updatingSelection()) {
+                selectionStart_.x = -1;
+                if (!selection_.empty()) {
+                    selection_.clear();
+                    static_cast<T*>(this)->repaint();
+                }
+            }
+        }
+
+        /** Notifies the root window that the selection should be cleared. 
+         
+            The root window then informs the widget and the window that the selection has been invalidated. 
          */
-        bool updating() const {
-            return updating_;
+        void clearSelection() {
+            RootWindow * rw = static_cast<T*>(this)->rootWindow();
+            ASSERT(rw != nullptr);
+            if (rw != nullptr) 
+                rw->clearSelection();
+        }
+
+        /** Invalidates the selection and repaints the control. 
+         */
+        virtual void selectionInvalidated() {
+            selection_.clear();
+            selectionStart_.x = -1;
+            static_cast<T*>(this)->repaint();
+        }
+
+        /** Marks the selection on the given canvas. 
+         */
+        virtual void paintSelection(Canvas & canvas, Color color) {
+            if (selection_.empty())
+                return;
+            ui::Brush selBrush(color);
+            canvas.fill(selection_, selBrush); 
         }
 
     private:
         Selection selection_;
-        bool updating_;
-
         Point selectionStart_;
+    }; // ui::SelectionOwner
 
-    };
 
 } // namespace ui

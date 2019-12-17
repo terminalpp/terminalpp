@@ -76,6 +76,22 @@ namespace ui {
             root->requestSelectionContents(this);
     }
 
+	void Widget::setClipboardContents(std::string const & value) {
+        RootWindow * root = rootWindow();
+		ASSERT(root != nullptr);
+		if (root != nullptr)
+		    root->setClipboard(value);
+	}
+
+	void Widget::setSelectionContents(std::string const & value) {
+        RootWindow * root = rootWindow();
+		ASSERT(root != nullptr);
+		if (root != nullptr)
+		    root->setSelection(this, value);
+	}
+
+
+
 	void Widget::detachRootWindow() {
 		// don't do anything if the widget is already detached from its root window
 		if (visibleRegion_.root == nullptr)

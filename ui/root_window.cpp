@@ -206,18 +206,16 @@ namespace ui {
 			LOG() << "Set clipboard event in an unattached root window";
 	}
 
-	void RootWindow::registerSelection(SelectionOwner * sender, std::string const & contents) {
-		if (renderer_) {
-			// if the selection belongs to other widget in the window, let it clear
-			if (selectionOwner_ && selectionOwner_ != sender)
-			    selectionOwner_->clearSelection();
-			// set the selection owner
-			selectionOwner_ = sender;
-			// let the renderer know the selection value
-			renderer_->setSelection(contents);
-		} else {
-			LOG() << "Set Selection event when no renderer attached";
+	void RootWindow::setSelection(Widget * owner, std::string const & contents) {
+		if (selectionOwner_ != owner) {
+			if (selectionOwner_ != nullptr)
+				selectionOwner_->selectionInvalidated();
+			selectionOwner_ = owner;
 		}
+		if (renderer_)
+			renderer_->setSelection(contents);
+		else
+			LOG() << "Set Selection event when no renderer attached";
 	}
 
 	void RootWindow::clearSelection() {

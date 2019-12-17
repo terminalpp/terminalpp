@@ -22,7 +22,7 @@ namespace ui {
 
 		> Note that at the moment, use of scrollbar widgets taking up space is discouraged and no such widgets are provided by the framework. 
 	 */
-	class ScrollBox : public virtual Widget {
+	class ScrollBox : public Widget {
 	public:
 
 		ScrollBox() :

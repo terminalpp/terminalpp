@@ -40,7 +40,7 @@ namespace ui {
     };
 
 
-    class Terminal : public ScrollBox, public SelectionOwner {
+    class Terminal : public ScrollBox, public SelectionOwner<Terminal> {
     public:
 
         class PTY;
@@ -245,6 +245,10 @@ namespace ui {
             return ScrollBox::clientRect();
         }
 
+        void repaint() override {
+            repaint_ = true;
+        }
+
     protected:
 
         /** Creates the terminal with the given PTY. 
@@ -329,7 +333,7 @@ namespace ui {
                 scrollBarActive_ = false;
                 repaint();
             }
-            SelectionOwner::mouseOut();
+            cancelSelection();
         }
 
         /** When a keydown is pressed, the terminal prompt is scrolled in view automatically. 
@@ -344,22 +348,24 @@ namespace ui {
          */
         void autoScrollStep() override {
             Point m = getMouseCoordinates();
-            selectionUpdate(m.x, m.y);
+            updateSelection(m.x, m.y);
         }
 
         /** Returns the contents of the selection. 
          
             Trims the right of each line.
          */
-        std::string getSelectionContents() override;
+        std::string getSelectionContents() const override;
 
+        void selectionInvalidated() override {
+            SelectionOwner<Terminal>::selectionInvalidated();
+        }
+
+        /*
         void selectionUpdated() override {
             repaint();
         }
-
-        void repaint() override {
-            repaint_ = true;
-        }
+        */
 
         // terminal interface
 

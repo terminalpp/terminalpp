@@ -1332,7 +1332,7 @@ namespace ui {
                 LOG(SEQ) << "Clipboard set to " << seq.value();
                 buffer_.unlock();
                 try {
-                    setClipboard(seq.value());
+                    setClipboardContents(seq.value());
                 } catch (std::exception const & e) {
                     LOG(SEQ_ERROR) << e.what();
                 } catch (...) {

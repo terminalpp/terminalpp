@@ -228,6 +228,12 @@ namespace ui {
 			return parent_;
 		}
 
+		/** Returns the root window of the widget, or nullptr if the window is not attached.
+		 */
+		RootWindow * rootWindow() const {
+			return visibleRegion_.root;
+		}
+
 		bool visible() const {
 			return visible_;
 		}
@@ -452,6 +458,14 @@ namespace ui {
 		 */
 		void requestSelectionContents();
 
+		void setClipboardContents(std::string const & value);
+
+		void setSelectionContents(std::string const & value);
+
+		virtual void selectionInvalidated() {
+			ASSERT(false) << "selectionInvalidated must be implemented at widgets which handle selection";
+		}
+
 		/** Whenever user or widget requested clipboard or selection contents is received, the paste method is called with the contents. 
 		 */
 		virtual void paste(std::string const & contents) {
@@ -610,12 +624,6 @@ namespace ui {
 			MARK_AS_UNUSED(col);
 			MARK_AS_UNUSED(row);
 			return this;
-		}
-
-		/** Returns the root window of the widget, or nullptr if the window is not attached.
-		 */
-		RootWindow * rootWindow() const {
-			return visibleRegion_.root;
 		}
 
         std::vector<Widget *> const & children() const {

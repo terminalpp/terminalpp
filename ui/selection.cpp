@@ -4,6 +4,8 @@
 
 namespace ui {
 
+/*
+
     void SelectionOwner::clearSelection() {
         if (selection_.empty())
             return;
@@ -35,5 +37,6 @@ namespace ui {
                 root->registerSelection(this, getSelectionContents());
         }
     }
+*/
 
 } // namespace ui

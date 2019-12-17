@@ -285,7 +285,7 @@ namespace ui {
            drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? Color::Red.withAlpha(128) : Color::White.withAlpha(64), scrollBarActive_);
         }
         // paint the selection, if any
-        paintSelection(clientCanvas);
+        paintSelection(clientCanvas, Color{128,128,192,128});
         // and finally, if the terminal is not enabled, dim its window accordingly
         if (!enabled())
             canvas.fill(Rect::FromWH(width(), height()), Brush(Color::Black.withAlpha(128)));
@@ -294,11 +294,11 @@ namespace ui {
     void Terminal::mouseDown(int col, int row, MouseButton button, Key modifiers) {
         if (modifiers == 0) {
             if (button == MouseButton::Left) {
-                startSelectionUpdate(col, row);
+                startSelection(Point{col, row});
             } else if (button == MouseButton::Wheel) {
                 requestSelectionContents(); 
             } else if (button == MouseButton::Right && ! selection().empty()) {
-                setClipboard();
+                setClipboardContents(getSelectionContents());
                 clearSelection();
             }
         }
@@ -307,16 +307,16 @@ namespace ui {
 
     void Terminal::mouseUp(int col, int row, MouseButton button, Key modifiers) {
         if (modifiers == 0) {
-            if (button == MouseButton::Left)
-                endSelectionUpdate(col, row);
+            if (button == MouseButton::Left) 
+                endSelection();
         }
         Widget::mouseUp(col, row, button, modifiers);
     }
 
     void Terminal::mouseMove(int col, int row, Key modifiers) {
         if (modifiers == 0) {
-            if (SelectionOwner::updating()) {
-                selectionUpdate(col, row);
+            if (updatingSelection()) {
+                updateSelection(Point{col, row} + scrollOffset(), Point{clientWidth(), clientHeight()});
                 calculateVerticalAutoScroll(col, row);
             }
             bool x = col == width() - 1;
@@ -334,11 +334,12 @@ namespace ui {
 
         TODO perhaps change this to not space, but something else so that we can ignore it from the selection? Or ignore this corner case entirely.
      */
-    std::string Terminal::getSelectionContents() {
+    std::string Terminal::getSelectionContents() const {
         Selection s = selection();
         std::stringstream result;
         {
-            Buffer::Ptr buf = buffer(); // lock the buffer (and therefore the history as well)
+            // TODO this is an ugly hack for now, should be changed when new locking is implemented
+            Buffer::Ptr buf = const_cast<Terminal*>(this)->buffer(); // lock the buffer (and therefore the history as well)
             int bufferStart = scrollable_ ? static_cast<int>(history_.size()) : 0;
             for (int y = s.start().y, ye = s.end().y; y < ye; ++y) {
                 // determine the start (inclusive) and end (exclusive) column for the selection on current row
@@ -355,8 +356,11 @@ namespace ui {
                     line << helpers::Char::FromCodepoint(rowCells[i].codepoint());
                     i += rowCells[i].font().width();
                 }
+                // add new lines to all lines but last
+                if (y != s.start().y)
+                    result << std::endl;
                 // trim the line if it ended with empty characters
-                result << helpers::TrimRight(line.str()) << std::endl;
+                result << helpers::TrimRight(line.str());
             }
         }
         return result.str();

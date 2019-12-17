@@ -2,7 +2,6 @@
 
 #include <map>
 
-#include "selection.h"
 #include "container.h"
 
 namespace ui {
@@ -173,8 +172,7 @@ namespace ui {
                 mouseClickWidget_ = nullptr;
             if (pasteRequestTarget_ == widget)
                 pasteRequestTarget_ = nullptr;
-            SelectionOwner * wse = dynamic_cast<SelectionOwner *>(widget);
-            if (wse != nullptr && selectionOwner_ == wse)
+            if (selectionOwner_ == widget)
                 clearSelection();
         }
 
@@ -296,8 +294,10 @@ namespace ui {
     private:
 
         friend class Canvas;
-        friend class SelectionOwner;
         friend class Renderer;
+
+        template<typename T>
+        friend class SelectionOwner;
 
         // Clipboard & selection paste request and response
 
@@ -315,7 +315,7 @@ namespace ui {
 
         /** Informs the renderer that selection has changed to given contents and owner. 
          */
-        virtual void registerSelection(SelectionOwner * sender, std::string const & contents);
+        virtual void setSelection(Widget * owner, std::string const & contents);
 
         /** Called when ui side wants to clear selection it owns explicitly. 
          
@@ -363,7 +363,7 @@ namespace ui {
         Cursor cursor_;
 
         Widget * pasteRequestTarget_;
-        SelectionOwner * selectionOwner_;
+        Widget * selectionOwner_;
 
         std::string title_;
         Icon icon_;
