@@ -34,9 +34,9 @@
 #include "ui/builders.h"
 #include "ui/layout.h"
 
-#include "tpp-widget/bypass_pty.h"
-#include "tpp-widget/local_pty.h"
-#include "tpp-widget/terminalpp.h"
+#include "ui-terminal/bypass_pty.h"
+#include "ui-terminal/local_pty.h"
+#include "ui-terminal/terminalpp.h"
 #include <thread>
 
 
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
 		LOG() << "t++ started";
 		// Create the palette & the pty - TODO this should be more systematic
 		ui::TerminalPP::Palette palette{config.sessionPalette()};
-		ui::PTY * pty;
+		ui::Terminal::PTY * pty;
 #if (defined ARCH_WINDOWS)
 		if (config.sessionPTY() != "bypass") 
 		    pty = new LocalPTY(config.sessionCommand());

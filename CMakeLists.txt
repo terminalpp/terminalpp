@@ -18,8 +18,8 @@ endif()
 
 # Include sub-projects.
 add_subdirectory("tpp-lib")
-add_subdirectory("tpp-widget")
 add_subdirectory("ui")
+add_subdirectory("ui-terminal")
 add_subdirectory("docs")
 add_subdirectory("tests")
 # optional subprojects - only include them if we actually have them
@@ -60,7 +60,7 @@ elseif(UNIX)
     target_link_libraries(tpp fontconfig)
 endif()
 # finally, add the libraries
-target_link_libraries(tpp libtppwidget libui)
+target_link_libraries(tpp libui libuiterminal)
 # add the dependency on stamp creation tool (see below)
 add_dependencies(tpp tpp-create-stamp)
 

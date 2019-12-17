@@ -5,11 +5,11 @@
 
 #include "helpers/process.h"
 
-#include "../canvas.h"
-#include "../widget.h"
-#include "../selection.h"
-#include "../builders.h"
-#include "scrollbox.h"
+#include "ui/canvas.h"
+#include "ui/widget.h"
+#include "ui/selection.h"
+#include "ui/builders.h"
+#include "ui/widgets/scrollbox.h"
 
 
 /** \page vterm Terminal Widget
@@ -20,44 +20,6 @@
 */
 
 namespace ui {
-
-    /** The pseudoterminal connection interface. 
-
-        A pseudoterminal connection provides the simplest possible interface to the target process. 
-     */
-    class PTY {
-    public:
-        /** Sends the given buffer to the target process. 
-         */
-        virtual void send(char const * buffer, size_t bufferSize) = 0;
-
-        /** Receives up to bufferSize bytes which are stored in the provided buffer.
-         
-            Returns the number of bytes received. If there are no data available, blocks until the data is ready and then returns them. 
-
-            If the attached process is terminated, should return immediately with 0 bytes read. 
-         */
-        virtual size_t receive(char * buffer, size_t bufferSize) = 0;
-
-        /** Terminates the target process and returns immediately. 
-         
-            If the target process has already terminated, simply returns. 
-         */
-        virtual void terminate() = 0;
-
-        /** Waits for the attached process to terminate and returns its exit code. 
-         */
-        virtual helpers::ExitCode waitFor() = 0;
-
-        virtual void resize(int cols, int rows) = 0;
-
-		/** Virtual destructor. 
-		 */
-		virtual ~PTY() {
-		}
-
-    }; // ui::PTY
-
 
     /** The input buffer of the terminal and its length. 
      
@@ -80,6 +42,8 @@ namespace ui {
 
     class Terminal : public ScrollBox, public SelectionOwner {
     public:
+
+        class PTY;
 
         using Widget::setFocused;
         using Widget::setFocusStop;
@@ -271,15 +235,7 @@ namespace ui {
          
             Waits for the reading and process exit terminating threads to finalize. 
          */
-        ~Terminal() {
-            fps_ = 0;
-            delete pty_;
-            ptyReader_.join();
-            ptyListener_.join();
-            repainter_.join();
-            while (! history_.empty())
-                popHistoryLine();
-        }
+        ~Terminal() override;
 
         Point scrollOffset() const override {
             return ScrollBox::scrollOffset();
@@ -335,10 +291,7 @@ namespace ui {
             }
         }
 
-        void send(char const * buffer, size_t size) {
-            pty_->send(buffer, size);
-            // TODO check errors
-        }
+        void send(char const * buffer, size_t size);
 
         void send(std::string const & str) {
             send(str.c_str(), str.size());
@@ -346,18 +299,7 @@ namespace ui {
 
         /** When terminal size is updated, we must resize the underlying buffer and the PTY.
          */
-        void updateSize(int width, int height) override {
-            {
-                Buffer::Ptr b = buffer(true); // grab priority lock
-                b->resize(width, height, this);
-            }
-            resizeHistory(width);
-            pty_->resize(width, height);
-            // resize the client canvas
-            setClientArea(width, buffer_.rows() + static_cast<int>(history_.size())); 
-            ScrollBox::updateSize(width, height);
-            Widget::updateSize(width, height);
-        }
+        void updateSize(int width, int height) override;
 
         void updateFocused(bool value) override {
             Widget::updateFocused(value);
@@ -510,6 +452,50 @@ namespace ui {
 
     }; // ui::Terminal
 
+    /** The pseudoterminal connection interface. 
+
+        A pseudoterminal connection provides the simplest possible interface to the target process. 
+     */
+    class Terminal::PTY {
+    public:
+        /** Sends the given buffer to the target process. 
+         */
+        virtual void send(char const * buffer, size_t bufferSize) = 0;
+
+        /** Receives up to bufferSize bytes which are stored in the provided buffer.
+         
+            Returns the number of bytes received. If there are no data available, blocks until the data is ready and then returns them. 
+
+            If the attached process is terminated, should return immediately with 0 bytes read. 
+         */
+        virtual size_t receive(char * buffer, size_t bufferSize) = 0;
+
+        /** Terminates the target process and returns immediately. 
+         
+            If the target process has already terminated, simply returns. 
+         */
+        virtual void terminate() = 0;
+
+        /** Waits for the attached process to terminate and returns its exit code. 
+         */
+        virtual helpers::ExitCode waitFor() = 0;
+
+        virtual void resize(int cols, int rows) = 0;
+
+		/** Virtual destructor. 
+		 */
+		virtual ~PTY() {
+		}
+
+    }; // ui::Terminal::PTY
+
+    inline void Terminal::send(char const * buffer, size_t size) {
+        pty_->send(buffer, size);
+        // TODO check errors
+    }
+
+
+
     template<>
     inline void Canvas::copyBuffer<Terminal::Buffer>(int x, int y, Terminal::Buffer const & buffer) {
         int xe = std::min(x + buffer.cols(), width()) - x;
@@ -519,6 +505,9 @@ namespace ui {
                 if (Cell * c = at(Point(x + bx, y + by))) 
                     *c = buffer.at(bx, by);
     }
+
+
+
 
     PROPERTY_BUILDER(HistorySizeLimit, size_t, setHistorySizeLimit, Terminal);
 

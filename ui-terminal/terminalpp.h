@@ -5,7 +5,7 @@
 #include "helpers/filesystem.h"
 
 #include "tpp-lib/sequence.h"
-#include "ui/widgets/terminal.h"
+#include "terminal.h"
 
 namespace ui {
 

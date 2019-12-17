@@ -228,6 +228,33 @@ namespace ui {
         });
     }
 
+    Terminal::~Terminal() {
+        fps_ = 0;
+        delete pty_;
+        ptyReader_.join();
+        ptyListener_.join();
+        repainter_.join();
+        while (! history_.empty())
+            popHistoryLine();
+    }
+
+    /** When terminal size is updated, we must resize the underlying buffer and the PTY.
+     */
+    void Terminal::updateSize(int width, int height) {
+        {
+            Buffer::Ptr b = buffer(true); // grab priority lock
+            b->resize(width, height, this);
+        }
+        resizeHistory(width);
+        pty_->resize(width, height);
+        // resize the client canvas
+        setClientArea(width, buffer_.rows() + static_cast<int>(history_.size())); 
+        ScrollBox::updateSize(width, height);
+        Widget::updateSize(width, height);
+    }
+
+
+
     void Terminal::paint(Canvas & canvas) {
         // determine the client canvas - either the proper client canvas if scrolling is available, or the child canvas
         Canvas clientCanvas{scrollable_ ? getClientCanvas(canvas) : canvas};

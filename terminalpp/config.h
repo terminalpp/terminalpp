@@ -3,7 +3,7 @@
 #include "helpers/process.h"
 #include "helpers/json.h"
 
-#include "tpp-widget/terminalpp.h"
+#include "ui-terminal/terminalpp.h"
 
 //#define SHOW_LINE_ENDINGS
 

@@ -4,7 +4,7 @@
 #include "ui/root_window.h"
 #include "ui/builders.h"
 
-#include "tpp-widget/terminalpp.h"
+#include "ui-terminal/terminalpp.h"
 
 #include "../config.h"
 #include "../remote_files.h"
@@ -20,7 +20,7 @@ namespace tpp {
      */
     class Session : public ui::RootWindow {
     public:
-        Session(ui::PTY * pty, ui::TerminalPP::Palette * palette):
+        Session(ui::Terminal::PTY * pty, ui::TerminalPP::Palette * palette):
             pty_(pty),
             closeOnKeyDown_(false),
             remoteFiles_(Config::Instance().sessionRemoteFilesDir()) {
@@ -156,7 +156,7 @@ namespace tpp {
             Application::Alert(e->error);
         }
 
-        ui::PTY * pty_;
+        ui::Terminal::PTY * pty_;
         ui::TerminalPP * terminal_;
         AboutBox * about_;
 

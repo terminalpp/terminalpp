@@ -5,11 +5,11 @@
     #include "sys/types.h"
 #endif
 
-#include "ui/widgets/terminal.h"
+#include "terminal.h"
 
 namespace tpp {
 
-    class LocalPTY : public ui::PTY {
+    class LocalPTY : public ui::Terminal::PTY {
     public:
         LocalPTY(helpers::Command const & command);
 		LocalPTY(helpers::Command const& command, helpers::Environment const& env);
