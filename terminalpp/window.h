@@ -294,12 +294,12 @@ namespace tpp {
                         initializeGlyphRun(cursor.pos.x, cursor.pos.y);
                         statusCell_ << cursor.codepoint 
                                 << ui::Foreground(cursor.color)
-                                << ui::Background(ui::Color::None()) 
+                                << ui::Background(ui::Color::None) 
                                 << buffer->at(cursor.pos).font()
                                 << ui::Attributes();
                         setFont(statusCell_.font());
                         setForegroundColor(statusCell_.foreground());
-                        setBackgroundColor(ui::Color::None());
+                        setBackgroundColor(ui::Color::None);
                         setDecorationColor(statusCell_.decorationColor());
                         setAttributes(statusCell_.attributes()); 
                         addGlyph(cursor.pos.x, cursor.pos.y, statusCell_);

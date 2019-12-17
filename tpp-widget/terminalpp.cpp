@@ -141,44 +141,44 @@ namespace ui {
     // TerminalPP::Palette
     TerminalPP::Palette TerminalPP::Palette::Colors16() {
 		return Palette{
-			Color::Black(), // 0
-			Color::DarkRed(), // 1
-			Color::DarkGreen(), // 2
-			Color::DarkYellow(), // 3
-			Color::DarkBlue(), // 4
-			Color::DarkMagenta(), // 5
-			Color::DarkCyan(), // 6
-			Color::Gray(), // 7
-			Color::DarkGray(), // 8
-			Color::Red(), // 9
-			Color::Green(), // 10
-			Color::Yellow(), // 11
-			Color::Blue(), // 12
-			Color::Magenta(), // 13
-			Color::Cyan(), // 14
-			Color::White() // 15
+			Color::Black, // 0
+			Color::DarkRed, // 1
+			Color::DarkGreen, // 2
+			Color::DarkYellow, // 3
+			Color::DarkBlue, // 4
+			Color::DarkMagenta, // 5
+			Color::DarkCyan, // 6
+			Color::Gray, // 7
+			Color::DarkGray, // 8
+			Color::Red, // 9
+			Color::Green, // 10
+			Color::Yellow, // 11
+			Color::Blue, // 12
+			Color::Magenta, // 13
+			Color::Cyan, // 14
+			Color::White // 15
 		};
     }
 
     TerminalPP::Palette TerminalPP::Palette::XTerm256() {
         Palette result(256);
         // first the basic 16 colors
-		result[0] =	Color::Black();
-		result[1] =	Color::DarkRed();
-		result[2] =	Color::DarkGreen();
-		result[3] =	Color::DarkYellow();
-		result[4] =	Color::DarkBlue();
-		result[5] =	Color::DarkMagenta();
-		result[6] =	Color::DarkCyan();
-		result[7] =	Color::Gray();
-		result[8] =	Color::DarkGray();
-		result[9] =	Color::Red();
-		result[10] = Color::Green();
-		result[11] = Color::Yellow();
-		result[12] = Color::Blue();
-		result[13] = Color::Magenta();
-		result[14] = Color::Cyan();
-		result[15] = Color::White();
+		result[0] =	Color::Black;
+		result[1] =	Color::DarkRed;
+		result[2] =	Color::DarkGreen;
+		result[3] =	Color::DarkYellow;
+		result[4] =	Color::DarkBlue;
+		result[5] =	Color::DarkMagenta;
+		result[6] =	Color::DarkCyan;
+		result[7] =	Color::Gray;
+		result[8] =	Color::DarkGray;
+		result[9] =	Color::Red;
+		result[10] = Color::Green;
+		result[11] = Color::Yellow;
+		result[12] = Color::Blue;
+		result[13] = Color::Magenta;
+		result[14] = Color::Cyan;
+		result[15] = Color::White;
 		// now do the xterm color cube
 		unsigned i = 16;
 		for (unsigned r = 0; r < 256; r += 40) {
@@ -1307,7 +1307,7 @@ namespace ui {
 			}
 		}
 		LOG(SEQ_UNKNOWN) << "Invalid extended color: " << seq;
-		return Color::White();
+		return Color::White;
     }
 
     void TerminalPP::parseOSCSequence(OSCSequence & seq) {

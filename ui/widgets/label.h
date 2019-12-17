@@ -11,9 +11,9 @@ namespace ui {
 		Label() :
 			PublicWidget(),
 			text_("Label"),
-			textColor_(Color::White()),
+			textColor_(Color::White),
 			font_(Font()),
-			background_(Color::Blue()) {
+			background_(Color::Blue) {
 		}
 
 		std::string const& text() const {

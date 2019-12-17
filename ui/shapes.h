@@ -239,7 +239,7 @@ namespace ui {
 		Brush(Color color) :
 			color(color),
 			fill(color.alpha == 255 ? ' ' : helpers::Char::NUL),
-			fillColor(Color::None()),
+			fillColor(Color::None),
 		    fillFont(Font()) {
 		}
 
@@ -257,7 +257,7 @@ namespace ui {
 		/** Returns an empty brush, which when used leaves all properties of the cell intact. 
 		 */
 		static Brush None() {
-			return Brush(Color::None(), 0, Color::None());
+			return Brush(Color::None, 0, Color::None);
 		}
 
 		/** Brushes are equal if their contents are equal. 

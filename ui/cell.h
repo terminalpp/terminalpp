@@ -23,7 +23,7 @@ namespace ui {
         Cursor():
 		    pos(0,0),
             codepoint(0x2581),
-            color(Color::White()),
+            color(Color::White),
             blink(true),
             visible(true) {
         }

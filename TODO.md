@@ -10,24 +10,14 @@
 
 The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-### v0.5
-
-- session palette can be customized in `settings.json`
-- terminal wait on terminated PTY is customized in `settings.json`
-- bold text can be forced to render in bright colors
-- support for opening remote files by extra escape sequences (basic)
-
-- update documentation generation into the website
-- ideally snap store will be vetted by this time
-- Windows Store version as well
-
-Maybe not necessary now: 
-
-- the tpp terminal should use the `<<` and `>>` notation so that it can be used instead of std::cout & std::cin
-
-- logging command line so that log can be controlled from it easily
-
 ### v0.6
+
+- simpler UI framework
+- tests added
+
+
+
+
 
 - multiple sessions
 
@@ -64,6 +54,15 @@ Maybe not necessary now:
 # Changelog
 
 > These are the versions already released and their major changes
+
+### v0.5 - Remote File Opening
+
+- session palette can be customized in settings.json
+- terminal wait on terminated PTY is customized in settings.json
+- Ubuntu WSL w/o version in name supported for bypass installation
+- bold text can be forced to render in bright colors
+- support for opening remote files by extra escape sequences (basic)
+- snap store at edge
 
 ### v0.4
 

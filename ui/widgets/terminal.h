@@ -302,11 +302,11 @@ namespace ui {
         Terminal(int width, int height, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
 
         virtual Color defaultForeground() const {
-            return Color::White();
+            return Color::White;
         }
 
         virtual Color defaultBackground() const {
-            return Color::Black();
+            return Color::Black;
         }
 
         /** Returns the locked buffer. 

@@ -31,9 +31,8 @@ namespace ui {
 			return * helpers::pointer_cast<uint32_t const*>(this);
 		}
 
-		Color & setAlpha(unsigned char value) {
-			alpha = value;
-			return *this;
+		Color withAlpha(unsigned char value) const {
+			return Color{red, green, blue, value};
 		}
 
         float floatAlpha() {
@@ -74,27 +73,27 @@ namespace ui {
 			return red != other.red || green != other.green || blue != other.blue || alpha != other.alpha;
 		}
 
-		/** Predefined static colors for convenience.
-
-		    They have to me static methods because of the static initialization order issue.
+		/** \name Predefined static colors for convenience.
 		 */
-		static Color None() { return Color(0, 0, 0, 0); }
-		static Color Black() { return Color(0, 0, 0); }
-		static Color White() { return Color(255, 255, 255);	}
-		static Color Green() { return Color(0, 255, 0);	}
-		static Color Blue() { return Color(0, 0, 255);	}
-		static Color Red() { return Color(255, 0, 0); }
-		static Color Magenta() { return Color(255, 0, 255); }
-		static Color Cyan() { return Color(0, 255, 255); }
-		static Color Yellow() { return Color(255, 255, 0); }
-		static Color Gray() { return Color(196, 196, 196); }
-		static Color DarkGreen() { return Color(0, 128, 0); }
-		static Color DarkBlue() { return Color(0, 0, 128); }
-		static Color DarkRed() { return Color(128, 0, 0); }
-		static Color DarkMagenta() { return Color(128, 0, 128); }
-		static Color DarkCyan() { return Color(0, 128, 128); }
-		static Color DarkYellow() { return Color(128, 128, 0); }
-		static Color DarkGray() { return Color(128, 128, 128); }
+		//@{
+		static Color const None;
+		static Color const Black;
+		static Color const White;
+		static Color const Green;
+		static Color const Blue;
+		static Color const Red;
+		static Color const Magenta;
+		static Color const Cyan;
+		static Color const Yellow;
+		static Color const Gray;
+		static Color const DarkGreen;
+		static Color const DarkBlue;
+		static Color const DarkRed;
+		static Color const DarkMagenta;
+		static Color const DarkCyan;
+		static Color const DarkYellow;
+		static Color const DarkGray;
+		//@}
 
 		/** Parses a color from its HTML definition.
 

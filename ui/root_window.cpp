@@ -26,7 +26,7 @@ namespace ui {
 		selectionOwner_{nullptr},
 		title_{""},
 		icon_{Icon::Default},
-		background_{Color::Black()} {
+		background_{Color::Black} {
 		visibleRegion_ = Canvas::VisibleRegion{this};
 	}
 

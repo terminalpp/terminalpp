@@ -73,7 +73,7 @@ namespace tpp {
 		// register the window
         AddWindowNativeHandle(this, window_);
 
-        border_ = toXftColor(ui::Color::White());
+        border_ = toXftColor(ui::Color::White);
     }
 
     X11Window::~X11Window() {

@@ -148,7 +148,7 @@ namespace ui {
 		using Container::setLayout;
 
 		PublicContainer() :
-		    background_(Color::Black()) {
+		    background_(Color::Black) {
 		}
 
 		/** Returns the background of the container.
@@ -170,7 +170,7 @@ namespace ui {
 	protected:
 
 		void paint(Canvas& canvas) override {
-			canvas.fill(Rect(canvas.width(), canvas.height()), Brush(Color::Black()));
+			canvas.fill(Rect(canvas.width(), canvas.height()), Brush(Color::Black));
 			Container::paint(canvas);
 		}
 

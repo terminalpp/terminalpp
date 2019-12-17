@@ -251,13 +251,13 @@ namespace ui {
                for (int col = 0, ce = history_[i].first; col < ce; ++col)
                    clientCanvas.set(Point{col, i}, row[col]);
            }
-           drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? Color::Red().setAlpha(128) : Color::White().setAlpha(64), scrollBarActive_);
+           drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? Color::Red.withAlpha(128) : Color::White.withAlpha(64), scrollBarActive_);
         }
         // paint the selection, if any
         paintSelection(clientCanvas);
         // and finally, if the terminal is not enabled, dim its window accordingly
         if (!enabled())
-            canvas.fill(Rect(width(), height()), Brush(Color::Black().setAlpha(128)));
+            canvas.fill(Rect(width(), height()), Brush(Color::Black.withAlpha(128)));
     }
 
     void Terminal::mouseDown(int col, int row, MouseButton button, Key modifiers) {
