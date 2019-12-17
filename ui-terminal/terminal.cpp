@@ -6,12 +6,14 @@ namespace ui {
 
     // Terminal::Buffer
 
-    Terminal::Buffer::Buffer(int cols, int rows):
+    Terminal::Buffer::Buffer(int cols, int rows, Cell const & fill):
         cols_{cols},
         rows_{rows},
         cells_{new Cell*[rows]} {
-        for (int i = 0; i < rows; ++i)
+        for (int i = 0; i < rows; ++i) {
             cells_[i] = new Cell[cols];
+            fillRow(cells_[i], fill, cols);
+        }
     }
 
     Terminal::Buffer::Buffer(Buffer const & from):
@@ -51,9 +53,9 @@ namespace ui {
         delete [] cells_;
     }
 
-    void Terminal::Buffer::resize(int cols, int rows, Terminal * terminal) {
+    void Terminal::Buffer::resize(int cols, int rows, Cell const & fill, Terminal * terminal) {
         if (cols_ != cols || rows_ != rows) {
-            resizeCells(cols, rows, terminal);
+            resizeCells(cols, rows, fill, terminal);
             cols_ = cols;
             rows_ = rows;
         }
@@ -101,11 +103,13 @@ namespace ui {
         memcpy(row + i, row, sizeof(Cell) * (cols - i));
     }
 
-	void Terminal::Buffer::resizeCells(int newCols, int newRows, Terminal * terminal) {
+	void Terminal::Buffer::resizeCells(int newCols, int newRows, Cell const & fill, Terminal * terminal) {
 		// create the new cells 
 		Cell** newCells = new Cell * [newRows];
-		for (int i = 0; i < newRows; ++i)
+		for (int i = 0; i < newRows; ++i) {
 			newCells[i] = new Cell[newCols];
+            fillRow(newCells[i], fill, newCols);
+        }
 		// now determine the row at which we should stop - this is done by going back from cursor's position until we hit end of line, that would be the last line we will use
 		int stopRow = cursor_.pos.y - 1;
 		while (stopRow >= 0) {
@@ -165,8 +169,8 @@ namespace ui {
 
     // Terminal 
 
-    Terminal::Terminal(int width, int height, PTY * pty, unsigned fps, size_t ptyBufferSize):
-        buffer_{width, height},
+    Terminal::Terminal(int width, int height, Cell const & fill, PTY * pty, unsigned fps, size_t ptyBufferSize):
+        buffer_{width, height, fill},
         pty_{pty},
         fps_{fps},
         repaint_{false},
@@ -243,7 +247,7 @@ namespace ui {
     void Terminal::updateSize(int width, int height) {
         {
             Buffer::Ptr b = buffer(true); // grab priority lock
-            b->resize(width, height, this);
+            b->resize(width, height, Cell{defaultForeground(), defaultBackground(), ' '}, this);
         }
         resizeHistory(width);
         pty_->resize(width, height);

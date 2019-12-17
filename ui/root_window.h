@@ -52,8 +52,16 @@ namespace ui {
 
         /** Returns the background color of the window. 
          */
-        Color background() const {
-            return background_;
+        Color backgroundColor() const {
+            return backgroundColor_;
+        }
+
+        void setBackgroundColor(Color value) {
+            if (backgroundColor_ != value) {
+                backgroundColor_ = value;
+                repaint();
+            }
+            
         }
 
         void attachChild(Widget * child) override {
@@ -362,7 +370,7 @@ namespace ui {
 
         /* Default background of the window. 
          */
-        Color background_;
+        Color backgroundColor_;
 
     }; 
 

@@ -58,7 +58,7 @@ namespace ui {
 
             typedef helpers::SmartRAIIPtr<Buffer> Ptr;
 
-            Buffer(int cols, int rows);
+            Buffer(int cols, int rows, Cell const & fill);
 
             Buffer(Buffer const & from);
 
@@ -116,7 +116,7 @@ namespace ui {
              
                 The terminal to which the buffer belongs can be provided as an optional argument, in which case any lines that would be deleted after the resize would be added to the history of the specified terminal. 
              */
-            void resize(int cols, int rows, Terminal * terminal);
+            void resize(int cols, int rows, Cell const & fill, Terminal * terminal);
 
             /** Inserts given number of lines at given top row.
                 
@@ -150,7 +150,7 @@ namespace ui {
 
                 The line is the copied. 
             */
-            void resizeCells(int newCols, int newRows, Terminal * terminal);
+            void resizeCells(int newCols, int newRows, Cell const & fill, Terminal * terminal);
 
 
             /* Size of the buffer and the array of the cells. */
@@ -251,7 +251,7 @@ namespace ui {
 
             Starts the process exit monitoring thread and the receiving thread to read input from the pty. 
          */
-        Terminal(int width, int height, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
+        Terminal(int width, int height, Cell const & fill, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240);
 
         virtual Color defaultForeground() const {
             return Color::White;

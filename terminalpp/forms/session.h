@@ -42,6 +42,9 @@ namespace tpp {
                   << Visible(false)
                 )
                 ;
+
+            setBackgroundColor(palette->defaultBackground());
+
             terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
             terminal_->onNotification.setHandler(&Session::terminalNotification, this);
             terminal_->onPTYTerminated.setHandler(&Session::ptyTerminated, this);

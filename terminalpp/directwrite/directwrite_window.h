@@ -159,7 +159,7 @@ namespace tpp {
         }
 
         void finalizeDraw() {
-            setBackgroundColor(rootWindow()->background());
+            setBackgroundColor(rootWindow()->backgroundColor());
             if (widthPx_ % cellWidthPx_ != 0) {
                 D2D1_RECT_F rect = D2D1::RectF(
                     static_cast<FLOAT>(cols_ * cellWidthPx_),

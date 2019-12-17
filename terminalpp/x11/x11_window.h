@@ -149,7 +149,7 @@ namespace tpp {
         }
 
         void finalizeDraw() {
-            setBackgroundColor(rootWindow()->background());
+            setBackgroundColor(rootWindow()->backgroundColor());
             if (widthPx_ % cellWidthPx_ != 0)
                 XftDrawRect(draw_, &bg_, cols_ * cellWidthPx_, 0, widthPx_ % cellWidthPx_, heightPx_);
             if (heightPx_ % cellHeightPx_ != 0)

@@ -258,6 +258,12 @@ namespace ui {
 			static_assert(sizeof(Cell) == 24, "Invalid cell size, padding must be adjusted");
 		}
 
+		Cell(Color fg, Color bg, char32_t codepoint):
+		    Cell() {
+			(*this) << Foreground(fg) << DecorationColor(fg) << Background(bg) << codepoint;
+		}
+		    
+
 		/** Returns the codepoint stored in the cell. 
 		 */
 	    char32_t codepoint() const {

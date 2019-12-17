@@ -350,7 +350,7 @@ namespace ui {
 
 
     TerminalPP::TerminalPP(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize):
-        Terminal{width, height, pty, fps, ptyBufferSize},
+        Terminal{width, height, Cell{palette->defaultForeground(), palette->defaultBackground(), ' '}, pty, fps, ptyBufferSize},
         state_{width, height, palette->defaultForeground(), palette->defaultBackground()},
         mouseMode_{MouseMode::Off},
         mouseEncoding_{MouseEncoding::Default},
@@ -360,7 +360,7 @@ namespace ui {
         keypadMode_{KeypadMode::Normal},
         bracketedPaste_{false},
         alternateBufferMode_{false},
-        alternateBuffer_{width, height},
+        alternateBuffer_{width, height, Cell{palette->defaultForeground(), palette->defaultBackground(), ' '}},
         alternateState_{width, height, palette->defaultForeground(), palette->defaultBackground()},
         palette_{palette},
         boldIsBright_{false} {
@@ -377,11 +377,11 @@ namespace ui {
     void TerminalPP::updateSize(int width, int height) {
         {
             Buffer::Ptr b = buffer(true); // grab priority lock
-            b->resize(width, height, alternateBufferMode_ ? nullptr : this);
+            b->resize(width, height, Cell{defaultForeground(), defaultBackground(), ' '},alternateBufferMode_ ? nullptr : this);
             // resize the real buffer
             state_.resize(width, height);
             // resize the alternate buffer and state
-            alternateBuffer_.resize(width, height, alternateBufferMode_ ? this : nullptr);
+            alternateBuffer_.resize(width, height, Cell{defaultForeground(), defaultBackground(), ' '}, alternateBufferMode_ ? this : nullptr);
             alternateState_.resize(width, height);
         }
         Terminal::updateSize(width, height);
