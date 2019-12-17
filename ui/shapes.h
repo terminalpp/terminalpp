@@ -9,174 +9,280 @@
 
 namespace ui {
 
-    class Point {
-    public:
+    /** 2D point with integer coordinates. 
+     
+        Supports basic point arithmetics - i.e. adding and subtracting points and numbers. 
+     */
+	class Point {
+	public:
+
         int x;
         int y;
 
-        Point(int x = 0, int y = 0):
-            x(x), 
+	    Point(int x = 0, int y = 0):
+            x(x),
             y(y) {
         }
 
-		bool operator == (Point const& other) const {
-			return x == other.x && y == other.y;
-		}
+        bool isOrigin() const {
+            return x == 0 && y == 0;
+        }
 
-		bool operator != (Point const& other) const {
-			return x != other.x || y != other.y;
-		}
+        void set(int xx, int yy) {
+            x = xx;
+            y = yy;
+        }
 
-		Point& operator += (Point const& other) {
-			x += other.x;
-			y += other.y;
-			return *this;
-		}
+        bool operator == (Point const & other) const {
+            return x == other.x && y == other.y;
+        }
 
-		Point operator + (Point const & other) const {
-			return Point{ x + other.x, y + other.y};
-		}
+        bool operator != (Point const & other) const {
+            return x != other.x || y != other.y;
+        }
 
-		friend std::ostream& operator << (std::ostream& s, Point const& p) {
-			s << "[" << p.x << "," << p.y << "]";
-			return s;
-		}
+        Point operator + (Point const & other) const {
+            return Point(x + other.x, y + other.y);
+        }
 
-    }; 
+        Point operator + (int scalar) const {
+            return Point(x + scalar, y + scalar);
+        }
 
-    class Rect {
-    public:
-        
-        Point topLeft;
-        Point bottomRight;
+        Point & operator += (Point const & other) {
+            x += other.x;
+            y += other.y;
+            return *this;
+        }
 
+        Point & operator += (int scalar) {
+            x += scalar;
+            y += scalar;
+            return *this;
+        }
+
+        Point operator - (Point const & other) const {
+            return Point(x - other.x, y - other.y);
+        }
+
+        Point operator - (int scalar) const {
+            return Point(x - scalar, y - scalar);
+        }
+
+        Point & operator -= (Point const & other) {
+            x -= other.x;
+            y -= other.y;
+            return *this;
+        }
+
+        Point & operator -= (int scalar) {
+            x -= scalar;
+            y -= scalar;
+            return *this;
+        }
+
+        friend std::ostream & operator << (std::ostream & s, Point const & p) {
+            s << "[" << p.x << "," << p.y << "]";
+            return s;
+        }
+	};
+	
+/** Rectangle. 
+	 */	
+	class Rect {
+	public:
+
+        /** \name Rectangle Constructors
+         
+            Because rectangles can be specified using different inputs, instead of constructors, static methods with disambiguating names are used instead. 
+         */
+        //@{
+
+        /** The default constructor creates an empty rectangle. 
+         */
         Rect():
-            topLeft(0,0),
-            bottomRight(0,0) {
+            left_{0},
+            top_{0},
+            width_{0},
+            height_{0} {
         }
 
-        Rect(Point topLeft, Point bottomRight):
-            topLeft(topLeft),
-            bottomRight(bottomRight) {
+	    static Rect Empty() {
+            return Rect{};
         }
 
-		// TODO check the usage of this, perhaps use static 
-        Rect(int left, int top, int right, int bottom):
-            topLeft(left, top),
-            bottomRight(right, bottom) {
+		static Rect FromCorners(Point topLeft, Point bottomRight) {
+            int width = bottomRight.x - topLeft.x;
+            int height = bottomRight.y - topLeft.y;
+            return Rect{topLeft.x, topLeft.y, width, height};
         }
 
-        Rect(int width, int height):
-            topLeft(0, 0),
-            bottomRight(width, height) {
+        static Rect FromCorners(int x1, int y1, int x2, int y2) {
+            return Rect{x1, y1, x2 - x1, y2 - y1};
         }
 
-        int left() const {
-            return topLeft.x;
+		static Rect FromTopLeftWH(Point topLeft, int width, int height) {
+            return Rect{topLeft.x, topLeft.y, width, height};
         }
 
-        int top() const {
-            return topLeft.y;
+		static Rect FromTopLeftWH(int x, int y, int width, int height) {
+            return Rect{x, y, width, height};
         }
 
-        int right() const {
-            return bottomRight.x;
+        static Rect FromWH(int width, int height) {
+            return Rect{0, 0, width, height};
         }
 
-        int bottom() const {
-            return bottomRight.y;
+        static Rect FromWH(Point dim) {
+            return Rect{0, 0, dim.x, dim.y};
         }
 
-        int width() const {
-            return bottomRight.x - topLeft.x;
+        //@}
+
+        bool empty() const {
+            return width_ == 0 || height_ == 0;
         }
 
-        int height() const {
-            return bottomRight.y - topLeft.y;
+        /** \name Accessors 
+         */
+        //@{
+
+	    int left() const { 
+            return left_; 
+        }
+		
+        int top() const { 
+            return top_;
+        }
+	    int width() const { 
+            return width_; 
+        }
+		int height() const { 
+            return height_; 
+        }
+		int right() const { 
+            return left_ + width_;
+        }
+		int bottom() const { 
+            return top_ + height_;
         }
 
-		Point bottomLeft() const {
-			return Point(topLeft.x, bottomRight.y);
-		}
+		Point topLeft() const { 
+            return Point{left_, top_}; 
+        }
 
-		Point topRight() const {
-			return Point(bottomRight.x, topLeft.y);
-		}
+		Point bottomRight() const {
+            return Point{left_ + width_, top_ + height_};
+        }
+        //@}
 
-		/** Returns true if the rectangle contains given point. 
-		 */
-		bool contains(Point point) const {
-			return (point.x >= left()) && (point.y >= top()) && (point.x < right()) && (point.y < bottom());
-		}
+        /** \name Setters
+         */
+        //@{
+        /** Sets the left coordinate keeping the width intact. 
+         */
+        void setLeft(int value) {
+            left_ = value;
+        }
 
-		bool empty() const {
-			return width() == 0 && height() == 0;
-		}
+        void setTop(int value) {
+            top_ = value;
+        }
+
+        void setWidth(int value) {
+            width_ = value;
+        }
+
+        void setHeight(int value) {
+            height_ = value;
+        }
+        
+        //@}
+
 
 		bool operator == (Rect const & other) const {
-			return topLeft == other.topLeft && bottomRight == other.bottomRight;
-		}
+            return left_ == other.left_ && top_ == other.top_ && width_ == other.width_ && height_ == other.height_;
+        }
 
 		bool operator != (Rect const & other) const {
-			return topLeft != other.topLeft || bottomRight != other.bottomRight;
-		}
+            return left_ != other.left_ || top_ != other.top_ || width_ != other.width_ || height_ != other.height_;
+        }
 
-		/** Returns a rectangle formed by union of two existing rectangles, i.e. a rectangle large enough to encompass both.
-		 */
-		static Rect Union(Rect const & first, Rect const & second) {
-			if (first.empty())
-				return second;
-			else if (second.empty())
-				return first;
-			else
-				return Rect{
-					std::min(first.left(), second.left()),
-					std::min(first.top(), second.top()),
-					std::max(first.right(), second.right()),
-					std::max(first.bottom(), second.bottom())
-			    };
-		}
+        Rect & operator += (Point const & other) {
+            left_ += other.x;
+            top_ += other.y;
+            return *this;
+        }
 
-		/** Returns the intersection of the two rectangles.
-		 */
-		static Rect Intersection(Rect const & first, Rect const & second) {
-			if (first.empty() || second.empty()) {
-				return Rect(0, 0);
-			} else {
-				int left = std::max(first.left(), second.left());
-				int top = std::max(first.top(), second.top());
-				int right = std::min(first.right(), second.right());
-				int bottom = std::min(first.bottom(), second.bottom());
-				if (left < right && top < bottom)
-					return Rect(left, top, right, bottom);
-				else
-					return Rect(0, 0);
-			}
-		}
+        Rect operator + (Point const & other) const {
+            return Rect{
+                left_ + other.x,
+                top_ + other.y,
+                width_,
+                height_
+            };
+        }
 
-		Rect& operator += (Point const & point) {
-            topLeft += point;
-            bottomRight += point;
-			return *this;
-		}
+        Rect operator - (Point const & other) {
+            return Rect{
+                left_ - other.x,
+                top_ - other.y,
+                width_,
+                height_
+            };
+        }
 
-		friend Rect operator + (Rect const& rect, Point const& p) {
-			return Rect(rect.left() + p.x, rect.top() + p.y, rect.right() + p.x, rect.bottom() + p.y);
-		}
+        /** Determines whether the rectangle contains the given point. 
+         
+            
+         */
+        bool contains(Point const & p) const {
+            return left() <= p.x && right() > p.x && top() <= p.y && bottom() > p.y;
+        }
 
-		/** Moves the rectangle by coordinates given by the point. 
-		 */
-		friend Rect operator - (Rect const& rect, Point const& p) {
-			return Rect(rect.left() - p.x, rect.top() - p.y, rect.right() - p.x, rect.bottom() - p.y);
-		}
+        static Rect Intersection(Rect const & a, Rect const & b) {
+            return FromCorners(
+                Point{std::max(a.left_, b.left_),std::max(a.top_, b.top_)},
+                Point{std::min(a.left_ + a.width_, b.left_ + b.width_), std::min(a.top_ + a.height_, b.top_ + b.height_)}
+            );
+        }
 
-		friend std::ostream & operator << (std::ostream & s, Rect const & rect) {
-			s << "[" << rect.left() << "," << rect.top() << "; " << rect.right() << "," << rect.bottom() << "]";
-			return s;
-		}
+        static Rect Union(Rect const & a, Rect const & b) {
+            if (a.empty())
+                return b;
+            else if (b.empty())
+                return a;
+            else 
+                return FromCorners(
+                    Point{std::min(a.left_, b.left_),std::min(a.top_, b.top_)},
+                    Point{std::max(a.left_ + a.width_, b.left_ + b.width_), std::max(a.top_ + a.height_, b.top_ + b.height_)}
+                );
+        }
 
+        friend std::ostream & operator << (std::ostream & s, Rect const & rect) {
+            s << "[" << rect.topLeft() << "," << rect.bottomRight() << "]";
+            return s;
+        }
+    
+    private:
 
-    };
+        Rect(int left, int top, int width, int height):
+            left_(left),
+            top_(top),
+            width_(width),
+            height_(height) {
+            if (width < 0 || height < 0) {
+                width_ = 0;
+                height_ = 0;
+            }
+        } 
+
+        int left_;
+        int top_;
+        int width_;
+        int height_;
+
+	};
 
 	class Border {
 	public:

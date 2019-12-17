@@ -170,7 +170,7 @@ namespace ui {
 	protected:
 
 		void paint(Canvas& canvas) override {
-			canvas.fill(Rect(canvas.width(), canvas.height()), Brush(Color::Black));
+			canvas.fill(Rect::FromWH(canvas.width(), canvas.height()), Brush(Color::Black));
 			Container::paint(canvas);
 		}
 

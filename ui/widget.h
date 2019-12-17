@@ -279,7 +279,7 @@ namespace ui {
 		/** Returns the rectangle of the widget in its parent's client rectangle. 
 		 */
 		Rect rect() const {
-			return Rect{x_, y_, x_ + width_, y_ + height_};
+			return Rect::FromCorners(x_, y_, x_ + width_, y_ + height_);
 		}
 
 		/** Returns the subset of the widget's canvas rectangle that is available to widget's children. 
@@ -287,7 +287,7 @@ namespace ui {
 		    The default implementation returns the entire rectangle of the widget. 
 		 */
 		virtual Rect childRect() const {
-			return Rect{width_, height_};
+			return Rect::FromWH(width_, height_);
 		}
 
 		/** The rectange presented to the children. 
@@ -300,7 +300,7 @@ namespace ui {
 		 */
 		virtual Rect clientRect() const {
 			Rect r{childRect()};
-			return Rect{r.width(), r.height()};
+			return Rect::FromWH(r.width(), r.height());
 		}
 
 		/** Returns the rectangle visible when scrolling position is taken into account. 

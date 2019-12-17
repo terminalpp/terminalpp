@@ -29,7 +29,7 @@ namespace tpp {
         /** Shorthand to repaint the entire window. 
          */
         void repaint() {
-            requestRender(ui::Rect(cols_, rows_));
+            requestRender(ui::Rect::FromWH(cols_, rows_));
         }
 
         int cols() const override {
@@ -339,7 +339,7 @@ namespace tpp {
             // if there were any paint requests while we were painting, request a repaint
             if (--painting_ != 0) {
                 painting_ = 0;
-                requestRender(ui::Rect(cols_, rows_));
+                requestRender(ui::Rect::FromWH(cols_, rows_));
             }
             
 			//std::cout << "Paint: " << t.value() << " ms\n" ;

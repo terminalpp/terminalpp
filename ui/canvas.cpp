@@ -10,7 +10,7 @@ namespace ui {
 
     Canvas::VisibleRegion::VisibleRegion(RootWindow * root):
         root(root),
-        region(root->width(), root->height()),
+        region(Rect::FromWH(root->width(), root->height())),
         windowOffset(0, 0),
         valid{true} {
     }
@@ -37,7 +37,7 @@ namespace ui {
         valid{true} {
 		// if the new visible region is not empty, update the intersection by the control start and update the offset, otherwise the offset's value does not matter
 		if (!region.empty()) {
-			region = region - subset.topLeft;
+			region = region - subset.topLeft();
 			windowOffset = Point(
 				from.windowOffset.x + (subset.left() + region.left() - from.region.left()),
 				from.windowOffset.y + (subset.top() + region.top() - from.region.top())
@@ -85,7 +85,7 @@ namespace ui {
         if (--buffer_.lockDepth_ == 0) {
             buffer_.lock_.unlock();
             visibleRegion_.root->render(
-                Rect(visibleRegion_.region.width(), visibleRegion_.region.height()) + visibleRegion_.windowOffset
+                Rect::FromWH(visibleRegion_.region.width(), visibleRegion_.region.height()) + visibleRegion_.windowOffset
             );
         }
     }
@@ -190,10 +190,10 @@ namespace ui {
     }
 
     void Canvas::borderRect(Rect const & rect, Color color, bool thick) {
-        borderLineTop(rect.topLeft, rect.width(), color, thick);
-        borderLineBottom(Point(rect.topLeft.x, rect.bottomRight.y - 1), rect.width(), color, thick);
-        borderLineLeft(rect.topLeft, rect.height(), color, thick);
-        borderLineRight(Point(rect.bottomRight.x - 1, rect.topLeft.y), rect.height(), color, thick);
+        borderLineTop(rect.topLeft(), rect.width(), color, thick);
+        borderLineBottom(Point(rect.topLeft().x, rect.bottomRight().y - 1), rect.width(), color, thick);
+        borderLineLeft(rect.topLeft(), rect.height(), color, thick);
+        borderLineRight(Point(rect.bottomRight().x - 1, rect.topLeft().y), rect.height(), color, thick);
     }
 
     void Canvas::borderLineTop(Point start, int width, Color color, bool thick) {

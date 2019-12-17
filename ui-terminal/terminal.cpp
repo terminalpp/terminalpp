@@ -277,7 +277,7 @@ namespace ui {
         if (scrollable_ && history_.size() > 0) {
            ASSERT(clientCanvas.height() == terminalOffset + height());
            for (int i = scrollOffset().y; i < terminalOffset; ++i) {
-               clientCanvas.fill(Rect{0, i, width(), i + 1}, defaultBackground());
+               clientCanvas.fill(Rect::FromCorners(0, i, width(), i + 1), defaultBackground());
                Cell * row = history_[i].second;
                for (int col = 0, ce = history_[i].first; col < ce; ++col)
                    clientCanvas.set(Point{col, i}, row[col]);
@@ -288,7 +288,7 @@ namespace ui {
         paintSelection(clientCanvas);
         // and finally, if the terminal is not enabled, dim its window accordingly
         if (!enabled())
-            canvas.fill(Rect(width(), height()), Brush(Color::Black.withAlpha(128)));
+            canvas.fill(Rect::FromWH(width(), height()), Brush(Color::Black.withAlpha(128)));
     }
 
     void Terminal::mouseDown(int col, int row, MouseButton button, Key modifiers) {

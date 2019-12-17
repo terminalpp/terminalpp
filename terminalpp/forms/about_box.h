@@ -67,10 +67,10 @@ namespace tpp {
 
         void paint(ui::Canvas & canvas) override {
             using namespace ui;
-            canvas.fill(Rect(canvas.width(), canvas.height()), Brush(Color::Black.withAlpha(128)));
+            canvas.fill(Rect::FromWH(canvas.width(), canvas.height()), Brush(Color::Black.withAlpha(128)));
             int x = (canvas.width() - 60) / 2;
             int y = (canvas.height() - 10) / 2;
-            canvas.fill(Rect(x, y, x + 60, y + 10), Brush(Color::Blue));
+            canvas.fill(Rect::FromCorners(x, y, x + 60, y + 10), Brush(Color::Blue));
             canvas.textOut(Point(x + 20,y + 1), "Terminal++", Color::White, ui::Font().setSize(2));
             helpers::Stamp stamp = helpers::Stamp::Stored();
             if (stamp.version().empty()) {
@@ -84,7 +84,7 @@ namespace tpp {
             canvas.textOut(Point(x + 5, y + 7), STR("platform: " << ARCH << " " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()), Color::White, ui::Font());
             canvas.textOut(Point(x + 20, y + 9), "Hit a key to dismiss", Color::White, ui::Font());
             // finally, draw the border
-            canvas.borderRect(Rect(x, y, x + 60, y + 10), ui::Color::White, false);
+            canvas.borderRect(Rect::FromCorners(x, y, x + 60, y + 10), ui::Color::White, false);
         }
 
     private:

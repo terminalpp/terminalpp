@@ -68,7 +68,7 @@ namespace ui {
 	protected:
 
 		void paint(Canvas& canvas) override {
-			canvas.fill(Rect(width(), height()), background_);
+			canvas.fill(Rect::FromWH(width(), height()), background_);
 			canvas.textOut(Point(0, 0), text_, textColor_, font_);
 		}
 

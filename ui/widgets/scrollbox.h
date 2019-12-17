@@ -39,7 +39,7 @@ namespace ui {
 		}
 
 		Rect clientRect() const override {
-			return Rect{clientWidth_, clientHeight_};
+			return Rect::FromWH(clientWidth_, clientHeight_);
 		}
 
 		/** Returns the visible rectangle. 
@@ -113,7 +113,7 @@ namespace ui {
 		/** Draws the vertical scrollbar overlay. 
 		 */ 
 		void drawVerticalScrollbarOverlay(Canvas & canvas, Color color, bool thick = false) {
-			canvas.borderClear(Rect{canvas.width() -1, 0, canvas.width(), canvas.height()});
+			canvas.borderClear(Rect::FromCorners(canvas.width() -1, 0, canvas.width(), canvas.height()));
 			// the right line
 			canvas.borderLineRight(Point{canvas.width() - 1, 0}, canvas.height(), color, thick);
 			// calculate the position of the slider
@@ -126,7 +126,7 @@ namespace ui {
 		/** Draws the horizontal scrollbar overlay. 
 		 */ 
 		void drawHorizontalScrollbarOverlay(Canvas & canvas, Color color, bool thick = false) {
-			canvas.borderClear(Rect{0, canvas.height() - 1, canvas.width(), canvas.height()});
+			canvas.borderClear(Rect::FromCorners(0, canvas.height() - 1, canvas.width(), canvas.height()));
 			// the right line
 			canvas.borderLineBottom(Point{0, canvas.height() - 1}, canvas.width(), color, thick);
 			// calculate the position of the slider

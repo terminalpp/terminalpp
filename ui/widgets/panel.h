@@ -17,7 +17,7 @@ namespace ui {
 		}
 
 		Rect childRect() const override {
-			return Rect{border_.left, border_.top, width() - border_.right, height() - border_.bottom };
+			return Rect::FromCorners(border_.left, border_.top, width() - border_.right, height() - border_.bottom);
 		}
 
 		/** The clientWidth and clientHeight return the size of the widget that is available for children (i.e. excluding the border of the control.

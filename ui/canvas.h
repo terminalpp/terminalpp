@@ -136,9 +136,9 @@ namespace ui {
             bool valid;
 
 			VisibleRegion() :
-				root(nullptr),
-				region(0, 0),
-				windowOffset(0, 0),
+				root{nullptr},
+				region{Rect::FromWH(0, 0)},
+				windowOffset{0, 0},
                 valid{false} {
 			}
 

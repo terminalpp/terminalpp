@@ -803,16 +803,16 @@ namespace ui {
                         switch (seq[0]) {
                             case 0:
                                 updateCursorPosition();
-                                fillRect(Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
-                                fillRect(Rect(0, buffer_.cursor().pos.y + 1, buffer_.cols(), buffer_.rows()), state_.cell);
+                                fillRect(Rect::FromCorners(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(Rect::FromCorners(0, buffer_.cursor().pos.y + 1, buffer_.cols(), buffer_.rows()), state_.cell);
                                 return;
                             case 1:
                                 updateCursorPosition();
-                                fillRect(Rect(0, 0, buffer_.cols(), buffer_.cursor().pos.y), state_.cell);
-                                fillRect(Rect(0, buffer_.cursor().pos.y, buffer_.cursor().pos.x + 1, buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(Rect::FromCorners(0, 0, buffer_.cols(), buffer_.cursor().pos.y), state_.cell);
+                                fillRect(Rect::FromCorners(0, buffer_.cursor().pos.y, buffer_.cursor().pos.x + 1, buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             case 2:
-                                fillRect(Rect(buffer_.cols(), buffer_.rows()), state_.cell);
+                                fillRect(Rect::FromWH(buffer_.cols(), buffer_.rows()), state_.cell);
                                 return;
                             default:
                                 break;
@@ -829,15 +829,15 @@ namespace ui {
                         switch (seq[0]) {
                             case 0:
                                 updateCursorPosition();
-                                fillRect(Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(Rect::FromCorners(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             case 1:
                                 updateCursorPosition();
-                                fillRect(Rect(0, buffer_.cursor().pos.y, buffer_.cursor().pos.x + 1, buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(Rect::FromCorners(0, buffer_.cursor().pos.y, buffer_.cursor().pos.x + 1, buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             case 2:
                                 updateCursorPosition();
-                                fillRect(Rect(0, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
+                                fillRect(Rect::FromCorners(0, buffer_.cursor().pos.y, buffer_.cols(), buffer_.cursor().pos.y + 1), state_.cell);
                                 return;
                             default:
                                 break;
@@ -888,18 +888,18 @@ namespace ui {
                         // erase from first line
                         int n = static_cast<unsigned>(seq[0]);
                         int l = std::min(buffer_.cols() - buffer_.cursor().pos.x, n);
-                        fillRect(Rect(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cursor().pos.x + l, buffer_.cursor().pos.y + 1), state_.cell);
+                        fillRect(Rect::FromCorners(buffer_.cursor().pos.x, buffer_.cursor().pos.y, buffer_.cursor().pos.x + l, buffer_.cursor().pos.y + 1), state_.cell);
                         n -= l;
                         // while there is enough stuff left to be larger than a line, erase entire line
                         l = buffer_.cursor().pos.y + 1;
                         while (n >= buffer_.cols() && l < buffer_.rows()) {
-                            fillRect(Rect(0, l, buffer_.cols(), l + 1), state_.cell);
+                            fillRect(Rect::FromCorners(0, l, buffer_.cols(), l + 1), state_.cell);
                             ++l;
                             n -= buffer_.cols();
                         }
                         // if there is still something to erase, erase from the beginning
                         if (n != 0 && l < buffer_.rows())
-                            fillRect(Rect(0, l, n, l + 1), state_.cell);
+                            fillRect(Rect::FromCorners(0, l, n, l + 1), state_.cell);
                         return;
                     }
                     /* CSI <n> c - primary device attributes.
@@ -1114,7 +1114,7 @@ namespace ui {
                                     << Background(palette_->defaultBackground())
                                     << Font()
                                     << Attributes();
-						fillRect(Rect(buffer_.cols(), buffer_.rows()), state_.cell);
+						fillRect(Rect::FromWH(buffer_.cols(), buffer_.rows()), state_.cell);
 						buffer_.cursor() = Cursor();
 						LOG(SEQ) << "Alternate screen on";
 					} else {
