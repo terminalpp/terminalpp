@@ -12,10 +12,13 @@ The following is very short description of the versions planned and their main n
 
 ### v0.6
 
+- simple tests framework in helpers, tests target added
+- reentrant lock in helpers
+
+
+##### TODO
+
 - simpler UI framework
-- tests added
-
-
 
 
 

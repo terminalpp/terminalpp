@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+#include <thread>
 #include <atomic>
 #include <condition_variable>
 
@@ -96,40 +97,56 @@ namespace helpers {
 
     /** A simple lock that allows locking in normal and priority modes, guaranteeing that a priority lock request will be serviced before any waiting normal locks. 
      
+        The lock is reentrant, i.e. a single thread can acquire it multiple times. 
      */
     class PriorityLock {
     public:
 
         PriorityLock():
+            depth_{0},
             priorityRequests_(0) {
         }
 
         /** Grabs the lock in non-priority mode.
          */
         void lock() {
-            std::unique_lock<std::mutex> g(m_);
-            while (priorityRequests_ > 0)
-                cv_.wait(g);
-            g.release();
+            if (owner_ != std::this_thread::get_id()) {
+                std::unique_lock<std::mutex> g(m_);
+                while (priorityRequests_ > 0)
+                    cv_.wait(g);
+                g.release();
+                owner_ = std::this_thread::get_id();
+            }
+            ++depth_;
         }
 
         /** Grabs the lock in priority mode.
          */
         void priorityLock() {
             ++priorityRequests_;
-            m_.lock();
+            if (owner_ != std::this_thread::get_id()) {
+                m_.lock();
+                owner_ = std::this_thread::get_id();
+            }
             --priorityRequests_;
+            ++depth_;
         }
 
         /** Releases the lock. 
          */
         void unlock() {
-            cv_.notify_all();
-            m_.unlock();
+            ASSERT(owner_ == std::this_thread::get_id());
+            ASSERT(depth_ > 0);
+            if (--depth_ == 0) {
+                owner_ = std::thread::id{};
+                cv_.notify_all();
+                m_.unlock();
+            }
         }
 
     private:
-
+        std::thread::id owner_;
+        unsigned depth_;
         std::atomic<unsigned> priorityRequests_;
         std::mutex m_;
         std::condition_variable cv_;

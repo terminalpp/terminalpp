@@ -6,11 +6,16 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <functional>
 
 #include "helpers.h"
-#include "object.h"
 
 namespace helpers {
+
+	// TODO - time pretty printer
+	inline std::string PrettyPrintMillis(size_t millis) {
+		return STR(millis);
+	}
 
 	inline std::string TimeInISO8601() {
 		time_t now;

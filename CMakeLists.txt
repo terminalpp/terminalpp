@@ -21,6 +21,7 @@ add_subdirectory("tpp-lib")
 add_subdirectory("tpp-widget")
 add_subdirectory("ui")
 add_subdirectory("docs")
+add_subdirectory("tests")
 # optional subprojects - only include them if we actually have them
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ropen/CMakeLists.txt")
     add_subdirectory("ropen")

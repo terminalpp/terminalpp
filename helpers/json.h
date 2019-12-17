@@ -514,10 +514,12 @@ namespace helpers {
 
         /** Returns true if the element is empty. 
          
-            Can only be used for strings, arrays and objects.
+            Only makes sense for strings, arrays and objects. Null is always empty and other element types are never empty. 
          */
         bool empty() const {
             switch (kind_) {
+                case Kind::Null:
+                    return true;
                 case Kind::String:
                     return valueStr_.empty();
                 case Kind::Array:
@@ -525,7 +527,7 @@ namespace helpers {
                 case Kind::Object:
                     return valueObject_.empty();
                 default:
-                    THROW(JSONError()) << "Unable to determine emptiness of JSON element of type " << kind_;
+                    return false;
             }
         }
 

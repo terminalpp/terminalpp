@@ -22,6 +22,7 @@
 
  */
 
+
 #define LOG(...) if (::helpers::Logger::GetLog(__VA_ARGS__).enabled()) ::helpers::Logger::GetLog(__VA_ARGS__).createMessage(__FILE__, __LINE__)
 
 namespace helpers {
