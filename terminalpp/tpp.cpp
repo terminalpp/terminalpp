@@ -36,7 +36,7 @@
 
 #include "ui-terminal/bypass_pty.h"
 #include "ui-terminal/local_pty.h"
-#include "ui-terminal/terminalpp.h"
+#include "ui-terminal/terminal.h"
 #include <thread>
 
 
@@ -96,12 +96,12 @@ int main(int argc, char* argv[]) {
 		helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.logDir(), "log-"));
 		helpers::Logger::Enable(log, { 
 			helpers::Logger::DefaultLog(),
-			ui::TerminalPP::SEQ_ERROR,
-			ui::TerminalPP::SEQ_UNKNOWN
+			ui::Terminal::SEQ_ERROR,
+			ui::Terminal::SEQ_UNKNOWN
 		});
 		LOG() << "t++ started";
 		// Create the palette & the pty - TODO this should be more systematic
-		ui::TerminalPP::Palette palette{config.sessionPalette()};
+		ui::Terminal::Palette palette{config.sessionPalette()};
 		ui::Terminal::PTY * pty;
 #if (defined ARCH_WINDOWS)
 		if (config.sessionPTY() != "bypass") 

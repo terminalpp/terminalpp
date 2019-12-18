@@ -4,7 +4,7 @@
 #include "ui/root_window.h"
 #include "ui/builders.h"
 
-#include "ui-terminal/terminalpp.h"
+#include "ui-terminal/terminal.h"
 
 #include "../config.h"
 #include "../remote_files.h"
@@ -20,7 +20,7 @@ namespace tpp {
      */
     class Session : public ui::RootWindow {
     public:
-        Session(ui::Terminal::PTY * pty, ui::TerminalPP::Palette * palette):
+        Session(ui::Terminal::PTY * pty, ui::Terminal::Palette * palette):
             pty_(pty),
             closeOnKeyDown_(false),
             remoteFiles_(Config::Instance().sessionRemoteFilesDir()) {
@@ -32,7 +32,7 @@ namespace tpp {
                 << (Create(new ui::Label()))
                 */
                 << Layout::Maximized
-                << (Create(terminal_ = new TerminalPP(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
+                << (Create(terminal_ = new ui::Terminal(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
                     << FocusIndex(0)
                     << FocusStop(true)
                     << HistorySizeLimit(config.sessionHistoryLimit())
@@ -160,7 +160,7 @@ namespace tpp {
         }
 
         ui::Terminal::PTY * pty_;
-        ui::TerminalPP * terminal_;
+        ui::Terminal * terminal_;
         AboutBox * about_;
 
         std::ofstream logFile_;

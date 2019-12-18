@@ -3,7 +3,7 @@
 #include "helpers/process.h"
 #include "helpers/json.h"
 
-#include "ui-terminal/terminalpp.h"
+#include "ui-terminal/terminal.h"
 
 //#define SHOW_LINE_ENDINGS
 
@@ -89,8 +89,8 @@ namespace tpp {
 			return get({"session", "remoteFiles", "dir"});
 		}
 
-		ui::TerminalPP::Palette sessionPalette() const {
-			ui::TerminalPP::Palette result{ui::TerminalPP::Palette::XTerm256()};
+		ui::Terminal::Palette sessionPalette() const {
+			ui::Terminal::Palette result{ui::Terminal::Palette::XTerm256()};
 			result.setDefaultForegroundIndex(get({"session","palette", "defaultForeground"}).toUnsigned());
 			result.setDefaultBackgroundIndex(get({"session","palette", "defaultBackground"}).toUnsigned());
 			helpers::JSON const & colors = get({"session", "palette", "colors"});
