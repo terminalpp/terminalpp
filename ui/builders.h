@@ -76,8 +76,8 @@ namespace ui {
 	PROPERTY_BUILDER(Focus, bool, setFocus, Widget);
 	PROPERTY_BUILDER(FocusStop, bool, setFocusStop, Widget);
 	PROPERTY_BUILDER(FocusIndex, unsigned, setFocusIndex, Widget);
-	PROPERTY_BUILDER(WidthHint, SizeHint const &, setWidthHint, Widget);
-	PROPERTY_BUILDER(HeightHint, SizeHint const &, setHeightHint, Widget);
+	PROPERTY_BUILDER(WidthHint, Layout::SizeHint const &, setWidthHint, Widget);
+	PROPERTY_BUILDER(HeightHint, Layout::SizeHint const &, setHeightHint, Widget);
 	
 
 

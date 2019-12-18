@@ -191,5 +191,4 @@ namespace ui {
         Point selectionStart_;
     }; // ui::SelectionOwner
 
-
 } // namespace ui

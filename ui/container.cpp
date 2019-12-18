@@ -5,7 +5,7 @@
 namespace ui {
 
 	Container::Container() :
-		layout_(Layout::None()),
+		layout_(Layout::None),
 		relayout_(true) {
 	}
 

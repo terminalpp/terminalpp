@@ -7,6 +7,7 @@
 #include "canvas.h"
 #include "mouse.h"
 #include "key.h"
+#include "layout.h"
 
 /** \page uiwidget ui - Widget
   
@@ -60,67 +61,6 @@
  */
 
 namespace ui {
-
-	/** Size hint provides hints about the width and height of a widget to the layouting engine. 
-
-	    Can be:
-
-		- auto (left to the layout engine, if any)
-		- fixed (not allowed to touch the present value)
-		- percentage (percentage of the parent)
-	 */
-	class SizeHint {
-	public:
-
-		static SizeHint Auto() {
-			return SizeHint(AUTO);
-		}
-
-		static SizeHint Fixed() {
-			return SizeHint(FIXED);
-		}
-
-		static SizeHint Percentage(unsigned value) {
-			ASSERT(value <= 100);
-			return SizeHint(PERCENTAGE + value);
-		}
-
-		int pct() const {
-			ASSERT(raw_ && PERCENTAGE) << "Not a percentage size hint";
-			return static_cast<int>(raw_ & 0xff);
-		}
-
-		bool isFixed() const {
-			return raw_ & FIXED;
-		}
-
-		bool isAuto() const {
-			return raw_ & AUTO;
-		}
-
-		bool isPercentage() const {
-			return raw_ & PERCENTAGE;
-		}
-
-		bool operator == (SizeHint other) const {
-			return raw_ == other.raw_;
-		}
-
-		bool operator != (SizeHint other) const {
-			return raw_ != other.raw_;
-		}
-
-	private:
-		static constexpr unsigned AUTO = 0x100;
-		static constexpr unsigned FIXED = 0x200;
-		static constexpr unsigned PERCENTAGE = 0x400;
-
-		SizeHint(unsigned raw) :
-			raw_(raw) {
-		}
-
-		unsigned raw_;
-	};
 
 	class Widget;
 
@@ -218,8 +158,8 @@ namespace ui {
 			y_(0),
 			width_(0),
 			height_(0),
-			widthHint_(SizeHint::Auto()),
-			heightHint_(SizeHint::Auto()) {
+			widthHint_(Layout::SizeHint::Auto()),
+			heightHint_(Layout::SizeHint::Auto()) {
 		}
 
 		Widget(Widget &&) = delete;
@@ -315,11 +255,11 @@ namespace ui {
 			return Point{0,0};
 		}
 
-		SizeHint widthHint() const {
+		Layout::SizeHint widthHint() const {
 			return widthHint_;
 		}
 
-		SizeHint heightHint() const {
+		Layout::SizeHint heightHint() const {
 			return heightHint_;
 		}
 
@@ -394,7 +334,7 @@ namespace ui {
 				updateOverlay(value);
 		}
 
-		void setWidthHint(SizeHint value) {
+		void setWidthHint(Layout::SizeHint value) {
 			if (widthHint_ != value) {
 				widthHint_ = value;
 				if (parent_ != nullptr)
@@ -402,7 +342,7 @@ namespace ui {
 			}
 		}
 
-		void setHeightHint(SizeHint value) {
+		void setHeightHint(Layout::SizeHint value) {
 			if (heightHint_ != value) {
 				heightHint_ = value;
 				if (parent_ != nullptr)
@@ -735,8 +675,8 @@ namespace ui {
 		int width_;
 		int height_;
 
-		SizeHint widthHint_;
-		SizeHint heightHint_;
+		Layout::SizeHint widthHint_;
+		Layout::SizeHint heightHint_;
 
 	};
 

@@ -31,7 +31,7 @@ namespace tpp {
                 << Layout::Horizontal()
                 << (Create(new ui::Label()))
                 */
-                << Layout::Maximized()
+                << Layout::Maximized
                 << (Create(terminal_ = new TerminalPP(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
                     << FocusIndex(0)
                     << FocusStop(true)
