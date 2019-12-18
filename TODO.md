@@ -22,6 +22,11 @@ The following is very short description of the versions planned and their main n
 - simpler UI framework
 
 
+Questions:
+
+- should Container's attach & detach children be virtual? 
+
+
 
 - multiple sessions
 

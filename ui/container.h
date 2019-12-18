@@ -2,7 +2,6 @@
 
 #include <vector>
 
-
 #include "widget.h"
 
 namespace ui {
@@ -19,17 +18,51 @@ namespace ui {
 		}
 
 	protected:
+		friend class Widget;
 
 		Container();
 
-        void attachChild(Widget * child) override {
-            Widget::attachChild(child);
+        std::vector<Widget *> const & children() const {
+            return children_;
+        }
+
+        std::vector<Widget *> & children() {
+            return children_;
+        }
+
+        virtual void attachChild(Widget * child) {
+            // first detach the child if it is attached to other widget
+            if (child->parent_ != nullptr)
+                child->parent_->detachChild(child);
+            // now, under paint lock add the children to the list and patch the parent link
+            {
+                PaintLockGuard g(this);
+                child->parent_ = this;
+                children_.push_back(child);
+            }
             scheduleRelayout();
             repaint();
         }
 
-        void detachChild(Widget * child) override {
-            Widget::detachChild(child);
+        virtual void detachChild(Widget * child) {
+            ASSERT(child->parent_ == this);
+            // remove the child from list of children first and then detach it under the paint lock
+            {
+                PaintLockGuard g(this);
+                for (auto i = children_.begin(), e = children_.end(); i != e; ++i)
+                    if (*i == child) {
+                        children_.erase(i);
+                        break;
+                    }
+                child->parent_ = nullptr;
+                // udpate the overlay settings of the detached children
+                if (child->overlay_)
+                    child->updateOverlay(false);
+                // invalidate the child
+                child->invalidate();
+                // and detach its root window
+                child->detachRootWindow();
+            }
             scheduleRelayout();
             repaint();
         }
@@ -60,12 +93,19 @@ namespace ui {
          */
 		void invalidateContents() override {
 			Widget::invalidateContents();
+            for (Widget * child : children_)
+                child->invalidateContents();
 			scheduleRelayout();
 		}
 
-		void childInvalidated(Widget* child) override {
+		/** Action to take when child is invalidated. 
+
+		    This method is called whenever a child is invalidated. The default action is to repaint the widget and relayout its components.
+		 */
+        void childInvalidated(Widget* child) {
+			MARK_AS_UNUSED(child);
 			scheduleRelayout();
-			Widget::childInvalidated(child);
+			repaint();
 		}
 
 		void updatePosition(int x, int y) override {
@@ -103,9 +143,19 @@ namespace ui {
 			relayout_ = true;
 		}
 
+		void detachRootWindow() {
+			for (Widget * child : children_)
+				child->detachRootWindow();
+			Widget::detachRootWindow();
+		}
+
 	private:
 
 		friend class Layout;
+
+        /** All widgets which have the current widget as their parent.
+         */
+        std::vector<Widget *> children_;
 
 		Layout* layout_;
 		bool relayout_;

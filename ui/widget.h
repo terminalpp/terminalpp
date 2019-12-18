@@ -63,6 +63,7 @@
 namespace ui {
 
 	class Widget;
+	class Container;
 
 	template<typename P, typename T = Widget>
 	using Event = helpers::Event<P, T>;
@@ -164,7 +165,7 @@ namespace ui {
 
 		Widget(Widget &&) = delete;
 
-		Widget* parent() const {
+		Container* parent() const {
 			return parent_;
 		}
 
@@ -271,25 +272,26 @@ namespace ui {
 
     protected:
 
+        /** When the paint lock guard is held, the widget cannot be repainted. 
+
+
+            For now, this is a coarse grain lock on the root window's buffer if the root window exists. 
+         */
+        class PaintLockGuard {
+        public:
+            PaintLockGuard(Widget * w);
+        private:
+            Canvas::Buffer::Ptr guard_;
+        }; // PaintLockGuard
+
+
 		/** Sets the widget as visible or hidden.
 
 		    Also triggers the repaint of entire parent, because the widget may interfere with other children of its own parent.
 		 */
-		void setVisible(bool value) {
-			if (visible_ != value) {
-				updateVisible(value);
-				if (parent_ != nullptr)
-					parent_->childInvalidated(this);
-			}
-		}
+		void setVisible(bool value);
 
-		void setEnabled(bool value) {
-			if (enabled_ != value) {
-				updateEnabled(value);
-				if (parent_ != nullptr)
-				    parent_->childInvalidated(this);
-			}
-		}
+		void setEnabled(bool value);
 
 		/** Focuses or defocuses the widget. 
 		 
@@ -334,21 +336,9 @@ namespace ui {
 				updateOverlay(value);
 		}
 
-		void setWidthHint(Layout::SizeHint value) {
-			if (widthHint_ != value) {
-				widthHint_ = value;
-				if (parent_ != nullptr)
-					parent_->childInvalidated(this);
-			}
-		}
+		void setWidthHint(Layout::SizeHint value);
 
-		void setHeightHint(Layout::SizeHint value) {
-			if (heightHint_ != value) {
-				heightHint_ = value;
-				if (parent_ != nullptr)
-					parent_->childInvalidated(this);
-			}
-		}
+		void setHeightHint(Layout::SizeHint value);
 
 		bool forceOverlay() const {
 			return forceOverlay_;
@@ -486,13 +476,7 @@ namespace ui {
 
 		    If the widget is valid, invalidates its visible region and informs its parent that a child was invalidated. If the widget is already not valid, does nothing because the parent has already been notified. 
 		 */
-		void invalidate() {
-			if (visibleRegion_.valid) {
-				invalidateContents();
-				if (parent_ != nullptr)
-					parent_->childInvalidated(this);
-			}
-		}
+		void invalidate();
 
 		/** Invalidates the contents of the widget. 
          
@@ -501,17 +485,6 @@ namespace ui {
 		 */
 		virtual void invalidateContents() {
 			visibleRegion_.valid = false;
-            for (Widget * child : children_)
-                child->invalidateContents();
-		}
-
-		/** Action to take when child is invalidated. 
-
-		    This method is called whenever a child is invalidated. The default action is to repaint the widget.
-		 */
-		virtual void childInvalidated(Widget* child) {
-			MARK_AS_UNUSED(child);
-			repaint();
 		}
 
 		/** Updates the position of the widget. 
@@ -566,14 +539,7 @@ namespace ui {
 			return this;
 		}
 
-        std::vector<Widget *> const & children() const {
-            return children_;
-        }
-
-        std::vector<Widget *> & children() {
-            return children_;
-        }
-
+	/*
         virtual void detachChild(Widget * child) {
             ASSERT(child->parent_ == this);
             // remove the child from list of children first and then detach it under the paint lock
@@ -606,6 +572,7 @@ namespace ui {
                 children_.push_back(child);
             }
         }
+		*/
 
 		/** Returns the mouse coordinates inside the widget. 
 		 */
@@ -618,31 +585,16 @@ namespace ui {
 		friend class RootWindow;
 		friend class Canvas;
 
-        /** When the paint lock guard is held, the widget cannot be repainted. 
-
-
-            For now, this is a coarse grain lock on the root window's buffer if the root window exists. 
-         */
-        class PaintLockGuard {
-        public:
-            PaintLockGuard(Widget * w);
-        private:
-                Canvas::Buffer::Ptr guard_;
-        }; // PaintLockGuard
 
 		/** Detaches the wdget from its root window. 
 		 
-		    Informs the root window that the widget is to be detached, then detaches its children transitively and finally detaches the widget itself. 
+		    Informs the root window that the widget is to be detached. 
 		 */
-        void detachRootWindow();
+        virtual void detachRootWindow();
 
 		/* Parent widget or none. 
 		 */
-		Widget* parent_;
-
-        /** All widgets which have the current widget as their parent.
-         */
-        std::vector<Widget *> children_;
+		Container * parent_;
 
 		/* Visible region of the canvas. 
 		 */

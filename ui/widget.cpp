@@ -1,4 +1,5 @@
 #include "widget.h"
+#include "container.h"
 #include "root_window.h"
 
 namespace ui {
@@ -13,6 +14,23 @@ namespace ui {
         if (parent_) 
             parent_->detachChild(this);
     }
+
+	void Widget::setVisible(bool value) {
+		if (visible_ != value) {
+			updateVisible(value);
+			if (parent_ != nullptr)
+				parent_->childInvalidated(this);
+		}
+	}
+
+	void Widget::setEnabled(bool value) {
+		if (enabled_ != value) {
+			updateEnabled(value);
+			if (parent_ != nullptr)
+				parent_->childInvalidated(this);
+		}
+	}
+
 	
 	void Widget::setFocused(bool value) {
 		if (focused_ != value && visibleRegion_.valid)
@@ -47,6 +65,33 @@ namespace ui {
 			child->paint(childCanvas);
 		}
 	}
+
+	void Widget::invalidate() {
+		if (visibleRegion_.valid) {
+			invalidateContents();
+			if (parent_ != nullptr)
+				parent_->childInvalidated(this);
+		}
+	}
+
+
+
+	void Widget::setWidthHint(Layout::SizeHint value) {
+		if (widthHint_ != value) {
+			widthHint_ = value;
+			if (parent_ != nullptr)
+				parent_->childInvalidated(this);
+		}
+	}
+
+	void Widget::setHeightHint(Layout::SizeHint value) {
+		if (heightHint_ != value) {
+			heightHint_ = value;
+			if (parent_ != nullptr)
+				parent_->childInvalidated(this);
+		}
+	}
+
 
 	void Widget::updateFocusStop(bool value) {
 		focusStop_ = value;
@@ -93,15 +138,10 @@ namespace ui {
 
 
 	void Widget::detachRootWindow() {
-		// don't do anything if the widget is already detached from its root window
-		if (visibleRegion_.root == nullptr)
-			return;
+		ASSERT(visibleRegion_.root != nullptr);
 		visibleRegion_.root->widgetDetached(this);
-		for (Widget * child : children_)
-			child->detachRootWindow();
 		visibleRegion_.root = nullptr;
 	}
-
 
 	Point Widget::getMouseCoordinates() const {
 		RootWindow * root = rootWindow();
