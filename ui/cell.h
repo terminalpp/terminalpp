@@ -15,17 +15,26 @@ namespace ui {
     class Cursor {
     public:
 	    Point pos;
-        char32_t codepoint;
-        Color color;
-        bool blink;
         bool visible;
+		// focused codepoint, color and blinking
+        char32_t activeCodepoint;
+        Color activeColor;
+        bool activeBlink;
+		// non - focused codepoint, color and blinking
+		char32_t inactiveCodepoint;
+		Color inactiveColor;
+		bool inactiveBlink;
+
 
         Cursor():
-		    pos(0,0),
-            codepoint(0x2581),
-            color(Color::White),
-            blink(true),
-            visible(true) {
+		    pos{0,0},
+			visible{true},
+			activeCodepoint{0x2588}, // full box
+			activeColor{Color::White},
+			activeBlink{true},
+			inactiveCodepoint{0x2591}, // light shade
+			inactiveColor{Color::White},
+			inactiveBlink{false} {
         }
 
 		/** Creates a new cursor with position updated by the given point. 

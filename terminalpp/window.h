@@ -60,19 +60,20 @@ namespace tpp {
 
     protected:
 
-		Window(int cols, int rows, unsigned cellWidthPx, unsigned cellHeightPx) :
-			cols_(cols),
-			rows_(rows),
-			widthPx_(cols* cellWidthPx),
-			heightPx_(rows* cellHeightPx),
-            baseCellHeightPx_(cellHeightPx),
-			cellWidthPx_(cellWidthPx),
-			cellHeightPx_(cellHeightPx),
-			zoom_(1.0),
-			fullscreen_(false),
-            mouseButtonsDown_(0),
-            blinkVisible_(true),
-            cursorBlinkVisible_(true) {
+		Window(int cols, int rows, int cellWidthPx, int cellHeightPx) :
+			cols_{cols},
+			rows_{rows},
+			widthPx_{cols* cellWidthPx},
+			heightPx_{rows* cellHeightPx},
+            baseCellHeightPx_{cellHeightPx},
+			cellWidthPx_{cellWidthPx},
+			cellHeightPx_{cellHeightPx},
+			zoom_{1.0},
+			fullscreen_{false},
+            mouseButtonsDown_{0},
+            focused_{false},
+            blinkVisible_{true},
+            cursorBlinkVisible_{true} {
 		}
 
         /** The actual paint method. 
@@ -81,9 +82,12 @@ namespace tpp {
 
         virtual void setFocus(bool value) {
             // if the window is loosing its focus, reset active modifiers (otherwise things like dangling ALT from ALT-TAB app switch are possible) 
-            if (! value)
-                activeModifiers_ = ui::Key::Invalid;
-            ui::Renderer::setFocus(value);
+            if (focused_ != value) {
+                focused_ = value;
+                if (! value)
+                    activeModifiers_ = ui::Key::Invalid;
+                ui::Renderer::setFocus(value);
+            }
         }
 
         /** Converts the x & y coordinates in pixels to cell coordinates. 
@@ -186,9 +190,9 @@ namespace tpp {
 
 		int cols_;
 		int rows_;
-		unsigned widthPx_;
-        unsigned heightPx_;
-        unsigned baseCellHeightPx_;
+		int widthPx_;
+        int heightPx_;
+        int baseCellHeightPx_;
         int cellWidthPx_;
         int cellHeightPx_;
 
@@ -201,6 +205,10 @@ namespace tpp {
         /* Number of mouse buttons currently pressed so that we know when to set & release mouse capture.
          */
         unsigned mouseButtonsDown_;
+
+        /** Determines if the window is focused or not. 
+         */
+        bool focused_;
 
         /* Determines if the blinking text and cursor are currently visible, or not. 
          */
@@ -288,12 +296,16 @@ namespace tpp {
                 ui::Cursor const & cursor = cursorToRender();
                 // it is possible that cursor is outside of the terminal window, in which case it is not rendered
                 if (cursor.visible == true && cursor.pos.x < buffer->cols() && cursor.pos.y < buffer->rows() && buffer->at(cursor.pos).isCursor()) {
-                    if (cursor.blink && cursor.pos != lastCursorPosition_)
+                    char32_t codepoint = focused_ ? cursor.activeCodepoint : cursor.inactiveCodepoint;
+                    ui::Color color = focused_ ? cursor.activeColor : cursor.inactiveColor;
+                    bool blink = focused_ ? cursor.activeBlink : cursor.inactiveBlink;
+
+                    if (blink && cursor.pos != lastCursorPosition_)
                         cursorBlinkVisible_ = true;
-                    if (! cursor.blink || cursorBlinkVisible_) {
+                    if (! blink || cursorBlinkVisible_) {
                         initializeGlyphRun(cursor.pos.x, cursor.pos.y);
-                        statusCell_.setCodepoint(cursor.codepoint)
-                                   .setFg(cursor.color)
+                        statusCell_.setCodepoint(codepoint)
+                                   .setFg(color)
                                    .setBg(ui::Color::None)
                                    .setFont(buffer->at(cursor.pos).font())
                                    .setAttributes(ui::Attributes{});

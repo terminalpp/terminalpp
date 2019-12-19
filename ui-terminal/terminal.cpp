@@ -469,11 +469,8 @@ namespace ui {
         if (! scrollable_ || scrollOffset().y + height() > terminalOffset ) {
             Buffer::Ptr buffer = this->buffer(/* priority */true);
             clientCanvas.copyBuffer(0, terminalOffset, *buffer);
-            // draw the cursor too
-            if (focused()) 
-                clientCanvas.setCursor(buffer->cursor() + Point{0, terminalOffset});
-            else 
-                clientCanvas.setCursor(Cursor::Invisible());
+            // draw the cursor
+            clientCanvas.setCursor(buffer->cursor() + Point{0, terminalOffset});
         }
         // if the terminal is scrollable, and there is any history, the scrollbar must be drawn and the history (if there is any visible)
         if (scrollable_ && history_.size() > 0) {
@@ -1288,7 +1285,8 @@ namespace ui {
 					continue;
 				// cursor blinking
 				case 12:
-					buffer_.cursor().blink = value;
+					buffer_.cursor().activeBlink = value;
+					buffer_.cursor().inactiveBlink = value;
 					LOG(SEQ) << "cursor blinking: " << value;
 					continue;
 				// cursor show/hide
