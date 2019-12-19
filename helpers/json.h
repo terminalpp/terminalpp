@@ -927,7 +927,6 @@ namespace helpers {
          */
         JSON parseElement() {
             skipWhitespace();
-            int sign = 1;
             switch (top()) {
                 case 'n':
                     pop("null");
@@ -946,30 +945,47 @@ namespace helpers {
                 case '{':
                     return parseObject();
                 case '-':
-                    sign = -1;
-                    pop();
-                    // fallthrough
+                    // fallthrough for number
                 default:
                     // it's number
-                    if (! IsDecimalDigit(top()))
-                        THROW(JSONError(line_, col_)) << "Expected number, bool, null, string, array, or object but " << top() << " found";
-                    int value = 0;
-                    do {
-                        value = value * 10 + DecCharToNumber(pop());
-                    } while (IsDecimalDigit(top()));
-                    if (condPop('.')) {
-                        double result = value;
-                        double n = 10.0;
-                        while (IsDecimalDigit(top())) {
-                            result = result + DecCharToNumber(pop()) / n;
-                            n *= 10;
-                        }
-                        return JSON(result * sign);
-                    } else {
-                        return JSON(value * sign);
-                    }
-                    break;
+                    return parseNumber();
             }
+        }
+
+        /** Parses integer or double number. 
+         */
+        JSON parseNumber() {
+            int sign = condPop('-') ? -1 : 1;
+            if (! IsDecimalDigit(top()))
+                THROW(JSONError(line_, col_)) << "Expected number, bool, null, string, array, or object but " << top() << " found";
+            if (sign == 1 && condPop('0') && condPop('x'))
+                return parseHexadecimalInteger();
+            int value = 0;
+            do {
+                value = value * 10 + DecCharToNumber(pop());
+            } while (IsDecimalDigit(top()));
+            if (condPop('.')) {
+                double result = value;
+                double n = 10.0;
+                while (IsDecimalDigit(top())) {
+                    result = result + DecCharToNumber(pop()) / n;
+                    n *= 10;
+                }
+                return JSON(result * sign);
+            } else {
+                return JSON(value * sign);
+            }
+        }
+
+        JSON parseHexadecimalInteger() {
+            // the 0x has already been parsed
+            int value = 0;
+            if (!IsHexadecimalDigit(top()))
+                THROW(JSONError(line_, col_)) << "Expected hexadecimal number but " << top() << " found";
+            do {
+                value = value * 16 + HexCharToNumber(pop());
+            } while (IsHexadecimalDigit(top()));
+            return JSON(value);
         }
 
         /** STR := double quoted string
