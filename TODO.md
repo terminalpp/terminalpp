@@ -12,27 +12,31 @@ The following is very short description of the versions planned and their main n
 
 ### v0.6
 
+- cursor appearance can be specified in `settings.json`
+
 - simple tests framework in helpers, tests target added
 - reentrant lock in helpers
 - simpler events (single handler, std::function, method and fptr handlers)
 
 
+
 ##### TODO
 
 - simpler UI framework
-
+- Windows store submission
 
 Questions:
 
 - should Container's attach & detach children be virtual? 
 
-
-
-- multiple sessions
+- simpler settings where not everything will be stored and only changes from defaults will be loaded
 
 ### v0.7
 
 - systray support
+- multiple sessions
+- proper multiplexing of the terminal sessions (wrt remote files)
+
 
 ### v1.0
 
@@ -57,8 +61,6 @@ Questions:
 - then at some point in the future, helpers, tpp and ui+vterm should go in separate repos
 - how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
 - add transparency for entire window? on Windows - https://msdn.microsoft.com/en-us/magazine/ee819134.aspx?f=255&MSPPError=-2147217396 and use layered windows
-
-
 
 # Changelog
 

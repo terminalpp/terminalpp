@@ -1352,7 +1352,8 @@ namespace ui {
                                    .setFont(Font{})
                                    .setAttributes(Attributes{});
 						fillRect(Rect::FromWH(buffer_.cols(), buffer_.rows()), state_.cell);
-						buffer_.cursor() = Cursor();
+						buffer_.cursor().pos = Point{0,0};
+                        buffer_.cursor().visible = true;
 						LOG(SEQ) << "Alternate screen on";
 					} else {
 						// go back from alternate buffer

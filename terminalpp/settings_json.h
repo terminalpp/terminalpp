@@ -83,6 +83,24 @@ namespace tpp {
              */
             "defaultBackground" : 0
         },
+        /* Cursor properties.
+         */
+        "cursor" : {
+            /* Cursor when the window is focused.
+             */
+            "active" : {
+                "codepoint" : 0x2581,
+                "color" : "#0000ff",
+                "blink" : true
+            },
+            /* Cursor when the window is not focused. 
+             */
+            "inactive" : {
+                "codepoint" : 0x2581,
+                "color" : "#000080",
+                "blink" : false
+            }
+        },        
         /* Behavior for terminal escape sequences. 
          */
         "sequences" : {

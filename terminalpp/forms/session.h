@@ -54,6 +54,8 @@ namespace tpp {
             terminal_->onTppOpenFile.setHandler(&Session::openRemoteFile, this);
             terminal_->onInputError.setHandler(&Session::terminalInputError, this);
 
+            terminal_->setCursor(config.sessionCursor());
+
             about_->onDismissed.setHandler(&Session::aboutBoxDismissed, this);
 
 

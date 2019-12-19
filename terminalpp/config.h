@@ -101,6 +101,17 @@ namespace tpp {
 			return result;
 		}
 
+		ui::Cursor sessionCursor() const {
+			ui::Cursor result;
+			result.activeCodepoint = get({"session", "cursor", "active", "codepoint"}).toUnsigned();
+			result.activeColor = ui::Color::FromHTML(get({"session", "cursor", "active", "color"})); 
+			result.activeBlink = get({"session", "cursor", "active", "blink"}).toBool();
+			result.inactiveCodepoint = get({"session", "cursor", "inactive", "codepoint"}).toUnsigned();
+			result.inactiveColor = ui::Color::FromHTML(get({"session", "cursor", "inactive", "color"})); 
+			result.inactiveBlink = get({"session", "cursor", "inactive", "blink"}).toBool();
+			return result;
+		}
+
 		bool sessionWaitAfterPtyTerminated() const {
 			return get({"session","waitAfterPtyTerminated"});
 		}

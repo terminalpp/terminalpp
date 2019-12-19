@@ -961,9 +961,9 @@ namespace helpers {
             if (sign == 1 && condPop('0') && condPop('x'))
                 return parseHexadecimalInteger();
             int value = 0;
-            do {
+            while (IsDecimalDigit(top())) {
                 value = value * 10 + DecCharToNumber(pop());
-            } while (IsDecimalDigit(top()));
+            };
             if (condPop('.')) {
                 double result = value;
                 double n = 10.0;

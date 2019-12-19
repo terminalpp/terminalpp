@@ -288,6 +288,25 @@ namespace ui {
             boldIsBright_ = value;
         }
 
+        /** Sets the cursor for the terminal overwriting any settings currently stored. 
+         */
+        void setCursor(Cursor const & value) {
+            Buffer::Ptr buffer = this->buffer(/* priority */false);
+            buffer->cursor().activeCodepoint = value.activeCodepoint;
+            buffer->cursor().activeColor = value.activeColor;
+            buffer->cursor().activeBlink = value.activeBlink;
+            buffer->cursor().inactiveCodepoint = value.inactiveCodepoint;
+            buffer->cursor().inactiveColor = value.inactiveColor;
+            buffer->cursor().inactiveBlink = value.inactiveBlink;
+            // alternate screen buffer
+            alternateBuffer_.cursor().activeCodepoint = value.activeCodepoint;
+            alternateBuffer_.cursor().activeColor = value.activeColor;
+            alternateBuffer_.cursor().activeBlink = value.activeBlink;
+            alternateBuffer_.cursor().inactiveCodepoint = value.inactiveCodepoint;
+            alternateBuffer_.cursor().inactiveColor = value.inactiveColor;
+            alternateBuffer_.cursor().inactiveBlink = value.inactiveBlink;
+        }
+
         Point scrollOffset() const override {
             return ScrollBox::scrollOffset();
         }
