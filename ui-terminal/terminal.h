@@ -523,13 +523,21 @@ namespace ui {
 		void markLastCharPosition() {
 			if (state_.lastCharCol >= 0 && state_.lastCharCol < buffer_.cols() &&
                 state_.lastCharRow >= 0 && state_.lastCharRow < buffer_.rows()) 
-				buffer_.at(state_.lastCharCol, state_.lastCharRow) += Attributes::EndOfLine();
+                MarkCellAsEndOfLine(buffer_.at(state_.lastCharCol, state_.lastCharRow));
 		}
 
 		void setLastCharPosition() {
 			state_.lastCharCol = buffer_.cursor().pos.x;
 			state_.lastCharRow = buffer_.cursor().pos.y;
 		}
+
+        static void MarkCellAsEndOfLine(Cell & cell, bool value = true) {
+            cell.setReserved1(value);
+        }
+
+        static bool IsEndOfLine(Cell const & cell) {
+            return cell.reserved1();
+        }
 
         enum class MouseMode {
             Off,
@@ -584,7 +592,7 @@ namespace ui {
                 lastCharCol{-1},
                 lastCharRow{0},
                 doubleHeightTopLine(false) {
-                cell << ' ' << Foreground(fg) << Background(bg) << DecorationColor(fg);
+                cell.setCodepoint(' ').setFg(fg).setDecoration(fg).setBg(bg);
                 MARK_AS_UNUSED(cols);
             }
 

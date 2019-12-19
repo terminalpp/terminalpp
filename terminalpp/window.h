@@ -233,12 +233,12 @@ namespace tpp {
             #define initializeDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->initializeDraw(__VA_ARGS__)
             #define initializeGlyphRun(...) reinterpret_cast<IMPLEMENTATION*>(this)->initializeGlyphRun(__VA_ARGS__)
             #define addGlyph(...) reinterpret_cast<IMPLEMENTATION*>(this)->addGlyph(__VA_ARGS__)
-            #define setFont(...) reinterpret_cast<IMPLEMENTATION*>(this)->setFont(__VA_ARGS__)
+            #define setRenderFont(...) reinterpret_cast<IMPLEMENTATION*>(this)->setFont(__VA_ARGS__)
             #define setForegroundColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setForegroundColor(__VA_ARGS__)
             #define setBackgroundColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setBackgroundColor(__VA_ARGS__)
             #define setDecorationColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setDecorationColor(__VA_ARGS__)
             #define setBorderColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setBorderColor(__VA_ARGS__)
-            #define setAttributes(...) reinterpret_cast<IMPLEMENTATION*>(this)->setAttributes(__VA_ARGS__)
+            #define setRenderAttributes(...) reinterpret_cast<IMPLEMENTATION*>(this)->setAttributes(__VA_ARGS__)
             #define drawGlyphRun(...) reinterpret_cast<IMPLEMENTATION*>(this)->drawGlyphRun(__VA_ARGS__)
             #define drawBorder(...) reinterpret_cast<IMPLEMENTATION*>(this)->drawBorder(__VA_ARGS__)
             #define finalizeDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
@@ -251,30 +251,30 @@ namespace tpp {
                 ui::Canvas::Buffer::Ptr buffer = bufferToRender();
                 // reset the status cell and call selectors on the font, colors and attributes
                 statusCell_ = buffer->at(0,0);
-                setFont(statusCell_.font());
-                setForegroundColor(statusCell_.foreground());
-                setBackgroundColor(statusCell_.background());
-                setDecorationColor(statusCell_.decorationColor());
-                setAttributes(statusCell_.attributes()); 
+                setRenderFont(statusCell_.font());
+                setForegroundColor(statusCell_.fg());
+                setBackgroundColor(statusCell_.bg());
+                setDecorationColor(statusCell_.decoration());
+                setRenderAttributes(statusCell_.attributes()); 
                 for (int row = 0, re = std::min(rows_, buffer->rows()); row < re; ++row) {
                     initializeGlyphRun(0, row);
                     for (int col = 0, ce = std::min(cols_, buffer->cols()); col < ce;) {
                         // get the cell to be drawn
                         ui::Cell const & c = buffer->at(col, row);
                         // now we know the cell must be drawn, determine if the attributes of the cell changed since last cell drawn
-                        if ((statusCell_ << c.codepoint()) != c) {
+                        if (statusCell_.setCodepoint(c.codepoint()) != c) {
                             drawGlyphRun();
                             initializeGlyphRun(col, row);
                             if (statusCell_.font() != c.font())
-                                setFont(c.font());
-                            if (statusCell_.foreground() != c.foreground())
-                                setForegroundColor(c.foreground());
-                            if (statusCell_.background() != c.background())
-                                setBackgroundColor(c.background());
-                            if (statusCell_.decorationColor() != c.decorationColor())
-                                setDecorationColor(c.decorationColor());
+                                setRenderFont(c.font());
+                            if (statusCell_.fg() != c.fg())
+                                setForegroundColor(c.fg());
+                            if (statusCell_.bg() != c.bg())
+                                setBackgroundColor(c.bg());
+                            if (statusCell_.decoration() != c.decoration())
+                                setDecorationColor(c.decoration());
                             if (statusCell_.attributes() != c.attributes())
-                                setAttributes(c.attributes());
+                                setRenderAttributes(c.attributes());
                             statusCell_ = c;
                         }
                         // draw the cell
@@ -292,16 +292,16 @@ namespace tpp {
                         cursorBlinkVisible_ = true;
                     if (! cursor.blink || cursorBlinkVisible_) {
                         initializeGlyphRun(cursor.pos.x, cursor.pos.y);
-                        statusCell_ << cursor.codepoint 
-                                << ui::Foreground(cursor.color)
-                                << ui::Background(ui::Color::None) 
-                                << buffer->at(cursor.pos).font()
-                                << ui::Attributes();
-                        setFont(statusCell_.font());
-                        setForegroundColor(statusCell_.foreground());
+                        statusCell_.setCodepoint(cursor.codepoint)
+                                   .setFg(cursor.color)
+                                   .setBg(ui::Color::None)
+                                   .setFont(buffer->at(cursor.pos).font())
+                                   .setAttributes(ui::Attributes{});
+                        setRenderFont(statusCell_.font());
+                        setForegroundColor(statusCell_.fg());
                         setBackgroundColor(ui::Color::None);
-                        setDecorationColor(statusCell_.decorationColor());
-                        setAttributes(statusCell_.attributes()); 
+                        setDecorationColor(statusCell_.decoration());
+                        setRenderAttributes(statusCell_.attributes()); 
                         addGlyph(cursor.pos.x, cursor.pos.y, statusCell_);
                         drawGlyphRun();
                     }
@@ -309,15 +309,15 @@ namespace tpp {
                 lastCursorPosition_ = cursor.pos;
                 // finally, draw the border, which is done on the base cell level over the already drawn text
                 statusCell_ = buffer->at(0,0);
-                setBorderColor(statusCell_.borderColor());
+                setBorderColor(statusCell_.border());
                 int wThin = std::min(cellWidthPx_, cellHeightPx_) / 4;
                 int wThick = std::min(cellWidthPx_, cellHeightPx_) / 2;
                 for (int row = 0, re = std::min(rows_, buffer->rows()); row < re; ++row) {
                     for (int col = 0, ce = std::min(cols_, buffer->cols()); col < ce; ++col) {
                         ui::Cell const & c = buffer->at(col, row);
-                        if (statusCell_.borderColor() != c.borderColor()) {
-                            statusCell_ << ui::BorderColor(c.borderColor());
-                            setBorderColor(statusCell_.borderColor());
+                        if (statusCell_.border() != c.border()) {
+                            statusCell_.setBorder(c.border());
+                            setBorderColor(statusCell_.border());
                         }
                         ui::Attributes attrs = c.attributes();
                         if (attrs.border()) {
@@ -347,12 +347,12 @@ namespace tpp {
             #undef initializeDraw
             #undef initializeGlyphRun
             #undef addGlyph
-            #undef setFont
+            #undef setRenderFont
             #undef setForegroundColor
             #undef setBackgroundColor
             #undef setDecorationColor
             #undef setBorderColor
-            #undef setAttributes
+            #undef setRenderAttributes
             #undef drawGlyphRun
             #undef drawBorder
             #undef finalizeDraw

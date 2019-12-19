@@ -344,7 +344,7 @@ namespace ui {
 		 */
 		Brush(Color color) :
 			color(color),
-			fill(color.alpha == 255 ? ' ' : helpers::Char::NUL),
+			fill(color.a == 255 ? ' ' : helpers::Char::NUL),
 			fillColor(Color::None),
 		    fillFont(Font()) {
 		}

@@ -238,10 +238,6 @@ namespace ui {
                 cols_ = cols;
                 rows_ = rows;
                 cells_ = new Cell[cols_ * rows_];
-				// TODO delete this when done with randomized stuff
-				for (int r = 0; r < rows; ++r)
-					for (int c = 0; c < cols; ++c)
-						at(c, r) << ((rand() % 64) + 32);
             }
         }
 

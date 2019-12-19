@@ -313,10 +313,10 @@ namespace tpp {
 
 		XftColor toXftColor(ui::Color const& c) {
 			XftColor result;
-			result.color.red = c.red * 256;
-			result.color.green = c.green * 256;
-			result.color.blue = c.blue * 256;
-			result.color.alpha = c.alpha * 256;
+			result.color.red = c.r * 256;
+			result.color.green = c.g * 256;
+			result.color.blue = c.b * 256;
+			result.color.alpha = c.a * 256;
 			return result;
 		}
 

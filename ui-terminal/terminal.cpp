@@ -677,7 +677,7 @@ namespace ui {
             Cell const & c = line[x];
             if (c.codepoint() != ' ')
                 break;
-            if (c.background() != bg)
+            if (c.bg() != bg)
                 break;
             --x;
         }
@@ -763,7 +763,7 @@ namespace ui {
 					case helpers::Char::LF: {
 						LOG(SEQ) << "LF";
                         // disable double width and height chars
-                        state_.cell << state_.cell.font().setSize(1).setDoubleWidth(false);
+                        state_.cell.setFont(state_.cell.font().setSize(1).setDoubleWidth(false));
                         state_.doubleHeightTopLine = false;
                         // mark last position
 						markLastCharPosition();
@@ -771,7 +771,7 @@ namespace ui {
 						++x;
 						// determine if region should be scrolled
 						if (++buffer_.cursor().pos.y == state_.scrollEnd) {
-							deleteLines(1, state_.scrollStart, state_.scrollEnd, (Cell(state_.cell) << Attributes()));
+							deleteLines(1, state_.scrollStart, state_.scrollEnd, (Cell(state_.cell).setAttributes(Attributes{})));
 							--buffer_.cursor().pos.y;
 						}
 						updateCursorPosition();
@@ -812,7 +812,7 @@ namespace ui {
                         // get the cell and update its contents
                         Cell& cell = buffer_.at(buffer_.cursor().pos.x, buffer_.cursor().pos.y);
                         cell = state_.cell;
-                        cell << c8->codepoint();
+                        cell.setCodepoint(c8->codepoint());
                         // store the last character position
                         setLastCharPosition();
                         // move to next column
@@ -821,7 +821,7 @@ namespace ui {
                         int columnWidth = c8->columnWidth();
                         if (columnWidth == 2 && ! cell.font().doubleWidth()) {
                             columnWidth = 1;
-                            cell << cell.font().setDoubleWidth(true);
+                            cell.setFont(cell.font().setDoubleWidth());
                         }
                         // if the font's size is greater than 1, copy the character as required (if we are at the top row of double height characters, increase the size artificially)
                         int charWidth = state_.doubleHeightTopLine ? cell.font().width() * 2 : cell.font().width();
@@ -832,14 +832,14 @@ namespace ui {
                                 // copy current cell properties
                                 cell2 = cell;
                                 // make sure the cell's font is normal size and width and display a space
-                                cell2 << cell.font().setSize(1).setDoubleWidth(0) << ' ';
+                                cell2.setCodepoint(' ').setFont(cell.font().setSize(1).setDoubleWidth(false));
                                 ++buffer_.cursor().pos.x;
                             } 
                             if (--columnWidth > 0 && buffer_.cursor().pos.x < buffer_.cols()) {
                                 Cell& cell2 = buffer_.at(buffer_.cursor().pos);
                                 // copy current cell properties
                                 cell2 = cell;
-                                cell2 <<  ' ';
+                                cell2.setCodepoint(' ');
                                 ++buffer_.cursor().pos.x;
                             } 
                         }
@@ -1348,11 +1348,11 @@ namespace ui {
                             // disable terminal history for alternate mode
                             enableScrolling(false);
 						}
-                        state_.cell << Foreground(palette_->defaultForeground()) 
-                                    << DecorationColor(palette_->defaultForeground()) 
-                                    << Background(palette_->defaultBackground())
-                                    << Font()
-                                    << Attributes();
+                        state_.cell.setFg(palette_->defaultForeground()) 
+                                   .setDecoration(palette_->defaultForeground()) 
+                                   .setBg(palette_->defaultBackground())
+                                   .setFont(Font{})
+                                   .setAttributes(Attributes{});
 						fillRect(Rect::FromWH(buffer_.cols(), buffer_.rows()), state_.cell);
 						buffer_.cursor() = Cursor();
 						LOG(SEQ) << "Alternate screen on";
@@ -1391,16 +1391,16 @@ namespace ui {
 			switch (seq[i]) {
 				/* Resets all attributes. */
 				case 0:
-                    state_.cell << Font() 
-                                << Foreground(palette_->defaultForeground())
-                                << DecorationColor(palette_->defaultForeground())
-                                << Background(palette_->defaultBackground())
-                                << Attributes();
-					LOG(SEQ) << "font fg bg reset";
+                    state_.cell.setFg(palette_->defaultForeground()) 
+                               .setDecoration(palette_->defaultForeground()) 
+                               .setBg(palette_->defaultBackground())
+                               .setFont(Font{})
+                               .setAttributes(Attributes{});
+                    LOG(SEQ) << "font fg bg reset";
 					break;
 				/* Bold / bright foreground. */
 				case 1:
-					state_.cell << state_.cell.font().setBold();
+					state_.cell.setFont(state_.cell.font().setBold());
 					LOG(SEQ) << "bold set";
 					break;
 				/* faint font (light) - won't support for now, though in theory we easily can. */
@@ -1409,88 +1409,88 @@ namespace ui {
 					break;
 				/* Italics */
 				case 3:
-					state_.cell << state_.cell.font().setItalics();
+					state_.cell.setFont(state_.cell.font().setItalics());
 					LOG(SEQ) << "italics set";
 					break;
 				/* Underline */
 				case 4:
-                    state_.cell += Attributes::Underline();
+                    state_.cell.setAttributes(state_.cell.attributes().setUnderline());
 					LOG(SEQ) << "underline set";
 					break;
 				/* Blinking text */
 				case 5:
-                    state_.cell += Attributes::Blink();
+                    state_.cell.setAttributes(state_.cell.attributes().setBlink());
 					LOG(SEQ) << "blink set";
 					break;
 				/* Inverse and inverse off */
 				case 7:
 				case 27: {
-                    Color bg = state_.cell.foreground();
-                    Color fg = state_.cell.background();
-                    state_.cell << Foreground(fg) << DecorationColor(fg) << Background(bg); 
+                    Color fg = state_.cell.fg();
+                    Color bg = state_.cell.bg();
+                    state_.cell.setFg(bg).setDecoration(bg).setBg(fg);
 					LOG(SEQ) << "toggle inverse mode";
 					break;
                 }
 				/* Strikethrough */
 				case 9:
-                    state_.cell += Attributes::Strikethrough();
+                    state_.cell.setAttributes(state_.cell.attributes().setStrikethrough());
 					LOG(SEQ) << "strikethrough";
 					break;
 				/* Bold off */
 				case 21:
-					state_.cell << state_.cell.font().setBold(false);
+					state_.cell.setFont(state_.cell.font().setBold(false));
 					LOG(SEQ) << "bold off";
 					break;
 				/* Normal - neither bold, nor faint. */
 				case 22:
-					state_.cell << state_.cell.font().setBold(false).setItalics(false);
+					state_.cell.setFont(state_.cell.font().setBold(false).setItalics(false));
 					LOG(SEQ) << "normal font set";
 					break;
 				/* Italics off. */
 				case 23:
-					state_.cell << state_.cell.font().setItalics(false);
+					state_.cell.setFont(state_.cell.font().setItalics(false));
 					LOG(SEQ) << "italics off";
 					break;
 				/* Disable underline. */
 				case 24:
-                    state_.cell -= Attributes::Underline();
+                    state_.cell.setAttributes(state_.cell.attributes().setUnderline(false));
 					LOG(SEQ) << "undeline off";
 					break;
 				/* Disable blinking. */
 				case 25:
-                    state_.cell -= Attributes::Blink();
+                    state_.cell.setAttributes(state_.cell.attributes().setBlink(false));
 					LOG(SEQ) << "blink off";
 					break;
 				/* Disable strikethrough. */
 				case 29:
-                    state_.cell -= Attributes::Strikethrough();
+                    state_.cell.setAttributes(state_.cell.attributes().setStrikethrough(false));
 					LOG(SEQ) << "Strikethrough off";
 					break;
 				/* 30 - 37 are dark foreground colors, handled in the default case. */
 				/* 38 - extended foreground color */
 				case 38: {
                     Color fg = parseSGRExtendedColor(seq, i);
-                    state_.cell << Foreground(fg) << DecorationColor(fg);    
+                    state_.cell.setFg(fg).setDecoration(fg);    
 					LOG(SEQ) << "fg set to " << fg;
 					break;
                 }
 				/* Foreground default. */
 				case 39:
-                    state_.cell << Foreground(palette_->defaultForeground())
-                                << DecorationColor(palette_->defaultForeground());
+                    state_.cell.setFg(palette_->defaultForeground())
+                               .setDecoration(palette_->defaultForeground());
 					LOG(SEQ) << "fg reset";
 					break;
 				/* 40 - 47 are dark background color, handled in the default case. */
 				/* 48 - extended background color */
 				case 48: {
                     Color bg = parseSGRExtendedColor(seq, i);
-                    state_.cell << Background(bg);    
+                    state_.cell.setBg(bg);    
 					LOG(SEQ) << "bg set to " << bg;
 					break;
                 }
 				/* Background default */
 				case 49:
-					state_.cell << Background(palette_->defaultBackground());
+					state_.cell.setBg(palette_->defaultBackground());
 					LOG(SEQ) << "bg reset";
 					break;
 				/* 90 - 97 are bright foreground colors, handled in the default case. */
@@ -1500,18 +1500,18 @@ namespace ui {
                         int colorIndex = seq[i] - 30;
                         if (boldIsBright_ && state_.cell.font().bold())
                             colorIndex += 8;
-						state_.cell << Foreground(palette_->at(colorIndex))
-                                    << DecorationColor(palette_->at(colorIndex));
+						state_.cell.setFg(palette_->at(colorIndex))
+                                   .setDecoration(palette_->at(colorIndex));
 						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 30);
 					} else if (seq[i] >= 40 && seq[i] <= 47) {
-						state_.cell << Background(palette_->at(seq[i] - 40));
+						state_.cell.setBg(palette_->at(seq[i] - 40));
 						LOG(SEQ) << "bg set to " << palette_->at(seq[i] - 40);
 					} else if (seq[i] >= 90 && seq[i] <= 97) {
-						state_.cell << Foreground(palette_->at(seq[i] - 82))
-                                    << DecorationColor(palette_->at(seq[i] - 82));
+						state_.cell.setFg(palette_->at(seq[i] - 82))
+                                   .setDecoration(palette_->at(seq[i] - 82));
 						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 82);
 					} else if (seq[i] >= 100 && seq[i] <= 107) {
-						state_.cell << Background(palette_->at(seq[i] - 92));
+						state_.cell.setBg(palette_->at(seq[i] - 92));
 						LOG(SEQ) << "bg set to " << palette_->at(seq[i] - 92);
 					} else {
 						LOG(SEQ_UNKNOWN) << "Invalid SGR code: " << seq;
@@ -1680,7 +1680,7 @@ namespace ui {
              */
             case '3':
                 state_.doubleHeightTopLine = true;
-                state_.cell << state_.cell.font().setSize(1).setDoubleWidth(false);
+                state_.cell.setFont(state_.cell.font().setSize(1).setDoubleWidth(false));
                 break;
             /* DECDHL - double height line, bottom half
 
@@ -1688,19 +1688,19 @@ namespace ui {
              */
             case '4':
                 state_.doubleHeightTopLine = false;
-                state_.cell << state_.cell.font().setSize(2).setDoubleWidth(false);
+                state_.cell.setFont(state_.cell.font().setSize(2).setDoubleWidth(false));
                 break;
             /* DECSWL - single width line (default)
              */
             case '5':
                 state_.doubleHeightTopLine = false;
-                state_.cell << state_.cell.font().setDoubleWidth(false).setSize(1);
+                state_.cell.setFont(state_.cell.font().setDoubleWidth(false).setSize(1));
                 break;
             /* DECDWL - double width line
              */
             case '6':
                 state_.doubleHeightTopLine = false;
-                state_.cell << state_.cell.font().setDoubleWidth().setSize(1);
+                state_.cell.setFont(state_.cell.font().setDoubleWidth().setSize(1));
                 break;
             /* DECALN which fills terminal with chars so that screen on VT100 could be aligned. 
              */
@@ -1773,7 +1773,7 @@ namespace ui {
         while (buffer_.cursor().pos.x >= c) {
             buffer_.cursor().pos.x -= c;
             if (++buffer_.cursor().pos.y == state_.scrollEnd) {
-                deleteLines(1, state_.scrollStart, state_.scrollEnd, Cell(state_.cell) << Attributes());
+                deleteLines(1, state_.scrollStart, state_.scrollEnd, Cell(state_.cell).setAttributes(Attributes{}));
                 --buffer_.cursor().pos.y;
             }
         }
@@ -1952,7 +1952,7 @@ namespace ui {
 			Cell* row = cells_[stopRow];
 			int i = 0;
 			for (; i < cols_; ++i)
-				if (row[i].attributes().endOfLine())
+				if (Terminal::IsEndOfLine(row[i]))
 					break;
 			// we have found the line end
 			if (i < cols_) {
@@ -1974,7 +1974,7 @@ namespace ui {
 				Cell& cell = cells_[y][x];
 				newCells[cursor_.pos.y][cursor_.pos.x] = cell;
 				// if the copied cell is end of line, or if we are at the end of new line, increase the cursor row
-				if (cell.attributes().endOfLine() || ++cursor_.pos.x == newCols) {
+				if (Terminal::IsEndOfLine(cell) || ++cursor_.pos.x == newCols) {
 					++cursor_.pos.y;
 					cursor_.pos.x = 0;
 				}
@@ -1990,7 +1990,7 @@ namespace ui {
 					--cursor_.pos.y;
 				}
 				// if it was new line, skip whatever was afterwards
-				if (cell.attributes().endOfLine())
+				if (Terminal::IsEndOfLine(cell))
 					break;
 			}
 		}

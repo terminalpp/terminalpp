@@ -113,7 +113,7 @@ namespace ui {
         // mark the cell as containing the cursor and update the cursor position with proper coordinates if in range
         Cell * cell = at(cursor.pos);
         if (cell != nullptr) {
-            *cell << cursor;
+            cell->setCursor(true);
             visibleRegion_.root->cursor_.pos = visibleRegion_.translate(cursor.pos);
         }
     }
@@ -154,14 +154,14 @@ namespace ui {
     void Canvas::fill(Cell * cell, Brush const & brush) {
         if (!cell)
             return;
-        *cell << Background(brush.color.blendOver(cell->background()));
+        cell->setBg(brush.color.blendOver(cell->bg()));
         if (brush.fill == helpers::Char::NUL) {
-            *cell << Foreground(brush.color.blendOver(cell->foreground()))
-                << DecorationColor(brush.color.blendOver(cell->decorationColor()));
+            cell->setFg(brush.color.blendOver(cell->fg()))
+                 .setDecoration(brush.color.blendOver(cell->decoration()));
         } else {
-            *cell << brush.fill 
-                << Foreground(brush.fillColor)
-                << brush.fillFont; 
+            cell->setCodepoint(brush.fill) 
+                 .setFg(brush.fillColor)
+                 .setFont(brush.fillFont); 
         }
 
     }
@@ -176,7 +176,7 @@ namespace ui {
             helpers::Char const * c = helpers::Char::At(i, e);
             for (int j = 0; j < fontWidth; ++j) {
                 if (Cell * cell = at(start)) 
-                    *cell << c->codepoint() << Foreground(color) << font;
+                    cell->setCodepoint(c->codepoint()).setFg(color).setFont(font);
                 ++start.x;
             }
 		}
@@ -186,7 +186,7 @@ namespace ui {
         for (int y = rect.top(), ye = rect.bottom(); y < ye; ++y)
             for (int x = rect.left(), xe = rect.right(); x < xe; ++x)
                 if (Cell * cell = at(Point{x, y}))
-                    (*cell) << cell->attributes().setBorderTop(false).setBorderLeft(false).setBorderBottom(false).setBorderRight(false);
+                    cell->setAttributes(cell->attributes().setBorderTop(false).setBorderLeft(false).setBorderBottom(false).setBorderRight(false));
     }
 
     void Canvas::borderRect(Rect const & rect, Color color, bool thick) {
@@ -200,7 +200,7 @@ namespace ui {
         int end = start.x + width;
         for (; start.x < end; ++start.x) {
             if (Cell * cell = at(start)) 
-                (*cell) << BorderColor(color) << (cell->attributes().setBorderTop().setBorderThick(thick));
+                cell->setBorder(color).setAttributes(cell->attributes().setBorderTop().setBorderThick(thick));
         }
     }
 
@@ -208,7 +208,7 @@ namespace ui {
         int end = start.x + width;
         for (; start.x < end; ++start.x) {
             if (Cell * cell = at(start)) 
-                (*cell) << BorderColor(color) << (cell->attributes().setBorderBottom().setBorderThick(thick));
+                cell->setBorder(color).setAttributes(cell->attributes().setBorderBottom().setBorderThick(thick));
         }
     }
 
@@ -216,7 +216,7 @@ namespace ui {
         int end = start.y + height;
         for (; start.y < end; ++start.y) {
             if (Cell * cell = at(start)) 
-                (*cell) << BorderColor(color) << (cell->attributes().setBorderLeft().setBorderThick(thick));
+                cell->setBorder(color).setAttributes(cell->attributes().setBorderLeft().setBorderThick(thick));
         }
     }
 
@@ -224,7 +224,7 @@ namespace ui {
         int end = start.y + height;
         for (; start.y < end; ++start.y) {
             if (Cell * cell = at(start)) 
-                (*cell) << BorderColor(color) << (cell->attributes().setBorderRight().setBorderThick(thick));
+                cell->setBorder(color).setAttributes(cell->attributes().setBorderRight().setBorderThick(thick));
         }
     }
 

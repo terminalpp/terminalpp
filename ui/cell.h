@@ -46,192 +46,89 @@ namespace ui {
 
     }; // ui::Cursor
 
-
+    /** Attributes of a cell. 
+     */
     class Attributes {
-	public:
+    public:
 
-		Attributes():
-		    raw_(0) {
-		}
+        Attributes():
+            raw_{0} {
+        }
 
-		bool empty() {
-			return raw_ == 0;
-		}
+        bool empty() const { return raw_ == 0; }
+        bool emptyDecorations() const { return (raw_ & (UNDERLINE | STRIKETHROUGH | CURLY_UNDERLINE)) == 0; }
+        bool underline() const { return raw_ & UNDERLINE; }
+        bool strikethrough() const { return raw_ & STRIKETHROUGH; }
+        bool curlyUnderline() const { return raw_ & CURLY_UNDERLINE; }
+        bool border() const { return raw_ & (BORDER_LEFT | BORDER_TOP | BORDER_RIGHT | BORDER_BOTTOM); }
+        bool borderLeft() const { return raw_ & BORDER_LEFT; }
+        bool borderTop() const { return raw_ & BORDER_TOP; }
+        bool borderRight() const { return raw_ & BORDER_RIGHT; }
+        bool borderBottom() const {	return raw_ & BORDER_BOTTOM; }
+        bool borderThick() const { return raw_ & BORDER_THICK; }
+        bool blink() const { return raw_ & BLINK; }
 
-		/** Returns true if the attributes contain any of the visible ones.
-		  
-		    I.e. if rendering them is necessary.
-		 */
-		bool emptyDecorations() {
-			return  (raw_ & 0x7eff) == 0; // no end of line, no border above
-		} 
+        bool operator == (Attributes other) const {
+            return raw_ == other.raw_;
+        }
 
-	    bool underline() const {
-			return raw_ & UNDERLINE;
-		}
+        bool operator != (Attributes other) const {
+            return raw_ != other.raw_;
+        }
 
-		bool strikethrough() const {
-			return raw_ & STRIKETHROUGH;
-		}
+        Attributes & setUnderline(bool value = true) { 
+            if (value) raw_ |= UNDERLINE; else raw_ &= ~UNDERLINE;
+            return *this;
+        }
+        Attributes & setStrikethrough(bool value = true) { 
+            if (value) raw_ |= STRIKETHROUGH; else raw_ &= ~STRIKETHROUGH; 
+            return *this;
+        }
+        Attributes & setCurlyUnderline(bool value = true) { 
+            if (value) raw_ |= CURLY_UNDERLINE; else raw_ &= ~CURLY_UNDERLINE; 
+            return *this;
+        }
+        Attributes & setBorderLeft(bool value = true) { 
+            if (value) raw_ |= BORDER_LEFT; else raw_ &= ~BORDER_LEFT; 
+            return *this;
+        }
+        Attributes & setBorderTop(bool value = true) { 
+            if (value) raw_ |= BORDER_TOP; else raw_ &= ~BORDER_TOP; 
+            return *this;
+        }
+        Attributes & setBorderRight(bool value = true) { 
+            if (value) raw_ |= BORDER_RIGHT; else raw_ &= ~BORDER_RIGHT; 
+            return *this;
+        }
+        Attributes & setBorderBottom(bool value = true) { 
+            if (value) raw_ |= BORDER_BOTTOM; else raw_ &= ~BORDER_BOTTOM; 
+            return *this;
+        }
+        Attributes & setBorderThick(bool value = true) { 
+            if (value) raw_ |= BORDER_THICK; else raw_ &= ~BORDER_THICK; 
+            return *this;
+        }
 
-		bool curlyUnderline() const {
-			return raw_ & CURLY_UNDERLINE;
-		}
+        Attributes & setBlink(bool value = true) {
+            if (value) raw_ |= BLINK; else raw_ &= ~BLINK; 
+            return *this;
+        }
 
-		/** Returns true if the cell has any of the borders enabled. 
-		 */
-		bool border() const {
-			return raw_ & (BORDER_LEFT | BORDER_TOP | BORDER_RIGHT | BORDER_BOTTOM);
-		}
+    private:
 
-		bool borderLeft() const {
-			return raw_ & BORDER_LEFT;
-		}
+        static constexpr uint16_t UNDERLINE = 1 << 0;
+        static constexpr uint16_t STRIKETHROUGH = 1 << 1;
+        static constexpr uint16_t CURLY_UNDERLINE = 1 << 2;
+        static constexpr uint16_t BORDER_LEFT = 1 << 3;
+        static constexpr uint16_t BORDER_TOP = 1 << 4;
+        static constexpr uint16_t BORDER_RIGHT = 1 << 5;
+        static constexpr uint16_t BORDER_BOTTOM = 1 << 6;
+        static constexpr uint16_t BORDER_THICK = 1 << 7;
+        static constexpr uint16_t BLINK = 1 << 9;
 
-		bool borderTop() const {
-			return raw_ & BORDER_TOP;
-		}
+        uint16_t raw_;
+    }; 
 
-		bool borderRight() const {
-			return raw_ & BORDER_RIGHT;
-		}
-
-		bool borderBottom() const {
-			return raw_ & BORDER_BOTTOM;
-		}
-
-		bool borderThick() const {
-			return raw_ & BORDER_THICK;
-		}
-
-		bool blink() const {
-			return raw_ & BLINK;
-		}
-
-		bool endOfLine() const {
-			return raw_ & END_OF_LINE;
-		}
-
-		bool operator == (Attributes other) const {
-			return raw_ == other.raw_;
-		}
-
-		bool operator != (Attributes other) const {
-			return raw_ != other.raw_;
-		}
-
-		Attributes & setBorderLeft(bool value = true) {
-			if (value)
-			    raw_ |= BORDER_LEFT;
-			else
-			    raw_ &= ~ BORDER_LEFT;
-			return *this;
-		}
-
-		Attributes & setBorderTop(bool value = true) {
-			if (value)
-			    raw_ |= BORDER_TOP;
-			else
-			    raw_ &= ~ BORDER_TOP;
-			return *this;
-		}
-
-		Attributes & setBorderRight(bool value = true) {
-			if (value)
-			    raw_ |= BORDER_RIGHT;
-			else
-			    raw_ &= ~ BORDER_RIGHT;
-			return *this;
-		}
-
-		Attributes & setBorderBottom(bool value = true) {
-			if (value)
-			    raw_ |= BORDER_BOTTOM;
-			else
-			    raw_ &= ~ BORDER_BOTTOM;
-			return *this;
-		}
-
-		Attributes & setBorderThick(bool value = true) {
-			if (value)
-			    raw_ |= BORDER_THICK;
-			else
-			    raw_ &= ~ BORDER_THICK;
-			return *this;
-		}
-
-
-
-		Attributes operator + (Attributes other) const {
-			return Attributes(raw_ | other.raw_);
-		}
-
-		Attributes operator - (Attributes other) const {
-			return Attributes(raw_ & ~other.raw_);
-		}
-
-		static Attributes Underline() {
-			return Attributes(UNDERLINE);
-		}
-
-		static Attributes Strikethrough() {
-			return Attributes(STRIKETHROUGH);
-		}
-
-		static Attributes CurlyUnderline() {
-			return Attributes(CURLY_UNDERLINE);
-		}
-
-		static Attributes BorderLeft() {
-			return Attributes(BORDER_LEFT);
-		}
-
-		static Attributes BorderTop() {
-			return Attributes(BORDER_TOP);
-		}
-
-		static Attributes BorderRight() {
-			return Attributes(BORDER_RIGHT);
-		}
-
-		static Attributes BorderBottom() {
-			return Attributes(BORDER_BOTTOM);
-		}
-
-		static Attributes BorderThick() {
-			return Attributes(BORDER_THICK);
-		}
-
-		static Attributes Blink() {
-			return Attributes(BLINK);
-		}
-
-		static Attributes EndOfLine() {
-			return Attributes(END_OF_LINE);
-		}
-
-	private:
-
-        friend class Cell;
-
-		static constexpr uint16_t UNDERLINE = 1 << 0;
-		static constexpr uint16_t STRIKETHROUGH = 1 << 1;
-		static constexpr uint16_t CURLY_UNDERLINE = 1 << 2;
-		static constexpr uint16_t BORDER_LEFT = 1 << 3;
-		static constexpr uint16_t BORDER_TOP = 1 << 4;
-		static constexpr uint16_t BORDER_RIGHT = 1 << 5;
-		static constexpr uint16_t BORDER_BOTTOM = 1 << 6;
-		static constexpr uint16_t BORDER_THICK = 1 << 7;
-		static constexpr uint16_t BLINK = 1 << 9;
-
-		static constexpr uint16_t END_OF_LINE = 1 << 15;
-
-		Attributes(uint16_t raw):
-		    raw_(raw) {
-		}
-
-	    uint16_t raw_;
-	};
 
     /** Base representation of a single UI cell.  
 
@@ -247,195 +144,177 @@ namespace ui {
 		3 bits remanining (application specific, such as line end, modified, etc)
 
 		TODO add font accessors, 
+
+		codepointAnd
+
 	 */
-    class Cell {
+
+	class Cell {
 	public:
 
 		/** Default cell constructor is white space on black background. 
 		 */
 		Cell():
-			big_{ 0xffffff0000000020, 0xffffffff00000000, 0x0000000000ff0080 } {
-			static_assert(sizeof(Cell) == 24, "Invalid cell size, padding must be adjusted");
+		    codepointAndFont_{0x20},
+			fg_{255,255,255},
+			bg_{0,0,0},
+			decoration_{255,255,255},
+			border_{255,255,255} {
 		}
 
 		Cell(Color fg, Color bg, char32_t codepoint):
-		    Cell() {
-			(*this) << Foreground(fg) << DecorationColor(fg) << Background(bg) << codepoint;
+		    codepointAndFont_{codepoint},
+			decoration_{fg},
+			border_{fg} {
+			setFg(fg);
+			setBg(bg);
 		}
-		    
 
-		/** Returns the codepoint stored in the cell. 
-		 */
 	    char32_t codepoint() const {
-			return small_[0] & 0x1fffff;
-		}
+			return codepointAndFont_ & 0x1fffff;
+	    }
 
-		/** Returns the font of the cell. 
- 		 */
 		Font font() const {
-			return Font(small_[0] >> 24);
-		}
-
-		/** Returns the foreground color of the cell. 
-		 
-		    Note that tghe foreground color's opacity is always 255. 
-		 */
-		Color foreground() const {
-			return Color(small_[1] | 0xff);
-		}
-
-		/** Returns the background color of the cell. 
-		 
-		    Note that the background color's opacity is always 255.
-		 */
-		Color background() const {
-			return Color(small_[2] | 0xff);
-		}
-
-		Color decorationColor() const {
-			return Color(small_[3]);
-		}
-
-		Color borderColor() const {
-			return Color(small_[4]);
+			return helpers::pointer_cast<Font const *>(& codepointAndFont_)[3];
 		}
 
 		Attributes attributes() const {
-			return Attributes(((small_[1] & 0xff) << 8) + (small_[2] & 0xff));
+			return attributes_;
 		}
 
+		Color fg() const {
+			return Color(fg_[0], fg_[1], fg_[2]);
+		}
+
+		Color bg() const {
+			return Color(bg_[0], bg_[1], bg_[2]);
+		}
+
+		Color decoration() const {
+			return decoration_;
+		}
+
+		Color border() const {
+			return border_;
+		}
+
+		Cell & setCodepoint(char32_t codepoint) {
+			codepointAndFont_ &= ~0xffffff; // also erase the reserved bits when codepoint is set
+			codepointAndFont_ |= (codepoint & 0x1fffff);
+			return *this;
+		}
+
+		Cell & setFont(Font font) {
+			helpers::pointer_cast<Font *>(& codepointAndFont_)[3] = font;
+			return *this;
+		}
+
+		Cell & setAttributes(Attributes attrs) {
+			attributes_ = attrs;
+			return *this;
+		}
+
+		Cell & setFg(Color value) {
+			fg_[0] = value.r;
+			fg_[1] = value.g;
+			fg_[2] = value.b;
+			return *this;
+		}
+
+		Cell & setBg(Color value) {
+			bg_[0] = value.r;
+			bg_[1] = value.g;
+			bg_[2] = value.b;
+			return *this;
+		}
+
+		Cell & setDecoration(Color value) {
+			decoration_ = value;
+			return *this;
+		}
+
+		Cell & setBorder(Color value) {
+			border_ = value;
+			return *this;
+		}
+
+		/** \name Reserved bits
+		 
+		    Internally, the cell packs the unicode codepoint and the font information into single 32bit unsigned. This leaves three bits free (21 bits of unicode + 8 bits of font), which are dedicated as reserved and can be used by subclasses.
+			The cell guarantees that copying & setting other things will not interfere with their value and that two cells will be identical only if their reserved bits are the same as well. 
+		 */
+		//@{
+	    bool reserved1() const {
+			return codepointAndFont_ & 0x200000;
+		}
+
+		bool reserved2() const {
+			return codepointAndFont_ & 0x400000;
+		}
+
+		bool reserved3() const {
+			return codepointAndFont_ & 0x800000;
+		}
+
+		Cell & setReserved1(bool value = true) {
+			if (value)
+			    codepointAndFont_ |= 0x200000;
+			else
+			    codepointAndFont_ &= ~0x200000;
+			return *this;
+		}
+
+		Cell & setReserved2(bool value = true) {
+			if (value)
+			    codepointAndFont_ |= 0x400000;
+			else
+			    codepointAndFont_ &= ~0x400000;
+			return *this;
+		}
+
+		Cell & setReserved3(bool value = true) {
+			if (value)
+			    codepointAndFont_ |= 0x800000;
+			else
+			    codepointAndFont_ &= ~0x800000;
+			return *this;
+		}
+		//@}
+
 		bool operator == (Cell const & other) const {
-			return big_[0] == other.big_[0] && big_[1] == other.big_[1] && big_[2] == other.big_[2];
+			return memcmp(this, &other, sizeof(Cell)) == 0;
 		}
 
 		bool operator != (Cell const & other) const {
-			return big_[0] != other.big_[0] || big_[1] != other.big_[1] || big_[2] != other.big_[2];
+			return memcmp(this, &other, sizeof(Cell)) != 0;
 		}
+
+
 
 		/** Returns true if the cells has text cursor in it. 
 		 
 		    Keeping this information in the cell allows easy tracking of whether the cursor should be displayed, or it was overlaid by some other widget and therefore should not be visible. 
+
+			TODO delete when there is better strategy to deal with cursor placement checks
 		 */
 		bool isCursor() const {
 			// we use the first padding bit to determine whether a cursor is at the coordinates or not. 
-			return padding() & PADDING_CURSOR;
+			return reserved3();
 		}
 
-    protected:
-	    static constexpr unsigned PADDING_CURSOR = 1;
-
-	    unsigned padding() const {
-			return small_[0] >> 21 & 0x7;
-		}
-
-		void setPadding(unsigned value) {
-			ASSERT(value <= 7) << "Only three bits of padding are available";
-			small_[0] &= 0xff1fffff;
-			small_[0] |= (value << 21);
+		Cell & setCursor(bool value = true) {
+			return setReserved3(value);
 		}
 
 	private:
-	    static uint16_t AttributesToRaw(Attributes attrs) {
-			return attrs.raw_;
-		}
-
-	    /** Sets the codepoint of the cell. 
- 		 */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, char32_t codepoint) {
-			cell.small_[0] &= 0xff700000;
-			cell.small_[0] |= codepoint & 0x1fffff;
-			return cell;
-		}
-
-		/** Sets the font of the cell. 
- 		 */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, Font font) {
-			cell.small_[0] &= 0xffffff;
-			cell.small_[0] |= (*helpers::pointer_cast<unsigned char *>(&font)) << 24;
-			return cell;
-		}
-
-		/** Foreground color */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, ForegroundColorHolder color) {
-			cell.small_[1] &= 0xff;
-			cell.small_[1] |= (color.value.toRGB() << 8);
-			return cell;
-		}
-
-		/** Background color */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, BackgroundColorHolder color) {
-			cell.small_[2] &= 0xff;
-			cell.small_[2] |= (color.value.toRGB() << 8);
-			return cell;
-		}
-
-		/** Decorations color */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, DecorationColorHolder color) {
-			cell.small_[3] = color.value.toRGBA();
-			return cell;
-		}
-
-		/** Border color */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, BorderColorHolder color) {
-			cell.small_[4] = color.value.toRGBA();
-			return cell;
-		}
-
-		/** Sets the attributes of the cell. 
-    	 */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, Attributes attr) {
-			cell.small_[1] &= 0xffffff00;
-			cell.small_[2] &= 0xffffff00;
-			cell.small_[1] |= (Cell::AttributesToRaw(attr) >> 8);
-			cell.small_[2] |= (Cell::AttributesToRaw(attr) & 0xff);
-			return cell;
-		}
-
-		/** Sets the attributes of the cell. 
-    	 */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &&>::type operator << (CELL && cell, Attributes attr) {
-			cell.small_[1] &= 0xffffff00;
-			cell.small_[2] &= 0xffffff00;
-			cell.small_[1] |= (Cell::AttributesToRaw(attr) >> 8);
-			cell.small_[2] |= (Cell::AttributesToRaw(attr) & 0xff);
-			return std::move(cell);
-		}
-
-		/** Adds given attributes to the cell
-    	 */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator += (CELL & cell, Attributes attr) {
-			cell << (cell.attributes() + attr);
-			return cell;
-		}
-
-		/** Removes given attributes to the cell
-    	 */
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator -= (CELL & cell, Attributes attr) {
-			cell << (cell.attributes() - attr);
-			return cell;
-		}
-
-		template<typename CELL>
-		friend typename std::enable_if<std::is_base_of<Cell, CELL>::value, CELL &>::type operator << (CELL & cell, Cursor const & cursor) {
-			MARK_AS_UNUSED(cursor);
-			cell.setPadding(cell.padding() | PADDING_CURSOR);
-			return cell;
-		}
-
-	    union {
-			uint64_t big_[3];
-			uint32_t small_[6];
-		};
+	    char32_t codepointAndFont_;
+		Attributes attributes_;
+		uint8_t fg_[3];
+		uint8_t bg_[3];
+		Color decoration_;
+		Color border_;
 	}; // ui::Cell
+
+	static_assert(sizeof(Cell) == 20, "The size of cell is expected to be packed");
 
 } // namespace ui

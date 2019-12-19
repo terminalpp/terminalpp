@@ -9,22 +9,22 @@ namespace ui {
 
     class Color {
     public:
-		uint8_t alpha;
-		uint8_t blue;
-		uint8_t green;
-		uint8_t red;
+		uint8_t a;
+		uint8_t b;
+		uint8_t g;
+		uint8_t r;
         
 		/** Creates a color of given properties. 
 		 */
 		constexpr Color(unsigned char red = 0, unsigned char green = 0, unsigned char blue = 0, unsigned char alpha = 255) :
-		    alpha(alpha),
-			blue(blue),
-			green(green),
-			red(red) {
+		    a(alpha),
+			b(blue),
+			g(green),
+			r(red) {
 		}
 
         uint32_t toRGB() const {
-            return (red << 16) + (green << 8) + blue;
+            return (r << 16) + (g << 8) + b;
         };
 
 		uint32_t toRGBA() const {
@@ -32,33 +32,33 @@ namespace ui {
 		}
 
 		Color withAlpha(unsigned char value) const {
-			return Color{red, green, blue, value};
+			return Color{r, g, b, value};
 		}
 
         float floatAlpha() {
-            return static_cast<float>(alpha) / 255.0f;
+            return static_cast<float>(a) / 255.0f;
         }
 
 		/** Returns true if the color is opaque, i.e. its alpha channel is maximized. 
 		 */
 		bool opaque() const {
-			return alpha == 255;
+			return a == 255;
 		}
 
 		/** Bleds the current color oven existing one. 
 		 */
 		Color blendOver(Color const& other) const {
-			if (alpha == 255) {
+			if (a == 255) {
 				return *this;
-			} else if (alpha == 0) {
+			} else if (a == 0) {
 				return other;
-			} else if (other.alpha == 255) {
-				unsigned char a = alpha + 1;
-				unsigned char aInv = static_cast<unsigned char>(256 - alpha);
-				unsigned char r = static_cast<unsigned char>((a * red + aInv * other.red) / 256);
-				unsigned char g = static_cast<unsigned char>((a * green + aInv * other.green) / 256);
-				unsigned char b = static_cast<unsigned char>((a * blue + aInv * other.blue) / 256);
-				return Color(r, g, b, 255);
+			} else if (other.a == 255) {
+				unsigned char aa = a + 1;
+				unsigned char aInv = static_cast<unsigned char>(256 - a);
+				unsigned char rr = static_cast<unsigned char>((aa * r + aInv * other.r) / 256);
+				unsigned char gg = static_cast<unsigned char>((aa * g + aInv * other.g) / 256);
+				unsigned char bb = static_cast<unsigned char>((aa * b + aInv * other.b) / 256);
+				return Color(rr, gg, bb, 255);
 			} else {
 				// TODO we can do this because the color always blends over an existing fully opaque color of the background.If this were not the case, the assert failsand we have to change the algorithm.
 				NOT_IMPLEMENTED;
@@ -66,11 +66,11 @@ namespace ui {
 		}
 
 		bool operator == (Color const & other) const {
-			return red == other.red && green == other.green && blue == other.blue && alpha == other.alpha;
+			return r == other.r && g == other.g && b == other.b && a == other.a;
 		}
 
 		bool operator != (Color const & other) const {
-			return red != other.red || green != other.green || blue != other.blue || alpha != other.alpha;
+			return r != other.r || g != other.g || b != other.b || a != other.a;
 		}
 
 		/** \name Predefined static colors for convenience.
@@ -125,40 +125,8 @@ namespace ui {
     }; 
 
 	inline std::ostream & operator << (std::ostream & s, Color const & c) {
-		s << static_cast<unsigned>(c.red) << ";" << static_cast<unsigned>(c.green) << ";" << static_cast<unsigned>(c.blue);
+		s << static_cast<unsigned>(c.r) << ";" << static_cast<unsigned>(c.g) << ";" << static_cast<unsigned>(c.b) << ";" << static_cast<unsigned>(c.a);
 		return s;
-	}
-
-	struct ForegroundColorHolder {
-	    Color value;
-	};
-
-	struct BackgroundColorHolder {
-	    Color value;
-	};
-
-	struct DecorationColorHolder {
-	    Color value;
-	};
-
-	struct BorderColorHolder {
-	    Color value;
-	};
-
-	inline ForegroundColorHolder Foreground(Color color) {
-		return ForegroundColorHolder{color};
-	}
-
-	inline BackgroundColorHolder Background(Color color) {
-		return BackgroundColorHolder{color};
-	}
-
-	inline DecorationColorHolder DecorationColor(Color color) {
-		return DecorationColorHolder{color};
-	}
-
-	inline BorderColorHolder BorderColor(Color color) {
-		return BorderColorHolder{color};
 	}
 
 } // namespace ui
