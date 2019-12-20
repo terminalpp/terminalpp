@@ -27,8 +27,7 @@ namespace ui {
 
 		ScrollBox() :
 			scrollOffset_{0,0},
-			clientWidth_(width()),
-			clientHeight_(height()),
+			clientSize_{width(), height()},
 		    autoScrollIncrement_{0,0} {
 			autoScrollTimer_.setInterval(50);
 			autoScrollTimer_.setHandler([this]() {
@@ -39,7 +38,7 @@ namespace ui {
 		}
 
 		Rect clientRect() const override {
-			return Rect::FromWH(clientWidth_, clientHeight_);
+			return Rect::FromWH(clientSize_.x, clientSize_.y);
 		}
 
 		/** Returns the visible rectangle. 
@@ -87,9 +86,9 @@ namespace ui {
 		}
 
 		void setClientArea(int clientWidth, int clientHeight) {
-			if (clientWidth_ != clientWidth || clientHeight_ != clientHeight) {
-				clientWidth_ = clientWidth;
-				clientHeight_ = clientHeight;
+			if (clientSize_.x != clientWidth || clientSize_.y != clientHeight) {
+				clientSize_.x = clientWidth;
+				clientSize_.y = clientHeight;
 			}
 		}
 
@@ -99,54 +98,15 @@ namespace ui {
 		}
 
 		void updateSize(int width, int height) override {
-		    setClientArea(std::max(width, clientWidth_), std::max(height, clientHeight_));
+		    setClientArea(std::max(width, clientSize_.x), std::max(height, clientSize_.y));
 		}
 
 		int clientWidth() const {
-			return clientWidth_;
+			return clientSize_.x;
 		}
 
 		int clientHeight() const {
-			return clientHeight_;
-		}
-
-		/** Draws the vertical scrollbar overlay. 
-		 */ 
-		void drawVerticalScrollbarOverlay(Canvas & canvas, Color color, bool thick = false) {
-			canvas.borderClear(Rect::FromCorners(canvas.width() -1, 0, canvas.width(), canvas.height()));
-			// the right line
-			canvas.borderLineRight(Point{canvas.width() - 1, 0}, canvas.height(), color, thick);
-			// calculate the position of the slider
-			std::pair<int, int> slider{sliderPlacement(canvas.height(), clientHeight_, scrollOffset_.y, canvas.height())};
-			canvas.borderLineRight(Point{canvas.width() - 1, slider.first}, slider.second, color, true);
-			if (thick)
-				canvas.borderLineLeft(Point{canvas.width() - 1, slider.first}, slider.second, color, true);
-		}
-
-		/** Draws the horizontal scrollbar overlay. 
-		 */ 
-		void drawHorizontalScrollbarOverlay(Canvas & canvas, Color color, bool thick = false) {
-			canvas.borderClear(Rect::FromCorners(0, canvas.height() - 1, canvas.width(), canvas.height()));
-			// the right line
-			canvas.borderLineBottom(Point{0, canvas.height() - 1}, canvas.width(), color, thick);
-			// calculate the position of the slider
-			std::pair<int, int> slider{sliderPlacement(canvas.width(), clientWidth_, scrollOffset_.x, canvas.width())};
-			canvas.borderLineBottom(Point{slider.first, canvas.height() - 1}, slider.second, color, true);
-			if (thick)
-				canvas.borderLineTop(Point{slider.first, canvas.height() - 1}, slider.second, color, true);
-		}
-
-		std::pair<int, int> sliderPlacement(int maxWidth, int maxVal, int pos, int size) {
-			int sliderSize = std::max(1, size * maxWidth / maxVal);
-			int sliderStart = pos * maxWidth / maxVal;
-			// make sure that slider starts at the top only if we are really at the top
-			if (sliderStart == 0 && pos != 0)
-			    sliderStart = 1;
-			if (pos + size == maxVal)
-			    sliderStart = maxWidth - sliderSize;
-			else
-			    sliderStart = std::min(sliderStart, maxWidth - sliderSize);
-			return std::make_pair(sliderStart, sliderSize);
+			return clientSize_.y;
 		}
 
 		/** Returns the maximum reasonable values for the scroll offset. 
@@ -207,12 +167,35 @@ namespace ui {
 			// do nothing
 		}
 
+        /** Returns the start and length of a vertical scrollbar. 
+         */
+        std::pair<int, int> verticalScrollbar(int length) {
+            return ScrollBarDimensions(length, clientSize_.y, scrollOffset_.y);
+        }
+
+        /** Returns the start and length of a horizontal scrollbar. 
+         */
+        std::pair<int, int> horizontalScrollbar(int length) {
+            return ScrollBarDimensions(length, clientSize_.x, scrollOffset_.x);
+        }		
+
 	private:
+
+        static std::pair<int, int> ScrollBarDimensions(int length, int max, int offset) {
+            int sliderSize = std::max(1, length * length / max);
+            int sliderStart = (offset + length == max) ? (length - sliderSize) : (offset * length / max);
+			// make sure that slider starts at the top only if we are really at the top
+			if (sliderStart == 0 && offset != 0)
+			    sliderStart = 1;
+            // if the slider would go beyond the length, adjust the slider start
+            if (sliderStart + sliderSize > length)
+                sliderStart = length - sliderSize;
+            return std::make_pair(sliderStart, sliderSize);
+        }	
 
 		Point scrollOffset_;
 
-		int clientWidth_;
-		int clientHeight_;
+		Point clientSize_;
 
         Point autoScrollIncrement_;
 		helpers::Timer autoScrollTimer_;

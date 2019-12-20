@@ -182,7 +182,7 @@ namespace ui {
 		}
 	}
 
-    void Canvas::borderClear(Rect const & rect) {
+    void Canvas::clearBorder(Rect const & rect) {
         for (int y = rect.top(), ye = rect.bottom(); y < ye; ++y)
             for (int x = rect.left(), xe = rect.right(); x < xe; ++x)
                 if (Cell * cell = at(Point{x, y}))
@@ -227,6 +227,15 @@ namespace ui {
                 cell->setBorder(color).setAttributes(cell->attributes().setBorderRight().setBorderThick(thick));
         }
     }
+
+   	void Canvas::drawRightVerticalScrollBar(Point from, int sliderStart, int sliderSize, Color color, bool thick) {
+        clearBorder(Rect::FromCorners(width() - 1, 0, width(), height()));
+        borderLineRight(Point{width() - 1, 0}, height(), color, thick);
+        borderLineRight(Point{width() -1, sliderStart}, sliderSize, color, true);
+        if (thick)
+            borderLineLeft(Point{width() -1, sliderStart}, sliderSize, color, true);
+   }
+
 
 
 

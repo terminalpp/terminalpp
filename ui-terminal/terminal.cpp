@@ -463,8 +463,8 @@ namespace ui {
 
     void Terminal::paint(Canvas & canvas) {
         // determine the client canvas - either the proper client canvas if scrolling is available, or the child canvas
-        Canvas clientCanvas{scrollable_ ? getClientCanvas(canvas) : canvas};
-        int terminalOffset = scrollable_ ? static_cast<int>(history_.size()) : 0;
+        Canvas clientCanvas{getClientCanvas(canvas)};
+        int terminalOffset = static_cast<int>(history_.size());
         // draw the terminal if it is visible
         if (! scrollable_ || scrollOffset().y + height() > terminalOffset ) {
             Buffer::Ptr buffer = this->buffer(/* priority */true);
@@ -473,7 +473,7 @@ namespace ui {
             clientCanvas.setCursor(buffer->cursor() + Point{0, terminalOffset});
         }
         // if the terminal is scrollable, and there is any history, the scrollbar must be drawn and the history (if there is any visible)
-        if (scrollable_ && history_.size() > 0) {
+        if (history_.size() > 0) {
            ASSERT(clientCanvas.height() == terminalOffset + height());
            for (int i = scrollOffset().y; i < terminalOffset; ++i) {
                clientCanvas.fill(Rect::FromCorners(0, i, width(), i + 1), defaultBackground());
@@ -481,7 +481,12 @@ namespace ui {
                for (int col = 0, ce = history_[i].first; col < ce; ++col)
                    clientCanvas.set(Point{col, i}, row[col]);
            }
-           drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? Color::Red.withAlpha(128) : Color::White.withAlpha(64), scrollBarActive_);
+           if (scrollable_) {
+                std::pair<int, int> slider{verticalScrollbar(canvas.height())};
+                canvas.drawRightVerticalScrollBar(Point{canvas.width() - 1, 0}, slider.first, slider.second, scrollBarActive_ ? Color::Red.withAlpha(128) : Color::White.withAlpha(64), scrollBarActive_);           
+           }
+
+           //drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? Color::Red.withAlpha(128) : Color::White.withAlpha(64), scrollBarActive_);
         }
         // paint the selection, if any
         paintSelection(clientCanvas, Color{128,128,192,128});
@@ -501,7 +506,7 @@ namespace ui {
         }
         if (modifiers == 0) {
             if (button == MouseButton::Left) {
-                startSelection(Point{col, row});
+                startSelection(Point{col, row} + scrollOffset());
             } else if (button == MouseButton::Wheel) {
                 requestSelectionContents(); 
             } else if (button == MouseButton::Right && ! selection().empty()) {

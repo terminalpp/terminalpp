@@ -79,7 +79,7 @@ namespace ui {
          
             Disables the top, left, bottom and right borders, but leaves border color and thickness unchanged. 
          */
-        void borderClear(Rect const & rect);
+        void clearBorder(Rect const & rect);
 
         /** Draws border around the specified rectangle with given color & thickness. 
          */
@@ -90,6 +90,8 @@ namespace ui {
 
         void borderLineLeft(Point start, int height, Color color, bool thick = false);
         void borderLineRight(Point start, int height, Color color, bool thick = false);
+
+        void drawRightVerticalScrollBar(Point from, int sliderStart, int sliderSize, Color color, bool thick = false);
 
         /** Copies the given buffer to specified coordinates. 
          

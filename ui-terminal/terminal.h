@@ -192,9 +192,6 @@ namespace ui {
         using Widget::setFocusIndex;
         using Widget::setEnabled;
 
-
-
-
         // log levels
 
         static helpers::Log SEQ;
@@ -369,7 +366,6 @@ namespace ui {
             Widget::updateFocused(value);
             repaint();
         }
-
 
         void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
         void mouseUp(int col, int row, MouseButton button, Key modifiers) override;
