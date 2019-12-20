@@ -45,6 +45,22 @@ namespace ui {
             return height_;
         }
 
+        // TODO replace these with proper functions that actually do as expected
+
+        /** Updates the size of the canvas without adjusting its visible region at all. 
+         */
+        void updateRect(Rect const & rect) {
+            width_ = rect.width();
+            height_ = rect.height();
+        }
+
+        /** Scrolls the canvas, i.e. moves the visible region by the given offset. 
+         */
+        void scroll(Point offset) {
+            visibleRegion_.region += offset;
+        }
+
+
         /** Sets the cursor to gievn behavior and position. 
          
             Marks the cell at cursor's position to contain the cursor and updates the cursor definition in the root window to the provided cursor info and translated coordinates. Having the cursor position both in the cursor info and the cell itself has the benefit of quickly checking whether the cursor is visible or has been overriden by other contents.
@@ -91,7 +107,7 @@ namespace ui {
         void borderLineLeft(Point start, int height, Color color, bool thick = false);
         void borderLineRight(Point start, int height, Color color, bool thick = false);
 
-        void drawRightVerticalScrollBar(Point from, int sliderStart, int sliderSize, Color color, bool thick = false);
+        void drawRightVerticalScrollBar(Point from, int size, int sliderStart, int sliderSize, Color color, bool thick = false);
 
         /** Copies the given buffer to specified coordinates. 
          
@@ -175,19 +191,6 @@ namespace ui {
         };
 
         Canvas(VisibleRegion const & visibleRegion, int width, int height);
-
-        /** Updates the size of the canvas without adjusting its visible region at all. 
-         */
-        void updateRect(Rect const & rect) {
-            width_ = rect.width();
-            height_ = rect.height();
-        }
-
-        /** Scrolls the canvas, i.e. moves the visible region by the given offset. 
-         */
-        void scroll(Point offset) {
-            visibleRegion_.region += offset;
-        }
 
         /** Fills given cell, if exists with given brush. 
          */

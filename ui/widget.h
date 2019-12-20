@@ -237,25 +237,6 @@ namespace ui {
 			return Rect::FromWH(width_, height_);
 		}
 
-		/** The rectange presented to the children. 
-		 
-		    Can be bigger, or even smaller than the childRect dimensions.
-
-			The default implementation is the magnitude of the childRect. 
-
-			TODO can it be non-negative too? I think yes... 
-		 */
-		virtual Rect clientRect() const {
-			Rect r{childRect()};
-			return Rect::FromWH(r.width(), r.height());
-		}
-
-		/** Returns the rectangle visible when scrolling position is taken into account. 
-		 */
-		virtual Point scrollOffset() const {
-			return Point{0,0};
-		}
-
 		Layout::SizeHint widthHint() const {
 			return widthHint_;
 		}
@@ -458,19 +439,6 @@ namespace ui {
 		    Expects the clientCanvas of the parent as the second argument. In cases where border is 0, this can be the widget's main canvas as well. In other cases the getClientCanvas method should be used to obtain the client canvas first. 
 		 */
 		void paintChild(Widget * child, Canvas& clientCanvas);
-
-		/** Given a canvas for the full widget, returns a canvas for the client area only. 
-		 
-		    First creates the canvas for the child
-		 */
-		Canvas getClientCanvas(Canvas& canvas) {
-			// create the child canvas
-			Canvas result{canvas, childRect()};
-			// resize the canvas and offset it
-			result.updateRect(clientRect());
-			result.scroll(scrollOffset());
-			return result;
-		} 
 
 		/** Invalidates the widget and request its parent repaint,
 

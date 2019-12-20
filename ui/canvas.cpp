@@ -228,15 +228,12 @@ namespace ui {
         }
     }
 
-   	void Canvas::drawRightVerticalScrollBar(Point from, int sliderStart, int sliderSize, Color color, bool thick) {
-        clearBorder(Rect::FromCorners(width() - 1, 0, width(), height()));
-        borderLineRight(Point{width() - 1, 0}, height(), color, thick);
-        borderLineRight(Point{width() -1, sliderStart}, sliderSize, color, true);
+   	void Canvas::drawRightVerticalScrollBar(Point from, int size,  int sliderStart, int sliderSize, Color color, bool thick) {
+        clearBorder(Rect::FromCorners(from.x, 0, from.x + 1, size));
+        borderLineRight(Point{from.x, 0}, size, color, thick);
+        borderLineRight(Point{from.x, sliderStart}, sliderSize, color, true);
         if (thick)
-            borderLineLeft(Point{width() -1, sliderStart}, sliderSize, color, true);
+            borderLineLeft(Point{from.x, sliderStart}, sliderSize, color, true);
    }
-
-
-
 
 } // namespace ui

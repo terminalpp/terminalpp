@@ -350,6 +350,7 @@ namespace ui {
 
 
     Terminal::Terminal(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize):
+        Scrollable{width, height},
         state_{width, height, palette->defaultForeground(), palette->defaultBackground()},
         mouseMode_{MouseMode::Off},
         mouseEncoding_{MouseEncoding::Default},
@@ -456,14 +457,13 @@ namespace ui {
         resizeHistory(width);
         pty_->resize(width, height);
         // resize the client canvas
-        setClientArea(width, buffer_.rows() + static_cast<int>(history_.size())); 
-        ScrollBox::updateSize(width, height);
+        setClientSize(Point{width, buffer_.rows() + static_cast<int>(history_.size())}); 
         Widget::updateSize(width, height);
     }
 
     void Terminal::paint(Canvas & canvas) {
         // determine the client canvas - either the proper client canvas if scrolling is available, or the child canvas
-        Canvas clientCanvas{getClientCanvas(canvas)};
+        Canvas clientCanvas{getChildrenCanvas(canvas)};
         int terminalOffset = static_cast<int>(history_.size());
         // draw the terminal if it is visible
         if (! scrollable_ || scrollOffset().y + height() > terminalOffset ) {
@@ -483,7 +483,7 @@ namespace ui {
            }
            if (scrollable_) {
                 std::pair<int, int> slider{verticalScrollbar(canvas.height())};
-                canvas.drawRightVerticalScrollBar(Point{canvas.width() - 1, 0}, slider.first, slider.second, scrollBarActive_ ? Color::Red.withAlpha(128) : Color::White.withAlpha(64), scrollBarActive_);           
+                canvas.drawRightVerticalScrollBar(Point{canvas.width() - 1, 0}, canvas.height(), slider.first, slider.second, scrollBarActive_ ? Color::Red.withAlpha(128) : Color::White.withAlpha(64), scrollBarActive_);           
            }
 
            //drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? Color::Red.withAlpha(128) : Color::White.withAlpha(64), scrollBarActive_);
@@ -540,22 +540,30 @@ namespace ui {
             LOG(SEQ) << "Wheel offset " << by << " at " << col << ";" << row;
         }
         if (scrollable_ && ! history_.empty()) {
-            scrollBy(Point{0,-by});
+            setScrollOffset(scrollOffset() - Point{0, by});
             repaint();
         } 
         Widget::mouseWheel(col, row, by, modifiers);
     }
 
     void Terminal::mouseMove(int col, int row, Key modifiers) {
-        if (mouseMode_ != MouseMode::Off && (mouseMode_ != MouseMode::ButtonEvent || mouseButtonsDown_ != 0)) {
-            // mouse move adds 32 to the last known button press
-            sendMouseEvent(mouseLastButton_ + 32, col, row, 'M');
-            LOG(SEQ) << "Mouse moved to " << col << ";" << row;
+        if (mouseMode_ != MouseMode::Off 
+            && (mouseMode_ != MouseMode::ButtonEvent || mouseButtonsDown_ != 0)
+            // only send the mouse information if the mouse is in the range of the window
+            && col >= 0 && row >= 0 && col < width() && row < height()) {
+                // mouse move adds 32 to the last known button press
+                sendMouseEvent(mouseLastButton_ + 32, col, row, 'M');
+                LOG(SEQ) << "Mouse moved to " << col << ";" << row;
         }
         if (modifiers == 0) {
             if (updatingSelection()) {
-                updateSelection(Point{col, row} + scrollOffset(), Point{clientWidth(), clientHeight()});
-                calculateVerticalAutoScroll(col, row);
+                updateSelection(Point{col, row} + scrollOffset(), clientSize());
+                if (scrollable_) {
+                    if (row < 0 || row >= height()) 
+                        startAutoScroll(Point{0, row < 0 ? -1 : 1});
+                    else 
+                        stopAutoScroll();
+                }
             }
             bool x = col == width() - 1;
             if (x != scrollBarActive_) {
@@ -1342,6 +1350,8 @@ namespace ui {
 				 */
 				case 47:
 				case 1049:
+                    // stop autoscrolling so that we don't scroll the alternate buffer at all
+                    stopAutoScroll();
 					if (value) {
 						// flip to alternate buffer and clear it
 						if (!alternateBufferMode_) {

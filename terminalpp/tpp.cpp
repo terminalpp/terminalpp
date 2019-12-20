@@ -30,7 +30,6 @@
 
 #include "ui/widgets/panel.h"
 #include "ui/widgets/label.h"
-#include "ui/widgets/scrollbox.h"
 #include "ui/builders.h"
 #include "ui/layout.h"
 

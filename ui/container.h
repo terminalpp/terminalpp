@@ -76,6 +76,12 @@ namespace ui {
 			}
 		}
 
+		virtual Canvas getChildrenCanvas(Canvas & canvas) {
+			// create the child canvas
+			Canvas result{canvas, childRect()};
+			return result;
+		}
+
 		virtual void setChildGeometry(Widget* child, int x, int y, int width, int height) {
 			if (child->x() != x || child->y() != y) {
 				if (child->visibleRegion_.valid)

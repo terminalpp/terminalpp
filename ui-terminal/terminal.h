@@ -11,8 +11,8 @@
 #include "ui/canvas.h"
 #include "ui/widget.h"
 #include "ui/selection.h"
+#include "ui/scrollable.h"
 #include "ui/builders.h"
-#include "ui/widgets/scrollbox.h"
 
 #include "tpp-lib/sequence.h"
 
@@ -22,7 +22,6 @@
 
     \section vtermHistory Terminal History
 */
-
 
 namespace ui {
 
@@ -65,7 +64,10 @@ namespace ui {
      
         Should this be named differently? 
      */
-    class Terminal : public ScrollBox, public SelectionOwner<Terminal> {
+    class Terminal : public Widget, 
+                     public Scrollable<Terminal>, 
+                     public AutoScroller<Terminal>,
+                     public SelectionOwner<Terminal> {
     public:
 
         class PTY;
@@ -304,14 +306,6 @@ namespace ui {
             alternateBuffer_.cursor().inactiveBlink = value.inactiveBlink;
         }
 
-        Point scrollOffset() const override {
-            return ScrollBox::scrollOffset();
-        }
-
-        Rect clientRect() const override {
-            return ScrollBox::clientRect();
-        }
-
         void repaint() override {
             repaint_ = true;
         }
@@ -320,6 +314,8 @@ namespace ui {
         class CSISequence;
 
         class OSCSequence;
+
+        using Scrollable<Terminal>::getChildrenCanvas;
 
         Color defaultForeground() const;
         Color defaultBackground() const;
@@ -385,13 +381,6 @@ namespace ui {
         void keyUp(Key key) override;
         void paste(std::string const & contents) override;
 
-        /** Updates the selection when autoscroll is activated. 
-         */
-        void autoScrollStep() override {
-            Point m = getMouseCoordinates();
-            updateSelection(m.x, m.y);
-        }
-
         /** Returns the contents of the selection. 
          
             Trims the right of each line.
@@ -423,7 +412,7 @@ namespace ui {
         /** Updates the client rectangle based on the history size and terminal height. 
          */
         void updateClientRect() {
-            setClientArea(width(), buffer_.rows() + static_cast<int>(history_.size())); 
+            setClientSize(Point{width(), buffer_.rows() + static_cast<int>(history_.size())}); 
         }
 
         /** Enables or disables showing the terminal history. 
