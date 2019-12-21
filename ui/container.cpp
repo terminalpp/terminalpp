@@ -68,8 +68,20 @@ namespace ui {
 			relayout_ = false;
 		}
 		// display the children
-		for (Widget* child : children())
-			paintChild(child, clientCanvas);
+		for (Widget* child : children()) {
+			if (!child->visible_)
+			    continue;
+			// get the child canvas and don't bother drawing if the canvas has empty visible region
+			Canvas childCanvas{clientCanvas};
+			childCanvas.clip(child->rect());
+			//Canvas childCanvas(clientCanvas, child->rect());
+			if (childCanvas.visibleRect_.empty())
+			    continue;
+			// otherwise update the child's visible rectangle
+			child->visibleRect_ = childCanvas.visibleRect_;
+			// finally, paint the child
+			child->paint(childCanvas);
+		}
 	}
 
 	void Container::updateOverlay(bool value) {

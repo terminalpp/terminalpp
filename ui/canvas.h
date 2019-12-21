@@ -25,17 +25,48 @@ namespace ui {
         /* Backing buffer. */
         class Buffer;
 
-        /** Given existing canvas, creates a canvas encompassing the given subset of the original canvas. 
-         */
-        //Canvas(Canvas & from, int left, int top, int width, int height);
+        Canvas(Widget const * widget);
 
-        Canvas(Canvas & from, Rect subset);
 
-        Canvas(Canvas const & from);
+	    /** Copy constructor. 
+		 
+		    Increases the buffer's lock depth. 
+		 */
+		Canvas(Canvas const & from);
 
-        //Canvas(Canvas && from);
+		/** Destructor. 
+		 
+		    If this is the last canvas to be destroyed for the given buffer, informs the root window that the visible rectangle should be updated. Otherwise just decreases the buffer's lock depth.
+		 */
+		~Canvas();
 
-        ~Canvas();
+		/** Clips the canvas to a given rectangle. 
+		 
+		    Adjusts the visible rectangle accordingly.
+		 */
+	    Canvas & clip(Rect const & rect);
+
+		/** \name Resizes the canvas to given width and height. 
+		  
+		    If the new size is smaller, the visible rectangle may be clipped, or even become empty.  
+		 */
+		//@{
+		Canvas & resize(int width, int height);
+		Canvas & resize(Point const & dimensions) {
+			return resize(dimensions.x, dimensions.y);
+		}
+		//@}
+		
+		/** \name Moves the visible rectangle by the given offset. 
+		  
+		    If scrolled outside of the canvas itself, the visible rectangle is clipped.
+		 */
+		//@{
+		Canvas & scrollBy(int x, int y) {
+			return scrollBy(Point{x, y});
+		}
+		Canvas & scrollBy(Point const & offset);
+		//@}
 
         int width() const {
             return width_;
@@ -44,22 +75,6 @@ namespace ui {
         int height() const {
             return height_;
         }
-
-        // TODO replace these with proper functions that actually do as expected
-
-        /** Updates the size of the canvas without adjusting its visible region at all. 
-         */
-        void updateRect(Rect const & rect) {
-            width_ = rect.width();
-            height_ = rect.height();
-        }
-
-        /** Scrolls the canvas, i.e. moves the visible region by the given offset. 
-         */
-        void scroll(Point offset) {
-            visibleRegion_.region += offset;
-        }
-
 
         /** Sets the cursor to gievn behavior and position. 
          
@@ -128,69 +143,103 @@ namespace ui {
 
     private:
         friend class Widget;
+        friend class Container;
         friend class RootWindow;
 
+        /** Description of the visible rectangle of a canvas. 
+		 */
+		class VisibleRect {
+		public:
 
-        /** Determines the visible region of the canvas, i.e. the part of the canvas that is backed by the root window's buffer. 
-         */
-        class VisibleRegion {
-        public:
+			VisibleRect():
+			    rootWindow_{nullptr},
+				valid_{false},
+				rect_{Rect::Empty()} {
+			}
 
-            /** Link to the root window which contains the buffer. */
-            RootWindow * root;
+			VisibleRect(Rect const & rect, Point const & bufferOffset, RootWindow * root):
+			    rootWindow_(root),
+				valid_(true),
+				rect_(rect),
+				bufferOffset_(bufferOffset) {
+			}
+
+		    bool empty() const {
+				ASSERT(valid_);
+				return rect_.width() == 0 || rect_.height() == 0;
+			}
+
+			bool valid() const {
+				return valid_;
+			}
+
+            // TODO this should die !!!!
+            bool contains(int x, int y) const {
+                return rect_.contains(Point{x, y});
+            }
+
+            // TODO this should die too I think. 
+            // takes root window's coordinates and converts them to widget's coordinates 
+            void toWidgetCoordinates(int & col, int & row) const {
+                col = col - bufferOffset_.x + rect_.left();
+                row = row - bufferOffset_.y + rect_.top();
+            }
+
+			/** Invalidates the visible rectangle. 
+			 
+			    A canvas cannot be created from an invalid rectangle. 
+			 */
+			void invalidate() {
+				valid_ = false;
+			}
+
+			/** Detaches the rectange.
+			 
+			    Invalidates the rectangle and clears the root window information. 
+			 */
+			void detach() {
+				valid_ = false;
+				rootWindow_ = nullptr;
+				rect_ = Rect::Empty();
+			}
+
+			RootWindow * rootWindow() const {
+				return rootWindow_;
+			}
+
+			/** Returns the rectangle in root window coordinates. 
+			 
+			    These are the direct indices to the buffer. 
+			 */
+			Rect rootWindowRectangle() const {
+				return rect_ + bufferOffset_;
+			}
+
+			bool operator == (VisibleRect const & other) const {
+				return rootWindow_ == other.rootWindow_ && rect_ == other.rect_ && bufferOffset_ == other.bufferOffset_ && valid_ == other.valid_;
+			}
+
+			bool operator != (VisibleRect const & other) const {
+				return rootWindow_ != other.rootWindow_ || rect_ != other.rect_ || bufferOffset_ != other.bufferOffset_ || valid_ != other.valid_;
+			}
+
+		private:
+		    friend class Canvas;
+			friend class TestCanvasAccessor;
+
+		    RootWindow * rootWindow_;
+			bool valid_;
 
             /** Visible region of the canvas in canvas' coordinates.
               
                 All coordinates of the region are expected to be positive. 
              */
-            Rect region;
+			Rect rect_;
 
             /** Offset of the top-left corner of the region in root window's coordinates.
              */
-            Point windowOffset;
-
-            /** Determines whether the visible region is valid or not. 
-             */
-            bool valid;
-
-			VisibleRegion() :
-				root{nullptr},
-				region{Rect::FromWH(0, 0)},
-				windowOffset{0, 0},
-                valid{false} {
-			}
-
-            VisibleRegion(RootWindow * root);
-
-            //VisibleRegion(VisibleRegion const & from, int left, int top, int width, int height);
-
-            VisibleRegion(VisibleRegion const & from, Rect subset);
-
-			/** Returns the given point in canvas coordinates translated to the screen coordinates. 
-			 */
-			Point translate(Point what) {
-				ASSERT(region.contains(what));
-				return Point(
-					(what.x - region.left() + windowOffset.x),
-					(what.y - region.top() + windowOffset.y)
-				);
-			}
-
-			/** Determines whether the visible region contains given screen column and row. 
-			 */
-			bool contains(unsigned col, unsigned row) {
-				if (root == nullptr)
-					return false;
-				if (col < static_cast<unsigned>(windowOffset.x) || row < static_cast<unsigned>(windowOffset.y))
-					return false;
-				if (col >= static_cast<unsigned>(windowOffset.x) + region.width() || row >= static_cast<unsigned>(windowOffset.y + region.height()))
-					return false;
-				return true;
-			}
-
-        };
-
-        Canvas(VisibleRegion const & visibleRegion, int width, int height);
+			Point bufferOffset_;
+		};
 
         /** Fills given cell, if exists with given brush. 
          */
@@ -204,11 +253,10 @@ namespace ui {
         int width_;
         int height_;
 
-        VisibleRegion visibleRegion_;
+        VisibleRect visibleRect_;
 
         Canvas::Buffer & buffer_;
 
-        static Canvas Create(Widget const & widget);
     };
 
 
@@ -306,14 +354,11 @@ namespace ui {
     }; // Canvas::Buffer
 
 
-    inline Cell * Canvas::at(Point p) {
-        // if the coordinates are not in visible region, return nullptr
-        if (!visibleRegion_.region.contains(p))
+	inline Cell * Canvas::at(Point p) {
+        if (visibleRect_.valid() == false || ! visibleRect_.rect_.contains(p))
             return nullptr;
         // otherwise recalculate the coordinates to the screen ones and return the cell
-        return &buffer_.at(visibleRegion_.translate(p));
-    }
-
-
+        return &buffer_.at(p - visibleRect_.rect_.topLeft() + visibleRect_.bufferOffset_);		
+	}
 
 } // namespace ui

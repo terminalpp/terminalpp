@@ -78,18 +78,17 @@ namespace ui {
 
 		virtual Canvas getChildrenCanvas(Canvas & canvas) {
 			// create the child canvas
-			Canvas result{canvas, childRect()};
-			return result;
+			return Canvas(canvas).clip(childRect());			
 		}
 
 		virtual void setChildGeometry(Widget* child, int x, int y, int width, int height) {
 			if (child->x() != x || child->y() != y) {
-				if (child->visibleRegion_.valid)
+				if (child->visibleRect_.valid())
 					child->invalidateContents();
 				child->updatePosition(x, y);
 			}
 			if (child->width() != width || child->height() != height) {
-				if (child->visibleRegion_.valid)
+				if (child->visibleRect_.valid())
 				    child->invalidateContents();
 				child->updateSize(width, height);
 			}
@@ -134,10 +133,10 @@ namespace ui {
 		 
 		 */
 		Widget* getMouseTarget(int col, int row) override {
-			ASSERT(visibleRegion_.contains(col, row));
+			ASSERT(visibleRect_.contains(col, row));
 			// go from rbegin so that greatest z-index widget at given coordinates will be selected
 			for (auto i = children().rbegin(), e = children().rend(); i != e; ++i) {
-				if ((*i)->visible() && (*i)->visibleRegion_.contains(col, row))
+				if ((*i)->visible() && (*i)->visibleRect_.contains(col, row))
 				    return *i;
 			}
 			return this;

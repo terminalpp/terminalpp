@@ -254,10 +254,9 @@ namespace ui {
 			Note that these may be negative, or bigger than the widget itself if the mouse is outside of the widget's area and the mouse target is locked.
 		 */
 		void screenToWidgetCoordinates(Widget const * w, int & col, int & row) {
-			Canvas::VisibleRegion const& wr = w->visibleRegion_;
-            ASSERT(wr.valid) << "An invalid widget is rather bad at receiving mouse coordinates";
-            col = wr.region.left() + (col - wr.windowOffset.x);
-            row = wr.region.top() + (row - wr.windowOffset.y);
+			Canvas::VisibleRect const& wr = w->visibleRect_;
+            ASSERT(wr.valid()) << "An invalid widget is rather bad at receiving mouse coordinates";
+            wr.toWidgetCoordinates(col, row);
 		} 
 
         Widget * getTransitiveMouseTarget(int & col, int & row) {

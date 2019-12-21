@@ -43,10 +43,7 @@ namespace ui {
 	protected:
 
 		Canvas getChildrenCanvas(Canvas & canvas) {
-			Canvas result{canvas, static_cast<T*>(this)->childRect()};
-			result.updateRect(Rect::FromWH(clientSize_.x, clientSize_.y));
-			result.scroll(scrollOffset_);
-			return result;
+            return Canvas{canvas}.clip(static_cast<T*>(this)->childRect()).resize(clientSize_).scrollBy(scrollOffset_);
         }	
 
         void setClientSize(Point const & size) {

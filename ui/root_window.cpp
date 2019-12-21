@@ -27,7 +27,7 @@ namespace ui {
 		title_{""},
 		icon_{Icon::Default},
 		backgroundColor_{Color::Black} {
-		visibleRegion_ = Canvas::VisibleRegion{this};
+		visibleRect_ = Canvas::VisibleRect{Rect::FromWH(width_, height_), Point{0, 0}, this};
 	}
 
 	void RootWindow::render(Rect const & rect) {
@@ -43,7 +43,7 @@ namespace ui {
 				mouseFocus_->mouseDown(col, row, button, modifiers);
 			}
 		} else {
-			if (!visibleRegion_.contains(col, row)) {
+			if (!visibleRect_.contains(col, row)) {
 				mouseFocusLock_ = 0;
 				return checkMouseOverAndOut(nullptr);
 			}
@@ -94,7 +94,7 @@ namespace ui {
 			screenToWidgetCoordinates(mouseFocus_, col, row);
 		    mouseFocus_->mouseWheel(col, row, by, modifiers);
 		} else {
-			if (!visibleRegion_.contains(col, row)) 
+			if (!visibleRect_.contains(col, row)) 
 				return checkMouseOverAndOut(nullptr);
 			Widget * target = getTransitiveMouseTarget(col, row);
 			checkMouseOverAndOut(target);
@@ -109,7 +109,7 @@ namespace ui {
 			screenToWidgetCoordinates(mouseFocus_, col, row);
 		    mouseFocus_->mouseMove(col, row, modifiers);
 		} else {
-			if (!visibleRegion_.contains(col, row)) 
+			if (!visibleRect_.contains(col, row)) 
 				return checkMouseOverAndOut(nullptr);
 			Widget * target = getTransitiveMouseTarget(col, row);
 			checkMouseOverAndOut(target);
@@ -143,7 +143,7 @@ namespace ui {
         Container::invalidateContents();
         // if the root window is in the process of being destroyed, don't revalidate
         if (! destroying_)
-            visibleRegion_ = Canvas::VisibleRegion(this);
+            visibleRect_ = Canvas::VisibleRect(Rect::FromWH(width_, height_), Point{0,0}, this);
     }
 
 	void RootWindow::updateTitle(std::string const & title) {

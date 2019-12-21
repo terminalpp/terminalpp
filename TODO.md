@@ -18,8 +18,6 @@ The following is very short description of the versions planned and their main n
 - reentrant lock in helpers
 - simpler events (single handler, std::function, method and fptr handlers)
 
-
-
 ##### TODO
 
 - simpler UI framework

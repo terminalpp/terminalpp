@@ -1,120 +1,76 @@
 #include "selection.h"
 #include "root_window.h"
 
+#include "widget.h"
 #include "canvas.h"
 
 
 namespace ui {
 
-    // Canvas::VisibleRegion
-
-    Canvas::VisibleRegion::VisibleRegion(RootWindow * root):
-        root(root),
-        region(Rect::FromWH(root->width(), root->height())),
-        windowOffset(0, 0),
-        valid{true} {
-    }
-
-/*
-    Canvas::VisibleRegion::VisibleRegion(VisibleRegion const & from, int left, int top, int width, int height):
-        root(from.root),
-	    region(Rect::Intersection(from.region, Rect(left, top, left + width, top + height))),
-        valid{true} {
-		// if the new visible region is not empty, update the intersection by the control start and update the offset, otherwise the offset's value does not matter
-		if (!region.empty()) {
-			region = region - Point(left, top);
-			windowOffset = Point(
-				from.windowOffset.x + (left + region.left() - from.region.left()),
-				from.windowOffset.y + (top + region.top() - from.region.top())
-			);
-		}
-		ASSERT(windowOffset.x >= 0 && windowOffset.y >= 0);
-    } */
-
-    Canvas::VisibleRegion::VisibleRegion(VisibleRegion const & from, Rect subset):
-        root(from.root),
-	    region(Rect::Intersection(from.region, subset)),
-        valid{true} {
-		// if the new visible region is not empty, update the intersection by the control start and update the offset, otherwise the offset's value does not matter
-		if (!region.empty()) {
-			region = region - subset.topLeft();
-			windowOffset = Point(
-				from.windowOffset.x + (subset.left() + region.left() - from.region.left()),
-				from.windowOffset.y + (subset.top() + region.top() - from.region.top())
-			);
-		}
-		ASSERT(windowOffset.x >= 0 && windowOffset.y >= 0);
-    }
-
     // Canvas
 
-/*
-    Canvas::Canvas(Canvas & from, int left, int top, int width, int height):
-        width_(width),
-        height_(height),
-        visibleRegion_(from.visibleRegion_, left, top, width, height),
-        buffer_(visibleRegion_.root->buffer_) {
-        ++buffer_.lockDepth_;
-    } */
-
-    Canvas::Canvas(Canvas & from, Rect subset):
-        width_(subset.width()),
-        height_(subset.height()),
-        visibleRegion_(from.visibleRegion_, subset),
-        buffer_(visibleRegion_.root->buffer_) {
+    Canvas::Canvas(Widget const * widget):
+        width_(widget->width()),
+        height_(widget->height()),
+        visibleRect_(widget->visibleRect_),
+        // TODO the locking should be less error prone and ad hoc
+        buffer_(widget->visibleRect_.rootWindow_->buffer_) {
+        buffer_.lock_.lock();
         ++buffer_.lockDepth_;
     }
 
     Canvas::Canvas(Canvas const & from):
         width_(from.width_),
         height_(from.height_),
-        visibleRegion_(from.visibleRegion_),
+        visibleRect_(from.visibleRect_),
         buffer_(from.buffer_) {
         ++buffer_.lockDepth_;
     }
+    
+    Canvas & Canvas::clip(Rect const & rect) {
+        // first update the visible rectangle
+        Rect vr{Rect::Intersection(visibleRect_.rect_, rect)};
+        visibleRect_.bufferOffset_ += Point{vr.left() - visibleRect_.rect_.left(), vr.top() - visibleRect_.rect_.top()};
+        visibleRect_.rect_ = vr - rect.topLeft();
+        // then update width and height
+        width_ = rect.width();
+        height_ = rect.height();
+        return *this;
+    }
 
-/*    Canvas::Canvas(Canvas && from):
-        width_(from.width_),
-        height_(from.height_),
-        visibleRegion_(from.visibleRegion_),
-        buffer_(from.buffer_) {
-        ++buffer_.lockDepth_;
-    } */
+    Canvas & Canvas::resize(int width, int height) {
+        ASSERT(width >= 0 && height >= 0);
+        width_ = width;
+        height_ = height;
+        visibleRect_.rect_ = Rect::Intersection(visibleRect_.rect_, Rect::FromWH(width_, height_));
+        return *this;
+    }
+
+    Canvas & Canvas::scrollBy(Point const & offset) {
+        visibleRect_.rect_ += offset;
+        Rect vr{Rect::Intersection(visibleRect_.rect_, Rect::FromWH(width_, height_))};
+        visibleRect_.bufferOffset_ += Point{vr.left() - visibleRect_.rect_.left(), vr.top() - visibleRect_.rect_.top()};
+        visibleRect_.rect_ = vr;
+        return *this;
+    }
+
 
     Canvas::~Canvas() {
         if (--buffer_.lockDepth_ == 0) {
             buffer_.lock_.unlock();
-            visibleRegion_.root->render(
-                Rect::FromWH(visibleRegion_.region.width(), visibleRegion_.region.height()) + visibleRegion_.windowOffset
-            );
+            visibleRect_.rootWindow_->render(Rect::FromTopLeftWH(visibleRect_.bufferOffset_, visibleRect_.rect_.width(), visibleRect_.rect_.height()));
         }
-    }
-
-    Canvas::Canvas(VisibleRegion const & visibleRegion, int width, int height):
-        width_(width),
-        height_(height),
-        visibleRegion_(visibleRegion),
-        buffer_(visibleRegion.root->buffer_) {
-        ++buffer_.lockDepth_;
-    }
-
-    Canvas Canvas::Create(Widget const & widget) {
-        ASSERT(widget.visibleRegion_.valid);
-        Buffer & b = widget.visibleRegion_.root->buffer_;
-        b.lock_.lock();
-        ASSERT(b.lockDepth_ == 0);
-        return Canvas{widget.visibleRegion_, widget.width_, widget.height_};
     }
 
     void Canvas::setCursor(Cursor const & cursor) {
         // set the cursor behavior in root to given cursor info and position 0 0
-        visibleRegion_.root->cursor_ = cursor;
-        visibleRegion_.root->cursor_.pos = Point(0,0);
+        visibleRect_.rootWindow_->cursor_ = cursor;
+        visibleRect_.rootWindow_->cursor_.pos = Point(0,0);
         // mark the cell as containing the cursor and update the cursor position with proper coordinates if in range
         Cell * cell = at(cursor.pos);
         if (cell != nullptr) {
             cell->setCursor(true);
-            visibleRegion_.root->cursor_.pos = visibleRegion_.translate(cursor.pos);
+            visibleRect_.rootWindow_->cursor_.pos = cursor.pos - visibleRect_.rect_.topLeft() + visibleRect_.bufferOffset_;;
         }
     }
 

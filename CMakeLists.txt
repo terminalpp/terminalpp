@@ -15,6 +15,25 @@ if(NOT DEFINED PACKAGE_INSTALL)
     set(PACKAGE_INSTALL terminalpp)
 endif()
 
+# A futile attempt at getting the coverage outputs being produced
+#if(UNIX)
+#    if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+#        message(FATAL_ERROR "Coverage requires GCC.")
+#    endif()
+#
+#    # enable profiling
+#    set(CMAKE_CXX_FLAGS "--coverage -g -O0 -fprofile-arcs -ftest-coverage")
+#    set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
+#
+#    # from https://github.com/RWTH-HPC/CMake-codecov/blob/master/cmake/FindGcov.cmake
+#    get_filename_component(COMPILER_PATH "${CMAKE_CXX_COMPILER}" PATH)
+#    string(REGEX MATCH "^[0-9]+" GCC_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
+#    find_program(GCOV_BIN NAMES gcov-${GCC_VERSION} gcov HINTS ${COMPILER_PATH})
+#    message(STATUS "Gcov found in ${GCOV_BIN}")
+#
+#
+#endif()
+
 # Include sub-projects.
 add_subdirectory("tpp-lib")
 add_subdirectory("ui")
@@ -32,7 +51,7 @@ endif()
 # Build checks
 #
 # Only on Linux, check for the required libraries. 
-if (UNIX)
+if(UNIX)
     find_package(X11 REQUIRED)
     find_package(Threads REQUIRED)
     find_package(Freetype REQUIRED)

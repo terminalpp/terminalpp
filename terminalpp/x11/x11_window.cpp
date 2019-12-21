@@ -373,7 +373,7 @@ namespace tpp {
             /* Handles window resize, which should change the terminal size accordingly. 
              */  
             case ConfigureNotify: {
-                if (window->widthPx_ != static_cast<unsigned>(e.xconfigure.width) || window->heightPx_ != static_cast<unsigned>(e.xconfigure.height))
+                if (window->widthPx_ != e.xconfigure.width || window->heightPx_ != e.xconfigure.height)
                     window->updateSizePx(e.xconfigure.width, e.xconfigure.height);
                 break;
             }

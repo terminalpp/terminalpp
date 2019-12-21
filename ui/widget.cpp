@@ -33,48 +33,34 @@ namespace ui {
 
 	
 	void Widget::setFocused(bool value) {
-		if (focused_ != value && visibleRegion_.valid)
-			visibleRegion_.root->focusWidget(this, value); 
+		if (focused_ != value && visibleRect_.valid())
+			visibleRect_.rootWindow()->focusWidget(this, value); 
 	}
 
 	void Widget::repaint() {
 		// only repaint the control if it is visible
-		if (visible_ && visibleRegion_.valid) {
+		if (visible_ && visibleRect_.valid()) {
 			// if the widget is overlaid, the parent must be repainted, if the parent is not known, it is likely a root window, so just repainting it is ok
 			if (parent_ != nullptr && (forceOverlay_ || overlay_)) {
 				parent_->repaint();
 			// otherwise repainting the widget is enough
 			} else {
-				Canvas canvas = Canvas::Create(*this);
+				// TODO this is an issue, if the widget has been invalidated before we get the canvas, the canvas construction would fail
+				Canvas canvas{this};
                 // now that the canvas was created, make sure that we are still valid under the lock, otherwise ignore the paint request
-                if (visibleRegion_.valid)
+                if (visibleRect_.valid())
 				    paint(canvas);
 			}
 		} 
 	}
 
-	void Widget::paintChild(Widget * child, Canvas& clientCanvas) {
-		if (!child->visible_)
-			return;
-		if (!child->visibleRegion_.valid) {
-			Canvas childCanvas(clientCanvas, child->rect());
-			child->visibleRegion_ = childCanvas.visibleRegion_;
-			child->paint(childCanvas);
-		} else {
-			Canvas childCanvas(child->visibleRegion_, child->width_, child->height_);
-			child->paint(childCanvas);
-		}
-	}
-
 	void Widget::invalidate() {
-		if (visibleRegion_.valid) {
+		if (visibleRect_.valid()) {
 			invalidateContents();
 			if (parent_ != nullptr)
 				parent_->childInvalidated(this);
 		}
 	}
-
-
 
 	void Widget::setWidthHint(Layout::SizeHint value) {
 		if (widthHint_ != value) {
@@ -91,7 +77,6 @@ namespace ui {
 				parent_->childInvalidated(this);
 		}
 	}
-
 
 	void Widget::updateFocusStop(bool value) {
 		focusStop_ = value;
@@ -138,9 +123,10 @@ namespace ui {
 
 
 	void Widget::detachRootWindow() {
-		ASSERT(visibleRegion_.root != nullptr);
-		visibleRegion_.root->widgetDetached(this);
-		visibleRegion_.root = nullptr;
+		ASSERT(visibleRect_.rootWindow() != nullptr);
+		visibleRect_.rootWindow()->widgetDetached(this);
+		visibleRect_.detach();
+		//visibleRect_.root = nullptr;
 	}
 
 	Point Widget::getMouseCoordinates() const {

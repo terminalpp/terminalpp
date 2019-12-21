@@ -147,7 +147,7 @@ namespace ui {
 
 		Widget():
 			parent_(nullptr),
-			visibleRegion_{},
+			visibleRect_{},
 			overlay_(false),
 			forceOverlay_(false),
 			visible_(true),
@@ -172,7 +172,7 @@ namespace ui {
 		/** Returns the root window of the widget, or nullptr if the window is not attached.
 		 */
 		RootWindow * rootWindow() const {
-			return visibleRegion_.root;
+			return visibleRect_.rootWindow();
 		}
 
 		bool visible() const {
@@ -247,7 +247,7 @@ namespace ui {
 
 		/** Repaints the widget.
 
-			Only repaints the widget if the visibleRegion is valid. If the visible region is invalid, does nothing because when the region was invalidated, the repaint was automatically triggered, so there is either repaint pending, or in progress.
+			Only repaints the widget if the VisibleRect is valid. If the visible region is invalid, does nothing because when the region was invalidated, the repaint was automatically triggered, so there is either repaint pending, or in progress.
 		 */
 		virtual void repaint();
 
@@ -434,12 +434,6 @@ namespace ui {
 			MARK_AS_UNUSED(k);
 		}
 
-		/** Paints given child.
-
-		    Expects the clientCanvas of the parent as the second argument. In cases where border is 0, this can be the widget's main canvas as well. In other cases the getClientCanvas method should be used to obtain the client canvas first. 
-		 */
-		void paintChild(Widget * child, Canvas& clientCanvas);
-
 		/** Invalidates the widget and request its parent repaint,
 
 		    If the widget is valid, invalidates its visible region and informs its parent that a child was invalidated. If the widget is already not valid, does nothing because the parent has already been notified. 
@@ -452,7 +446,7 @@ namespace ui {
 		
 		 */
 		virtual void invalidateContents() {
-			visibleRegion_.valid = false;
+			visibleRect_.invalidate();
 		}
 
 		/** Updates the position of the widget. 
@@ -501,46 +495,11 @@ namespace ui {
 		/** Given mouse coordinates, determine the immediate child that is the target of the mouse event. If no such child can be found, returns itself. 
 		 */
 		virtual Widget * getMouseTarget(int col, int row) {
-			ASSERT(visibleRegion_.contains(col, row));
+			ASSERT(visibleRect_.contains(col, row));
 			MARK_AS_UNUSED(col);
 			MARK_AS_UNUSED(row);
 			return this;
 		}
-
-	/*
-        virtual void detachChild(Widget * child) {
-            ASSERT(child->parent_ == this);
-            // remove the child from list of children first and then detach it under the paint lock
-            {
-                PaintLockGuard g(this);
-                for (auto i = children_.begin(), e = children_.end(); i != e; ++i)
-                    if (*i == child) {
-                        children_.erase(i);
-                        break;
-                    }
-                child->parent_ = nullptr;
-                // udpate the overlay settings of the detached children
-                if (child->overlay_)
-                    child->updateOverlay(false);
-                // invalidate the child
-                child->invalidate();
-                // and detach its root window
-                child->detachRootWindow();
-            }
-        }
-
-        virtual void attachChild(Widget * child) {
-            // first detach the child if it is attached to other widget
-            if (child->parent_ != nullptr)
-                child->parent_->detachChild(child);
-            // now, under paint lock add the children to the list and patch the parent link
-            {
-                PaintLockGuard g(this);
-                child->parent_ = this;
-                children_.push_back(child);
-            }
-        }
-		*/
 
 		/** Returns the mouse coordinates inside the widget. 
 		 */
@@ -566,7 +525,7 @@ namespace ui {
 
 		/* Visible region of the canvas. 
 		 */
-		Canvas::VisibleRegion visibleRegion_;
+		Canvas::VisibleRect visibleRect_;
 
 		/* If true, the rectangle of the widget is shared with other widgets, i.e. when the widget is to be repainted, its parent must be repainted instead. */
 		bool overlay_;
