@@ -22,6 +22,7 @@ The following is very short description of the versions planned and their main n
 
 - simpler UI framework
 - Windows store submission
+- more automation for releases
 
 Questions:
 
@@ -48,10 +49,8 @@ Questions:
 
 - ssh plain does not display boxes in mc well
 - add showModal(Widget *) to root window, which would dim the background and then display the widget centered
-- clean shapes - rect, to provide the points for corners on demand
 - add zoom out? and default zoom? 
 - add JSON schema and validator support
-- add tests
 - allow container to reverse order of its elements (so that maximized and horizontal layouts can be used nicely with header lines both up and down)
 - onChange handler for generic changes
 - make canvas do more

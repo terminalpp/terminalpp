@@ -21,10 +21,18 @@ jobs:
       run: |
         cd build
         cmake --build . --clean-first --config Debug
+    - name: run-tests-debug
+      run: |
+        cd build\tests\Debug
+        .\tests.exe        
     - name: build-release
       run: |
         cd build
         cmake --build . --clean-first --config Release
+    - name: run-tests-release
+      run: |
+        cd build\tests\Release
+        .\tests.exe        
     - name: build-terminalpp-packages
       run: |
         cd build

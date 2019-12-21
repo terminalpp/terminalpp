@@ -28,6 +28,10 @@ jobs:
       run: |
         cd build/debug
         cmake --build . 
+    - name: run-tests-debug
+      run: |
+        cd build/debug
+        tests/tests        
     - name: configure-release
       run: |
         mkdir -p build/release
@@ -37,6 +41,10 @@ jobs:
       run: |
         cd build/release
         cmake --build . 
+    - name: run-tests-release
+      run: |
+        cd build/release
+        tests/tests        
     - name: build-terminalpp-packages
       run: |
         cd build/release
