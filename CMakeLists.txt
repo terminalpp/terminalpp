@@ -239,6 +239,7 @@ if(PACKAGE_INSTALL STREQUAL terminalpp)
         find_program(SNAP snapcraft)
         if(SNAP)
             message(STATUS "snapcraft found in ${SNAP}, snap package will be added to packages")
+            message(STATUS "snapcraft extra args: ${SNAP_EXTRA_ARGS}")
             # create the build directory and configure the WiX configuration in it
             configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/snap/tpp.yaml ${CMAKE_CURRENT_BINARY_DIR}/snap/snapcraft.yaml @ONLY)
             add_custom_target(package-snap-copy-tpp
@@ -250,7 +251,7 @@ if(PACKAGE_INSTALL STREQUAL terminalpp)
             set_target_properties(package-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
             add_custom_target(package-snap
                 COMMAND snapcraft clean
-                COMMAND snapcraft
+                COMMAND snapcraft ${SNAP_EXTRA_ARGS}
                 COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/packages/${PROJECT_NAME}_${PROJECT_VERSION}.snap
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/snap
                 DEPENDS package-snap-copy-tpp
