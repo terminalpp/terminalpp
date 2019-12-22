@@ -27,6 +27,9 @@ The following is very short description of the versions planned and their main n
 Questions:
 
 - should Container's attach & detach children be virtual? 
+- create proper documentation and figure out how to release it
+- add Windows Store Submission - can this be automated in any way? 
+- add benchmarking
 
 - simpler settings where not everything will be stored and only changes from defaults will be loaded
 
@@ -35,7 +38,6 @@ Questions:
 - systray support
 - multiple sessions
 - proper multiplexing of the terminal sessions (wrt remote files)
-
 
 ### v1.0
 

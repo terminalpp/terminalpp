@@ -4,11 +4,6 @@
 
 namespace ui {
 
-    Widget::PaintLockGuard::PaintLockGuard(Widget * w) {
-        if (w->rootWindow())
-            guard_ = w->rootWindow()->buffer();        
-    }
-
     Widget::~Widget() {
         // detach from parent if not detached alerady
         if (parent_) 

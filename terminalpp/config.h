@@ -26,7 +26,7 @@
 #define SHORTCUT_PASTE (ui::Key::V + ui::Key::Ctrl + ui::Key::Shift)
 
 namespace tpp {	
-	
+
 	class Config {
 	public:
 

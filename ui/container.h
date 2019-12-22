@@ -31,38 +31,33 @@ namespace ui {
         }
 
         virtual void attachChild(Widget * child) {
-            // first detach the child if it is attached to other widget
-            if (child->parent_ != nullptr)
-                child->parent_->detachChild(child);
-            // now, under paint lock add the children to the list and patch the parent link
-            {
-                PaintLockGuard g(this);
-                child->parent_ = this;
+			if (child->parent_ == this) {
+			    auto i = std::find(children_.begin(), children_.end(), child);
+				std::swap(*i, children_.back());
+			} else {
+				// first detach the child if it is attached to other widget
+				if (child->parent_ != nullptr)
+					child->parent_->detachChild(child);
                 children_.push_back(child);
-            }
+                child->parent_ = this;
+			}
             scheduleRelayout();
             repaint();
         }
 
         virtual void detachChild(Widget * child) {
             ASSERT(child->parent_ == this);
-            // remove the child from list of children first and then detach it under the paint lock
-            {
-                PaintLockGuard g(this);
-                for (auto i = children_.begin(), e = children_.end(); i != e; ++i)
-                    if (*i == child) {
-                        children_.erase(i);
-                        break;
-                    }
-                child->parent_ = nullptr;
-                // udpate the overlay settings of the detached children
-                if (child->overlay_)
-                    child->updateOverlay(false);
-                // invalidate the child
-                child->invalidate();
-                // and detach its root window
-                child->detachRootWindow();
-            }
+			// so that anything from the child won't go to parent
+			child->parent_ = nullptr;
+			// so that anything from the parent won't go to the child
+		    children_.erase(std::find(children_.begin(), children_.end(), this));
+			// udpate the overlay settings of the detached children
+			if (child->overlay_)
+				child->updateOverlay(false);
+			// invalidate the child
+			child->invalidate();
+			// and detach its root window
+			child->detachRootWindow();
             scheduleRelayout();
             repaint();
         }

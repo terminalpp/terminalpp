@@ -253,19 +253,6 @@ namespace ui {
 
     protected:
 
-        /** When the paint lock guard is held, the widget cannot be repainted. 
-
-
-            For now, this is a coarse grain lock on the root window's buffer if the root window exists. 
-         */
-        class PaintLockGuard {
-        public:
-            PaintLockGuard(Widget * w);
-        private:
-            Canvas::Buffer::Ptr guard_;
-        }; // PaintLockGuard
-
-
 		/** Sets the widget as visible or hidden.
 
 		    Also triggers the repaint of entire parent, because the widget may interfere with other children of its own parent.
@@ -511,7 +498,6 @@ namespace ui {
 		friend class Container;
 		friend class RootWindow;
 		friend class Canvas;
-
 
 		/** Detaches the wdget from its root window. 
 		 
