@@ -10,6 +10,16 @@ namespace ui {
             parent_->detachChild(this);
     }
 
+	bool Widget::isChildOf(Widget const * parent) const {
+		Widget const * p = this->parent_;
+		while (p != nullptr) {
+			if (p == parent)
+				return true;
+			p = p->parent_;
+		}
+		return false;
+	}
+
 	void Widget::setVisible(bool value) {
 		if (visible_ != value) {
 			updateVisible(value);
@@ -25,7 +35,6 @@ namespace ui {
 				parent_->childInvalidated(this);
 		}
 	}
-
 	
 	void Widget::setFocused(bool value) {
 		if (focused_ != value && visibleRect_.valid())

@@ -485,8 +485,6 @@ namespace ui {
                 std::pair<int, int> slider{verticalScrollbar(canvas.height())};
                 canvas.drawRightVerticalScrollBar(Point{canvas.width() - 1, 0}, canvas.height(), slider.first, slider.second, scrollBarActive_ ? Color::Red.withAlpha(128) : Color::White.withAlpha(64), scrollBarActive_);           
            }
-
-           //drawVerticalScrollbarOverlay(canvas, scrollBarActive_ ? Color::Red.withAlpha(128) : Color::White.withAlpha(64), scrollBarActive_);
         }
         // paint the selection, if any
         paintSelection(clientCanvas, Color{128,128,192,128});
@@ -494,7 +492,6 @@ namespace ui {
         if (!enabled())
             canvas.fill(Rect::FromWH(width(), height()), Brush(Color::Black.withAlpha(128)));
     }
-
 
     void Terminal::mouseDown(int col, int row, MouseButton button, Key modifiers) {
         ASSERT(mouseButtonsDown_ <= 3);

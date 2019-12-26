@@ -24,6 +24,11 @@ The following is very short description of the versions planned and their main n
 - Windows store submission
 - more automation for releases
 
+- modal pane: cleanup & modal widget base
+
+- like steal focus from the current widget, steal mouse focus (? would this work)
+- update About box to be modallable
+
 Questions:
 
 - should Container's attach & detach children be virtual? 

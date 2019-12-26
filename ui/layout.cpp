@@ -10,7 +10,7 @@ namespace ui {
          */
         class NoneImpl : public Layout {
         protected:
-            virtual void relayout(Container* container, Canvas const& clientCanvas) {
+            void relayout(Container* container, Canvas const& clientCanvas) override {
                 int w = clientCanvas.width();
                 int h = clientCanvas.height();
                 for (Widget* child : childrenOf(container))
@@ -24,7 +24,7 @@ namespace ui {
         */
         class MaximizedImpl : public Layout {
         protected:
-            virtual void relayout(Container* container, Canvas const& clientCanvas) {
+            void relayout(Container* container, Canvas const& clientCanvas) override {
                 int w = clientCanvas.width();
                 int h = clientCanvas.height();
                 for (Widget* child : childrenOf(container))
@@ -67,7 +67,7 @@ namespace ui {
         */
         class HorizontalImpl : public Layout {
         protected:
-            virtual void relayout(Container* container, Canvas const& clientCanvas) {
+            void relayout(Container* container, Canvas const& clientCanvas) override {
                 int w = clientCanvas.width();
                 std::vector<Widget*> const& children = childrenOf(container);
                 // first determine the number of visible children to layout, the total height occupied by children with fixed height and number of children with height hint set to auto
@@ -122,9 +122,9 @@ namespace ui {
 
             /** None of the children are overlaid.
              */
-            virtual void calculateOverlay(Container* container) {
+            void calculateOverlay(Container* container, bool initialOverlay) override {
                 for (Widget* child : childrenOf(container))
-                    setOverlayOf(child, false);
+                    setOverlayOf(child, initialOverlay);
             }
 
             void layout(Container * container, Widget* child, int top, int maxWidth, int height) {
@@ -145,7 +145,7 @@ namespace ui {
         */
         class VerticalImpl : public Layout {
         protected:
-            virtual void relayout(Container* container, Canvas const& clientCanvas) {
+            void relayout(Container* container, Canvas const& clientCanvas) override {
                 int h = clientCanvas.height();
                 std::vector<Widget*> const& children = childrenOf(container);
                 // first determine the number of visible children to layout, the total width occupied by children with fixed width and number of children with width hint set to auto
@@ -200,9 +200,9 @@ namespace ui {
 
             /** None of the children are overlaid.
              */
-            virtual void calculateOverlay(Container* container) {
+            void calculateOverlay(Container* container, bool initialOverlay) override {
                 for (Widget* child : childrenOf(container))
-                    setOverlayOf(child, false);
+                    setOverlayOf(child, initialOverlay);
             }
 
             void layout(Container* container, Widget* child, int left, int width, int maxHeight) {
@@ -225,13 +225,13 @@ namespace ui {
 
     Layout * Layout::Vertical = new VerticalImpl();
 
-    void Layout::calculateOverlay(Container* container) {
+    void Layout::calculateOverlay(Container* container, bool initialOverlay) {
         Rect overlay;
         for (auto i = childrenOf(container).rbegin(), e = childrenOf(container).rend(); i != e; ++i) {
             if (!(*i)->visible())
                 continue;
             Rect childRect = (*i)->rect();
-            (*i)->setOverlay(!Rect::Intersection(childRect, overlay).empty());
+            (*i)->setOverlay(initialOverlay || !Rect::Intersection(childRect, overlay).empty());
             overlay = Rect::Union(childRect, overlay);
         }
     }

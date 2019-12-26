@@ -19,6 +19,7 @@ namespace ui {
 
 	protected:
 		friend class Widget;
+		friend class RootWindow;
 
 		Container();
 
@@ -50,7 +51,7 @@ namespace ui {
 			// so that anything from the child won't go to parent
 			child->parent_ = nullptr;
 			// so that anything from the parent won't go to the child
-		    children_.erase(std::find(children_.begin(), children_.end(), this));
+		    children_.erase(std::find(children_.begin(), children_.end(), child));
 			// udpate the overlay settings of the detached children
 			if (child->overlay_)
 				child->updateOverlay(false);
@@ -121,6 +122,8 @@ namespace ui {
 		/** The container assumes that its children will be responsible for painting the container itself in the paint method, while the container's paint method draws the children themselves. 
 		 */
 		void paint(Canvas& canvas) override;
+
+		void paintChild(Widget * child, Canvas & clientCanvas);
 
 		void updateOverlay(bool value) override;
 

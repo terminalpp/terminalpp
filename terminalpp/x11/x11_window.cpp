@@ -24,8 +24,7 @@ namespace tpp {
 	    buffer_(0),
 	    draw_(nullptr),
         text_(nullptr),
-        textSize_(0),
-        pasteTarget_{nullptr} {
+        textSize_(0) {
 		unsigned long black = BlackPixel(display_, screen_);	/* get color black */
 		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
         x11::Window parent = XRootWindow(display_, screen_);

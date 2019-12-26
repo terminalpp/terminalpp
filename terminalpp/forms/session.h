@@ -37,11 +37,7 @@ namespace tpp {
                     << FocusStop(true)
                     << HistorySizeLimit(config.sessionHistoryLimit())
                     << BoldIsBright(config.sessionSequencesBoldIsBright())
-                )
-                << (Create(about_ = new AboutBox())
-                  << Visible(false)
-                )
-                ;
+                );
 
             setBackgroundColor(palette->defaultBackground());
 
@@ -55,7 +51,7 @@ namespace tpp {
             terminal_->onInputError.setHandler(&Session::terminalInputError, this);
 
             terminal_->setCursor(config.sessionCursor());
-
+            about_ = new AboutBox();
             about_->onDismissed.setHandler(&Session::aboutBoxDismissed, this);
 
 
@@ -151,7 +147,7 @@ namespace tpp {
             } else {
                 setIcon(Icon::Default);
                 if (k == SHORTCUT_ABOUT)
-                    about_->show();
+                    showModalWidget(about_);
                 else
                     ui::RootWindow::keyDown(k);
             }

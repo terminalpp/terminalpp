@@ -366,10 +366,6 @@ namespace tpp {
 		 */
         XWindowChanges fullscreenRestore_;
 
-        /** The widget which requested data to be pasted. 
-         */
-        ui::Clipboard * pasteTarget_;
-
         /** If mouse out without corresponding mouse in was issued while mouse was locked (at least one button pressed), the mouseOut has to be issued after the mouse is released. 
          */
         //bool pendingMouseOut_;

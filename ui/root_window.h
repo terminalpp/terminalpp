@@ -6,8 +6,8 @@
 
 namespace ui {
 
-    class Clipboard;
     class Renderer;
+    class Panel;
 
     /**  */
     class RootWindow : public Container {
@@ -29,17 +29,7 @@ namespace ui {
 
 		RootWindow();
 
-        ~RootWindow() override {
-            // one-way detach all children
-            //for (Widget * child : children())
-            //    child->detach
-            // first set the destroy flag
-            destroying_ = true;
-            // then invalidate
-            invalidate();
-            // obtain the buffer - sync with end of any pending paints
-            buffer();
-        }
+        ~RootWindow() override;
 
         std::string const & title() const {
             return title_;
@@ -75,6 +65,10 @@ namespace ui {
             if (child->focusStop())
                 removeFocusStop(child);
         }
+
+        void showModalWidget(Widget * w);
+
+        void hideModalWidget();
 
     protected:
 
@@ -155,50 +149,7 @@ namespace ui {
             Dependning on the mouse capture and previous mouse position and focus widget emits the proper mouseEenter, mouseLeave and mouseIn events. 
             Also recalculates the coordinates given to it to the coordinates relative the the origin of the widget which has currently the mouse focus, i.e. over which the mouse currently hovers, or which has captured it. 
          */
-        void updateMouseState(int & col, int & row) {
-            if (mouseCaptured_) {
-                ASSERT(mouseFocus_ != nullptr);
-                // if the mouse was out, but the coordinates now are inside the window, set mouseIn correctly
-                if (! mouseIn_ && col >= 0 && col < width() && row >= 0 && row < height())
-                    mouseIn_ = true;
-                // update the coordinates correctly for the target widget
-                mouseFocus_->windowToWidgetCoordinates(col, row);
-            } else {
-                // when mouse is not captured, mouse events are expected to only arrive if coordinates are within the root window
-                ASSERT(col >= 0 && row >= 0 && col < width() && row < height());
-                // if mouse is not captured, then we must determine proper focus target and recalculate the coordinates
-                Widget * w = getMouseTarget(col, row);
-                // if this is first mouse event then we need to signal mouseIn for the root window first and then update the mouse focus target and call its mouseEnter
-                if (! mouseIn_) {
-                    ASSERT(mouseFocus_ == this);
-                    mouseIn_ = true;
-                    mouseIn();
-                    mouseFocus_ = w;
-                    mouseFocus_->mouseEnter();
-                // otherwise, if the calculated target is different from the previous one, we must emit mouse leave and mouse enter events properly
-                } else if (w != mouseFocus_) {
-                    mouseFocus_->mouseLeave();
-                    mouseFocus_ = w;
-                    mouseFocus_->mouseEnter();
-                }
-            }
-
-            // if the mouse is inside the window, do nothing as either we'll get the inputMouseOut signal, or the mouse is in anyways
-            if (mouseIn_)
-                return;
-            // don't do anything if the mouse is outside of the window
-            if (col < 0 || row < 0 || col >= width() || row >= height())
-                return;
-            // otherwise if capture is on, just disable the flag
-            if (mouseCaptured_) {
-                mouseIn_ = true;
-            // if capture is off,
-            } else {
-                Widget * w = getMouseTarget(col, row);
-                ASSERT(w != nullptr);
-                ASSERT(w->rootWindow() == this);
-            }
-        }        
+        void updateMouseState(int & col, int & row);
 
         void keyChar(helpers::Char c) override;
         void keyDown(Key k) override;
@@ -230,36 +181,11 @@ namespace ui {
 
         void invalidateContents() override;
 
-        void updateSize(int width, int height) override {
-            // resize the buffer first
-            {
-                std::lock_guard<Canvas::Buffer> g(buffer_);
-                buffer_.resize(width, height);
-            }
-            Container::updateSize(width, height);
-        }
+        void updateSize(int width, int height) override;
 
         /** Called by widget that wants to obtain keyboard focus. 
          */
-        void focusWidget(Widget * widget, bool value) {
-            ASSERT(widget != nullptr);
-            // if the widget is not the root window, update its focus accordingly and set the focused
-            if (widget != this) {
-                if (focused()) {
-                    ASSERT(keyboardFocus_ == widget || value);
-                    if (keyboardFocus_ != nullptr) 
-                        keyboardFocus_->updateFocused(false);
-                    keyboardFocus_ = value ? widget : nullptr;
-                    if (keyboardFocus_ != nullptr)
-                        keyboardFocus_->updateFocused(true);
-                } else {
-                    keyboardFocus_ = value ? widget : nullptr;
-                }
-            // if the widget is root window, then just call own updateFocused method, which sets the focus of the root window and updates the focus of the active widget, if any
-            } else {
-                updateFocused(value);
-            }
-        }
+        bool focusWidget(Widget * widget, bool value);
 
         /** Focuses next element in the explicit focus stops ring. 
          
@@ -267,22 +193,7 @@ namespace ui {
 
             If the focus ring is empty, does nothing.
          */ 
-        Widget * focusNext() {
-            if (keyboardFocus_ != nullptr) {
-                if (keyboardFocus_->focusStop()) {
-                    auto i = focusStops_.find(keyboardFocus_->focusIndex());
-                    ++i;
-                    if (i != focusStops_.end()) {
-                        focusWidget(i->second, true);
-                        return keyboardFocus_;
-                    }
-                }
-            }
-            auto i = focusStops_.begin();
-            if (i != focusStops_.end())
-                focusWidget(i->second, true);
-            return keyboardFocus_;
-        }
+        Widget * focusNext();
 
         /** Adds new focus stop widget. 
           
@@ -351,6 +262,8 @@ namespace ui {
         virtual void updateIcon(Icon icon);
 
         virtual void closeRenderer();
+
+        void paint(Canvas & canvas) override;
 
     private:
 
@@ -446,6 +359,12 @@ namespace ui {
         /* Default background of the window. 
          */
         Color backgroundColor_;
+
+        /* The panel that displays the modal widget, if any. 
+         */
+        Panel * modalPane_;
+        Widget * modalFocusBackup_;
+        bool modalWidgetActive_;
 
     }; 
 

@@ -169,6 +169,10 @@ namespace ui {
 			return parent_;
 		}
 
+		/** Returns true if the widget is child (transitively) of the given widget. 
+		 */
+		bool isChildOf(Widget const * parent) const;
+
 		/** Returns the root window of the widget, or nullptr if the window is not attached.
 		 */
 		RootWindow * rootWindow() const {

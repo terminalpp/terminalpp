@@ -13,25 +13,27 @@ namespace ui {
 		Canvas clientCanvas{getChildrenCanvas(canvas)};
 		if (relayout_) {
 			layout_->relayout(this, clientCanvas);
-			if (!overlay_)
-				layout_->calculateOverlay(this);
+			layout_->calculateOverlay(this, overlay_);
 			relayout_ = false;
 		}
 		// display the children
-		for (Widget* child : children()) {
-			if (!child->visible_)
-			    continue;
-			// get the child canvas and don't bother drawing if the canvas has empty visible region
-			Canvas childCanvas{clientCanvas};
-			childCanvas.clip(child->rect());
-			//Canvas childCanvas(clientCanvas, child->rect());
-			if (childCanvas.visibleRect_.empty())
-			    continue;
-			// otherwise update the child's visible rectangle
-			child->visibleRect_ = childCanvas.visibleRect_;
-			// finally, paint the child
-			child->paint(childCanvas);
-		}
+		for (Widget* child : children())
+			paintChild(child, clientCanvas);
+	}
+
+	void Container::paintChild(Widget * child, Canvas & clientCanvas) {
+		if (!child->visible_)
+		    return;
+		// get the child canvas and don't bother drawing if the canvas has empty visible region
+		Canvas childCanvas{clientCanvas};
+		childCanvas.clip(child->rect());
+		//Canvas childCanvas(clientCanvas, child->rect());
+		if (childCanvas.visibleRect_.empty())
+			return;
+		// otherwise update the child's visible rectangle
+		child->visibleRect_ = childCanvas.visibleRect_;
+		// finally, paint the child
+		child->paint(childCanvas);
 	}
 
 	void Container::updateOverlay(bool value) {

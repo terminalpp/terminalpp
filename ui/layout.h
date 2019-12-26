@@ -49,7 +49,7 @@ namespace ui {
 
 		    This can be overriden in children to provide better overlaying logic, but the default overlay is quite simple: Iterates the widgets in the container backwards and remembers the rectangle in which the widget fits. If new widgets intersects with the rectangle, its overlay is set to true, otherwise its set to false. 
 		 */
-		virtual void calculateOverlay(Container* container);
+		virtual void calculateOverlay(Container* container, bool initialOverlay);
 
 		/** Returns the children of given container. 
 		 */

@@ -13,23 +13,24 @@ namespace ui {
 		Panel() :
 		    Widget{},
 			PublicContainer(),
-			border_(0, 0, 0, 0) {
+			border_(0, 0, 0, 0),
+			background_(Color::Red.withAlpha(128)) {
+		}
+
+		Brush const & background() const {
+			return background_;
+		}
+
+		void setBackground(Brush const & value) {
+			if (background_ != value) {
+				background_ = value;
+				repaint();
+			}
 		}
 
 		Rect childRect() const override {
 			return Rect::FromCorners(border_.left, border_.top, width() - border_.right, height() - border_.bottom);
 		}
-
-		/** The clientWidth and clientHeight return the size of the widget that is available for children (i.e. excluding the border of the control.
-		 */
-		/*
-		int clientWidth() const {
-			return std::max(width() - border_.left - border_.right, 0);
-		}
-
-		int clientHeight() const {
-			return std::max(height() - border_.top - border_.bottom, 0);
-		} */
 
 	protected:
 
@@ -52,10 +53,18 @@ namespace ui {
 			invalidate();
 		}
 
+		virtual void paint(Canvas & canvas) {
+			canvas.fill(Rect::FromWH(width(), height()), background_);
+			Container::paint(canvas);
+		}
+
 	private:
 
 		/* Border of the panel */
 		Border border_;
+
+
+		Brush background_;
 
  
 	}; // ui::Panel

@@ -3,6 +3,8 @@
 
 #include "renderer.h"
 
+#include "widgets/panel.h"
+
 #include "root_window.h"
 
 namespace ui {
@@ -29,8 +31,50 @@ namespace ui {
 		selectionOwner_{nullptr},
 		title_{""},
 		icon_{Icon::Default},
-		backgroundColor_{Color::Black} {
+		backgroundColor_{Color::Black},
+		modalPane_{new Panel{}},
+		modalFocusBackup_{nullptr},
+		modalWidgetActive_{false} {
 		visibleRect_ = Canvas::VisibleRect{Rect::FromWH(width_, height_), Point{0, 0}, this};
+		modalPane_->parent_ = this;
+		modalPane_->setBackground(Color::Black.withAlpha(128));
+		modalPane_->setLayout(Layout::Maximized);
+	}
+
+	RootWindow::~RootWindow() {
+		// one-way detach all children
+		//for (Widget * child : children())
+		//    child->detach
+		// first set the destroy flag
+		destroying_ = true;
+		// then invalidate
+		invalidate();
+		// obtain the buffer - sync with end of any pending paints
+		buffer();
+		// deletes the modal pane - the modal pane is never really attached, so we just reset its parent pointer
+		modalPane_->parent_ = nullptr;
+		delete modalPane_;
+	}
+
+
+	void RootWindow::showModalWidget(Widget * w) {
+		modalPane_->attachChild(w);
+		modalWidgetActive_ = true;
+		setOverlay(true);
+		modalFocusBackup_ = keyboardFocus_;
+		focusWidget(w, true);
+		repaint();
+	}
+
+	void RootWindow::hideModalWidget() {
+		if (modalPane_->visible_) {
+			modalWidgetActive_ = false;
+			ASSERT(modalFocusBackup_ != nullptr);
+			focusWidget(modalFocusBackup_, true);
+			modalPane_->detachChild(modalPane_->children_.front());
+			setOverlay(false);
+			repaint();
+		}
 	}
 
 	void RootWindow::render(Rect const & rect) {
@@ -106,6 +150,52 @@ namespace ui {
         }
     }
 
+	void RootWindow::updateMouseState(int & col, int & row) {
+		if (mouseCaptured_) {
+			ASSERT(mouseFocus_ != nullptr);
+			// if the mouse was out, but the coordinates now are inside the window, set mouseIn correctly
+			if (! mouseIn_ && col >= 0 && col < width() && row >= 0 && row < height())
+				mouseIn_ = true;
+			// update the coordinates correctly for the target widget
+			mouseFocus_->windowToWidgetCoordinates(col, row);
+		} else {
+			// when mouse is not captured, mouse events are expected to only arrive if coordinates are within the root window
+			ASSERT(col >= 0 && row >= 0 && col < width() && row < height());
+			// if mouse is not captured, then we must determine proper focus target and recalculate the coordinates
+			Widget * w = modalWidgetActive_ ? modalPane_->getMouseTarget(col, row) : getMouseTarget(col, row);
+			// if this is first mouse event then we need to signal mouseIn for the root window first and then update the mouse focus target and call its mouseEnter
+			if (! mouseIn_) {
+				ASSERT(mouseFocus_ == this);
+				mouseIn_ = true;
+				mouseIn();
+				mouseFocus_ = w;
+				mouseFocus_->mouseEnter();
+			// otherwise, if the calculated target is different from the previous one, we must emit mouse leave and mouse enter events properly
+			} else if (w != mouseFocus_) {
+				mouseFocus_->mouseLeave();
+				mouseFocus_ = w;
+				mouseFocus_->mouseEnter();
+			}
+		}
+
+		// if the mouse is inside the window, do nothing as either we'll get the inputMouseOut signal, or the mouse is in anyways
+		if (mouseIn_)
+			return;
+		// don't do anything if the mouse is outside of the window
+		if (col < 0 || row < 0 || col >= width() || row >= height())
+			return;
+		// otherwise if capture is on, just disable the flag
+		if (mouseCaptured_) {
+			mouseIn_ = true;
+		// if capture is off,
+		} else {
+			Widget * w = getMouseTarget(col, row);
+			ASSERT(w != nullptr);
+			ASSERT(w->rootWindow() == this);
+		}
+	}        
+
+
     void RootWindow::keyChar(helpers::Char c) {
 		if (keyboardFocus_)
 		    keyboardFocus_->keyChar(c);
@@ -134,6 +224,68 @@ namespace ui {
             visibleRect_ = Canvas::VisibleRect(Rect::FromWH(width_, height_), Point{0,0}, this);
     }
 
+	void RootWindow::updateSize(int width, int height) {
+		// resize the buffer first
+		{
+			std::lock_guard<Canvas::Buffer> g(buffer_);
+			buffer_.resize(width, height);
+			// we can't simply resize the widget as this would trigger a conflicting repaint because the modal pane is not part of the main tree. This invalidates the pane first without repainting and then changes the size
+			modalPane_->visibleRect_.invalidate();
+			modalPane_->resize(width, height);
+		}
+		Container::updateSize(width, height);
+	}
+
+	bool RootWindow::focusWidget(Widget * widget, bool value) {
+		ASSERT(widget != nullptr);
+		if (modalWidgetActive_ && ! widget->isChildOf(modalPane_))
+			return false;
+		// if the widget is not the root window, update its focus accordingly and set the focused
+		if (widget != this) {
+			if (focused()) {
+				ASSERT(keyboardFocus_ == widget || value);
+				if (keyboardFocus_ != nullptr) 
+					keyboardFocus_->updateFocused(false);
+				keyboardFocus_ = value ? widget : nullptr;
+				if (keyboardFocus_ != nullptr)
+					keyboardFocus_->updateFocused(true);
+			} else {
+				keyboardFocus_ = value ? widget : nullptr;
+			}
+		// if the widget is root window, then just call own updateFocused method, which sets the focus of the root window and updates the focus of the active widget, if any
+		} else {
+			updateFocused(value);
+		}
+		return true;
+	}
+
+	Widget * RootWindow::focusNext() {
+		std::map<unsigned, Widget*>::iterator i = focusStops_.begin();
+		if (keyboardFocus_ != nullptr && keyboardFocus_->focusStop()) {
+			i = focusStops_.find(keyboardFocus_->focusIndex());
+			++i;
+			if (i == focusStops_.end())
+				i = focusStops_.begin();
+		}
+		// now we have the iterator to the widget to be focused
+		if (modalWidgetActive_) {
+			size_t x = 0;
+			while (x < focusStops_.size()) {
+				if (i->second->isChildOf(modalPane_))
+					break;
+				++x;
+				++i;
+				if (i == focusStops_.end())
+					i = focusStops_.begin();
+			}
+			if (x == focusStops_.size())
+				return keyboardFocus_;
+		}
+		if (i != focusStops_.end())
+			focusWidget(i->second, true);
+		return keyboardFocus_;
+	}
+
 	void RootWindow::updateTitle(std::string const & title) {
 		title_ = title;
 		if (renderer_)
@@ -149,6 +301,12 @@ namespace ui {
 	void RootWindow::closeRenderer() {
 		if (renderer_)
 		    renderer_->requestClose();
+	}
+
+	void RootWindow::paint(Canvas & canvas) {
+		Container::paint(canvas);
+		if (modalWidgetActive_)
+	        paintChild(modalPane_, canvas);
 	}
 
 	void RootWindow::requestClipboardContents(Widget * sender) {

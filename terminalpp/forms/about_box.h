@@ -5,6 +5,7 @@
 
 #include "ui/widget.h"
 #include "ui/builders.h"
+//#include "ui/layout.h"
 
 namespace tpp {
 
@@ -19,7 +20,9 @@ namespace tpp {
         AboutBox():
             Widget(),
             lastKey_(ui::Key::Invalid) {
-            using namespace ui;
+            setWidthHint(ui::Layout::SizeHint::Fixed());
+            setHeightHint(ui::Layout::SizeHint::Fixed());
+            resize(60,10);
         }
 
         void show() {
@@ -33,12 +36,15 @@ namespace tpp {
 
     protected:
 
+        void dismiss() {
+            onDismissed(this);       
+            rootWindow()->hideModalWidget(); 
+        }
+
         void updateFocused(bool value) override {
             Widget::updateFocused(value);
-            if (visible() && value == false) {
-                setVisible(false);
-                onDismissed(this);
-            }
+            if (visible() && value == false)
+                dismiss();
         }
 
         void mouseClick(int col, int row, ui::MouseButton button, ui::Key modifiers) override {
@@ -46,10 +52,8 @@ namespace tpp {
             MARK_AS_UNUSED(row);
             MARK_AS_UNUSED(button);
             MARK_AS_UNUSED(modifiers);
-            if (lastKey_ == ui::Key::Invalid) {
-                setVisible(false);
-                onDismissed(this);
-            }
+            if (lastKey_ == ui::Key::Invalid)
+                dismiss();
         }
 
         void keyDown(ui::Key k) override {
@@ -60,16 +64,15 @@ namespace tpp {
         void keyUp(ui::Key k) override {
             if (k.code() == lastKey_) {
                 lastKey_ = ui::Key::Invalid;
-                setVisible(false);
-                onDismissed(this);
+                dismiss();
             }
         }
 
         void paint(ui::Canvas & canvas) override {
             using namespace ui;
             canvas.fill(Rect::FromWH(canvas.width(), canvas.height()), Brush(Color::Black.withAlpha(128)));
-            int x = (canvas.width() - 60) / 2;
-            int y = (canvas.height() - 10) / 2;
+            int x = 0; //(canvas.width() - 60) / 2;
+            int y = 0; //(canvas.height() - 10) / 2;
             canvas.fill(Rect::FromCorners(x, y, x + 60, y + 10), Brush(Color::Blue));
             canvas.textOut(Point(x + 20,y + 1), "Terminal++", Color::White, ui::Font().setSize(2));
             helpers::Stamp stamp = helpers::Stamp::Stored();
