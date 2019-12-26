@@ -100,33 +100,33 @@ namespace tpp {
          */
         void mouseUp(int x, int y, ui::MouseButton button) override {
             Super::mouseUp(x, y, button);
-            if (pendingMouseOut_ && mouseButtonsDown_ == 0) {
+            /*if (pendingMouseOut_ && mouseButtonsDown_ == 0) {
                 pendingMouseOut_ = false;
                 Super::mouseLeave();
-            }
+            }*/
         }
 
         /** Triggers the mouse enter event. 
          
             If the mouse is locked (i.e. at least one mouse button is down), does not trigger the event, but clears the pending mouse out. 
          */
-        void mouseEnter() {
+        /*void mouseEnter() {
             if (mouseButtonsDown_ == 0)
                 Super::mouseEnter();
             else
                 pendingMouseOut_ = false;
-        }
+        }*/
 
         /** Triggers the mouse leave event. 
          
             If the mouse is locked, does not trigger the event immediately, but sets the pending mouse out event flag so that it will be triggered when the mouse lock is cleared. 
          */
-        void mouseLeave() {
+        /*void mouseLeave() {
             if (mouseButtonsDown_ == 0)
                 Super::mouseLeave();
             else
                 pendingMouseOut_ = true;
-        }
+        } */
 
     private:
 
@@ -372,7 +372,7 @@ namespace tpp {
 
         /** If mouse out without corresponding mouse in was issued while mouse was locked (at least one button pressed), the mouseOut has to be issued after the mouse is released. 
          */
-        bool pendingMouseOut_;
+        //bool pendingMouseOut_;
 
 		/** Given current state as reported from X11, translates it to vterm::Key modifiers
 		 */

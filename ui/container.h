@@ -124,10 +124,30 @@ namespace ui {
 
 		void updateOverlay(bool value) override;
 
+        /** Given mouse coordinates, returns the target widget and updates the coordinates accordingly. 
+         */
+		virtual Widget * getMouseTarget(int & col, int & row) {
+            // mouse coordinates in the client area
+            //Point coord{col - border_.left, row - border_.top};
+            Point coord{col, row};
+            /*Point coord{
+                col - clientRect_.left() + scrollOffset_.x,
+                row - clientRect_.top() + scrollOffset_.y
+            }; */
+            for (auto i = children_.rbegin(), e = children_.rend(); i != e; ++i) {
+                if ((*i)->rect().contains(coord)) {
+                    col = coord.x - (*i)->x();
+                    row = coord.y - (*i)->y();
+                    return (*i)->getMouseTarget(col, row);
+                }
+            }
+			return this;
+		}
+
 		/** Returns the target for the given mouse coordinates. 
 		 
 		 */
-		Widget* getMouseTarget(int col, int row) override {
+		/*Widget* getMouseTarget(int col, int row) override {
 			ASSERT(visibleRect_.contains(col, row));
 			// go from rbegin so that greatest z-index widget at given coordinates will be selected
 			for (auto i = children().rbegin(), e = children().rend(); i != e; ++i) {
@@ -135,7 +155,7 @@ namespace ui {
 				    return *i;
 			}
 			return this;
-		}
+		}*/
 
 		/** Schedules layout of all components on the next repaint event without actually triggering the repaint itself. 
 		 */
@@ -180,8 +200,8 @@ namespace ui {
 		using Widget::onMouseDoubleClick;
 		using Widget::onMouseWheel;
 		using Widget::onMouseMove;
-		using Widget::onMouseOver;
-		using Widget::onMouseOut;
+		using Widget::onMouseEnter;
+		using Widget::onMouseLeave;
 
 		// Methods from Widget
 

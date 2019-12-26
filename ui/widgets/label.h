@@ -80,14 +80,14 @@ namespace ui {
 			Widget::mouseClick(x, y, button, modifiers);
 		}
 
-		void mouseOver() override {
+		void mouseEnter() override {
 			repaint();
-			Widget::mouseOver();
+			Widget::mouseEnter();
 		}
 
-		void mouseOut() override {
+		void mouseLeave() override {
 			repaint();
-			Widget::mouseOut();
+			Widget::mouseLeave();
 		}
 
 

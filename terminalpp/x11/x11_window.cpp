@@ -25,8 +25,7 @@ namespace tpp {
 	    draw_(nullptr),
         text_(nullptr),
         textSize_(0),
-        pasteTarget_{nullptr},
-        pendingMouseOut_{false} {
+        pasteTarget_{nullptr} {
 		unsigned long black = BlackPixel(display_, screen_);	/* get color black */
 		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
         x11::Window parent = XRootWindow(display_, screen_);
@@ -468,7 +467,7 @@ namespace tpp {
             /* Mouse enters the window. 
              */
             case EnterNotify:
-                window->mouseEnter();
+                //window->mouseEnter();
                 break;
             /* Mouse leaves the window. 
              */

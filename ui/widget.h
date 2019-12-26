@@ -135,8 +135,8 @@ namespace ui {
 		Event<MouseButtonEvent> onMouseDoubleClick;
 		Event<MouseWheelEvent> onMouseWheel;
 		Event<MouseMoveEvent> onMouseMove;
-		Event<void> onMouseOver;
-		Event<void> onMouseOut;
+		Event<void> onMouseEnter;
+		Event<void> onMouseLeave;
 
 
 		// keyboard events
@@ -401,12 +401,12 @@ namespace ui {
 			onMouseMove(this, MouseMoveEvent{ col, row, modifiers });
 		}
 
-		virtual void mouseOver() {
-			onMouseOver(this);
+		virtual void mouseEnter() {
+			onMouseEnter(this);
 		}
 
-		virtual void mouseOut() {
-			onMouseOut(this);
+		virtual void mouseLeave() {
+			onMouseLeave(this);
 		}
 
 		virtual void keyChar(helpers::Char c) {
@@ -479,18 +479,31 @@ namespace ui {
 			overlay_ = value;
 		}
 
+        /** Returns the target widget for mouse events on the given coordinates. 
+		 
+		    For widget, this is always the widget itself, but the method is overriden in widget's subclasses.
+		 */
+		virtual Widget * getMouseTarget(int & col, int & row) {
+			MARK_AS_UNUSED(col);
+			MARK_AS_UNUSED(row);
+			return this;
+		}        
+
+        virtual void windowToWidgetCoordinates(int & col, int & row);
+
 		/** Given mouse coordinates, determine the immediate child that is the target of the mouse event. If no such child can be found, returns itself. 
 		 */
-		virtual Widget * getMouseTarget(int col, int row) {
+		/*virtual Widget * getMouseTarget(int col, int row) {
 			ASSERT(visibleRect_.contains(col, row));
 			MARK_AS_UNUSED(col);
 			MARK_AS_UNUSED(row);
 			return this;
 		}
+        */
 
 		/** Returns the mouse coordinates inside the widget. 
 		 */
-		Point getMouseCoordinates() const;
+		//Point getMouseCoordinates() const;
 
 	private:
 
@@ -565,8 +578,8 @@ namespace ui {
 		using Widget::onMouseDoubleClick;
 		using Widget::onMouseWheel;
 		using Widget::onMouseMove;
-		using Widget::onMouseOver;
-		using Widget::onMouseOut;
+		using Widget::onMouseEnter;
+		using Widget::onMouseLeave;
 
 		// Methods 
 
