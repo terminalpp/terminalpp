@@ -121,7 +121,6 @@ namespace tpp {
         void mouseMove(int x, int y) override {
             // enable tracking if not enabled, also do mouseEnter on the root window? 
             if (! mouseLeaveTracked_) {
-                mouseEnter();
                 TRACKMOUSEEVENT tm;
                 tm.cbSize = sizeof(tm);
                 tm.dwFlags = TME_LEAVE;

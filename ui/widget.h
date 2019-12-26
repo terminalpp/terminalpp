@@ -491,20 +491,6 @@ namespace ui {
 
         virtual void windowToWidgetCoordinates(int & col, int & row);
 
-		/** Given mouse coordinates, determine the immediate child that is the target of the mouse event. If no such child can be found, returns itself. 
-		 */
-		/*virtual Widget * getMouseTarget(int col, int row) {
-			ASSERT(visibleRect_.contains(col, row));
-			MARK_AS_UNUSED(col);
-			MARK_AS_UNUSED(row);
-			return this;
-		}
-        */
-
-		/** Returns the mouse coordinates inside the widget. 
-		 */
-		//Point getMouseCoordinates() const;
-
 	private:
 
 		friend class Layout;

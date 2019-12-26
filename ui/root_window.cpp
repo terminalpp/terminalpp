@@ -14,12 +14,11 @@ namespace ui {
 		renderer_{nullptr},
 		buffer_{0, 0},
         windowFocused_{false},
-		keyboardFocus_{nullptr},
+		keyboardFocus_{this},
 		lastMouseTarget_{nullptr},
-		mouseFocus_{nullptr},
+		mouseFocus_{this},
         mouseIn_{false},
 		mouseCaptured_{0},
-		mouseCoords_{-1,-1},
         mouseClickDuration_{200},
         mouseDoubleClickDuration_{400},
 		mouseClickTarget_{nullptr},
@@ -56,32 +55,6 @@ namespace ui {
             mouseClickTarget_ = mouseFocus_;
             mouseClickEnd_ = 0;
         }
-        /*        
-		mouseCoords_ = Point{col, row};
-		if (++mouseFocusLock_ > 1) {
-			if (mouseFocus_ != nullptr) {
-				screenToWidgetCoordinates(mouseFocus_, col, row);
-				mouseFocus_->mouseDown(col, row, button, modifiers);
-			}
-		} else {
-			if (!visibleRect_.contains(col, row)) {
-				mouseFocusLock_ = 0;
-				return checkMouseOverAndOut(nullptr);
-			}
-			// set the mouse focus, determine if mouseOver or Out should be generated
-			mouseFocus_ = getTransitiveMouseTarget(col, row);
-			checkMouseOverAndOut(mouseFocus_);
-			screenToWidgetCoordinates(mouseFocus_, col, row);
-			mouseFocus_->mouseDown(col, row, button, modifiers);
-		}
-		mouseClickStart_ = helpers::SteadyClockMillis();
-		mouseClickButton_ = button;
-		// if the target is different than previous mouse click widget, update it and clear the double click timer
-		if (mouseClickWidget_ != mouseFocus_) {
-			mouseClickWidget_ = mouseFocus_;
-			mouseDoubleClickPrevious_ = 0;
-		}
-        */
     }
 
     void RootWindow::mouseUp(int col, int row, MouseButton button, Key modifiers) {
@@ -113,30 +86,6 @@ namespace ui {
         // if at the end of capture we realize the mouse is out, the delayed mouse out events should be triggered now
         if (--mouseCaptured_ == 0 && mouseIn_ == false) 
             inputMouseOut();
-        /*        
-		mouseCoords_ = Point{col, row};
-		ASSERT(mouseFocusLock_ > 0);
-		mouseFocusLock_--;
-		if (mouseFocus_ != nullptr) {
-			screenToWidgetCoordinates(mouseFocus_, col, row);
-			mouseFocus_->mouseUp(col, row, button, modifiers);
-			// see if we have single or double click
-			if (mouseClickButton_ == button) {
-				size_t end = helpers::SteadyClockMillis();
-				if (end - mouseClickStart_ <= MOUSE_CLICK_MAX_DURATION) {
-					if (mouseDoubleClickPrevious_ != 0 && mouseClickStart_ - mouseDoubleClickPrevious_ < MOUSE_DOUBLE_CLICK_MAX_INTERVAL) {
-						// double click
-						mouseFocus_->mouseDoubleClick(col, row, button, modifiers);
-						mouseClickWidget_ = nullptr;
-					} else {
-						// single click
-						mouseFocus_->mouseClick(col, row, button, modifiers);
-						mouseDoubleClickPrevious_ = end;
-					}
-				} 
-				// that's it - no need to do anything with mouseClick widget here, it has either expired, or it is valid, or it was cleared by a double click happening already
-			} 			
-		} */
     }
 
     void RootWindow::mouseWheel(int col, int row, int by, Key modifiers) {
@@ -145,20 +94,6 @@ namespace ui {
                 Container::mouseWheel(col, row, by, modifiers);
             else 
                 mouseFocus_->mouseWheel(col, row, by, modifiers);
-        //mouseFocus_->mouseWheel(col, row, by, modifiers);	
-        /*	mouseCoords_ = Point{col, row};
-		if (mouseFocusLock_ > 0 && mouseFocus_ != nullptr) {
-			screenToWidgetCoordinates(mouseFocus_, col, row);
-		    mouseFocus_->mouseWheel(col, row, by, modifiers);
-		} else {
-			if (!visibleRect_.contains(col, row)) 
-				return checkMouseOverAndOut(nullptr);
-			Widget * target = getTransitiveMouseTarget(col, row);
-			checkMouseOverAndOut(target);
-			screenToWidgetCoordinates(target, col, row);
-		    target->mouseWheel(col, row, by, modifiers);
-		}
-        */
     }
 
     void RootWindow::mouseMove(int col, int row, Key modifiers) {
@@ -169,19 +104,6 @@ namespace ui {
             else 
                 mouseFocus_->mouseMove(col, row, modifiers);
         }
-        /*
-        mouseCoords_ = Point{col, row};
-		if (mouseFocusLock_ > 0 && mouseFocus_ != nullptr) {
-			screenToWidgetCoordinates(mouseFocus_, col, row);
-		    mouseFocus_->mouseMove(col, row, modifiers);
-		} else {
-			if (!visibleRect_.contains(col, row)) 
-				return checkMouseOverAndOut(nullptr);
-			Widget * target = getTransitiveMouseTarget(col, row);
-			checkMouseOverAndOut(target);
-			screenToWidgetCoordinates(target, col, row);
-			target->mouseMove(col, row, modifiers);
-		} */
     }
 
     void RootWindow::keyChar(helpers::Char c) {

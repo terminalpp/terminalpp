@@ -60,7 +60,6 @@ namespace ui {
                 backgroundColor_ = value;
                 repaint();
             }
-            
         }
 
         void attachChild(Widget * child) override {
@@ -93,11 +92,6 @@ namespace ui {
         virtual void rendererResized(int width, int height) {
             resize(width, height);
         }
-
-/*        virtual void rendererFocused(bool value) {
-            setFocused(value);
-        }
-    */
 
         /** Locks the backing buffer and returns it in a RAII smart pointer.
          */
@@ -206,36 +200,9 @@ namespace ui {
             }
         }        
 
-        /*
-        void checkMouseOverAndOut(Widget * target) {
-            if (target != lastMouseTarget_) {
-                if (lastMouseTarget_ != nullptr)
-                    lastMouseTarget_->mouseOut();
-                lastMouseTarget_ = target;
-                if (lastMouseTarget_ != nullptr)
-                    lastMouseTarget_->mouseOver();
-            }
-        } */
-
         void keyChar(helpers::Char c) override;
         void keyDown(Key k) override;
         void keyUp(Key k) override;
-
-
-        // widget implementation specific to renderer
-
-        /*
-        void updateFocused(bool value) override {
-            // first make sure the focus in/out 
-            Container::updateFocused(value);
-            // if there is keyboard focused widget, update its state as well
-            if (keyboardFocus_ != nullptr)
-                keyboardFocus_->updateFocused(value);
-            // trigger mouse out for last mouse target
-            if (!value)
-                checkMouseOverAndOut(nullptr);
-        }
-        */
 
         /** Notifies the root window that a widget has been detached within it. 
          
@@ -369,6 +336,16 @@ namespace ui {
             }
         }
 
+        /** Updates the mouse coordinates for the widget. 
+
+            Does nothing, but stops the widget's search through the parent.  
+         */
+        void windowToWidgetCoordinates(int & col, int & row) {
+            MARK_AS_UNUSED(col);
+            MARK_AS_UNUSED(row);
+            ASSERT(x() == 0 && y() == 0 && parent() == nullptr);
+        }        
+
         virtual void updateTitle(std::string const & title);
 
         virtual void updateIcon(Icon icon);
@@ -444,11 +421,6 @@ namespace ui {
         /** Determines the number of pressed buttons to know when the mouse focus lock is to be acquired and released. 
          */
         size_t mouseCaptured_;
-
-        /** Last known mouse coordinates. 
-         */
-        // TODO delete this
-        Point mouseCoords_;
 
         /** Duration in milliseconds between down & up events to pass as a mouse click. 
          */

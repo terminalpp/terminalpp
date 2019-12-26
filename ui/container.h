@@ -144,19 +144,6 @@ namespace ui {
 			return this;
 		}
 
-		/** Returns the target for the given mouse coordinates. 
-		 
-		 */
-		/*Widget* getMouseTarget(int col, int row) override {
-			ASSERT(visibleRect_.contains(col, row));
-			// go from rbegin so that greatest z-index widget at given coordinates will be selected
-			for (auto i = children().rbegin(), e = children().rend(); i != e; ++i) {
-				if ((*i)->visible() && (*i)->visibleRect_.contains(col, row))
-				    return *i;
-			}
-			return this;
-		}*/
-
 		/** Schedules layout of all components on the next repaint event without actually triggering the repaint itself. 
 		 */
 		void scheduleRelayout() {
