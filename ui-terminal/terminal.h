@@ -368,12 +368,13 @@ namespace ui {
         void mouseWheel(int col, int row, int by, Key modifiers) override;
         void mouseMove(int col, int row, Key modifiers) override;
 
-        void mouseOut() override {
+        void mouseLeave() override {
             if (scrollBarActive_) {
                 scrollBarActive_ = false;
                 repaint();
             }
             cancelSelection();
+            Widget::mouseLeave();
         }
 
         void keyChar(helpers::Char c) override;

@@ -120,7 +120,13 @@ namespace ui {
 		    root->setSelection(this, value);
 	}
 
-
+    void Widget::windowToWidgetCoordinates(int & col, int & row) {
+        ASSERT(parent_ != nullptr) << "Not expected to be called un detached widget.";
+        // adjust for the offset of the widget inside its parent widget
+        col -= x_;
+        row -= y_;
+        parent_->windowToWidgetCoordinates(col, row);
+    }
 
 	void Widget::detachRootWindow() {
 		ASSERT(visibleRect_.rootWindow() != nullptr);
@@ -128,18 +134,5 @@ namespace ui {
 		visibleRect_.detach();
 		//visibleRect_.root = nullptr;
 	}
-
-	Point Widget::getMouseCoordinates() const {
-		RootWindow * root = rootWindow();
-		if (root != nullptr) {
-			Point result = root->mouseCoords_;
-			root->screenToWidgetCoordinates(this, result.x, result.y);
-			return result;
-		} else {
-			return Point{-1,-1};
-		}
-
-	}
-
 
 } // namespace ui

@@ -86,7 +86,7 @@ namespace tpp {
                 focused_ = value;
                 if (! value)
                     activeModifiers_ = ui::Key::Invalid;
-                ui::Renderer::setFocus(value);
+                ui::Renderer::inputSetFocus(value);
             }
         }
 

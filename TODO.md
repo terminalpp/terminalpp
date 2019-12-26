@@ -26,6 +26,9 @@ The following is very short description of the versions planned and their main n
 
 Questions:
 
+- delete mousecoords from root window
+- window to widget coordinates in terminal (and scrollable widgets in general)
+
 - should Container's attach & detach children be virtual? 
 
 - simpler settings where not everything will be stored and only changes from defaults will be loaded

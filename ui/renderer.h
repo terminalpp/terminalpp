@@ -107,10 +107,16 @@ namespace ui {
                 rootWindow_->rendererResized(cols, rows);
         }
 
-        void setFocus(bool value) {
+        void inputSetFocus(bool value) {
             if (attached())
-                rootWindow_->rendererFocused(value);
+                rootWindow_->inputSetFocus(value);
         }
+
+        void inputMouseOut() {
+            if (attached())
+                rootWindow_->inputMouseOut();
+        }
+
 
         /** Mouse events. 
          */
@@ -134,14 +140,16 @@ namespace ui {
                 rootWindow_->mouseMove(col, row, modifiers);
         }
 
+        /*
         void mouseEnter() {
             if (attached())
                 rootWindow_->mouseEnter();
         }
+        */
 
         void mouseLeave() {
             if (attached())
-                rootWindow_->mouseLeave();
+                rootWindow_->inputMouseOut();
         }
 
         /** Keyboard events. 

@@ -81,10 +81,10 @@ namespace ui {
 
         friend class Widget;
         
-	    static constexpr unsigned MOUSE_CLICK_MAX_DURATION = 100;
-
-	    static constexpr unsigned MOUSE_DOUBLE_CLICK_MAX_INTERVAL = 300;
-
+        Event<void> onMouseIn;
+        Event<void> onMouseOut;
+        Event<void> onWindowFocusIn;
+        Event<void> onWindowFocusOut;
         
         // Interface to the renderer (and widget implementation where used by both)
 
@@ -94,9 +94,10 @@ namespace ui {
             resize(width, height);
         }
 
-        virtual void rendererFocused(bool value) {
+/*        virtual void rendererFocused(bool value) {
             setFocused(value);
         }
+    */
 
         /** Locks the backing buffer and returns it in a RAII smart pointer.
          */
@@ -114,19 +115,98 @@ namespace ui {
             return cursor_;
         }
 
+        /** Triggered when mouse leaves the are of the renderer window. 
+         
+            This is not identical to the window loosing focus. 
+         */
+        void inputMouseOut() {
+            ASSERT(mouseFocus_ != nullptr);
+            if (mouseCaptured_ == 0) {
+                mouseIn_ = true; // temporarily make sure that mouseLeave will assume the mouse is still focused 
+                mouseFocus_->mouseLeave();
+                mouseIn_ = false;
+                mouseFocus_ = this;
+                mouseOut();
+            } else {
+                mouseIn_ = false;
+            }
+        }
+
+        void inputSetFocus(bool value) {
+            ASSERT(windowFocused_ != value);
+            windowFocused_ = value;
+            if (value)
+                onWindowFocusIn(this);
+            else
+                onWindowFocusOut(this);
+        }
+
         void mouseDown(int col, int row, MouseButton button, Key modifiers) override;
         void mouseUp(int col, int row, MouseButton button, Key modifiers) override;
         void mouseWheel(int col, int row, int by, Key modifiers) override;
         void mouseMove(int col, int row, Key modifiers) override;
 
-        virtual void mouseEnter() {
+        virtual void mouseIn() {
             // do nothing - we will receive mouse move event too, but other may want to override
+            onMouseIn(this);
         }
 
-        virtual void mouseLeave() {
-            checkMouseOverAndOut(nullptr);
+        virtual void mouseOut() {
+            onMouseOut(this);
+            //checkMouseOverAndOut(nullptr);
         }
 
+        /** Updates the mouse state when a mouse event occurs and recalculates the coordinates. 
+         
+            Dependning on the mouse capture and previous mouse position and focus widget emits the proper mouseEenter, mouseLeave and mouseIn events. 
+            Also recalculates the coordinates given to it to the coordinates relative the the origin of the widget which has currently the mouse focus, i.e. over which the mouse currently hovers, or which has captured it. 
+         */
+        void updateMouseState(int & col, int & row) {
+            if (mouseCaptured_) {
+                ASSERT(mouseFocus_ != nullptr);
+                // if the mouse was out, but the coordinates now are inside the window, set mouseIn correctly
+                if (! mouseIn_ && col >= 0 && col < width() && row >= 0 && row < height())
+                    mouseIn_ = true;
+                // update the coordinates correctly for the target widget
+                mouseFocus_->windowToWidgetCoordinates(col, row);
+            } else {
+                // when mouse is not captured, mouse events are expected to only arrive if coordinates are within the root window
+                ASSERT(col >= 0 && row >= 0 && col < width() && row < height());
+                // if mouse is not captured, then we must determine proper focus target and recalculate the coordinates
+                Widget * w = getMouseTarget(col, row);
+                // if this is first mouse event then we need to signal mouseIn for the root window first and then update the mouse focus target and call its mouseEnter
+                if (! mouseIn_) {
+                    ASSERT(mouseFocus_ == this);
+                    mouseIn_ = true;
+                    mouseIn();
+                    mouseFocus_ = w;
+                    mouseFocus_->mouseEnter();
+                // otherwise, if the calculated target is different from the previous one, we must emit mouse leave and mouse enter events properly
+                } else if (w != mouseFocus_) {
+                    mouseFocus_->mouseLeave();
+                    mouseFocus_ = w;
+                    mouseFocus_->mouseEnter();
+                }
+            }
+
+            // if the mouse is inside the window, do nothing as either we'll get the inputMouseOut signal, or the mouse is in anyways
+            if (mouseIn_)
+                return;
+            // don't do anything if the mouse is outside of the window
+            if (col < 0 || row < 0 || col >= width() || row >= height())
+                return;
+            // otherwise if capture is on, just disable the flag
+            if (mouseCaptured_) {
+                mouseIn_ = true;
+            // if capture is off,
+            } else {
+                Widget * w = getMouseTarget(col, row);
+                ASSERT(w != nullptr);
+                ASSERT(w->rootWindow() == this);
+            }
+        }        
+
+        /*
         void checkMouseOverAndOut(Widget * target) {
             if (target != lastMouseTarget_) {
                 if (lastMouseTarget_ != nullptr)
@@ -135,7 +215,7 @@ namespace ui {
                 if (lastMouseTarget_ != nullptr)
                     lastMouseTarget_->mouseOver();
             }
-        }
+        } */
 
         void keyChar(helpers::Char c) override;
         void keyDown(Key k) override;
@@ -144,6 +224,7 @@ namespace ui {
 
         // widget implementation specific to renderer
 
+        /*
         void updateFocused(bool value) override {
             // first make sure the focus in/out 
             Container::updateFocused(value);
@@ -154,6 +235,7 @@ namespace ui {
             if (!value)
                 checkMouseOverAndOut(nullptr);
         }
+        */
 
         /** Notifies the root window that a widget has been detached within it. 
          
@@ -165,11 +247,14 @@ namespace ui {
             if (keyboardFocus_ == widget)
                 focusWidget(widget, false);
             if (lastMouseTarget_ == widget)
-                checkMouseOverAndOut(nullptr);
-            if (mouseFocus_ == widget) 
-                mouseFocus_ = nullptr;
-            if (mouseClickWidget_ == widget)
-                mouseClickWidget_ = nullptr;
+                lastMouseTarget_ = nullptr;
+            if (mouseFocus_ == widget) {
+                mouseFocus_->mouseLeave();
+                mouseFocus_ = this;
+                mouseFocus_->mouseEnter();
+            }
+            if (mouseClickTarget_ == widget)
+                mouseClickTarget_ = nullptr;
             if (pasteRequestTarget_ == widget)
                 pasteRequestTarget_ = nullptr;
             if (selectionOwner_ == widget)
@@ -337,6 +422,10 @@ namespace ui {
 
         Canvas::Buffer buffer_;
 
+        /** Holds whether the renderer window containing the root window is focused or not. 
+         */
+        bool windowFocused_;
+
         Widget * keyboardFocus_;
         std::map<unsigned, Widget *> focusStops_;
 
@@ -348,16 +437,31 @@ namespace ui {
          */
 		Widget* mouseFocus_;
 
+        /** Determines whether the mouse is inside the root window, or not. 
+         */    
+        bool mouseIn_;
+
         /** Determines the number of pressed buttons to know when the mouse focus lock is to be acquired and released. 
          */
-        unsigned mouseFocusLock_; 
+        size_t mouseCaptured_;
+
         /** Last known mouse coordinates. 
          */
+        // TODO delete this
         Point mouseCoords_;
-		Widget* mouseClickWidget_;
+
+        /** Duration in milliseconds between down & up events to pass as a mouse click. 
+         */
+        size_t mouseClickDuration_;
+
+        /** Duration in milliseconds between two mouse click events to pass as a double click. 
+         */
+        size_t mouseDoubleClickDuration_;
+
+		Widget* mouseClickTarget_;
 		MouseButton mouseClickButton_;
 		size_t mouseClickStart_;
-		size_t mouseDoubleClickPrevious_;
+		size_t mouseClickEnd_;
 
         Cursor cursor_;
 

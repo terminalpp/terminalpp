@@ -13,15 +13,19 @@ namespace ui {
 		destroying_{false},
 		renderer_{nullptr},
 		buffer_{0, 0},
+        windowFocused_{false},
 		keyboardFocus_{nullptr},
 		lastMouseTarget_{nullptr},
 		mouseFocus_{nullptr},
-		mouseFocusLock_{0},
+        mouseIn_{false},
+		mouseCaptured_{0},
 		mouseCoords_{-1,-1},
-		mouseClickWidget_{nullptr},
+        mouseClickDuration_{200},
+        mouseDoubleClickDuration_{400},
+		mouseClickTarget_{nullptr},
 		mouseClickButton_{MouseButton::Left}, // does not matter
 		mouseClickStart_{0},
-		mouseDoubleClickPrevious_{0},
+		mouseClickEnd_{0},
 		pasteRequestTarget_{nullptr},
 		selectionOwner_{nullptr},
 		title_{""},
@@ -36,6 +40,23 @@ namespace ui {
 	}
 
     void RootWindow::mouseDown(int col, int row, MouseButton button, Key modifiers) {
+        updateMouseState(col, row);
+        // capture the mouse, dispatch mouse down event 
+        ++mouseCaptured_;
+        if (mouseFocus_ == this)
+            Container::mouseDown(col, row, button, modifiers);
+        else 
+            mouseFocus_->mouseDown(col, row, button, modifiers);
+        //mouseFocus_->mouseDown(col, row, button, modifiers);
+        // deal with clicks and double clicks, by remembering the button & time of the down event
+        mouseClickStart_ = helpers::SteadyClockMillis();
+        mouseClickButton_ = button;
+        // if mouseFocus has changed between the last click and now, it's not a double click we deal with this by setting the last click end to 0
+        if (mouseClickTarget_ != mouseFocus_) {
+            mouseClickTarget_ = mouseFocus_;
+            mouseClickEnd_ = 0;
+        }
+        /*        
 		mouseCoords_ = Point{col, row};
 		if (++mouseFocusLock_ > 1) {
 			if (mouseFocus_ != nullptr) {
@@ -60,9 +81,39 @@ namespace ui {
 			mouseClickWidget_ = mouseFocus_;
 			mouseDoubleClickPrevious_ = 0;
 		}
+        */
     }
 
     void RootWindow::mouseUp(int col, int row, MouseButton button, Key modifiers) {
+        // no need to update mouse state, would have been updated properly by the mouseDown at least
+        ASSERT(mouseCaptured_ > 0);
+        ASSERT(mouseFocus_ != nullptr);
+        // just some defensive programming here
+        if (mouseFocus_ == nullptr)
+            return;
+        // determine the widget's coordinates based on the col & row and trigger the appropriate events
+        mouseFocus_->windowToWidgetCoordinates(col, row);
+        if (mouseFocus_ == this)
+            Container::mouseUp(col, row, button, modifiers);
+        else 
+            mouseFocus_->mouseUp(col, row, button, modifiers);
+        //mouseFocus_->mouseUp(col, row, button, modifiers);
+        size_t now = helpers::SteadyClockMillis();
+        if (button == mouseClickButton_ && (now - mouseClickStart_ <= mouseClickDuration_)) {
+            ASSERT(mouseClickTarget_ == mouseFocus_);
+            // is it a double click? 
+            if (now - mouseClickEnd_ <= mouseDoubleClickDuration_) {
+                mouseFocus_->mouseDoubleClick(col, row, button, modifiers);
+                mouseClickEnd_ = 0;
+            } else {
+                mouseFocus_->mouseClick(col, row, button, modifiers);
+                mouseClickEnd_ = now;
+            }
+        } 
+        // if at the end of capture we realize the mouse is out, the delayed mouse out events should be triggered now
+        if (--mouseCaptured_ == 0 && mouseIn_ == false) 
+            inputMouseOut();
+        /*        
 		mouseCoords_ = Point{col, row};
 		ASSERT(mouseFocusLock_ > 0);
 		mouseFocusLock_--;
@@ -85,11 +136,17 @@ namespace ui {
 				} 
 				// that's it - no need to do anything with mouseClick widget here, it has either expired, or it is valid, or it was cleared by a double click happening already
 			} 			
-		}
+		} */
     }
 
     void RootWindow::mouseWheel(int col, int row, int by, Key modifiers) {
-		mouseCoords_ = Point{col, row};
+        updateMouseState(col, row);
+            if (mouseFocus_ == this)
+                Container::mouseWheel(col, row, by, modifiers);
+            else 
+                mouseFocus_->mouseWheel(col, row, by, modifiers);
+        //mouseFocus_->mouseWheel(col, row, by, modifiers);	
+        /*	mouseCoords_ = Point{col, row};
 		if (mouseFocusLock_ > 0 && mouseFocus_ != nullptr) {
 			screenToWidgetCoordinates(mouseFocus_, col, row);
 		    mouseFocus_->mouseWheel(col, row, by, modifiers);
@@ -101,10 +158,19 @@ namespace ui {
 			screenToWidgetCoordinates(target, col, row);
 		    target->mouseWheel(col, row, by, modifiers);
 		}
+        */
     }
 
     void RootWindow::mouseMove(int col, int row, Key modifiers) {
-		mouseCoords_ = Point{col, row};
+        if (mouseCaptured_ || (col >= 0 && col < width() && row >= 0 && row < height())) {
+            updateMouseState(col, row);
+            if (mouseFocus_ == this)
+                Container::mouseMove(col, row, modifiers);
+            else 
+                mouseFocus_->mouseMove(col, row, modifiers);
+        }
+        /*
+        mouseCoords_ = Point{col, row};
 		if (mouseFocusLock_ > 0 && mouseFocus_ != nullptr) {
 			screenToWidgetCoordinates(mouseFocus_, col, row);
 		    mouseFocus_->mouseMove(col, row, modifiers);
@@ -115,7 +181,7 @@ namespace ui {
 			checkMouseOverAndOut(target);
 			screenToWidgetCoordinates(target, col, row);
 			target->mouseMove(col, row, modifiers);
-		}
+		} */
     }
 
     void RootWindow::keyChar(helpers::Char c) {

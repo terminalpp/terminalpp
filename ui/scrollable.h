@@ -62,6 +62,15 @@ namespace ui {
 			static_cast<T*>(this)->repaint();			
 		}
 
+        /** Updates the coordinates of the widget based on the current scroll offset. 
+         
+            This method is to be called from the class inheriting from scrollable. 
+         */
+        void windowToWidgetCoordinates(int & col, int & row) {
+            col += scrollOffset_.x;
+            row += scrollOffset_.y;
+        }        
+
         /** Returns the start and length of a vertical scrollbar. 
          */
         std::pair<int, int> verticalScrollbar(int length) {

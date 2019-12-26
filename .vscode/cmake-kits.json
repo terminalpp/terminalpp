@@ -1,0 +1,9 @@
+[
+    {
+        "name" : "G++ version 8",
+        "compilers" : {
+            "C" : "/usr/bin/gcc-8",
+            "CXX" : "/usr/bin/g++-8"
+        }
+    }
+]
