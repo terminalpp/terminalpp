@@ -3,7 +3,7 @@
 #include "../stamp.h"
 #include "helpers/stamp.h"
 
-#include "ui/widget.h"
+#include "ui/modal-widget.h"
 #include "ui/builders.h"
 //#include "ui/layout.h"
 
@@ -15,37 +15,17 @@ namespace tpp {
 
         TODO this would be better served by a modal show of a widget perhaps? 
      */
-    class AboutBox : public ui::Widget {
+    class AboutBox : public ui::ModalWidget {
     public:
         AboutBox():
-            Widget(),
+            ModalWidget(),
             lastKey_(ui::Key::Invalid) {
-            setWidthHint(ui::Layout::SizeHint::Fixed());
-            setHeightHint(ui::Layout::SizeHint::Fixed());
             resize(60,10);
         }
-
-        void show() {
-            setVisible(true);
-            setFocused(true);
-        }
-
-        ui::Event<void> onDismissed;
 
         using Widget::setVisible;
 
     protected:
-
-        void dismiss() {
-            onDismissed(this);       
-            rootWindow()->hideModalWidget(); 
-        }
-
-        void updateFocused(bool value) override {
-            Widget::updateFocused(value);
-            if (visible() && value == false)
-                dismiss();
-        }
 
         void mouseClick(int col, int row, ui::MouseButton button, ui::Key modifiers) override {
             MARK_AS_UNUSED(col);

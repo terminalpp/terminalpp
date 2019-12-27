@@ -52,8 +52,6 @@ namespace tpp {
 
             terminal_->setCursor(config.sessionCursor());
             about_ = new AboutBox();
-            about_->onDismissed.setHandler(&Session::aboutBoxDismissed, this);
-
 
             focusWidget(terminal_, true);
             if (! config.sessionLog().empty()) {
@@ -68,11 +66,6 @@ namespace tpp {
         }
 
     private:
-
-        void aboutBoxDismissed(ui::Event<void>::Payload & e) {
-            MARK_AS_UNUSED(e);
-            terminal_->setFocused(true);
-        }
 
         void terminalTitleChanged(ui::Event<std::string>::Payload & e) {
             setTitle(*e);
@@ -152,7 +145,7 @@ namespace tpp {
             } else {
                 setIcon(Icon::Default);
                 if (k == SHORTCUT_ABOUT)
-                    showModalWidget(about_);
+                    about_->show(this);
                 else
                     ui::RootWindow::keyDown(k);
             }

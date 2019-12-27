@@ -66,7 +66,7 @@ namespace ui {
                 removeFocusStop(child);
         }
 
-        void showModalWidget(Widget * w);
+        void showModalWidget(Widget * w, Widget * keyboardFocus);
 
         void hideModalWidget();
 

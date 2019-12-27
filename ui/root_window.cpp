@@ -57,12 +57,13 @@ namespace ui {
 	}
 
 
-	void RootWindow::showModalWidget(Widget * w) {
+	void RootWindow::showModalWidget(Widget * w, Widget * keyboardFocus) {
+		ASSERT(keyboardFocus == w || keyboardFocus->isChildOf(w));
 		modalPane_->attachChild(w);
 		modalWidgetActive_ = true;
 		setOverlay(true);
 		modalFocusBackup_ = keyboardFocus_;
-		focusWidget(w, true);
+		focusWidget(keyboardFocus, true);
 		repaint();
 	}
 
