@@ -348,6 +348,7 @@ namespace ui {
 
     std::unordered_map<Key, std::string> Terminal::KeyMap_(InitializeVT100KeyMap());
 
+    char32_t Terminal::LineDrawingChars_[15] = {0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0, 0, 0x2500, 0, 0, 0x251c, 0x2524, 0x2534, 0x252c, 0x2502};
 
     Terminal::Terminal(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize):
         Scrollable{width, height},
@@ -358,6 +359,7 @@ namespace ui {
         mouseButtonsDown_{0},
         cursorMode_{CursorMode::Normal},
         keypadMode_{KeypadMode::Normal},
+        lineDrawingSet_{false},
         bracketedPaste_{false},
         alternateBufferMode_{false},
         alternateBuffer_{width, height, Cell{palette->defaultForeground(), palette->defaultBackground(), ' '}},
@@ -819,7 +821,11 @@ namespace ui {
                         // get the cell and update its contents
                         Cell& cell = buffer_.at(buffer_.cursor().pos.x, buffer_.cursor().pos.y);
                         cell = state_.cell;
-                        cell.setCodepoint(c8->codepoint());
+                        // set the contents based on whether we are in the line drawing mode or not
+                        char32_t cp = c8->codepoint();
+                        if (lineDrawingSet_ && cp >= 0x6a && cp <0x79)
+                            cp = LineDrawingChars_[cp-0x6a]; 
+                        cell.setCodepoint(cp);
                         // store the last character position
                         setLastCharPosition();
                         // move to next column
@@ -933,8 +939,22 @@ namespace ui {
                     parseTppSequence(std::move(seq));
                 }
                 break;
-    		/* Character set specification - ignored, we just have to parse it. */
+    		/* Character set specification - most cases are ignored, with the exception of the box drawing and reset to english (0 and B) respectively. 
+             */
 			case '(':
+                if (x != bufferEnd) {
+                    if (*x == '0') {
+                        ++x;
+                        lineDrawingSet_ = true;
+                        LOG(SEQ) << "Line drawing set selected";
+                        break;
+                    } else if (*x == 'B') {
+                        ++x;
+                        lineDrawingSet_ = false;
+                        LOG(SEQ) << "Normal character set selected";
+                        break;
+                    }
+                }
 			case ')':
 			case '*':
 			case '+':

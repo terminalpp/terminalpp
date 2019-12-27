@@ -48,8 +48,6 @@ Questions:
 
 ## Non-version TODOs
 
-- ssh plain does not display boxes in mc well
-- add showModal(Widget *) to root window, which would dim the background and then display the widget centered
 - add zoom out? and default zoom? 
 - add JSON schema and validator support
 - allow container to reverse order of its elements (so that maximized and horizontal layouts can be used nicely with header lines both up and down)

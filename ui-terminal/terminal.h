@@ -619,6 +619,7 @@ namespace ui {
 
         CursorMode cursorMode_;
         KeypadMode keypadMode_;
+        bool lineDrawingSet_;
 
         /* Determines whether pasted text will be surrounded by ESC[200~ and ESC[201~ */
         bool bracketedPaste_;
@@ -643,6 +644,8 @@ namespace ui {
         }
 
         static std::unordered_map<Key, std::string> KeyMap_;
+
+        static char32_t LineDrawingChars_[15];
 
     private:
 
