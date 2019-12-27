@@ -67,7 +67,7 @@ namespace ui {
 	}
 
 	void RootWindow::hideModalWidget() {
-		if (modalPane_->visible_) {
+		if (modalWidgetActive_) {
 			modalWidgetActive_ = false;
 			ASSERT(modalFocusBackup_ != nullptr);
 			focusWidget(modalFocusBackup_, true);

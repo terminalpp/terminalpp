@@ -466,7 +466,6 @@ namespace tpp {
             /* Mouse enters the window. 
              */
             case EnterNotify:
-                //window->mouseEnter();
                 break;
             /* Mouse leaves the window. 
              */
@@ -574,10 +573,8 @@ namespace tpp {
 				break;
             default:
                 break;
-
         }
     }
-
 
 } // namespace tpp
 

@@ -62,6 +62,11 @@ namespace tpp {
             }
         }
 
+        ~Session() override {
+            hideModalWidget();
+            delete about_;
+        }
+
     private:
 
         void aboutBoxDismissed(ui::Event<void>::Payload & e) {
