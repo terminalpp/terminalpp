@@ -250,7 +250,7 @@ if(PACKAGE_INSTALL STREQUAL terminalpp)
             )
             set_target_properties(package-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
             add_custom_target(package-snap
-                COMMAND snapcraft clean
+                COMMAND snapcraft clean ${SNAP_EXTRA_ARGS}
                 COMMAND snapcraft ${SNAP_EXTRA_ARGS}
                 COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/packages/${PROJECT_NAME}_${PROJECT_VERSION}.snap
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/snap

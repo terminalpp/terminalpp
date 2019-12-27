@@ -13,7 +13,6 @@ The following is very short description of the versions planned and their main n
 ### v0.6
 
 - cursor appearance can be specified in `settings.json`
-
 - simple tests framework in helpers, tests target added
 - reentrant lock in helpers
 - simpler events (single handler, std::function, method and fptr handlers)
@@ -23,8 +22,6 @@ The following is very short description of the versions planned and their main n
 - simpler UI framework
 - Windows store submission
 - more automation for releases
-
-- modal pane: cleanup & modal widget base
 
 Questions:
 

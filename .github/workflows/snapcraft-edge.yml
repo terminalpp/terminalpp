@@ -15,7 +15,8 @@ jobs:
         sudo snap install snapcraft --classic
         sudo chown root:root /
         sudo snap install lxd
-        sudo lxd init
+        sudo usermod --append --groups lxd $USER
+        sudo lxd init --auto
     - name: install-packages
       run: |
         sudo apt update
