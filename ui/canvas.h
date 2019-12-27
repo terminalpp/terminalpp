@@ -193,7 +193,12 @@ namespace ui {
 				valid_ = false;
 			}
 
-			/** Detaches the rectange.
+            void attach(RootWindow * root) {
+                ASSERT(! valid_);
+                rootWindow_ = root;
+            }
+
+			/** Detaches the rectangle.
 			 
 			    Invalidates the rectangle and clears the root window information. 
 			 */

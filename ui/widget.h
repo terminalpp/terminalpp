@@ -502,11 +502,16 @@ namespace ui {
 		friend class RootWindow;
 		friend class Canvas;
 
+		/** Attaches the root window to the widget. 
+		 */
+		virtual void attachRootWindow(RootWindow * root);
+
 		/** Detaches the wdget from its root window. 
 		 
 		    Informs the root window that the widget is to be detached. 
 		 */
         virtual void detachRootWindow();
+
 
 		/* Parent widget or none. 
 		 */

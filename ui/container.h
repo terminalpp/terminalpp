@@ -31,7 +31,7 @@ namespace ui {
             return children_;
         }
 
-        virtual void attachChild(Widget * child) {
+        void attachChild(Widget * child) {
 			if (child->parent_ == this) {
 			    auto i = std::find(children_.begin(), children_.end(), child);
 				std::swap(*i, children_.back());
@@ -42,11 +42,13 @@ namespace ui {
                 children_.push_back(child);
                 child->parent_ = this;
 			}
+			if (rootWindow() != nullptr)
+			    child->attachRootWindow(rootWindow());
             scheduleRelayout();
             repaint();
         }
 
-        virtual void detachChild(Widget * child) {
+        void detachChild(Widget * child) {
             ASSERT(child->parent_ == this);
 			// so that anything from the child won't go to parent
 			child->parent_ = nullptr;
@@ -153,7 +155,13 @@ namespace ui {
 			relayout_ = true;
 		}
 
-		void detachRootWindow() {
+		void attachRootWindow(RootWindow * root) override {
+			Widget::attachRootWindow(root);
+			for (Widget * child : children_)
+				child->attachRootWindow(root);
+		}
+
+		void detachRootWindow() override {
 			for (Widget * child : children_)
 				child->detachRootWindow();
 			Widget::detachRootWindow();

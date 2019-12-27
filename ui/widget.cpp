@@ -132,6 +132,12 @@ namespace ui {
         parent_->windowToWidgetCoordinates(col, row);
     }
 
+	void Widget::attachRootWindow(RootWindow * root) {
+		ASSERT(visibleRect_.rootWindow() == nullptr);
+		visibleRect_.attach(root);
+		root->widgetAttached(this);
+	}
+
 	void Widget::detachRootWindow() {
 		ASSERT(visibleRect_.rootWindow() != nullptr);
 		visibleRect_.rootWindow()->widgetDetached(this);

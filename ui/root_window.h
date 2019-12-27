@@ -52,19 +52,8 @@ namespace ui {
             }
         }
 
-        void attachChild(Widget * child) override {
-            Container::attachChild(child);
-            if (child->focusStop())
-                addFocusStop(child);
-        }
-
-        void detachChild(Widget * child) override {
-            if (keyboardFocus_ == child)
-                focusWidget(child, false);
-            Container::detachChild(child);
-            if (child->focusStop())
-                removeFocusStop(child);
-        }
+        using Container::attachChild;
+        using Container::detachChild;
 
         void showModalWidget(Widget * w, Widget * keyboardFocus);
 
@@ -154,6 +143,13 @@ namespace ui {
         void keyChar(helpers::Char c) override;
         void keyDown(Key k) override;
         void keyUp(Key k) override;
+
+        /** Notifies the root window that a widget has been attached. 
+         */
+        virtual void widgetAttached(Widget * widget) {
+            if (widget->focusStop())
+                addFocusStop(widget);
+        }
 
         /** Notifies the root window that a widget has been detached within it. 
          
