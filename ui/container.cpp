@@ -4,7 +4,8 @@
 
 namespace ui {
 
-	Container::Container() :
+	Container::Container(int width, int height) :
+	    Widget(width, height),
 		layout_(Layout::None),
 		relayout_(true) {
 	}

@@ -27,7 +27,7 @@ namespace ui {
         using Widget::repaint;
         using Widget::resize;
 
-		RootWindow();
+		RootWindow(int width = 0, int height = 0);
 
         ~RootWindow() override;
 

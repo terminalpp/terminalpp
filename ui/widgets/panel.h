@@ -7,12 +7,11 @@ namespace ui {
 	/** A simple container with custom background and a possibility of a border. 
 
 	 */
-	class Panel : public PublicContainer {
+	class Panel : public Container {
 	public:
 
-		Panel() :
-		    Widget{},
-			PublicContainer(),
+		Panel(int width = 0, int height = 0) :
+			Container(width, height),
 			border_(0, 0, 0, 0),
 			background_(Color::Red.withAlpha(128)) {
 		}
@@ -24,7 +23,8 @@ namespace ui {
 		void setBackground(Brush const & value) {
 			if (background_ != value) {
 				background_ = value;
-				repaint();
+				setForceOverlay(!background_.color.opaque());
+                repaint();
 			}
 		}
 

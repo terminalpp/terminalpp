@@ -955,6 +955,7 @@ namespace ui {
                         break;
                     }
                 }
+                // fallthrough
 			case ')':
 			case '*':
 			case '+':

@@ -10,7 +10,7 @@ namespace ui {
 
 	/** Container is a widget capable of managing its children at runtime. 
 	 */
-	class Container : public virtual Widget {
+	class Container : public Widget {
 	public:
 
 		Layout* layout() const {
@@ -21,7 +21,7 @@ namespace ui {
 		friend class Widget;
 		friend class RootWindow;
 
-		Container();
+		Container(int width = 0, int height = 0);
 
         std::vector<Widget *> const & children() const {
             return children_;
@@ -179,76 +179,5 @@ namespace ui {
 		bool relayout_;
 
 	}; // ui::Container
-
-
-	/** Exposes the container's interface publicly. 
-	 */
-	class PublicContainer : public Container {
-	public:
-
-		// Events from Widget
-
-		using Widget::onShow;
-		using Widget::onHide;
-		using Widget::onResize;
-		using Widget::onMove;
-		using Widget::onMouseDown;
-		using Widget::onMouseUp;
-		using Widget::onMouseClick;
-		using Widget::onMouseDoubleClick;
-		using Widget::onMouseWheel;
-		using Widget::onMouseMove;
-		using Widget::onMouseEnter;
-		using Widget::onMouseLeave;
-
-		// Methods from Widget
-
-		using Widget::setVisible;
-		using Widget::move;
-		using Widget::resize;
-		using Widget::setWidthHint;
-		using Widget::setHeightHint;
-
-		// Methods from Container
-
-		using Container::attachChild;
-		using Container::detachChild;
-		using Container::setLayout;
-
-		PublicContainer() :
-		    background_(Color::Black) {
-		}
-
-		/** Returns the background of the container.
-		 */
-		Brush const& backrgound() const {
-			return background_;
-		}
-
-		/** Sets the background of the container. 
-		 */
-		void setBackground(Brush const& value) {
-			if (background_ != value) {
-				background_ = value;
-				setForceOverlay(!background_.color.opaque());
-				repaint();
-			}
-		}
-
-	protected:
-
-		void paint(Canvas& canvas) override {
-			canvas.fill(Rect::FromWH(canvas.width(), canvas.height()), Brush(Color::Black));
-			Container::paint(canvas);
-		}
-
-	private:
-
-		Brush background_;
-
-
-
-
-	};
 
 } // namespace ui

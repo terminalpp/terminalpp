@@ -9,12 +9,11 @@
 
 namespace ui {
 
-	RootWindow::RootWindow():
-		Widget{},
-		Container{},
+	RootWindow::RootWindow(int width, int height):
+		Container{width, height},
 		destroying_{false},
 		renderer_{nullptr},
-		buffer_{0, 0},
+		buffer_{width, height},
         windowFocused_{false},
 		keyboardFocus_{this},
 		lastMouseTarget_{nullptr},

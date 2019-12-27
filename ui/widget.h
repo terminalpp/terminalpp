@@ -145,7 +145,7 @@ namespace ui {
 
         virtual ~Widget();
 
-		Widget():
+		Widget(int width = 0, int height = 0):
 			parent_(nullptr),
 			visibleRect_{},
 			overlay_(false),
@@ -157,8 +157,8 @@ namespace ui {
 			focusIndex_(0),
 			x_(0),
 			y_(0),
-			width_(0),
-			height_(0),
+			width_(width),
+			height_(height),
 			widthHint_(Layout::SizeHint::Auto()),
 			heightHint_(Layout::SizeHint::Auto()) {
 		}

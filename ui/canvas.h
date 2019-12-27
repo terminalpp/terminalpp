@@ -146,6 +146,8 @@ namespace ui {
         friend class Container;
         friend class RootWindow;
 
+        friend class TestCanvasAccessor;
+
         /** Description of the visible rectangle of a canvas. 
 		 */
 		class VisibleRect {
