@@ -1,0 +1,37 @@
+# Builds the snap package for each push to master.
+#
+# As these pushes are not checked in any way, they are not released to snap store. See the snapcraft-release-CHANNEL yaml files for releasing.
+name: snapcraft-build
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  create-snap:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: install-snapcraft
+      run: |
+        sudo chown root:root /
+        sudo apt-get remove -qy lxd lxd-client
+        sudo snap install lxd
+        sudo lxd init --auto
+        sudo snap install snapcraft --classic
+    - name: install-packages
+      run: |
+        sudo apt update
+        sudo apt install cmake libx11-dev libxft-dev g++-8
+    - name: build-snap
+      run: |
+        mkdir -p build/release
+        cd build/release
+        sudo cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=terminalpp -DSNAP_EXTRA_ARGS=--use-lxd
+        sudo cmake --build . --target package-snap
+    - uses: actions/upload-artifact@master
+      with:
+        name: terminalpp.snap
+        path: build/release/packages/terminalpp.snap
+

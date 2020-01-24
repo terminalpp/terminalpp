@@ -12,7 +12,6 @@ The following is very short description of the versions planned and their main n
 
 ### v0.6
 
-- cursor appearance can be specified in `settings.json`
 - simple tests framework in helpers, tests target added
 - reentrant lock in helpers
 - simpler events (single handler, std::function, method and fptr handlers)
@@ -37,6 +36,7 @@ The following is very short description of the versions planned and their main n
 ### v1.0
 
 - polish and bugfixing of stuff, some beta releases and "testing"
+- remove the tpp application from snap (tpp.yaml)
 
 ### Later
 
@@ -54,25 +54,5 @@ The following is very short description of the versions planned and their main n
 - how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
 - add transparency for entire window? on Windows - https://msdn.microsoft.com/en-us/magazine/ee819134.aspx?f=255&MSPPError=-2147217396 and use layered windows
 
-# Changelog
 
-> These are the versions already released and their major changes
-
-### v0.5 - Remote File Opening
-
-- session palette can be customized in settings.json
-- terminal wait on terminated PTY is customized in settings.json
-- Ubuntu WSL w/o version in name supported for bypass installation
-- bold text can be forced to render in bright colors
-- support for opening remote files by extra escape sequences (basic)
-- snap store at edge
-
-### v0.4
-
-- support terminal history, scrolling, selection from it, etc. 
-- will open `settings.json` for editing when requested
-
-### v0.3
-
-- font fallback, CJK, double width & height fonts
 

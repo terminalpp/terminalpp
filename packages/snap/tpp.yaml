@@ -35,8 +35,13 @@ parts:
       - x11-utils
 
 apps:
+  terminalpp:
+      command: usr/bin/terminalpp
+      environment:
+          DISABLE_WAYLAND: 1
+# for legacy support of terminalpp.tpp executable in versions prior to 0.6
   tpp:
-      command: usr/bin/tpp
+      command: usr/bin/terminalpp
       environment:
           DISABLE_WAYLAND: 1
       

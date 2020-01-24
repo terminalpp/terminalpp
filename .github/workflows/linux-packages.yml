@@ -1,6 +1,9 @@
-name: linux-build
+name: linux-packages
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -13,38 +16,15 @@ jobs:
       run: |
         sudo apt update
         sudo apt install cmake libx11-dev libxft-dev g++-8
-        #sudo snap install --classic snapcraft        
     - name: fetch-subprojects
       run: |
-        git clone --verbose https://github.com/terminalpp/website
         git clone --verbose https://github.com/terminalpp/tpp-bypass
         git clone --verbose https://github.com/terminalpp/ropen
-    - name: configure-debug
-      run: |
-        mkdir -p build/debug
-        cd build/debug
-        cmake ../.. -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
-    - name: build-debug
-      run: |
-        cd build/debug
-        cmake --build . 
-    - name: run-tests-debug
-      run: |
-        cd build/debug
-        tests/tests        
     - name: configure-release
       run: |
         mkdir -p build/release
         cd build/release
         cmake ../.. -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DCMAKE_BUILD_TYPE=Release
-    - name: build-release
-      run: |
-        cd build/release
-        cmake --build . 
-    - name: run-tests-release
-      run: |
-        cd build/release
-        tests/tests        
     - name: build-terminalpp-packages
       run: |
         cd build/release

@@ -67,20 +67,20 @@ endif()
 # On Windows, this is simply a Win32 GUI application created from the given sources and resources file. On Linux the situation is more complex as the build scripts tries to localize all required libraries and then build the app. 
 file(GLOB_RECURSE SRC "terminalpp/*.cpp" "terminalpp/*.h")
 if(WIN32)
-    add_executable(tpp WIN32 ${SRC} "terminalpp/directwrite/tpp.rc")
+    add_executable(terminalpp WIN32 ${SRC} "terminalpp/directwrite/tpp.rc")
 elseif(UNIX)
-    add_executable(tpp ${SRC})
-    target_link_libraries(tpp ${X11_LIBRARIES} ${X11_Xft_LIB})  
-    target_link_libraries(tpp ${CMAKE_THREAD_LIBS_INIT})
-    target_link_libraries(tpp ${FREETYPE_LIBRARIES})
-    target_link_libraries(tpp stdc++fs)    
+    add_executable(terminalpp ${SRC})
+    target_link_libraries(terminalpp ${X11_LIBRARIES} ${X11_Xft_LIB})  
+    target_link_libraries(terminalpp ${CMAKE_THREAD_LIBS_INIT})
+    target_link_libraries(terminalpp ${FREETYPE_LIBRARIES})
+    target_link_libraries(terminalpp stdc++fs)    
     # TODO newer cmake version supports FindFontconfig which should be used instead (3.14 upwards)
-    target_link_libraries(tpp fontconfig)
+    target_link_libraries(terminalpp fontconfig)
 endif()
 # finally, add the libraries
-target_link_libraries(tpp libui libuiterminal)
+target_link_libraries(terminalpp libui libuiterminal)
 # add the dependency on stamp creation tool (see below)
-add_dependencies(tpp tpp-create-stamp)
+add_dependencies(terminalpp tpp-create-stamp)
 
 # Executable stamp creation
 #
@@ -134,7 +134,8 @@ endif()
 #
 # The packages target is first created empty and then the buildres register as its dependencies if they are available. 
 #
-# All assets are stored in ${CMAKE_CURRENT_BINARY_DIR}/packages
+# All assets are stored in ${CMAKE_CURRENT_BINARY_DIR}/packages.
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages)
 add_custom_target(packages)
 set_target_properties(packages PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
@@ -143,7 +144,7 @@ add_custom_target(package-build
     COMMAND "${CMAKE_COMMAND}" --build . --target package
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     COMMENT "Building CPack packages"
-    DEPENDS tpp
+    DEPENDS terminalpp
     VERBATIM
 )
 set_target_properties(package-build PROPERTIES EXCLUDE_FROM_ALL TRUE)
@@ -183,7 +184,7 @@ set(CPACK_RPM_PACKAGE_LICENSE "MIT")
 if(PACKAGE_INSTALL STREQUAL terminalpp)
     message(STATUS "terminalpp project package will be built")
     if(UNIX)
-        install(TARGETS tpp DESTINATION bin COMPONENT tpp)
+        install(TARGETS terminalpp DESTINATION bin COMPONENT terminalpp)
     endif()
 
     # cpack settings - generic
@@ -225,7 +226,7 @@ if(PACKAGE_INSTALL STREQUAL terminalpp)
                     -sice:ICE61 -sice:ICE91 
                     "tpp.wixobj"
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages/msi
-                DEPENDS tpp
+                DEPENDS terminalpp
             )        
             set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
             add_dependencies(packages package-msi)
@@ -245,14 +246,15 @@ if(PACKAGE_INSTALL STREQUAL terminalpp)
             add_custom_target(package-snap-copy-tpp
                 COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/snap/source
                 COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/snap/source
-                COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/snap/source --exclude-from=.gitignore --exclude=.vscode
+                COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/snap/source  --exclude-from=.gitignore
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             )
             set_target_properties(package-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
             add_custom_target(package-snap
                 COMMAND snapcraft clean ${SNAP_EXTRA_ARGS}
                 COMMAND snapcraft ${SNAP_EXTRA_ARGS}
-                COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/packages/${PROJECT_NAME}_${PROJECT_VERSION}.snap
+                COMMAND
+                COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/packages/${PROJECT_NAME}.snap
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/snap
                 DEPENDS package-snap-copy-tpp
             )
