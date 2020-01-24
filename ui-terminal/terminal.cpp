@@ -606,7 +606,9 @@ namespace ui {
 			}
 			send(seq->c_str(), seq->size());
 		}
-        scrollToPrompt();
+        // only scroll to prompt if the key down is not a simple modifier key
+        if (key != Key::Shift + Key::ShiftKey && key != Key::Alt + Key::AltKey && key != Key::Ctrl + Key::CtrlKey && key != Key::Win + Key::WinKey)
+            scrollToPrompt();
         Widget::keyDown(key);
     }
 
