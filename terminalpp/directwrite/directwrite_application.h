@@ -33,8 +33,6 @@ namespace tpp {
             return localeName_;
         }
 
-        std::string getSettingsFolder() override;
-
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;
 
         void mainLoop() override;
@@ -76,29 +74,6 @@ namespace tpp {
             } 
             #pragma warning(pop)
         }
-
-        /** Determines whether the WSL is installed or not. 
-         
-            Returns the default WSL distribution, if any, or empty string if no WSL is present. 
-         */
-        std::string isWSLPresent() const;
-
-        /** Determines if the ConPTY bypass is present in the WSL or not. 
-         */
-        bool isBypassPresent() const;
-
-        /** Determins the actual version of the provided WSL distribution. 
-         */
-    	void DirectWriteApplication::updateDistributionVersion(std::string & wslDistribution);
-
-
-        /** Installs the bypass for given WSL distribution. 
-         
-            Returns true if the installation was successful, false otherwise. The bypass is installed by downloading the appropriate bypass binary from github releases and installing it into BYPASS_FOLDER (set in config.h).
-         */
-        bool installBypass(std::string const & wslDistribution);
-
-        void updateDefaultSettings(helpers::JSON & json) override;
 
 		/** Attaches a console to the GDIApplication for debugging purposes.
 

@@ -65,6 +65,7 @@
         "codecvt": "cpp",
         "map": "cpp",
         "xlocbuf": "cpp",
-        "concepts": "cpp"
+        "concepts": "cpp",
+        "stack": "cpp"
     }
 }

@@ -19,9 +19,12 @@
 
 #ifdef NDEBUG 
 #define THROW(...) throw __VA_ARGS__ & ::helpers::Exception::ExceptionInfo()
+#define CREATE_EXCEPTION(...) __VA_ARGS__ & ::helpers::Exception::ExceptionInfo()
 #define ASSERT(...) if (false) std::stringstream()
+
 #else
 #define THROW(...) throw __VA_ARGS__ & ::helpers::Exception::ExceptionInfo(__LINE__,__FILE__)
+#define CREATE_EXCEPTION(...) __VA_ARGS__ & ::helpers::Exception::ExceptionInfo(__LINE__, __FILE__)
 #define ASSERT(...) if (! (__VA_ARGS__)) THROW(::helpers::AssertionError(#__VA_ARGS__))
 #endif
 
@@ -212,6 +215,12 @@ namespace helpers {
 
 
 
+    // TODO move this to json_config once I get rid of args.h which is superseded by the JSON configuration
+    
+	/** Exceptiomn thrown when invalid arguments are passed to the application. 
+	 */
+	class ArgumentError : public Exception {
+	};
 
 
 

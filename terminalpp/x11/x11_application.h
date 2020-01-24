@@ -24,8 +24,6 @@ namespace tpp {
             return dynamic_cast<X11Application*>(Application::Instance());
         }
 
-        std::string getSettingsFolder() override;
-
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;
 
         /** Sends given X event. 
@@ -72,10 +70,6 @@ namespace tpp {
         friend class X11Window;
 
         X11Application();
-
-        std::string getDefaultValidFont();
-
-        void updateDefaultSettings(helpers::JSON & json) override;
 
         void openInputMethod();
 

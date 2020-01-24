@@ -16,20 +16,19 @@ The following is very short description of the versions planned and their main n
 - simple tests framework in helpers, tests target added
 - reentrant lock in helpers
 - simpler events (single handler, std::function, method and fptr handlers)
+- configuration code refactoring
+- simpler UI code
 
 ##### TODO
 
 - simpler UI framework
-- Windows store submission
 - more automation for releases
-
-Questions:
 
 - create proper documentation and figure out how to release it
 - add Windows Store Submission - can this be automated in any way? 
 - add benchmarking
 
-- simpler settings where not everything will be stored and only changes from defaults will be loaded
+- remove args from helpers, should use the JSON configuration istead
 
 ### v0.7
 

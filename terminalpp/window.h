@@ -155,7 +155,7 @@ namespace tpp {
                 setFullscreen(!fullscreen());
             // open settings in editor
             } else if (key == SHORTCUT_SETTINGS) {
-                Config::OpenSettingsInEditor();
+                Application::Open(Config::GetSettingsFile(), /* edit = */ true);
             // zoom in
             } else if (key == SHORTCUT_ZOOM_IN) {
                 if (zoom() < 10)

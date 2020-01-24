@@ -23,7 +23,7 @@ namespace tpp {
         Session(ui::Terminal::PTY * pty, ui::Terminal::Palette * palette):
             pty_(pty),
             closeOnKeyDown_(false),
-            remoteFiles_(Config::Instance().sessionRemoteFilesDir()) {
+            remoteFiles_(Config::Instance().session.remoteFiles.dir()) {
             Config const & config = Config::Instance();
             using namespace ui;
             Create(this) 
@@ -32,11 +32,11 @@ namespace tpp {
                 << (Create(new ui::Label()))
                 */
                 << Layout::Maximized
-                << (Create(terminal_ = new ui::Terminal(config.sessionCols(), config.sessionRows(), palette, pty, config.rendererFps()))
+                << (Create(terminal_ = new ui::Terminal(config.session.cols(), config.session.rows(), palette, pty, config.renderer.fps()))
                     << FocusIndex(0)
                     << FocusStop(true)
-                    << HistorySizeLimit(config.sessionHistoryLimit())
-                    << BoldIsBright(config.sessionSequencesBoldIsBright())
+                    << HistorySizeLimit(config.session.historyLimit())
+                    << BoldIsBright(config.session.sequences.boldIsBright())
                 );
 
             setBackgroundColor(palette->defaultBackground());
@@ -50,12 +50,12 @@ namespace tpp {
             terminal_->onTppOpenFile.setHandler(&Session::openRemoteFile, this);
             terminal_->onInputError.setHandler(&Session::terminalInputError, this);
 
-            terminal_->setCursor(config.sessionCursor());
+            terminal_->setCursor(config.session.cursor());
             about_ = new AboutBox();
 
             focusWidget(terminal_, true);
-            if (! config.sessionLog().empty()) {
-                logFile_.open(config.sessionLog());
+            if (! config.session.log().empty()) {
+                logFile_.open(config.session.log());
                 terminal_->onInput.setHandler(&Session::terminalInputProcessed, this);
             }
         }
@@ -110,7 +110,7 @@ namespace tpp {
         void ptyTerminated(ui::Event<helpers::ExitCode>::Payload & e) {
             // disable the terminal
             terminal_->setEnabled(false);
-            if (*e != EXIT_SUCCESS || Config::Instance().sessionWaitAfterPtyTerminated()) {
+            if (*e != EXIT_SUCCESS || Config::Instance().session.waitAfterPtyTerminated()) {
                 setTitle(STR("Attached process terminated (code " << *e << ") - press a key to exit"));
                 setIcon(Icon::Notification);
                 // close the window upon next key down

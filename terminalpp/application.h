@@ -26,10 +26,6 @@ namespace tpp {
         virtual ~Application() {
         }
 
-        /** Returns the folder to which the terminal should store its settings. 
-         */
-        virtual std::string getSettingsFolder() = 0;
-
         virtual Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) = 0;
 
         /** The main event loop of the application. 
@@ -55,16 +51,12 @@ namespace tpp {
          */
         virtual void openLocalFile(std::string const & filename, bool edit) = 0;
 
-
-        virtual void updateDefaultSettings(helpers::JSON & json);
-
     private:
 
         static Application *& Singleton() {
             static Application * singleton_ = nullptr;
             return singleton_;
         }
-
 
     }; // tpp::Application
 

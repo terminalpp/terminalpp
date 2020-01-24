@@ -67,11 +67,27 @@ namespace helpers {
 #endif
     }
 
+    inline std::string JoinPath(std::initializer_list<std::string> elements) {
+        if (elements.size() == 0)
+            return "";
+        auto i = elements.begin(), e = elements.end();
+#if (defined ARCH_WINDOWS)
+        std::filesystem::path p{UTF8toUTF16(*i)};
+        while (++i != e)
+            p.append(UTF8toUTF16(*i));
+#else
+        std::filesystem::path p{*i};
+        while (++i != e)
+            p.append(*i);
+#endif
+        return p.u8string();
+    }
+
     inline bool PathExists(std::string const path) {
 #if (defined ARCH_WINDOWS)
-        std::filesystem::path p(UTF8toUTF16(path));
+        std::filesystem::path p{UTF8toUTF16(path)};
 #else
-        std::filesystem::path p(path);
+        std::filesystem::path p{path};
 #endif
         return std::filesystem::exists(p);
     }
@@ -82,6 +98,32 @@ namespace helpers {
      */
     inline bool CreatePath(std::string const & path) {
         return std::filesystem::create_directories(path);
+    }
+
+    /** Copies given file or folder. 
+     */
+    inline void Copy(std::string const & from, std::string const & to) {
+    #if (defined ARCH_WINDOWS)
+        std::filesystem::path f{UTF8toUTF16(from)};
+        std::filesystem::path t{UTF8toUTF16(to)};
+    #else
+        std::filesystem::path f{from};
+        std::filesystem::path t{to};
+    #endif
+        std::filesystem::copy(from, to);
+    }
+
+    /** Renames given file or folder. 
+     */
+    inline void Rename(std::string const & from, std::string const & to) {
+    #if (defined ARCH_WINDOWS)
+        std::filesystem::path f{UTF8toUTF16(from)};
+        std::filesystem::path t{UTF8toUTF16(to)};
+    #else
+        std::filesystem::path f{from};
+        std::filesystem::path t{to};
+    #endif
+        std::filesystem::rename(from, to);
     }
 
     /** Returns the directory in which local application settings should be stored on given platform. 
@@ -125,6 +167,20 @@ namespace helpers {
             std::filesystem::path p{folder};
             std::string x{CreateRandomAlphanumericString(length)};
             p.append(prefix + x);
+            if (! std::filesystem::exists(p))
+#if (defined ARCH_WINDOWS)
+                return UTF16toUTF8(p.c_str());
+#else
+                return p.c_str();
+#endif
+        }
+    }
+
+    /** Makes the given filename unique by attaching random alphanumeric string of given size separated by the given separator. 
+     */
+    inline std::string MakeUnique(std::string const & path, std::string const & separator = ".", size_t length = 16) {
+        while (true) {
+            std::filesystem::path p{path + separator + CreateRandomAlphanumericString(length)};
             if (! std::filesystem::exists(p))
 #if (defined ARCH_WINDOWS)
                 return UTF16toUTF8(p.c_str());

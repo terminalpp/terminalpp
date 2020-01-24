@@ -29,6 +29,18 @@ namespace helpers {
         class ConstIterator {
         public:
 
+            std::string const & name() const {
+                if (json_.kind_ != Kind::Object)
+                    THROW(JSONError()) << "Cannot get name of JSON array iterator";
+                return iObject_->first;
+            }
+
+            size_t index() const {
+                if (json_.kind_ != Kind::Array)
+                    THROW(JSONError()) << "Cannot get name of JSON array iterator";
+                return iArray_ - json_.valueArray_.begin();
+            }
+
             JSON const & operator * () const {
                 switch(json_.kind_) {
                     case Kind::Array:
@@ -284,32 +296,37 @@ namespace helpers {
             }
         }
 
-        JSON(std::nullptr_t):
+        explicit JSON(std::nullptr_t):
             kind_(Kind::Null),
             valueInt_(0) {
         }
 
-        JSON(bool value):
+        explicit JSON(bool value):
             kind_(Kind::Boolean),
             valueBool_(value ? 1 : 0) {
         }
 
-        JSON(int value):
+        explicit JSON(int value):
             kind_(Kind::Integer),
             valueInt_(value) {
         }
 
-        JSON(double value):
+        explicit JSON(unsigned value):
+            kind_(Kind::Integer),
+            valueInt_(static_cast<int>(value)) {
+        }
+
+        explicit JSON(double value):
             kind_(Kind::Double),
             valueDouble_(value) {
         }
 
-        JSON(char const * value):
+        explicit JSON(char const * value):
             kind_(Kind::String),
             valueStr_(value) {
         }
 
-        JSON(std::string const & value):
+        explicit JSON(std::string const & value):
             kind_(Kind::String),
             valueStr_(value) {
         }
@@ -333,8 +350,8 @@ namespace helpers {
                     break;
                 case Kind::Array:
                     new (&valueArray_) std::vector<JSON *>();
-                    for (auto i : other.valueArray_)
-                        valueArray_.push_back(new JSON(i));
+                    for (JSON * i : other.valueArray_)
+                        valueArray_.push_back(new JSON(*i));
                     break;
                 case Kind::Object:
                     new (&valueObject_) std::unordered_map<std::string, JSON *>();
@@ -397,10 +414,14 @@ namespace helpers {
                     new (&valueStr_) std::string(other.valueStr_);
                     break;
                 case Kind::Array:
-                    new (&valueArray_) std::vector<JSON *>(other.valueArray_);
+                    new (&valueArray_) std::vector<JSON *>{};
+                    for (JSON * i : other.valueArray_)
+                        valueArray_.push_back(new JSON(*i));
                     break;
                 case Kind::Object:
-                    new (&valueObject_) std::unordered_map<std::string, JSON *>(other.valueObject_);
+                    new (&valueObject_) std::unordered_map<std::string, JSON *>{};
+                    for (auto i : other.valueObject_)
+                        valueObject_.insert(std::make_pair(i.first, new JSON(*i.second)));
                     break;
             }
             return *this;
@@ -669,6 +690,16 @@ namespace helpers {
             if (kind_ != Kind::Object)
                 THROW(JSONError()) << "Cannot add member elemnt to element holding " << kind_;
             valueObject_.insert(std::make_pair(key, new JSON(std::move(value))));
+        }
+
+        void erase(std::string const & key) {
+            if (kind_ != Kind::Object)
+                THROW(JSONError()) << "Only objects can erase their members, but " << kind_ << " found";
+            auto i = valueObject_.find(key);
+            if (i != valueObject_.end()) {
+                delete i->second;
+                valueObject_.erase(i);
+            }
         }
 
         void clear() {

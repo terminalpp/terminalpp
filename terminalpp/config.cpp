@@ -1,8 +1,6 @@
 #include <fstream>
 #include <filesystem>
 
-#include "settings_json.h"
-
 #include "stamp.h"
 #include "helpers/stamp.h"
 
@@ -13,173 +11,197 @@
 
 namespace tpp { 
 
-	Config const & Config::Initialize(int argc, char * argv[]) {
-		Config * & config = Singleton_();
-		ASSERT(config == nullptr) << "Already initialized";
-		helpers::JSON json = ReadSettings();
-		if (json.isNull()) {
-			Application::Instance()->alert("No settings found, initializing from defaults");
-		    json = CreateDefaultSettings();
-		    config = new Config(std::move(json));
-			Application::Instance()->updateDefaultSettings(config->json_);
-			// make sure the folder exists before we store the settings
-			std::filesystem::create_directories(Application::Singleton()->getSettingsFolder());
-			config->saveSettings();
-		} else {
-		    config = new Config(std::move(json));
-			if (config->version() != JSONSettingsVersion()) {
-				Application::Instance()->alert("Settings will be updated to new version. Existing values will be preserved where possible");
-			    config->updateToNewVersion();
-				Application::Instance()->updateDefaultSettings(config->json_);
-                config->saveSettings();
-			}
-		}
-
-		config->processCommandLineArguments(argc, argv);
-
-		return * config;
+	std::string Config::GetSettingsDir() {
+        return helpers::JoinPath(helpers::LocalSettingsDir(), "terminalpp");
 	}
 
-	void Config::OpenSettingsInEditor() {
-		Application::Open(GetSettingsLocation(), /* edit = */ true);
+	std::string Config::GetSettingsFile() {
+		return helpers::JoinPath(GetSettingsDir(), "settings.json");
 	}
 
-	void Config::processCommandLineArguments(int argc, char * argv[]) {
-		// initialize the arguments
-#if (defined ARCH_WINDOWS)
-		helpers::Arg<bool> useConPTY(
-			{ "--use-conpty" },
-			sessionPTY() == "local",
-			false,
-			"Uses the Win32 ConPTY pseudoterminal instead of the WSL bypass"
-		);
-#endif
-		helpers::Arg<unsigned> fps(
-			{ "--fps" },
-			rendererFps(),
-			false,
-			"Maximum number of fps the terminal will display"
-		);
-		helpers::Arg<unsigned> cols(
-			{ "--cols", "-c" },
-			sessionCols(),
-			false,
-			"Number of columns of the terminal window"
-		);
-		helpers::Arg<unsigned> rows(
-			{ "--rows", "-r" },
-			sessionRows(),
-			false,
-			"Number of rows of the terminal window"
-		);
-		helpers::Arg<std::string> fontFamily(
-			{ "--font" }, 
-			this->fontFamily(), 
-			false, 
-			"Font to render the terminal with"
-		);
-		helpers::Arg<unsigned> fontSize(
-			{ "--font-size" }, 
-			this->fontSize(),
-			false,
-			"Size of the font in pixels at no zoom."
-		);
-		helpers::Arg<std::vector<std::string>> command(
-			{ "-e" }, 
-			{ },
-			false,
-			"Determines the command to be executed in the terminal",
-			true
-		);
-		helpers::Arg<std::string> logFile(
-			{ "--log-file" }, 
-			"", 
-			false, 
-			"File to which all terminal input will be logged, if specified"
-		);
-		// process the arguments
-		helpers::Arguments::SetVersion(STR("t++ :" << helpers::Stamp::Stored()));		
-		helpers::Arguments::Parse(argc, argv);
-		// now update any settings according to the specified arguments
-#if (defined ARCH_WINDOWS)
-		if (useConPTY.specified())
-		    json_["session"]["pty"] = (*useConPTY ? "local" : "bypass");
-#endif
-        if (fps.specified())
-		    json_["renderer"]["fps"] = static_cast<int>(*fps);
-        if (cols.specified())
-		    json_["session"]["cols"] = static_cast<int>(*cols);
-        if (rows.specified())
-		    json_["session"]["rows"] = static_cast<int>(*rows);
-        if (fontFamily.specified())
-		    json_["font"]["family"] = *fontFamily;
-        if (fontSize.specified())
-		    json_["font"]["size"] = static_cast<int>(*fontSize);
-		if (command.specified()) {
-			helpers::JSON & cmd = json_["session"]["command"];
-			cmd.clear();
-			for (std::string const & s : *command)
-			    cmd.add(helpers::JSON(s));
-		}
-		if (logFile.specified())
-		    json_["log"]["file"] = *logFile;
-		else
-		    json_["log"]["file"] = std::string{};
-	}
-
-	void Config::saveSettings() {
-		std::string settingsFile{GetSettingsLocation()};
-		std::ofstream sf(settingsFile);
-		sf << json_;
-	}
-
-	void Config::updateToNewVersion() {
-		// parse the default settings and update them to any runtime calculated values
-		helpers::JSON defaults = CreateDefaultSettings();
-		// update the version
-		json_["version"] = JSONSettingsVersion();
-		// now check the defaults
-		copyMissingSettingsFrom(json_, defaults);
-	}
-
-	void Config::copyMissingSettingsFrom(helpers::JSON & settings, helpers::JSON & defaults) {
-		// make sure that we are dealing with objects only
-		ASSERT(settings.kind() == helpers::JSON::Kind::Object && defaults.kind() == helpers::JSON::Kind::Object);
-		// copy all missing setings
-		for (helpers::JSON::Iterator i = defaults.begin(), e = defaults.end(); i != e; ++i) {
-			if (!settings.hasKey(i.name()) || settings[i.name()].kind() != i->kind()) { 
-				settings[i.name()] = std::move(*i);
+	void Config::setup(int argc, char * argv[]) {
+		bool saveSettings = false;
+		std::string filename{GetSettingsFile()};
+		// load user settings first
+		{
+			std::ifstream f{filename};
+			if (f.good()) {
+				try {
+					helpers::JSON settings{helpers::JSON::Parse(f)};
+					verifyConfigurationVersion(settings);
+					// TODO specify, check errors, make copy if wrong, etc. 
+					specify(settings, [& saveSettings](std::exception const & e){
+						Application::Alert(e.what());
+						saveSettings = true;
+					});
+				} catch (std::exception const & e) {
+					Application::Alert(e.what());
+					saveSettings = true;
+				}
+				// if there were any errors with the settings, create backup of the old settings as new settings will be stored. 
+				if (saveSettings) {
+					std::string backup{helpers::MakeUnique(filename)};
+					Application::Alert(STR("New settings file will be saved, backup stored in " << backup));
+					f.close();
+					helpers::Rename(filename, backup);
+				}
+			// if there are no settings, then the settings should be saved after default values are calculated
 			} else {
-				// if the settings element is an object itself, recurse 
-				if (i->kind() == helpers::JSON::Kind::Object)
-				    copyMissingSettingsFrom(settings[i.name()], *i);
+				saveSettings = true;
+				Application::Alert(STR("No settings file found, default settings will be calculated and stored in " << filename));
+			}
+		}
+		saveSettings = fixMissingDefaultValues() || saveSettings;
+		// if the settings should be saved, save them now 
+		if (saveSettings) {
+			std::ofstream f(filename);
+			if (!f)
+			    THROW(helpers::IOError()) << "Unable to write to the settings file " << filename;
+			// get the saved JSON and store it in the settings file
+			f << save();
+		}
+		// read the command line arguments and update the configuration accordingly
+		parseCommandLine(argc, argv);
+	}
+
+	void Config::verifyConfigurationVersion(helpers::JSON & userConfig) {
+		if (userConfig.hasKey("version")) {
+			if (userConfig["version"].toString() == PROJECT_VERSION)
+			    return;
+			userConfig.erase("version");
+		}
+		Application::Alert(STR("Settings version differs from current terminal version (" << PROJECT_VERSION << "). The configuration will be updated to the new version."));
+	}
+
+
+	// default configfuration providers
+
+	std::string Config::TerminalVersion() {
+		return STR("\"" << PROJECT_VERSION << "\"");
+	}
+
+	std::string Config::DefaultLogDir() {
+		return helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"logs");
+	}
+
+	std::string Config::DefaultRemoteFilesDir() {
+		return helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles");
+	}
+
+	std::string Config::DefaultFontFamily() {
+#if (defined ARCH_WINDOWS)
+		return "\"Consolas\"";
+#else
+		char const * fonts[] = { "Monospace", "DejaVu Sans Mono", "Nimbus Mono", "Liberation Mono", nullptr };
+		char const ** f = fonts;
+		while (*f != nullptr) {
+			std::string found{helpers::Exec(helpers::Command("fc-list", { *f }), "")};
+			if (! found.empty())
+			    return STR("\"" << *f << "\"");
+			++f;
+		}
+		Application::Alert("Cannot guess valid font - please specify manually for best results");
+		return "\"\"";
+#endif
+	}
+
+	std::string Config::DefaultDoubleWidthFontFamily() {
+		return DefaultFontFamily();
+	}
+
+	std::string Config::DefaultSessionPTY() {
+#if (defined ARCH_WINDOWS)
+        auto & cmd = Config::Instance().session.command;
+		if (cmd.specified()) 
+		    THROW(helpers::ArgumentError()) << "Command is specified, but PTY is not, which can lead to inconsistent result. Please specify or clear both manually in the configuration file";
+        std::string wslDefaultDistro{IsWSLPresent()};
+		if (! wslDefaultDistro.empty()) {
+			bool hasBypass = IsBypassPresent();
+			if (!hasBypass) {
+				if (MessageBox(nullptr, L"WSL bypass was not found in your default distribution. Do you want terminal++ to install it? (if No, ConPTY will be used instead)", L"WSL Bypass not found", MB_ICONQUESTION + MB_YESNO) == IDYES) {
+					// update the version of the distro, if necessary
+					UpdateWSLDistributionVersion(wslDefaultDistro);
+					// attempt to install the bypass
+					hasBypass = InstallBypass(wslDefaultDistro);
+					if (hasBypass)
+						MessageBox(nullptr, L"WSL Bypass successfully installed", L"Success", MB_ICONINFORMATION + MB_OK);
+					else
+						MessageBox(nullptr, L"Bypass installation failed, most likely due to missing binary for your WSL distribution. Terminal++ will continue with ConPTY.", L"WSL Install bypass failure", MB_ICONSTOP + MB_OK);
+				}
+			}
+			if (hasBypass)
+			    return "\"bypass\"";
+		}
+		return "\"local\"";
+#else
+		return "\"local\"";
+#endif
+	}
+
+	std::string Config::DefaultSessionCommand() {
+#if (defined ARCH_WINDOWS)
+        auto & pty = Config::Instance().session.pty;
+		// make sure we know which PTY to use before we attempt to determine the command
+		if (! pty.specified())
+		    pty.set(DefaultSessionPTY());
+		if (pty() == "bypass")
+		    return STR("[\"wsl.exe\", \"--\", \"" << BYPASS_PATH << "\"]");
+		else 
+		    return "[\"wsl.exe\"]"; 
+#else
+		// get the default shell for the current user
+		return STR("[\"" << getpwuid(getuid())->pw_shell << "\"]");
+#endif
+	}
+
+#if (defined ARCH_WINDOWS)
+	std::string Config::IsWSLPresent() {
+		helpers::ExitCode ec;
+		std::vector<std::string> lines = helpers::SplitAndTrim(helpers::Exec(helpers::Command("wsl.exe", {"-l"}),"", &ec), "\n");
+	    if (lines.size() > 1 && lines[0] == "Windows Subsystem for Linux Distributions:") {
+			for (size_t i = 1, e = lines.size(); i != e; ++i) {
+				if (helpers::EndsWith(lines[i], "(Default)"))
+				    return helpers::Split(lines[i], " ")[0];
+			}
+		}
+		// nothing found, return empty string
+		return std::string{};
+	}
+
+	bool Config::IsBypassPresent() {
+		helpers::ExitCode ec;
+		std::string output{helpers::Exec(helpers::Command("wsl.exe", {"--", BYPASS_PATH, "--version"}), "", &ec)};
+		return output.find("Terminal++ Bypass, version") == 0;
+	}
+
+	void Config::UpdateWSLDistributionVersion(std::string & wslDistribution) {
+		if (wslDistribution == "Ubuntu") {
+    		helpers::ExitCode ec;
+			std::vector<std::string> lines = helpers::SplitAndTrim(
+				helpers::Exec(helpers::Command("wsl.exe", {"--", "lsb_release", "-a"}), "", &ec),
+				"\n"
+			);
+			for (std::string const & line : lines) {
+				if (helpers::StartsWith(line, "Release:")) {
+					std::string ver = helpers::Trim(line.substr(9));
+					wslDistribution = wslDistribution + "-" + ver;
+					break;
+				}
 			}
 		}
 	}
 
-	std::string Config::GetSettingsLocation() {
-		return Application::Instance()->getSettingsFolder() + "settings.json";
-	}
-
-	helpers::JSON Config::ReadSettings() {
-		std::string settingsFile{GetSettingsLocation()};
-		std::ifstream sf(settingsFile);
-		if (sf.good()) {
-			helpers::JSON result(helpers::JSON::Parse(sf));
-			// backwards compatibility with version 0.2 where version was double
-			// TODO to be deleted later as a dead code
-			if (result["version"].kind() == helpers::JSON::Kind::Double)
-			    result["version"] = STR(static_cast<double>(result["version"]));
-		    return result;
-		} else {
-			return helpers::JSON(nullptr);
+	bool Config::InstallBypass(std::string const & wslDistribution) {
+		try {
+			std::string url{STR("https://github.com/terminalpp/bypass/releases/download/v0.1/tpp-bypass-" << wslDistribution)};
+			helpers::Exec(helpers::Command("wsl.exe", {"--", "mkdir", "-p", BYPASS_FOLDER}), "");
+			helpers::Exec(helpers::Command("wsl.exe", {"--", "wget", "-O", BYPASS_PATH, url}), "");
+			helpers::Exec(helpers::Command("wsl.exe", {"--", "chmod", "+x", BYPASS_PATH}), "");
+		} catch (...) {
+			return false;
 		}
+		return IsBypassPresent();
 	}
-
-	helpers::JSON Config::CreateDefaultSettings() {
-		helpers::JSON json(helpers::JSON::Parse(DefaultJSONSettings()));
-		json["version"] = JSONSettingsVersion();
-		return json;
-	}
+#endif
 
 } // namespace tpp

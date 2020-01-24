@@ -85,14 +85,14 @@ int main(int argc, char* argv[]) {
     }
 #endif
 	try {
-    	Config const & config = Config::Initialize(argc, argv);
+		Config const & config = Config::Setup(argc, argv);
 		// make sure the log & remote files directories exist
-		helpers::CreatePath(config.logDir());
-		helpers::CreatePath(config.sessionRemoteFilesDir());
+		helpers::CreatePath(config.log.dir());
+		helpers::CreatePath(config.session.remoteFiles.dir());
 		// check that the logs directory does not overgrow the max number of files allowed
-		helpers::EraseOldestFiles(config.logDir(), config.logMaxFiles());
+		helpers::EraseOldestFiles(config.log.dir(), config.log.maxFiles());
 		// create log writer & enable the selected logs
-		helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.logDir(), "log-"));
+		helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
 		helpers::Logger::Enable(log, { 
 			helpers::Logger::DefaultLog(),
 			ui::Terminal::SEQ_ERROR,
@@ -100,15 +100,15 @@ int main(int argc, char* argv[]) {
 		});
 		LOG() << "t++ started";
 		// Create the palette & the pty - TODO this should be more systematic
-		ui::Terminal::Palette palette{config.sessionPalette()};
+		ui::Terminal::Palette palette{config.session.palette()};
 		ui::Terminal::PTY * pty;
 #if (defined ARCH_WINDOWS)
-		if (config.sessionPTY() != "bypass") 
-		    pty = new LocalPTY(config.sessionCommand());
+		if (config.session.pty() != "bypass") 
+		    pty = new LocalPTY(config.session.command());
 		else
-		    pty = new BypassPTY(config.sessionCommand());
+		    pty = new BypassPTY(config.session.command());
 #else
-		pty = new LocalPTY(config.sessionCommand());
+		pty = new LocalPTY(config.session.command());
 #endif
 
 		// create the session
@@ -116,10 +116,10 @@ int main(int argc, char* argv[]) {
 
 		// and create the main window
 
-	    tpp::Window * w = Application::Instance()->createWindow(DEFAULT_WINDOW_TITLE, config.sessionCols(), config.sessionRows(), config.fontSize());
+	    tpp::Window * w = Application::Instance()->createWindow(DEFAULT_WINDOW_TITLE, config.session.cols(), config.session.rows(), config.font.size());
 		w->setRootWindow(session);
 		w->show();
-		if (config.sessionFullscreen())
+		if (config.session.fullscreen())
 		    w->setFullscreen(true);
     	Application::Instance()->mainLoop();
 		delete session;

@@ -64,10 +64,11 @@ namespace tpp {
 			// find the required font family - first get the index then obtain the family by the index
 			UINT32 findex;
 			BOOL fexists;
-			helpers::utf16_string fname = helpers::UTF8toUTF16(font.doubleWidth() ? Config::Instance().doubleWidthFontFamily() : Config::Instance().fontFamily());
+			std::string fnameUTF8{font.doubleWidth() ? Config::Instance().font.doubleWidthFamily() : Config::Instance().font.family()};
+			helpers::utf16_string fname{helpers::UTF8toUTF16(fnameUTF8)};
 			app->systemFontCollection_->FindFamilyName(fname.c_str(), &findex, &fexists);
 			if (! fexists) {
-				Application::Alert(STR("Unable to load font family " << (font.doubleWidth() ? Config::Instance().doubleWidthFontFamily() : Config::Instance().fontFamily()) << ", trying fallback font (Consolas)"));
+				Application::Alert(STR("Unable to load font family " << fnameUTF8 << ", trying fallback font (Consolas)"));
 				app->systemFontCollection_->FindFamilyName(L"Consolas", &findex, &fexists);
 				OSCHECK(fexists) << "Unable to initialize fallback font (Consolas)";
 			}
@@ -94,7 +95,7 @@ namespace tpp {
 			UINT32 mappedLength;
 			Microsoft::WRL::ComPtr<IDWriteFont> mappedFont;
 			FLOAT scale;
-			helpers::utf16_string fname = helpers::UTF8toUTF16(font_.doubleWidth() ? Config::Instance().doubleWidthFontFamily() : Config::Instance().fontFamily());
+			helpers::utf16_string fname = helpers::UTF8toUTF16(font_.doubleWidth() ? Config::Instance().font.doubleWidthFamily() : Config::Instance().font.family());
 			app->fontFallback_->MapCharacters(
 				&ta, // IDWriteTextAnalysisSource
 				0, // text position

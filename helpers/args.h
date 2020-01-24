@@ -23,11 +23,6 @@
  */
 namespace helpers {
 
-	/** Exceptiomn thrown when invalid arguments are passed to the application. 
-	 */
-	class ArgumentError : public Exception {
-	};
-
 	/** Common base for command line arguments. 
 	 */
 	class BaseArg {
