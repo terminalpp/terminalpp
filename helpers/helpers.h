@@ -213,24 +213,6 @@ namespace helpers {
 
 #endif
 
-
-
-    // TODO move this to json_config once I get rid of args.h which is superseded by the JSON configuration
-    
-	/** Exceptiomn thrown when invalid arguments are passed to the application. 
-	 */
-	class ArgumentError : public Exception {
-	};
-
-
-
-
-
-
-
-
-
-
 	/** Shorthand for determining whether value is in given inclusive interval. 
 	 */
 	template<typename T>

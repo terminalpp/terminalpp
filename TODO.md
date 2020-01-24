@@ -28,8 +28,6 @@ The following is very short description of the versions planned and their main n
 - add Windows Store Submission - can this be automated in any way? 
 - add benchmarking
 
-- remove args from helpers, should use the JSON configuration istead
-
 ### v0.7
 
 - systray support

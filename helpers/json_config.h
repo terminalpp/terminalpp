@@ -8,6 +8,11 @@
 
 namespace helpers {
 
+	/** Exceptiomn thrown when invalid arguments are passed to the application. 
+	 */
+	class ArgumentError : public Exception {
+	};
+
 	/** JSON Based Configuration. 
 	 
 	    - default value specified as JSON text, always
@@ -353,6 +358,10 @@ namespace helpers {
     class JSONArguments {
 	public:
 
+	    JSONArguments():
+		    defaultArgument_{nullptr} {
+		}
+
 	    ~JSONArguments() {
 			for (auto i : arguments_) 
 			    delete i.second;
@@ -365,6 +374,12 @@ namespace helpers {
 			ASSERT(i == argc);
 			for (auto j : arguments_)
 			    j.second->finalizeAndVerify();
+		}
+
+		void setDefaultArgument(std::string const & name) {
+			auto i = arguments_.find(name);
+			ASSERT(i != arguments_.end()) << "Argument " << name << " does not exist";
+			defaultArgument_ = i->second;
 		}
 
 		template<typename T>
@@ -419,13 +434,27 @@ namespace helpers {
 				// if the entire argument is not recognized argument alias, split it by the '='
 				if (arg == keywordArguments_.end()) {
 					size_t x = argName.find('=');
-					if (x == std::string::npos)
-					    THROW(ArgumentError()) << "Unknown argument name " << argName;
+					if (x == std::string::npos) {
+						if (defaultArgument_ != nullptr) {
+						    defaultArgument_->parse(argName);
+							++i;
+							continue;
+						} else {
+					        THROW(ArgumentError()) << "Unknown argument name " << argName;
+						}
+					}
 					argName = argName.substr(0, x);
 					argValue = argv[i] + x + 1;
 					arg = keywordArguments_.find(argName);
-					if (arg == keywordArguments_.end())
-					    THROW(ArgumentError()) << "Unknown argument name " << argName;
+					if (arg == keywordArguments_.end()) {
+						if (defaultArgument_ != nullptr) {
+						    defaultArgument_->parse(argv[i]);
+							++i;
+							continue;
+						} else {
+					        THROW(ArgumentError()) << "Unknown argument name " << argName;
+						}
+					}
 				}
 				if (argValue == nullptr && arg->second->expectsValue()) {
 					if (++i == argc)

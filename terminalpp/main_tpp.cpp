@@ -2,7 +2,6 @@
 
 #include "helpers/log.h"
 #include "helpers/char.h"
-#include "helpers/args.h"
 #include "helpers/time.h"
 #include "helpers/filesystem.h"
 

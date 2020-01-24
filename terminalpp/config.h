@@ -340,6 +340,7 @@ namespace tpp {
 	protected:
 
 	    Config() {
+			initializationDone();
 		}
 
 		void setup(int argc, char * argv[]);
