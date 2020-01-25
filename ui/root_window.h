@@ -72,6 +72,13 @@ namespace ui {
 
         virtual void render(Rect const & rect);
 
+        /** Called when new renderer is attached to the window. 
+         */
+        virtual void attachRenderer(Renderer * renderer) {
+            ASSERT(renderer_ == nullptr);
+            renderer_ = renderer;
+        }
+
         virtual void rendererResized(int width, int height) {
             resize(width, height);
         }

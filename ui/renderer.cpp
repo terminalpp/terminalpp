@@ -9,7 +9,7 @@ namespace ui {
         ASSERT(rootWindow_ == nullptr);
         ASSERT(newRootWindow->renderer_ == nullptr);
         rootWindow_ = newRootWindow;
-        rootWindow_->renderer_ = this;
+        rootWindow_->attachRenderer(this);
         rootWindow_->rendererResized(cols(), rows());
     }
 

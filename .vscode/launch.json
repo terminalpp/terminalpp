@@ -9,7 +9,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": " ${workspaceFolder}/build/Debug/terminalpp.exe",
-            "args": ["-e", "time", "echo", "\"haha\""],
+            "args": ["-e", "echo", "haha"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -46,7 +46,8 @@ namespace tpp {
 			NULL, // use parent's environment 
 			NULL, // use parent's directory 
 			&sInfo,  // startup info
-			&pInfo_));  // info about the process
+			&pInfo_)  // info about the process
+		) << "Unable to execute process " << command_.toString();
 		// we can close our handles to the other ends now
 		OSCHECK(CloseHandle(pipePTYOut));
 		OSCHECK(CloseHandle(pipePTYIn));

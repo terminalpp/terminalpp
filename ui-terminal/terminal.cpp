@@ -350,7 +350,7 @@ namespace ui {
 
     char32_t Terminal::LineDrawingChars_[15] = {0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0, 0, 0x2500, 0, 0, 0x251c, 0x2524, 0x2534, 0x252c, 0x2502};
 
-    Terminal::Terminal(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize):
+    Terminal::Terminal(int width, int height, Palette const * palette, PTY * pty, unsigned fps):
         Scrollable{width, height},
         state_{width, height, palette->defaultForeground(), palette->defaultBackground()},
         mouseMode_{MouseMode::Off},
@@ -373,7 +373,30 @@ namespace ui {
         scrollable_{true},
         scrollBarActive_{false},
         historySizeLimit_{0} {
-        pty_->resize(width, height);
+        repainter_ = std::thread([this](){
+            while (fps_ > 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000 / fps_));
+                if (repaint_) {
+                    repaint_ = false;
+                    // trigger immediate repaint by calling widget's repaint implementation
+                    Widget::repaint();
+                }
+            }
+        });
+    }
+
+    Terminal::~Terminal() {
+        fps_ = 0;
+        delete pty_;
+        ptyReader_.join();
+        ptyListener_.join();
+        repainter_.join();
+        while (! history_.empty())
+            popHistoryLine();
+    }
+
+    void Terminal::start(size_t ptyBufferSize) {
+        pty_->resize(width(), height());
         ptyReader_ = std::thread([this, ptyBufferSize](){
             try {
                 std::unique_ptr<char> holder(new char[ptyBufferSize]);
@@ -416,26 +439,6 @@ namespace ui {
             helpers::ExitCode ec = pty_->waitFor();
             this->ptyTerminated(ec);
         });
-        repainter_ = std::thread([this](){
-            while (fps_ > 0) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000 / fps_));
-                if (repaint_) {
-                    repaint_ = false;
-                    // trigger immediate repaint by calling widget's repaint implementation
-                    Widget::repaint();
-                }
-            }
-        });
-    }
-
-    Terminal::~Terminal() {
-        fps_ = 0;
-        delete pty_;
-        ptyReader_.join();
-        ptyListener_.join();
-        repainter_.join();
-        while (! history_.empty())
-            popHistoryLine();
     }
 
     Color Terminal::defaultForeground() const {

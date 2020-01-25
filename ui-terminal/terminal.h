@@ -201,13 +201,19 @@ namespace ui {
         static helpers::Log SEQ_ERROR;
         static helpers::Log SEQ_WONT_SUPPORT;
 
-        Terminal(int width, int height, Palette const * palette, PTY * pty, unsigned fps, size_t ptyBufferSize = 10240); // 1Mb buffer size
+        Terminal(int width, int height, Palette const * palette, PTY * pty, unsigned fps); // 1Mb buffer size
 
         /** Deletes the terminal and the attached PTY. 
          
             Waits for the reading and process exit terminating threads to finalize. 
          */
         ~Terminal() override;
+
+        /** Starts the terminal communication with the initialized PTY. 
+         
+            The terminal uses two-stage initialization where the constructor sets the owned PTY and the start method then actually begins the communication with the PTY so that configuration can be made between the constructor and the call to start() method, such as setting the `onPTYTerminated` handler, which otherwise could never be called if the PTY terminated before the assignment. 
+         */
+        void start(size_t ptyBufferSize = 10240);
 
         /** Triggered when the attached pseudoterminal terminates. 
          
@@ -723,6 +729,7 @@ namespace ui {
     }; // ui::Terminal::PTY
 
     inline void Terminal::send(char const * buffer, size_t size) {
+        ASSERT(ptyListener_.get_id() != std::thread::id{}) << "Thread communication attempted before call to start method";
         pty_->send(buffer, size);
         // TODO check errors
     }

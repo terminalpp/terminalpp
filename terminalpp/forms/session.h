@@ -58,11 +58,20 @@ namespace tpp {
                 logFile_.open(config.session.log());
                 terminal_->onInput.setHandler(&Session::terminalInputProcessed, this);
             }
+
         }
 
         ~Session() override {
             hideModalWidget();
             delete about_;
+        }
+
+    protected:
+
+        void attachRenderer(ui::Renderer * renderer) override {
+            RootWindow::attachRenderer(renderer);
+            // start the terminal once all configuration is done
+            terminal_->start();
         }
 
     private:
