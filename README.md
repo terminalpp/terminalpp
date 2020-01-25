@@ -1,13 +1,13 @@
 # Terminal++
 
-![Windows build](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-build?logo=windows&logoColor=white&style=flat-square)
-![Linux build](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-build?logo=linux&logoColor=white&style=flat-square)
-![Windows MSI](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-packages?label=msi&logo=windows&logoColor=white&style=flat-square)
-![Linux DEB/RPM](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-packages?label=deb%2Frpm&logo=linux&logoColor=white&style=flat-square)
-![Snapcraft](https://img.shields.io/github/workflow/status/terminalpp/tpp/snapcraft-build?label=snap&logo=snapcraft&logoColor=white&style=flat-square)
+[![Windows build](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-build?logo=windows&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Awindows-build)
+[![Linux build](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-build?logo=linux&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Alinux-build)
+[![Windows MSI](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-packages?label=msi&logo=windows&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Awindows-packages)
+[![Linux DEB/RPM](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-packages?label=deb%2Frpm&logo=linux&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Alinux-packages)
+[![Snapcraft](https://img.shields.io/github/workflow/status/terminalpp/tpp/snapcraft-build?label=snap&logo=snapcraft&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Asnapcraft-build)
 
-![Codacy grade](https://img.shields.io/codacy/grade/fd4f07b095634b9d90bbb9edb11fc12c?logo=codacy&style=flat-square)
-![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/terminalpp/tpp?logo=LGTM&style=flat-square)
+[![Codacy grade](https://img.shields.io/codacy/grade/fd4f07b095634b9d90bbb9edb11fc12c?logo=codacy&style=flat-square)](https://app.codacy.com/manual/zduka/tpp)
+[![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/terminalpp/tpp?logo=LGTM&style=flat-square)](https://lgtm.com/projects/g/terminalpp/tpp?mode=list)
 
 
 [![Coverage Status](https://coveralls.io/repos/github/terminalpp/tpp/badge.svg?branch=master)](https://coveralls.io/github/terminalpp/tpp?branch=master)
