@@ -17,11 +17,11 @@ The following is very short description of the versions planned and their main n
 - simpler events (single handler, std::function, method and fptr handlers)
 - configuration code refactoring
 - simpler UI code
+- more automation for releases
 
 ##### TODO
 
 - simpler UI framework
-- more automation for releases
 
 - create proper documentation and figure out how to release it
 - add Windows Store Submission - can this be automated in any way? 
