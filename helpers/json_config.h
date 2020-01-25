@@ -590,9 +590,11 @@ namespace helpers {
 				if (required_ && ! specified_)
 				    THROW(ArgumentError()) << "Argument " << name() << " required";
 				// sets the value as JSON for the attached option
-				element_.specify(JSON::Parse(STR("{" << value_ << "}")), [](std::exception const & e){
-					THROW(ArgumentError()) << e.what();
-				});
+				if (specified_) {
+					element_.specify(JSON::Parse(STR("[" << value_ << "]")), [](std::exception const & e){
+						THROW(ArgumentError()) << e.what();
+					});
+				}
 			}
 
 			bool last_;
