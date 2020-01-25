@@ -38,7 +38,7 @@ namespace tpp {
             // get the font pattern 
             pattern_ = FcPatternCreate();
             FcPatternAddBool(pattern_, FC_SCALABLE, FcTrue);
-            FcPatternAddString(pattern_, FC_FAMILY, helpers::pointer_cast<FcChar8 const *>(font.doubleWidth() ? Config::Instance().font.doubleWidthFamily().c_str() : Config::Instance().font.family().c_str()));
+            FcPatternAddString(pattern_, FC_FAMILY, pointer_cast<FcChar8 const *>(font.doubleWidth() ? Config::Instance().font.doubleWidthFamily().c_str() : Config::Instance().font.family().c_str()));
             FcPatternAddInteger(pattern_, FC_WEIGHT, font.bold() ? FC_WEIGHT_BOLD : FC_WEIGHT_NORMAL);
             FcPatternAddInteger(pattern_, FC_SLANT, font.italics() ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
             FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, cellHeight);

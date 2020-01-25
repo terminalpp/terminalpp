@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iomanip>
 
+#include "helpers/helpers.h"
+
 /** Very simple tool which takes a RGBA image file containing raw pixel data, and produces a C++ file which embeds the definition in a format usable for the X11. 
 
     The RGBA file may contain multiple icon sizes, but since it only contains raw pixel values, the sizes of the icons within it must be provided as an argument to the script as well. 
@@ -59,7 +61,7 @@ int main(int argc, char * argv[]) {
             if (i % size == 0)
             o << "\n        ";
             uint32_t x;
-            input.read(reinterpret_cast<char *>(&x), 4);
+            input.read(pointer_cast<char *>(&x), 4);
             // convert RGBA to BGRA
             x = (x & 0xff00ff00) + ((x & 0xff) << 16) + ((x & 0xff0000) >> 16);
             o << "0x" << x << ",";

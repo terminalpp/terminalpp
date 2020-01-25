@@ -109,7 +109,7 @@ namespace tpp {
 		/** Joins the font and the cell height together to form a unique hash for the font & size under which the font and its fallback cache is stored. 
   		 */
 		static unsigned FontHash(ui::Font font, unsigned cellHeight) {
-			return (cellHeight << 8) + helpers::pointer_cast<uint8_t*>(&font)[0];
+			return (cellHeight << 8) + pointer_cast<uint8_t*>(&font)[0];
 		}
 
 		ui::Font font_;

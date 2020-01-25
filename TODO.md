@@ -22,6 +22,7 @@ The following is very short description of the versions planned and their main n
 ##### TODO
 
 - simpler UI framework
+- remove / refactor builders
 
 - create proper documentation and figure out how to release it
 - add Windows Store Submission - can this be automated in any way? 

@@ -28,7 +28,7 @@ namespace ui {
         };
 
 		uint32_t toRGBA() const {
-			return * helpers::pointer_cast<uint32_t const*>(this);
+			return * pointer_cast<uint32_t const*>(this);
 		}
 
 		Color withAlpha(unsigned char value) const {
@@ -119,7 +119,7 @@ namespace ui {
 
         // TODO maybe the order of RGB in the Color is not correct
         Color(uint32_t raw) {
-            *helpers::pointer_cast<uint32_t *>(this) = raw;
+            *pointer_cast<uint32_t *>(this) = raw;
         }
 
     }; 

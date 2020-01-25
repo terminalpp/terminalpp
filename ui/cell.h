@@ -184,7 +184,7 @@ namespace ui {
 	    }
 
 		Font font() const {
-			return helpers::pointer_cast<Font const *>(& codepointAndFont_)[3];
+			return pointer_cast<Font const *>(& codepointAndFont_)[3];
 		}
 
 		Attributes attributes() const {
@@ -214,7 +214,7 @@ namespace ui {
 		}
 
 		Cell & setFont(Font font) {
-			helpers::pointer_cast<Font *>(& codepointAndFont_)[3] = font;
+			pointer_cast<Font *>(& codepointAndFont_)[3] = font;
 			return *this;
 		}
 
