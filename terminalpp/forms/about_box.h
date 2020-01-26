@@ -3,10 +3,10 @@
 #include "../../build-stamp.h"
 #include "helpers/stamp.h"
 
-#include "ui/modal-widget.h"
 #include "ui/builders.h"
 
 #include "ui/traits/box.h"
+#include "ui/traits/modal.h"
 //#include "ui/layout.h"
 
 namespace tpp {
@@ -17,12 +17,15 @@ namespace tpp {
 
         TODO this would be better served by a modal show of a widget perhaps? 
      */
-    class AboutBox : public ui::ModalWidget, public ui::Box<AboutBox> {
+    class AboutBox : public ui::Widget, public ui::Modal<AboutBox>, public ui::Box<AboutBox> {
     public:
         AboutBox():
-            ModalWidget{},
+            Widget{},
+            Modal{},
             Box{ui::Color::Blue, ui::Border::Thin(ui::Color::White)},
             lastKey_(ui::Key::Invalid) {
+            setWidthHint(ui::Layout::SizeHint::Fixed());
+            setHeightHint(ui::Layout::SizeHint::Fixed());
             resize(60,10);
         }
 

@@ -73,4 +73,13 @@ namespace ui {
 
     }; // ui::Box
 
+    /** Box drawing in different control states.
+     */
+
+    template<typename T>
+    class DynamicBox : public Box<T> {
+    public:
+
+    }; // ui::DynamicBox
+
 } // namespace ui

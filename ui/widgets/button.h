@@ -1,12 +1,13 @@
 #pragma once
 
 #include "../widget.h"
+#include "../traits/box.h"
 
 namespace ui {
 
     /** A simple clickable and focusable button. 
      */
-    class Button : public Widget {
+    class Button : public Widget, public DynamicBox<Button> {
     public:
 
         std::string const & caption() const {
@@ -37,7 +38,7 @@ namespace ui {
         }
 
         void paint(Canvas & canvas) override {
-
+            Box::paint(canvas);
         }
 
         std::string caption_;
