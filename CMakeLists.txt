@@ -80,6 +80,18 @@ endif()
 # finally, add the libraries
 target_link_libraries(terminalpp libui libuiterminal)
 
+
+# Tools
+#
+# A simple counter of lines of code in the entire project. Note that this is only useful if all repos have been downloaded first. 
+if(UNIX)
+    add_custom_target(cloc
+        COMMAND cloc helpers ropen terminalpp tests tools tpp-bypass tpp-lib ui ui-terminal
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+    set_target_properties(cloc PROPERTIES EXCLUDE_FROM_ALL TRUE)
+endif()
+
 # Executable stamp creation
 #
 # First an executable stamp is created which is then invoked via the tpp-create-stamp target to produce the stamp.h file containing the stamp data. 
@@ -94,6 +106,8 @@ file(GLOB_RECURSE ALL_SOURCES
   "ropen/*.cpp"
   "terminalpp/*.h"
   "terminalpp/*.cpp" 
+  "tests/*.h"
+  "tests/*.cpp" 
   "tools/*.h"
   "tools/*.cpp"
   "tpp-bypass/*.h"
@@ -102,6 +116,8 @@ file(GLOB_RECURSE ALL_SOURCES
   "tpp-lib/*.cpp"
   "ui/*.h"
   "ui/*.cpp"
+  "ui-terminal/*.h"
+  "ui-terminal/*.cpp"
 )
 
 add_custom_command(
@@ -264,7 +280,6 @@ if(PACKAGE_INSTALL STREQUAL terminalpp)
             add_custom_target(package-snap
                 COMMAND snapcraft clean ${SNAP_EXTRA_ARGS}
                 COMMAND snapcraft ${SNAP_EXTRA_ARGS}
-                COMMAND
                 COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/packages/${PROJECT_NAME}.snap
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/snap
                 DEPENDS package-snap-copy-tpp
