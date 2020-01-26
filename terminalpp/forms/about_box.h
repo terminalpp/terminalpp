@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../stamp.h"
+#include "../../build-stamp.h"
 #include "helpers/stamp.h"
 
 #include "ui/modal-widget.h"

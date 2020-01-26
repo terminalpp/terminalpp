@@ -1,7 +1,6 @@
+build-stamp.h
 .vs/
 build/
 build-release/
 build-win/
-/terminalpp/stamp.h
 build-test-win/
-

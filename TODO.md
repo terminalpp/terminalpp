@@ -18,6 +18,7 @@ The following is very short description of the versions planned and their main n
 - configuration code refactoring
 - simpler UI code
 - more automation for releases
+- build fixed so that stamp is only generated when required
 
 ##### TODO
 
@@ -29,7 +30,6 @@ The following is very short description of the versions planned and their main n
 - add Windows Store Submission - can this be automated in any way? 
 - add benchmarking
 
-- generate stamp via cmake, not as extra stemp so that builds are not repeated always
 - add QT backend that will work on Mac too (maybe use wxWidgets?)
 
 ### v0.7

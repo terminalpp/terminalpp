@@ -67,9 +67,9 @@ endif()
 # On Windows, this is simply a Win32 GUI application created from the given sources and resources file. On Linux the situation is more complex as the build scripts tries to localize all required libraries and then build the app. 
 file(GLOB_RECURSE SRC "terminalpp/*.cpp" "terminalpp/*.h")
 if(WIN32)
-    add_executable(terminalpp WIN32 ${SRC} "terminalpp/directwrite/tpp.rc")
+    add_executable(terminalpp WIN32 ${SRC} "terminalpp/directwrite/tpp.rc" "build-stamp.h")
 elseif(UNIX)
-    add_executable(terminalpp ${SRC})
+    add_executable(terminalpp ${SRC} "build-stamp.h")
     target_link_libraries(terminalpp ${X11_LIBRARIES} ${X11_Xft_LIB})  
     target_link_libraries(terminalpp ${CMAKE_THREAD_LIBS_INIT})
     target_link_libraries(terminalpp ${FREETYPE_LIBRARIES})
@@ -79,8 +79,6 @@ elseif(UNIX)
 endif()
 # finally, add the libraries
 target_link_libraries(terminalpp libui libuiterminal)
-# add the dependency on stamp creation tool (see below)
-add_dependencies(terminalpp tpp-create-stamp)
 
 # Executable stamp creation
 #
@@ -90,14 +88,27 @@ add_executable(
 	tools/stamp.cpp
 )
 
-add_custom_target(tpp-create-stamp
-    DEPENDS stamp
+file(GLOB_RECURSE ALL_SOURCES 
+  "helpers/*.h"
+  "ropen/*.h"
+  "ropen/*.cpp"
+  "terminalpp/*.h"
+  "terminalpp/*.cpp" 
+  "tools/*.h"
+  "tools/*.cpp"
+  "tpp-bypass/*.h"
+  "tpp-bypass/*.cpp"
+  "tpp-lib/*.h"
+  "tpp-lib/*.cpp"
+  "ui/*.h"
+  "ui/*.cpp"
 )
 
 add_custom_command(
-    TARGET tpp-create-stamp
-    POST_BUILD
-    COMMAND stamp ${CMAKE_CURRENT_SOURCE_DIR} terminalpp/stamp.h
+  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/build-stamp.h
+  COMMAND stamp ${CMAKE_CURRENT_SOURCE_DIR} build-stamp.h
+  DEPENDS tools/stamp.cpp stamp ${ALL_SOURCES}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 # Resources preparation - icons 
