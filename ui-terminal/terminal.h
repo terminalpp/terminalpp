@@ -10,8 +10,8 @@
 
 #include "ui/canvas.h"
 #include "ui/widget.h"
-#include "ui/selection.h"
-#include "ui/scrollable.h"
+#include "ui/traits/selection.h"
+#include "ui/traits/scrollable.h"
 #include "ui/builders.h"
 
 #include "tpp-lib/sequence.h"

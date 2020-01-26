@@ -7,7 +7,7 @@
 #include <d2d1_2.h>
 #include <wrl.h>
 
-#include "ui/selection.h"
+#include "ui/traits/selection.h"
 
 #include "../application.h"
 #include "../font.h"

@@ -257,6 +257,11 @@ namespace ui {
 
     protected:
 
+		/** Widget is friends with TraitBase so that the traits can get access to its protected functions via methods in the TraitBase class. While this is not perfect, it is better than not having traits at all. 
+		 */
+	    template<template<typename> typename X, typename T>
+		friend class TraitBase;
+
 		/** Sets the widget as visible or hidden.
 
 		    Also triggers the repaint of entire parent, because the widget may interfere with other children of its own parent.

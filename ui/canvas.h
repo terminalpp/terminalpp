@@ -82,6 +82,12 @@ namespace ui {
          */
         void setCursor(Cursor const & cursor);
 
+        /** Returns the rect encompassing the whole canvas. 
+         */
+        Rect rect() const {
+            return Rect::FromWH(width(), height());
+        }
+
 		/** Fills the given rectangle with specified brush. 
 
 		    See the Brush class for more details. 

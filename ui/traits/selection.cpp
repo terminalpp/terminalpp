@@ -1,4 +1,4 @@
-#include "root_window.h"
+#include "../root_window.h"
 
 #include "selection.h"
 

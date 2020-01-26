@@ -11,12 +11,6 @@ namespace ui {
 	/** Container is a widget capable of managing its children at runtime. 
 	 */
 	class Container : public Widget {
-	public:
-
-		Layout* layout() const {
-			return layout_;
-		}
-
 	protected:
 		friend class Widget;
 		friend class RootWindow;
@@ -64,6 +58,10 @@ namespace ui {
             scheduleRelayout();
             repaint();
         }
+
+		Layout* layout() const {
+			return layout_;
+		}
 
 		void setLayout(Layout* value) {
 			ASSERT(value != nullptr) << "use Layout::None instead";

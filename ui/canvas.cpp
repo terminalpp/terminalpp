@@ -1,9 +1,8 @@
-#include "selection.h"
+#include "traits/selection.h"
 #include "root_window.h"
 
 #include "widget.h"
 #include "canvas.h"
-
 
 namespace ui {
 

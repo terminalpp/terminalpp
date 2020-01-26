@@ -3,7 +3,7 @@
 #include "helpers/helpers.h"
 
 #include "widget.h"
-#include "selection.h"
+#include "traits/selection.h"
 #include "root_window.h"
 
 /** \page uirenderer ui - Renderer

@@ -1,11 +1,12 @@
 #pragma once
 
-#include "shapes.h"
-#include "canvas.h"
-#include "root_window.h"
+#include "../shapes.h"
+#include "../canvas.h"
+#include "../root_window.h"
+
+#include "trait_base.h"
 
 namespace ui {
-
 
     /** Determines selection coordinates on a widget. 
 
@@ -85,7 +86,7 @@ namespace ui {
 
      */
     template<typename T>
-    class SelectionOwner {
+    class SelectionOwner : public TraitBase<SelectionOwner, T> {
     public:
 
         SelectionOwner():
@@ -103,6 +104,7 @@ namespace ui {
         virtual std::string getSelectionContents() const = 0;
 
     protected:
+        using TraitBase<SelectionOwner, T>::downcastThis;
 
         /** Returns true if the selection update is in progress. 
          */
@@ -132,7 +134,7 @@ namespace ui {
             end.y = std::min(clientSize.y - 1, end.y);
             // update the selection and call for repaint
             selection_ = Selection::Create(selectionStart_, end);
-            static_cast<T*>(this)->repaint();
+            downcastThis()->repaint();
         }
 
         /** Finishes the selection update, obtains its contents and registers itself as the selection owner. 
@@ -141,10 +143,10 @@ namespace ui {
             selectionStart_.x = -1;
             if (! selection_.empty()) {
                 std::string contents{getSelectionContents()};
-                RootWindow * rw = static_cast<T*>(this)->rootWindow();
+                RootWindow * rw = downcastThis()->rootWindow();
                 ASSERT(rw != nullptr);
                 if (rw != nullptr) 
-                    rw->setSelection(static_cast<T*>(this), contents);
+                    rw->setSelection(downcastThis(), contents);
             }
         }
 
@@ -153,7 +155,7 @@ namespace ui {
                 selectionStart_.x = -1;
                 if (!selection_.empty()) {
                     selection_.clear();
-                    static_cast<T*>(this)->repaint();
+                    downcastThis()->repaint();
                 }
             }
         }
@@ -163,7 +165,7 @@ namespace ui {
             The root window then informs the widget and the window that the selection has been invalidated. 
          */
         void clearSelection() {
-            RootWindow * rw = static_cast<T*>(this)->rootWindow();
+            RootWindow * rw = downcastThis()->rootWindow();
             ASSERT(rw != nullptr);
             if (rw != nullptr) 
                 rw->clearSelection();
@@ -174,7 +176,7 @@ namespace ui {
         virtual void selectionInvalidated() {
             selection_.clear();
             selectionStart_.x = -1;
-            static_cast<T*>(this)->repaint();
+            downcastThis()->repaint();
         }
 
         /** Marks the selection on the given canvas. 

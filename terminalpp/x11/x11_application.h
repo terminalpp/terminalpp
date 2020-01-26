@@ -1,7 +1,7 @@
 #pragma once
 #if (defined ARCH_UNIX)
 
-#include "ui/selection.h"
+#include "ui/traits/selection.h"
 
 #include "x11.h"
 #include "../application.h"

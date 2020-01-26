@@ -2,10 +2,12 @@
 
 #include "helpers/time.h"
 
+#include "trait_base.h"
+
 namespace ui {
 
 	template<typename T>
-	class Scrollable {
+	class Scrollable : public TraitBase<Scrollable, T> {
 	public:
 
 		Scrollable(int width, int height) :
@@ -41,9 +43,10 @@ namespace ui {
         }		
 
 	protected:
+        using TraitBase<Scrollable, T>::downcastThis;
 
 		Canvas getChildrenCanvas(Canvas & canvas) {
-            return Canvas{canvas}.clip(static_cast<T*>(this)->childRect()).resize(clientSize_).scrollBy(scrollOffset_);
+            return Canvas{canvas}.clip(downcastThis()->childRect()).resize(clientSize_).scrollBy(scrollOffset_);
         }	
 
         void setClientSize(Point const & size) {
@@ -54,12 +57,12 @@ namespace ui {
 
         virtual void updateClientSize(Point const & size) {
             clientSize_ = size;
-            static_cast<T*>(this)->repaint();
+            downcastThis()->repaint();
         }
 
 		virtual void updateScrollOffset(Point const & value) {
 			scrollOffset_ = value;
-			static_cast<T*>(this)->repaint();			
+			downcastThis()->repaint();			
 		}
 
         /** Updates the coordinates of the widget based on the current scroll offset. 
@@ -106,9 +109,10 @@ namespace ui {
     /** Autoscrolling trait for scrollable widgets.
      */
     template<typename T>
-    class AutoScroller {
+    class AutoScroller : public TraitBase<AutoScroller, T> {
 
     protected:
+        using TraitBase<AutoScroller, T>::downcastThis;
 
         /** Creates the autoscroller.
          */
@@ -149,7 +153,7 @@ namespace ui {
         /** A single step of the autoscroll feature. 
          */    
         virtual bool autoScrollStep() {
-            T* self = static_cast<T*>(this);
+            T* self = downcastThis();
             return self->setScrollOffset(self->scrollOffset() + autoScrollIncrement_);
         }
 

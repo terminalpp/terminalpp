@@ -21,12 +21,16 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
+- confirmation box for paste and for remote files
 - simpler UI framework
 - remove / refactor builders
 
 - create proper documentation and figure out how to release it
 - add Windows Store Submission - can this be automated in any way? 
 - add benchmarking
+
+- generate stamp via cmake, not as extra stemp so that builds are not repeated always
+- add QT backend that will work on Mac too (maybe use wxWidgets?)
 
 ### v0.7
 
