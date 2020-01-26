@@ -144,51 +144,59 @@ namespace ui {
                     cell->setAttributes(cell->attributes().setBorderTop(false).setBorderLeft(false).setBorderBottom(false).setBorderRight(false));
     }
 
-    void Canvas::borderRect(Rect const & rect, Color color, bool thick) {
-        borderLineTop(rect.topLeft(), rect.width(), color, thick);
-        borderLineBottom(Point(rect.topLeft().x, rect.bottomRight().y - 1), rect.width(), color, thick);
-        borderLineLeft(rect.topLeft(), rect.height(), color, thick);
-        borderLineRight(Point(rect.bottomRight().x - 1, rect.topLeft().y), rect.height(), color, thick);
+    void Canvas::borderRect(Rect const & rect, Border const & border) {
+        borderLineTop(rect.topLeft(), rect.width(), border.color, border.top);
+        borderLineBottom(Point(rect.topLeft().x, rect.bottomRight().y - 1), rect.width(), border.color, border.bottom);
+        borderLineLeft(rect.topLeft(), rect.height(), border.color, border.left);
+        borderLineRight(Point(rect.bottomRight().x - 1, rect.topLeft().y), rect.height(), border.color, border.right);
     }
 
-    void Canvas::borderLineTop(Point start, int width, Color color, bool thick) {
+    void Canvas::borderLineTop(Point start, int width, Color color, Border::Kind kind) {
+        if (kind == Border::Kind::None)
+            return;
         int end = start.x + width;
         for (; start.x < end; ++start.x) {
             if (Cell * cell = at(start)) 
-                cell->setBorder(color).setAttributes(cell->attributes().setBorderTop().setBorderThick(thick));
+                cell->setBorder(color).setAttributes(cell->attributes().setBorderTop().setBorderThick(kind == Border::Kind::Thick));
         }
     }
 
-    void Canvas::borderLineBottom(Point start, int width, Color color, bool thick) {
+    void Canvas::borderLineBottom(Point start, int width, Color color, Border::Kind kind) {
+        if (kind == Border::Kind::None)
+            return;
         int end = start.x + width;
         for (; start.x < end; ++start.x) {
             if (Cell * cell = at(start)) 
-                cell->setBorder(color).setAttributes(cell->attributes().setBorderBottom().setBorderThick(thick));
+                cell->setBorder(color).setAttributes(cell->attributes().setBorderBottom().setBorderThick(kind == Border::Kind::Thick));
         }
     }
 
-    void Canvas::borderLineLeft(Point start, int height, Color color, bool thick) {
+    void Canvas::borderLineLeft(Point start, int height, Color color, Border::Kind kind) {
+        if (kind == Border::Kind::None)
+            return;
         int end = start.y + height;
         for (; start.y < end; ++start.y) {
             if (Cell * cell = at(start)) 
-                cell->setBorder(color).setAttributes(cell->attributes().setBorderLeft().setBorderThick(thick));
+                cell->setBorder(color).setAttributes(cell->attributes().setBorderLeft().setBorderThick(kind == Border::Kind::Thick));
         }
     }
 
-    void Canvas::borderLineRight(Point start, int height, Color color, bool thick) {
+    void Canvas::borderLineRight(Point start, int height, Color color, Border::Kind kind) {
+        if (kind == Border::Kind::None)
+            return;
         int end = start.y + height;
         for (; start.y < end; ++start.y) {
             if (Cell * cell = at(start)) 
-                cell->setBorder(color).setAttributes(cell->attributes().setBorderRight().setBorderThick(thick));
+                cell->setBorder(color).setAttributes(cell->attributes().setBorderRight().setBorderThick(kind == Border::Kind::Thick));
         }
     }
 
    	void Canvas::drawRightVerticalScrollBar(Point from, int size,  int sliderStart, int sliderSize, Color color, bool thick) {
         clearBorder(Rect::FromCorners(from.x, 0, from.x + 1, size));
-        borderLineRight(Point{from.x, 0}, size, color, thick);
-        borderLineRight(Point{from.x, sliderStart}, sliderSize, color, true);
+        borderLineRight(Point{from.x, 0}, size, color, thick ? Border::Kind::Thick : Border::Kind::Thin);
+        borderLineRight(Point{from.x, sliderStart}, sliderSize, color, Border::Kind::Thick);
         if (thick)
-            borderLineLeft(Point{from.x, sliderStart}, sliderSize, color, true);
+            borderLineLeft(Point{from.x, sliderStart}, sliderSize, color, Border::Kind::Thick);
    }
 
 } // namespace ui

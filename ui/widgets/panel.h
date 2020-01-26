@@ -14,36 +14,22 @@ namespace ui {
 
 		Panel(int width = 0, int height = 0) :
 			Container(width, height),
-			border_(0, 0, 0, 0) {
+			childMargin_{0, 0, 0, 0} {
 		}
-
-/*
-		Brush const & background() const {
-			return background_;
-		}
-
-		void setBackground(Brush const & value) {
-			if (background_ != value) {
-				background_ = value;
-				setForceOverlay(!background_.color.opaque());
-                repaint();
-			}
-		}
-		*/
 
 		Rect childRect() const override {
-			return Rect::FromCorners(border_.left, border_.top, width() - border_.right, height() - border_.bottom);
+			return Rect::FromCorners(childMargin_.left, childMargin_.top, width() - childMargin_.right, height() - childMargin_.bottom);
 		}
 
 	protected:
 
-		Border const& border() const {
-			return border_;
+		Margin const& childMargin() const {
+			return childMargin_;
 		}
 
-		void setBorder(Border const& value) {
-			if (value != border_) {
-				updateBorder(value);
+		void setChildMargin(Margin const& value) {
+			if (value != childMargin_) {
+				updateChildMargin(value);
 				scheduleRelayout();
 				repaint();
 			}
@@ -51,8 +37,8 @@ namespace ui {
 
 		/** Updates the value of the widget's border and invalidates the widget.
 		 */
-		virtual void updateBorder(Border const& value) {
-			border_ = value;
+		virtual void updateChildMargin(Margin const& value) {
+			childMargin_ = value;
 			invalidate();
 		}
 
@@ -65,10 +51,8 @@ namespace ui {
 	private:
 
 		/* Border of the panel */
-		Border border_;
+		Margin childMargin_;
 
-		//Brush background_;
- 
 	}; // ui::Panel
 
 

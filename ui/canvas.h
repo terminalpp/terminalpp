@@ -120,13 +120,13 @@ namespace ui {
 
         /** Draws border around the specified rectangle with given color & thickness. 
          */
-        void borderRect(Rect const & rect, Color color, bool thick = false);
+        void borderRect(Rect const & rect, Border const & border);
 
-        void borderLineTop(Point start, int width, Color color, bool thick = false);
-        void borderLineBottom(Point start, int width, Color color, bool thick = false);
+        void borderLineTop(Point start, int width, Color color, Border::Kind kind);
+        void borderLineBottom(Point start, int width, Color color, Border::Kind kind);
 
-        void borderLineLeft(Point start, int height, Color color, bool thick = false);
-        void borderLineRight(Point start, int height, Color color, bool thick = false);
+        void borderLineLeft(Point start, int height, Color color, Border::Kind kind);
+        void borderLineRight(Point start, int height, Color color, Border::Kind kind);
 
         void drawRightVerticalScrollBar(Point from, int size, int sliderStart, int sliderSize, Color color, bool thick = false);
 

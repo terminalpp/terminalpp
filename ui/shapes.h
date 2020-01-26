@@ -9,6 +9,82 @@
 
 namespace ui {
 
+	class Margin {
+	public:
+		int left;
+		int top;
+		int right;
+		int bottom;
+		
+		Margin(int left = 0, int top = 0, int right = 0, int bottom = 0) :
+			left(left),
+			top(top),
+			right(right),
+			bottom(bottom) {
+		}
+
+		bool operator == (Margin const& other) const {
+			return left == other.left && top == other.top && right == other.right && bottom == other.bottom;
+		}
+
+		bool operator != (Margin const& other) const {
+			return left != other.left || top != other.top || right != other.right || bottom != other.bottom;
+		}
+	};
+
+	class Border {
+	public:
+        enum class Kind {
+            None,
+            Thin,
+            Thick
+        }; // Border::Kind
+        Color color;    
+
+		Kind left;
+		Kind top;
+		Kind right;
+		Kind bottom;
+
+        Border():
+            color{Color::Black},
+            left{Kind::None},
+            top{Kind::None},
+            right{Kind::None},
+            bottom{Kind::None} {
+        }
+		
+		Border(Color color, Kind left = Kind::None, Kind top = Kind::None, Kind right = Kind::None, Kind bottom = Kind::None) :
+            color{color},
+			left(left),
+			top(top),
+			right(right),
+			bottom(bottom) {
+		}
+
+        static Border Thin(Color color) {
+            return Border{color, Kind::Thin, Kind::Thin, Kind::Thin, Kind::Thin};
+        }
+
+        static Border Thick(Color color) {
+            return Border{color, Kind::Thick, Kind::Thick, Kind::Thick, Kind::Thick};
+        }
+
+        bool visible() const {
+            return (left != Kind::None || top != Kind::None || right != Kind::None || bottom != Kind::None) && color.a != 0;
+        }
+
+		bool operator == (Border const& other) const {
+			return color == other.color && left == other.left && top == other.top && right == other.right && bottom == other.bottom;
+		}
+
+		bool operator != (Border const& other) const {
+			return color != other.color || left != other.left || top != other.top || right != other.right || bottom != other.bottom;
+		}
+	};
+
+
+
     /** 2D point with integer coordinates. 
      
         Supports basic point arithmetics - i.e. adding and subtracting points and numbers. 
@@ -283,31 +359,6 @@ namespace ui {
         int height_;
 
 	};
-
-	class Border {
-	public:
-		int left;
-		int top;
-		int right;
-		int bottom;
-		
-		Border(int left = 0, int top = 0, int right = 0, int bottom = 0) :
-			left(left),
-			top(top),
-			right(right),
-			bottom(bottom) {
-		}
-
-		bool operator == (Border const& other) const {
-			return left == other.left && top == other.top && right == other.right && bottom == other.bottom;
-		}
-
-		bool operator != (Border const& other) const {
-			return left != other.left || top != other.top || right != other.right || bottom != other.bottom;
-		}
-
-	};
-
 
 	/** A brush used to fill areas on the canvas. 
 

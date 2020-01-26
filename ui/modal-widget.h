@@ -18,7 +18,8 @@ namespace ui {
         Event<void> onDismissed;
 
         virtual void show(RootWindow * root) {
-            root->showModalWidget(this, this);
+            if (rootWindow() == nullptr)
+                root->showModalWidget(this, this);
         }
 
         void dismiss() {

@@ -25,16 +25,30 @@ namespace ui {
                 updateBackground(value);
         }
 
+        Border const & border() const {
+            return border_;
+        }
+
+        void setBorder(Border const & value) {
+            if (border_ != value)
+                updateBorder(value);
+        }
+
     protected:
         using TraitBase<Box, T>::downcastThis;
         using TraitBase<Box, T>::downcastSetForceOverlay;
 
         Box():
-          background_(Color::Black) {
+            background_(Color::Black) {
         }
 
         explicit Box(Color color):
-          background_(color) {
+            background_{color} {
+        }
+
+        Box(Brush const & background, Border const & border):
+            background_{background},
+            border_{border} {
         }
 
         virtual void updateBackground(Brush const & value) {
@@ -43,11 +57,19 @@ namespace ui {
             downcastThis()->repaint();
         }
 
+        virtual void updateBorder(Border const & value) {
+            border_ = value;
+            downcastThis()->repaint();
+        }
+
         void paint(Canvas & canvas) {
             canvas.fill(canvas.rect(), background_);
+            if (border_.visible())
+                canvas.borderRect(canvas.rect(), border_);
         }
 
         Brush background_;
+        Border border_;
 
     }; // ui::Box
 
