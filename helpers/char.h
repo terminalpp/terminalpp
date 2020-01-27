@@ -91,6 +91,40 @@ namespace helpers {
 			return FromCodepoint(cp + 0x10000);
 		}
 
+		static Char FromUTF8(char const * & x, char const * end, bool permissive = false) {
+			if (x >= end)
+				THROW(CharError()) << "Cannot read character, buffer overflow";
+			unsigned char const * start = reinterpret_cast<unsigned char const *>(x);
+			if (*start >= 0x80) {
+				if (*start < 0xe0) {
+					if (x + 2 <= end) {
+					    x += 2;
+						return Char{start[0], start[1]};
+					}
+				} else if (*start < 0xf0) {
+					if (x + 3 <= end) {
+					    x += 3;
+						return Char{start[0], start[1], start[2]};
+					}
+				} else {
+					if (x + 4 <= end) {
+					    x += 4;
+						return Char{start[0], start[1], start[2], start[3]};
+					}
+				}
+			} else {
+				++x;
+				return Char{start[0]};
+			}
+			if (permissive)
+			    return Char{'?'};
+		    THROW(CharError()) << "Cannot read character, incomplete UTF8 character at the end";
+		}
+
+		static Char FromUTF8(char * & x, char const * end, bool permissive = false) {
+            return FromUTF8(const_cast<char const *&>(x), end, permissive);		
+		}
+
 		/** Creates the character from given unicode codepoint. 
 		 */
 		static Char FromCodepoint(char32_t cp) {
@@ -99,48 +133,21 @@ namespace helpers {
 			return result;
 		}
 
-		static Char const* At(char*& buffer, char const* bufferEnd) {
-			return At(const_cast<char const*&>(buffer), bufferEnd);
-		}
-
-		/** Given a pointer to valid UTF8 character encoded in char array, returns a Char around it. 
-		
-		 */
-		static Char const * At(char const * & buffer, char const * bufferEnd) {
-			if (buffer == bufferEnd)
-				return nullptr;
-			unsigned char const * start = reinterpret_cast<unsigned char const *>(buffer);
-			if (*start >= 0x80) {
-				if (*start < 0xe0) {
-					if (buffer + 2 > bufferEnd)
-						return nullptr;
-					buffer += 2;
-				} else if (*start < 0xf0) {
-					if (buffer + 3 > bufferEnd)
-						return nullptr;
-					buffer += 3;
-				} else {
-					if (buffer + 4 > bufferEnd)
-						return nullptr;
-					buffer += 4;
-				}
-			} else {
-				++buffer;
-			}
-			return reinterpret_cast<Char const*>(start);
+		static size_t SizeFromFirstByte(unsigned char b) {
+			if (b <= 0x7f) // 0xxxxxxx
+				return 1;
+			else if (b <= 0xdf) // 110xxxxx
+				return 2;
+			else if (b <= 0xef) // 1110xxxx
+				return 3;
+			else
+				return 4;
 		}
 
 		/** Returns the number of bytes required to encode the stored codepoint.
 		 */
 		size_t size() const {
-			if (bytes_[0] <= 0x7f) // 0xxxxxxx
-				return 1;
-			else if (bytes_[0] <= 0xdf) // 110xxxxx
-				return 2;
-			else if (bytes_[0] <= 0xef) // 1110xxxx
-				return 3;
-			else
-				return 4;
+			return SizeFromFirstByte(bytes_[0]);
 		}
 
 		/** Returns the unicode codepoint stored by the character. 
@@ -205,6 +212,13 @@ namespace helpers {
 		}
 
 	private:
+
+	    Char(unsigned char first, unsigned char second = 0, unsigned char third = 0, unsigned char fourth = 0) {
+			bytes_[0] = first;
+			bytes_[1] = second;
+			bytes_[2] = third;
+			bytes_[3] = fourth;
+		}
 
 		friend std::ostream& operator << (std::ostream& s, Char c) {
 			s.write(reinterpret_cast<char const *>(&c.bytes_), c.size());

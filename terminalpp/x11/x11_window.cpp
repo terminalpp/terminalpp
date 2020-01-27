@@ -401,9 +401,12 @@ namespace tpp {
                 // if it is printable character and there were no modifiers other than shift pressed, we are dealing with printable character (backspace is not printable character)
                 if (strLen > 0 && (str[0] < 0 || str[0] >= 0x20) && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
                     char * x = reinterpret_cast<char*>(& str);
-					helpers::Char const* c = helpers::Char::At(x, x + 32);
-					if (c != nullptr) 
-						window->keyChar(*c);
+                    try {
+                        helpers::Char c{helpers::Char::FromUTF8(x, x + 32)};
+                        window->keyChar(c);
+                    } catch (helpers::CharError const &) {
+                        // do nothing
+                    }
                 }
                 break;
             }

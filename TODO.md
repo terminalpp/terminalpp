@@ -25,14 +25,18 @@ The following is very short description of the versions planned and their main n
 - confirmation box for paste and for remote files
 - simpler UI framework
 - remove / refactor builders
+- shapes.h is areally bad name for the classes defined therein
 
 - create proper documentation and figure out how to release it
 - add Windows Store Submission - can this be automated in any way? 
 - add benchmarking
 
-- add QT backend that will work on Mac too (maybe use wxWidgets?)
-
 ### v0.7
+
+- add QT backend that will work on Mac too (maybe use wxWidgets?)
+- is there a mac store? 
+
+### v0.8
 
 - systray support
 - multiple sessions

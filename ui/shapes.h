@@ -9,6 +9,26 @@
 
 namespace ui {
 
+    /** Horizontal alignment options. 
+     */
+    enum class HorizontalAlign {
+        Left,
+        Center,
+        Right
+    }; // ui::HorizontalAlign
+
+    /** Vertical alignment options. 
+     */
+    enum class VerticalAlign {
+        Top,
+        Center,
+        bottom
+    }; // ui::VerticalAlign
+
+    /** Margin description. 
+     
+        Lists the sizes of top, left, bottom and right margins (i.e. space not available from drawing from a given rectangle). Typical use is a margin of a panel that is part of the canvas accessible to the paint method of the panel itself, but not to its children. 
+     */
 	class Margin {
 	public:
 		int left;
@@ -30,8 +50,12 @@ namespace ui {
 		bool operator != (Margin const& other) const {
 			return left != other.left || top != other.top || right != other.right || bottom != other.bottom;
 		}
-	};
+	}; // ui::Margin
 
+    /** Describes a border box. 
+     
+        Specifies the border properties for a rectangle using the extra cell attributes. The border kind of top, left, bottom and right edges can be specified separately, while a single color is provided for the entire border. 
+     */
 	class Border {
 	public:
         enum class Kind {
@@ -39,6 +63,7 @@ namespace ui {
             Thin,
             Thick
         }; // Border::Kind
+
         Color color;    
 
 		Kind left;
@@ -81,9 +106,7 @@ namespace ui {
 		bool operator != (Border const& other) const {
 			return color != other.color || left != other.left || top != other.top || right != other.right || bottom != other.bottom;
 		}
-	};
-
-
+	}; // ui::Border
 
     /** 2D point with integer coordinates. 
      

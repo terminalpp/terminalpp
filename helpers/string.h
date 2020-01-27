@@ -129,7 +129,6 @@ namespace helpers {
 		return result;
 	}
 
-
 	/** Quotes the current string. 
 	 
 	    TODO the quoting should be more robust. 
@@ -172,13 +171,8 @@ namespace helpers {
 #ifndef ARCH_MACOS
 	inline utf16_string UTF8toUTF16(char const* str) {
 		utf16_stringstream result;
-		while (*str != 0) {
-			Char const * c = Char::At(str, str + 4); // null terminated, so we assume there is enough space
-			// just stop if the character looks invalid
-			if (c == nullptr)
-				break;
-			c->toUTF16(result);
-		}
+		while (*str != 0) 
+			Char::FromUTF8(str, str + 4).toUTF16(result);
 		return result.str();
 	}
 

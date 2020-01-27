@@ -106,11 +106,15 @@ namespace ui {
                 *c = cell;
         }
 
-		/** Displays the given text. 
+        /** Draws a single line of text at the top of the given rectange. 
+         
+            Any overflow is clipped, supports the UTF8 encoding in the text properly. 
+         */
+        void lineOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{});
 
-		    TODO this is stupid api, should change
-		 */
-		void textOut(Point start, std::string const& text, Color color, Font font = Font());
+        void lineOut(Point const & start, std::string const & text, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{}) {
+            lineOut(Rect::FromCorners(start, Point{width(), start.y + 1}), text, color, halign, font);
+        }
 
         /** Clears the given rectangle of any visible borders. 
          
@@ -253,6 +257,12 @@ namespace ui {
              */
 			Point bufferOffset_;
 		};
+
+        /** Draws a single line of text, left justified.
+            
+            Returns false if the drawn length was smaller or equal to the maxLength argument, true otherwise (i.e. whet clipping occured).
+         */
+        bool drawLineLeft(Rect const & rect, std::string const & what, Color color, Font font);
 
         /** Fills given cell, if exists with given brush. 
          */

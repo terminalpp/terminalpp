@@ -121,21 +121,16 @@ namespace ui {
 
     }
 
-	void Canvas::textOut(Point start, std::string const& text, Color color, Font font) {
-		char const* i = text.c_str();
-		char const* e = i + text.size();
-        int fontWidth = font.width();
-		while (i < e) {
-			if (start.x >= width_) // don't draw past first line
-				break;
-            helpers::Char const * c = helpers::Char::At(i, e);
-            for (int j = 0; j < fontWidth; ++j) {
-                if (Cell * cell = at(start)) 
-                    cell->setCodepoint(c->codepoint()).setFg(color).setFont(font);
-                ++start.x;
-            }
-		}
-	}
+    void Canvas::lineOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign, Font font) {
+        switch (halign) {
+            case HorizontalAlign::Left:
+                drawLineLeft(rect, text, color, font);
+                break;
+            case HorizontalAlign::Center:
+            case HorizontalAlign::Right:
+                NOT_IMPLEMENTED;
+        }
+    }
 
     void Canvas::clearBorder(Rect const & rect) {
         for (int y = rect.top(), ye = rect.bottom(); y < ye; ++y)
@@ -197,6 +192,24 @@ namespace ui {
         borderLineRight(Point{from.x, sliderStart}, sliderSize, color, Border::Kind::Thick);
         if (thick)
             borderLineLeft(Point{from.x, sliderStart}, sliderSize, color, Border::Kind::Thick);
-   }
+    }
+
+    bool Canvas::drawLineLeft(Rect const & rect, std::string const & what, Color color, Font font) {
+        char const * i = what.c_str();
+        char const * stre = i + what.size();
+        Point start{rect.topLeft()};
+        int end = rect.right();
+        while (i < stre) {
+            if (start.x >= end)
+                return true;
+            if (Cell * cell = at(start)) {
+                (*cell).setCodepoint(helpers::Char::FromUTF8(i, stre).codepoint())
+                       .setFont(font)
+                       .setFg(color);
+            }
+            start.x += font.width();
+        }
+        return false;
+    }
 
 } // namespace ui
