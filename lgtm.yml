@@ -8,8 +8,10 @@ extraction:
     after_prepare:
         - bash ./scripts/setup-repos.sh
     configure:
-      command:
-        - cmake . -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
+      command: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
     index:
       build_command:
-        - make -j2 -s        
+        - cd build && make -j2 -s        
