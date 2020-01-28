@@ -263,6 +263,7 @@ namespace ui {
             Returns false if the drawn length was smaller or equal to the maxLength argument, true otherwise (i.e. whet clipping occured).
          */
         bool drawLineLeft(Rect const & rect, std::string const & what, Color color, Font font);
+        bool drawLineRight(Rect const & rect, std::string const & what, Color color, Font font);
 
         /** Fills given cell, if exists with given brush. 
          */

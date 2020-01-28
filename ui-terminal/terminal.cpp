@@ -816,19 +816,35 @@ namespace ui {
   					/* default variant is to print the character received to current cell.
 					 */
                     default: {
-                        // TODO this is suspected performance sensitive code which can be refactored into a faster variant if ever necessary.
 						// make sure that the cursor is in visible part of the screen
 						updateCursorPosition();
-						// it could be we are dealing with unicode. If entire character was not read, stop the processing, what we have so far will be prepended to next data to be processed
-                        if (x + helpers::Char::SizeFromFirstByte(*x) > bufferEnd)
-                            return x - buffer;
-                        helpers::Char c8{helpers::Char::FromUTF8(x, bufferEnd, /*permissive */ true)};
-						LOG(SEQ) << "codepoint " << std::hex << c8.codepoint() << " " << static_cast<char>(c8.codepoint() & 0xff);
+                        // while this is a code duplication from the helpers::Char class, since this code is a bottleneck for processing large ammounts of text, the code is copied for performance
+                        char32_t cp = 0;
+                        unsigned char * ux = pointer_cast<unsigned char *>(x);
+                        if (*ux < 0x80) {
+                            cp = *ux;
+                            ++x;
+                        } else if (*ux < 0xe0) {
+                            if (x + 2 > bufferEnd)
+                                return x - buffer;
+                            cp = ((ux[0] & 0x1f) << 6) + (ux[1] & 0x3f);
+                            x += 2;
+                        } else if (*ux < 0xf0) {
+                            if (x + 3 > bufferEnd)
+                                return x - buffer;
+                            cp = ((ux[0] & 0x0f) << 12) + ((ux[1] & 0x3f) << 6) + (ux[2] & 0x3f);
+                            x += 3;
+                        } else {
+                            if (x + 4 > bufferEnd)
+                                return x - buffer;
+                            cp = ((ux[0] & 0x07) << 18) + ((ux[1] & 0x3f) << 12) + ((ux[2] & 0x3f) << 6) + (ux[3] & 0x3f);
+                            x += 4;
+                        }
+						LOG(SEQ) << "codepoint " << std::hex << cp << " " << static_cast<char>(cp & 0xff);
                         // get the cell and update its contents
                         Cell& cell = buffer_.at(buffer_.cursor().pos.x, buffer_.cursor().pos.y);
                         cell = state_.cell;
                         // set the contents based on whether we are in the line drawing mode or not
-                        char32_t cp = c8.codepoint();
                         if (lineDrawingSet_ && cp >= 0x6a && cp <0x79)
                             cp = LineDrawingChars_[cp-0x6a]; 
                         cell.setCodepoint(cp);
@@ -837,7 +853,7 @@ namespace ui {
                         // move to next column
                         ++buffer_.cursor().pos.x;
                         // if the character's column width is 2 and current font is not double width, update to double width font
-                        int columnWidth = c8.columnWidth();
+                        int columnWidth = helpers::Char::ColumnWidth(cp);
                         if (columnWidth == 2 && ! cell.font().doubleWidth()) {
                             columnWidth = 1;
                             cell.setFont(cell.font().setDoubleWidth());

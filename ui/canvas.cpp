@@ -127,8 +127,11 @@ namespace ui {
                 drawLineLeft(rect, text, color, font);
                 break;
             case HorizontalAlign::Center:
-            case HorizontalAlign::Right:
                 NOT_IMPLEMENTED;
+                break;
+            case HorizontalAlign::Right:
+                drawLineRight(rect, text, color, font);
+                break;
         }
     }
 
@@ -195,19 +198,36 @@ namespace ui {
     }
 
     bool Canvas::drawLineLeft(Rect const & rect, std::string const & what, Color color, Font font) {
-        char const * i = what.c_str();
-        char const * stre = i + what.size();
+        using namespace helpers;
         Point start{rect.topLeft()};
         int end = rect.right();
-        while (i < stre) {
+        for (Char::iterator_utf8 i = Char::BeginOf(what), ie = Char::EndOf(what); i < ie; ++i) {
             if (start.x >= end)
                 return true;
             if (Cell * cell = at(start)) {
-                (*cell).setCodepoint(helpers::Char::FromUTF8(i, stre).codepoint())
+                (*cell).setCodepoint((*i).codepoint())
                        .setFont(font)
                        .setFg(color);
             }
             start.x += font.width();
+        }
+        return false;
+    }
+
+    bool Canvas::drawLineRight(Rect const & rect, std::string const & what, Color color, Font font) {
+        using namespace helpers;
+        Point start = rect.topRight();
+        int end = rect.left();
+        Char::iterator_utf8 i = Char::EndOf(what), ie = Char::BeginOf(what);
+        for (--i; i >= ie; --i) {
+            start.x -= font.width();
+            if (start.x < end)
+                return true;
+            if (Cell * cell = at(start)) {
+                (*cell).setCodepoint((*i).codepoint())
+                       .setFont(font)
+                       .setFg(color);
+            }
         }
         return false;
     }

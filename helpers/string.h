@@ -167,19 +167,14 @@ namespace helpers {
 		return result.str();
 	}
 
-// macOS does not really support the C++ standard wrt char16_t. Fportunately we only need it on Windows for now
+// macOS does not really support the C++ standard wrt char16_t. Fortunately we only need it on Windows for now
 #ifndef ARCH_MACOS
-	inline utf16_string UTF8toUTF16(char const* str) {
+    inline utf16_string UTF8toUTF16(std::string const & str) {
 		utf16_stringstream result;
-		while (*str != 0) 
-			Char::FromUTF8(str, str + 4).toUTF16(result);
+		for (Char::iterator_utf8 i = Char::BeginOf(str), e = Char::EndOf(str); i < e; ++i)
+		    result << (*i);
 		return result.str();
 	}
-
-	inline utf16_string UTF8toUTF16(std::string const& from) {
-		return UTF8toUTF16(from.c_str());
-	}
 #endif
-
 
 } // namespace helpers

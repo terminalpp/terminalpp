@@ -32,6 +32,130 @@ namespace helpers {
 	class Char {
 	public:
 
+		/** Iterator into char const * that does UTF8 encoding. 
+		 
+		    Allows forwards and backwards iteration over UTF8 strings. 
+		 */
+	    class iterator_utf8 {
+		public:
+
+			iterator_utf8():
+			    i_{} {
+			}
+
+			/** Creates the UTF8 iterator from an std::string iterator. 
+			 */
+		    iterator_utf8(std::string::const_iterator const & i):
+			    i_{pointer_cast<unsigned char const *>(&*i)} {
+			}
+
+			iterator_utf8(char const * from):
+    			i_{pointer_cast<unsigned char const *>(from)} {
+			}
+
+			iterator_utf8(iterator_utf8 const & from):
+			    i_{from.i_} {
+			}
+
+			iterator_utf8 operator = (iterator_utf8 const & from) {
+				i_ = from.i_;
+				return *this;
+			}
+
+			bool operator == (iterator_utf8 const & other) const {
+				return i_ == other.i_;
+			}
+
+			bool operator != (iterator_utf8 const & other) const {
+				return i_ != other.i_;
+			}
+
+			bool operator < (iterator_utf8 const & other) const {
+				return i_ < other.i_;
+			}
+
+			bool operator > (iterator_utf8 const & other) const {
+				return i_ > other.i_;
+			}
+
+			bool operator <= (iterator_utf8 const & other) const {
+				return i_ <= other.i_;
+			}
+			bool operator >= (iterator_utf8 const & other) const {
+				return i_ >= other.i_;
+			}
+
+			/** Returns the UTF8 character to which the iterator points. 
+			 
+			    Assumes that the iterator points to a valid UTF8 character, otherwise memory errors may occur. 
+			 */
+			Char operator * () {
+				char const * i = pointer_cast<char const *>(i_);
+				return Char::FromUTF8(i, i + 4);
+			}
+
+			size_t charSize() const {
+				unsigned char x = static_cast<unsigned char>(*i_);
+				if (x < 0x80) 
+				    return 1;
+				else if (x < 0xe0)
+				    return 2;
+				else if (x < 0xf0)
+				    return 3;
+				else 
+				    return 4;
+			}
+
+			/** Prefix increment. 
+			 */
+		    iterator_utf8 & operator ++ () {
+				i_ += charSize();
+				return *this;
+			}
+
+			/** Postfix increment. 
+			 */
+			iterator_utf8 operator ++ (int) {
+				iterator_utf8 result{*this};
+				++(*this);
+				return result;
+			}
+
+			/** Prefix decrement. 
+			 */
+			iterator_utf8 & operator -- () {
+				unsigned char const * old = i_;
+				--i_;
+				while ((*i_ & 0xc0) == 0x80) {
+				    --i_;
+					if (old - i_ > 4)
+					    THROW(CharError()) << "Not UTF8 encoding";
+				}
+				return *this;
+			}
+
+			/** Postrfix decrement. 
+		     */
+			iterator_utf8 operator -- (int) {
+				iterator_utf8 result{*this};
+				--(*this);
+				return result;
+			}
+
+
+		private:
+		    unsigned char const * i_;
+
+		}; // Char::iterator_utf8
+
+		static iterator_utf8 BeginOf(std::string const & str) {
+			return iterator_utf8{str.c_str()};
+		}
+
+		static iterator_utf8 EndOf(std::string const & str) {
+			return iterator_utf8{str.c_str() + str.size()};
+		}
+
 		static constexpr char NUL = 0;
 		static constexpr char BEL = 7;
 		static constexpr char BACKSPACE = 8;
@@ -79,6 +203,8 @@ namespace helpers {
 			// range < 0xd800 and >= 0xe000 are the codepoints themselves, single byte
 			if (*x < 0xd800 || *x >= 0xe000)
 				return FromCodepoint(*x++);
+			if (x + 1 >= end)
+				THROW(CharError()) << "Cannot read character, buffer overflow";
 			// otherwise the stored value is a codepoint which is above 0x10000
 			char32_t cp = 0;
 			// if the first byte is > 0xd800 and < 0xdc00, it is either high byte of surrogate pair, or possible unpaired high surrogate
@@ -91,38 +217,31 @@ namespace helpers {
 			return FromCodepoint(cp + 0x10000);
 		}
 
-		static Char FromUTF8(char const * & x, char const * end, bool permissive = false) {
-			if (x >= end)
+		/** Returns the UTF8 encoded character at the given address. 
+		 */
+		static Char FromUTF8(char const *& i, char const * end) {
+			if (i >= end)
 				THROW(CharError()) << "Cannot read character, buffer overflow";
-			unsigned char const * start = reinterpret_cast<unsigned char const *>(x);
-			if (*start >= 0x80) {
-				if (*start < 0xe0) {
-					if (x + 2 <= end) {
-					    x += 2;
-						return Char{start[0], start[1]};
-					}
-				} else if (*start < 0xf0) {
-					if (x + 3 <= end) {
-					    x += 3;
-						return Char{start[0], start[1], start[2]};
-					}
-				} else {
-					if (x + 4 <= end) {
-					    x += 4;
-						return Char{start[0], start[1], start[2], start[3]};
-					}
-				}
+			unsigned char const * u = pointer_cast<unsigned char const *>(i);
+			if (*u < 0x80) {
+				++i;
+			    return Char{*u};
+			} else if (*u < 0xe0) {
+				if (i + 2 >= end)
+    				THROW(CharError()) << "Cannot read character, buffer overflow";
+				i += 2;
+			    return Char{u[0], u[1]};
+			} else if (*u < 0xf0) {
+				if (i + 3 >= end)
+    				THROW(CharError()) << "Cannot read character, buffer overflow";
+				i += 3;
+			    return Char{u[0], u[1], u[2]};
 			} else {
-				++x;
-				return Char{start[0]};
+				if (i + 4 >= end)
+    				THROW(CharError()) << "Cannot read character, buffer overflow";
+				i += 4;
+			    return Char{u[0], u[1], u[2], u[3]};
 			}
-			if (permissive)
-			    return Char{'?'};
-		    THROW(CharError()) << "Cannot read character, incomplete UTF8 character at the end";
-		}
-
-		static Char FromUTF8(char * & x, char const * end, bool permissive = false) {
-            return FromUTF8(const_cast<char const *&>(x), end, permissive);		
 		}
 
 		/** Creates the character from given unicode codepoint. 
@@ -133,21 +252,17 @@ namespace helpers {
 			return result;
 		}
 
-		static size_t SizeFromFirstByte(unsigned char b) {
-			if (b <= 0x7f) // 0xxxxxxx
-				return 1;
-			else if (b <= 0xdf) // 110xxxxx
-				return 2;
-			else if (b <= 0xef) // 1110xxxx
-				return 3;
-			else
-				return 4;
-		}
-
 		/** Returns the number of bytes required to encode the stored codepoint.
 		 */
 		size_t size() const {
-			return SizeFromFirstByte(bytes_[0]);
+			if (bytes_[0] <= 0x7f) // 0xxxxxxx
+				return 1;
+			else if (bytes_[0] <= 0xdf) // 110xxxxx
+				return 2;
+			else if (bytes_[0] <= 0xef) // 1110xxxx
+				return 3;
+			else
+				return 4;
 		}
 
 		/** Returns the unicode codepoint stored by the character. 
@@ -163,23 +278,6 @@ namespace helpers {
 				return ((bytes_[0] & 0x07) << 18) + ((bytes_[1] & 0x3f) << 12) + ((bytes_[2] & 0x3f) << 6) + (bytes_[3] & 0x3f);
 		}
 
-// macOS does not really support the C++ standard wrt char16_t. Fportunately we only need it on Windows for now
-#ifndef ARCH_MACOS
-		void toUTF16(utf16_stringstream& s) const {
-			unsigned cp = codepoint();
-			if (cp < 0x10000) {
-				ASSERT(cp < 0xd800 || cp >= 0xe000) << "Invalid UTF16 codepoint";
-				s << static_cast<utf16_char>(cp);
-			} else {
-				cp -= 0x10000;
-				unsigned high = cp >> 10; // upper 10 bits
-				unsigned low = cp & 0x3ff; // lower 10 bits
-				s << static_cast<utf16_char>(high + 0xd800);
-				s << static_cast<utf16_char>(low + 0xdc00);
-			}
-		}
-#endif
-
 		char const* toCharPtr() const {
 			return reinterpret_cast<char const*>(&bytes_);
 		}
@@ -188,10 +286,6 @@ namespace helpers {
 
 		    On linux, the funtion wcwidth should do, however this does not exist on Windows and to make sure that applications behave the same on all platforms, own decission is implemented. 
 		 */
-		int columnWidth() const {
-			return ColumnWidth(codepoint());
-        }
-
         static int ColumnWidth(char32_t cp) {
 			if (cp >= 0x1100) {
 				if (cp <= 0x115f || // Hangul
@@ -220,10 +314,28 @@ namespace helpers {
 			bytes_[3] = fourth;
 		}
 
-		friend std::ostream& operator << (std::ostream& s, Char c) {
+		friend std::ostream& operator << (std::ostream& s, Char const & c) {
 			s.write(reinterpret_cast<char const *>(&c.bytes_), c.size());
 			return s;
 		}
+
+// macOS does not really support the C++ standard wrt char16_t. Fportunately we only need it on Windows for now
+#ifndef ARCH_MACOS
+		friend utf16_stringstream & operator << (utf16_stringstream & s, Char const & c) {
+			unsigned cp = c.codepoint();
+			if (cp < 0x10000) {
+				ASSERT(cp < 0xd800 || cp >= 0xe000) << "Invalid UTF16 codepoint";
+				s << static_cast<utf16_char>(cp);
+			} else {
+				cp -= 0x10000;
+				unsigned high = cp >> 10; // upper 10 bits
+				unsigned low = cp & 0x3ff; // lower 10 bits
+				s << static_cast<utf16_char>(high + 0xd800);
+				s << static_cast<utf16_char>(low + 0xdc00);
+			}
+			return s;
+		}
+#endif
 
 		void fillFromCodepoint(char32_t cp) {
 			if (cp < 0x80) {

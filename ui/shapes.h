@@ -273,6 +273,14 @@ namespace ui {
 		Point bottomRight() const {
             return Point{left_ + width_, top_ + height_};
         }
+
+        Point topRight() const {
+            return Point{left_ + width_, top_};
+        }
+
+        Point bottomLeft() const {
+            return Point{left_, top_ + height_};
+        }
         //@}
 
         /** \name Setters
