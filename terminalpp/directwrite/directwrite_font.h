@@ -1,5 +1,5 @@
 #pragma once 
-#if (defined ARCH_WINDOWS) 
+#if (defined ARCH_WINDOWS && defined RENDERER_NATIVE) 
 
 #include "helpers/string.h"
 

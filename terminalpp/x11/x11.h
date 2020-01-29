@@ -1,5 +1,5 @@
 #pragma once
-#ifdef ARCH_UNIX
+#if (defined ARCH_UNIX && defined RENDERER_NATIVE)
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

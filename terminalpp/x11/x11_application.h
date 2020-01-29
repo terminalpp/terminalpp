@@ -1,5 +1,5 @@
 #pragma once
-#if (defined ARCH_UNIX)
+#if (defined ARCH_UNIX && defined RENDERER_NATIVE)
 
 #include "ui/traits/selection.h"
 

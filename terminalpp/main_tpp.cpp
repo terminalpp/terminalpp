@@ -7,7 +7,7 @@
 
 #include "config.h"
 
-#if (defined ARCH_WINDOWS)
+#if (defined ARCH_WINDOWS && defined RENDERER_NATIVE)
 
 #include "directwrite/directwrite_application.h"
 #include "directwrite/directwrite_window.h"
@@ -15,11 +15,21 @@
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
 
-#elif (defined ARCH_UNIX)
+#define APPLICATION_CLASS DirectWriteApplication
 
+#elif (defined ARCH_UNIX && defined RENDERER_NATIVE)
 
 #include "x11/x11_application.h"
 #include "x11/x11_window.h"
+
+#define APPLICATION_CLASS X11Application
+
+#elif (defined RENDERER_QT)
+
+#include "qt/qt_application.h"
+#include "qt/qt_window.h"
+
+#define APPLICATION_CLASS QtApplication
 
 #else
 #error "Unsupported platform"
@@ -73,11 +83,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MARK_AS_UNUSED(nCmdShow);
 	int argc = __argc;
 	char** argv = __argv;
-	DirectWriteApplication::Initialize(hInstance);
+	APPLICATION_CLASS::Initialize(hInstance);
 #else
 int main(int argc, char* argv[]) {
     try {
-	    X11Application::Initialize();
+	    APPLICATION_CLASS::Initialize();
     } catch (helpers::Exception const & e) {
         std::cerr << e << std::endl;
         return EXIT_FAILURE;

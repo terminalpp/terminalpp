@@ -15,6 +15,18 @@ if(NOT DEFINED PACKAGE_INSTALL)
     set(PACKAGE_INSTALL terminalpp)
 endif()
 
+# Determines the renderer to be used
+#
+# By default, the native renderer is specified, but QT can be specified instead
+# 
+# TODO make native default, make QT default on MacOS
+if(NOT DEFINED RENDERER)
+#    set(RENDERER NATIVE)
+    set(RENDERER QT)
+endif()
+add_definitions(-DRENDERER_${RENDERER})
+message(STATUS "renderer: ${RENDERER}")
+
 # A futile attempt at getting the coverage outputs being produced
 #if(UNIX)
 #    if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -62,6 +74,11 @@ if(UNIX)
     endif()
 endif()
 
+# Check that QT is installed if QT renderer selected
+if(RENDERER STREQUAL QT)
+    find_package(Qt5Widgets REQUIRED)
+endif()
+
 # tpp executable
 #
 # On Windows, this is simply a Win32 GUI application created from the given sources and resources file. On Linux the situation is more complex as the build scripts tries to localize all required libraries and then build the app. 
@@ -80,6 +97,10 @@ endif()
 # finally, add the libraries
 target_link_libraries(terminalpp libui libuiterminal)
 
+# link with QT libraries if selected
+if(RENDERER STREQUAL QT)
+    target_link_libraries(terminalpp Qt5::Widgets)
+endif()
 
 # Tools
 #

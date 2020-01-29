@@ -1,4 +1,4 @@
-#if (defined ARCH_WINDOWS)
+#if (defined ARCH_WINDOWS && defined RENDERER_NATIVE)
 
 #include <iostream>
 

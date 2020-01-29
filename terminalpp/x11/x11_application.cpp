@@ -1,4 +1,4 @@
-#if (defined ARCH_UNIX)
+#if (defined ARCH_UNIX && defined RENDERER_NATIVE)
 
 #include "helpers/log.h"
 #include "helpers/filesystem.h"
