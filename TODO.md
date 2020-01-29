@@ -23,6 +23,7 @@ The following is very short description of the versions planned and their main n
 ##### TODO
 
 - confirmation box for paste and for remote files
+- lineOut should center/top/bottom vertically too
 - simpler UI framework
 - remove / refactor builders
 - shapes.h is areally bad name for the classes defined therein

@@ -57,7 +57,7 @@ namespace helpers {
 			    i_{from.i_} {
 			}
 
-			iterator_utf8 operator = (iterator_utf8 const & from) {
+			iterator_utf8 & operator = (iterator_utf8 const & from) {
 				i_ = from.i_;
 				return *this;
 			}
