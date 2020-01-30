@@ -779,9 +779,9 @@ namespace helpers {
             return kind_ == Kind::String && valueStr_ == other;
         }
 
-        void emit(std::ostream & s, unsigned tabWidth = 4) const {
-            emitComment(s, tabWidth, 0);
-            emit(s, tabWidth, 0);
+        void writeTo(std::ostream & s, unsigned tabWidth = 4) const {
+            writeComment(s, tabWidth, 0);
+            writeTo(s, tabWidth, 0);
         }
 
         friend std::ostream & operator << (std::ostream & s, Kind kind) {
@@ -814,7 +814,7 @@ namespace helpers {
         }
 
         friend std::ostream & operator << (std::ostream & s, JSON const & json) {
-            json.emit(s);
+            json.writeTo(s);
             return s;
         }
 
@@ -848,7 +848,7 @@ namespace helpers {
             }
         }
 
-        void emitComment(std::ostream & s, unsigned tabWidth, unsigned offset) const {
+        void writeComment(std::ostream & s, unsigned tabWidth, unsigned offset) const {
             if (comment_.empty())
                 return;
             std::vector<std::string> lines(Split(comment_, "\n"));
@@ -864,7 +864,7 @@ namespace helpers {
             s << std::setw(offset) << "" << " */" << std::endl;
         }
 
-        void emit(std::ostream & s, unsigned tabWidth, unsigned offset) const {
+        void writeTo(std::ostream & s, unsigned tabWidth, unsigned offset) const {
             switch (kind_) {
                 case Kind::Null:
                     s << "null";
@@ -885,9 +885,9 @@ namespace helpers {
                     s << "[" << std::endl;
                     offset += tabWidth;
                     for (auto i = valueArray_.begin(), e = valueArray_.end(); i != e;) {
-                        (*i)->emitComment(s,tabWidth, offset);
+                        (*i)->writeComment(s,tabWidth, offset);
                         s << std::setw(offset) << "";
-                        (*i)->emit(s, tabWidth, offset);
+                        (*i)->writeTo(s, tabWidth, offset);
                         ++i;
                         if (i != e)
                             s << ",";
@@ -900,9 +900,9 @@ namespace helpers {
                     s << "{" << std::endl;
                     offset += tabWidth;
                     for (auto i = valueObject_.begin(), e = valueObject_.end(); i != e;) {
-                        i->second->emitComment(s,tabWidth, offset);
+                        i->second->writeComment(s,tabWidth, offset);
                         s << std::setw(offset) << "" << Quote(i->first) << " : ";
-                        i->second->emit(s, tabWidth, offset);
+                        i->second->writeTo(s, tabWidth, offset);
                         ++i;
                         if (i != e)
                             s << ",";
