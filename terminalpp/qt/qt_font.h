@@ -20,6 +20,8 @@ namespace tpp {
             Font<QtFont>(font) {
             MARK_AS_UNUSED(cellWidth);
             MARK_AS_UNUSED(cellHeight);
+            heightPx_ = cellHeight;
+            widthPx_ = cellHeight;
         }
     };
 

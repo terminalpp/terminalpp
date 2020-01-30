@@ -9,7 +9,7 @@ namespace tpp {
 
     class QtWindow;
 
-    class QtApplication : public Application {
+    class QtApplication : public Application, QApplication {
     public:
 
         static void Initialize(int & argc, char ** argv) {
@@ -23,14 +23,14 @@ namespace tpp {
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;
 
         void mainLoop() override {
-            app_.exec();
+            exec();
         }
 
 
     protected:
 
         QtApplication(int & argc, char ** argv):
-            app_{argc, argv} {
+            QApplication{argc, argv} {
         }
 
         ~QtApplication() override;
@@ -38,10 +38,6 @@ namespace tpp {
         void alert(std::string const & message) override;
 
         void openLocalFile(std::string const & filename, bool edit) override;
-
-    private:
-
-        QApplication app_;
 
     }; // tpp::QtApplication
 

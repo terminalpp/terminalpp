@@ -8,20 +8,20 @@ namespace tpp {
     }
 
     void QtWindow::show() {
-        NOT_IMPLEMENTED;
+        QRasterWindow::show();
     }
 
     /** Sets the window icon. 
      */
     void QtWindow::setIcon(ui::RootWindow::Icon icon) {
         MARK_AS_UNUSED(icon);
-        NOT_IMPLEMENTED;
     }
 
     QtWindow::QtWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
         RendererWindow(cols, rows, QtFont::GetOrCreate(ui::Font(), 0, baseCellHeightPx)->widthPx(), baseCellHeightPx)
         {
-        MARK_AS_UNUSED(title);
+        QRasterWindow::resize(widthPx_, heightPx_);
+        QRasterWindow::setTitle(title.c_str());
     }
 
     void QtWindow::requestClipboardContents() {

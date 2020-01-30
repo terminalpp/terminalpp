@@ -8,7 +8,7 @@
 
 namespace tpp {
 
-    class QtWindow : public RendererWindow<QtWindow, QWindow *> {
+    class QtWindow : public RendererWindow<QtWindow, QWindow *>, public QRasterWindow {
     public:
 
         ~QtWindow() override;
@@ -27,12 +27,11 @@ namespace tpp {
          */
 		void requestRender(ui::Rect const & rect) override {
             MARK_AS_UNUSED(rect);
-            NOT_IMPLEMENTED;
+            QRasterWindow::update();
         }
 
         void setTitle(std::string const & title) override {
-            MARK_AS_UNUSED(title);
-            NOT_IMPLEMENTED;
+            QRasterWindow::setTitle(title.c_str());
         }
 
 		/** Sets the window icon. 
@@ -45,8 +44,18 @@ namespace tpp {
 
         typedef RendererWindow<QtWindow, QWindow *> Super;
 
-
         QtWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);
+
+        void updateSizePx(unsigned widthPx, unsigned heightPx) override {
+            QRasterWindow::resize(widthPx, heightPx);
+            Super::updateSizePx(widthPx, heightPx);
+            repaint();
+        }
+
+        void updateSize(int cols, int rows) override {
+            Super::updateSize(cols, rows);
+            repaint();    
+        }
 
         void requestClipboardContents() override;
 
