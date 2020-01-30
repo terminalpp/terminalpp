@@ -155,6 +155,20 @@ namespace helpers {
 		return result.str();
 	}
 
+	/** Determines the length of an UTF-8 encoded string. 
+	 */
+	inline size_t Length(Char::iterator_utf8 begin, Char::iterator_utf8 end) {
+		size_t result = 0;
+		for (; begin < end; ++begin)
+		    ++result;
+		return result;
+	}
+
+	inline size_t Length(std::string const & str) {
+		return Length(Char::BeginOf(str), Char::EndOf(str));
+	}
+
+
 	// Conversions ------------------------------------------------------------------------------------
 
 	/** Converts a null terminated wide string in UTF-16 encoding into an std::string encoded in UTF-8.

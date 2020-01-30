@@ -124,13 +124,13 @@ namespace ui {
     void Canvas::lineOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign, Font font) {
         switch (halign) {
             case HorizontalAlign::Left:
-                drawLineLeft(rect, text, color, font);
+                drawLineLeft(rect, Char::BeginOf(text), Char::EndOf(text), color, font);
                 break;
             case HorizontalAlign::Center:
-                NOT_IMPLEMENTED;
+                drawLineCenter(rect, Char::BeginOf(text), Char::EndOf(text), color, font);
                 break;
             case HorizontalAlign::Right:
-                drawLineRight(rect, text, color, font);
+                drawLineRight(rect, Char::BeginOf(text), Char::EndOf(text), color, font);
                 break;
         }
     }
@@ -197,33 +197,31 @@ namespace ui {
             borderLineLeft(Point{from.x, sliderStart}, sliderSize, color, Border::Kind::Thick);
     }
 
-    bool Canvas::drawLineLeft(Rect const & rect, std::string const & what, Color color, Font font) {
-        using namespace helpers;
-        Point start{rect.topLeft()};
-        int end = rect.right();
-        for (Char::iterator_utf8 i = Char::BeginOf(what), ie = Char::EndOf(what); i < ie; ++i) {
-            if (start.x >= end)
+    bool Canvas::drawLineLeft(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end, Color color, Font font) {
+        Point p{rect.topLeft()};
+        int pe = rect.right();
+        for (; begin < end; ++begin) {
+            if (p.x >= pe)
                 return true;
-            if (Cell * cell = at(start)) {
-                (*cell).setCodepoint((*i).codepoint())
+            if (Cell * cell = at(p)) {
+                (*cell).setCodepoint((*begin).codepoint())
                        .setFont(font)
                        .setFg(color);
             }
-            start.x += font.width();
+            p.x += font.width();
         }
         return false;
     }
 
-    bool Canvas::drawLineRight(Rect const & rect, std::string const & what, Color color, Font font) {
-        using namespace helpers;
-        Point start = rect.topRight();
-        int end = rect.left();
-        Char::iterator_utf8 i = Char::EndOf(what), ie = Char::BeginOf(what);
-        for (--i; i >= ie; --i) {
-            start.x -= font.width();
-            if (start.x < end)
+    bool Canvas::drawLineRight(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end, Color color, Font font) {
+        Point p = rect.topRight();
+        int pe = rect.left();
+        Char::iterator_utf8 i = end; //Char::EndOf(what), ie = Char::BeginOf(what);
+        for (--i; i >= begin; --i) {
+            p.x -= font.width();
+            if (p.x < pe)
                 return true;
-            if (Cell * cell = at(start)) {
+            if (Cell * cell = at(p)) {
                 (*cell).setCodepoint((*i).codepoint())
                        .setFont(font)
                        .setFg(color);
@@ -231,5 +229,21 @@ namespace ui {
         }
         return false;
     }
+
+    bool Canvas::drawLineCenter(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end, Color color, Font font) {
+        int length{static_cast<int>(helpers::Length(begin, end) * font.width())};
+        // the whole text can be displayed
+        if (length <= rect.width()) {
+            int offset = static_cast<int>((rect.width() - length) / 2);
+            drawLineLeft(Rect::FromTopLeftWH(rect.left() + offset, rect.top(), length, rect.height()), begin, end, color, font);
+            return false;
+        } else {
+            size_t offset = (length - rect.width()) / 2 / font.width();
+            begin += offset;
+            drawLineLeft(rect, begin, end, color, font);
+            return true;
+        }
+    }
+
 
 } // namespace ui

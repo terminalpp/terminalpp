@@ -142,6 +142,39 @@ namespace helpers {
 				return result;
 			}
 
+			iterator_utf8 & operator += (size_t offset) {
+				while (offset-- > 0)
+				    ++(*this);
+				return *this;
+			}
+
+			iterator_utf8 & operator -= (size_t offset) {
+				while (offset-- > 0)
+				    --(*this);
+				return *this;
+			}
+
+			iterator_utf8 & operator += (int offset) {
+				if (offset > 0) {
+					while (--offset > 0)
+					    ++(*this);
+				} else if (offset < 0) {
+					while (++offset < 0)
+					    --(*this);
+			    }
+				return *this;
+			}
+
+			iterator_utf8 & operator -= (int offset) {
+				if (offset > 0) {
+					while (--offset > 0)
+					    --(*this);
+				} else if (offset < 0) {
+					while (++offset < 0)
+					    ++(*this);
+			    }
+				return *this;
+			}
 
 		private:
 		    unsigned char const * i_;
