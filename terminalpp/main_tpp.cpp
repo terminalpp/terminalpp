@@ -87,7 +87,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #else
 int main(int argc, char* argv[]) {
     try {
-	    APPLICATION_CLASS::Initialize();
+	    APPLICATION_CLASS::Initialize(argc, argv);
     } catch (helpers::Exception const & e) {
         std::cerr << e << std::endl;
         return EXIT_FAILURE;

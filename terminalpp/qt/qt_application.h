@@ -12,8 +12,8 @@ namespace tpp {
     class QtApplication : public Application {
     public:
 
-        static void Initialize() {
-            new QtApplication();
+        static void Initialize(int & argc, char ** argv) {
+            new QtApplication{argc, argv};
         }
 
         static QtApplication * Instance() {
@@ -22,10 +22,16 @@ namespace tpp {
 
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;
 
-        void mainLoop() override;
+        void mainLoop() override {
+            app_.exec();
+        }
 
 
     protected:
+
+        QtApplication(int & argc, char ** argv):
+            app_{argc, argv} {
+        }
 
         ~QtApplication() override;
 
@@ -34,6 +40,8 @@ namespace tpp {
         void openLocalFile(std::string const & filename, bool edit) override;
 
     private:
+
+        QApplication app_;
 
     }; // tpp::QtApplication
 

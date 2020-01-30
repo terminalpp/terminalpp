@@ -12,13 +12,10 @@ namespace tpp {
     QtApplication::~QtApplication() {
     }
 
-    void QtApplication::mainLoop() {
-        NOT_IMPLEMENTED;
-    }
 
     void QtApplication::alert(std::string const & message) {
-        MARK_AS_UNUSED(message);
-        NOT_IMPLEMENTED;
+        QMessageBox msgBox{QMessageBox::Icon::Warning, "Error", message.c_str()};
+        msgBox.exec();
     }
 
     void QtApplication::openLocalFile(std::string const & filename, bool edit) {

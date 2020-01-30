@@ -16,7 +16,9 @@ namespace tpp {
     class X11Application : public Application {
     public:
 
-        static void Initialize() {
+        static void Initialize(int argc, char ** argv) {
+            MARK_AS_UNUSED(argc);
+            MARK_AS_UNUSED(argv);
             new X11Application();
         }
 
