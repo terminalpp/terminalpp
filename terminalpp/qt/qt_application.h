@@ -24,9 +24,10 @@ namespace tpp {
 
         void mainLoop() override;
 
-        ~QtApplication() override;
 
     protected:
+
+        ~QtApplication() override;
 
         void alert(std::string const & message) override;
 
