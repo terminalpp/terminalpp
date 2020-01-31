@@ -76,14 +76,17 @@ void reportError(std::string const & message) {
 
     For now creates single terminal window and one virtual terminal. 
  */
-#ifdef ARCH_WINDOWS
+#if (defined ARCH_WINDOWS && defined RENDERER_NATIVE)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	MARK_AS_UNUSED(hPrevInstance);
 	MARK_AS_UNUSED(lpCmdLine);
 	MARK_AS_UNUSED(nCmdShow);
 	int argc = __argc;
 	char** argv = __argv;
-	APPLICATION_CLASS::Initialize(hInstance);
+	APPLICATION_CLASS::Initialize(argc, argv, hInstance);
+#elif (defined ARCH_WINDOWS && defined RENDERER_QT)
+int main(int argc, char* argv[]) {
+	APPLICATION_CLASS::Initialize(argc, argv);
 #else
 int main(int argc, char* argv[]) {
     try {

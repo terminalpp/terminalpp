@@ -75,8 +75,17 @@ if(UNIX)
 endif()
 
 # Check that QT is installed if QT renderer selected
+# 
+# On Windows, the Qt path is specified manually. Is there a better way to do it, and should I bother?
 if(RENDERER STREQUAL QT)
+    if(WIN32)
+        set(CMAKE_PREFIX_PATH "C:\\Qt\\5.14.1\\msvc2017_64")
+    endif()
     find_package(Qt5Widgets REQUIRED)
+    if(WIN32)
+        # finds the windeployqt executable so that the binaries can be added
+        find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
+    endif()
 endif()
 
 # tpp executable
@@ -85,6 +94,12 @@ endif()
 file(GLOB_RECURSE SRC "terminalpp/*.cpp" "terminalpp/*.h")
 if(WIN32)
     add_executable(terminalpp WIN32 ${SRC} "terminalpp/directwrite/tpp.rc" "build-stamp.h")
+    # add QT dlls to the executable
+    if(RENDERER STREQUAL QT)
+        add_custom_command(TARGET terminalpp POST_BUILD
+            COMMAND ${WINDEPLOYQT_EXECUTABLE} "$<TARGET_FILE:terminalpp>"
+        )
+    endif()
 elseif(UNIX)
     add_executable(terminalpp ${SRC} "build-stamp.h")
     target_link_libraries(terminalpp ${X11_LIBRARIES} ${X11_Xft_LIB})  

@@ -19,7 +19,9 @@ namespace tpp {
     class DirectWriteApplication : public Application {
     public:
 
-        static void Initialize(HINSTANCE hInstance) {
+        static void Initialize(int argc, char ** argv, HINSTANCE hInstance) {
+            MARK_AS_UNUSED(argc);
+            MARK_AS_UNUSED(argv);
             new DirectWriteApplication(hInstance);
         }
 
