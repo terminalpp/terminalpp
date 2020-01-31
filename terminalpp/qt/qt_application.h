@@ -29,9 +29,7 @@ namespace tpp {
 
     protected:
 
-        QtApplication(int & argc, char ** argv):
-            QApplication{argc, argv} {
-        }
+        QtApplication(int & argc, char ** argv);
 
         ~QtApplication() override;
 
