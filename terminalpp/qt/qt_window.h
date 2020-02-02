@@ -8,10 +8,20 @@
 
 namespace tpp {
 
+    typedef QOpenGLWindow QWindowBase;
+
     /**
+     
+        TODO after QT rendering done:
+
+        - rename Fullscreen to FullScreen
+        - see if zoom can be done at the Window level
+        - qt rendering is not really fast (only render what needs to be rendered?)
+        
+
      */
     // QT object must be the first base, otherwise teh code won't compile
-    class QtWindow : public QOpenGLWindow, public RendererWindow<QtWindow, QWindow *> {
+    class QtWindow : public QWindowBase, public RendererWindow<QtWindow, QWindow *> {
         Q_OBJECT
     public:
 
@@ -25,6 +35,7 @@ namespace tpp {
 
         void requestClose() override {
             NOT_IMPLEMENTED;
+            //emit tppWindowClose();
         }
 
         /** Sets the title of the window. 
@@ -36,7 +47,7 @@ namespace tpp {
 
         // TODO this has to be made thread safe
         void setTitle(std::string const & title) override {
-            QOpenGLWindow::setTitle(title.c_str());
+            QWindowBase::setTitle(title.c_str());
         }
 
 		/** Sets the window icon. 
@@ -47,6 +58,9 @@ namespace tpp {
     signals:
 
         void tppRequestUpdate();
+        void tppShowFullScreen();
+        void tppShowNormal();
+        bool tppWindowClose();
 
     protected:
 
@@ -61,6 +75,11 @@ namespace tpp {
          */
         //@{
 
+        /*void closeEvent(QCloseEvent * ev) override {
+            ev->accept();
+        }
+        */
+
         /** Qt's paint event just delegates to the paint method of the RendererWindow. 
          */
         void paintEvent(QPaintEvent * ev) override {
@@ -71,7 +90,7 @@ namespace tpp {
         /** Qt's resize event.
          */
         void resizeEvent(QResizeEvent* ev) override {
-            QOpenGLWindow::resizeEvent(ev);
+            QWindowBase::resizeEvent(ev);
             updateSizePx(ev->size().width(), ev->size().height());
         }
 
@@ -83,7 +102,6 @@ namespace tpp {
          */
         void keyReleaseEvent(QKeyEvent * ev) override;
 
-
         void mousePressEvent(QMouseEvent * ev) override;
 
         void mouseReleaseEvent(QMouseEvent * ev) override;
@@ -91,7 +109,6 @@ namespace tpp {
         void mouseMoveEvent(QMouseEvent * ev) override;
 
         void wheelEvent(QWheelEvent * ev) override;
-
 
         //@}
 
@@ -103,6 +120,22 @@ namespace tpp {
         void updateSize(int cols, int rows) override {
             Super::updateSize(cols, rows);
             repaint();    
+        }
+
+        void updateFullscreen(bool value) override {
+            if (value)
+                emit tppShowFullScreen();
+            else
+                emit tppShowNormal();
+            Super::updateFullscreen(value);
+        }
+
+        void updateZoom(double value) override {
+            QtFont * f = QtFont::GetOrCreate(ui::Font(), 0, static_cast<unsigned>(baseCellHeightPx_ * value));
+            cellWidthPx_ = f->widthPx();
+            cellHeightPx_ = f->heightPx();
+            Super::updateZoom(value);
+            Super::updateSizePx(widthPx_, heightPx_);
         }
 
         void requestClipboardContents() override;
@@ -137,8 +170,8 @@ namespace tpp {
 
         void addGlyph(int col, int row, ui::Cell const & cell) {
             char32_t cp{ cell.codepoint() };
-            painter_.fillRect(QRect{col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_, cellHeightPx_}, painter_.brush());
-            painter_.drawText(col * cellWidthPx_, (row + 1) * cellHeightPx_, QString::fromUcs4(&cp, 1));
+            painter_.fillRect(QRect{col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_ * statusCell_.font().width(), cellHeightPx_ * statusCell_.font().height()}, painter_.brush());
+            painter_.drawText(col * cellWidthPx_, (row + 1 - statusCell_.font().height()) * cellHeightPx_ + font_->ascent(), QString::fromUcs4(&cp, 1));
         }
 
         /** Updates the current font.

@@ -3,7 +3,7 @@
 #include <sstream>
 
 #if (defined ARCH_WINDOWS)
-    #include "windows.h"
+    #include <windows.h>
 #elif (defined ARCH_UNIX)
 	#include <cstring>
 	#include <errno.h>

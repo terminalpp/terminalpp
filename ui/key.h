@@ -53,7 +53,7 @@ namespace ui {
 			return raw_ != other;
 		}
 
-		bool operator | (unsigned modifier) const {
+		bool operator & (unsigned modifier) const {
 			ASSERT((modifier & 0xfff0ffff) == 0);
 			return raw_ & modifier;
 		}
@@ -82,13 +82,13 @@ namespace ui {
 	};
 
 	inline std::ostream& operator << (std::ostream& s, Key k) {
-		if (k | Key::Shift)
+		if (k & Key::Shift)
 			s << "S-";
-		if (k | Key::Ctrl)
+		if (k & Key::Ctrl)
 			s << "C-";
-		if (k | Key::Alt)
+		if (k & Key::Alt)
 			s << "A-";
-		if (k | Key::Win)
+		if (k & Key::Win)
 			s << "W-";
 		switch (k.code()) {
 		case Key::Invalid:

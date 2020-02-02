@@ -34,16 +34,29 @@ namespace tpp {
             Config const & config{Config::Instance()};
             widthPx_ = cellWidth * font.width();
             heightPx_ = cellHeight * font.height();
-            font_.setFamily(font.doubleWidth() ? config.font.doubleWidthFamily().c_str() : config.font.family().c_str());
+            //font_.setFamily(font.doubleWidth() ? config.font.doubleWidthFamily().c_str() : config.font.family().c_str());
+            font_.setFamily("Iosevka NF");
             if (font.bold())
                 font_.setBold(true);
             if (font.italics())
                 font_.setItalic(true);
             font_.setPixelSize(heightPx_);
             QFontMetrics metrics{font_};
-            QRect brect{metrics.boundingRect('M')};
-            widthPx_ = brect.width();
-            heightPx_ = brect.height();
+            // scale the font if the ascent and descent are 
+            unsigned h = static_cast<unsigned>(metrics.ascent() + metrics.descent());
+            if (h != heightPx_) {
+                h = static_cast<unsigned>(heightPx_ * (heightPx_ / static_cast<double>(h)));
+                font_.setPixelSize(h);
+                metrics = QFontMetrics{font_};
+            }
+            //QRect brect{metrics.boundingRect('M')};
+            //widthPx_ = brect.width();
+            widthPx_ = static_cast<unsigned>(metrics.horizontalAdvance('M'));
+            ascent_ = metrics.ascent();
+            underlineOffset_ = ascent_ + 1;
+            underlineThickness_ = 1;
+            strikethroughOffset_ = ascent_ * 2 / 3;
+            strikethroughThickness_ = 1;
         }
 
         QFont font_;

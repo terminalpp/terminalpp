@@ -8,7 +8,7 @@ namespace tpp {
     }
 
     void QtWindow::show() {
-        QOpenGLWindow::show();
+        QWindowBase::show();
     }
 
     /** Sets the window icon. 
@@ -21,11 +21,13 @@ namespace tpp {
         RendererWindow(cols, rows, QtFont::GetOrCreate(ui::Font(), 0, baseCellHeightPx)->widthPx(), baseCellHeightPx),
         font_{ nullptr }
         {
-        QOpenGLWindow::resize(widthPx_, heightPx_);
-        QOpenGLWindow::setTitle(title.c_str());
-
+        QWindowBase::resize(widthPx_, heightPx_);
+        QWindowBase::setTitle(title.c_str());
 
         connect(this, SIGNAL(tppRequestUpdate()), this, SLOT(update()), Qt::ConnectionType::QueuedConnection);
+        connect(this, SIGNAL(tppShowFullScreen()), this, SLOT(showFullScreen()), Qt::ConnectionType::QueuedConnection);
+        connect(this, SIGNAL(tppShowNormal()), this, SLOT(showNormal()), Qt::ConnectionType::QueuedConnection);
+        connect(this, SIGNAL(tppClose()), this, SLOT(close()), Qt::ConnectionType::QueuedConnection);
 
         //setMouseTracking(true);
         AddWindowNativeHandle(this, this);
@@ -37,6 +39,10 @@ namespace tpp {
         ui::Key k{GetKey(ev->key(), activeModifiers_.modifiers(), true)};
         if (k != ui::Key::Invalid)
             keyDown(k);
+        // if ctrl, alt, or win is active, don't deal with keyChar
+        if (k & ( ui::Key::Ctrl + ui::Key::Alt + ui::Key::Win))
+            return;
+        
         // determine if there is a printable character to be sent
         QString str{ev->text()};
         if (!str.isEmpty()) {
@@ -142,7 +148,7 @@ namespace tpp {
     ui::Key QtWindow::GetKey(int qtKey, unsigned modifiers, bool pressed) {
         if (qtKey >= Qt::Key::Key_A && qtKey <= Qt::Key::Key_Z) 
             return ui::Key{static_cast<unsigned>(qtKey), modifiers};
-        if (qtKey <= Qt::Key::Key_0 && qtKey <= Qt::Key::Key_9) 
+        if (qtKey >= Qt::Key::Key_0 && qtKey <= Qt::Key::Key_9) 
             return ui::Key{static_cast<unsigned>(qtKey), modifiers};
         switch (qtKey) {
             case Qt::Key::Key_Backspace:

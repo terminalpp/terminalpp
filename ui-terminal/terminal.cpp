@@ -1768,9 +1768,9 @@ namespace ui {
 
 	unsigned Terminal::encodeMouseButton(MouseButton btn, Key modifiers) {
 		unsigned result =
-			((modifiers | Key::Shift) ? 4 : 0) +
-			((modifiers | Key::Alt) ? 8 : 0) +
-			((modifiers | Key::Ctrl) ? 16 : 0);
+			((modifiers & Key::Shift) ? 4 : 0) +
+			((modifiers & Key::Alt) ? 8 : 0) +
+			((modifiers & Key::Ctrl) ? 16 : 0);
 		switch (btn) {
 			case MouseButton::Left:
 				return result;
