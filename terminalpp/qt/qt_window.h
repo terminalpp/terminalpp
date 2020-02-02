@@ -11,7 +11,7 @@ namespace tpp {
     /**
      */
     // QT object must be the first base, otherwise teh code won't compile
-    class QtWindow : public QRasterWindow, public RendererWindow<QtWindow, QWindow *> {
+    class QtWindow : public QOpenGLWindow, public RendererWindow<QtWindow, QWindow *> {
         Q_OBJECT
     public:
 
@@ -28,21 +28,20 @@ namespace tpp {
         }
 
         /** Sets the title of the window. 
-
-            TODO perhaps the signal must be marked as thread safe or something?  
          */
 		void requestRender(ui::Rect const & rect) override {
             MARK_AS_UNUSED(rect);
             emit tppRequestUpdate();
-            //QtApplication::Instance()->postEvent(this, new QPaintEvent{QRect{0,0, widthPx_, heightPx_}});
         }
 
+        // TODO this has to be made thread safe
         void setTitle(std::string const & title) override {
-            QRasterWindow::setTitle(title.c_str());
+            QOpenGLWindow::setTitle(title.c_str());
         }
 
 		/** Sets the window icon. 
 		 */
+        // TODO this has to be made thread safe
         void setIcon(ui::RootWindow::Icon icon) override;
 
     signals:
@@ -58,15 +57,35 @@ namespace tpp {
 
         QtWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);
 
+        /** \name QT events.
+         */
+        //@{
+
         /** Qt's paint event just delegates to the paint method of the RendererWindow. 
          */
-        void paintEvent(QPaintEvent * e) override {
-            MARK_AS_UNUSED(e);
+        void paintEvent(QPaintEvent * ev) override {
+            MARK_AS_UNUSED(ev);
             Super::paint();
         }
 
+        /** Qt's resize event.
+         */
+        void resizeEvent(QResizeEvent* ev) override {
+            QOpenGLWindow::resizeEvent(ev);
+            updateSizePx(ev->size().width(), ev->size().height());
+        }
+
+        /** Key press event. 
+         */
+        void keyPressEvent(QKeyEvent * ev) override;
+
+        /** Key release event.
+         */
+        void keyReleaseEvent(QKeyEvent * ev) override;
+
+        //@}
+
         void updateSizePx(unsigned widthPx, unsigned heightPx) override {
-            QRasterWindow::resize(widthPx, heightPx);
             Super::updateSizePx(widthPx, heightPx);
             repaint();
         }
@@ -127,7 +146,7 @@ namespace tpp {
         /** Updates the background color. 
          */
         void setBackgroundColor(ui::Color color) {
-            MARK_AS_UNUSED(color);
+            painter_.setBrush(QColor{ color.r, color.g, color.b, color.a });
         }
 
         /** Updates the decoration color. 

@@ -8,7 +8,7 @@ namespace tpp {
     }
 
     void QtWindow::show() {
-        QRasterWindow::show();
+        QOpenGLWindow::show();
     }
 
     /** Sets the window icon. 
@@ -21,12 +21,20 @@ namespace tpp {
         RendererWindow(cols, rows, QtFont::GetOrCreate(ui::Font(), 0, baseCellHeightPx)->widthPx(), baseCellHeightPx),
         font_{ nullptr }
         {
-        QRasterWindow::resize(widthPx_, heightPx_);
-        QRasterWindow::setTitle(title.c_str());
+        QOpenGLWindow::resize(widthPx_, heightPx_);
+        QOpenGLWindow::setTitle(title.c_str());
 
 
         connect(this, SIGNAL(tppRequestUpdate()), this, SLOT(update()), Qt::ConnectionType::QueuedConnection);
         AddWindowNativeHandle(this, this);
+    }
+
+    void QtWindow::keyPressEvent(QKeyEvent* ev) {
+
+    }
+
+    void QtWindow::keyReleaseEvent(QKeyEvent* ev) {
+
     }
 
     void QtWindow::requestClipboardContents() {
