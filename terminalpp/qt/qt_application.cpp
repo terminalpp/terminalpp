@@ -13,7 +13,10 @@ namespace tpp {
 
     QtApplication::QtApplication(int & argc, char ** argv):
         QApplication{argc, argv} {
+#if (defined ARCH_WINDOWS)
+        // on windows, the console must be attached and its window disabled so that later executions of WSL programs won't spawn new console window
         AttachConsole();
+#endif
 
 
 
