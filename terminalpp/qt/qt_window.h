@@ -181,6 +181,10 @@ namespace tpp {
             MARK_AS_UNUSED(width);
         }
 
+        static unsigned GetStateModifiers(Qt::KeyboardModifiers const & modifiers);
+
+        static ui::Key GetKey(int qtKey, unsigned modifiers, bool pressed);
+
         QPainter painter_;
         QtFont * font_;
 
