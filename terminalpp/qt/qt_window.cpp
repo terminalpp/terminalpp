@@ -26,6 +26,8 @@ namespace tpp {
 
 
         connect(this, SIGNAL(tppRequestUpdate()), this, SLOT(update()), Qt::ConnectionType::QueuedConnection);
+
+        //setMouseTracking(true);
         AddWindowNativeHandle(this, this);
     }
 
@@ -52,7 +54,53 @@ namespace tpp {
         ui::Key k{GetKey(ev->key(), activeModifiers_.modifiers(), false)};
         if (k != ui::Key::Invalid)
             keyUp(k);
+    }
 
+    void QtWindow::mousePressEvent(QMouseEvent * ev) {
+        ui::MouseButton btn;
+        switch (ev->button()) {
+            case Qt::MouseButton::LeftButton:
+                btn = ui::MouseButton::Left;
+                break;
+            case Qt::MouseButton::MiddleButton:
+                btn = ui::MouseButton::Wheel;
+                break;
+            case Qt::MouseButton::RightButton:
+                btn = ui::MouseButton::Right;
+                break;
+            default:
+                // TODO should we call super? 
+                return;
+        }
+        mouseDown(ev->x(), ev->y(), btn);
+    }
+
+    void QtWindow::mouseReleaseEvent(QMouseEvent * ev) {
+        ui::MouseButton btn;
+        switch (ev->button()) {
+            case Qt::MouseButton::LeftButton:
+                btn = ui::MouseButton::Left;
+                break;
+            case Qt::MouseButton::MiddleButton:
+                btn = ui::MouseButton::Wheel;
+                break;
+            case Qt::MouseButton::RightButton:
+                btn = ui::MouseButton::Right;
+                break;
+            default:
+                // TODO should we call super? 
+                return;
+        }
+        mouseUp(ev->x(), ev->y(), btn);
+    }
+
+    void QtWindow::mouseMoveEvent(QMouseEvent * ev) {
+        mouseMove(ev->x(), ev->y());
+    }
+
+    void QtWindow::wheelEvent(QWheelEvent * ev) {
+        // can't use pixelDelta as it is only high resolution scrolling information not available for regular mouse
+        mouseWheel(ev->x(), ev->y(), (ev->angleDelta().y() > 0) ? 1 : -1);
     }
 
     void QtWindow::requestClipboardContents() {

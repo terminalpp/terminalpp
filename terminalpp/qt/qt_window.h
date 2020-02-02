@@ -83,6 +83,16 @@ namespace tpp {
          */
         void keyReleaseEvent(QKeyEvent * ev) override;
 
+
+        void mousePressEvent(QMouseEvent * ev) override;
+
+        void mouseReleaseEvent(QMouseEvent * ev) override;
+
+        void mouseMoveEvent(QMouseEvent * ev) override;
+
+        void wheelEvent(QWheelEvent * ev) override;
+
+
         //@}
 
         void updateSizePx(unsigned widthPx, unsigned heightPx) override {
