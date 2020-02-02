@@ -18,10 +18,15 @@ namespace tpp {
     }
 
     QtWindow::QtWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
-        RendererWindow(cols, rows, QtFont::GetOrCreate(ui::Font(), 0, baseCellHeightPx)->widthPx(), baseCellHeightPx)
+        RendererWindow(cols, rows, QtFont::GetOrCreate(ui::Font(), 0, baseCellHeightPx)->widthPx(), baseCellHeightPx),
+        font_{ nullptr }
         {
         QRasterWindow::resize(widthPx_, heightPx_);
         QRasterWindow::setTitle(title.c_str());
+
+
+        connect(this, SIGNAL(tppRequestUpdate()), this, SLOT(update()), Qt::ConnectionType::QueuedConnection);
+        AddWindowNativeHandle(this, this);
     }
 
     void QtWindow::requestClipboardContents() {

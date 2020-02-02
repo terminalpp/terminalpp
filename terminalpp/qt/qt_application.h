@@ -29,6 +29,8 @@ namespace tpp {
 
     protected:
 
+        friend class QtWindow;
+
         QtApplication(int & argc, char ** argv);
 
         ~QtApplication() override;

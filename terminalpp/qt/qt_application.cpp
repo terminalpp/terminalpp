@@ -14,7 +14,10 @@ namespace tpp {
     QtApplication::QtApplication(int & argc, char ** argv):
         QApplication{argc, argv} {
         AttachConsole();
-        
+
+
+
+        QtWindow::StartBlinkerThread();
     }
       
 

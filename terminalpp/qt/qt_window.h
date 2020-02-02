@@ -8,7 +8,11 @@
 
 namespace tpp {
 
-    class QtWindow : public RendererWindow<QtWindow, QWindow *>, public QRasterWindow {
+    /**
+     */
+    // QT object must be the first base, otherwise teh code won't compile
+    class QtWindow : public QRasterWindow, public RendererWindow<QtWindow, QWindow *> {
+        Q_OBJECT
     public:
 
         ~QtWindow() override;
@@ -24,10 +28,13 @@ namespace tpp {
         }
 
         /** Sets the title of the window. 
+
+            TODO perhaps the signal must be marked as thread safe or something?  
          */
 		void requestRender(ui::Rect const & rect) override {
             MARK_AS_UNUSED(rect);
-            QRasterWindow::update();
+            emit tppRequestUpdate();
+            //QtApplication::Instance()->postEvent(this, new QPaintEvent{QRect{0,0, widthPx_, heightPx_}});
         }
 
         void setTitle(std::string const & title) override {
@@ -38,13 +45,25 @@ namespace tpp {
 		 */
         void setIcon(ui::RootWindow::Icon icon) override;
 
+    signals:
+
+        void tppRequestUpdate();
+
     protected:
 
         friend class QtApplication;
 
         typedef RendererWindow<QtWindow, QWindow *> Super;
 
+
         QtWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx);
+
+        /** Qt's paint event just delegates to the paint method of the RendererWindow. 
+         */
+        void paintEvent(QPaintEvent * e) override {
+            MARK_AS_UNUSED(e);
+            Super::paint();
+        }
 
         void updateSizePx(unsigned widthPx, unsigned heightPx) override {
             QRasterWindow::resize(widthPx, heightPx);
@@ -75,9 +94,11 @@ namespace tpp {
         // rendering methods - we really want these to inline
 
         void initializeDraw() {
+            painter_.begin(this);
         }
 
         void finalizeDraw() {
+            painter_.end();
         }
 
         void initializeGlyphRun(int col, int row) {
@@ -86,21 +107,21 @@ namespace tpp {
         }
 
         void addGlyph(int col, int row, ui::Cell const & cell) {
-            MARK_AS_UNUSED(col);
-            MARK_AS_UNUSED(row);
-            MARK_AS_UNUSED(cell);
+            char32_t cp{ cell.codepoint() };
+            painter_.drawText(col * cellWidthPx_, (row + 1) * cellHeightPx_, QString::fromUcs4(&cp, 1));
         }
 
         /** Updates the current font.
          */
         void setFont(ui::Font font) {
-            MARK_AS_UNUSED(font);
+            font_ = QtFont::GetOrCreate(font, cellWidthPx_, cellHeightPx_);
+            painter_.setFont(font_->font());
         }
 
         /** Updates the foreground color.
          */
         void setForegroundColor(ui::Color color) {
-            MARK_AS_UNUSED(color);
+            painter_.setPen(QColor{ color.r, color.g, color.b, color.a });
         }
 
         /** Updates the background color. 
@@ -140,6 +161,9 @@ namespace tpp {
             MARK_AS_UNUSED(top);
             MARK_AS_UNUSED(width);
         }
+
+        QPainter painter_;
+        QtFont * font_;
 
     }; // QtWindow
 

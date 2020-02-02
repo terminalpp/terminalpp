@@ -238,18 +238,18 @@ namespace tpp {
             // see if we are the first one to paint, terminate if not
             if (++painting_ != 1)
                 return;
-            #define initializeDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->initializeDraw(__VA_ARGS__)
-            #define initializeGlyphRun(...) reinterpret_cast<IMPLEMENTATION*>(this)->initializeGlyphRun(__VA_ARGS__)
-            #define addGlyph(...) reinterpret_cast<IMPLEMENTATION*>(this)->addGlyph(__VA_ARGS__)
-            #define setRenderFont(...) reinterpret_cast<IMPLEMENTATION*>(this)->setFont(__VA_ARGS__)
-            #define setForegroundColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setForegroundColor(__VA_ARGS__)
-            #define setBackgroundColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setBackgroundColor(__VA_ARGS__)
-            #define setDecorationColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setDecorationColor(__VA_ARGS__)
-            #define setBorderColor(...) reinterpret_cast<IMPLEMENTATION*>(this)->setBorderColor(__VA_ARGS__)
-            #define setRenderAttributes(...) reinterpret_cast<IMPLEMENTATION*>(this)->setAttributes(__VA_ARGS__)
-            #define drawGlyphRun(...) reinterpret_cast<IMPLEMENTATION*>(this)->drawGlyphRun(__VA_ARGS__)
-            #define drawBorder(...) reinterpret_cast<IMPLEMENTATION*>(this)->drawBorder(__VA_ARGS__)
-            #define finalizeDraw(...) reinterpret_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
+            #define initializeDraw(...) static_cast<IMPLEMENTATION*>(this)->initializeDraw(__VA_ARGS__)
+            #define initializeGlyphRun(...) static_cast<IMPLEMENTATION*>(this)->initializeGlyphRun(__VA_ARGS__)
+            #define addGlyph(...) static_cast<IMPLEMENTATION*>(this)->addGlyph(__VA_ARGS__)
+            #define setRenderFont(...) static_cast<IMPLEMENTATION*>(this)->setFont(__VA_ARGS__)
+            #define setForegroundColor(...) static_cast<IMPLEMENTATION*>(this)->setForegroundColor(__VA_ARGS__)
+            #define setBackgroundColor(...) static_cast<IMPLEMENTATION*>(this)->setBackgroundColor(__VA_ARGS__)
+            #define setDecorationColor(...) static_cast<IMPLEMENTATION*>(this)->setDecorationColor(__VA_ARGS__)
+            #define setBorderColor(...) static_cast<IMPLEMENTATION*>(this)->setBorderColor(__VA_ARGS__)
+            #define setRenderAttributes(...) static_cast<IMPLEMENTATION*>(this)->setAttributes(__VA_ARGS__)
+            #define drawGlyphRun(...) static_cast<IMPLEMENTATION*>(this)->drawGlyphRun(__VA_ARGS__)
+            #define drawBorder(...) static_cast<IMPLEMENTATION*>(this)->drawBorder(__VA_ARGS__)
+            #define finalizeDraw(...) static_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
 
             helpers::Stopwatch t;
             t.start();
