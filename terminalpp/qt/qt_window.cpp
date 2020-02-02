@@ -27,7 +27,8 @@ namespace tpp {
         connect(this, SIGNAL(tppRequestUpdate()), this, SLOT(update()), Qt::ConnectionType::QueuedConnection);
         connect(this, SIGNAL(tppShowFullScreen()), this, SLOT(showFullScreen()), Qt::ConnectionType::QueuedConnection);
         connect(this, SIGNAL(tppShowNormal()), this, SLOT(showNormal()), Qt::ConnectionType::QueuedConnection);
-        connect(this, SIGNAL(tppClose()), this, SLOT(close()), Qt::ConnectionType::QueuedConnection);
+        connect(this, SIGNAL(tppWindowClose()), this, SLOT(close()), Qt::ConnectionType::QueuedConnection);
+        connect(this, SIGNAL(tppSetTitle(QString const &)), this, SLOT(setTitle(QString const &)), Qt::ConnectionType::QueuedConnection);
 
         //setMouseTracking(true);
         AddWindowNativeHandle(this, this);

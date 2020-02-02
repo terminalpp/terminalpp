@@ -34,8 +34,7 @@ namespace tpp {
         }
 
         void requestClose() override {
-            NOT_IMPLEMENTED;
-            //emit tppWindowClose();
+            emit tppWindowClose();
         }
 
         /** Sets the title of the window. 
@@ -45,9 +44,8 @@ namespace tpp {
             emit tppRequestUpdate();
         }
 
-        // TODO this has to be made thread safe
         void setTitle(std::string const & title) override {
-            QWindowBase::setTitle(title.c_str());
+            emit tppSetTitle(QString{title.c_str()});
         }
 
 		/** Sets the window icon. 
@@ -61,6 +59,7 @@ namespace tpp {
         void tppShowFullScreen();
         void tppShowNormal();
         bool tppWindowClose();
+        void tppSetTitle(QString const &);
 
     protected:
 
@@ -74,11 +73,6 @@ namespace tpp {
         /** \name QT events.
          */
         //@{
-
-        /*void closeEvent(QCloseEvent * ev) override {
-            ev->accept();
-        }
-        */
 
         /** Qt's paint event just delegates to the paint method of the RendererWindow. 
          */
