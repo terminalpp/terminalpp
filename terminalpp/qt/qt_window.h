@@ -127,6 +127,7 @@ namespace tpp {
 
         void addGlyph(int col, int row, ui::Cell const & cell) {
             char32_t cp{ cell.codepoint() };
+            painter_.fillRect(QRect{col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_, cellHeightPx_}, painter_.brush());
             painter_.drawText(col * cellWidthPx_, (row + 1) * cellHeightPx_, QString::fromUcs4(&cp, 1));
         }
 

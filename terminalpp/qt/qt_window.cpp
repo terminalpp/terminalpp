@@ -31,7 +31,7 @@ namespace tpp {
 
     void QtWindow::keyPressEvent(QKeyEvent* ev) {
         static_assert(sizeof(QChar) == sizeof(helpers::utf16_char));
-        activeModifiers_ = GetStateModifiers(ev->modifiers());
+        activeModifiers_ = ui::Key{ui::Key::Invalid, GetStateModifiers(ev->modifiers())};
         ui::Key k{GetKey(ev->key(), activeModifiers_.modifiers(), true)};
         if (k != ui::Key::Invalid)
             keyDown(k);
@@ -48,7 +48,7 @@ namespace tpp {
     }
 
     void QtWindow::keyReleaseEvent(QKeyEvent* ev) {
-        activeModifiers_ = GetStateModifiers(ev->modifiers());
+        activeModifiers_ = ui::Key{ui::Key::Invalid, GetStateModifiers(ev->modifiers())};
         ui::Key k{GetKey(ev->key(), activeModifiers_.modifiers(), false)};
         if (k != ui::Key::Invalid)
             keyUp(k);
@@ -89,7 +89,6 @@ namespace tpp {
             result += ui::Key::Win;
         return result;
     }
-
 
     // TODO check if shift meta and friends must do anything with the pressed
     ui::Key QtWindow::GetKey(int qtKey, unsigned modifiers, bool pressed) {
