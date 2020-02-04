@@ -24,7 +24,7 @@ namespace tpp {
     }
 
     void QtApplication::setSelection(QString value, QtWindow * owner) {
-        if (selectionOwner_ != owner && selectionOwner_ != nullptr)
+        if (selectionOwner_ != owner && selectionOwner_ != nullptr) 
             selectionOwner_->selectionInvalidated();
         selectionOwner_ = owner;
         if (clipboard()->supportsSelection()) 
@@ -50,6 +50,13 @@ namespace tpp {
             sender->paste(text.toStdString());
     }
 
+    void QtApplication::selectionChanged() {
+        if (! clipboard()->ownsSelection() && selectionOwner_ != nullptr) {
+            selectionOwner_->selectionInvalidated();
+            selectionOwner_ = nullptr;
+        }
+    }
+
     QtApplication::QtApplication(int & argc, char ** argv):
         QApplication{argc, argv},
         selectionOwner_{nullptr} {
@@ -58,7 +65,7 @@ namespace tpp {
         AttachConsole();
 #endif
 
-
+        connect(clipboard(), &QClipboard::selectionChanged, this, &QtApplication::selectionChanged);
 
         QtWindow::StartBlinkerThread();
     }

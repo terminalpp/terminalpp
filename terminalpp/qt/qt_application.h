@@ -48,6 +48,8 @@ namespace tpp {
         void getClipboardContents(QtWindow * sender);
 
     protected slots:
+
+        void selectionChanged();
         
     protected:
 
