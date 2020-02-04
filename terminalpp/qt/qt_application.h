@@ -12,7 +12,7 @@ namespace tpp {
     class QtWindow;
 
     class QtApplication : public QApplication, public Application {
-        Q_OBJECT;
+        Q_OBJECT
     public:
 
         static void Initialize(int & argc, char ** argv) {

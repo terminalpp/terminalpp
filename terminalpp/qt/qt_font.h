@@ -34,8 +34,11 @@ namespace tpp {
             Config const & config{Config::Instance()};
             widthPx_ = cellWidth * font.width();
             heightPx_ = cellHeight * font.height();
-            //font_.setFamily(font.doubleWidth() ? config.font.doubleWidthFamily().c_str() : config.font.family().c_str());
+            font_.setFamily(font.doubleWidth() ? config.font.doubleWidthFamily().c_str() : config.font.family().c_str());
+// TODO delete this, only on windows where QT expects different font names
+#if (defined ARCH_WINDOWS)
             font_.setFamily("Iosevka NF");
+#endif
             if (font.bold())
                 font_.setBold(true);
             if (font.italics())
@@ -51,7 +54,12 @@ namespace tpp {
             }
             //QRect brect{metrics.boundingRect('M')};
             //widthPx_ = brect.width();
+// TODO older versions if QT should not be supported in the future, this is for simple builds on Ubuntu for now
+#if (QT_VERSION >= QT_VERSION_CHECK(5,11,0))
             widthPx_ = static_cast<unsigned>(metrics.horizontalAdvance('M'));
+#else
+            widthPx_ = metrics.width('M');
+#endif
             ascent_ = metrics.ascent();
             underlineOffset_ = ascent_ + 1;
             underlineThickness_ = 1;
