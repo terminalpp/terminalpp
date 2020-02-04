@@ -3,13 +3,16 @@
 
 #include <QtWidgets>
 
+#include "helpers/log.h"
+
 #include "../application.h"
 
 namespace tpp {
 
     class QtWindow;
 
-    class QtApplication : public Application, QApplication {
+    class QtApplication : public QApplication, public Application {
+        Q_OBJECT;
     public:
 
         static void Initialize(int & argc, char ** argv) {
@@ -17,7 +20,9 @@ namespace tpp {
         }
 
         static QtApplication * Instance() {
-            return dynamic_cast<QtApplication*>(Application::Instance());
+            QtApplication * result = dynamic_cast<QtApplication*>(Application::Instance());
+            ASSERT(result != nullptr);
+            return result;
         }
 
         Window * createWindow(std::string const & title, int cols, int rows, unsigned cellHeightPx) override;
@@ -26,7 +31,24 @@ namespace tpp {
             exec();
         }
 
+    public slots:
 
+        void clearSelection(QtWindow * owner);
+
+        void setSelection(QString value, QtWindow * owner);
+
+        /** Setting the clipboard is easy, just set the clipboard to the given string.
+         */ 
+        void setClipboard(QString value) {
+            clipboard()->setText(value, QClipboard::Mode::Clipboard);
+        }
+
+        void getSelectionContents(QtWindow * sender);
+
+        void getClipboardContents(QtWindow * sender);
+
+    protected slots:
+        
     protected:
 
         friend class QtWindow;
@@ -38,6 +60,11 @@ namespace tpp {
         void alert(std::string const & message) override;
 
         void openLocalFile(std::string const & filename, bool edit) override;
+
+        QtWindow * selectionOwner_;
+
+        // the contents of the selection on platforms which do not support the selection buffer
+        std::string selection_;
 
     }; // tpp::QtApplication
 

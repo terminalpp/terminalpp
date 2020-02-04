@@ -48,6 +48,8 @@ namespace tpp {
             emit tppSetTitle(QString{title.c_str()});
         }
 
+        using QWindowBase::setTitle;
+
 		/** Sets the window icon. 
 		 */
         // TODO this has to be made thread safe
@@ -58,8 +60,15 @@ namespace tpp {
         void tppRequestUpdate();
         void tppShowFullScreen();
         void tppShowNormal();
-        bool tppWindowClose();
+        void tppWindowClose();
         void tppSetTitle(QString const &);
+
+        void tppSetClipboard(QString);
+        void tppSetSelection(QString, QtWindow *);
+        void tppClearSelection(QtWindow *);
+
+        void tppGetClipboard(QtWindow *);
+        void tppGetSelection(QtWindow *);
 
     protected:
 
@@ -132,15 +141,25 @@ namespace tpp {
             Super::updateSizePx(widthPx_, heightPx_);
         }
 
-        void requestClipboardContents() override;
+        void requestClipboardContents() override {
+            emit tppGetClipboard(this);
+        }
 
-        void requestSelectionContents() override;
+        void requestSelectionContents() override {
+            emit tppGetSelection(this);
+        }
 
-        void setClipboard(std::string const & contents) override;
+        void setClipboard(std::string const & contents) override {
+            emit tppSetClipboard(QString{contents.c_str()});
+        }
 
-        void setSelection(std::string const & contents) override;
+        void setSelection(std::string const & contents) override {
+            emit tppSetSelection(QString{contents.c_str()}, this);
+        }
 
-        void clearSelection() override;
+        void clearSelection() override {
+            emit tppClearSelection(this);
+        }
 
 
     private:

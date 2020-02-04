@@ -176,7 +176,7 @@ namespace tpp {
     void X11Window::setSelection(std::string const & contents) {
         X11Application * app = X11Application::Instance();
         // if there is a selection ownership by other window, let it invalidate its selection first
-        if (app->selectionOwner_)
+        if (app->selectionOwner_ != this && app->selectionOwner_ != nullptr)
             app->selectionOwner_->selectionInvalidated();
         // set the contents
 		app->selection_ = contents;

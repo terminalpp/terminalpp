@@ -24,11 +24,18 @@ namespace tpp {
         QWindowBase::resize(widthPx_, heightPx_);
         QWindowBase::setTitle(title.c_str());
 
-        connect(this, SIGNAL(tppRequestUpdate()), this, SLOT(update()), Qt::ConnectionType::QueuedConnection);
-        connect(this, SIGNAL(tppShowFullScreen()), this, SLOT(showFullScreen()), Qt::ConnectionType::QueuedConnection);
-        connect(this, SIGNAL(tppShowNormal()), this, SLOT(showNormal()), Qt::ConnectionType::QueuedConnection);
-        connect(this, SIGNAL(tppWindowClose()), this, SLOT(close()), Qt::ConnectionType::QueuedConnection);
-        connect(this, SIGNAL(tppSetTitle(QString const &)), this, SLOT(setTitle(QString const &)), Qt::ConnectionType::QueuedConnection);
+        connect(this, &QtWindow::tppRequestUpdate, this, static_cast<void (QtWindow::*)()>(&QtWindow::update), Qt::ConnectionType::QueuedConnection);
+        connect(this, &QtWindow::tppShowFullScreen, this, &QtWindow::showFullScreen, Qt::ConnectionType::QueuedConnection);
+        connect(this, &QtWindow::tppShowNormal, this, &QtWindow::showNormal, Qt::ConnectionType::QueuedConnection);
+        connect(this, &QtWindow::tppWindowClose, this, &QtWindow::close, Qt::ConnectionType::QueuedConnection);
+        connect(this, &QtWindow::tppSetTitle, this, static_cast<void (QtWindow::*)(QString const &)>(&QtWindow::setTitle), Qt::ConnectionType::QueuedConnection);
+
+        connect(this, &QtWindow::tppSetClipboard, QtApplication::Instance(), &QtApplication::setClipboard, Qt::ConnectionType::QueuedConnection);
+        connect(this, &QtWindow::tppSetSelection, QtApplication::Instance(), &QtApplication::setSelection, Qt::ConnectionType::QueuedConnection);
+        connect(this, &QtWindow::tppClearSelection, QtApplication::Instance(), &QtApplication::clearSelection, Qt::ConnectionType::QueuedConnection);
+
+        connect(this, &QtWindow::tppGetSelection, QtApplication::Instance(), &QtApplication::getSelectionContents, Qt::ConnectionType::QueuedConnection);
+        connect(this, &QtWindow::tppGetClipboard, QtApplication::Instance(), &QtApplication::getClipboardContents, Qt::ConnectionType::QueuedConnection);
 
         //setMouseTracking(true);
         AddWindowNativeHandle(this, this);
@@ -108,28 +115,6 @@ namespace tpp {
     void QtWindow::wheelEvent(QWheelEvent * ev) {
         // can't use pixelDelta as it is only high resolution scrolling information not available for regular mouse
         mouseWheel(ev->x(), ev->y(), (ev->angleDelta().y() > 0) ? 1 : -1);
-    }
-
-    void QtWindow::requestClipboardContents() {
-        NOT_IMPLEMENTED;
-    }
-
-    void QtWindow::requestSelectionContents() {
-        NOT_IMPLEMENTED;
-    }
-
-    void QtWindow::setClipboard(std::string const & contents) {
-        MARK_AS_UNUSED(contents);
-        NOT_IMPLEMENTED;
-    }
-
-    void QtWindow::setSelection(std::string const & contents) {
-        MARK_AS_UNUSED(contents);
-        NOT_IMPLEMENTED;
-    }
-
-    void QtWindow::clearSelection() {
-        NOT_IMPLEMENTED;
     }
 
     unsigned QtWindow::GetStateModifiers(Qt::KeyboardModifiers const & modifiers) {

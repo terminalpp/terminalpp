@@ -162,7 +162,7 @@ namespace tpp {
 	void DirectWriteWindow::setSelection(std::string const & contents) {
 		DirectWriteApplication * app = DirectWriteApplication::Instance();
 		// if the selectionOwner is own window, then there is no need to informa the window of selection change as it has done so already if necessary, in other cases we must inform the old owner that its selection has been invalidated
-		if (app->selectionOwner_)
+		if (app->selectionOwner_ != this && app->selectionOwner_ != nullptr)
 		    app->selectionOwner_->selectionInvalidated();
 		// set the contents and owner
 		app->selection_ = contents;
