@@ -117,6 +117,16 @@ namespace tpp {
         mouseWheel(ev->x(), ev->y(), (ev->angleDelta().y() > 0) ? 1 : -1);
     }
 
+    void QtWindow::focusInEvent(QFocusEvent * ev) {
+        QWindowBase::focusInEvent(ev);
+        setFocus(true);
+    }
+
+    void QtWindow::focusOutEvent(QFocusEvent * ev) {
+        QWindowBase::focusOutEvent(ev);
+        setFocus(false);
+    }
+
     unsigned QtWindow::GetStateModifiers(Qt::KeyboardModifiers const & modifiers) {
         unsigned result = 0;
         if (modifiers & Qt::KeyboardModifier::ShiftModifier)

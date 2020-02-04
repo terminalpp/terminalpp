@@ -113,6 +113,10 @@ namespace tpp {
 
         void wheelEvent(QWheelEvent * ev) override;
 
+        void focusInEvent(QFocusEvent * ev) override;
+
+        void focusOutEvent(QFocusEvent * ev) override;
+
         //@}
 
         void updateSizePx(unsigned widthPx, unsigned heightPx) override {
@@ -173,6 +177,11 @@ namespace tpp {
         }
 
         void finalizeDraw() {
+            setBackgroundColor(rootWindow()->backgroundColor());
+            if (widthPx_ % cellWidthPx_ != 0)
+                painter_.fillRect(QRect{cols_ * cellWidthPx_, 0, widthPx_ % cellWidthPx_, heightPx_}, painter_.brush());
+            if (heightPx_ % cellHeightPx_ != 0)
+                painter_.fillRect(QRect{0, rows_ * cellHeightPx_, widthPx_, heightPx_ % cellHeightPx_}, painter_.brush());
             painter_.end();
         }
 
@@ -183,8 +192,13 @@ namespace tpp {
 
         void addGlyph(int col, int row, ui::Cell const & cell) {
             char32_t cp{ cell.codepoint() };
-            painter_.fillRect(QRect{col * cellWidthPx_, row * cellHeightPx_, cellWidthPx_ * statusCell_.font().width(), cellHeightPx_ * statusCell_.font().height()}, painter_.brush());
-            painter_.drawText(col * cellWidthPx_, (row + 1 - statusCell_.font().height()) * cellHeightPx_ + font_->ascent(), QString::fromUcs4(&cp, 1));
+            int fontWidth = statusCell_.font().width();
+            int fontHeight = statusCell_.font().height();
+            if (statusCell_.bg().a != 0) {
+                painter_.fillRect(QRect{col * cellWidthPx_, (row + 1 - fontHeight)  * cellHeightPx_, cellWidthPx_ * fontWidth, cellHeightPx_ * fontHeight}, painter_.brush());   
+            }
+            if (cp != 32 && (!statusCell_.attributes().blink() || blinkVisible_))
+                painter_.drawText(col * cellWidthPx_, (row + 1 - statusCell_.font().height()) * cellHeightPx_ + font_->ascent(), QString::fromUcs4(&cp, 1));
         }
 
         /** Updates the current font.
