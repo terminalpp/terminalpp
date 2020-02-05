@@ -186,8 +186,8 @@ namespace tpp {
         }
 
         void initializeGlyphRun(int col, int row) {
-            MARK_AS_UNUSED(col);
-            MARK_AS_UNUSED(row);
+            glyphRunStart_ = ui::Point{col, row};
+            glyphRunSize_ = 0;
         }
 
         void addGlyph(int col, int row, ui::Cell const & cell) {
@@ -195,10 +195,12 @@ namespace tpp {
             int fontWidth = statusCell_.font().width();
             int fontHeight = statusCell_.font().height();
             if (statusCell_.bg().a != 0) {
-                painter_.fillRect(QRect{col * cellWidthPx_, (row + 1 - fontHeight)  * cellHeightPx_, cellWidthPx_ * fontWidth, cellHeightPx_ * fontHeight}, painter_.brush());   
+                painter_.fillRect(col * cellWidthPx_, (row + 1 - fontHeight)  * cellHeightPx_, cellWidthPx_ * fontWidth, cellHeightPx_ * fontHeight, painter_.brush());   
             }
-            if (cp != 32 && (!statusCell_.attributes().blink() || blinkVisible_))
+            if ((cp != 32) && (!statusCell_.attributes().blink() || blinkVisible_)) {
                 painter_.drawText(col * cellWidthPx_, (row + 1 - statusCell_.font().height()) * cellHeightPx_ + font_->ascent(), QString::fromUcs4(&cp, 1));
+            }
+            ++glyphRunSize_;
         }
 
         /** Updates the current font.
@@ -223,13 +225,13 @@ namespace tpp {
         /** Updates the decoration color. 
          */
         void setDecorationColor(ui::Color color) {
-            MARK_AS_UNUSED(color);
+            decorationBrush_.setColor(QColor{ color.r, color.g, color.b, color.a });
         }
     
         /** Updates the decoration color. 
          */
         void setBorderColor(ui::Color color) {
-            MARK_AS_UNUSED(color);
+            borderBrush_.setColor(QColor{ color.r, color.g, color.b, color.a });
         }
 
         /** Sets the attributes of the cell. 
@@ -239,17 +241,70 @@ namespace tpp {
         }
 
         /** Draws the glyph run. 
-         
-            First clears the background with given background color, then draws the text and finally applies any decorations. 
          */
         void drawGlyphRun() {
+            if (glyphRunSize_ == 0)
+                return;
+            if (!statusCell_.attributes().emptyDecorations() && (!statusCell_.attributes().blink() || blinkVisible_)) {
+                if (statusCell_.attributes().underline())
+                    painter_.fillRect(glyphRunStart_.x * cellWidthPx_, glyphRunStart_.y * cellHeightPx_ + font_->underlineOffset(), cellWidthPx_ * glyphRunSize_, font_->underlineThickness(), decorationBrush_);
+                if (statusCell_.attributes().strikethrough())
+                    painter_.fillRect(glyphRunStart_.x * cellWidthPx_, glyphRunStart_.y * cellHeightPx_ + font_->strikethroughOffset(), cellWidthPx_ * glyphRunSize_, font_->strikethroughThickness(), decorationBrush_);
+            }
         }
 
         void drawBorder(ui::Attributes attrs, int left, int top, int width) {
-            MARK_AS_UNUSED(attrs);
-            MARK_AS_UNUSED(left);
-            MARK_AS_UNUSED(top);
-            MARK_AS_UNUSED(width);
+            int cLeft = left;
+            int cTop = top;
+            int cWidth = cellWidthPx_;
+            int cHeight = width;
+            // if top border is selected, draw the top line 
+            if (attrs.borderTop()) {
+                painter_.fillRect(cLeft, cTop, cWidth, cHeight, borderBrush_);
+            // otherwise see if the left or right parts of the border should be drawn
+            } else {
+                if (attrs.borderLeft()) {
+                    cWidth = width;
+                    painter_.fillRect(cLeft, cTop, cWidth, cHeight, borderBrush_);
+                }
+                if (attrs.borderRight()) {
+                    cWidth = width;
+                    cLeft = left + cellWidthPx_ - width;
+                    painter_.fillRect(cLeft, cTop, cWidth, cHeight, borderBrush_);
+                }
+            }
+            // check the left and right border in the middle part
+            cTop += width;
+            cHeight = cellHeightPx_ - 2 * width;
+            if (attrs.borderLeft()) {
+                cLeft = left;
+                cWidth = width;
+                painter_.fillRect(cLeft, cTop, cWidth, cHeight, borderBrush_);
+            }
+            if (attrs.borderRight()) {
+                cWidth = width;
+                cLeft = left + cellWidthPx_ - width;
+                painter_.fillRect(cLeft, cTop, cWidth, cHeight, borderBrush_);
+            }
+            // check if the bottom part should be drawn, first by checking whether the whole bottom part should be drawn, if not then by separate checking the left and right corner
+            cTop = top + cellHeightPx_ - width;
+            cHeight = width;
+            if (attrs.borderBottom()) {
+                cLeft = left;
+                cWidth = cellWidthPx_;
+                painter_.fillRect(cLeft, cTop, cWidth, cHeight, borderBrush_);
+            } else {
+                if (attrs.borderLeft()) {
+                    cLeft = left;
+                    cWidth = width;
+                    painter_.fillRect(cLeft, cTop, cWidth, cHeight, borderBrush_);
+                }
+                if (attrs.borderRight()) {
+                    cWidth = width;
+                    cLeft = left + cellWidthPx_ - width;
+                    painter_.fillRect(cLeft, cTop, cWidth, cHeight, borderBrush_);
+                }
+            }
         }
 
         static unsigned GetStateModifiers(Qt::KeyboardModifiers const & modifiers);
@@ -258,6 +313,12 @@ namespace tpp {
 
         QPainter painter_;
         QtFont * font_;
+
+        QBrush decorationBrush_;
+        QBrush borderBrush_;
+
+        ui::Point glyphRunStart_;
+        int glyphRunSize_;
 
     }; // QtWindow
 

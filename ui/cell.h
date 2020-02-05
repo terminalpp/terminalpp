@@ -123,6 +123,11 @@ namespace ui {
             return *this;
         }
 
+		Attributes & clearBorder() {
+			raw_ &= !(BORDER_LEFT | BORDER_TOP | BORDER_RIGHT | BORDER_BOTTOM | BORDER_THICK);
+			return *this;
+		}
+
     private:
 
         static constexpr uint16_t UNDERLINE = 1 << 0;

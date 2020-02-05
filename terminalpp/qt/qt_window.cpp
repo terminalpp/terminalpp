@@ -19,10 +19,13 @@ namespace tpp {
 
     QtWindow::QtWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
         RendererWindow(cols, rows, QtFont::GetOrCreate(ui::Font(), 0, baseCellHeightPx)->widthPx(), baseCellHeightPx),
-        font_{ nullptr }
-        {
+        font_{ nullptr },
+        decorationBrush_{QColor{255, 255, 255, 255}},
+        borderBrush_{QColor{255, 255, 255, 255}} {
         QWindowBase::resize(widthPx_, heightPx_);
         QWindowBase::setTitle(title.c_str());
+
+
 
         connect(this, &QtWindow::tppRequestUpdate, this, static_cast<void (QtWindow::*)()>(&QtWindow::update), Qt::ConnectionType::QueuedConnection);
         connect(this, &QtWindow::tppShowFullScreen, this, &QtWindow::showFullScreen, Qt::ConnectionType::QueuedConnection);

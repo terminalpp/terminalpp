@@ -60,8 +60,8 @@ namespace ui {
 				unsigned char bb = static_cast<unsigned char>((aa * b + aInv * other.b) / 256);
 				return Color(rr, gg, bb, 255);
 			} else {
-				// TODO we can do this because the color always blends over an existing fully opaque color of the background.If this were not the case, the assert failsand we have to change the algorithm.
-				NOT_IMPLEMENTED;
+				// TODO we can do this because the color always blends over an existing fully opaque color of the background.If this were not the case, the assert fails and we have to change the algorithm.
+				UNREACHABLE;
 			}
 		}
 

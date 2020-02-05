@@ -69,11 +69,9 @@ namespace tpp {
 
         QtWindow::StartBlinkerThread();
     }
-      
 
     QtApplication::~QtApplication() {
     }
-
 
     void QtApplication::alert(std::string const & message) {
         QMessageBox msgBox{QMessageBox::Icon::Warning, "Error", message.c_str()};
@@ -81,6 +79,7 @@ namespace tpp {
     }
 
     void QtApplication::openLocalFile(std::string const & filename, bool edit) {
+        MARK_AS_UNUSED(edit);
         QDesktopServices::openUrl(QUrl::fromLocalFile(filename.c_str()));
     }
 

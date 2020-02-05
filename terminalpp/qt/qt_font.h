@@ -11,8 +11,7 @@ namespace tpp {
     class QtFont : public Font<QtFont> {
     public:
 		bool supportsCodepoint(char32_t codepoint) override {
-            MARK_AS_UNUSED(codepoint);
-            NOT_IMPLEMENTED;
+            return QFontMetrics{font_}.inFontUcs4(codepoint);
 		}
 
         QFont const& font() const {

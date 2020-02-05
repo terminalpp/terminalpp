@@ -213,10 +213,10 @@ namespace tpp {
             if (!attrs_.blink() || blinkVisible_)
                 XftDrawGlyphSpec(draw_, &fg_, font_->xftFont(), text_, textSize_);
             // deal with the attributes
-            if (!attrs_.emptyDecorations()) {
-                if (attrs_.underline() && (!attrs_.blink() || blinkVisible_))
+            if (!attrs_.emptyDecorations() && (!attrs_.blink() || blinkVisible_)) {
+                if (attrs_.underline())
 					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->underlineOffset(), cellWidthPx_ * textSize_, font_->underlineThickness());
-                if (attrs_.strikethrough() && (!attrs_.blink() || blinkVisible_))
+                if (attrs_.strikethrough())
 					XftDrawRect(draw_, &decor_, textCol_ * cellWidthPx_, textRow_ * cellHeightPx_ + font_->strikethroughOffset(), cellWidthPx_ * textSize_, font_->strikethroughThickness());
             }
             textSize_ = 0;

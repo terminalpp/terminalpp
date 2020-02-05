@@ -109,7 +109,7 @@ namespace ui {
     void Canvas::fill(Cell * cell, Brush const & brush) {
         if (!cell)
             return;
-        cell->setBg(brush.color.blendOver(cell->bg()));
+        cell->setBg(brush.color.blendOver(cell->bg())).setAttributes(cell->attributes().clearBorder());
         if (brush.fill == helpers::Char::NUL) {
             cell->setFg(brush.color.blendOver(cell->fg()))
                  .setDecoration(brush.color.blendOver(cell->decoration()));
@@ -118,7 +118,6 @@ namespace ui {
                  .setFg(brush.fillColor)
                  .setFont(brush.fillFont); 
         }
-
     }
 
     void Canvas::lineOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign, Font font) {
