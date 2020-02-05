@@ -81,9 +81,7 @@ namespace tpp {
     }
 
     void QtApplication::openLocalFile(std::string const & filename, bool edit) {
-        MARK_AS_UNUSED(filename);
-        MARK_AS_UNUSED(edit);
-        NOT_IMPLEMENTED;
+        QDesktopServices::openUrl(QUrl::fromLocalFile(filename.c_str()));
     }
 
 } // namespace tpp
