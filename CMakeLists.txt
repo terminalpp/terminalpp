@@ -21,7 +21,6 @@ endif()
 # 
 # TODO make native default, make QT default on MacOS
 if(NOT DEFINED RENDERER)
-#    set(RENDERER NATIVE)
     set(RENDERER QT)
 endif()
 add_definitions(-DRENDERER_${RENDERER})
