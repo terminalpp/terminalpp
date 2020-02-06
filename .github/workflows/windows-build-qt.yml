@@ -1,0 +1,42 @@
+name: windows-build-qt
+
+on:
+  push:
+    branches:
+      - qt_renderer
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: install-qt
+      run: |
+        pip install aqtinstall
+        python -m aqt install --outputdir c:\\Qt 5.14.1 windows desktop win64_msvc2017_64
+    - name: fetch-subprojects
+      run: |
+        git clone --verbose https://github.com/terminalpp/website
+    - name: configure
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DRENDERER=QT
+    - name: build-debug
+      run: |
+        cd build
+        cmake --build . --clean-first --config Debug
+    - name: run-tests-debug
+      run: |
+        cd build\tests\Debug
+        .\tests.exe        
+    - name: build-release
+      run: |
+        cd build
+        cmake --build . --clean-first --config Release
+    - name: run-tests-release
+      run: |
+        cd build\tests\Release
+        .\tests.exe        

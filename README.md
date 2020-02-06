@@ -1,7 +1,10 @@
 # Terminal++
 
-[![Windows build](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-build?logo=windows&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Awindows-build)
-[![Linux build](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-build?logo=linux&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Alinux-build)
+[![Windows build](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-build?logo=windows&logoColor=white&style=flat-square&label=native)](https://github.com/terminalpp/tpp/actions?query=workflow%3Awindows-build)
+[![Windows build QT](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-build-qt?logo=windows&logoColor=white&style=flat-square&label=qt)](https://github.com/terminalpp/tpp/actions?query=workflow%3Awindows-build-qt)
+[![Linux build](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-build?logo=linux&logoColor=white&style=flat-square&label=native)](https://github.com/terminalpp/tpp/actions?query=workflow%3Alinux-build)
+[![Linux build QT](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-build-qt?logo=linux&logoColor=white&style=flat-square&label=qt)](https://github.com/terminalpp/tpp/actions?query=workflow%3Alinux-build-qt)
+
 [![Windows MSI](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-packages?label=msi&logo=windows&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Awindows-packages)
 [![Linux DEB/RPM](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-packages?label=deb%2Frpm&logo=linux&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Alinux-packages)
 [![Snapcraft](https://img.shields.io/github/workflow/status/terminalpp/tpp/snapcraft-build?label=snap&logo=snapcraft&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Asnapcraft-build)
