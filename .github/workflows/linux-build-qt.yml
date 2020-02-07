@@ -3,7 +3,7 @@ name: linux-build-qt
 on:
   push:
     branches:
-      - qt_renderer
+      - master
 
 jobs:
   build:
