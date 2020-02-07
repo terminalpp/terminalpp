@@ -192,6 +192,7 @@ namespace ui {
 			Widget * w = getMouseTarget(col, row);
 			ASSERT(w != nullptr);
 			ASSERT(w->rootWindow() == this);
+			MARK_AS_UNUSED(w);
 		}
 	}        
 

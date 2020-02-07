@@ -18,10 +18,8 @@ endif()
 # Determines the renderer to be used
 #
 # By default, the native renderer is specified, but QT can be specified instead
-# 
-# TODO make native default, make QT default on MacOS
 if(NOT DEFINED RENDERER)
-    set(RENDERER QT)
+    set(RENDERER NATIVE)
 endif()
 add_definitions(-DRENDERER_${RENDERER})
 message(STATUS "renderer: ${RENDERER}")
