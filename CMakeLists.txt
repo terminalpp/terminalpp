@@ -1,13 +1,18 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
-# and include sub-projects here.
-#
+﻿# terminalpp global configuration file
+
+# This is the global configuration file for terminalpp. It is a bit complex as it handles all platforms and configurations as well as the possible subprojects for given platforms (bypass, ropen, etc.)
+
 cmake_minimum_required (VERSION 3.5)
 
+# terminalpp version - this version is stamped on all the executables produced and should be the only place when version should be changed manually.
+#
+# Version format is MAJOR.MINOR.PATCH. 
 project(terminalpp VERSION 0.5.2)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
 
 include_directories(".")
 
@@ -17,9 +22,13 @@ endif()
 
 # Determines the renderer to be used
 #
-# By default, the native renderer is specified, but QT can be specified instead
+# By default, the native renderer is specified, but QT can be specified instead. On macOS where native renderer is not available, QT is the default renderer. 
 if(NOT DEFINED RENDERER)
-    set(RENDERER NATIVE)
+    if(DEFINED APPLE)
+        set(RENDERER QT)
+    else()
+        set(RENDERER NATIVE)
+    endif()
 endif()
 add_definitions(-DRENDERER_${RENDERER})
 message(STATUS "renderer: ${RENDERER}")
@@ -61,13 +70,15 @@ endif()
 #
 # Only on Linux, check for the required libraries. 
 if(UNIX)
-    find_package(X11 REQUIRED)
     find_package(Threads REQUIRED)
-    find_package(Freetype REQUIRED)
-    include_directories(${X11_INCLUDE_DIR})
-    include_directories(${FREETYPE_INCLUDE_DIRS})
-    if (NOT X11_Xft_FOUND)
-        message(FATAL_ERROR "xft not found - please install libxft-dev")
+    if(NOT APPLE)
+        find_package(X11 REQUIRED)
+        find_package(Freetype REQUIRED)
+        include_directories(${X11_INCLUDE_DIR})
+        include_directories(${FREETYPE_INCLUDE_DIRS})
+        if (NOT X11_Xft_FOUND)
+            message(FATAL_ERROR "xft not found - please install libxft-dev")
+        endif()
     endif()
 endif()
 
@@ -102,12 +113,16 @@ if(WIN32)
     endif()
 elseif(UNIX)
     add_executable(terminalpp ${SRC} "build-stamp.h")
-    target_link_libraries(terminalpp ${X11_LIBRARIES} ${X11_Xft_LIB})  
     target_link_libraries(terminalpp ${CMAKE_THREAD_LIBS_INIT})
-    target_link_libraries(terminalpp ${FREETYPE_LIBRARIES})
-    target_link_libraries(terminalpp stdc++fs)    
+    if(RENDERER STREQUAL NATIVE)
+        target_link_libraries(terminalpp ${X11_LIBRARIES} ${X11_Xft_LIB})  
+        target_link_libraries(terminalpp ${FREETYPE_LIBRARIES})
+        target_link_libraries(terminalpp fontconfig)
+    endif()
+    if(NOT APPLE)
+        target_link_libraries(terminalpp stdc++fs)    
+    endif()
     # TODO newer cmake version supports FindFontconfig which should be used instead (3.14 upwards)
-    target_link_libraries(terminalpp fontconfig)
 endif()
 # finally, add the libraries
 target_link_libraries(terminalpp libui libuiterminal)

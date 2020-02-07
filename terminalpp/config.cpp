@@ -10,12 +10,12 @@
 
 namespace tpp { 
 
-	std::string Config::GetSettingsDir() {
-        return helpers::JoinPath(helpers::LocalSettingsDir(), "terminalpp");
+	std::string Config::GetSettingsFolder() {
+        return helpers::JoinPath(helpers::LocalSettingsFolder(), "terminalpp");
 	}
 
 	std::string Config::GetSettingsFile() {
-		return helpers::JoinPath(GetSettingsDir(), "settings.json");
+		return helpers::JoinPath(GetSettingsFolder(), "settings.json");
 	}
 
 	void Config::setup(int argc, char * argv[]) {
@@ -53,6 +53,7 @@ namespace tpp {
 		saveSettings = fixMissingDefaultValues() || saveSettings;
 		// if the settings should be saved, save them now 
 		if (saveSettings) {
+            helpers::CreatePath(GetSettingsFolder());
 			std::ofstream f(filename);
 			if (!f)
 			    THROW(helpers::IOError()) << "Unable to write to the settings file " << filename;
@@ -80,16 +81,18 @@ namespace tpp {
 	}
 
 	std::string Config::DefaultLogDir() {
-		return helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"logs");
+		return STR("\"" << helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"logs") << "\"");
 	}
 
 	std::string Config::DefaultRemoteFilesDir() {
-		return helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles");
+		return STR("\"" << helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles") << "\"");
 	}
 
 	std::string Config::DefaultFontFamily() {
 #if (defined ARCH_WINDOWS)
 		return "\"Consolas\"";
+#elif (defined ARCH_MACOS)
+        return "\"Courier New\"";
 #else
 		char const * fonts[] = { "Monospace", "DejaVu Sans Mono", "Nimbus Mono", "Liberation Mono", nullptr };
 		char const ** f = fonts;

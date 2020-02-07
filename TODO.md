@@ -22,6 +22,8 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
+- terminalpp should have its own CMakeLists. 
+- the global terminalpp stuff should deal with non-building related things only, i.e. packaging, etc. 
 - confirmation box for paste and for remote files
 - lineOut should center/top/bottom vertically too
 - simpler UI framework

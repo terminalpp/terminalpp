@@ -129,7 +129,7 @@ namespace ui {
 
         /** Given mouse coordinates, returns the target widget and updates the coordinates accordingly. 
          */
-		virtual Widget * getMouseTarget(int & col, int & row) {
+		virtual Widget * getMouseTarget(int & col, int & row) override {
             // mouse coordinates in the client area
             //Point coord{col - border_.left, row - border_.top};
             Point coord{col, row};

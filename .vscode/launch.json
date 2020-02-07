@@ -33,6 +33,14 @@
                     "ignoreFailures": true
                 }
             ]
-        }
+        },
+        { 
+            "name":"(lldb) Launch",
+            "type":"lldb",
+            "request":"launch",
+            "program":"${workspaceFolder}/build/terminalpp",
+            "args":[ ],
+            "cwd":"${workspaceFolder}",
+         }
     ]
 }

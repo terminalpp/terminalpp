@@ -196,7 +196,7 @@ namespace tpp {
 				CONFIG_OPTION(
 					colors, 
 					"Overrides the predefined palette. Up to 256 colors can be specified in HTML format. These colors will override the default xterm palette used.",
-					"{}",
+					"[]",
 				    ui::Terminal::Palette
 				);
 				CONFIG_OPTION(
@@ -331,7 +331,7 @@ namespace tpp {
 
 		/** Returns the directory in which the configuration files should be located. 
 		 */
-	    static std::string GetSettingsDir();
+	    static std::string GetSettingsFolder();
 
 		/** Returns the actual settings file, i.e. the `settings.json` file in the settings directory. 
 		 */

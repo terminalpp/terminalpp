@@ -38,6 +38,10 @@ namespace helpers {
         OSCHECK(GetComputerName(buffer, &bufSize));
         buffer[bufSize] = 0;
         return UTF16toUTF8(buffer);
+#elif (defined ARCH_MACOS)
+        char buffer[_POSIX_HOST_NAME_MAX];
+        gethostname(buffer, _POSIX_HOST_NAME_MAX);
+        return std::string(buffer);
 #else
         char buffer[HOST_NAME_MAX];
         gethostname(buffer, HOST_NAME_MAX);
@@ -128,7 +132,7 @@ namespace helpers {
 
     /** Returns the directory in which local application settings should be stored on given platform. 
      */
-    inline std::string LocalSettingsDir() {
+    inline std::string LocalSettingsFolder() {
 #if (defined ARCH_WINDOWS)
 		wchar_t * wpath;
 		OSCHECK(SHGetKnownFolderPath(
@@ -140,6 +144,9 @@ namespace helpers {
 		std::string path(helpers::UTF16toUTF8(wpath));
 		CoTaskMemFree(wpath);
         return path;
+#elif (defined ARCH_MACOS)
+        std::string path(getpwuid(getuid())->pw_dir);
+        return path + "/Library/Application Support";
 #else
         std::string path(getpwuid(getuid())->pw_dir);
         return path + "/.config";

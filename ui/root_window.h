@@ -254,7 +254,7 @@ namespace ui {
 
             Does nothing, but stops the widget's search through the parent.  
          */
-        void windowToWidgetCoordinates(int & col, int & row) {
+        void windowToWidgetCoordinates(int & col, int & row) override {
             MARK_AS_UNUSED(col);
             MARK_AS_UNUSED(row);
             ASSERT(x() == 0 && y() == 0 && parent() == nullptr);
@@ -304,7 +304,7 @@ namespace ui {
 
             No need to inform the renderer, but selection owner has to be notified that its selection has been invalidated and the selection owner should be cleared.  
          */
-        virtual void selectionInvalidated();
+        void selectionInvalidated() override;
 
 
         bool destroying_;
