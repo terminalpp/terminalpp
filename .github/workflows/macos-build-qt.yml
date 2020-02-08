@@ -1,0 +1,48 @@
+name: macos-build-qt
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: install-packages
+      run: |
+        bash scripts/setup-macos.sh
+    - name: fetch-subprojects
+      run: |
+        git clone --verbose https://github.com/terminalpp/website
+        git clone --verbose https://github.com/terminalpp/tpp-bypass
+        git clone --verbose https://github.com/terminalpp/ropen
+    - name: configure-debug
+      run: |
+        mkdir -p build/debug
+        cd build/debug
+        cmake ../..  -DCMAKE_BUILD_TYPE=Debug
+    - name: build-debug
+      run: |
+        cd build/debug
+        cmake --build . 
+    - name: run-tests-debug
+      run: |
+        cd build/debug
+        tests/tests        
+    - name: configure-release
+      run: |
+        mkdir -p build/release
+        cd build/release
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release
+    - name: build-release
+      run: |
+        cd build/release
+        cmake --build . 
+    - name: run-tests-release
+      run: |
+        cd build/release
+        tests/tests        

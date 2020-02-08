@@ -84,10 +84,14 @@ endif()
 
 # Check that QT is installed if QT renderer selected
 # 
-# On Windows, the Qt path is specified manually. Is there a better way to do it, and should I bother?
+# On Windows and macOS, the Qt path is specified manually. Is there a better way to do it, and should I bother?
 if(RENDERER STREQUAL QT)
     if(WIN32)
         set(CMAKE_PREFIX_PATH "C:\\Qt\\5.14.1\\msvc2017_64")
+        message(STATUS "Qt will be looked for in c:\\Qt\\5.14.1\\msvc2017_64")
+    elseif(DEFINED APPLE)
+        set(CMAKE_PREFIX_PATH "/usr/local/opt/qt")
+        message(STATUS "Qt will be looked for in /usr/local/opt/qt")
     endif()
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
