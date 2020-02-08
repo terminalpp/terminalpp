@@ -7,7 +7,7 @@ cmake_minimum_required (VERSION 3.5)
 # terminalpp version - this version is stamped on all the executables produced and should be the only place when version should be changed manually.
 #
 # Version format is MAJOR.MINOR.PATCH. 
-project(terminalpp VERSION 0.5.2)
+project(terminalpp VERSION 0.5.3)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

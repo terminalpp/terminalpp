@@ -77,15 +77,15 @@ namespace tpp {
 	// default configfuration providers
 
 	std::string Config::TerminalVersion() {
-		return STR("\"" << PROJECT_VERSION << "\"");
+		return helpers::Quote(PROJECT_VERSION);
 	}
 
 	std::string Config::DefaultLogDir() {
-		return STR("\"" << helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"logs") << "\"");
+		return helpers::Quote(helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"logs"));
 	}
 
 	std::string Config::DefaultRemoteFilesDir() {
-		return STR("\"" << helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles") << "\"");
+		return helpers::Quote(helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles"));
 	}
 
 	std::string Config::DefaultFontFamily() {

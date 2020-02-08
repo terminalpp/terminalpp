@@ -2,6 +2,10 @@
 
 Lists the most important improvements for recent `terminalpp` versions.
 
+### 0.5.3
+
+- fixed bug with invalid JSON settings for initial installation
+
 ### 0.5.2
 
 - cursor appearance can be specified in `settings.json`
