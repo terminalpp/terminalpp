@@ -13,11 +13,21 @@ set(TPP_VERSION 0.5.3)
 # The pseudoproject for the tools defined in this cmake. 
 project(tpp VERSION ${TPP_VERSION})
 
-# Global C++ settings
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # architecture macros (ARCH_WINDOWS, ARCH_LINUX, ARCH_BSD, ARCH_MACOS, ARCH_UNIX)
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
+
+# Global C++ settings
+#
+# This is a bit complex, C++20 would be best candidate, but it is not supported much and g++ does not even recognized it yet. On msvc and g++ we are therefore happy with c++17.
+#
+# On clang, the C++20 standard must be used because the __VA_OPT__ usage and the corresponding warning for empty varargs list is disabled.
+if(ARCH_MACOS)
+    set(CMAKE_CXX_STANDARD 20)
+    add_compile_options(-Wno-gnu-zero-variadic-macro-arguments)
+else()
+    set(CMAKE_CXX_STANDARD 17)
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # by this all subprojects are addressabe from the source root
 include_directories(${CMAKE_SOURCE_DIR})

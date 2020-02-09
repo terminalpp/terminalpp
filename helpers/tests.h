@@ -18,7 +18,22 @@
 /** Defines new test. 
  
     The test must specify the suite name and the test name as identifiers and may optionally specify accessors, i.e. classes that the test will inherit from.
+
+    TODO The definition uses the __VA_OPT__ feature from C++20 when compiled with Clang, the default behavior on msvc and the GNU extension of ## __VA_ARGS__ if compiled with gcc. This is a mess, and as soon as __VA_OPT__ is supported on all three compilers that version should be used exclusively. 
  */
+#ifdef __clang__
+#define TEST(SUITE_NAME, TEST_NAME, ...) \
+    class Test_ ## SUITE_NAME ## _ ## TEST_NAME : public ::helpers::Test __VA_OPT__(,) __VA_ARGS__ { \
+    private: \
+        Test_ ## SUITE_NAME ## _ ## TEST_NAME (char const * suiteName, char const * testName): \
+            ::helpers::Test(suiteName, testName) { \
+        } \
+        void run_() override; \
+        static Test_ ## SUITE_NAME ## _ ## TEST_NAME singleton_; \
+    } \
+    Test_ ## SUITE_NAME ## _ ## TEST_NAME ::singleton_{# SUITE_NAME, # TEST_NAME }; \
+    inline void Test_ ## SUITE_NAME ## _ ## TEST_NAME ::run_() 
+#else
 #define TEST(SUITE_NAME, TEST_NAME, ...) \
     class Test_ ## SUITE_NAME ## _ ## TEST_NAME : public ::helpers::Test, ## __VA_ARGS__ { \
     private: \
@@ -30,7 +45,7 @@
     } \
     Test_ ## SUITE_NAME ## _ ## TEST_NAME ::singleton_{# SUITE_NAME, # TEST_NAME }; \
     inline void Test_ ## SUITE_NAME ## _ ## TEST_NAME ::run_() 
-
+#endif
 /** Checks that given assumption holds, and fails the test immediately if it does not.
  */
 

@@ -22,10 +22,9 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- terminalpp should have its own CMakeLists. 
-- the global terminalpp stuff should deal with non-building related things only, i.e. packaging, etc. 
-
 - qt: support icons
+- weird colors in mac (background in white for some reason)
+- macOS packaging
 
 - better errors for invalid JSON settings
 
