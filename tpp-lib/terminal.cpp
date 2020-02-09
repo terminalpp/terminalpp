@@ -167,7 +167,7 @@ namespace tpp {
     }
 
 
-#if (defined ARCH_LINUX)
+#if (defined ARCH_UNIX)
 
     // StdTerminal
 

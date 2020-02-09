@@ -1,6 +1,6 @@
 #pragma once
 
-#if (defined ARCH_LINUX)
+#if (defined ARCH_UNIX)
 #include <termios.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -117,7 +117,7 @@ namespace tpp {
 
     }; 
 
-#if (defined ARCH_LINUX)
+#if (defined ARCH_UNIX)
 
     /** Provides terminal wrapper over standard input and output streams. 
      */
