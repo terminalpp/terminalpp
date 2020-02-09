@@ -24,7 +24,7 @@ namespace tpp {
             lastKey_(ui::Key::Invalid) {
             setWidthHint(ui::Layout::SizeHint::Fixed());
             setHeightHint(ui::Layout::SizeHint::Fixed());
-            resize(60,10);
+            resize(65,10);
         }
 
         using Widget::setVisible;
@@ -67,7 +67,11 @@ namespace tpp {
                 canvas.lineOut(Point{x + 15, y + 4}, STR(stamp.commit() << (stamp.clean() ? "" : "*")), Color::White);
                 canvas.lineOut(Point{x + 15, y + 5}, stamp.time(), Color::White);
             }
-            canvas.lineOut(Point{x + 5, y + 7}, STR("platform: " << ARCH << " " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()), Color::White);
+#if (defined RENDERER_QT)
+            canvas.lineOut(Point{x + 5, y + 7}, STR("platform: " << ARCH << "(Qt) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()), Color::White);
+#else
+            canvas.lineOut(Point{x + 5, y + 7}, STR("platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()), Color::White);
+#endif
             canvas.lineOut(Point{x, y + 9}, "Hit a key to dismiss", Color::White, HorizontalAlign::Center);
         }
 
