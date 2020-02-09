@@ -48,13 +48,26 @@ namespace tpp {
             emit tppSetTitle(QString{title.c_str()});
         }
 
-        using QWindowBase::setTitle;
-
 		/** Sets the window icon. 
 		 */
-        // TODO this has to be made thread safe
-        void setIcon(ui::RootWindow::Icon icon) override;
+        void setIcon(ui::RootWindow::Icon icon) override {
+            switch (icon) {
+                case ui::RootWindow::Icon::Default:
+                    emit tppSetIcon(IconDefault);
+                    break;
+                case ui::RootWindow::Icon::Notification:
+                    emit tppSetIcon(IconNotification);
+                    break;
+                default:
+                    UNREACHABLE;
+            }
+        }
 
+        using QWindowBase::setTitle;
+        using QWindowBase::setIcon;
+
+        static QIcon const IconDefault;
+        static QIcon const IconNotification;
     signals:
 
         void tppRequestUpdate();
@@ -62,6 +75,7 @@ namespace tpp {
         void tppShowNormal();
         void tppWindowClose();
         void tppSetTitle(QString const &);
+        void tppSetIcon(QIcon const &);
 
         void tppSetClipboard(QString);
         void tppSetSelection(QString, QtWindow *);

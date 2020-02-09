@@ -3,6 +3,9 @@
 
 namespace tpp {
 
+    QIcon const QtWindow::IconDefault{":/icon-default.ico"};
+    QIcon const QtWindow::IconNotification{":/icon-notification.ico"};
+
     QtWindow::~QtWindow() {
 
     }
@@ -11,11 +14,6 @@ namespace tpp {
         QWindowBase::show();
     }
 
-    /** Sets the window icon. 
-     */
-    void QtWindow::setIcon(ui::RootWindow::Icon icon) {
-        MARK_AS_UNUSED(icon);
-    }
 
     QtWindow::QtWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):
         RendererWindow(cols, rows, QtFont::GetOrCreate(ui::Font(), 0, baseCellHeightPx)->widthPx(), baseCellHeightPx),
@@ -25,13 +23,14 @@ namespace tpp {
         QWindowBase::resize(widthPx_, heightPx_);
         QWindowBase::setTitle(title.c_str());
 
-
-
         connect(this, &QtWindow::tppRequestUpdate, this, static_cast<void (QtWindow::*)()>(&QtWindow::update), Qt::ConnectionType::QueuedConnection);
         connect(this, &QtWindow::tppShowFullScreen, this, &QtWindow::showFullScreen, Qt::ConnectionType::QueuedConnection);
         connect(this, &QtWindow::tppShowNormal, this, &QtWindow::showNormal, Qt::ConnectionType::QueuedConnection);
         connect(this, &QtWindow::tppWindowClose, this, &QtWindow::close, Qt::ConnectionType::QueuedConnection);
+
         connect(this, &QtWindow::tppSetTitle, this, static_cast<void (QtWindow::*)(QString const &)>(&QtWindow::setTitle), Qt::ConnectionType::QueuedConnection);
+        connect(this, &QtWindow::tppSetIcon, this, static_cast<void (QtWindow::*)(QIcon const &)>(&QtWindow::setIcon), Qt::ConnectionType::QueuedConnection);
+        connect(this, &QtWindow::tppSetIcon, QtApplication::Instance(), &QtApplication::setWindowIcon, Qt::ConnectionType::QueuedConnection);
 
         connect(this, &QtWindow::tppSetClipboard, QtApplication::Instance(), &QtApplication::setClipboard, Qt::ConnectionType::QueuedConnection);
         connect(this, &QtWindow::tppSetSelection, QtApplication::Instance(), &QtApplication::setSelection, Qt::ConnectionType::QueuedConnection);
@@ -42,6 +41,8 @@ namespace tpp {
 
         //setMouseTracking(true);
         AddWindowNativeHandle(this, this);
+        setIcon(IconDefault);
+        QtApplication::Instance()->setWindowIcon(IconDefault);
     }
 
     void QtWindow::keyPressEvent(QKeyEvent* ev) {

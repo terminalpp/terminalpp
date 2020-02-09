@@ -1,0 +1,6 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file alias="icon-default.ico">../resources/images/tpp.ico</file>
+    <file alias="icon-notification.ico">../resources/images/tpp-notification.ico</file>
+</qresource>
+</RCC>
