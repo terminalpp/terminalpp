@@ -113,6 +113,8 @@ file(GLOB_RECURSE ALL_SOURCES
   "ui/*.cpp"
   "ui-terminal/*.h"
   "ui-terminal/*.cpp"
+  "*/CMakeLists.txt"
+  "CMakeLists.txt"
 )
 
 # Build the stamp generator tool - this is a simple tool that analyzes the github repository as well as other sources and determines the build properties which are then stored in the header file when the generator is run. 

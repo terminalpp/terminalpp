@@ -3,8 +3,8 @@
 
 namespace tpp {
 
-    QIcon const QtWindow::IconDefault{":/icon-default.ico"};
-    QIcon const QtWindow::IconNotification{":/icon-notification.ico"};
+    QIcon const QtWindow::IconDefault{":/icon-default.png"};
+    QIcon const QtWindow::IconNotification{":/icon-notification.png"};
 
     QtWindow::~QtWindow() {
 
