@@ -20,7 +20,7 @@ set(TPP_LINK_LIBRARIES libui libuiterminal)
 #
 # If the renderer is not explicitly provided, the default renderer for given platform is selected and passed to the code as RENDERER macro. 
 if(NOT DEFINED RENDERER)
-    if(DEFINED APPLE)
+    if(ARCH_MACOS)
         set(RENDERER QT)
     else()
         set(RENDERER NATIVE)
@@ -42,9 +42,9 @@ message(STATUS "Terminalpp will use the following renderer: ${RENDERER}")
 #
 # The native renderer not supported on macOS. On Linux, the X11, Freetype and xft libraries must be found. No extra setup is required for Windows.  
 if(RENDERER STREQUAL NATIVE) 
-    if(APPLE)
+    if(ARCH_MACOS)
         message(FATAL_ERROR "Native renderer not supported on macOS")
-    elseif(UNIX)
+    elseif(ARCH_UNIX)
         find_package(X11 REQUIRED)
         find_package(Freetype REQUIRED)
         include_directories(${X11_INCLUDE_DIR})
@@ -58,10 +58,10 @@ if(RENDERER STREQUAL NATIVE)
 # For the QT renderer, the Qt Installation must be found. This works out of the box on Linux, but Windows and macOS need some extra information. For windows, the version 5.14.1 and location C:\Qt is hardcoded, which macOS assumes that Qt was installed using brew. 
 # On Windows shared QT libraries must be deployed together with the executable so the windeployqt exacutable must be found. 
 elseif(RENDERER STREQUAL QT)
-    if(WIN32)
+    if(ARCH_WINDOWS)
         set(CMAKE_PREFIX_PATH "C:\\Qt\\5.14.1\\msvc2017_64")
         message(STATUS "Qt will be looked for in c:\\Qt\\5.14.1\\msvc2017_64")
-    elseif(DEFINED APPLE)
+    elseif(ARCH_MACOS)
         set(CMAKE_PREFIX_PATH "/usr/local/opt/qt")
         message(STATUS "Qt will be looked for in /usr/local/opt/qt")
     endif()
@@ -69,7 +69,7 @@ elseif(RENDERER STREQUAL QT)
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
     set_property(SOURCE build-stamp.h PROPERTY SKIP_AUTOMOC ON)
     find_package(Qt5Widgets REQUIRED)
-    if(WIN32)
+    if(ARCH_WINDOWS)
         # finds the windeployqt executable so that the binaries can be added
         find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
     endif()
@@ -80,10 +80,10 @@ endif()
 # Extra Dependencies Configuration
 #
 # On Unix platforms, the pthreads library must be present. No extra steps are required for Windows. 
-if(UNIX)
+if(ARCH_UNIX)
     find_package(Threads REQUIRED)
     list(APPEND TPP_LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
-    if(NOT APPLE)
+    if(NOT ARCH_MACOS)
         list(APPEND TPP_LINK_LIBRARIES stdc++fs)
     endif()
 endif()
@@ -94,9 +94,9 @@ endif()
 file(GLOB_RECURSE SRC "*.cpp" "*.h" "${CMAKE_SOURCE_DIR}/build-stamp.h")
 
 # Creates the executable. On Windows, the WIN32 GUI app has to be selected and the resources description must be added to the sources. On UNIX, the executable is straightforward. 
-if(WIN32)
+if(ARCH_WINDOWS)
     add_executable(terminalpp WIN32 ${SRC} "directwrite/tpp.rc")
-elseif(UNIX)
+elseif(ARCH_UNIX)
     add_executable(terminalpp ${SRC})
 endif()
 
@@ -158,7 +158,7 @@ if (PACKAGE_TERMINALPP AND PACKAGE_SNAP AND RENDERER_NATIVE)
     )
 endif()
 
-if(PACKAGE_TERMINALPP AND UNIX)
+if(PACKAGE_TERMINALPP AND ARCH_UNIX)
     install(TARGETS terminalpp DESTINATION bin COMPONENT terminalpp)
 endif()
 
