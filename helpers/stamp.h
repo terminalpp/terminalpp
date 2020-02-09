@@ -65,7 +65,7 @@ namespace helpers {
 			std::string version;
 			commit = repo.currentCommit();
 			changed = repo.hasPendingChanges();
-			// if project version is available as macro, use that, otherwise check if the commit is tagged in git
+			// if project version is available as macro, use that, otherwise check if the commit is tagged in git 
 #if (defined PROJECT_VERSION)
 			version = PROJECT_VERSION;
 #else

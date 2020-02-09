@@ -4,157 +4,87 @@
 
 cmake_minimum_required (VERSION 3.5)
 
-# terminalpp version - this version is stamped on all the executables produced and should be the only place when version should be changed manually.
+# The Global Project version
+# ==========================
 #
-# Version format is MAJOR.MINOR.PATCH. 
-project(terminalpp VERSION 0.5.3)
+# For releasing simplicity, all of the packages follow the terminalpp's version numbering. This is the only place where the version should be changed. It will get updated to the subprojects automatically. 
+set(TPP_VERSION 0.5.3)
 
+# The pseudoproject for the tools defined in this cmake. 
+project(tpp VERSION ${TPP_VERSION})
+
+# Global C++ settings
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+# architecture macros (ARCH_WINDOWS, ARCH_LINUX, ARCH_BSD, ARCH_MACOS, ARCH_UNIX)
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
 
-include_directories(".")
+# by this all subprojects are addressabe from the source root
+include_directories(${CMAKE_SOURCE_DIR})
 
-if(NOT DEFINED PACKAGE_INSTALL)
-    set(PACKAGE_INSTALL terminalpp)
+# Package Generation
+# ==================
+#
+# The main project sets up the package generation global settings and searches for all the supported generators. The subprojects, if they are selected by the -DPACKAGE setting use this information to build their own supported packages. 
+#
+# If no -DPACKAGE argument was provided, terminalpp is selected by default as a package generating project. 
+if(NOT DEFINED PACKAGE)
+    set(PACKAGE terminalpp)
 endif()
 
-# Determines the renderer to be used
-#
-# By default, the native renderer is specified, but QT can be specified instead. On macOS where native renderer is not available, QT is the default renderer. 
-if(NOT DEFINED RENDERER)
-    if(DEFINED APPLE)
-        set(RENDERER QT)
+# The supplied PACKAGE value is checked and the shorthand value for the selected project is set.
+if(PACKAGE STREQUAL terminalpp)
+    set(PACKAGE_TERMINALPP true)
+elseif(PACKAGE STREQUAL ropen)
+    set(PACKAGE_ROPEN true)
+elseif(PACKAGE STREQUAL tpp-bypass)
+    set(PACKAGE_BYPASS true)
+else()
+    message(FATAL_ERROR "Invalid value of PACKAGE: ${PACKAGE}")
+endif()
+message(STATUS "packages: configuring for ${PACKAGE}")
+
+# Generial CPACK variables are set here (such as package name, version, maintainer, license, etc.). The rest of the CPACK values must be set in the respective subprojects within PARENT_SCOPE for the build script to work.  
+set(CPACK_PACKAGE_NAME ${PACKAGE})
+set(CPACK_PACKAGE_VERSION ${TPP_VERSION})
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
+set(CPACK_PACKAGE_VENDOR "Zduka")
+set(CPACK_PACKAGE_CONTACT "zduka <zduka@outlook.com>")
+# rpm specific
+set(CPACK_RPM_PACKAGE_RELEASE 1)
+set(CPACK_RPM_PACKAGE_LICENSE "MIT")
+
+# The supported package generators are now checked. On UNIX systems we check for deb, rpm and snap package generators, on Windows the WIX toolset is searched for. If found, the PACKAGE_xxx variable is set, where xxx is the found packaging tool (DEB, RPM, SNAP, WIX)
+if(UNIX)
+    find_program(PACKAGE_DEB "dpkg")
+    if(PACKAGE_DEB)
+        message(STATUS "packages: dpkg found in ${PACKAGE_DEB}")
+    endif()
+    find_program(PACKAGE_RPM "rpmbuild")
+    if(PACKAGE_RPM)
+        message(STATUS "packages: rpmbuild found in ${PACKAGE_RPM}")
+    endif()
+    find_program(PACKAGE_SNAP snapcraft)
+    if(PACKAGE_SNAP)
+        message(STATUS "packages: snapcraft found in ${PACKAGE_SNAP}")
+    endif()
+elseif(WIN32)
+    if($ENV{WIX})
+        set(PACKAGE_WIX $ENV{WIX})
     else()
-        set(RENDERER NATIVE)
+        file(GLOB PACKAGE_WIX "C:/Program Files*/WiX Toolset v*/bin")
     endif()
-endif()
-add_definitions(-DRENDERER_${RENDERER})
-message(STATUS "renderer: ${RENDERER}")
-
-# A futile attempt at getting the coverage outputs being produced
-#if(UNIX)
-#    if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-#        message(FATAL_ERROR "Coverage requires GCC.")
-#    endif()
-#
-#    # enable profiling
-#    set(CMAKE_CXX_FLAGS "--coverage -g -O0 -fprofile-arcs -ftest-coverage")
-#    set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
-#
-#    # from https://github.com/RWTH-HPC/CMake-codecov/blob/master/cmake/FindGcov.cmake
-#    get_filename_component(COMPILER_PATH "${CMAKE_CXX_COMPILER}" PATH)
-#    string(REGEX MATCH "^[0-9]+" GCC_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
-#    find_program(GCOV_BIN NAMES gcov-${GCC_VERSION} gcov HINTS ${COMPILER_PATH})
-#    message(STATUS "Gcov found in ${GCOV_BIN}")
-#
-#
-#endif()
-
-# Include sub-projects.
-add_subdirectory("tpp-lib")
-add_subdirectory("ui")
-add_subdirectory("ui-terminal")
-add_subdirectory("docs")
-add_subdirectory("tests")
-# optional subprojects - only include them if we actually have them
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ropen/CMakeLists.txt")
-    add_subdirectory("ropen")
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tpp-bypass/CMakeLists.txt")
-    add_subdirectory("tpp-bypass")
-endif()
-
-# Build checks
-#
-# Only on Linux, check for the required libraries. 
-if(UNIX)
-    find_package(Threads REQUIRED)
-    if(NOT APPLE)
-        find_package(X11 REQUIRED)
-        find_package(Freetype REQUIRED)
-        include_directories(${X11_INCLUDE_DIR})
-        include_directories(${FREETYPE_INCLUDE_DIRS})
-        if (NOT X11_Xft_FOUND)
-            message(FATAL_ERROR "xft not found - please install libxft-dev")
-        endif()
+    if(PACKAGE_WIX)
+        message(STATUS "packages: wix found in ${PACKAGE_WIX}")
     endif()
-endif()
-
-# Check that QT is installed if QT renderer selected
-# 
-# On Windows and macOS, the Qt path is specified manually. Is there a better way to do it, and should I bother?
-if(RENDERER STREQUAL QT)
-    if(WIN32)
-        set(CMAKE_PREFIX_PATH "C:\\Qt\\5.14.1\\msvc2017_64")
-        message(STATUS "Qt will be looked for in c:\\Qt\\5.14.1\\msvc2017_64")
-    elseif(DEFINED APPLE)
-        set(CMAKE_PREFIX_PATH "/usr/local/opt/qt")
-        message(STATUS "Qt will be looked for in /usr/local/opt/qt")
-    endif()
-    set(CMAKE_AUTOMOC ON)
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
-    set_property(SOURCE build-stamp.h PROPERTY SKIP_AUTOMOC ON)
-    find_package(Qt5Widgets REQUIRED)
-    if(WIN32)
-        # finds the windeployqt executable so that the binaries can be added
-        find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
-    endif()
-endif()
-
-# tpp executable
-#
-# On Windows, this is simply a Win32 GUI application created from the given sources and resources file. On Linux the situation is more complex as the build scripts tries to localize all required libraries and then build the app. 
-file(GLOB_RECURSE SRC "terminalpp/*.cpp" "terminalpp/*.h")
-if(WIN32)
-    add_executable(terminalpp WIN32 ${SRC} "terminalpp/directwrite/tpp.rc" "build-stamp.h")
-    # add QT dlls to the executable
-    if(RENDERER STREQUAL QT)
-        add_custom_command(TARGET terminalpp POST_BUILD
-            COMMAND ${WINDEPLOYQT_EXECUTABLE} "$<TARGET_FILE:terminalpp>"
-        )
-    endif()
-elseif(UNIX)
-    add_executable(terminalpp ${SRC} "build-stamp.h")
-    target_link_libraries(terminalpp ${CMAKE_THREAD_LIBS_INIT})
-    if(RENDERER STREQUAL NATIVE)
-        target_link_libraries(terminalpp ${X11_LIBRARIES} ${X11_Xft_LIB})  
-        target_link_libraries(terminalpp ${FREETYPE_LIBRARIES})
-        target_link_libraries(terminalpp fontconfig)
-    endif()
-    if(NOT APPLE)
-        target_link_libraries(terminalpp stdc++fs)    
-    endif()
-    # TODO newer cmake version supports FindFontconfig which should be used instead (3.14 upwards)
-endif()
-# finally, add the libraries
-target_link_libraries(terminalpp libui libuiterminal)
-
-# link with QT libraries if selected
-if(RENDERER STREQUAL QT)
-    target_link_libraries(terminalpp Qt5::Widgets)
-endif()
-
-# Tools
-#
-# A simple counter of lines of code in the entire project. Note that this is only useful if all repos have been downloaded first. 
-if(UNIX)
-    add_custom_target(cloc
-        COMMAND cloc helpers ropen terminalpp tests tools tpp-bypass tpp-lib ui ui-terminal
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-    set_target_properties(cloc PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
 
 # Executable stamp creation
+# =========================
 #
-# First an executable stamp is created which is then invoked via the tpp-create-stamp target to produce the stamp.h file containing the stamp data. 
-add_executable(
-    stamp
-	tools/stamp.cpp
-)
-
+# The stamp is available in the `build_stamp.h` file in the root directory, and is recreated every time any of the source files change. If a target wishes to use the stamp, it must depend on the `stamp` target defined below. 
+#
+# TODO this is ugly, should be fixed to some nicer dependency when I have time - just list all the sources the stamp creation depends on, i.e. if any of the sources change, the stamp will be recreated.
 file(GLOB_RECURSE ALL_SOURCES 
   "helpers/*.h"
   "ropen/*.h"
@@ -175,19 +105,52 @@ file(GLOB_RECURSE ALL_SOURCES
   "ui-terminal/*.cpp"
 )
 
+# Build the stamp generator tool - this is a simple tool that analyzes the github repository as well as other sources and determines the build properties which are then stored in the header file when the generator is run. 
+add_executable(
+    stamp-generator
+	tools/stamp.cpp
+)
+
+# A custom command to create the stamp header.
 add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/build-stamp.h
-  COMMAND stamp ${CMAKE_CURRENT_SOURCE_DIR} build-stamp.h
+  OUTPUT ${CMAKE_SOURCE_DIR}/build_stamp.h
+  COMMAND stamp-generator ${CMAKE_SOURCE_DIR} build_stamp.h
   DEPENDS tools/stamp.cpp stamp ${ALL_SOURCES}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-# Resources preparation - icons 
+# A target to depend on - this is needed because the custom command won't work well with parallel builds.
+add_custom_target(stamp
+    DEPENDS ${ALL_SOURCES} ${CMAKE_SOURCE_DIR}/build_stamp.h
+)
+
+# Subprojects
+# ===========
+#
+# All libraries and executables produced by the main buildscript are included now. Some subprojects only make sense for certail platforms and so they are included conditionally. To make sure all projects are loaded according to the platform used, make sure to run the scripts/setup-repos-PLATFORM.sh (or its ssh variant) for your platform   
+
+add_subdirectory("tpp-lib")
+add_subdirectory("ui")
+add_subdirectory("ui-terminal")
+add_subdirectory("docs")
+add_subdirectory("tests")
+# optional subprojects - only include them if we actually have them
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ropen/CMakeLists.txt")
+    add_subdirectory("ropen")
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tpp-bypass/CMakeLists.txt")
+    add_subdirectory("tpp-bypass")
+endif()
+add_subdirectory("terminalpp")
+
+# Other tools
+# ===========
 #
 # Creates the appropriate icons for both windows and linux versions. However, since imagemagick is used the target itself is only supported on Linux. 
 #
 # The generated resources are part of the repository and should only be reran when the original resource files change. 
-if(UNIX AND NOT APPLE)
+if(ARCH_LINUX)
+    message(STATUS "targets: icons target available for updating terminalpp icons")
     # the xIconCpp is a simple C++ program which takes a RGBA multisize icons and converts it to the format required by the X server, which is then stored as a C++ literal array in specified header file 
     add_executable(
         xIconCpp EXCLUDE_FROM_ALL
@@ -210,154 +173,59 @@ if(UNIX AND NOT APPLE)
     set_target_properties(icons PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
 
-# Packages
+# Other Targets
+# =============
 #
-# The packages target generates packages such as msi or snap installers, deb or rpm packages, etc. Since the generation of packages is not necessary for building from source, the packages target is only populated if the required tools are found. 
+# A simple counter of lines of code in the entire project. Note that this is only useful if all repos have been downloaded first. 
+if(ARCH_UNIX)
+    add_custom_target(cloc
+        COMMAND cloc helpers ropen terminalpp tests tools tpp-bypass tpp-lib ui ui-terminal
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+    set_target_properties(cloc PROPERTIES EXCLUDE_FROM_ALL TRUE)
+endif()
+
+# CPack and Packages Targets
+# ==========================
 #
-# The packages target is first created empty and then the buildres register as its dependencies if they are available. 
-#
-# All assets are stored in ${CMAKE_CURRENT_BINARY_DIR}/packages.
+# Detect if the selected package subproject produced any of the supported packages and if so update the target dependencies and cpack generators accordingly (i.e. add respective cpack generators, or if cpack is not used, add the dependency on the target that produces the package).
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages)
 add_custom_target(packages)
 set_target_properties(packages PROPERTIES EXCLUDE_FROM_ALL TRUE)
+if(ARCH_LINUX)
+    if(PACKAGE_DEB AND DEFINED CPACK_DEBIAN_PACKAGE_DEPENDS)
+        message(STATUS "packages: deb package configured for ${PACKAGE}")
+        set(CPACK_GENERATOR "${CPACK_GENERATOR}DEB;")
+        add_dependencies(packages package-build)
+    endif()
+    if(PACKAGE_RPM AND DEFINED CPACK_RPM_PACKAGE_REQUIRES)
+        message(STATUS "packages: rpm package configured for ${PACKAGE}")
+        set(CPACK_GENERATOR "${CPACK_GENERATOR}RPM;")
+        add_dependencies(packages package-build)
+    endif()
+    if(TARGET package-snap)
+        message(STATUS "packages: snap package configured for ${PACKAGE}")
+        set_target_properties(package-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_dependencies(packages package-snap)
+    endif()
+elseif(ARCH_WINDOWS)
+    if(TARGET package-msi)
+        message(STATUS "packages: msi installed configured for ${PACKAGE}")
+        set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_dependencies(packages package-msi)
+    endif()
+endif()
 
 # there is an issue with CMake that does not allow targets depend on special targets such as package. This workaround simply creates a package-build target which explicitly builds the packages by calling cmake. But since it is a user target we can then depend on it
 add_custom_target(package-build
     COMMAND "${CMAKE_COMMAND}" --build . --target package
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     COMMENT "Building CPack packages"
-    DEPENDS terminalpp
+    DEPENDS ${PACKAGE}
     VERBATIM
 )
 set_target_properties(package-build PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
-# Linux DEB and RPM packages
-#
-# CPack is used to produce these. If the required tools are found, the respective CPack generators are added.
-if(UNIX) 
-    find_program(DPKG "dpkg")
-    if(DPKG)
-        message(STATUS "dpkg found in ${DPKG}, DEB package will be added to packages")
-        set(CPACK_GENERATOR "${CPACK_GENERATOR}DEB;")
-        add_dependencies(packages package-build)
-    endif()
-    find_program(RPMBUILD "rpmbuild")
-    if (RPMBUILD)
-        message(STATUS "rpmbuild found in ${RPMBUILD}, RPM package will be added to packages")
-        set(CPACK_GENERATOR "${CPACK_GENERATOR}RPM;")
-        add_dependencies(packages package-build)
-    endif()
-endif()
-
-
-# Include cpack which adds the package target
-# cpack settings - generic
-set(CPACK_PACKAGE_NAME ${PACKAGE_INSTALL})
-set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
-set(CPACK_PACKAGE_VENDOR "Zduka")
-set(CPACK_PACKAGE_CONTACT "zduka <zduka@outlook.com>")
-# debian specific
-set(CPACK_PACKAGE_DEBIAN_SECTION "utils")
-# rpm specific
-set(CPACK_RPM_PACKAGE_RELEASE 1)
-set(CPACK_RPM_PACKAGE_LICENSE "MIT")
-
-if(PACKAGE_INSTALL STREQUAL terminalpp)
-    message(STATUS "terminalpp project package will be built")
-    if(UNIX)
-        install(TARGETS terminalpp DESTINATION bin COMPONENT terminalpp)
-    endif()
-
-    # cpack settings - generic
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Cross-platform terminal emulator.")
-    set(CPACK_PACKAGE_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows and Linux.")
-    # debian specific
-    set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/postinst;${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/prerm")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libfontconfig1, libfreetype6, libpng16-16, libx11-6, libxau6, libxcb1, libxdmcp6, libxft2, libxrender1, x11-utils")
-    # rpm specific
-    set(CPACK_RPM_PACKAGE_REQUIRES "fontconfig, libfreetype6, libpng16-16, libX11-6, libXau6, libxcb1, libXdmcp6, libXft2, libXrender1, xmessage")
-
-
-    # WiX powered MSI installer creation (Windows)
-    #
-    # Creates the MSI installer (classic Windows desktop installer). 
-    if(WIN32)
-        # Search for the wix toolkit 
-        if (DEFINED $ENV{WIX})
-            set(WIX_ROOT $ENV{WIX})
-        else()   
-            file(GLOB WIX_ROOT "C:/Program Files*/WiX Toolset v*/bin")
-        endif()
-        if (WIX_ROOT) 
-            message(STATUS "WIX toolset found in ${WIX_ROOT}, msi package creation will be added to packages")
-            # create the build directory and configure the WiX configuration in it
-            configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/msi/tpp.wxs ${CMAKE_CURRENT_BINARY_DIR}/packages/msi/tpp.wxs @ONLY)
-            add_custom_target(package-msi
-                COMMAND ${WIX_ROOT}/candle.exe
-                    -nologo 
-                    -arch "x64" 
-                    -ext WixUIExtension -ext WixUtilExtension 
-                    -out "tpp.wixobj" 
-                    "tpp.wxs"
-                COMMAND ${WIX_ROOT}/light.exe 
-                    -nologo
-                    -ext WixUIExtension
-                    -ext WixUtilExtension 
-                    -out "../${PROJECT_NAME}.msi" 
-                    -sice:ICE61 -sice:ICE91 
-                    "tpp.wixobj"
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages/msi
-                DEPENDS terminalpp
-            )        
-            set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
-            add_dependencies(packages package-msi)
-        endif()
-    endif() 
-
-    # Builds the snap package for linux
-    #
-    # The classic confinement is used as terminal with the strict confinement is most likely not what we want.
-    if(UNIX)
-        find_program(SNAP snapcraft)
-        if(SNAP)
-            message(STATUS "snapcraft found in ${SNAP}, snap package will be added to packages")
-            message(STATUS "snapcraft extra args: ${SNAP_EXTRA_ARGS}")
-            # create the build directory and configure the WiX configuration in it
-            configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/snap/tpp.yaml ${CMAKE_CURRENT_BINARY_DIR}/snap/snapcraft.yaml @ONLY)
-            add_custom_target(package-snap-copy-tpp
-                COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/snap/source
-                COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/snap/source
-                COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/snap/source  --exclude-from=.gitignore
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            )
-            set_target_properties(package-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
-            add_custom_target(package-snap
-                COMMAND snapcraft clean ${SNAP_EXTRA_ARGS}
-                COMMAND snapcraft ${SNAP_EXTRA_ARGS}
-                COMMAND cp ${PROJECT_NAME}_${PROJECT_VERSION}_amd64.snap ${CMAKE_CURRENT_BINARY_DIR}/packages/${PROJECT_NAME}.snap
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/snap
-                DEPENDS package-snap-copy-tpp
-            )
-            set_target_properties(package-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
-            add_dependencies(packages package-snap)
-        endif()
-    endif()
-
-elseif(PACKAGE_INSTALL STREQUAL tpp-ropen)
-    message(STATUS "ropen project package will be built")
-    # cpack settings - generic
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Remote file opener.")
-    set(CPACK_PACKAGE_DESCRIPTION "Allows terminal++ sessions to open remote files and view them locally by transmitting the file in the existing terminal connection.")
-elseif(PACKAGE_INSTALL STREQUAL tpp-bypass)
-    message(STATUS "bypass project package will be built")
-    # cpack settings - generic
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "ConPTY Bypass.")
-    set(CPACK_PACKAGE_DESCRIPTION "Bypasses terminal IO to standard input and output to bypass the ConPTY on Windows when WSL is used. ")
-endif()
-
-if(PACKAGE_INSTALL)
-    set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/packages")
-    include(CPack)
-endif()
-
+# Finally, include cpack and set its output directory
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")
+include(CPack)

@@ -1,6 +1,6 @@
-build-stamp.h
 .vs/
 build/
 build-release/
 build-win/
 build-test-win/
+build_stamp.h

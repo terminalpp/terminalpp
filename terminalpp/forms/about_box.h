@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../build-stamp.h"
+#include "../../build_stamp.h"
 #include "helpers/stamp.h"
 
 #include "ui/builders.h"

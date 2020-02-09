@@ -28,17 +28,17 @@ jobs:
     - name: build-terminalpp-packages
       run: |
         cd build/release
-        cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=terminalpp
+        cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE=terminalpp
         cmake --build . --target packages
     - name: build-ropen-packages
       run: |
         cd build/release
-        cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=tpp-ropen
+        cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE=ropen
         cmake --build . --target packages
     - name: build-bypass-packages
       run: |
         cd build/release
-        cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=tpp-bypass
+        cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE=tpp-bypass
         cmake --build . --target packages
     - uses: actions/upload-artifact@master
       with:
@@ -58,9 +58,9 @@ jobs:
         path: build/release/packages/tpp-bypass.rpm
     - uses: actions/upload-artifact@master
       with:
-        name: tpp-ropen.deb
-        path: build/release/packages/tpp-ropen.deb
+        name: ropen.deb
+        path: build/release/packages/ropen.deb
     - uses: actions/upload-artifact@master
       with:
-        name: tpp-ropen.rpm
-        path: build/release/packages/tpp-ropen.rpm
+        name: ropen.rpm
+        path: build/release/packages/ropen.rpm

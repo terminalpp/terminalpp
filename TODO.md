@@ -24,8 +24,14 @@ The following is very short description of the versions planned and their main n
 
 - terminalpp should have its own CMakeLists. 
 - the global terminalpp stuff should deal with non-building related things only, i.e. packaging, etc. 
+
+- qt: support icons
+
+- better errors for invalid JSON settings
+
 - confirmation box for paste and for remote files
 - lineOut should center/top/bottom vertically too
+
 - simpler UI framework
 - remove / refactor builders
 - shapes.h is areally bad name for the classes defined therein
@@ -36,19 +42,20 @@ The following is very short description of the versions planned and their main n
 
 ### v0.7
 
-- add QT backend that will work on Mac too (maybe use wxWidgets?)
-- is there a mac store? 
-
-### v0.8
-
 - systray support
 - multiple sessions
 - proper multiplexing of the terminal sessions (wrt remote files)
+
+### v0.8
+
+- better bug reporting support and optional checking of updates for non-store installers
 
 ### v1.0
 
 - polish and bugfixing of stuff, some beta releases and "testing"
 - remove the tpp application from snap (tpp.yaml)
+- definitely add windows store submission
+- make the snap and deb & rpm packages 
 
 ### Later
 
