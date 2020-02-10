@@ -38,7 +38,7 @@
             "name":"(lldb) Launch",
             "type":"lldb",
             "request":"launch",
-            "program":"${workspaceFolder}/build/terminalpp",
+            "program":"${workspaceFolder}/build/terminalpp/terminalpp.app/Contents/MacOS/terminalpp",
             "args":[ ],
             "cwd":"${workspaceFolder}",
          }

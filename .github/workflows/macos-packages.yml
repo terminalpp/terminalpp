@@ -1,0 +1,30 @@
+name: macos-packages
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: install-packages
+      run: |
+        bash scripts/setup-macos.sh
+    - name: configure-release
+      run: |
+        mkdir -p build/release
+        cd build/release
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DPACKAGE=terminalpp
+    - name: build-terminalpp-package
+      run: |
+        cd build/release
+        cmake --build . --target packages
+    - uses: actions/upload-artifact@master
+      with:
+        name: terminalpp.zip
+        path: build/release/packages/terminalpp.zip

@@ -7,11 +7,13 @@
 # -DRENDERER=(QT | NATIVE)
 #
 # Selects the renderer which should be built. By default, the NATIVE renderer is used on Windows and Linux, while the QT renderer is used on MacOS where no native renderer exists. 
-#
 
 cmake_minimum_required (VERSION 3.5)
 
 project(terminalpp VERSION ${TPP_VERSION})
+
+set(TPP_SUMMARY "Cross-platform terminal emulator.")
+set(TPP_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows, Linux and macOS.")
 
 # the list of libraries to link the executable with
 set(TPP_LINK_LIBRARIES libui libuiterminal)
@@ -73,6 +75,8 @@ elseif(RENDERER STREQUAL QT)
     if(ARCH_WINDOWS)
         # finds the windeployqt executable so that the binaries can be added
         find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
+    elseif(ARCH_MACOS)
+        find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}")
     endif()
     # link with the QT libraries
     list(APPEND TPP_LINK_LIBRARIES Qt5::Widgets)
@@ -104,7 +108,25 @@ elseif(ARCH_WINDOWS AND RENDERER_QT)
         COMMAND ${WINDEPLOYQT_EXECUTABLE} "$<TARGET_FILE:terminalpp>"
     )
 elseif(ARCH_MACOS)
-    add_executable(terminalpp ${SRC} "qt/terminalpp.qrc")
+    # we can't target older versions because of the usage of std::filesystem
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
+    set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME})
+    set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.terminalpp")
+    set(MACOSX_BUNDLE_INFO_STRING "${TPP_SUMMARY}")
+    set(MACOSX_BUNDLE_ICON_FILE "bundle.icns")
+    set(MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION})
+    set(MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION})
+    set(MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION})
+    add_executable(terminalpp MACOSX_BUNDLE ${SRC} "qt/terminalpp.qrc" "../resources/bundle.icns")
+    set_target_properties(
+        terminalpp
+        PROPERTIES
+        RESOURCE "../resources/bundle.icns"
+    )
+    add_custom_command(TARGET terminalpp POST_BUILD
+        COMMAND ${MACDEPLOYQT_EXECUTABLE} terminalpp.app
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
 elseif(ARCH_UNIX AND RENDERER_NATIVE)
     add_executable(terminalpp ${SRC})
 elseif(ARCH_UNIX AND RENDERER_QT)
@@ -117,8 +139,8 @@ add_dependencies(terminalpp stamp)
 
 if(PACKAGE_TERMINALPP)
     # cpack settings - generic
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Cross-platform terminal emulator.")
-    set(CPACK_PACKAGE_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows, Linux and macOS.")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${TPP_SUMMARY})
+    set(CPACK_PACKAGE_DESCRIPTION ${TPP_DESCRIPTION})
     # we need to propagate these to the parent scope *and* have them in the local scope because the snap target below might need it
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}  PARENT_SCOPE)
     set(CPACK_PACKAGE_DESCRIPTION ${CPACK_PACKAGE_DESCRIPTION}  PARENT_SCOPE)
@@ -181,4 +203,13 @@ endif()
 
 if(PACKAGE_TERMINALPP AND PACKAGE_RPM AND RENDERER_NATIVE)
     set(CPACK_RPM_PACKAGE_REQUIRES "fontconfig, libfreetype6, libpng16-16, libX11-6, libXau6, libxcb1, libXdmcp6, libXft2, libXrender1, xmessage" PARENT_SCOPE)
+endif()
+
+if(PACKAGE_TERMINALPP AND PACKAGE_APPBUNDLE)
+    add_custom_target(package-appbundle
+        COMMAND mkdir -p ${CMAKE_BINARY_DIR}/packages
+        COMMAND zip -FSr ${CMAKE_BINARY_DIR}/packages/terminalpp.zip terminalpp.app
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS terminalpp
+    )
 endif()

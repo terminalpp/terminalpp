@@ -65,7 +65,7 @@ set(CPACK_RPM_PACKAGE_RELEASE 1)
 set(CPACK_RPM_PACKAGE_LICENSE "MIT")
 
 # The supported package generators are now checked. On UNIX systems we check for deb, rpm and snap package generators, on Windows the WIX toolset is searched for. If found, the PACKAGE_xxx variable is set, where xxx is the found packaging tool (DEB, RPM, SNAP, WIX)
-if(ARCH_UNIX)
+if(ARCH_LINUX)
     find_program(PACKAGE_DEB "dpkg")
     if(PACKAGE_DEB)
         message(STATUS "packages: dpkg found in ${PACKAGE_DEB}")
@@ -87,6 +87,9 @@ elseif(ARCH_WINDOWS)
     if(PACKAGE_WIX)
         message(STATUS "packages: wix found in ${PACKAGE_WIX}")
     endif()
+elseif(ARCH_MACOS)
+    set(PACKAGE_APPBUNDLE true)
+    message(STATUS "packages: macOS appbundles can be created")
 endif()
 
 # Executable stamp creation
@@ -198,13 +201,18 @@ if(ARCH_LINUX)
         COMMAND convert icon.png -resize 256x256 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon256.png
         COMMAND convert icon-notification.png -resize 256x256 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification256.png
         # create iconset folder for the default icon for macOS bundle
-        COMMAND convert icon.png -resize 16x16 ${CMAKE_SOURCE_DIR}/resources/bundle-iconset/icon_16x16.png
-        COMMAND convert icon.png -resize 32x32 ${CMAKE_SOURCE_DIR}/resources/bundle-iconset/icon_32x32.png
-        COMMAND convert icon.png -resize 128x128 ${CMAKE_SOURCE_DIR}/resources/bundle-iconset/icon_128x128.png
-        COMMAND convert icon.png -resize 256x256 ${CMAKE_SOURCE_DIR}/resources/bundle-iconset/icon_256x256.png
-        COMMAND convert icon.png -resize 512x512 ${CMAKE_SOURCE_DIR}/resources/bundle-iconset/icon_512x512.png
+        COMMAND convert icon.png -resize 16x16 ${CMAKE_SOURCE_DIR}/resources/bundle.iconset/icon_16x16.png
+        COMMAND convert icon.png -resize 32x32 ${CMAKE_SOURCE_DIR}/resources/bundle.iconset/icon_32x32.png
+        COMMAND convert icon.png -resize 128x128 ${CMAKE_SOURCE_DIR}/resources/bundle.iconset/icon_128x128.png
+        COMMAND convert icon.png -resize 256x256 ${CMAKE_SOURCE_DIR}/resources/bundle.iconset/icon_256x256.png
+        COMMAND convert icon.png -resize 512x512 ${CMAKE_SOURCE_DIR}/resources/bundle.iconset/icon_512x512.png
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/images
         DEPENDS xIconCpp
+    )
+    set_target_properties(icons PROPERTIES EXCLUDE_FROM_ALL TRUE)
+elseif(ARCH_MACOS)
+    add_custom_target(icons
+        COMMAND iconutil -c icns ${CMAKE_SOURCE_DIR}/resources/bundle.iconset
     )
     set_target_properties(icons PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
@@ -249,6 +257,12 @@ elseif(ARCH_WINDOWS)
         message(STATUS "packages: msi installed configured for ${PACKAGE}")
         set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
         add_dependencies(packages package-msi)
+    endif()
+elseif(ARCH_MACOS)
+    if(TARGET package-appbundle)
+        message(STATUS "packages: appbundle will be created for ${PACKAGE}")
+        set_target_properties(package-appbundle PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        add_dependencies(packages package-appbundle)
     endif()
 endif()
 
