@@ -6,7 +6,7 @@ extraction:
         - libx11-dev
         - libxft-dev
     after_prepare:
-        - bash ./scripts/setup-repos.sh
+        - bash ./scripts/setup-repos-linux.sh
     configure:
       command: |
         mkdir build
