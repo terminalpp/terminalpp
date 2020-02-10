@@ -59,7 +59,9 @@ namespace tpp {
 
     QtApplication::QtApplication(int & argc, char ** argv):
         QApplication{argc, argv},
-        selectionOwner_{nullptr} {
+        selectionOwner_{nullptr},
+        iconDefault_{":/icon32.png"},
+        iconNotification_{":/icon-notification32.png"} {
 #if (defined ARCH_WINDOWS)
         // on windows, the console must be attached and its window disabled so that later executions of WSL programs won't spawn new console window
         AttachConsole();

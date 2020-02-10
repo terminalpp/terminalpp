@@ -1,10 +1,8 @@
 #if (defined RENDERER_QT)
+#include "qt_application.h"
 #include "qt_window.h"
 
 namespace tpp {
-
-    QIcon const QtWindow::IconDefault{":/icon-default.png"};
-    QIcon const QtWindow::IconNotification{":/icon-notification.png"};
 
     QtWindow::~QtWindow() {
 
@@ -12,6 +10,19 @@ namespace tpp {
 
     void QtWindow::show() {
         QWindowBase::show();
+    }
+
+    void QtWindow::setIcon(ui::RootWindow::Icon icon) {
+        switch (icon) {
+            case ui::RootWindow::Icon::Default:
+                emit tppSetIcon(QtApplication::Instance()->iconDefault());
+                break;
+            case ui::RootWindow::Icon::Notification:
+                emit tppSetIcon(QtApplication::Instance()->iconNotification());
+                break;
+            default:
+                UNREACHABLE;
+        }
     }
 
 
@@ -41,8 +52,8 @@ namespace tpp {
 
         //setMouseTracking(true);
         AddWindowNativeHandle(this, this);
-        setIcon(IconDefault);
-        QtApplication::Instance()->setWindowIcon(IconDefault);
+        setIcon(QtApplication::Instance()->iconDefault());
+        QtApplication::Instance()->setWindowIcon(QtApplication::Instance()->iconDefault());
     }
 
     void QtWindow::keyPressEvent(QKeyEvent* ev) {

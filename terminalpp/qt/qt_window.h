@@ -50,24 +50,11 @@ namespace tpp {
 
 		/** Sets the window icon. 
 		 */
-        void setIcon(ui::RootWindow::Icon icon) override {
-            switch (icon) {
-                case ui::RootWindow::Icon::Default:
-                    emit tppSetIcon(IconDefault);
-                    break;
-                case ui::RootWindow::Icon::Notification:
-                    emit tppSetIcon(IconNotification);
-                    break;
-                default:
-                    UNREACHABLE;
-            }
-        }
+        void setIcon(ui::RootWindow::Icon icon) override;
 
         using QWindowBase::setTitle;
         using QWindowBase::setIcon;
 
-        static QIcon const IconDefault;
-        static QIcon const IconNotification;
     signals:
 
         void tppRequestUpdate();
@@ -196,7 +183,6 @@ namespace tpp {
                 painter_.fillRect(QRect{cols_ * cellWidthPx_, 0, widthPx_ % cellWidthPx_, heightPx_}, painter_.brush());
             if (heightPx_ % cellHeightPx_ != 0)
                 painter_.fillRect(QRect{0, rows_ * cellHeightPx_, widthPx_, heightPx_ % cellHeightPx_}, painter_.brush());
-            IconDefault.paint(&painter_, QRect{0,0,32,32});
             painter_.end();
         }
 

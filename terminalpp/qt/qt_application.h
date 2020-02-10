@@ -31,6 +31,14 @@ namespace tpp {
             exec();
         }
 
+        QIcon const & iconDefault() const {
+            return iconDefault_;
+        }
+
+        QIcon const & iconNotification() const {
+            return iconNotification_;
+        }
+
     public slots:
 
         void clearSelection(QtWindow * owner);
@@ -67,6 +75,9 @@ namespace tpp {
 
         // the contents of the selection on platforms which do not support the selection buffer
         std::string selection_;
+
+        QIcon iconDefault_;
+        QIcon iconNotification_;
 
     }; // tpp::QtApplication
 

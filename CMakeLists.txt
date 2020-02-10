@@ -127,7 +127,7 @@ add_executable(
 add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/build_stamp.h
   COMMAND stamp-generator ${CMAKE_SOURCE_DIR} build_stamp.h
-  DEPENDS tools/stamp.cpp stamp ${ALL_SOURCES}
+  DEPENDS tools/stamp.cpp ${ALL_SOURCES}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
