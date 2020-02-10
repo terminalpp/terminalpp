@@ -153,7 +153,9 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tpp-bypass/CMakeLists.txt")
     add_subdirectory("tpp-bypass")
 endif()
-add_subdirectory("terminalpp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/terminalpp/CMakeLists.txt")
+    add_subdirectory("terminalpp")
+endif()
 
 # Other tools
 # ===========

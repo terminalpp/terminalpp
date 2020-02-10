@@ -24,14 +24,24 @@ jobs:
       run: |
         sudo apt update
         sudo apt install cmake libx11-dev libxft-dev g++-8
-    - name: build-snap
+    - name: build-terminalpp
       run: |
         mkdir -p build/release
         cd build/release
-        sudo cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE_INSTALL=terminalpp -DSNAP_EXTRA_ARGS=--use-lxd
+        sudo cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE=terminalpp -DSNAP_EXTRA_ARGS=--use-lxd
+        sudo cmake --build . --target package-snap
+    - name: build-ropen
+      run: |
+        mkdir -p build/release
+        cd build/release
+        sudo cmake ../.. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DPACKAGE=ropen -DSNAP_EXTRA_ARGS=--use-lxd
         sudo cmake --build . --target package-snap
     - uses: actions/upload-artifact@master
       with:
         name: terminalpp.snap
         path: build/release/packages/terminalpp.snap
+    - uses: actions/upload-artifact@master
+      with:
+        name: ropen.snap
+        path: build/release/packages/ropen.snap
 
