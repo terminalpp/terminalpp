@@ -1,6 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-    <file alias="logo-default.png">resources/icon32.png</file>
-    <file alias="logo-notification.png">resources/icon-notification32.png</file>
+    <file>resources/icon32.png</file>
+    <file>resources/icon-notification32.png</file>
 </qresource>
 </RCC>
