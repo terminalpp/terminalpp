@@ -24,6 +24,9 @@ jobs:
       run: |
         sudo apt update
         sudo apt install cmake libx11-dev libxft-dev g++-8
+    - name: fetch-subprojects
+      run: |
+        git clone --verbose https://github.com/terminalpp/ropen
     - name: build-terminalpp
       run: |
         mkdir -p build/release
