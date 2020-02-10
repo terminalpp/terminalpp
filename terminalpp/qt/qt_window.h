@@ -196,6 +196,7 @@ namespace tpp {
                 painter_.fillRect(QRect{cols_ * cellWidthPx_, 0, widthPx_ % cellWidthPx_, heightPx_}, painter_.brush());
             if (heightPx_ % cellHeightPx_ != 0)
                 painter_.fillRect(QRect{0, rows_ * cellHeightPx_, widthPx_, heightPx_ % cellHeightPx_}, painter_.brush());
+            IconDefault.paint(&painter_, QRect{0,0,32,32});
             painter_.end();
         }
 

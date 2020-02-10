@@ -171,15 +171,21 @@ if(ARCH_LINUX)
     set_target_properties(xIconCpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
     # creates the win32 icon from the logo and the logo with notification, then converts the icons to RGBA a creates the c++ header files containing their contents as literals
     add_custom_target(icons 
-        COMMAND convert -background transparent ${CMAKE_CURRENT_SOURCE_DIR}/resources/images/logo.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 tpp.ico
-        COMMAND convert -background transparent ${CMAKE_CURRENT_SOURCE_DIR}/resources/images/logo-notification.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 tpp-notification.ico
-        COMMAND convert tpp.ico -depth 8 tpp.rgba
-        COMMAND xIconCpp tppIcon ${CMAKE_CURRENT_SOURCE_DIR}/terminalpp/x11/tppIcon.cpp tpp.rgba 16 24 32 64
-        COMMAND rm tpp.rgba
-        COMMAND convert tpp-notification.ico -depth 8 tpp.rgba
-        COMMAND xIconCpp tppIconNotification ${CMAKE_SOURCE_DIR}/terminalpp/x11/tppIconNotification.cpp tpp.rgba 16 24 32 64
-        COMMAND rm tpp.rgba
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/images
+        COMMAND convert -background transparent icon.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 icon.ico
+        COMMAND convert -background transparent icon-notification.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 icon-notification.ico
+        COMMAND convert icon.ico -depth 8 icon.rgba
+        COMMAND xIconCpp tppIcon ${CMAKE_SOURCE_DIR}/terminalpp/x11/resources/tppIcon.cpp icon.rgba 16 24 32 64
+        COMMAND rm icon.rgba
+        COMMAND convert icon-notification.ico -depth 8 icon.rgba
+        COMMAND xIconCpp tppIconNotification ${CMAKE_SOURCE_DIR}/terminalpp/x11/resources/tppIconNotification.cpp icon.rgba 16 24 32 64
+        COMMAND rm icon.rgba
+        # now move the icons to directwrite resources
+        COMMAND mv icon.ico ${CMAKE_SOURCE_DIR}/terminalpp/directwrite/resources/icon.ico
+        COMMAND mv icon-notification.ico ${CMAKE_SOURCE_DIR}/terminalpp/directwrite/resources/icon-notification.ico
+        # and create small png icons for Qt
+        COMMAND convert -background transparent icon.png -resize 32x32 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon32.png
+        COMMAND convert -background transparent icon-notification.png -resize 32x32 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification32.png
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/images
         DEPENDS xIconCpp
     )
     set_target_properties(icons PROPERTIES EXCLUDE_FROM_ALL TRUE)
