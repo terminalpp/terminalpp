@@ -105,8 +105,10 @@ elseif(ARCH_WINDOWS AND RENDERER_QT)
     )
 elseif(ARCH_MACOS)
     add_executable(terminalpp ${SRC} "qt/terminalpp.qrc")
-elseif(ARCH_UNIX)
+elseif(ARCH_UNIX AND RENDERER_NATIVE)
     add_executable(terminalpp ${SRC})
+elseif(ARCH_UNIX AND RENDERER_QT)
+    add_executable(terminalpp ${SRC} "qt/terminalpp.qrc")
 endif()
 
 # On all platforms, terminalpp links against the ui and terminal libraries from the root folder.

@@ -183,8 +183,18 @@ if(ARCH_LINUX)
         COMMAND mv icon.ico ${CMAKE_SOURCE_DIR}/terminalpp/directwrite/resources/icon.ico
         COMMAND mv icon-notification.ico ${CMAKE_SOURCE_DIR}/terminalpp/directwrite/resources/icon-notification.ico
         # and create small png icons for Qt
-        COMMAND convert -background transparent icon.png -resize 32x32 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon32.png
-        COMMAND convert -background transparent icon-notification.png -resize 32x32 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification32.png
+        COMMAND convert icon.png -resize 16x16 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon16.png
+        COMMAND convert icon-notification.png -resize 16x16 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification16.png
+        COMMAND convert icon.png -resize 32x32 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon32.png
+        COMMAND convert icon-notification.png -resize 32x32 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification32.png
+        COMMAND convert icon.png -resize 48x48 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon48.png
+        COMMAND convert icon-notification.png -resize 48x48 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification48.png
+        COMMAND convert icon.png -resize 64x64 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon64.png
+        COMMAND convert icon-notification.png -resize 64x64 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification64.png
+        COMMAND convert icon.png -resize 128x128 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon128.png
+        COMMAND convert icon-notification.png -resize 128x128 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification128.png
+        COMMAND convert icon.png -resize 256x256 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon256.png
+        COMMAND convert icon-notification.png -resize 256x256 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification256.png
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/images
         DEPENDS xIconCpp
     )

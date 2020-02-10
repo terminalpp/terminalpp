@@ -52,8 +52,7 @@ namespace tpp {
 
         //setMouseTracking(true);
         AddWindowNativeHandle(this, this);
-        setIcon(QtApplication::Instance()->iconDefault());
-        QtApplication::Instance()->setWindowIcon(QtApplication::Instance()->iconDefault());
+        setIcon(ui::RootWindow::Icon::Default);
     }
 
     void QtWindow::keyPressEvent(QKeyEvent* ev) {
