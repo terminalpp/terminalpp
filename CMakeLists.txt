@@ -197,6 +197,12 @@ if(ARCH_LINUX)
         COMMAND convert icon-notification.png -resize 128x128 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification128.png
         COMMAND convert icon.png -resize 256x256 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon256.png
         COMMAND convert icon-notification.png -resize 256x256 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification256.png
+        # create iconset folder for the default icon for macOS bundle
+        COMMAND convert icon.png -resize 16x16 ${CMAKE_SOURCE_DIR}/resources/bundle-iconset/icon_16x16.png
+        COMMAND convert icon.png -resize 32x32 ${CMAKE_SOURCE_DIR}/resources/bundle-iconset/icon_32x32.png
+        COMMAND convert icon.png -resize 128x128 ${CMAKE_SOURCE_DIR}/resources/bundle-iconset/icon_128x128.png
+        COMMAND convert icon.png -resize 256x256 ${CMAKE_SOURCE_DIR}/resources/bundle-iconset/icon_256x256.png
+        COMMAND convert icon.png -resize 512x512 ${CMAKE_SOURCE_DIR}/resources/bundle-iconset/icon_512x512.png
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/images
         DEPENDS xIconCpp
     )
