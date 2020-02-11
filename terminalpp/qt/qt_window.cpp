@@ -64,15 +64,14 @@ namespace tpp {
         // if ctrl, alt, or win is active, don't deal with keyChar
         if (k & ( ui::Key::Ctrl + ui::Key::Alt + ui::Key::Win))
             return;
-        
         // determine if there is a printable character to be sent
         QString str{ev->text()};
         if (!str.isEmpty()) {
             helpers::utf16_char const * data = pointer_cast<helpers::utf16_char const*>(str.data());
             helpers::Char c{helpers::Char::FromUTF16(data, data + str.size())};
             // raise the keyChar event
-            // TODO what to do with delete
-            if (c.codepoint() >= 32)
+            // the delete character (ASCII 127) is also non printable, furthermore on macOS backspace incorrectly translates to it.
+            if (c.codepoint() >= 32 && c.codepoint() != 127)
                 keyChar(c);
         }
     }

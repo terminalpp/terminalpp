@@ -1,4 +1,3 @@
-
 #include "helpers/log.h"
 
 #include "ui/key.h"
