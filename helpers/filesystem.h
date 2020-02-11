@@ -136,7 +136,7 @@ namespace helpers {
 #if (defined ARCH_WINDOWS)
 		wchar_t * wpath;
 		OSCHECK(SHGetKnownFolderPath(
-			FOLDERID_LocalAppData,
+			FOLDERID_RoamingAppData,
 			0, 
 			nullptr,
 			& wpath
