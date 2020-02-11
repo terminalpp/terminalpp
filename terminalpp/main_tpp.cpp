@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
 		helpers::Logger::Enable(log, { 
 			helpers::Logger::DefaultLog(),
 			ui::Terminal::SEQ_ERROR,
-			ui::Terminal::SEQ_UNKNOWN
+			ui::Terminal::SEQ_UNKNOWN,
 		});
 		LOG() << "t++ started";
 		// Create the palette & the pty - TODO this should be more systematic

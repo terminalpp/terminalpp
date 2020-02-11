@@ -1449,6 +1449,7 @@ namespace ui {
                                .setBg(palette_->defaultBackground())
                                .setFont(Font{})
                                .setAttributes(Attributes{});
+                    state_.inverseMode = false;
                     LOG(SEQ) << "font fg bg reset";
 					break;
 				/* Bold / bright foreground. */
@@ -1475,15 +1476,16 @@ namespace ui {
                     state_.cell.setAttributes(state_.cell.attributes().setBlink());
 					LOG(SEQ) << "blink set";
 					break;
-				/* Inverse and inverse off */
+				/* Inverse on */
 				case 7:
-				case 27: {
-                    Color fg = state_.cell.fg();
-                    Color bg = state_.cell.bg();
-                    state_.cell.setFg(bg).setDecoration(bg).setBg(fg);
-					LOG(SEQ) << "toggle inverse mode";
-					break;
-                }
+                    if (! state_.inverseMode) {
+                        state_.inverseMode = true;
+                        Color fg = state_.cell.fg();
+                        Color bg = state_.cell.bg();
+                        state_.cell.setFg(bg).setDecoration(bg).setBg(fg);
+    					LOG(SEQ) << "inverse mode on";
+                    }
+                    break;
 				/* Strikethrough */
 				case 9:
                     state_.cell.setAttributes(state_.cell.attributes().setStrikethrough());
@@ -1514,6 +1516,16 @@ namespace ui {
                     state_.cell.setAttributes(state_.cell.attributes().setBlink(false));
 					LOG(SEQ) << "blink off";
 					break;
+                /* Inverse off */
+				case 27: 
+                    if (state_.inverseMode) {
+                        state_.inverseMode = false;
+                        Color fg = state_.cell.fg();
+                        Color bg = state_.cell.bg();
+                        state_.cell.setFg(bg).setDecoration(bg).setBg(fg);
+    					LOG(SEQ) << "inverse mode off";
+                    }
+                    break;
 				/* Disable strikethrough. */
 				case 29:
                     state_.cell.setAttributes(state_.cell.attributes().setStrikethrough(false));

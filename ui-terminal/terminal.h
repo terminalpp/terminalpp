@@ -582,6 +582,8 @@ namespace ui {
             
             /* Cell containing space and current fg, bg, decorations, etc. settings */
             Cell cell;
+            /* Determines whether inverse mode is active or not. */
+            bool inverseMode;
 
             /* Location of the last valid character printed so that if followed by return, it can be set as line terminating. */
             int lastCharCol;
@@ -600,6 +602,7 @@ namespace ui {
                 scrollStart{0},
                 scrollEnd{rows},
                 cell{},
+                inverseMode{false},
                 lastCharCol{-1},
                 lastCharRow{0},
                 doubleHeightTopLine(false) {

@@ -22,10 +22,6 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- qt: support icons
-- weird colors in mac (background in white for some reason)
-- macOS packaging
-
 - better errors for invalid JSON settings
 
 - confirmation box for paste and for remote files
