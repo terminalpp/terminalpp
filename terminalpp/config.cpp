@@ -150,6 +150,9 @@ namespace tpp {
 		    return STR("[\"wsl.exe\", \"--\", \"" << BYPASS_PATH << "\"]");
 		else 
 		    return "[\"wsl.exe\"]"; 
+#elif (defined ARCH_MACOS)
+		// get the default shell for the current user with the --login flag so that the .profile is loaded as well
+		return STR("[\"" << getpwuid(getuid())->pw_shell << "\", \"--login\"]");
 #else
 		// get the default shell for the current user
 		return STR("[\"" << getpwuid(getuid())->pw_shell << "\"]");
