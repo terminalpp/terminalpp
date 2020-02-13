@@ -108,20 +108,16 @@ elseif(ARCH_WINDOWS AND RENDERER_QT)
         COMMAND ${WINDEPLOYQT_EXECUTABLE} "$<TARGET_FILE:terminalpp>"
     )
 elseif(ARCH_MACOS)
+    # use custom plist file
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/macOS/Info.plist ${CMAKE_BINARY_DIR}/packages/macOS/Info.plist @ONLY)
     # we can't target older versions because of the usage of std::filesystem
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
-    set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME})
-    set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.terminalpp")
-    set(MACOSX_BUNDLE_INFO_STRING "${TPP_SUMMARY}")
-    set(MACOSX_BUNDLE_ICON_FILE "bundle.icns")
-    set(MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION})
-    set(MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION})
-    set(MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION})
     add_executable(terminalpp MACOSX_BUNDLE ${SRC} "qt/terminalpp.qrc" "../resources/bundle.icns")
     set_target_properties(
         terminalpp
         PROPERTIES
         RESOURCE "../resources/bundle.icns"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_BINARY_DIR}/packages/macOS/Info.plist"
     )
     add_custom_command(TARGET terminalpp POST_BUILD
         COMMAND ${MACDEPLOYQT_EXECUTABLE} terminalpp.app
