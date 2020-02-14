@@ -175,14 +175,15 @@ if(ARCH_LINUX)
     )
     set_target_properties(xIconCpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
     # creates the win32 icon from the logo and the logo with notification, then converts the icons to RGBA a creates the c++ header files containing their contents as literals
+    # sizes from the icon exported must be sequential, i.e. all sizes in the icon from the smallest to the largest exported must appear in the as arguments to xIconCpp
     add_custom_target(icons 
         COMMAND convert -background transparent icon.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 icon.ico
         COMMAND convert -background transparent icon-notification.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 icon-notification.ico
         COMMAND convert icon.ico -depth 8 icon.rgba
-        COMMAND xIconCpp tppIcon ${CMAKE_SOURCE_DIR}/terminalpp/x11/resources/tppIcon.cpp icon.rgba 16 24 32 64
+        COMMAND xIconCpp tppIcon ${CMAKE_SOURCE_DIR}/terminalpp/x11/resources/tppIcon.cpp icon.rgba 16 24 32 48 64
         COMMAND rm icon.rgba
         COMMAND convert icon-notification.ico -depth 8 icon.rgba
-        COMMAND xIconCpp tppIconNotification ${CMAKE_SOURCE_DIR}/terminalpp/x11/resources/tppIconNotification.cpp icon.rgba 16 24 32 64
+        COMMAND xIconCpp tppIconNotification ${CMAKE_SOURCE_DIR}/terminalpp/x11/resources/tppIconNotification.cpp icon.rgba 16 24 32 48 64
         COMMAND rm icon.rgba
         # now move the icons to directwrite resources
         COMMAND mv icon.ico ${CMAKE_SOURCE_DIR}/terminalpp/directwrite/resources/icon.ico
