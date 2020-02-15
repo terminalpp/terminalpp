@@ -128,10 +128,12 @@ namespace tpp {
         }
 
         virtual void mouseUp(int x, int y, ui::MouseButton button) {
-            ASSERT(mouseButtonsDown_ > 0);
-            --mouseButtonsDown_;
-            convertMouseCoordsToCells(x, y);
-            ui::Renderer::mouseUp(x, y, button, activeModifiers_);
+            // this is necessary because Ubuntu's top bar reports mouseUp without corresponding mouse down when it is clicked first and then the application window is clicked
+            if (mouseButtonsDown_ > 0) {
+                --mouseButtonsDown_;
+                convertMouseCoordsToCells(x, y);
+                ui::Renderer::mouseUp(x, y, button, activeModifiers_);
+            }
         }
 
         virtual void mouseWheel(int x, int y, int by) {
