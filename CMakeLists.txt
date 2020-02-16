@@ -215,7 +215,7 @@ elseif(ARCH_MACOS)
         COMMAND cp icon_256x256.png bundle.iconset/icon_256x256.png
         COMMAND cp icon_512x512.png bundle.iconset/icon_512x512.png
         COMMAND iconutil -c icns bundle.iconset
-        COMMAND rm -rf budle.iconset
+        COMMAND rm -rf bundle.iconset
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/icons
     )
     set_target_properties(icons PROPERTIES EXCLUDE_FROM_ALL TRUE)

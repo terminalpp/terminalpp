@@ -4,3 +4,4 @@ build-release/
 build-win/
 build-test-win/
 build_stamp.h
+.DS_Store
