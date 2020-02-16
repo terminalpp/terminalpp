@@ -60,8 +60,8 @@ namespace tpp {
     QtApplication::QtApplication(int & argc, char ** argv):
         QApplication{argc, argv},
         selectionOwner_{nullptr},
-        iconDefault_{":/resources/icon32.png"},
-        iconNotification_{":/resources/icon-notification32.png"} {
+        iconDefault_{":/icon_32x32.png"},
+        iconNotification_{":/icon-notification_32x32.png"} {
 #if (defined ARCH_WINDOWS)
         // on windows, the console must be attached and its window disabled so that later executions of WSL programs won't spawn new console window
         AttachConsole();
@@ -70,19 +70,19 @@ namespace tpp {
         connect(clipboard(), &QClipboard::selectionChanged, this, &QtApplication::selectionChanged);
 
         QtWindow::StartBlinkerThread();
-        iconDefault_.addFile(":/resources/icon16.png");
-        iconDefault_.addFile(":/resources/icon48.png");
-        iconDefault_.addFile(":/resources/icon64.png");
-        iconDefault_.addFile(":/resources/icon128.png");
-        iconDefault_.addFile(":/resources/icon256.png");
-        iconNotification_.addFile(":/resources/icon-notification16.png");
-        iconNotification_.addFile(":/resources/icon-notification48.png");
-        iconNotification_.addFile(":/resources/icon-notification64.png");
-        iconNotification_.addFile(":/resources/icon-notification128.png");
-        iconNotification_.addFile(":/resources/icon-notification256.png");
+        iconDefault_.addFile(":/icon_16x16.png");
+        iconDefault_.addFile(":/icon_48x48.png");
+        iconDefault_.addFile(":/icon_64x64.png");
+        iconDefault_.addFile(":/icon_128x128.png");
+        iconDefault_.addFile(":/icon_256x256.png");
+        iconNotification_.addFile(":/icon-notification_16x16.png");
+        iconNotification_.addFile(":/icon-notification_48x48.png");
+        iconNotification_.addFile(":/icon-notification_64_64.png");
+        iconNotification_.addFile(":/icon-notification_128x128.png");
+        iconNotification_.addFile(":/icon-notification_256x256.png");
         // assertions to verify that the qt resources were built properly
-        ASSERT(QFile::exists(":/resources/icon32.png"));
-        ASSERT(QFile::exists(":/resources/icon-notification32.png"));
+        ASSERT(QFile::exists(":/icon_32x32.png"));
+        ASSERT(QFile::exists(":/icon-notification_32x32.png"));
     }
 
     QtApplication::~QtApplication() {

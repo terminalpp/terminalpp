@@ -1,5 +1,5 @@
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON                    "resources\\icon.ico"
-IDI_ICON2               ICON                    "resources\\icon-notification.ico"
+IDI_ICON1               ICON                    "..\\..\\resources\\icons\\icon.ico"
+IDI_ICON2               ICON                    "..\\..\\resources\\icons\\icon-notification.ico"
 

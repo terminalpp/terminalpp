@@ -112,11 +112,11 @@ elseif(ARCH_MACOS)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/macOS/Info.plist ${CMAKE_BINARY_DIR}/packages/macOS/Info.plist @ONLY)
     # we can't target older versions because of the usage of std::filesystem
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
-    add_executable(terminalpp MACOSX_BUNDLE ${SRC} "qt/terminalpp.qrc" "../resources/bundle.icns")
+    add_executable(terminalpp MACOSX_BUNDLE ${SRC} "qt/terminalpp.qrc" "${CMAKE_SOURCE_DIR}/resources/icons/bundle.icns")
     set_target_properties(
         terminalpp
         PROPERTIES
-        RESOURCE "../resources/bundle.icns"
+        RESOURCE "${CMAKE_SOURCE_DIR}/resources/icons/bundle.icns"
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_BINARY_DIR}/packages/macOS/Info.plist"
     )
     add_custom_command(TARGET terminalpp POST_BUILD
@@ -169,7 +169,7 @@ endif()
 #
 # The classic confinement is used as terminal with the strict confinement is most likely not what we want.
 if (PACKAGE_TERMINALPP AND PACKAGE_SNAP AND RENDERER_NATIVE)
-    # create the build directory and configure the WiX configuration in it
+    # create the build directory and configure the snap configuration in it
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/snap/tpp.yaml ${CMAKE_CURRENT_BINARY_DIR}/snap/snapcraft.yaml @ONLY)
     add_custom_target(package-snap-copy-tpp
         COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/snap/source
@@ -188,6 +188,11 @@ if (PACKAGE_TERMINALPP AND PACKAGE_SNAP AND RENDERER_NATIVE)
 endif()
 
 if(PACKAGE_TERMINALPP AND ARCH_UNIX)
+    if(ARCH_LINUX)
+        configure_file(${CMAKE_SOURCE_DIR}/resources/terminalpp.desktop ${CMAKE_CURRENT_BINARY_DIR}/terminalpp.desktop @ONLY)
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/terminalpp.desktop DESTINATION share/applications)
+        install(FILES ${CMAKE_SOURCE_DIR}/resources/icons/icon_48x48.png DESTINATION share/icons/hicolor/48x48/terminalpp.png)
+    endif()
     install(TARGETS terminalpp DESTINATION bin COMPONENT terminalpp)
 endif()
 

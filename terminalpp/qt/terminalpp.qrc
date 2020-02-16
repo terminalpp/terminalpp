@@ -1,6 +1,16 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-    <file>resources/icon32.png</file>
-    <file>resources/icon-notification32.png</file>
+    <file alias="icon_16x16.png">../../resources/icons/icon_16x16.png</file>
+    <file alias="icon-notification_16x16.png">../../resources/icons/icon-notification_16x16.png</file>
+    <file alias="icon_32x32.png">../../resources/icons/icon_32x32.png</file>
+    <file alias="icon-notification_32x32.png">../../resources/icons/icon-notification_32x32.png</file>
+    <file alias="icon_48x48.png">../../resources/icons/icon_48x48.png</file>
+    <file alias="icon-notification_48x48.png">../../resources/icons/icon-notification_48x48.png</file>
+    <file alias="icon_64x64.png">../../resources/icons/icon_64x64.png</file>
+    <file alias="icon-notification_64x64.png">../../resources/icons/icon-notification_64x64.png</file>
+    <file alias="icon_128x128.png">../../resources/icons/icon_128x128.png</file>
+    <file alias="icon-notification_128x128.png">../../resources/icons/icon-notification_128x128.png</file>
+    <file alias="icon_256x256.png">../../resources/icons/icon_256x256.png</file>
+    <file alias="icon-notification_256x256.png">../../resources/icons/icon-notification_256x256.png</file>
 </qresource>
 </RCC>

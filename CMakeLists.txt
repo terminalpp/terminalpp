@@ -177,43 +177,46 @@ if(ARCH_LINUX)
     # creates the win32 icon from the logo and the logo with notification, then converts the icons to RGBA a creates the c++ header files containing their contents as literals
     # sizes from the icon exported must be sequential, i.e. all sizes in the icon from the smallest to the largest exported must appear in the as arguments to xIconCpp
     add_custom_target(icons 
-        COMMAND convert -background transparent icon.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 icon.ico
-        COMMAND convert -background transparent icon-notification.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 icon-notification.ico
+        # create icon files for Windows 
+        COMMAND convert -background transparent ../images/logo.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 icon.ico
+        COMMAND convert -background transparent ../images/logo-notification.png -define icon:auto-resize=16,24,32,48,64,72,96,128,256 icon-notification.ico
+        # create rgba icons for X11
         COMMAND convert icon.ico -depth 8 icon.rgba
         COMMAND xIconCpp tppIcon ${CMAKE_SOURCE_DIR}/terminalpp/x11/resources/tppIcon.cpp icon.rgba 16 24 32 48 64
         COMMAND rm icon.rgba
         COMMAND convert icon-notification.ico -depth 8 icon.rgba
         COMMAND xIconCpp tppIconNotification ${CMAKE_SOURCE_DIR}/terminalpp/x11/resources/tppIconNotification.cpp icon.rgba 16 24 32 48 64
         COMMAND rm icon.rgba
-        # now move the icons to directwrite resources
-        COMMAND mv icon.ico ${CMAKE_SOURCE_DIR}/terminalpp/directwrite/resources/icon.ico
-        COMMAND mv icon-notification.ico ${CMAKE_SOURCE_DIR}/terminalpp/directwrite/resources/icon-notification.ico
-        # and create small png icons for Qt
-        COMMAND convert icon.png -resize 16x16 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon16.png
-        COMMAND convert icon-notification.png -resize 16x16 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification16.png
-        COMMAND convert icon.png -resize 32x32 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon32.png
-        COMMAND convert icon-notification.png -resize 32x32 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification32.png
-        COMMAND convert icon.png -resize 48x48 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon48.png
-        COMMAND convert icon-notification.png -resize 48x48 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification48.png
-        COMMAND convert icon.png -resize 64x64 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon64.png
-        COMMAND convert icon-notification.png -resize 64x64 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification64.png
-        COMMAND convert icon.png -resize 128x128 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon128.png
-        COMMAND convert icon-notification.png -resize 128x128 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification128.png
-        COMMAND convert icon.png -resize 256x256 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon256.png
-        COMMAND convert icon-notification.png -resize 256x256 ${CMAKE_SOURCE_DIR}/terminalpp/qt/resources/icon-notification256.png
-        # create iconset folder for the default icon for macOS bundle
-        COMMAND convert icon.png -resize 16x16 ${CMAKE_SOURCE_DIR}/resources/bundle.iconset/icon_16x16.png
-        COMMAND convert icon.png -resize 32x32 ${CMAKE_SOURCE_DIR}/resources/bundle.iconset/icon_32x32.png
-        COMMAND convert icon.png -resize 128x128 ${CMAKE_SOURCE_DIR}/resources/bundle.iconset/icon_128x128.png
-        COMMAND convert icon.png -resize 256x256 ${CMAKE_SOURCE_DIR}/resources/bundle.iconset/icon_256x256.png
-        COMMAND convert icon.png -resize 512x512 ${CMAKE_SOURCE_DIR}/resources/bundle.iconset/icon_512x512.png
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/images
+        # create the different sizes of icons used for desktops, qt and so on
+        COMMAND convert ../images/logo.png -resize 16x16 icon_16x16.png
+        COMMAND convert ../images/logo-notification.png -resize 16x16 icon-notification_16x16.png
+        COMMAND convert ../images/logo.png -resize 32x32 icon_32x32.png
+        COMMAND convert ../images/logo-notification.png -resize 32x32 icon-notification_32x32.png
+        COMMAND convert ../images/logo.png -resize 48x48 icon_48x48.png
+        COMMAND convert ../images/logo-notification.png -resize 48x48 icon-notification_48x48.png
+        COMMAND convert ../images/logo.png -resize 64x64 icon_64x64.png
+        COMMAND convert ../images/logo-notification.png -resize 64x64 icon-notification_64x64.png
+        COMMAND convert ../images/logo.png -resize 128x128 icon_128x128.png
+        COMMAND convert ../images/logo-notification.png -resize 128x128 icon-notification_128x128.png
+        COMMAND convert ../images/logo.png -resize 256x256 icon_256x256.png
+        COMMAND convert ../images/logo-notification.png -resize 256x256 icon-notification_256x256.png
+        COMMAND convert ../images/logo.png -resize 512x512 icon_512x512.png
+        COMMAND convert ../images/logo-notification.png -resize 512x512 icon-notification_512x512.png
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/icons
         DEPENDS xIconCpp
     )
     set_target_properties(icons PROPERTIES EXCLUDE_FROM_ALL TRUE)
 elseif(ARCH_MACOS)
     add_custom_target(icons
-        COMMAND iconutil -c icns ${CMAKE_SOURCE_DIR}/resources/bundle.iconset
+        COMMAND mkdir bundle.iconset
+        COMMAND cp icon_16x16.png bundle.iconset/icon_16x16.png
+        COMMAND cp icon_32x32.png bundle.iconset/icon_32x32.png
+        COMMAND cp icon_128x128.png bundle.iconset/icon_128x128.png
+        COMMAND cp icon_256x256.png bundle.iconset/icon_256x256.png
+        COMMAND cp icon_512x512.png bundle.iconset/icon_512x512.png
+        COMMAND iconutil -c icns bundle.iconset
+        COMMAND rm -rf budle.iconset
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/icons
     )
     set_target_properties(icons PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()

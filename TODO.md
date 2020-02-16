@@ -21,7 +21,6 @@ The following is very short description of the versions planned and their main n
 - build fixed so that stamp is only generated when required
 - better errors for invalid JSON settings
 
-
 ##### TODO
 
 - confirmation box for paste and for remote files
@@ -32,7 +31,6 @@ The following is very short description of the versions planned and their main n
 - shapes.h is areally bad name for the classes defined therein
 
 - create proper documentation and figure out how to release it
-- add Windows Store Submission - can this be automated in any way? 
 - add benchmarking
 
 ### v0.7
@@ -52,7 +50,6 @@ The following is very short description of the versions planned and their main n
 - polish and bugfixing of stuff, some beta releases and "testing"
 - remove the tpp application from snap (tpp.yaml)
 - definitely add windows store submission
-- make the snap and deb & rpm packages 
 
 ### Later
 

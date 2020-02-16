@@ -1,0 +1,8 @@
+[Desktop Entry]
+Exec=terminalpp
+Icon=terminalpp.png
+Type=Application
+Terminal=false
+Categories=System;TerminalEmulator;
+GenericName=Terminal
+Comment=@TPP_SUMMARY@

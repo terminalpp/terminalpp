@@ -37,6 +37,7 @@ parts:
 apps:
   terminalpp:
       command: usr/bin/terminalpp
+      desktop: usr/share/applications/terminalpp.desktop
       environment:
           DISABLE_WAYLAND: 1
 # for legacy support of terminalpp.tpp executable in versions prior to 0.6

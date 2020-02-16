@@ -5,8 +5,8 @@
     <Product Name="Terminal++" Id="*" UpgradeCode="3e26832c-a36a-4b82-8432-8908666865be" Language="1033" Codepage="1252" Version="@PROJECT_VERSION@" Manufacturer="@CPACK_PACKAGE_VENDOR@">
         <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine"/>
         <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
-        <Icon Id="ProductIcon" SourceFile="@CMAKE_CURRENT_SOURCE_DIR@\directwrite\resources\icon.ico"/>
-        <WixVariable Id="WixUILicenseRtf" Value="@CMAKE_CURRENT_SOURCE_DIR@\directwrite\resources\license.rtf"/>
+        <Icon Id="ProductIcon" SourceFile="@CMAKE_SOURCE_DIR@\resources\icons\icon.ico"/>
+        <WixVariable Id="WixUILicenseRtf" Value="@CMAKE_SOURCE_DIR@\resources\text\license.rtf"/>
         <Property Id="ARPPRODUCTICON" Value="ProductIcon"/>
         <MediaTemplate EmbedCab="yes"/>
         <UIRef Id="WixUI_FeatureTree"/>
