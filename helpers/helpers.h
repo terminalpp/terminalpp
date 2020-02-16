@@ -75,10 +75,12 @@ namespace helpers {
 
         private:
             friend class Exception;
+
         #ifndef NDEBUG
             size_t line_;
             char const * file_;
         #endif
+
             std::stringstream what_;
         };
 
@@ -89,6 +91,14 @@ namespace helpers {
             return what_.c_str();
         }
 
+        /** Sets the message of the exception. 
+         
+            This method is useful when the exception message is changed after the exception has been thrown, such as when more error context is available. 
+         */
+        void setMessage(std::string const & what) {
+            what_ = what;
+        }
+
         #ifndef NDEBUG
         size_t line() const {
             return line_;
@@ -97,8 +107,6 @@ namespace helpers {
         char const * file() const {
             return file_;
         }
-
-
         #endif
 
     protected:

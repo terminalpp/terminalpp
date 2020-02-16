@@ -13,14 +13,8 @@ namespace helpers {
 	class ArgumentError : public Exception {
 	};
 
-	/** JSON Based Configuration. 
-	 
-	    - default value specified as JSON text, always
-		- required means it must be in the configuration file, 
-		- if not found, its default value can be calculated 
-	 
+	/** JSON Based Configuration.
 	 */
-
     class JSONConfig {
 	public:
 	    class Group;
@@ -33,13 +27,35 @@ namespace helpers {
 
 		class Root;
 
+		virtual ~JSONConfig() {
+		}
+
+		std::string name() const {
+			if (parent_ == nullptr || parent_->parent_ == nullptr)
+			    return name_;
+			else
+			    return parent_->name() + "." + name_;
+		}
+
+		std::string const & description() const {
+			return description_;
+		}
+
+		bool specified() const {
+			return specified_;
+		}
+
+		/** Explicitly sets the value of the element from a string containing the JSON representation. 
+		 */
+		void set(std::string const & value) {
+			specify(JSON::Parse(value), [](std::exception const & e){
+				THROW(ArgumentError()) << e.what();
+			});
+		}
+
 	protected:
 
 	    friend class JSONArguments;
-
-		class ElementBase;
-
-	    friend class ElementBase;
 
 		friend class Group;
 
@@ -49,15 +65,45 @@ namespace helpers {
 		template<typename T>
 		friend class Array;
 
-		JSONConfig():
-		    config_{JSON::Kind::Object} {
+		JSONConfig(std::string const & name, std::string const & description):
+		    json_{nullptr},
+			name_{name},
+			description_{description},
+			specified_{false},
+			parent_{nullptr} {
 		}
 
-	    /** The actual configuration stored as a JSON. 
+		/** Specifies the value of the element from the given JSON. 
+		 
+		    Calls the provided error handler in case of unknown options. 
 		 */
-	    JSON config_;
+		virtual void specify(JSON const & from, std::function<void(std::exception const &)> errorHandler) = 0;
 
-		// TODO this should take the ElementBase as an argument so that error messages can be informative
+		/** Fixes missing default values. 
+		 */
+		virtual bool fixMissingDefaultValues() = 0;
+
+		/** Returns new JSON object that contains the current settings. 
+		 
+		    If onlySpecified is true, then only the values which were explicitly specified (either by specify, or by fixMissingDefaultValues functions) will be stored. 
+		 */
+		virtual JSON save(bool onlySpecified = true) = 0;
+
+	    JSON * json_;
+
+		/** Name of the element. 
+		 */
+		std::string name_;
+
+		std::string description_;
+
+		// true if the element was specified by the user
+		bool specified_;
+
+		/** Parent element if any, nullptr for root element. 
+		 */
+		JSONConfig * parent_;
+
 		template<typename T>
 		static T ParseValue(JSON const & json);
 
@@ -119,67 +165,11 @@ namespace helpers {
 		return json.toDouble();
 	}
 
-	class JSONConfig::ElementBase {
-	public:
-	    virtual ~ElementBase() { }
-
-		std::string const & description() const {
-			return description_;
-		}
-
-		bool specified() const {
-			return specified_;
-		}
-
-		/** Sets the value of the element from a string containing the JSON representation. 
-		 */
-		void set(std::string const & value) {
-			specify(JSON::Parse(value), [](std::exception const & e){
-				THROW(ArgumentError()) << e.what();
-			});
-		}
-
-	protected:
-
-		friend class JSONArguments;
-
-	    friend class Group;
-
-		ElementBase(std::string const & description):
-		    json_{nullptr},
-			description_{description},
-			specified_{false} {
-		}
-
-		/** Specifies the value of the element from the given JSON. 
-		 
-		    Calls the provided error handler in case of unknown options. 
-		 */
-		virtual void specify(JSON const & from, std::function<void(std::exception const &)> errorHandler) = 0;
-
-		/** Fixes missing default values. 
-		 */
-		virtual bool fixMissingDefaultValues() = 0;
-
-		/** Returns new JSON object that contains the current settings. 
-		 
-		    If onlySpecified is true, then only the values which were explicitly specified (either by specify, or by fixMissingDefaultValues functions) will be stored. 
-		 */
-		virtual JSON save(bool onlySpecified = true) = 0;
-
-	    JSON * json_;
-
-		std::string description_;
-
-		// true if the element was specified by the user
-		bool specified_;
-	}; 
-
-	class JSONConfig::Group : public JSONConfig::ElementBase {
+	class JSONConfig::Group : public JSONConfig {
 	public:
 
 		Group(std::string const & name, std::string const & description):
-		    ElementBase(description) {
+		    JSONConfig(name, description) {
 			Group * parent = GetActiveGroup();
 			PushActiveGroup(this);
 			parent->addElement(*this, name, "{}");
@@ -191,19 +181,18 @@ namespace helpers {
 	    friend class Option;
 
 		// Constructor for root object where no parents are made
-        Group(JSON * json):
-		    ElementBase("") {
+        Group():
+		    JSONConfig("", "") {
 			PushActiveGroup(this);
-			json_ = json;
 		}
 
 		void specify(JSON const & from, std::function<void(std::exception const &)> errorHandler) override {
 			if (from.kind() != JSON::Kind::Object)
-			    errorHandler(CREATE_EXCEPTION(JSONError()) << "Object expected, but " << from << " found");
+			    errorHandler(CREATE_EXCEPTION(JSONError()) << "Object expected, but " << from << " found in " << name());
 			for (auto i = from.begin(), e = from.end(); i != e; ++i) {
 				auto own = elements_.find(i.name());
 				if (own == elements_.end())
-					errorHandler(CREATE_EXCEPTION(JSONError()) << "Unknown option " << i.name());
+					errorHandler(CREATE_EXCEPTION(JSONError()) << "Unknown option " << i.name() << " in " << name());
 				else
 					own->second->specify(*i, errorHandler);
 			}
@@ -236,40 +225,42 @@ namespace helpers {
 
 	    /** Adds the given element to the group.
 		 */
-	    void addElement(ElementBase & element, std::string const & name, std::string const & defaultValue) {
+	    void addElement(JSONConfig & element, std::string const & name, std::string const & defaultValue) {
 			ASSERT(elements_.find(name) == elements_.end()) << " Configuration element " << name << " already exists";
 			elements_.insert(std::make_pair(name, &element));
 			json_->add(name, JSON::Parse(defaultValue));
 			element.json_ = & (*json_)[name];
+			ASSERT(element.parent_ == nullptr) << "Element already has parent";
+			element.parent_ = this;
 		}
 
 		void initializationDone() {
 			PopActiveGroup(this);
 		}
 
-	    std::unordered_map<std::string, ElementBase *> elements_;
+	    std::unordered_map<std::string, JSONConfig *> elements_;
 	};
 
 
 
 	template<typename T>
-	class JSONConfig::Array : public JSONConfig::ElementBase {
+	class JSONConfig::Array : public JSONConfig {
 		// TODO TODO TODO 
 
 	};
 
 	template<typename T>
-	class JSONConfig::Option : public JSONConfig::ElementBase {
+	class JSONConfig::Option : public JSONConfig {
 	public:
 		Option(std::string const & name, std::string const & description, std::string const & defaultValue):
-		    ElementBase(description) {
+		    JSONConfig(name, description) {
 			Group * parent = GetActiveGroup();
 			ASSERT(parent != nullptr);
 			parent->addElement(*this, name, defaultValue);
 		}
 
 		Option(std::string const & name, std::string const & description, std::function<std::string(void)> defaultValue):
-		    ElementBase(description),
+		    JSONConfig(name, description),
 			defaultValue_{defaultValue} {
 			Group * parent = GetActiveGroup();
 			ASSERT(parent != nullptr);
@@ -279,7 +270,12 @@ namespace helpers {
 		/** Returns the configuration value parsed from the stored JSON. 
 		 */
 		T operator () () const {
-			return JSONConfig::ParseValue<T>(*json_);
+			try {
+			    return JSONConfig::ParseValue<T>(*json_);
+			} catch (helpers::Exception & e) {
+				e.setMessage(STR(" in confifuration value " << name()));
+				throw e;
+			}
 		}
 
 	protected:
@@ -293,7 +289,7 @@ namespace helpers {
 		bool fixMissingDefaultValues() override {
 			if (defaultValue_ && ! specified_) {
 				// update the json with the calculated default value
-				(*json_) = JSON::Parse(defaultValue_());
+			    (*json_) = JSON::Parse(defaultValue_());
 				// and set the description as a comment for better readability
 				json_->setComment(description_);
 				specified_ = true;
@@ -321,7 +317,7 @@ namespace helpers {
 
 	}; // helpers::JSONConfig::Option
 
-	class JSONConfig::Root : public JSONConfig, public JSONConfig::Group {
+	class JSONConfig::Root : public JSONConfig::Group {
 	public:
 
 		std::string toString() {
@@ -331,10 +327,16 @@ namespace helpers {
 	protected:
 
 	    Root():
-		    JSONConfig{},
-		    JSONConfig::Group{&config_} {
+		    JSONConfig::Group{},
+			config_{JSON::Kind::Object} {
+			// set the JSON element for the group to the root JSON element
+			json_ = &config_;
 			// TODO check that there is only one active group and that is us
 		}
+
+		/** JSON file storing the configuration
+		 */ 
+		JSON config_;
 
 	}; // helpers::JSONConfig::Root
 
@@ -488,7 +490,7 @@ namespace helpers {
 
 			friend class JSONArguments;
 
-			ArgumentBase(std::string const & name, bool required, JSONConfig::ElementBase & element):
+			ArgumentBase(std::string const & name, bool required, JSONConfig & element):
 			    name_{name},
 				description_{element.description()},
 				required_{required},
@@ -519,7 +521,7 @@ namespace helpers {
 			// determines whether the argument was specified on the commandline
 			bool specified_;
 			// the corresponding JSON configuration option
-			JSONConfig::ElementBase & element_;
+			JSONConfig & element_;
 		}; // JSONArguments::ArgumentBase
 
 		/** Single value argument that can only be specified once. 
@@ -529,7 +531,7 @@ namespace helpers {
 		template<typename T>
 		class Argument : public ArgumentBase {
 		public:
-		    Argument(std::string const & name, bool required, bool expectsValue, JSONConfig::ElementBase & element):
+		    Argument(std::string const & name, bool required, bool expectsValue, JSONConfig & element):
 			    ArgumentBase{name, required, element},
 				expectsValue_{expectsValue} {
 			}
@@ -568,7 +570,7 @@ namespace helpers {
 		class ArrayArgument : public ArgumentBase {
 		public:
 
-		    ArrayArgument(std::string const & name, bool required, bool last, JSONConfig::ElementBase & element):
+		    ArrayArgument(std::string const & name, bool required, bool last, JSONConfig & element):
 			    ArgumentBase{name, required, element},
 				last_{last} {
 			}
@@ -595,7 +597,7 @@ namespace helpers {
 				if (specified_) {
 					element_.specify(JSON::Parse(STR("[" << value_ << "]")), [](std::exception const & e){
 						THROW(ArgumentError()) << e.what();
-					});
+					}); 
 				}
 			}
 

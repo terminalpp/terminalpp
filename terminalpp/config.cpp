@@ -26,13 +26,18 @@ namespace tpp {
 			std::ifstream f{filename};
 			if (f.good()) {
 				try {
-					helpers::JSON settings{helpers::JSON::Parse(f)};
-					verifyConfigurationVersion(settings);
-					// TODO specify, check errors, make copy if wrong, etc. 
-					specify(settings, [& saveSettings](std::exception const & e){
-						Application::Alert(e.what());
-						saveSettings = true;
-					});
+					try {
+						helpers::JSON settings{helpers::JSON::Parse(f)};
+						verifyConfigurationVersion(settings);
+						// specify, check errors, make copy if wrong
+						specify(settings, [& saveSettings, & filename](std::exception const & e){
+							Application::Alert(STR(e.what() << " while parsing terminalpp settings at " << filename));
+							saveSettings = true;
+						});
+					} catch (helpers::JSONError & e) {
+						e.setMessage(STR(e.what() << " while parsing terminalpp settings at " << filename));
+						throw e;
+					}
 				} catch (std::exception const & e) {
 					Application::Alert(e.what());
 					saveSettings = true;

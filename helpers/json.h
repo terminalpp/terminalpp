@@ -689,7 +689,11 @@ namespace helpers {
         void add(std::string const & key, JSON && value) {
             if (kind_ != Kind::Object)
                 THROW(JSONError()) << "Cannot add member elemnt to element holding " << kind_;
-            valueObject_.insert(std::make_pair(key, new JSON(std::move(value))));
+            JSON * element = new JSON{std::move(value)};
+            if (! valueObject_.insert(std::make_pair(key, element)).second) {
+                delete element;
+                THROW(JSONError()) << "Value " << key << " already exists";
+            }
         }
 
         void erase(std::string const & key) {
@@ -954,6 +958,10 @@ namespace helpers {
             }
         }
 
+    private:
+
+        friend class JSON;
+
         /** ELEMENT := null | true | false | int | double | STR | ARRAY | OBJECT
          */
         JSON parseElement() {
@@ -1114,6 +1122,25 @@ namespace helpers {
             return result;
         }
 
+        void parseObjectElement(JSON & result) {
+            std::string comment;
+            if (top() == '/') {
+                comment = parseComment();
+                skipWhitespace();
+            }
+            unsigned l = line_;
+            unsigned c = col_;
+            std::string key = parseStr();
+            if (result.hasKey(key))
+                THROW(JSONError(l, c)) << "Key " << key << " already exists";
+            skipWhitespace();
+            pop(':');
+            skipWhitespace();
+            JSON value = parseElement();
+            value.setComment(comment);
+            result.add(key, std::move(value));
+        }
+
         /** OBJECT := '{' [ [ COMMENT ] STR ':' ELEMENT { ',' [COMMENT] STR ':' ELEMENT } ] }
          */
         JSON parseObject() {
@@ -1121,32 +1148,10 @@ namespace helpers {
             JSON result(Kind::Object);
             skipWhitespace();
             if (top() != '}') {
-                std::string comment;
-                if (top() == '/') {
-                    comment = parseComment();
-                    skipWhitespace();
-                }
-                std::string key = parseStr();
-                skipWhitespace();
-                pop(':');
-                skipWhitespace();
-                JSON value = parseElement();
-                value.setComment(comment);
-                result.add(key, std::move(value));
+                parseObjectElement(result);
                 while (condPop(',')) {
                     skipWhitespace();
-                    if (top() == '/') {
-                        comment = parseComment();
-                        skipWhitespace();
-                    }
-                    skipWhitespace();
-                    key = parseStr();
-                    skipWhitespace();
-                    pop(':');
-                    skipWhitespace();
-                    value = parseElement();
-                    value.setComment(comment);
-                    result.add(key, std::move(value));
+                    parseObjectElement(result);
                     skipWhitespace();
                 }
             }
@@ -1154,10 +1159,6 @@ namespace helpers {
             pop('}');
             return result;
         }
-
-    private:
-
-        friend class JSON;
 
         char top() const {
             if (input_.eof())
@@ -1190,8 +1191,7 @@ namespace helpers {
             while (*w != 0) {
                 if (input_.eof())
                     THROW(JSONError(l, c)) << "Expected " << what << ", but EOF found";
-                if (input_.get() != *w)
-                    THROW(JSONError(l, c)) << "Expected " << what;
+                pop(*w);
                 ++w;
             }
         }

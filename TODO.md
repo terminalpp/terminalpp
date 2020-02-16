@@ -19,10 +19,10 @@ The following is very short description of the versions planned and their main n
 - simpler UI code
 - more automation for releases
 - build fixed so that stamp is only generated when required
+- better errors for invalid JSON settings
+
 
 ##### TODO
-
-- better errors for invalid JSON settings
 
 - confirmation box for paste and for remote files
 - lineOut should center/top/bottom vertically too
@@ -39,7 +39,9 @@ The following is very short description of the versions planned and their main n
 
 - systray support
 - multiple sessions
+- maybe platform notifications
 - proper multiplexing of the terminal sessions (wrt remote files)
+- remote files should use absolute path, or some other form of same file detection
 
 ### v0.8
 
