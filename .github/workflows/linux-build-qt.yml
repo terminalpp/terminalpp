@@ -16,11 +16,6 @@ jobs:
       run: |
         sudo apt update
         sudo apt install cmake libx11-dev libxft-dev g++-8 qt5-default
-    - name: fetch-subprojects
-      run: |
-        git clone --verbose https://github.com/terminalpp/website
-        git clone --verbose https://github.com/terminalpp/tpp-bypass
-        git clone --verbose https://github.com/terminalpp/ropen
     - name: configure-debug
       run: |
         mkdir -p build/debug

@@ -38,7 +38,7 @@ if(ARCH_UNIX)
         add_custom_target(package-snap-copy-ropen
             COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/snap/source
             COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/snap/source
-            COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/snap/source  --exclude-from=.gitignore --exclude=terminalpp/* --exclude=tpp-bypass/*
+            COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/snap/source  --exclude-from=.gitignore
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
         set_target_properties(package-snap-copy-ropen PROPERTIES EXCLUDE_FROM_ALL TRUE)

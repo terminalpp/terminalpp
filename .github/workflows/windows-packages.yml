@@ -12,9 +12,6 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: fetch-subprojects
-      run: |
-        git clone --verbose https://github.com/terminalpp/website
     - name: configure
       run: |
         mkdir build

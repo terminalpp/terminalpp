@@ -13,11 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: install-qt
-#      uses: jurplel/install-qt-action@v2    
-#      with:
-#        version: 5.14.1
-#        dir: c:\\Qt
-#    - name: install-qt
       run: |
         pip install -Iv aqtinstall==0.7
         python -m aqt install --outputdir c:\\Qt 5.14.1 windows desktop win64_msvc2017_64

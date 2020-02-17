@@ -15,11 +15,6 @@ jobs:
     - name: install-packages
       run: |
         bash scripts/setup-macos.sh
-    - name: fetch-subprojects
-      run: |
-        git clone --verbose https://github.com/terminalpp/website
-        git clone --verbose https://github.com/terminalpp/tpp-bypass
-        git clone --verbose https://github.com/terminalpp/ropen
     - name: configure-debug
       run: |
         mkdir -p build/debug
