@@ -142,23 +142,16 @@ add_custom_target(stamp
 # Subprojects
 # ===========
 #
-# All libraries and executables produced by the main buildscript are included now. Some subprojects only make sense for certail platforms and so they are included conditionally. To make sure all projects are loaded according to the platform used, make sure to run the scripts/setup-repos-PLATFORM.sh (or its ssh variant) for your platform   
+# All libraries and executables produced by the main buildscript are included now. Some subprojects only make sense for certain platforms, see their respective CMakeLists.txt for details.
 
 add_subdirectory("tpp-lib")
 add_subdirectory("ui")
 add_subdirectory("ui-terminal")
 add_subdirectory("docs")
 add_subdirectory("tests")
-# optional subprojects - only include them if we actually have them
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ropen/CMakeLists.txt")
-    add_subdirectory("ropen")
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tpp-bypass/CMakeLists.txt")
-    add_subdirectory("tpp-bypass")
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/terminalpp/CMakeLists.txt")
-    add_subdirectory("terminalpp")
-endif()
+add_subdirectory("ropen")
+add_subdirectory("tpp-bypass")
+add_subdirectory("terminalpp")
 
 # Other tools
 # ===========
