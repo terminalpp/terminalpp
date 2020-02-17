@@ -1,4 +1,5 @@
 .vs/
+benchmarks/data/
 build/
 build-release/
 build-win/
