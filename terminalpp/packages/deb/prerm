@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # Remove tpp from the terminal options
-update-alternatives --remove x-terminal-emulator /usr/bin/tpp
+update-alternatives --remove x-terminal-emulator /usr/bin/terminalpp

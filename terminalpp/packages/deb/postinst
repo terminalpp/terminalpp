@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # Add tpp to the list of available terminal emulators with lowest priority
-update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator /usr/bin/tpp 0
+update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator /usr/bin/terminalpp 0
