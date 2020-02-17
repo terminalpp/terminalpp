@@ -5,8 +5,6 @@ extraction:
         - g++-8 
         - libx11-dev
         - libxft-dev
-    after_prepare:
-        - bash ./scripts/setup-repos-linux.sh
     configure:
       command: |
         mkdir build
