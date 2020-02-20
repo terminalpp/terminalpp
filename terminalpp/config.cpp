@@ -36,7 +36,7 @@ namespace tpp {
 						});
 					} catch (helpers::JSONError & e) {
 						e.setMessage(STR(e.what() << " while parsing terminalpp settings at " << filename));
-						throw e;
+						throw;
 					}
 				} catch (std::exception const & e) {
 					Application::Alert(e.what());

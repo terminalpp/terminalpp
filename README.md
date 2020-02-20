@@ -1,21 +1,16 @@
 # Terminal++
 
-[![Windows build](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-build?logo=windows&logoColor=white&style=flat-square&label=native)](https://github.com/terminalpp/tpp/actions?query=workflow%3Awindows-build)
-[![Windows build QT](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-build-qt?logo=windows&logoColor=white&style=flat-square&label=qt)](https://github.com/terminalpp/tpp/actions?query=workflow%3Awindows-build-qt)
-[![Linux build](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-build?logo=linux&logoColor=white&style=flat-square&label=native)](https://github.com/terminalpp/tpp/actions?query=workflow%3Alinux-build)
-[![Linux build QT](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-build-qt?logo=linux&logoColor=white&style=flat-square&label=qt)](https://github.com/terminalpp/tpp/actions?query=workflow%3Alinux-build-qt)
-[![macOs build QT](https://img.shields.io/github/workflow/status/terminalpp/tpp/macos-build-qt?logo=apple&logoColor=white&style=flat-square&label=qt)](https://github.com/terminalpp/tpp/actions?query=workflow%3Amacos-build-qt)
+[![Windows build](https://img.shields.io/github/workflow/status/terminalpp/terminalpp/windows-build?logo=windows&logoColor=white&style=flat-square&label=native)](https://github.com/terminalpp/terminalpp/actions?query=workflow%3Awindows-build)
+[![Windows build QT](https://img.shields.io/github/workflow/status/terminalpp/terminalpp/windows-build-qt?logo=windows&logoColor=white&style=flat-square&label=qt)](https://github.com/terminalpp/terminalpp/actions?query=workflow%3Awindows-build-qt)
+[![Linux build](https://img.shields.io/github/workflow/status/terminalpp/terminalpp/linux-build?logo=linux&logoColor=white&style=flat-square&label=native)](https://github.com/terminalpp/terminalpp/actions?query=workflow%3Alinux-build)
+[![Linux build QT](https://img.shields.io/github/workflow/status/terminalpp/terminalpp/linux-build-qt?logo=linux&logoColor=white&style=flat-square&label=qt)](https://github.com/terminalpp/terminalpp/actions?query=workflow%3Alinux-build-qt)
+[![macOs build QT](https://img.shields.io/github/workflow/status/terminalpp/terminalpp/macos-build-qt?logo=apple&logoColor=white&style=flat-square&label=qt)](https://github.com/terminalpp/terminalpp/actions?query=workflow%3Amacos-build-qt)
+[![packages](https://img.shields.io/github/workflow/status/terminalpp/terminalpp/packages?label=packages&logo=buffer&logoColor=white&style=flat-square)](https://github.com/terminalpp/terminalpp/actions?query=workflow%3Apackages)
 
-[![Windows MSI](https://img.shields.io/github/workflow/status/terminalpp/tpp/windows-packages?label=msi&logo=windows&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Awindows-packages)
-[![Linux DEB/RPM](https://img.shields.io/github/workflow/status/terminalpp/tpp/linux-packages?label=deb%2Frpm&logo=linux&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Alinux-packages)
-[![Snapcraft](https://img.shields.io/github/workflow/status/terminalpp/tpp/snapcraft-build?label=snap&logo=snapcraft&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Asnapcraft-build)
-[![macOS bundle](https://img.shields.io/github/workflow/status/terminalpp/tpp/macos-packages?label=app&logo=apple&logoColor=white&style=flat-square)](https://github.com/terminalpp/tpp/actions?query=workflow%3Amacos-packages)
+[![Codacy grade](https://img.shields.io/codacy/grade/fd4f07b095634b9d90bbb9edb11fc12c?logo=codacy&style=flat-square)](https://app.codacy.com/manual/zduka/terminalpp)
+[![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/terminalpp/terminalpp?logo=LGTM&style=flat-square)](https://lgtm.com/projects/g/terminalpp/terminalpp?mode=list)
 
-[![Codacy grade](https://img.shields.io/codacy/grade/fd4f07b095634b9d90bbb9edb11fc12c?logo=codacy&style=flat-square)](https://app.codacy.com/manual/zduka/tpp)
-[![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/terminalpp/tpp?logo=LGTM&style=flat-square)](https://lgtm.com/projects/g/terminalpp/tpp?mode=list)
-
-
-[![Coverage Status](https://coveralls.io/repos/github/terminalpp/tpp/badge.svg?branch=master)](https://coveralls.io/github/terminalpp/tpp?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/terminalpp/tpp/badge.svg?branch=master)](https://coveralls.io/github/terminalpp/terminalpp?branch=master)
 [![terminalpp](https://snapcraft.io//terminalpp/badge.svg)](https://snapcraft.io/terminalpp)
 
 This is the main development repository for the `terminal++` and its suppport repositories. 
