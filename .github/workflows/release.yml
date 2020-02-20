@@ -1,29 +1,69 @@
+# terminalpp & friends release
+#
+# Gets executed every time a new release tag is created, runs on all supported platforms and creates the respective installation packages for terminalpp, ropen and bypass. These are then added as artifacts to the release and to the respective platform stores, where applicable. 
+#
+# Because on windows the tpp-bypass must be built inside the WSL, a self-hosted runner with WSL installed is being used. 
+
 name: release
 
 on:
   push:
-    branches:
-    - master
+    tags:
+    - 'v*' 
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ROOT: /mnt/c/Users/peta/actions-runner/_work/terminalpp/terminalpp
 
 jobs:
   windows:
     runs-on: [self-hosted, windows]
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: check-wsl
       run: |
         wsl.exe --list
+      shell: powershell
+    - name: build-bypass-ubuntu
+      run: |
+        wsl.exe -d Ubuntu bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh ubuntu-18-04"
+    - name: artifact-tpp-bypass-ubuntu-18.04
+      uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass-ubuntu-18.04
+        path: build-ubuntu-18-04/tpp-bypass/tpp-bypass
+    - name: build-bypass-debian
+      run: |
+        wsl.exe -d Debian bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh debian"
+    - name: artifact-tpp-bypass-debian
+      uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass-debian
+        path: build-Debian/tpp-bypass/tpp-bypass
+    - name: build-bypass-suse
+      run: |
+        wsl.exe -d openSUSE-Leap-15-1 bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh leap-15-1"
+    - name: artifact-tpp-bypass-openSUSE-Leap-15-1
+      uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass-openSUSE-Leap-15-1
+        path: build-leap-15-1/tpp-bypass/tpp-bypass
     - name: build-terminalpp
       run: |
         mkdir build
         cd build
         cmake .. -DPACKAGE=terminalpp
         cmake --build . --clean-first --config Release --target packages
-        # build/packages/terminalpp.msi
+    - name: artifact-terminalpp-msi
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp.msi
+        path: build/packages/terminalpp.msi
+
   linux:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: install-snapcraft
       run: |
         bash scripts/github-actions-install-snapcraft.sh 
@@ -36,28 +76,46 @@ jobs:
         cd build
         sudo cmake .. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DSNAP_EXTRA_ARGS=--use-lxd -DPACKAGE=terminalpp
         sudo cmake --build . --target packages
-        # build/packages/terminalpp.deb
-        # build/packages/terminalpp.rpm
-        # build/packages/terminalpp.snap
+    - name: artifact-terminalpp-deb
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp.deb
+        path: build/packages/terminalpp.deb
+    - name: artifact-terminalpp-rpm
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp.rpm
+        path: build/packages/terminalpp.rpm
+    - name: artifact-terminalpp-snap
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp.snap
+        path: build/packages/terminalpp.snap
     - name: build-ropen
       run: |
         cd build
         sudo cmake .. -DPACKAGE=ropen
         sudo cmake --build . --target packages
-        # build/packages/ropen.deb
-        # build/packages/ropen.rpm
-        # build/packages/ropen.snap
-#    - name: build-bypass
-#      run: |
-#        cd build/release
-#        sudo cmake ../.. -DPACKAGE_INSTALL=tpp-bypass
-#        sudo cmake --build . --target packages
-#        # build/release/packages/tpp-bypass.deb
-#        # build/release/packages/tpp-bypass.rpm
+    - name: artifact-ropen-deb
+      uses: actions/upload-artifact@master
+      with:
+        name: ropen.deb
+        path: build/packages/ropen.deb
+    - name: artifact-ropen-rpm
+      uses: actions/upload-artifact@master
+      with:
+        name: ropen.rpm
+        path: build/packages/ropen.rpm
+    - name: artifact-ropen-snap
+      uses: actions/upload-artifact@master
+      with:
+        name: ropen.snap
+        path: build/packages/ropen.snap
+
   macOS:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: install-packages
       run: |
         bash scripts/setup-macos.sh
@@ -68,3 +126,166 @@ jobs:
         cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE=terminalpp
         cmake --build . --target packages
         # build/packages/terminalpp.zip
+    - name: artifact-terminalpp-zip
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp-macos.zip
+        path: build/packages/terminalpp.zip
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [ windows, linux, macOS ]
+    steps:
+    - uses: actions/checkout@v2
+    - name: install-snapcraft
+      run: |
+        bash scripts/github-actions-install-snapcraft.sh 
+    - name: login-snapcraft
+      env:
+        snapcraft_edge: ${{ secrets.snapcraft_edge }}     
+      run: |
+        echo $snapcraft_edge > snapcraft-edge-login
+        snapcraft login --with snapcraft-edge-login
+        rm snapcraft-edge-login
+    # first download the different packages for terminalpp, i.e. the msi installer produced by the windows job, the deb, rpm and snap packages produced by the linux job and the macos zipped bundle produced by the macos job
+    - name: get-terminalpp-msi
+      uses: actions/download-artifact@v1
+      with:
+        name: terminalpp.msi
+    - name: get-terminalpp-deb
+      uses: actions/download-artifact@v1
+      with:
+        name: terminalpp.deb
+    - name: get-terminalpp-rpm
+      uses: actions/download-artifact@v1
+      with:
+        name: terminalpp.rpm
+    - name: get-terminalpp-snap
+      uses: actions/download-artifact@v1
+      with:
+        name: terminalpp.snap
+    - name: get-terminalpp-macos-zip
+      uses: actions/download-artifact@v1
+      with:
+        name: terminalpp-macos.zip
+    # then download the ropen packages for linux
+    # TODO ropen package for macOS - but how to deploy? 
+    - name: get-ropen-deb
+      uses: actions/download-artifact@v1
+      with:
+        name: ropen.deb
+    - name: get-ropen-rpm
+      uses: actions/download-artifact@v1
+      with:
+        name: ropen.rpm
+    - name: get-ropen-snap
+      uses: actions/download-artifact@v1
+      with:
+        name: ropen.snap
+    # and finally download the executables for tpp-bypass for different WSL distributions
+    - name: get-tpp-bypass-ubuntu
+      uses: actions/download-artifact@v1
+      with:
+        name: tpp-bypass-ubuntu-18.04
+    - name: get-tpp-bypass-debian
+      uses: actions/download-artifact@v1
+      with:
+        name: tpp-bypass-debian
+    - name: get-tpp-bypass-openSUSE-Leap-15-1
+      uses: actions/download-artifact@v1
+      with:
+        name: tpp-bypass-openSUSE-Leap-15-1
+
+    # now that all artifacts have been downloaded, create the release for given tag
+    - name: create-release
+      id: create-release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: true
+        prerelease: false 
+    # and upload the artifacts, start with terminalpp
+    - name: upload-terminalpp-msi
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./terminalpp.msi/terminalpp.msi
+        asset_name: terminalpp.msi
+        asset_content_type: application/octet-stream
+    - name: upload-terminalpp-deb
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./terminalpp.deb/terminalpp.deb
+        asset_name: terminalpp.deb
+        asset_content_type: application/octet-stream
+    - name: upload-terminalpp-rpm
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./terminalpp.rpm/terminalpp.rpm
+        asset_name: terminalpp.rpm
+        asset_content_type: application/octet-stream
+    - name: upload-terminalpp-snap
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./terminalpp.snap/terminalpp.snap
+        asset_name: terminalpp.snap
+        asset_content_type: application/octet-stream
+    - name: upload-terminalpp-macos
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./terminalpp-macos.zip/terminalpp.zip
+        asset_name: terminalpp-macos.zip
+        asset_content_type: application/zip
+    # now upload the ropen packages
+    - name: upload-ropen-deb
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./ropen.deb/ropen.deb
+        asset_name: ropen.deb
+        asset_content_type: application/octet-stream
+    - name: upload-ropen-rpm
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./ropen.rpm/ropen.rpm
+        asset_name: ropen.rpm
+        asset_content_type: application/octet-stream
+    - name: upload-ropen-snap
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./ropen.snap/ropen.snap
+        asset_name: ropen.snap
+        asset_content_type: application/octet-stream
+    # finally, upload the tpp-bypass executables for different WSL distributions
+    - name: upload-tpp-bypass-ubuntu-18.04
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./tpp-bypass-ubuntu-18.04/tpp-bypass
+        asset_name: tpp-bypass-Ubuntu-18.04
+        asset_content_type: application/octet-stream
+    - name: upload-tpp-bypass-debian
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./tpp-bypass-debian/tpp-bypass
+        asset_name: tpp-bypass-Debian
+        asset_content_type: application/octet-stream
+    - name: upload-tpp-bypass-openSUSE-Leap-15-1
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./tpp-bypass-openSUSE-Leap-15-1/tpp-bypass
+        asset_name: tpp-bypass-openSUSE-Leap-15-1
+        asset_content_type: application/octet-stream
+    # now that all artifacts have been properly generated and correctly pushed to the release, it is time to release them to snapcraft as well
+    - name: release-to-snapcraft
+      run: |
+        sudo snapcraft push --release=edge terminalpp.snap/terminalpp.snap
