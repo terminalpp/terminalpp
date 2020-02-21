@@ -1190,6 +1190,22 @@ namespace ui {
                             fillRect(Rect::FromCorners(0, l, n, l + 1), state_.cell);
                         return;
                     }
+                    /* CSI <n> b - repeat the previous character n times (REP)
+                     */
+                    case 'b': {
+                        seq.setDefault(0, 1);
+                        if (buffer_.cursor().pos.x == 0 || buffer_.cursor().pos.x + seq[0] >= buffer_.cols()) {
+                            LOG(SEQ_ERROR) << "Repeat previous character out of bounds";
+                        } else {
+                            LOG(SEQ) << "Repeat previous character " << seq[0] << " times";
+                            Cell const & prev = buffer_.at(buffer_.cursor().pos - Point{1, 0});
+                            for (size_t i = 0, e = seq[0]; i < e; ++i) {
+                                buffer_.at(buffer_.cursor().pos) = prev;
+                                ++buffer_.cursor().pos.x;
+                            }
+                        }
+                        return;
+                    }
                     /* CSI <n> c - primary device attributes.
                      */
                     case 'c': {
