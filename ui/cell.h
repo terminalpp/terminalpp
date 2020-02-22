@@ -85,6 +85,16 @@ namespace ui {
             return raw_ != other.raw_;
         }
 
+		Attributes & operator |= (Attributes other) {
+			raw_ |= other.raw_;
+			return *this;
+		}
+
+		Attributes & operator &= (Attributes other) {
+			raw_ &= other.raw_;
+			return *this;
+		}
+
         Attributes & setUnderline(bool value = true) { 
             if (value) raw_ |= UNDERLINE; else raw_ &= ~UNDERLINE;
             return *this;
@@ -225,6 +235,11 @@ namespace ui {
 
 		Cell & setAttributes(Attributes attrs) {
 			attributes_ = attrs;
+			return *this;
+		}
+
+		Cell & addAttributes(Attributes attrs) {
+			attributes_ |= attrs;
 			return *this;
 		}
 

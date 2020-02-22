@@ -69,7 +69,8 @@ namespace ui {
 
 		void paint(Canvas& canvas) override {
 			canvas.fill(Rect::FromWH(width(), height()), background_);
-			canvas.lineOut(Point{0, 0}, text_, textColor_, HorizontalAlign::Left, font_);
+			canvas.setFg(textColor_).setFont(font_);
+			canvas.lineOut(Point{0, 0}, text_, HorizontalAlign::Left);
 		}
 
 		void mouseClick(int x, int y, MouseButton button, Key modifiers) override {

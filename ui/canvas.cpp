@@ -120,26 +120,26 @@ namespace ui {
         }
     }
 
-    void Canvas::lineOut(Rect const & rect, Char::iterator_utf8 start, Char::iterator_utf8 end, Color color, HorizontalAlign halign, Font font) {
+    void Canvas::lineOut(Rect const & rect, Char::iterator_utf8 start, Char::iterator_utf8 end, HorizontalAlign halign) {
         switch (halign) {
             case HorizontalAlign::Left:
-                drawLineLeft(rect, start, end, color, font);
+                lineOutLeft(rect, start, end);
                 break;
             case HorizontalAlign::Center:
-                drawLineCenter(rect, start, end, color, font);
+                lineOutCenter(rect, start, end);
                 break;
             case HorizontalAlign::Right:
-                drawLineRight(rect, start, end, color, font);
+                lineOutRight(rect, start, end);
                 break;
         }
     }
 
-    void Canvas::textOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign, Font font, bool wordWrap) {
+    void Canvas::textOut(Rect const & rect, std::string const & text, HorizontalAlign halign, bool wordWrap) {
         Char::iterator_utf8 lineStart = Char::BeginOf(text);
         Char::iterator_utf8 end = Char::EndOf(text);
         for (int i = 0, e = rect.height(); i < e; ++i) {
             Char::iterator_utf8 lineEnd = helpers::GetLine(lineStart, end, wordWrap ? rect.width() : 0);
-            lineOut(Rect::FromTopLeftWH(rect.topLeft() + Point{0, i}, rect.width(), 1), lineStart, lineEnd, color, halign, font);
+            lineOut(Rect::FromTopLeftWH(rect.topLeft() + Point{0, i}, rect.width(), 1), lineStart, lineEnd, halign);
             lineStart = lineEnd;
             if (lineStart == end)
                 return;
@@ -209,7 +209,7 @@ namespace ui {
             borderLineLeft(Point{from.x, sliderStart}, sliderSize, color, Border::Kind::Thick);
     }
 
-    bool Canvas::drawLineLeft(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end, Color color, Font font) {
+    bool Canvas::lineOutLeft(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end) {
         Point p{rect.topLeft()};
         int pe = rect.right();
         for (; begin < end; ++begin) {
@@ -217,42 +217,46 @@ namespace ui {
                 return true;
             if (Cell * cell = at(p)) {
                 (*cell).setCodepoint((*begin).codepoint())
-                       .setFont(font)
-                       .setFg(color);
+                       .setFont(font_)
+                       .setFg(fg_)
+                       .addAttributes(attrs_)
+                       .setDecoration(decorationColor_);
             }
-            p.x += font.width();
+            p.x += font_.width();
         }
         return false;
     }
 
-    bool Canvas::drawLineRight(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end, Color color, Font font) {
+    bool Canvas::lineOutRight(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end) {
         Point p = rect.topRight();
         int pe = rect.left();
         Char::iterator_utf8 i = end; //Char::EndOf(what), ie = Char::BeginOf(what);
         for (--i; i >= begin; --i) {
-            p.x -= font.width();
+            p.x -= font_.width();
             if (p.x < pe)
                 return true;
             if (Cell * cell = at(p)) {
                 (*cell).setCodepoint((*i).codepoint())
-                       .setFont(font)
-                       .setFg(color);
+                       .setFont(font_)
+                       .setFg(fg_)
+                       .addAttributes(attrs_)
+                       .setDecoration(decorationColor_);
             }
         }
         return false;
     }
 
-    bool Canvas::drawLineCenter(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end, Color color, Font font) {
-        int length{static_cast<int>(helpers::Length(begin, end) * font.width())};
+    bool Canvas::lineOutCenter(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end) {
+        int length{static_cast<int>(helpers::Length(begin, end) * font_.width())};
         // the whole text can be displayed
         if (length <= rect.width()) {
             int offset = static_cast<int>((rect.width() - length) / 2);
-            drawLineLeft(Rect::FromTopLeftWH(rect.left() + offset, rect.top(), length, rect.height()), begin, end, color, font);
+            lineOutLeft(Rect::FromTopLeftWH(rect.left() + offset, rect.top(), length, rect.height()), begin, end);
             return false;
         } else {
-            size_t offset = (length - rect.width()) / 2 / font.width();
+            size_t offset = (length - rect.width()) / 2 / font_.width();
             begin += offset;
-            drawLineLeft(rect, begin, end, color, font);
+            lineOutLeft(rect, begin, end);
             return true;
         }
     }

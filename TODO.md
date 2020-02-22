@@ -33,6 +33,7 @@ The following is very short description of the versions planned and their main n
 - change from msi to appx
 
 - add benchmarking
+- revisit how errors are reported and logged and how things are checked before releases
 
 ### v0.7
 

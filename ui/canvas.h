@@ -89,15 +89,72 @@ namespace ui {
             return Rect::FromWH(width(), height());
         }
 
+        //@{
+
+        Color fg() const {
+            return fg_;
+        }    
+
+        Brush const & bg() const {
+            return bg_;
+        }
+
+        Color decorationColor() const {
+            return decorationColor_;
+        }
+
+        Font font() const {
+            return font_;
+        }
+
+        Attributes attributes() const {
+            return attrs_;
+        }
+
+        Canvas & setFg(Color const & value) {
+            fg_ = value;
+            return *this;
+        }
+
+        Canvas & setBg(Brush const & value) {
+            bg_ = value;
+            return *this;
+        }
+
+        Canvas & setDecorationColor(Color const & value) {
+            decorationColor_ = value;
+            return *this;
+        }
+
+        Canvas & setFont(Font const & value) {
+            font_ = value;
+            return *this;
+        }
+
+        Canvas & setAttributes(Attributes const & value) {
+            attrs_ = value;
+            return *this;
+        }
+
+        //@}
+
 		/** Fills the given rectangle with specified brush. 
 
 		    See the Brush class for more details. 
 		 */
         void fill(Rect const & rect, Brush const & brush);
 
+        void fill(Rect const & rect) {
+            fill(rect, bg_);
+        }
+
         /** Fills the given selection with specified brush. 
          */
         void fill(Selection const & sel, Brush const & brush);
+
+        void fill(Selection const & sel) {
+            fill(sel, bg_);
+        }
 
         /** Sets the cell at given coordinates to the given template. 
          */
@@ -112,21 +169,21 @@ namespace ui {
             Any overflow is clipped, supports the UTF8 encoding in the text properly. 
          */
 
-        void lineOut(Rect const & rect, Char::iterator_utf8 start, Char::iterator_utf8 end, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{});
+        void lineOut(Rect const & rect, Char::iterator_utf8 start, Char::iterator_utf8 end, HorizontalAlign halign = HorizontalAlign::Left);
 
-        void lineOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{}) {
-            lineOut(rect, Char::BeginOf(text), Char::EndOf(text), color, halign, font);
+        void lineOut(Rect const & rect, std::string const & text, HorizontalAlign halign = HorizontalAlign::Left) {
+            lineOut(rect, Char::BeginOf(text), Char::EndOf(text), halign);
         }
 
-        void lineOut(Point const & from, std::string const & text, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{}) {
-            lineOut(Rect::FromTopLeftWH(from, width(), 1), Char::BeginOf(text), Char::EndOf(text), color, halign, font);
+        void lineOut(Point const & from, std::string const & text, HorizontalAlign halign = HorizontalAlign::Left) {
+            lineOut(Rect::FromTopLeftWH(from, width(), 1), Char::BeginOf(text), Char::EndOf(text), halign);
         }
 
         /** Outputs the given text line by line in the provided rectangle. 
          
             If wordWrap is true (default), lines that are too long will be broken up at word boundaries. 
          */
-        void textOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{}, bool wordWrap = true);
+        void textOut(Rect const & rect, std::string const & text, HorizontalAlign halign = HorizontalAlign::Left, bool wordWrap = true);
 
         /** Clears the given rectangle of any visible borders. 
          
@@ -269,9 +326,9 @@ namespace ui {
             
             Returns false if the drawn length was smaller or equal to the maxLength argument, true otherwise (i.e. whet clipping occured).
          */
-        bool drawLineLeft(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end, Color color, Font font);
-        bool drawLineRight(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end, Color color, Font font);
-        bool drawLineCenter(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end, Color color, Font font);
+        bool lineOutLeft(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end);
+        bool lineOutRight(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end);
+        bool lineOutCenter(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end);
 
         /** Fills given cell, if exists with given brush. 
          */
@@ -289,6 +346,16 @@ namespace ui {
 
         Canvas::Buffer & buffer_;
 
+        /* Current foreground color.  */
+        Color fg_;
+        /* Current background brush. */
+        Brush bg_;
+        /* Color for decorations (underline, strikethrough, etc.) */
+        Color decorationColor_;
+        /* Current font. */
+        Font font_;
+        /* Current cell attributes. */
+        Attributes attrs_;
     };
 
 

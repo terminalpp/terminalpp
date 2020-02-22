@@ -9,9 +9,7 @@
 
 [![Codacy grade](https://img.shields.io/codacy/grade/fd4f07b095634b9d90bbb9edb11fc12c?logo=codacy&style=flat-square)](https://app.codacy.com/manual/zduka/terminalpp)
 [![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/terminalpp/terminalpp?logo=LGTM&style=flat-square)](https://lgtm.com/projects/g/terminalpp/terminalpp?mode=list)
-
 [![Coverage Status](https://coveralls.io/repos/github/terminalpp/tpp/badge.svg?branch=master)](https://coveralls.io/github/terminalpp/terminalpp?branch=master)
-[![terminalpp](https://snapcraft.io//terminalpp/badge.svg)](https://snapcraft.io/terminalpp)
 
 This is the main development repository for the `terminal++` and its suppport repositories. 
 

@@ -57,22 +57,27 @@ namespace tpp {
             Box::paint(canvas);
             int x = 0; //(canvas.width() - 60) / 2;
             int y = 0; //(canvas.height() - 10) / 2;
-            canvas.lineOut(Point{x,y + 1}, "Terminal++", Color::White, HorizontalAlign::Center, ui::Font().setSize(2));
+            canvas.setFg(Color::White);
+            canvas.setFont(ui::Font{}.setSize(2));
+            canvas.lineOut(Point{x,y + 1}, "Terminal++", HorizontalAlign::Center);
+            canvas.setFont(ui::Font{});
+
             helpers::Stamp stamp = helpers::Stamp::Stored();
             if (stamp.version().empty()) {
-                canvas.lineOut(Point{x + 5, y + 3}, STR("commit:   " << stamp.commit() << (stamp.clean() ? "" : "*")), Color::White);
-                canvas.lineOut(Point{x + 15, y + 4}, stamp.time(), Color::White);
+                canvas.lineOut(Point{x + 5, y + 3}, STR("commit:   " << stamp.commit() << (stamp.clean() ? "" : "*")));
+                canvas.lineOut(Point{x + 15, y + 4}, stamp.time());
             } else {
-                canvas.lineOut(Point{x + 5, y + 3}, STR("version:  " << stamp.version()), Color::White);
-                canvas.lineOut(Point{x + 15, y + 4}, STR(stamp.commit() << (stamp.clean() ? "" : "*")), Color::White);
-                canvas.lineOut(Point{x + 15, y + 5}, stamp.time(), Color::White);
+                canvas.lineOut(Point{x + 5, y + 3}, STR("version:  " << stamp.version()));
+                canvas.lineOut(Point{x + 15, y + 4}, STR(stamp.commit() << (stamp.clean() ? "" : "*")));
+                canvas.lineOut(Point{x + 15, y + 5}, stamp.time());
             }
 #if (defined RENDERER_QT)
-            canvas.lineOut(Point{x + 5, y + 7}, STR("platform: " << ARCH << "(Qt) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()), Color::White);
+            canvas.lineOut(Point{x + 5, y + 7}, STR("platform: " << ARCH << "(Qt) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()));
 #else
-            canvas.lineOut(Point{x + 5, y + 7}, STR("platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()), Color::White);
+            canvas.lineOut(Point{x + 5, y + 7}, STR("platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()));
 #endif
-            canvas.lineOut(Point{x, y + 9}, "Hit a key to dismiss", Color::White, HorizontalAlign::Center);
+            canvas.setAttributes(Attributes{}.setBlink());
+            canvas.lineOut(Point{x, y + 9}, "Hit a key to dismiss", HorizontalAlign::Center);
         }
 
     private:

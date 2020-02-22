@@ -420,6 +420,13 @@ namespace ui {
 		 */
 		Font fillFont;
 
+        Brush():
+            color(Color::None),
+            fill(helpers::Char::NUL),
+            fillColor(Color::None),
+            fillFont(Font{}) {
+        }
+
 		/** Creates a simple brush with only a background color. 
 
 		    If the background color is not opaque, fill character is set to space, otherwise the fill character is set to NUL and its color to None. This means that if the background color is transparent, the contents of the cell will be kept as is, otherwise the cell will be erased.
