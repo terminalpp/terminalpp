@@ -115,6 +115,29 @@ namespace helpers {
 		return result;
 	}
 
+    /** Returns the end of a line.
+	 */
+	inline Char::iterator_utf8 GetLine(Char::iterator_utf8 start, Char::iterator_utf8 end, size_t wordWrapAt = 0) {
+		Char::iterator_utf8 i = start;
+		while (--wordWrapAt != 0) {
+			// if this is the end of the string, return immediately
+			if (i == end)
+			    return i;
+			if (Char::IsLineEnd(*i))
+			    return i;
+			++i;
+		}
+		// here the current line is longer than the word wrap limit, we must backtrack to find the nearest word delimiter
+		Char::iterator_utf8 ii = i;
+		while (ii != start) {
+			if (Char::IsWordSeparator(*ii))
+			    return ii;
+			--ii;
+		}
+		// if no separator has been found, then return the word wrapped limit
+		return i;
+	}
+
 	/** Splits the given string by given delimiter and trims all substrings. 
 	 */
 	inline std::vector<std::string> SplitAndTrim(std::string const& what, std::string const& delimiter) {

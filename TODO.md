@@ -23,35 +23,38 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- check ropen and bypass downloads paths
-
-- confirmation box for paste and for remote files
-- lineOut should center/top/bottom vertically too
+- confirmation box for paste and for remote files (see https://thejh.net/misc/website-terminal-copy-paste)
 
 - simpler UI framework
 - remove / refactor builders
 - shapes.h is areally bad name for the classes defined therein
 
-- create proper documentation and figure out how to release it
+- snapcraft build has dirty stamp, see why & fix
+- change from msi to appx
+
 - add benchmarking
 
 ### v0.7
 
-- systray support
-- multiple sessions
-- maybe platform notifications
-- proper multiplexing of the terminal sessions (wrt remote files)
-- remote files should use absolute path, or some other form of same file detection
+- multiple sessions (in same window)
 
 ### v0.8
 
+- multiple sessions in multiple windows or tiling
 - better bug reporting support and optional checking of updates for non-store installers
+- systray support & platform notifications
+
+### v0.9
+
+- proper multiplexing of the terminal sessions (wrt remote files)
+- remote files should use absolute path, or some other form of same file detection
+
 
 ### v1.0
 
 - polish and bugfixing of stuff, some beta releases and "testing"
 - remove the tpp application from snap (tpp.yaml)
-- definitely add windows store submission
+- change from msi to appx, add windows store submission if possible 
 
 ### Later
 
@@ -65,7 +68,6 @@ The following is very short description of the versions planned and their main n
 - onChange handler for generic changes
 - make canvas do more
 - xim is wrong, it works on linux, but fails on mac
-- then at some point in the future, helpers, tpp and ui+vterm should go in separate repos
 - how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
 - add transparency for entire window? on Windows - https://msdn.microsoft.com/en-us/magazine/ee819134.aspx?f=255&MSPPError=-2147217396 and use layered windows
 

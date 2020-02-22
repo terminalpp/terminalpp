@@ -29,7 +29,6 @@ namespace ui {
 
         Canvas(Widget const * widget);
 
-
 	    /** Copy constructor. 
 		 
 		    Increases the buffer's lock depth. 
@@ -112,11 +111,22 @@ namespace ui {
          
             Any overflow is clipped, supports the UTF8 encoding in the text properly. 
          */
-        void lineOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{});
 
-        void lineOut(Point const & start, std::string const & text, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{}) {
-            lineOut(Rect::FromCorners(start, Point{width(), start.y + 1}), text, color, halign, font);
+        void lineOut(Rect const & rect, Char::iterator_utf8 start, Char::iterator_utf8 end, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{});
+
+        void lineOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{}) {
+            lineOut(rect, Char::BeginOf(text), Char::EndOf(text), color, halign, font);
         }
+
+        void lineOut(Point const & from, std::string const & text, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{}) {
+            lineOut(Rect::FromTopLeftWH(from, width(), 1), Char::BeginOf(text), Char::EndOf(text), color, halign, font);
+        }
+
+        /** Outputs the given text line by line in the provided rectangle. 
+         
+            If wordWrap is true (default), lines that are too long will be broken up at word boundaries. 
+         */
+        void textOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign = HorizontalAlign::Left, Font font = Font{}, bool wordWrap = true);
 
         /** Clears the given rectangle of any visible borders. 
          
@@ -186,11 +196,6 @@ namespace ui {
 			bool valid() const {
 				return valid_;
 			}
-
-            // TODO this should die !!!!
-            bool contains(int x, int y) const {
-                return rect_.contains(Point{x, y});
-            }
 
             // TODO this should die too I think. 
             // takes root window's coordinates and converts them to widget's coordinates 

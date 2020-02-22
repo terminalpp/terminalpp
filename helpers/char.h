@@ -338,6 +338,56 @@ namespace helpers {
 			return 1;
 		}
 
+		/** Returns true if the given character is whitespace
+		 
+		    TODO only works on ASCII characters for now, extra UTF whitespace characters should be added.
+		 */
+		static bool IsWhitespace(Char const & what) {
+			switch (what.bytes_[0]) {
+				case '\t':
+				case '\r':
+				case '\n':
+				case ' ':
+				    return true;
+				default:
+				    return false;
+			}
+		}
+
+		/** Returns true if the given character is end of line. 
+		 
+		    TODO only works on ASCII characters for now, extra UTF end of line codepoints should be added.
+		 */
+		static bool IsLineEnd(Char const & what) {
+			switch (what.bytes_[0]) {
+				case '\n':
+				    return true;
+				default:
+				    return false;
+			}
+		}
+
+		/** Returns true if the given character is word separator. 
+		 
+		    TODO only works on ASCII characters for now, extra UTF word separators should be added.
+		 */
+		static bool IsWordSeparator(Char const & what) {
+			switch (what.bytes_[0]) {
+				case '\t':
+				case '\r':
+				case '\n':
+				case ' ':
+				case ',':
+				case '.':
+				case ';':
+				case '!':
+				case '?':
+				    return true;
+				default:
+				    return false;
+			}
+		}
+
 	private:
 
 	    Char(unsigned char first, unsigned char second = 0, unsigned char third = 0, unsigned char fourth = 0) {

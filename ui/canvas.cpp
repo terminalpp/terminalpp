@@ -120,17 +120,30 @@ namespace ui {
         }
     }
 
-    void Canvas::lineOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign, Font font) {
+    void Canvas::lineOut(Rect const & rect, Char::iterator_utf8 start, Char::iterator_utf8 end, Color color, HorizontalAlign halign, Font font) {
         switch (halign) {
             case HorizontalAlign::Left:
-                drawLineLeft(rect, Char::BeginOf(text), Char::EndOf(text), color, font);
+                drawLineLeft(rect, start, end, color, font);
                 break;
             case HorizontalAlign::Center:
-                drawLineCenter(rect, Char::BeginOf(text), Char::EndOf(text), color, font);
+                drawLineCenter(rect, start, end, color, font);
                 break;
             case HorizontalAlign::Right:
-                drawLineRight(rect, Char::BeginOf(text), Char::EndOf(text), color, font);
+                drawLineRight(rect, start, end, color, font);
                 break;
+        }
+    }
+
+    void Canvas::textOut(Rect const & rect, std::string const & text, Color color, HorizontalAlign halign, Font font, bool wordWrap) {
+        Char::iterator_utf8 lineStart = Char::BeginOf(text);
+        Char::iterator_utf8 end = Char::EndOf(text);
+        for (int i = 0, e = rect.height(); i < e; ++i) {
+            Char::iterator_utf8 lineEnd = helpers::GetLine(lineStart, end, wordWrap ? rect.width() : 0);
+            lineOut(Rect::FromTopLeftWH(rect.topLeft() + Point{0, i}, rect.width(), 1), lineStart, lineEnd, color, halign, font);
+            lineStart = lineEnd;
+            if (lineStart == end)
+                return;
+            ++lineStart;
         }
     }
 
