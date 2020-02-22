@@ -24,6 +24,7 @@ The following is very short description of the versions planned and their main n
 ##### TODO
 
 - confirmation box for paste and for remote files (see https://thejh.net/misc/website-terminal-copy-paste)
+- how to deal with cursor of inactive terminal in active window - this seems to lead to multiple cursors per window and how to handle them... (?)
 
 - simpler UI framework
 - remove / refactor builders

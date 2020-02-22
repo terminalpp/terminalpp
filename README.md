@@ -11,76 +11,76 @@
 [![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/terminalpp/terminalpp?logo=LGTM&style=flat-square)](https://lgtm.com/projects/g/terminalpp/terminalpp?mode=list)
 [![Coverage Status](https://coveralls.io/repos/github/terminalpp/tpp/badge.svg?branch=master)](https://coveralls.io/github/terminalpp/terminalpp?branch=master)
 
-This is the main development repository for the `terminal++` and its suppport repositories. 
 
-# Releases
+> Please note that `terminalpp` is in an  alpha stage and there may (and will) be rough edges. That said, it has been used by a few people as their daily driver with only minor issues. If you encounter a problem, please file an issue!
 
-> Please note that `terminalpp` is in an  alpha stage and there may (and will be) rough edges. That said, it has been used by a few people as their daily driver with only minor issues. Note that backwards compatibility with previous versions is not guaranteed before release 1.0, although it should mostly work from version 0.5 up.
+This is the main development repository for the `terminalpp` and its suppport repositories. For more details about how to install `terminalpp` on your machine please visit the [homepage](https://terminalpp.com). This readme provides information on how to build the repository from source only. 
 
-Major & minor releases are released via github where the binary packages for supported platforms can be downloaded. Github actions provide binaries for every successful push.
+# Supported Platforms
 
-See the file `CHANGELOG.md` for details about all released versions. 
-
-## Snaps
-
-On each release, new snap version is released to the *edge* channel. The corresponding branch is `release-edge`, i.e. any new push to the branch will automatically upload new version to snap store.
-
-> In the future other channels will also be supported. 
-
-## Windows Store
-
-> Release in Windows store is planned, but has not happened yet.
+Platform | Renderer | Notes
+---------|----------|---------------
+Windows  | Native   | uses DirectWrite
+Linux    | Native   | uses X11
+macOS    | QT       | limited testing as I do not have real Apple computer
 
 # Building From Sources
 
-`cmake` is used to build the terminal and related projects as well as to orchestrate the generation of installation packages. First the related projects must be fetched, i.e. :
-
-- `tpp-bypass` - containing the Windows ConPTY bypass directly to `WSL`
-- `ropen` - a simple app that transfers remote files through the terminal connection so that they can be opened locally
-- `website` - `terminalpp` website
-
-> To clone them all, the `scripts/setup-repos.sh` script can be executed (works with `bash` and `cmd.exe`), which uses the `https` connection. In case `ssh` keys are used the `scripts/setup-repos-ssh.sh` should be executed instead.
-
-## Prerequisites
-
-`terminalpp` has very minimal dependencies. On Windows latest [Visual Studio](https://visualstudio.microsoft.com) must be installed (or [Visual Studio Code](https://code.microsoft.com) with `c++` support) and [cmake](https://cmake.org), while the packagres required on Linux can be automatically installed via the `scripts/setup-linux.sh`.
-
-## Building via CMake
-
-The whole build process on all platforms is automated via `cmake`. The following are examples on how to create release build for the supported platforms:
+`cmake` is used to build the terminal and related projects as well as to orchestrate the generation of installation packages. Following sections describe the build process on the different platforms:
 
 > A good way to start is to look at the CI configurations in `.github/workflows` folder where build steps for each supported platform are detailed. 
 
-### Windows
+## Windows 
+
+The latest Windows 10 stable version is always supported. `terminalpp` may run on older Windows 10 versions since Fall 2018 (first ConPTY release). Visual Studio 2019 for C++ and Win32 apps must be installed. 
+
+Build process:
 
     mkdir build
     cd build
-    cmake .. 
-    cmake --build . --config Release
+    cmake ..
+    cmake --build . --config Release 
 
-### Linux
+For details about how to build the `tpp-bypass` app, refer to the Linux instructions below as bypass is built inside the WSL it is intended for.
+
+## Linux
+
+Tested on latest and LTS versions of Ubuntu. Before building the prerequisite packages must be installed via the `setup-linux.sh` script, i.e.:
+
+    bash scripts/setup-linux.sh
+
+Then build the application using the following commands:
 
     mkdir -p build/release
     cd build/release
     cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
+    cmake --build .
 
-## Building Installation packages
+## macOS
 
-By default, installation packages for `terminalpp` are created for the given platform and subject to the availability of the package creation tools (`WIX` toolset for Windows, `snapcraft`, and DEB and RPM tools on Linux).
+macOS Catalina 10.15 and above is supported (due to lack of `std::filesystem` in previous releases). On macOS native rendere is not available and QT must be used instead. Before installation, `brew` must be available. To install prerequisites, run the setup script, i.e: 
 
-To create them, build the `packages` target:
+    bash scripts/setup-macos.sh
 
-    cmake --build . --target packages
+Then build the application using the following commands:
 
-> Since `cpack` is not able to create multiple packages during a single build, multiple conditional builds must be executed if packages for the `bypass` and `ropen` are needed as well. 
+    mkdir -p build/release
+    cd build/release
+    cmake ../.. -DCMAKE_BUILD_TYPE=Release
+    cmake --build . 
 
-To build installation packages for `ropen` and `bypass`, the project must be reconfigured with the `-DPACKAGE_INSTALL=tpp-ropen` or `-DCPACKAGE_INSTALL=tpp-bypass` respectively. 
+If QT is not found, try adding adding the following to the cmake command `-DCMAKE_PREFIX_PATH=/usr/local/opt/qt`.
 
-> Installation packages are also regularly built every time push is made to the repository. These can be downloaded via the Github actions artifacts.
+# Building Installation Packages
 
-### Manual installation
+Use the `packages` target and `-DPACKAGE=xxx` `cmake` configuration option to determine which packages should be bold (`xxx` can be `terminalpp` (default), `ropen`, or `tpp-bypass`). 
+
+Depending on the availability of the packaging tools (WIX, rpmbuild, snapcraft, etc.) the respective packages will be created in the `packages` directory inside the build. 
+
+> For more details see the github action `packages`.
+
+## Manual installation
 
 Once the package to be creates has been selected via `-DPACKAGE_INSTALL` (or left default), the default `install` target can be used to install the respective applications (Linux only):
 
     sudo cmake --build . --target install
-
