@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "ui/widgets/label.h"
+#include "ui/widgets/panel.h"
 #include "ui/root_window.h"
 #include "ui/builders.h"
 
@@ -13,6 +14,65 @@
 
 
 namespace tpp {
+
+    /** An alert displayed when pasting into the terminal. 
+     */
+    class PasteAlert : public ui::Panel, public ui::Modal<PasteAlert> {
+    public:
+        PasteAlert() {
+            showHeader_ = true;
+            headerFont_.setBold();
+            headerColor_ = ui::Color::White;
+            headerBackground_ = ui::Color{255,0,0};
+            headerText_ = "Are you sure you want to paste this?";
+            setBorder(ui::Border::Thin(ui::Color::Red));
+            setBackground(ui::Color{96, 0, 0});
+            setWidthHint(ui::Layout::SizeHint::Auto());
+            setHeightHint(ui::Layout::SizeHint::Fixed());
+            setLayout(ui::Layout::Maximized);
+            attachChild(contents_ = new ui::Label());
+        }
+        
+        void show(ui::RootWindow * root, Widget * target, std::string const & contents) {
+            contents_->setText(contents);
+            target_ = target;
+            // resize to almost nothing so that the show will resize the panel accordingly wrt the actual label size. 
+            resize(1, 1);
+            Modal<PasteAlert>::show(root, ui::Layout::HorizontalBottom);
+        }
+
+        void dismiss() override {
+            target_ = nullptr;
+            Modal<PasteAlert>::dismiss();
+        }
+
+    protected:
+
+        /** TODO this is an ugly hack, should be fixed by allowing the panel and label to be autosized, but I need to figure out a simple API for that. 
+         */
+        void updateSize(int width, int height) override {
+            if (rootWindow() != nullptr) {
+                height = ui::Canvas::TextHeight(contents_->text(), ui::Font{}, width) + 1;
+                if (height > rootWindow()->height())
+                    height = rootWindow()->height();
+                contents_->resize(width, height - 1);
+            }
+            Panel::updateSize(width, height);
+        }
+
+        void keyDown(ui::Key k) override {
+            if (k == ui::Key::V + ui::Key::Ctrl + ui::Key::Shift) {
+                target_->paste(contents_->text());
+                dismiss();
+            } else if (k == ui::Key::Esc) {
+                dismiss();
+            }
+        }
+
+    private:
+        ui::Label * contents_;
+        Widget * target_;
+    };
 
     /** A window displaying single session. 
       
@@ -53,12 +113,13 @@ namespace tpp {
             terminal_->setCursor(config.session.cursor());
             about_ = new AboutBox();
 
+            pasteAlert_ = new PasteAlert();
+
             focusWidget(terminal_, true);
             if (! config.session.log().empty()) {
                 logFile_.open(config.session.log());
                 terminal_->onInput.setHandler(&Session::terminalInputProcessed, this);
             }
-
         }
 
         ~Session() override {
@@ -72,6 +133,19 @@ namespace tpp {
             RootWindow::attachRenderer(renderer);
             // start the terminal once all configuration is done
             terminal_->start();
+        }
+
+        void paste(Widget * target, std::string const & contents) override {
+            if (contents.empty())
+                return;
+            if (target != terminal_)
+                RootWindow::paste(target, contents);
+            std::string confirmPaste = Config::Instance().session.confirmPaste();
+            // if we are pasting to the terminal, the warning needs to be displayed
+            if (confirmPaste == "always" || (confirmPaste == "multiline" && helpers::NumLines(contents) > 1))
+                pasteAlert_->show(this, target, contents);
+            else
+                RootWindow::paste(target, contents);
         }
 
     private:
@@ -153,7 +227,7 @@ namespace tpp {
                 closeRenderer();
             } else {
                 setIcon(Icon::Default);
-                if (k == SHORTCUT_ABOUT)
+                if (! isModal() && k == SHORTCUT_ABOUT)
                     about_->show(this);
                 else
                     ui::RootWindow::keyDown(k);
@@ -167,6 +241,7 @@ namespace tpp {
         ui::Terminal::PTY * pty_;
         ui::Terminal * terminal_;
         AboutBox * about_;
+        PasteAlert * pasteAlert_;
 
         std::ofstream logFile_;
 

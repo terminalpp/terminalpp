@@ -55,7 +55,13 @@ namespace ui {
         using Container::attachChild;
         using Container::detachChild;
 
-        void showModalWidget(Widget * w, Widget * keyboardFocus);
+        void showModalWidget(Widget * w, Widget * keyboardFocus, Layout * layout = Layout::Maximized);
+
+        /** Returns true if the root window is currently covered with a modal widget. 
+         */
+        bool isModal() const {
+            return modalWidgetActive_;
+        }
 
         void hideModalWidget();
 
@@ -268,6 +274,11 @@ namespace ui {
 
         void paint(Canvas & canvas) override;
 
+
+        virtual void paste(Widget * target, std::string const & contents) {
+            target->paste(contents);
+        }
+
     private:
 
         friend class Canvas;
@@ -282,6 +293,13 @@ namespace ui {
          */
         virtual void requestClipboardContents(Widget * sender);
         virtual void requestSelectionContents(Widget * sender);
+
+        /** Triggered by the renderer when paste event is received. 
+         
+            Determines whether there is known widget that requested paste and if so, calls the paste(Widget*, std::string &) method that is responsible for actually delivering the contents of the keyboard to the target widget. 
+
+            Clears the paste state. 
+         */
         void paste(std::string const & contents) override;
 
         // Clipboard and selection updates

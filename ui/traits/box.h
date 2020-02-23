@@ -39,7 +39,7 @@ namespace ui {
         using TraitBase<Box, T>::downcastSetForceOverlay;
 
         Box():
-            background_(Color::Black) {
+            background_(Color::None) {
         }
 
         explicit Box(Color color):

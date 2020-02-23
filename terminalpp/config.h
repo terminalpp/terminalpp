@@ -220,6 +220,12 @@ namespace tpp {
 					return result;
 				}
 			);
+			CONFIG_OPTION(
+				confirmPaste,
+				"Determines whether pasting into terminal should be explicitly confirmed. Allowed values are 'never', 'always', 'multiline'.",
+				"\"multiline\"",
+			    std::string
+			);
 			CONFIG_GROUP(
 				cursor,
 			    "Cursor properties",

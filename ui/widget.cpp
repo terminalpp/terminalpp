@@ -139,10 +139,11 @@ namespace ui {
 	}
 
 	void Widget::detachRootWindow() {
-		ASSERT(visibleRect_.rootWindow() != nullptr);
-		visibleRect_.rootWindow()->widgetDetached(this);
-		visibleRect_.detach();
-		//visibleRect_.root = nullptr;
+		// it is possible the visible rect is not attached in case the widget was never drawn
+		if (visibleRect_.rootWindow() != nullptr) {
+			visibleRect_.rootWindow()->widgetDetached(this);
+			visibleRect_.detach();
+		}
 	}
 
 } // namespace ui

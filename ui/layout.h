@@ -30,7 +30,9 @@ namespace ui {
 
 		/** Returns a layoyt which organizes the children horizontally. 
 		 */
-		static Layout * Horizontal;
+		static Layout * HorizontalTop;
+
+		static Layout * HorizontalBottom;
 
 		/** Returns a layout which organizes the children vertically. 
 		 */
@@ -51,6 +53,12 @@ namespace ui {
 		 */
 		virtual void calculateOverlay(Container* container, bool initialOverlay);
 
+		/** \name Widget Accessors
+		   
+		    Accessors to widget's private and protected members so that they are available for layout subclasses.
+		 */
+		//@{
+
 		/** Returns the children of given container. 
 		 */
 		std::vector<Widget*> const& childrenOf(Container* container);
@@ -60,6 +68,8 @@ namespace ui {
 		void setOverlayOf(Widget * child, bool value);
 
 		void relayoutWidget(Widget* child, int width, int height);
+		//@}
+
 
 	}; // ui::Layout
 

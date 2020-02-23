@@ -49,9 +49,6 @@
 	
     \subsection widgetInvalidation Invalidating a widget
 
-
-
-
 	ui::Widget::getClientCanvas()
 
 	When the widget is drawn, the children of the widget should be drawn next, if any. The children may not necessarily be drawn using the same canvas as the widget and the task of this method is to return the canvas on which the children should be drawn given the widget's own canvas as an argument. 
@@ -255,6 +252,13 @@ namespace ui {
 		 */
 		virtual void repaint();
 
+		/** Whenever user or widget requested clipboard or selection contents is received, the paste method is called with the contents. 
+		 */
+		virtual void paste(std::string const & contents) {
+			MARK_AS_UNUSED(contents);
+			// do nothing by default
+		}
+
     protected:
 
 		/** Widget is friends with TraitBase so that the traits can get access to its protected functions via methods in the TraitBase class. While this is not perfect, it is better than not having traits at all. 
@@ -371,13 +375,6 @@ namespace ui {
 
 		virtual void selectionInvalidated() {
 			ASSERT(false) << "selectionInvalidated must be implemented at widgets which handle selection";
-		}
-
-		/** Whenever user or widget requested clipboard or selection contents is received, the paste method is called with the contents. 
-		 */
-		virtual void paste(std::string const & contents) {
-			MARK_AS_UNUSED(contents);
-			// do nothing by default
 		}
 
 		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {

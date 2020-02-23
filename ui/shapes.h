@@ -87,6 +87,10 @@ namespace ui {
 			bottom(bottom) {
 		}
 
+        static Border None() {
+            return Border{};
+        }
+
         static Border Thin(Color color) {
             return Border{color, Kind::Thin, Kind::Thin, Kind::Thin, Kind::Thin};
         }

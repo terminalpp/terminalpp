@@ -59,15 +59,29 @@ namespace ui {
             }
         }; // MaximizedImpl
 
-        /** Layouts all the children as horizontally stacked bars. 
-
-            Does not resize widgets with fixed-size hint, all percentage hints are relative to the total available height - the fixed widget's height being 100%. The autosized widgets will each get equal share of the remaining available height. The last autosized widget fills up the rest of the parent's container. 
-
-            Unless hinted otherwise, width of all children will be set to the width of the parent's canvas.
-        */
         class HorizontalImpl : public Layout {
         protected:
-            void relayout(Container* container, Canvas const& clientCanvas) override {
+            /** None of the children are overlaid.
+             */
+            void calculateOverlay(Container* container, bool initialOverlay) override {
+                for (Widget* child : childrenOf(container))
+                    setOverlayOf(child, initialOverlay);
+            }
+
+            void layout(Container * container, Widget* child, int top, int maxWidth, int height) {
+                if (child->widthHint().isFixed()) 
+                    setChildGeometry(container, child, 0, top, child->width(), height);
+                else if (child->widthHint().isAuto()) 
+                    setChildGeometry(container, child, 0, top, maxWidth, height);
+                else 
+                    setChildGeometry(container, child, 0, top, maxWidth * child->widthHint().pct() / 100, height);
+            }
+
+            /** Sets the sizes for all visible children of the specified element. 
+
+                This leaves the relayout method with only the task to actually position the elements according to the layout rules.  
+             */
+            bool setChildrenSizes(Container * container, Canvas const & clientCanvas) {
                 int w = clientCanvas.width();
                 std::vector<Widget*> const& children = childrenOf(container);
                 // first determine the number of visible children to layout, the total height occupied by children with fixed height and number of children with height hint set to auto
@@ -86,7 +100,7 @@ namespace ui {
                     }
                 // nothing to layout if there are no kids
                 if (visibleChildren == 0)
-                    return;
+                    return false;
                 // set the width and height of the percentage wanting children
                 int totalHeight = clientCanvas.height();
                 int availableHeight = std::max(0, totalHeight - fixedHeight);
@@ -110,7 +124,24 @@ namespace ui {
                         }
                     }
                 }
+                return true;
+            }
+
+        }; // HorizontalImpl
+
+        /** Layouts all the children as horizontally stacked bars. 
+
+            Does not resize widgets with fixed-size hint, all percentage hints are relative to the total available height - the fixed widget's height being 100%. The autosized widgets will each get equal share of the remaining available height. The last autosized widget fills up the rest of the parent's container. 
+
+            Unless hinted otherwise, width of all children will be set to the width of the parent's canvas.
+        */
+        class HorizontalTopImpl : public HorizontalImpl {
+        protected:
+            void relayout(Container* container, Canvas const& clientCanvas) override {
+                if (! setChildrenSizes(container, clientCanvas))
+                    return; // nothing to layout
                 // finally, when the sizes are right, we must reposition the elements
+                std::vector<Widget*> const& children = childrenOf(container);
                 int top = 0;
                 for (Widget* child : children) {
                     if (child->visible()) {
@@ -120,22 +151,25 @@ namespace ui {
                 }
             }
 
-            /** None of the children are overlaid.
-             */
-            void calculateOverlay(Container* container, bool initialOverlay) override {
-                for (Widget* child : childrenOf(container))
-                    setOverlayOf(child, initialOverlay);
+        }; // HorizontalTopImpl
+
+        class HorizontalBottomImpl : public HorizontalImpl {
+        protected:
+            void relayout(Container* container, Canvas const& clientCanvas) override {
+                if (! setChildrenSizes(container, clientCanvas))
+                    return; // nothing to layout
+                // finally, when the sizes are right, we must reposition the elements
+                std::vector<Widget*> const& children = childrenOf(container);
+                int bottom = clientCanvas.height();
+                for (Widget* child : children) {
+                    if (child->visible()) {
+                        setChildGeometry(container, child, 0, bottom - child->height(), child->width(), child->height());
+                        bottom -= child->height();
+                    }
+                }
             }
 
-            void layout(Container * container, Widget* child, int top, int maxWidth, int height) {
-                if (child->widthHint().isFixed()) 
-                    setChildGeometry(container, child, 0, top, child->width(), height);
-                else if (child->widthHint().isAuto()) 
-                    setChildGeometry(container, child, 0, top, maxWidth, height);
-                else 
-                    setChildGeometry(container, child, 0, top, maxWidth * child->widthHint().pct() / 100, height);
-            }
-        }; // HorizontalImpl
+        }; // HorizontalBottomImpl
 
         /** Layouts all the children as vertically stacked bars.
 
@@ -221,7 +255,9 @@ namespace ui {
 
     Layout * Layout::Maximized = new MaximizedImpl();
 
-    Layout * Layout::Horizontal = new HorizontalImpl();
+    Layout * Layout::HorizontalTop = new HorizontalTopImpl();
+
+    Layout * Layout::HorizontalBottom = new HorizontalBottomImpl();
 
     Layout * Layout::Vertical = new VerticalImpl();
 

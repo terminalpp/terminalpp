@@ -115,6 +115,16 @@ namespace helpers {
 		return result;
 	}
 
+	/** Returns the number of lines in given string. 
+	 */
+	inline size_t NumLines(std::string const & text) {
+		size_t result = 1;
+		for (Char::iterator_utf8 i = Char::BeginOf(text), end = Char::EndOf(text); i != end; ++i)
+		    if (Char::IsLineEnd(*i))
+			    ++result;
+		return result;
+	}
+
     /** Returns the end of a line.
 	 */
 	inline Char::iterator_utf8 GetLine(Char::iterator_utf8 start, Char::iterator_utf8 end, size_t wordWrapAt = 0) {

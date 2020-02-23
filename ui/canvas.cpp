@@ -138,7 +138,7 @@ namespace ui {
         Char::iterator_utf8 lineStart = Char::BeginOf(text);
         Char::iterator_utf8 end = Char::EndOf(text);
         for (int i = 0, e = rect.height(); i < e; ++i) {
-            Char::iterator_utf8 lineEnd = helpers::GetLine(lineStart, end, wordWrap ? rect.width() : 0);
+            Char::iterator_utf8 lineEnd = helpers::GetLine(lineStart, end, wordWrap ? (rect.width() / font_.width()) : 0);
             lineOut(Rect::FromTopLeftWH(rect.topLeft() + Point{0, i}, rect.width(), 1), lineStart, lineEnd, halign);
             lineStart = lineEnd;
             if (lineStart == end)
@@ -209,8 +209,22 @@ namespace ui {
             borderLineLeft(Point{from.x, sliderStart}, sliderSize, color, Border::Kind::Thick);
     }
 
+    int Canvas::TextHeight(Char::iterator_utf8 begin, Char::iterator_utf8 end, Font font, int maxWidth, bool wordWrap) {
+        Char::iterator_utf8 lineStart = begin;
+        int result = 0;
+        while (true) {
+            Char::iterator_utf8 lineEnd = helpers::GetLine(lineStart, end, wordWrap ? (maxWidth / font.width()) : 0);
+            result += font.height();
+            lineStart = lineEnd;
+            if (lineStart == end)
+                return result;
+            ++lineStart;
+        }
+        return result;
+    }
+
     bool Canvas::lineOutLeft(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end) {
-        Point p{rect.topLeft()};
+        Point p{rect.topLeft() + Point{0, font_.height() - 1}};
         int pe = rect.right();
         for (; begin < end; ++begin) {
             if (p.x >= pe)
@@ -228,7 +242,7 @@ namespace ui {
     }
 
     bool Canvas::lineOutRight(Rect const & rect, Char::iterator_utf8 begin, Char::iterator_utf8 end) {
-        Point p = rect.topRight();
+        Point p{rect.topLeft() + Point{0, font_.height() - 1}};
         int pe = rect.left();
         Char::iterator_utf8 i = end; //Char::EndOf(what), ie = Char::BeginOf(what);
         for (--i; i >= begin; --i) {

@@ -23,7 +23,12 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
+- resize the contents label and alert panel when shown
+- add option that tells when to show the paste confirmation
 - confirmation box for paste and for remote files (see https://thejh.net/misc/website-terminal-copy-paste)
+
+- design proper and simple layouts and autosizing of widgets
+
 - how to deal with cursor of inactive terminal in active window - this seems to lead to multiple cursors per window and how to handle them... (?)
 
 - simpler UI framework

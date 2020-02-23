@@ -220,6 +220,14 @@ namespace ui {
             }
         }
 
+        /** Determines the height required for the gievn text to be displayed. 
+         */ 
+        static int TextHeight(Char::iterator_utf8 begin, Char::iterator_utf8 end, Font font, int maxWidth, bool wordWrap = true);
+
+        static int TextHeight(std::string const & text, Font font, int maxWidth, bool wordWrap = true) {
+            return TextHeight(Char::BeginOf(text), Char::EndOf(text), font, maxWidth, wordWrap);
+        }
+
     private:
         friend class Widget;
         friend class Container;

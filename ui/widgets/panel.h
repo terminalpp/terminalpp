@@ -13,45 +13,36 @@ namespace ui {
 	public:
 
 		Panel(int width = 0, int height = 0) :
-			Container(width, height),
-			childMargin_{0, 0, 0, 0} {
+			Container{width, height},
+			showHeader_{false} {
 		}
 
 		Rect childRect() const override {
-			return Rect::FromCorners(childMargin_.left, childMargin_.top, width() - childMargin_.right, height() - childMargin_.bottom);
+			if (showHeader_) 
+				return Rect::FromCorners(0, headerFont_.height(), width(), height());
+			else
+				return Rect::FromCorners(0, 0, width(), height());
 		}
 
 	protected:
 
-		Margin const& childMargin() const {
-			return childMargin_;
-		}
-
-		void setChildMargin(Margin const& value) {
-			if (value != childMargin_) {
-				updateChildMargin(value);
-				scheduleRelayout();
-				repaint();
-			}
-		}
-
-		/** Updates the value of the widget's border and invalidates the widget.
-		 */
-		virtual void updateChildMargin(Margin const& value) {
-			childMargin_ = value;
-			invalidate();
-		}
-
 		void paint(Canvas & canvas) override {
 			Box::paint(canvas);
-			//canvas.fill(Rect::FromWH(width(), height()), background_);
+			if (showHeader_) {
+				canvas.setBg(headerBackground_).fill(Rect::FromTopLeftWH(0,0,canvas.width(), headerFont_.height()));
+				canvas.setFg(headerColor_).setFont(headerFont_).lineOut(Point{0, 0}, headerText_);
+			}
 			Container::paint(canvas);
 		}
 
-	private:
+	//private:
 
-		/* Border of the panel */
-		Margin childMargin_;
+		// invalidate on change to font as childRect changes...
+	    Font headerFont_;
+		Color headerColor_;
+		Brush headerBackground_;
+		std::string headerText_;
+		bool showHeader_;
 
 	}; // ui::Panel
 

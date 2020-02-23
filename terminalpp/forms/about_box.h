@@ -7,7 +7,6 @@
 
 #include "ui/traits/box.h"
 #include "ui/traits/modal.h"
-//#include "ui/layout.h"
 
 namespace tpp {
 
@@ -59,7 +58,7 @@ namespace tpp {
             int y = 0; //(canvas.height() - 10) / 2;
             canvas.setFg(Color::White);
             canvas.setFont(ui::Font{}.setSize(2));
-            canvas.lineOut(Point{x,y + 1}, "Terminal++", HorizontalAlign::Center);
+            canvas.lineOut(Point{0,0}, "Terminal++", HorizontalAlign::Center);
             canvas.setFont(ui::Font{});
 
             helpers::Stamp stamp = helpers::Stamp::Stored();

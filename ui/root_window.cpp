@@ -36,6 +36,7 @@ namespace ui {
 		modalWidgetActive_{false} {
 		visibleRect_ = Canvas::VisibleRect{Rect::FromWH(width_, height_), Point{0, 0}, this};
 		modalPane_->parent_ = this;
+		modalPane_->visibleRect_.attach(this);
 		modalPane_->setBackground(Color::Black.withAlpha(128));
 		modalPane_->setLayout(Layout::Maximized);
 	}
@@ -55,9 +56,10 @@ namespace ui {
 		delete modalPane_;
 	}
 
-
-	void RootWindow::showModalWidget(Widget * w, Widget * keyboardFocus) {
+	void RootWindow::showModalWidget(Widget * w, Widget * keyboardFocus, Layout * layout) {
+		ASSERT(! modalWidgetActive_) << "Modal window already displayed";
 		ASSERT(keyboardFocus == w || keyboardFocus->isChildOf(w));
+		modalPane_->setLayout(layout);
 		modalPane_->attachChild(w);
 		modalWidgetActive_ = true;
 		setOverlay(true);
@@ -336,10 +338,9 @@ namespace ui {
 
 	void RootWindow::paste(std::string const & contents) {
 		if (pasteRequestTarget_ != nullptr) {
-		    pasteRequestTarget_->paste(contents);
+			Widget * target = pasteRequestTarget_;
 			pasteRequestTarget_ = nullptr;
-		} else if (keyboardFocus_ != nullptr) {
-			keyboardFocus_->paste(contents);
+			paste(target, contents);
 		} else {
 			LOG() << "Paste event received w/o active request or focused widget";
 		}

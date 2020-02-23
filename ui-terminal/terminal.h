@@ -58,8 +58,6 @@ namespace ui {
     typedef tpp::Sequence::DataRequest TppDataEvent;
     typedef tpp::Sequence::OpenFileRequest TppOpenFileEvent;
 
-
-
     /** Terminal understanding the ANSI escape sequences. 
      
         Should this be named differently? 
@@ -241,6 +239,7 @@ namespace ui {
         Event<TppTransferStatusEvent> onTppTransferStatus;
         Event<TppOpenFileEvent> onTppOpenFile;
 
+
         PTY * pty() {
             return pty_;
         }
@@ -316,6 +315,8 @@ namespace ui {
             repaint_ = true;
         }
 
+        void paste(std::string const & contents) override;
+
     protected:
         class CSISequence;
 
@@ -386,7 +387,6 @@ namespace ui {
         void keyChar(helpers::Char c) override;
         void keyDown(Key key) override;
         void keyUp(Key key) override;
-        void paste(std::string const & contents) override;
 
         /** Returns the contents of the selection. 
          

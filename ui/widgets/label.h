@@ -3,17 +3,19 @@
 #include "../widget.h"
 #include "../builders.h"
 
+#include "../traits/box.h"
+
 namespace ui {
 
-	class Label : public PublicWidget {
+	class Label : public PublicWidget, public ui::Box<Label> {
 	public:
 
 		Label() :
-			PublicWidget(),
-			text_("Label"),
-			textColor_(Color::White),
-			font_(Font()),
-			background_(Color::Blue) {
+			PublicWidget{},
+			Box{},
+			text_{"Label"},
+			color_{Color::White},
+			font_{} {
 		}
 
 		std::string const& text() const {
@@ -31,13 +33,13 @@ namespace ui {
 			}
 		}
 
-		Color textColor() const {
-			return textColor_;
+		Color color() const {
+			return color_;
 		}
 
-		void setTextColor(Color value) {
-			if (textColor_ != value) {
-				textColor_ = value;
+		void setColor(Color value) {
+			if (color_ != value) {
+				color_ = value;
 				repaint();
 			}
 		}
@@ -53,67 +55,19 @@ namespace ui {
 			}
 		}
 
-		Brush background() const {
-			return background_;
-		}
-
-		void setBackground(Brush const & value) {
-			if (background_ != value) {
-				background_ = value;
-				setForceOverlay(! background_.color.opaque());
-				repaint();
-			}
-		}
-
 	protected:
 
 		void paint(Canvas& canvas) override {
 			canvas.fill(Rect::FromWH(width(), height()), background_);
-			canvas.setFg(textColor_).setFont(font_);
-			canvas.lineOut(Point{0, 0}, text_, HorizontalAlign::Left);
+			canvas.setFg(color_).setFont(font_);
+			canvas.textOut(canvas.rect(), text_, HorizontalAlign::Left);
 		}
-
-		void mouseClick(int x, int y, MouseButton button, Key modifiers) override {
-			Widget::mouseClick(x, y, button, modifiers);
-		}
-
-		void mouseDoubleClick(int x, int y, MouseButton button, Key modifiers) override {
-			Widget::mouseClick(x, y, button, modifiers);
-		}
-
-		void mouseEnter() override {
-			repaint();
-			Widget::mouseEnter();
-		}
-
-		void mouseLeave() override {
-			repaint();
-			Widget::mouseLeave();
-		}
-
 
 	private:
 
 		std::string text_;
-		Color textColor_;
+		Color color_;
 		Font font_;
-		Brush background_;
 	};
-
-	/** Builder overload for setting the text of a label. 
-
-	    TODO make this enable for any label children
-	 */
-	template<>
-	Builder<Label> operator << (Builder<Label> widget, std::string const& str) {
-		widget->setText(str);
-		return widget;
-	}
-
-	template<>
-	Builder<Label> operator << (Builder<Label> widget, Font const & font) {
-		widget->setFont(font);
-		return widget;
-	}
 
 } // namespace ui
