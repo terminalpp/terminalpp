@@ -20,12 +20,9 @@ The following is very short description of the versions planned and their main n
 - more automation for releases
 - build fixed so that stamp is only generated when required
 - better errors for invalid JSON settings
+- paste confirmation dialog
 
 ##### TODO
-
-- resize the contents label and alert panel when shown
-- add option that tells when to show the paste confirmation
-- confirmation box for paste and for remote files (see https://thejh.net/misc/website-terminal-copy-paste)
 
 - design proper and simple layouts and autosizing of widgets
 

@@ -56,14 +56,14 @@
             <!-- cmd.exe shortcut -->
             <Component Id="CmdShortcut" Guid="9734f922-b9ac-4b22-b171-c290f228eb1a">
                 <Shortcut 
-                    Id="CmdShortcutFile" Name="Terminal++ (cmd.exe)" Description="Terminal++ cmd.exe session" Target="[TppProgramFiles]terminalpp.exe" Arguments="--use-conpty -e cmd.exe"/>
+                    Id="CmdShortcutFile" Name="Terminal++ (cmd.exe)" Description="Terminal++ cmd.exe session" Target="[TppProgramFiles]terminalpp.exe" Arguments="--pty=local -e cmd.exe"/>
                     <RemoveFolder Id="CmdProgramMenu" On="uninstall"/>
                     <RegistryValue Root="HKCU" Key="Software\Microsoft\TerminalppCmd" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
             </Component>
             <!-- powershell shortcut -->
             <Component Id="PowershellShortcut" Guid="01ec43e8-e52f-4b6d-a617-dc6fd2aba60b">
                 <Shortcut 
-                    Id="PowershellShortcutFile" Name="Terminal++ (ps)" Description="Terminal++ powershell session" Target="[TppProgramFiles]terminalpp.exe" Arguments="--use-conpty -e powershell.exe"/>
+                    Id="PowershellShortcutFile" Name="Terminal++ (ps)" Description="Terminal++ powershell session" Target="[TppProgramFiles]terminalpp.exe" Arguments="--pty=local -e powershell.exe"/>
                     <RemoveFolder Id="PowershellProgramMenu" On="uninstall"/>
                     <RegistryValue Root="HKCU" Key="Software\Microsoft\TerminalppPs" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
             </Component>

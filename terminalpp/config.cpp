@@ -151,10 +151,15 @@ namespace tpp {
 		// make sure we know which PTY to use before we attempt to determine the command
 		if (! pty.specified())
 		    pty.set(DefaultSessionPTY());
-		if (pty() == "bypass")
+		if (pty() == "bypass") {
 		    return STR("[\"wsl.exe\", \"--\", \"" << BYPASS_PATH << "\"]");
-		else 
-		    return "[\"wsl.exe\"]"; 
+		} else {
+			// if WSL is present, run WSL, otherwise run cmd.exe
+			if (! IsWSLPresent().empty())  
+		        return "[\"wsl.exe\"]"; 
+			else
+			    return "[\"cmd.exe\"]";
+		}
 #elif (defined ARCH_MACOS)
 		// get the default shell for the current user with the --login flag so that the .profile is loaded as well
 		return STR("[\"" << getpwuid(getuid())->pw_shell << "\", \"--login\"]");
