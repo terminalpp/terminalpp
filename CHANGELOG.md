@@ -1,6 +1,15 @@
-# Changelog
+---
+title: Changelog
+layout: titled
+---
 
 Lists the most important improvements for recent `terminalpp` versions.
+
+### 0.5.4
+
+- macOS supported via QT
+- paste confirmation 
+- fixed windows default installation w/o WSL bug
 
 ### 0.5.3
 
