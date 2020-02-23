@@ -203,7 +203,7 @@ jobs:
       uses: actions/create-release@v1
       with:
         tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        release_name: ${{ github.ref }}
         draft: true
         prerelease: false 
     # and upload the artifacts, start with terminalpp
