@@ -125,6 +125,7 @@ namespace tpp {
         ~Session() override {
             hideModalWidget();
             delete about_;
+            delete pasteAlert_;
         }
 
     protected:
