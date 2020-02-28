@@ -19,6 +19,25 @@ namespace ui2 {
     protected:
 
         friend class Canvas;
+        friend class Widget;
+
+        /** Called when a widget is attached to the renderer. 
+         
+            When attaching a subtree, the widgetAttached method will be called for each widget in the subtree. Called *after* the widget's renderer has been set. 
+         */
+        virtual void widgetAttached(Widget * widget) {
+            UI_THREAD_CHECK;
+            // TODO do nothing ? or make abstract?
+        }
+
+        /** Called when a widget is detached (removed from the tree).
+         
+            If a subtree is removed, the method is called for each widget starting at the leaves. At the call the widget is still attached. 
+         */
+        virtual void widgetDetached(Widget * widget) {
+            UI_THREAD_CHECK;
+            // TODO do nothing ? or make abstract?
+        }
 
         /** Called when the selected rectangle of the backing buffer has been updated and needs rendered. 
          */

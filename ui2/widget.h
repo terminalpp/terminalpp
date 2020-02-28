@@ -36,6 +36,10 @@ namespace ui2 {
             return rect_;
         }
 
+        /** Returns true if the widget is visible.
+          
+            Invisible widgets are not painted and do not receive any user input events (mouse or keyboard).  
+         */
         bool visible() const {
             return visible_;
         }
@@ -94,7 +98,7 @@ namespace ui2 {
             ASSERT(renderer_ == nullptr && renderer != nullptr);
             ASSERT(parent_ == nullptr || parent_->renderer_ == renderer);
             renderer_.store(renderer);
-            // TODO should the renderer be notified that the widget has been attached? 
+            renderer->widgetAttached(this);
         }
 
         /** Detaches the renderer. 
@@ -105,8 +109,8 @@ namespace ui2 {
             UI_THREAD_CHECK;
             ASSERT(renderer_ != nullptr);
             ASSERT(parent_ == nullptr || parent_->renderer_ != nullptr);
+            renderer_->widgetDetached(this);
             renderer_.store(nullptr);
-            // TODO the renderer should be notified that a widget has been attached
         }
 
         /** Returns the parent widget. 
