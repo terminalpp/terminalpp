@@ -242,6 +242,7 @@ namespace tpp {
             case XK_Tab:
                 return ui::Key(ui::Key::Tab, modifiers);
             case XK_Return:
+            case XK_KP_Enter:
                 return ui::Key(ui::Key::Enter, modifiers);
             case XK_Caps_Lock:
                 return ui::Key(ui::Key::CapsLock, modifiers);
