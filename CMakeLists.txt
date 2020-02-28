@@ -146,6 +146,7 @@ add_custom_target(stamp
 
 add_subdirectory("tpp-lib")
 add_subdirectory("ui")
+add_subdirectory("ui2")
 add_subdirectory("ui-terminal")
 add_subdirectory("docs")
 add_subdirectory("tests")
