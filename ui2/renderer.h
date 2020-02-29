@@ -2,17 +2,29 @@
 
 #include "common.h"
 #include "buffer.h"
+#include "widget.h"
 
 namespace ui2 {
 
-    class Widget;
 
     /** UI Renderer
      
-        Class responsible for rendering the widgets and providing the user actions such as keyboard, mouse and selection & clipboard. 
+        Class responsible for rendering the widgets and providing the user actions such as keyboard, mouse and selection & clipboard.
      */
     class Renderer {
     public:
+
+        std::string const & title() const {
+            return title_;
+        }
+
+        void setTitle(std::string const & value) {
+            UI_THREAD_CHECK;
+            if (title_ != value) {
+                title_ = value;
+                titleChanged();
+            }
+        }
 
         /** Requests repaint of the given widget. [thread-safe]
          
@@ -24,6 +36,90 @@ namespace ui2 {
 
         friend class Canvas;
         friend class Widget;
+
+        /** Called when the selected rectangle of the backing buffer has been updated and needs rendered. 
+         
+            This method should actually render the contents. While only the refresh of the given rectangle is necessary at the time the method is called, the entire buffer is guaranteed to be valid in case whole screen repaint is to be issued. 
+         */
+        virtual void render(Rect const & rect) = 0;
+
+        /** Called when the title of the renderer has changed. 
+         */
+        virtual void titleChanged() = 0;
+
+        /** \name Mouse Input 
+         
+         */
+        //@{
+        virtual void mouseDown(Point coords, MouseButton button, Key modifiers) {
+            NOT_IMPLEMENTED;
+        }
+
+        virtual void mouseUp(Point coords, MouseButton button, Key modifiers) {
+            NOT_IMPLEMENTED;
+        }
+
+        virtual void mouseClick(Point coords, MouseButton button, Key modifiers) {
+            NOT_IMPLEMENTED;
+        }
+
+        virtual void mouseDoubleClick(Point coords, MouseButton button, Key modifiers) {
+            NOT_IMPLEMENTED;
+        }
+
+        virtual void mouseWheel() {
+            NOT_IMPLEMENTED;
+        }
+
+        virtual void mouseMove() {
+            NOT_IMPLEMENTED;
+        }
+
+        virtual void mouseEnter() {
+            NOT_IMPLEMENTED;
+        }
+
+        virtual void mouseLeave() {
+            NOT_IMPLEMENTED;
+        }
+
+        //@}
+
+        /** \name Keyboard Input
+         
+            - who is going to keep track of modal windows and other things? 
+         */
+        //@{
+        virtual void keyChar(Char c) {
+            if (keyboardFocus_ == nullptr)
+                return;
+            Event<Char>::Payload payload{c};
+            keyboardFocus_->keyChar(payload);
+        }
+
+        virtual void keyDown(Key k) {
+            if (keyboardFocus_ == nullptr)
+                return;
+            Event<Key>::Payload payload{k};
+            keyboardFocus_->keyDown(payload);
+        }
+
+        virtual void keyUp(Key k) {
+            if (keyboardFocus_ == nullptr)
+                return;
+            Event<Key>::Payload payload{k};
+            keyboardFocus_->keyUp(payload);
+        }
+
+        //@}
+
+        /** \name Clipboard & Selection
+         */
+        //@{
+        virtual void paste() {
+            NOT_IMPLEMENTED;
+        }
+        //@}
 
         /** Called when a widget is attached to the renderer. 
          
@@ -43,10 +139,6 @@ namespace ui2 {
             // TODO do nothing ? or make abstract?
         }
 
-        /** Called when the selected rectangle of the backing buffer has been updated and needs rendered. 
-         */
-        virtual void render(Rect const & rect) = 0;
-
         /** Returns the renderer's backing buffer. 
          */
         Buffer & buffer() {
@@ -64,6 +156,19 @@ namespace ui2 {
 
         Buffer buffer_;
 
+        /** Renderer's window title. 
+         */
+        std::string title_;
+
+        Widget * keyboardFocus_;
+
+
+
+        friend class UiThreadChecker_;
+        
+        Renderer * getRenderer_() {
+            return this;
+        }
         
 
     }; // ui::Renderer

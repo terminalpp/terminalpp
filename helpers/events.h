@@ -25,6 +25,11 @@ namespace helpers {
 		    typedef PAYLOAD payload_type;
     		typedef SENDER sender_type;
 
+            Payload(PAYLOAD & payload):
+                payload_{payload},
+                sender_{nullptr} {
+            } 
+
 		    SENDER * sender() const {
 				return sender_;
 			}

@@ -9,47 +9,12 @@
 #include "input.h"
 #include "buffer.h"
 #include "canvas.h"
-#include "renderer.h"
 
 namespace ui2 {
 
     class Canvas;
+    class Renderer;
 
-
-    class CancellablePayloadBase {
-    public:
-        /** Prevents the default behavior for the event. 
-         */
-        void preventDefault() {
-
-        }
-    }; 
-
-    template<typename P, typename T = Widget>
-    using Event = helpers::Event<P, T, CancellablePayloadBase>;
-
-	class MouseButtonEvent {
-	public:
-		int x;	
-		int y;
-		MouseButton button;
-		Key modifiers;
-	};
-
-	class MouseWheelEvent {
-	public:
-		int x;
-		int y;
-		int by;
-		Key modifiers;
-	};
-
-	class MouseMoveEvent {
-	public:
-		int x;
-		int y;
-		Key modifiers;
-	};
 
 
     /** Base class for widgets. 
@@ -61,7 +26,7 @@ namespace ui2 {
     public:
 
         virtual ~Widget() {
-            ASSERT(renderer_ == nullptr);
+            // TODO how to deal with deleting attached widgets? 
         }
 
         /** Returns the rectangle occupied by the widget in its parent's contents area. 
@@ -81,11 +46,7 @@ namespace ui2 {
         /** Triggers the repaint of the widget. [thread-safe]
          */
         // TODO ideally this should do nothing if the repaint has already been scheduled, but did not progress yet
-        virtual void repaint() {
-            Renderer * r = renderer();
-            if (r != nullptr)
-                r->repaint(this);
-        }
+        virtual void repaint();
 
     protected:
 
@@ -119,7 +80,7 @@ namespace ui2 {
         Event<void> onMouseEnter;
         Event<void> onMouseLeave;
 
-        Event<helpers::Char> onKeyChar;
+        Event<Char> onKeyChar;
         Event<Key> onKeyDown;
         Event<Key> onKeyUp;
 
@@ -135,8 +96,8 @@ namespace ui2 {
             UI_THREAD_CHECK;
             ASSERT(parent_ == nullptr && parent != nullptr);
             parent_ = parent;
-            if (parent_->renderer_ != nullptr)
-                attachRenderer(parent_->renderer_);
+            if (parent_->renderer() != nullptr)
+                attachRenderer(parent_->renderer());
         }
 
         /** Detaches the widget from its parent. 
@@ -145,9 +106,9 @@ namespace ui2 {
          */
         virtual void detachFrom(Widget * parent) {
             UI_THREAD_CHECK;
-            ASSERT(parent_ = parent);
+            ASSERT(parent_ == parent);
             parent_ = nullptr;
-            if (renderer_ != nullptr)
+            if (renderer() != nullptr)
                 detachRenderer();
         }
 
@@ -155,25 +116,13 @@ namespace ui2 {
          
             The renderer must be valid and parent must already be attached if parent exists. 
          */
-        virtual void attachRenderer(Renderer * renderer) {
-            UI_THREAD_CHECK;
-            ASSERT(renderer_ == nullptr && renderer != nullptr);
-            ASSERT(parent_ == nullptr || parent_->renderer_ == renderer);
-            renderer_.store(renderer);
-            renderer->widgetAttached(this);
-        }
+        virtual void attachRenderer(Renderer * renderer);
 
         /** Detaches the renderer. 
          
             If parent is valid, its renderer must be attached to enforce detachment of all children before the detachment of the parent. 
          */
-        virtual void detachRenderer() {
-            UI_THREAD_CHECK;
-            ASSERT(renderer_ != nullptr);
-            ASSERT(parent_ == nullptr || parent_->renderer_ != nullptr);
-            (renderer_.load())->widgetDetached(this);
-            renderer_.store(nullptr);
-        }
+        virtual void detachRenderer();
 
         /** Returns the parent widget. 
          */
@@ -185,7 +134,7 @@ namespace ui2 {
         /** Returns the renderer of the widget. [thread-safe]
          */
         Renderer * renderer() const {
-            return renderer_;
+            return renderer_.load();
         }
 
         /** Returns the canvas to be used for drawing the contents of the widget. 
@@ -246,7 +195,7 @@ namespace ui2 {
             Default implementation for keyboard actions simply calls the attached events when present.
          */
         //@{
-        void keyChar(Event<helpers::Char>::Payload & event) {
+        void keyChar(Event<Char>::Payload & event) {
             onKeyChar(event, this);
         }
         void keyDown(Event<Key>::Payload & event) {
@@ -295,7 +244,11 @@ namespace ui2 {
          */
         bool visible_;
 
-
+        friend class UiThreadChecker_;
+        
+        Renderer * getRenderer_() {
+            return renderer();
+        }
 
     };
 
