@@ -135,7 +135,6 @@ namespace ui {
 		Event<void> onMouseEnter;
 		Event<void> onMouseLeave;
 
-
 		// keyboard events
 
 	public:

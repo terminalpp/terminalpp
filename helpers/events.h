@@ -8,14 +8,19 @@
 
 namespace helpers {
 
+    /** The default payload base. 
+     */
+    class DefaultPayloadBase {
+    };
+
 	/** 
 	 */
-    template<typename PAYLOAD, typename SENDER>
+    template<typename PAYLOAD, typename SENDER, typename PAYLOAD_BASE = DefaultPayloadBase>
 	class Event {
 	public:
 		typedef SENDER sender_type;
 
-	    class Payload {
+	    class Payload : public PAYLOAD_BASE {
 		public:
 		    typedef PAYLOAD payload_type;
     		typedef SENDER sender_type;
@@ -72,6 +77,8 @@ namespace helpers {
 			handler_ = std::bind(method, object, std::placeholders::_1);
 		}
 
+        /* TODO DEPRECATED
+         */
 		void operator() (SENDER * sender, PAYLOAD & payload) {
 			if (handler_) {
 				Payload p{payload, sender};
@@ -94,15 +101,21 @@ namespace helpers {
 			}
 		}
 
+        // END DEPRECATED
+
+        void operator() (Payload & payload, SENDER * sender) {
+            payload.sender_ = sender;
+            if (handler_) 
+                handler_(payload);
+        }
+
 	private:
 	    std::function<void(Payload &)> handler_;
 
-	}; // Event<PAYLOAD, SENDER>
+	}; // Event<PAYLOAD, SENDER, PAYLOAD_BASE>
 
-
-
-    template<typename SENDER>
-	class Event<void, SENDER> {
+    template<typename SENDER, typename PAYLOAD_BASE>
+	class Event<void, SENDER, PAYLOAD_BASE> {
 	public:
 		typedef SENDER sender_type;
 
@@ -155,16 +168,24 @@ namespace helpers {
 			handler_ = std::bind(method, object, std::placeholders::_1);
 		}
 
+        // TODO DEPRECATED
 		void operator() (SENDER * sender) {
 			if (handler_) {
 				Payload p{sender};
 			    handler_(p);
 			}
 		}
+        // TODO END DEPRECATED
+
+        void operator() (Payload & payload, SENDER * sender) {
+            payload.sender_ = sender;
+            if (handler_) 
+                handler_(payload);
+        }
 
 	private:
 	    std::function<void(Payload &)> handler_;
 
-	}; // Event<void, SENDER>
+	}; // Event<void, SENDER, PAYLOAD_BASE>
 
 } // namespace helpers

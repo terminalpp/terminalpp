@@ -7,6 +7,10 @@ namespace ui2 {
 
     class Widget;
 
+    /** UI Renderer
+     
+        Class responsible for rendering the widgets and providing the user actions such as keyboard, mouse and selection & clipboard. 
+     */
     class Renderer {
     public:
 

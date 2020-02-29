@@ -12,6 +12,8 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
+- fix the renderer asserts for std::atomic
+
 - design proper and simple layouts and autosizing of widgets
 
 - how to deal with cursor of inactive terminal in active window - this seems to lead to multiple cursors per window and how to handle them... (?)

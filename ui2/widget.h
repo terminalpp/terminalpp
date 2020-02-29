@@ -6,6 +6,7 @@
 #include "helpers/events.h"
 
 #include "common.h"
+#include "input.h"
 #include "buffer.h"
 #include "canvas.h"
 #include "renderer.h"
@@ -14,8 +15,41 @@ namespace ui2 {
 
     class Canvas;
 
-	template<typename P, typename T = Widget>
-	using Event = helpers::Event<P, T>;
+
+    class CancellablePayloadBase {
+    public:
+        /** Prevents the default behavior for the event. 
+         */
+        void preventDefault() {
+
+        }
+    }; 
+
+    template<typename P, typename T = Widget>
+    using Event = helpers::Event<P, T, CancellablePayloadBase>;
+
+	class MouseButtonEvent {
+	public:
+		int x;	
+		int y;
+		MouseButton button;
+		Key modifiers;
+	};
+
+	class MouseWheelEvent {
+	public:
+		int x;
+		int y;
+		int by;
+		Key modifiers;
+	};
+
+	class MouseMoveEvent {
+	public:
+		int x;
+		int y;
+		Key modifiers;
+	};
 
 
     /** Base class for widgets. 
@@ -65,6 +99,34 @@ namespace ui2 {
             visible_{true} {
         }
 
+        /** \name Events
+         */
+        //@{
+
+        Event<void> onShow;
+        Event<void> onHide;
+        Event<void> onFocusIn;
+        Event<void> onFocusOut;
+        Event<void> onEnabled;
+        Event<void> onDisabled;
+
+        Event<MouseButtonEvent> onMouseDown;
+        Event<MouseButtonEvent> onMouseUp;
+        Event<MouseButtonEvent> onMouseClick;
+        Event<MouseButtonEvent> onMouseDoubleClick;
+        Event<MouseWheelEvent> onMouseWheel;
+        Event<MouseMoveEvent> onMouseMove;
+        Event<void> onMouseEnter;
+        Event<void> onMouseLeave;
+
+        Event<helpers::Char> onKeyChar;
+        Event<Key> onKeyDown;
+        Event<Key> onKeyUp;
+
+        Event<std::string> onPaste;
+
+        //@}
+
         /** Attaches the widget to given parent. 
          
             If the parent has valid renderer attaches the renderer as well.
@@ -109,7 +171,7 @@ namespace ui2 {
             UI_THREAD_CHECK;
             ASSERT(renderer_ != nullptr);
             ASSERT(parent_ == nullptr || parent_->renderer_ != nullptr);
-            renderer_->widgetDetached(this);
+            (renderer_.load())->widgetDetached(this);
             renderer_.store(nullptr);
         }
 
@@ -147,6 +209,63 @@ namespace ui2 {
             UI_THREAD_CHECK;
             return overlaid_;
         }
+
+        /** \name Mouse Actions
+         
+            Default implementation for mouse action simply calls the attached events when present.
+         */
+        //@{
+        void mouseDown(Event<MouseButtonEvent>::Payload & event) {
+            onMouseDown(event, this);
+        }
+        void mouseUp(Event<MouseButtonEvent>::Payload & event) {
+            onMouseUp(event, this);
+        }
+        void mouseClick(Event<MouseButtonEvent>::Payload & event) {
+            onMouseClick(event, this);
+        }
+        void mouseDoubleClick(Event<MouseButtonEvent>::Payload & event) {
+            onMouseDoubleClick(event, this);
+        }
+        void mouseWheel(Event<MouseWheelEvent>::Payload & event) {
+            onMouseWheel(event, this);
+        }
+        void mouseMove(Event<MouseMoveEvent>::Payload & event) {
+            onMouseMove(event, this);
+        }
+        void mouseEnter(Event<void>::Payload & event) {
+            onMouseEnter(event, this);
+        }
+        void mouseLeave(Event<void>::Payload & event) {
+            onMouseLeave(event, this);
+        }
+        //@}
+
+        /** \name Keyboard Actions
+         
+            Default implementation for keyboard actions simply calls the attached events when present.
+         */
+        //@{
+        void keyChar(Event<helpers::Char>::Payload & event) {
+            onKeyChar(event, this);
+        }
+        void keyDown(Event<Key>::Payload & event) {
+            onKeyDown(event, this);
+        }
+        void keyUp(Event<Key>::Payload & event) {
+            onKeyUp(event, this);
+        }
+        //@}
+
+        /** \name Clipboard Actions
+
+            Default implementation the clipboard actions simply calls the attached events when present.
+         */
+        //@{
+        void paste(Event<std::string>::Payload & event) {
+            onPaste(event, this);
+        }
+        //@}
 
     private:
 
