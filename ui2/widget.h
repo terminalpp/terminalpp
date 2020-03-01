@@ -244,11 +244,13 @@ namespace ui2 {
          */
         bool visible_;
 
+#ifndef NDEBUG
         friend class UiThreadChecker_;
         
-        Renderer * getRenderer_() {
-            return renderer();
+        Renderer * getRenderer_() const  {
+            return renderer_.load();
         }
+#endif
 
     };
 

@@ -1,5 +1,10 @@
 #pragma once
 
+#ifndef NDEBUG
+#include <thread>
+#include <mutex>
+#endif
+
 #include "common.h"
 #include "buffer.h"
 #include "widget.h"
@@ -164,12 +169,17 @@ namespace ui2 {
 
 
 
+#ifndef NDEBUG
         friend class UiThreadChecker_;
         
-        Renderer * getRenderer_() {
-            return this;
+        Renderer * getRenderer_() const {
+            return const_cast<Renderer*>(this);
         }
-        
+
+        std::thread::id uiThreadId_;
+        size_t uiThreadChecksDepth_;
+        std::mutex uiThreadCheckMutex_;
+#endif
 
     }; // ui::Renderer
 

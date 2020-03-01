@@ -8,7 +8,11 @@
 
 /** TODO this will be represented by a templated monstrosity that would lock based on the renderer, i.e. one thread per renderer. 
  */
+#ifndef NDEBUG
+#define UI_THREAD_CHECK ui2::UiThreadChecker_ uiThreadChecker_{this->getRenderer_()}
+#else
 #define UI_THREAD_CHECK
+#endif
 
 
 
@@ -57,6 +61,8 @@ namespace ui2 {
 
     class Renderer;
 
+#ifndef NDEBUG
+
     /** A simple RAII debug check that all UI operations are always done in a single thread. 
      
         Note that instead of forcing a thread, which would be safer, but more obtrusive, this only checks at runtime that no threads ever cross accessing functions intended to run in the UI thread only. This means that if the client code uses multiple threads, but makes sure that they never cross accessing UI events, the checks will pass. 
@@ -71,7 +77,8 @@ namespace ui2 {
         template<typename T>
         UiThreadChecker_(T * object):
             renderer_{object->getRenderer_()} {
-            initialize();
+            if (renderer_ != nullptr)
+                initialize();
         }
 
         ~UiThreadChecker_();
@@ -84,6 +91,8 @@ namespace ui2 {
          */
         Renderer * renderer_;
     };
+
+#endif
 
 
 } // namespace ui
