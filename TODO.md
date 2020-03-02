@@ -12,7 +12,7 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- fix the renderer asserts for std::atomic
+- fix the events payload to not contain references, and the event should take the payload as argument already
 
 - design proper and simple layouts and autosizing of widgets
 
@@ -23,7 +23,7 @@ The following is very short description of the versions planned and their main n
 - shapes.h is areally bad name for the classes defined therein
 
 - snapcraft build has dirty stamp, see why & fix
-- change from msi to appx
+- change from msi to appx (this would also remove the dependency on .NET 3.5 for wix)
 
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
@@ -42,7 +42,6 @@ The following is very short description of the versions planned and their main n
 
 - proper multiplexing of the terminal sessions (wrt remote files)
 - remote files should use absolute path, or some other form of same file detection
-
 
 ### v1.0
 

@@ -40,6 +40,14 @@ namespace ui2 {
             return x_ < other.x_ && y_ < other.y_;
         }
 
+        bool operator == (Point other) const {
+            return (x_ == other.x_) && (y_ == other.y_);
+        }
+
+        bool operator != (Point other) const {
+            return (x_ != other.x_) || (y_ != other.y_);
+        }
+
     private:
 
         int x_;
@@ -142,6 +150,14 @@ namespace ui2 {
 				max(bottom(), other.bottom())
 			);
 		}
+
+        bool operator == (Rect const & other) const {
+            return (left_ == other.left_) && (top_ == other.top_) && (width_ == other.width_) && (height_ == other.height_);
+        }
+
+        bool operator != (Rect const & other) const {
+            return (left_ != other.left_) || (top_ != other.top_) || (width_ != other.width_) || (height_ != other.height_);
+        }
 
     private:
 		Rect(int left, int top, int width, int height):

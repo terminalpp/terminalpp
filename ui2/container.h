@@ -36,6 +36,26 @@ namespace ui2 {
 
     protected:
 
+        /** \name Geometry and Layout
+         */
+        //@{
+
+        /** Change in child's rectangle triggers relayout of the container. 
+         */
+        void childRectChanged(Widget * child) override {
+            if (! relayouting_) {
+                relayouting_ = true;
+                relayout();
+            }
+        }
+
+        virtual void relayout() {
+            // TODO actually relayout the stuff
+            relayouting_ = false;    
+            repaint();
+        }
+        //@}
+
         /** Attaches the container to specified renderer. 
 
             First the container is attached and then all its children are attached as well. 
@@ -72,6 +92,8 @@ namespace ui2 {
 
     private:
         std::vector<Widget *> children_;
+
+        bool relayouting_;
 
     };
 

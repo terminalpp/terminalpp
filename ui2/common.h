@@ -59,9 +59,9 @@ namespace ui2 {
 
 
 
-    class Renderer;
-
 #ifndef NDEBUG
+
+    class Renderer;
 
     /** A simple RAII debug check that all UI operations are always done in a single thread. 
      
@@ -71,8 +71,6 @@ namespace ui2 {
     class UiThreadChecker_ {
     public:
         /** Constructor. 
-         
-            The constructor is templated so that 
          */
         template<typename T>
         UiThreadChecker_(T * object):

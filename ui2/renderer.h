@@ -167,8 +167,6 @@ namespace ui2 {
 
         Widget * keyboardFocus_;
 
-
-
 #ifndef NDEBUG
         friend class UiThreadChecker_;
         

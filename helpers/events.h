@@ -25,7 +25,7 @@ namespace helpers {
 		    typedef PAYLOAD payload_type;
     		typedef SENDER sender_type;
 
-            Payload(PAYLOAD & payload):
+            Payload(PAYLOAD const & payload):
                 payload_{payload},
                 sender_{nullptr} {
             } 
@@ -47,12 +47,13 @@ namespace helpers {
 		private:
 		    friend class Event;
 
+            // TODO remoev this
 			Payload(PAYLOAD & payload, SENDER * sender):
 			    payload_(payload),
 				sender_(sender) {
 			}
 
-			PAYLOAD & payload_;
+			PAYLOAD payload_;
 			SENDER * sender_;
 
 		}; 

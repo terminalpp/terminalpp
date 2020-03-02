@@ -15,11 +15,54 @@ namespace ui2 {
     class Canvas;
     class Renderer;
 
+    class GeometryEvent {
+    public:
+        Rect rect;
+        bool resized;
+        bool moved;
+    }; // GeometryEvent
 
-
-    /** Base class for widgets. 
+    /** Base class for all UI widgets. 
      
         A widget can paint itself and can react to user interaction. 
+
+
+        Setting the geometry must support the following scenarios:
+
+        - manual
+
+        The manual position is the default for widgets. It means that widget has control over its position 
+
+        - anchors
+
+        When parent resizes, the widget can update its own size as well based on the anchors, this will be done via the anchored trait. 
+
+        => I need to notify the widget that parent has resized
+
+        - layout managed
+
+        => 
+
+
+
+        # This deals with the manual settings:
+
+        setRect() sets the size, can actually adjust the size, i.e. widgets can override the behavior and update the size before calling the parent's implementation
+
+        The onRectChanged() event is then emitted, the event itself has flags for resize and reposition so that apps can tell 
+
+        # Anchors 
+
+        When parent gets resized, it informs all of its children and they are free to act on that knowledge. Or do nothing. When they do something, they can then resize themselves. 
+
+        # Layout
+
+        - when parent is resized, it needs to relayout the children, i.e. change their size and position according to its own layout
+
+        - when child is resized, it needs to notify the parent so that the whole thing can be relaid out 
+
+        - how to make these not cycle!!!!!
+
 
      */
     class Widget {
@@ -45,7 +88,6 @@ namespace ui2 {
 
         /** Triggers the repaint of the widget. [thread-safe]
          */
-        // TODO ideally this should do nothing if the repaint has already been scheduled, but did not progress yet
         virtual void repaint();
 
     protected:
@@ -63,6 +105,10 @@ namespace ui2 {
         /** \name Events
          */
         //@{
+
+        /** Triggered when the widget's geometry changes. 
+         */
+        Event<GeometryEvent> onGeometryChange;
 
         Event<void> onShow;
         Event<void> onHide;
@@ -85,6 +131,55 @@ namespace ui2 {
         Event<Key> onKeyUp;
 
         Event<std::string> onPaste;
+
+        //@}
+
+        /** \name Geometry
+
+            - simple changes are ok
+            - layouting is ok, but anchors are complicated, unless anchors are done via anchored layout, which will check all children and update those that have anchors specified, which is perhaps the way to go.   
+            - YEAH !!!!
+         */
+        //@{
+
+        /** Sets the position and size of the widget.
+         
+            Subclasses can override this method to inject modifications to the requested size and position. Doing so must be done with great care otherwise the automatic layouting can easily be broken. 
+
+            TODO what to do with size hints? 
+
+         */
+        virtual void setRect(Rect const & value) {
+            UI_THREAD_CHECK;
+            // do nothing if the new rectangle is identical to the existing geometry
+            if (rect_ == value)
+                return;
+            // update the rectangle
+            bool resized = rect_.width() != value.width() || rect_.height() != value.height();
+            bool moved = rect_.topLeft() != value.topLeft();
+            rect_ = value;
+            // raise the event
+            Event<GeometryEvent>::Payload p{GeometryEvent{rect_, resized, moved}};
+            onGeometryChange(p, this);
+            // inform the parent that the child has been resized, which should also trigger the parent's repaint
+            if (parent_ != nullptr)
+                parent_->childRectChanged(this);
+        }
+
+        /** Changing the rectangle of a child widget triggers repaint of the parent. 
+         */
+        virtual void childRectChanged(Widget * child) {
+            repaint();
+        }
+
+        /** Returns true if the widget is overlaid by other widgets. 
+         
+            Note that this is an implication, i.e. if the widget is not overlaid by other widgets, it can still return true. 
+         */
+        bool isOverlaid() const {
+            UI_THREAD_CHECK;
+            return overlaid_;
+        }
 
         //@}
 
@@ -149,15 +244,6 @@ namespace ui2 {
             The canvas is guaranteed to have the width and height of the widget itself. This method *must* be implemented in widget subclasses to actually draw the contents of the widget. 
          */
         virtual void paint(Canvas & canvas) = 0;
-
-        /** Returns true if the widget is overlaid by other widgets. 
-         
-            Note that this is an implication, i.e. if the widget is not overlaid by other widgets, it can still return true. 
-         */
-        bool isOverlaid() const {
-            UI_THREAD_CHECK;
-            return overlaid_;
-        }
 
         /** \name Mouse Actions
          
