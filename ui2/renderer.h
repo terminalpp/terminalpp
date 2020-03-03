@@ -62,8 +62,9 @@ namespace ui2 {
          */
         virtual void titleChanged() = 0;
 
-        /** =======================================================================================
-            \anchor ui_renderer_mouse_input
+        // ========================================================================================
+        
+        /** \anchor ui_renderer_mouse_input
             \name Mouse Input
 
             The renderer is responsible for tracking the mouse pointer and report the mouse events to the affected widgets. Similarly to other user inputs, this is split into two layers. First the trigger functions in this section are invoked directly by the renderer subclasses that monitor the user inputs. Their task is to manage the mouse state and the mouse focus widget. 
@@ -82,6 +83,8 @@ namespace ui2 {
             return mouseFocus_;
         }
 
+        /** Triggered when mouse enters the rendered area.
+         */
         virtual void rendererMouseIn() {
             ASSERT(mouseIn_ == false);
             ASSERT(mouseFocus_ == nullptr && mouseButtons_ == 0) << "Looks like mouseOut was not called properly";
@@ -195,8 +198,68 @@ namespace ui2 {
         }
         //@}
 
-        /** =======================================================================================
-            \anchor ui_renderer_event_triggers
+        // ========================================================================================
+
+        /** \anchor ui_renderer_keyboard_input
+            \name Keyboard Input
+
+         */
+        //@{
+
+        Widget * keyboardFocus() const {
+            return keyboardIn_ ? keyboardFocus_ : nullptr;
+        }
+
+        virtual void rendererFocusIn() {
+            ASSERT(! keyboardIn_);
+            keyboardIn_ = true;
+            // focus the widget that had element last time the renderer was focused
+            Event<void>::Payload p{};
+            focusIn(p, keyboardFocus_);
+        }
+
+        virtual void rendererFocusOut() {
+            ASSERT(keyboardIn_);
+            Event<void>::Payload p{};
+            focusOut(p, keyboardFocus_);
+            keyboardIn_ = false;
+        }
+
+        virtual void rendererKeyChar(Char c) {
+            ASSERT(keyboardIn_);
+            Event<Char>::Payload p{c};
+            keyChar(p, keyboardFocus_);
+        }
+
+        virtual void rendererKeyDown(Key k) {
+            ASSERT(keyboardIn_);
+            Event<Key>::Payload p{k};
+            keyDown(p, keyboardFocus_);
+        }
+
+        virtual void rendererKeyUp(Key k) {
+            ASSERT(keyboardIn_);
+            Event<Key>::Payload p{k};
+            keyUp(p, keyboardFocus_);
+        }
+
+        //@}
+
+        // ========================================================================================
+
+        /** \name Clipboard & Selection Input
+         */
+        //@{
+        virtual void rendererPaste(std::string const & contents) {
+            ASSERT(keyboardIn_);
+            Event<std::string>::Payload p{contents};
+            paste(p, keyboardFocus_);
+        }
+        //@}
+
+        // ========================================================================================
+
+        /** \anchor ui_renderer_event_triggers
             \name UI Event Triggers
 
             When the input processing layers (\ref ui_renderer_mouse_input "mouse") determine that particular events should be triggered in attached widgets, these dispatch methods are called with the event payloads and target widgets.  The trigger methods verify that the target is valid and the event is still active and if so, trigger the appropriate method in the target widget. 
@@ -258,45 +321,43 @@ namespace ui2 {
                 target->mouseDoubleClick(e);
             }
         }
+
+        virtual void focusIn(Event<void>::Payload & e, Widget * target) {
+            if (target != nullptr && e.active())
+                target->focusIn(e);
+        }
+
+        virtual void focusOut(Event<void>::Payload & e, Widget * target) {
+            if (target != nullptr && e.active())
+                target->focusOut(e);
+        }
+
+        virtual void keyChar(Event<Char>::Payload & e, Widget * target) {
+            if (target != nullptr && e.active())
+                target->keyChar(e);
+        }
+
+        virtual void keyDown(Event<Key>::Payload & e, Widget * target) {
+            if (target != nullptr && e.active())
+                target->keyDown(e);
+        }
+
+        virtual void keyUp(Event<Key>::Payload & e, Widget * target) {
+            if (target != nullptr && e.active())
+                target->keyUp(e);
+        }
+
+        virtual void paste(Event<std::string>::Payload & e, Widget * target) {
+            if (target != nullptr && e.active())
+                target->paste(e);
+        }
         //@}
 
+        // ========================================================================================
 
-
-        /** \name Keyboard Input
-         
-            - who is going to keep track of modal windows and other things? 
+        /** \name Child Widgets Management
          */
         //@{
-        virtual void keyChar(Char c) {
-            if (keyboardFocus_ == nullptr)
-                return;
-            Event<Char>::Payload payload{c};
-            keyboardFocus_->keyChar(payload);
-        }
-
-        virtual void keyDown(Key k) {
-            if (keyboardFocus_ == nullptr)
-                return;
-            Event<Key>::Payload payload{k};
-            keyboardFocus_->keyDown(payload);
-        }
-
-        virtual void keyUp(Key k) {
-            if (keyboardFocus_ == nullptr)
-                return;
-            Event<Key>::Payload payload{k};
-            keyboardFocus_->keyUp(payload);
-        }
-
-        //@}
-
-        /** \name Clipboard & Selection
-         */
-        //@{
-        virtual void paste() {
-            NOT_IMPLEMENTED;
-        }
-        //@}
 
         /** Called when a widget is attached to the renderer. 
          
@@ -319,6 +380,7 @@ namespace ui2 {
                 mouseFocus_ = nullptr;
             }
         }
+        //@}
 
         /** Returns the renderer's backing buffer. 
          */
@@ -337,24 +399,26 @@ namespace ui2 {
 
         Buffer buffer_;
 
-        /** Renderer's window title. 
-         */
+        /** Renderer's window title. */
         std::string title_;
 
-        /** The target for mouse events. 
-         */
-        Widget * mouseFocus_;
-        /** Determines if the mouse is captured by the window. Toggled by the mouseIn and mouseOut events.  
-         */
+        /** Determines if the mouse is captured by the window. Toggled by the mouseIn and mouseOut events.  */
         bool mouseIn_;
-        /** Number of mouse buttons pressed down. If greater than 0, then the mouse is captured by the mouse focus widget. 
-         */
+        /** The target for mouse events. */
+        Widget * mouseFocus_;
+        /** Number of mouse buttons pressed down. If greater than 0, then the mouse is captured by the mouse focus widget. */
         size_t mouseButtons_;
 
+        /** Determines if the renderer's window is itself focused or not. */
+        bool keyboardIn_;
+        /** The target for keyboard events (focused widget). */
         Widget * keyboardFocus_;
 
 
 #ifndef NDEBUG
+        /** \name UI Thread Checking. 
+         */
+        //@{
         friend class UiThreadChecker_;
         
         Renderer * getRenderer_() const {
@@ -364,6 +428,7 @@ namespace ui2 {
         std::thread::id uiThreadId_;
         size_t uiThreadChecksDepth_;
         std::mutex uiThreadCheckMutex_;
+        //@}
 #endif
 
     }; // ui::Renderer

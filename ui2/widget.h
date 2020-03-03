@@ -112,8 +112,6 @@ namespace ui2 {
 
         Event<void> onShow;
         Event<void> onHide;
-        Event<void> onFocusIn;
-        Event<void> onFocusOut;
         Event<void> onEnabled;
         Event<void> onDisabled;
 
@@ -126,6 +124,8 @@ namespace ui2 {
         Event<MouseButtonEvent> onMouseClick;
         Event<MouseButtonEvent> onMouseDoubleClick;
 
+        Event<void> onFocusIn;
+        Event<void> onFocusOut;
         Event<Char> onKeyChar;
         Event<Key> onKeyDown;
         Event<Key> onKeyUp;
@@ -245,24 +245,26 @@ namespace ui2 {
          */
         virtual void paint(Canvas & canvas) = 0;
 
-        /** \name Mouse Actions
+        // ========================================================================================
+
+        /** \name Mouse Input Handling
          
-            Default implementation for mouse action simply calls the attached events when present as long as the propagation of the event has not been stopped. For more details about mouse events, see the \ref ui_renderer_mouse_events "mouse events in renderer".
+            Default implementation for mouse action simply calls the attached events when present as long as the propagation of the event has not been stopped. For more details about mouse events, see the \ref ui_renderer_mouse_input "mouse input" and \ref ui_renderer_event_triggers "event triggers" in ui2::Renderer.
          */
         //@{
 
         /** Triggered when the mouse enters the area of the widget. 
          */
         virtual void mouseIn(Event<void>::Payload & event) {
-            ASSERT(event.active());
-            onMouseIn(event, this);
+            if (event.active())
+                onMouseIn(event, this);
         }
 
         /** Triggered when the mouse leaves the area of the widget. 
          */
         virtual void mouseOut(Event<void>::Payload & event) {
-            ASSERT(event.active());
-            onMouseOut(event, this);
+            if (event.active())
+                onMouseOut(event, this);
         }
 
         /** Triggered when the mouse changes position inside the widget. 
@@ -270,42 +272,42 @@ namespace ui2 {
             When mouse enters the widget, first mouseIn is called and then mouseMove as two separate events. When the mouse moves away from the widget then only mouseOut is called on the widget. 
          */
         virtual void mouseMove(Event<MouseMoveEvent>::Payload & event) {
-            ASSERT(event.active());
-            onMouseMove(event, this);
+            if (event.active())
+                onMouseMove(event, this);
         }
 
         /** Triggered when the mouse wheel rotates while the mouse is over the widget, or captured. 
          */
         virtual void mouseWheel(Event<MouseWheelEvent>::Payload & event) {
-            ASSERT(event.active());
-            onMouseWheel(event, this);
+            if (event.active())
+                onMouseWheel(event, this);
         }
 
         /** Triggered when a mouse button is pressed down. 
          */
         virtual void mouseDown(Event<MouseButtonEvent>::Payload & event) {
-            ASSERT(event.active());
-            onMouseDown(event, this);
+            if (event.active())
+                onMouseDown(event, this);
         }
 
         /** Triggered when a mouse button is released.
          */
         virtual void mouseUp(Event<MouseButtonEvent>::Payload & event) {
-            ASSERT(event.active());
-            onMouseUp(event, this);
+            if (event.active())
+                onMouseUp(event, this);
         }
 
         /** Triggered when mouse button is clicked on the widget. 
          */
         virtual void mouseClick(Event<MouseButtonEvent>::Payload & event) {
-            ASSERT(event.active());
-            onMouseClick(event, this);
+            if (event.active())
+                onMouseClick(event, this);
         }
         /** Triggered when mouse button is double-clicked on the widget. 
          */
         virtual void mouseDoubleClick(Event<MouseButtonEvent>::Payload & event) {
-            ASSERT(event.active());
-            onMouseDoubleClick(event, this);
+            if (event.active())
+                onMouseDoubleClick(event, this);
         }
 
         /** Returns the mouse target within the widget itself corresponding to the given coordinates. 
@@ -328,37 +330,45 @@ namespace ui2 {
                 return Point{0,0};
             return rendererCoords - bufferOffset_;
         }
-
         //@}
 
-        /** \name Keyboard Actions
+        // ========================================================================================
+
+        /** \name Keyboard Input Handling
          
             Default implementation for keyboard actions simply calls the attached events when present.
          */
         //@{
-        virtual void focusIn(Event<void>::Payload & event) {
 
+        bool focused() const;
+        
+        virtual void focusIn(Event<void>::Payload & event) {
+            if (event.active())
+                onFocusIn(event, this);
         }
 
         virtual void focusOut(Event<void>::Payload & event) {
-
+            if (event.active())
+                onFocusOut(event, this);
         }
 
         virtual void keyChar(Event<Char>::Payload & event) {
-            ASSERT(event.active());
-            onKeyChar(event, this);
+            if (event.active())
+                onKeyChar(event, this);
         }
 
         virtual void keyDown(Event<Key>::Payload & event) {
-            ASSERT(event.active());
-            onKeyDown(event, this);
+            if (event.active())
+                onKeyDown(event, this);
         }
 
         virtual void keyUp(Event<Key>::Payload & event) {
-            ASSERT(event.active());
-            onKeyUp(event, this);
+            if (event.active())
+                onKeyUp(event, this);
         }
         //@}
+
+        // ========================================================================================
 
         /** \name Clipboard Actions
 
@@ -366,8 +376,8 @@ namespace ui2 {
          */
         //@{
         virtual void paste(Event<std::string>::Payload & event) {
-            ASSERT(event.active());
-            onPaste(event, this);
+            if (event.active())
+                onPaste(event, this);
         }
         //@}
 

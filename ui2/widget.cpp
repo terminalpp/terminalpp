@@ -10,6 +10,12 @@ namespace ui2 {
             r->repaint(this);
     }
 
+    bool Widget::focused() const {
+        UI_THREAD_CHECK;
+        Renderer * r = renderer();
+        return (r == nullptr) ? false : (r->keyboardFocus() == this);
+    }
+
 
     void Widget::attachRenderer(Renderer * renderer) {
         UI_THREAD_CHECK;
