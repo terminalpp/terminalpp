@@ -5,10 +5,12 @@
 
 namespace ui2 {
 
+    /** Mouse buttons are organized as a bitset. 
+     */
 	enum class MouseButton {
-		Left,
-		Right,
-		Wheel
+		Left = 1,
+		Right = 2,
+		Wheel = 4
 	};
 
 	inline std::ostream& operator << (std::ostream& s, MouseButton const& b) {

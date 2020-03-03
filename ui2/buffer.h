@@ -2,11 +2,10 @@
 
 #include "helpers/char.h"
 
+#include "common.h"
 #include "geometry.h"
 
 namespace ui2 {
-
-    using helpers::Char;
 
 
     /** Single cell of the buffer. 

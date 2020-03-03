@@ -68,8 +68,8 @@ namespace ui2 {
     class Widget {
     public:
 
-        virtual ~Widget() {
-            // TODO how to deal with deleting attached widgets? 
+        virtual ~Widget() noexcept(false) {
+            ASSERT(parent_ == nullptr) << "Widget must be detached from its parent before it is deleted";    
         }
 
         /** Returns the rectangle occupied by the widget in its parent's contents area. 
@@ -117,14 +117,14 @@ namespace ui2 {
         Event<void> onEnabled;
         Event<void> onDisabled;
 
+        Event<void> onMouseIn;
+        Event<void> onMouseOut;
+        Event<MouseMoveEvent> onMouseMove;
+        Event<MouseWheelEvent> onMouseWheel;
         Event<MouseButtonEvent> onMouseDown;
         Event<MouseButtonEvent> onMouseUp;
         Event<MouseButtonEvent> onMouseClick;
         Event<MouseButtonEvent> onMouseDoubleClick;
-        Event<MouseWheelEvent> onMouseWheel;
-        Event<MouseMoveEvent> onMouseMove;
-        Event<void> onMouseEnter;
-        Event<void> onMouseLeave;
 
         Event<Char> onKeyChar;
         Event<Key> onKeyDown;
@@ -247,33 +247,88 @@ namespace ui2 {
 
         /** \name Mouse Actions
          
-            Default implementation for mouse action simply calls the attached events when present.
+            Default implementation for mouse action simply calls the attached events when present as long as the propagation of the event has not been stopped. For more details about mouse events, see the \ref ui_renderer_mouse_events "mouse events in renderer".
          */
         //@{
-        void mouseDown(Event<MouseButtonEvent>::Payload & event) {
-            onMouseDown(event, this);
+
+        /** Triggered when the mouse enters the area of the widget. 
+         */
+        virtual void mouseIn(Event<void>::Payload & event) {
+            ASSERT(event.active());
+            onMouseIn(event, this);
         }
-        void mouseUp(Event<MouseButtonEvent>::Payload & event) {
-            onMouseUp(event, this);
+
+        /** Triggered when the mouse leaves the area of the widget. 
+         */
+        virtual void mouseOut(Event<void>::Payload & event) {
+            ASSERT(event.active());
+            onMouseOut(event, this);
         }
-        void mouseClick(Event<MouseButtonEvent>::Payload & event) {
-            onMouseClick(event, this);
-        }
-        void mouseDoubleClick(Event<MouseButtonEvent>::Payload & event) {
-            onMouseDoubleClick(event, this);
-        }
-        void mouseWheel(Event<MouseWheelEvent>::Payload & event) {
-            onMouseWheel(event, this);
-        }
-        void mouseMove(Event<MouseMoveEvent>::Payload & event) {
+
+        /** Triggered when the mouse changes position inside the widget. 
+         
+            When mouse enters the widget, first mouseIn is called and then mouseMove as two separate events. When the mouse moves away from the widget then only mouseOut is called on the widget. 
+         */
+        virtual void mouseMove(Event<MouseMoveEvent>::Payload & event) {
+            ASSERT(event.active());
             onMouseMove(event, this);
         }
-        void mouseEnter(Event<void>::Payload & event) {
-            onMouseEnter(event, this);
+
+        /** Triggered when the mouse wheel rotates while the mouse is over the widget, or captured. 
+         */
+        virtual void mouseWheel(Event<MouseWheelEvent>::Payload & event) {
+            ASSERT(event.active());
+            onMouseWheel(event, this);
         }
-        void mouseLeave(Event<void>::Payload & event) {
-            onMouseLeave(event, this);
+
+        /** Triggered when a mouse button is pressed down. 
+         */
+        virtual void mouseDown(Event<MouseButtonEvent>::Payload & event) {
+            ASSERT(event.active());
+            onMouseDown(event, this);
         }
+
+        /** Triggered when a mouse button is released.
+         */
+        virtual void mouseUp(Event<MouseButtonEvent>::Payload & event) {
+            ASSERT(event.active());
+            onMouseUp(event, this);
+        }
+
+        /** Triggered when mouse button is clicked on the widget. 
+         */
+        virtual void mouseClick(Event<MouseButtonEvent>::Payload & event) {
+            ASSERT(event.active());
+            onMouseClick(event, this);
+        }
+        /** Triggered when mouse button is double-clicked on the widget. 
+         */
+        virtual void mouseDoubleClick(Event<MouseButtonEvent>::Payload & event) {
+            ASSERT(event.active());
+            onMouseDoubleClick(event, this);
+        }
+
+        /** Returns the mouse target within the widget itself corresponding to the given coordinates. 
+         
+            The default implementation returns the widget itself, but subclasses with child widgets must override this method and implement the logic to determine whether one of their children is the actual target. 
+         */
+        virtual Widget * getMouseTarget(Point coords) {
+            MARK_AS_UNUSED(coords);
+            return this;
+        }
+
+        /** Takes the renderer's coordinates and converts them to widget's coordinates.
+         
+            It is expected that this function is only called for visible widgets with valid positions, otherwise the functions asserts in debug mode and returns the origin otherwise. 
+         */
+        Point toWidgetCoordinates(Point rendererCoords) const {
+            ASSERT(visible_ && renderer() != nullptr);
+            // for robustness, return the origin if widget is in invalid state
+            if (!visible_ || renderer() == nullptr) 
+                return Point{0,0};
+            return rendererCoords - bufferOffset_;
+        }
+
         //@}
 
         /** \name Keyboard Actions
@@ -281,13 +336,26 @@ namespace ui2 {
             Default implementation for keyboard actions simply calls the attached events when present.
          */
         //@{
-        void keyChar(Event<Char>::Payload & event) {
+        virtual void focusIn(Event<void>::Payload & event) {
+
+        }
+
+        virtual void focusOut(Event<void>::Payload & event) {
+
+        }
+
+        virtual void keyChar(Event<Char>::Payload & event) {
+            ASSERT(event.active());
             onKeyChar(event, this);
         }
-        void keyDown(Event<Key>::Payload & event) {
+
+        virtual void keyDown(Event<Key>::Payload & event) {
+            ASSERT(event.active());
             onKeyDown(event, this);
         }
-        void keyUp(Event<Key>::Payload & event) {
+
+        virtual void keyUp(Event<Key>::Payload & event) {
+            ASSERT(event.active());
             onKeyUp(event, this);
         }
         //@}
@@ -297,7 +365,8 @@ namespace ui2 {
             Default implementation the clipboard actions simply calls the attached events when present.
          */
         //@{
-        void paste(Event<std::string>::Payload & event) {
+        virtual void paste(Event<std::string>::Payload & event) {
+            ASSERT(event.active());
             onPaste(event, this);
         }
         //@}
@@ -318,11 +387,21 @@ namespace ui2 {
         /** If true, parts of the widget can be overlaid by other widgets and therefore any repaint request of the widget is treated as a repaint request of its parent. */
         bool overlaid_;
 
-        /** \name Visible rectangle properties
+        /** \anchor ui_widget_visible_rect 
+            \name Visible Rectangle properties
 
+            Each widget contains its visible rectangle and offset of its origin from the renderer's origin. These values can be used for immediate conversions of coordinates and painting on the renderer's canvas so that the canvas can easily determine the buffer coordinates and whether to render a particular cell or not. 
+            
+            Note that the values are only valid when the widget is visible and has a renderer attached. 
+
+            \sa ui2::Canvas and its \ref ui_canvas_visible_rect "visible rectangle".
          */
         //@{
+        /** The visible rectangle of the widget it its own coordinates. 
+         */
         Rect visibleRect_;
+        /** The top-left corner of the widget in the renderer's coordinates. 
+         */
         Point bufferOffset_;
         //@}
 

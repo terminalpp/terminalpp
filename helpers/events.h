@@ -125,10 +125,14 @@ namespace helpers {
 	public:
 		typedef SENDER sender_type;
 
-	    class Payload {
+	    class Payload : public PAYLOAD_BASE {
 		public:
 		    typedef void payload_type;
     		typedef SENDER sender_type;
+
+            Payload():
+                sender_{nullptr} {
+            }
 
 		    SENDER * sender() const {
 				return sender_;

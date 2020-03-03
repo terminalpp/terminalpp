@@ -109,11 +109,18 @@ namespace ui2 {
          */
         Buffer & buffer_;
 
+        /** \anchor ui_canvas_visible_rect 
+            \name Visible Rectangle Properties
+
+            The coordinates of the top-left corner (origin) of the canvas in the buffer's coordinates and the visible rectangle, i.e. the rectangle of the canvas that is visible. The canvas is not allowed to change any cells outside of the visible rectangle. 
+
+            Note that the visible rectangle is in the canvas' own coordinates. 
+         */
         /** The visible rectangle of the canvas in the canvas coordinates. 
          */
         Rect visibleRect_;
 
-        /** The offset of the visible rectangle in the renderer's buffer. 
+        /** The coordinates of canvas origin in the backing buffer's coordinates. 
          
             I.e. value that needs to be added to a point in canvas coordinates to convert it to renderer's buffer coordinates.  
          */

@@ -4,6 +4,7 @@
 #include "helpers/events.h"
 
 #include "input.h"
+#include "geometry.h"
 
 
 /** TODO this will be represented by a templated monstrosity that would lock based on the renderer, i.e. one thread per renderer. 
@@ -22,13 +23,25 @@ namespace ui2 {
 
     using Char = helpers::Char;
 
+    // TODO rename this to PreventablePayloadBase ?
     class CancellablePayloadBase {
     public:
         /** Prevents the default behavior for the event. 
          */
-        void preventDefault() {
-
+        void stop() {
+            active_ = false;
         }
+
+        bool active() const {
+            return active_;
+        }
+
+    protected:
+        CancellablePayloadBase():
+            active_{true} {
+        }
+    private:
+        bool active_;
     }; 
 
     template<typename P, typename T = Widget>
@@ -36,24 +49,21 @@ namespace ui2 {
 
 	class MouseButtonEvent {
 	public:
-		int x;	
-		int y;
+        Point coords;
 		MouseButton button;
 		Key modifiers;
 	};
 
 	class MouseWheelEvent {
 	public:
-		int x;
-		int y;
+        Point coords;
 		int by;
 		Key modifiers;
 	};
 
 	class MouseMoveEvent {
 	public:
-		int x;
-		int y;
+        Point coords;
 		Key modifiers;
 	};
 
@@ -79,7 +89,7 @@ namespace ui2 {
                 initialize();
         }
 
-        ~UiThreadChecker_();
+        ~UiThreadChecker_() noexcept(false);
 
     private:
 

@@ -6,7 +6,7 @@ namespace ui2 {
 
 #ifndef NDEBUG
 
-    UiThreadChecker_::~UiThreadChecker_() {
+    UiThreadChecker_::~UiThreadChecker_() noexcept(false) {
         if (renderer_ == nullptr)
             return;
         std::lock_guard<std::mutex> g{renderer_->uiThreadCheckMutex_};

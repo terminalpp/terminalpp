@@ -4,8 +4,24 @@
 
 namespace ui2 {
 
+    /** Container manages its child widgets dynamically. 
+     
+        A container is a basic widget that manages its children dynamically via a list. Child widgets can be added to, or removed from the container at runtime. The container furthermore provides support for automatic layouting of the children and makes sure that the UI events are propagated to them correctly. 
+
+        TODO the order of elements in the container vector. 
+     */
     class Container : public Widget {
     public:
+
+        /** Container destructor also destroys its children. 
+         */
+        ~Container() override {
+            while (!children_.empty()) {
+                Widget * w = children_.front();
+                remove(w);
+                delete w;
+            }
+        }
 
         /** Adds the given widget as child. 
          
@@ -54,6 +70,16 @@ namespace ui2 {
             relayouting_ = false;    
             repaint();
         }
+        //@}
+
+        /** \name Mouse Actions
+         */
+        //@{
+
+        Widget * getMouseTarget(Point coords) override {
+            NOT_IMPLEMENTED;
+        }
+
         //@}
 
         /** Attaches the container to specified renderer. 
