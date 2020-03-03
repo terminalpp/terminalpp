@@ -16,7 +16,13 @@ namespace ui2 {
      
         Class responsible for rendering the widgets and providing the user actions such as keyboard, mouse and selection & clipboard.
 
+        TODO
+
+        - make sure things are initialized in constructor
+        - create the tab order of widgets and figure out how to work with it
+        - and how to set the modal root and stuff
         
+
      */
     class Renderer {
     public:
@@ -172,7 +178,7 @@ namespace ui2 {
             if (mouseButtons_ != 0 && mouseFocus_ != nullptr)
                 return;
             // determine the mouse target
-            Widget * newTarget = getMouseTarget(coords);
+            Widget * newTarget = (modalRoot_ != nullptr) ? modalRoot_->getMouseTarget(coords) : nullptr;
             // check if the target has changed and emit the appropriate events
             if (mouseFocus_ != newTarget) {
                 if (mouseFocus_ != nullptr) {
@@ -187,15 +193,6 @@ namespace ui2 {
             }
         }
 
-        /** Determines the widget that should receive mouse events given the coordinates. 
-         
-            TODO this should act differently based on how the rendering is done, i.e. whether there are any modal widgets, etc. I need to figure out how these will work before proceeding. 
-
-         */
-        virtual Widget * getMouseTarget(Point coords) {
-            MARK_AS_UNUSED(coords);
-            NOT_IMPLEMENTED;
-        }
         //@}
 
         // ========================================================================================
@@ -379,6 +376,9 @@ namespace ui2 {
                 widget->mouseOut(p);
                 mouseFocus_ = nullptr;
             }
+            if (keyboardFocus_ == widget) {
+                NOT_IMPLEMENTED;
+            }
         }
         //@}
 
@@ -402,6 +402,11 @@ namespace ui2 {
         /** Renderer's window title. */
         std::string title_;
 
+        /** The root widget being rendered. */
+        Widget * rootWidget_;
+        /** The dominating element for the keyboard focus so that focusable elements can be limited to a given substree */
+        Widget * modalRoot_;
+
         /** Determines if the mouse is captured by the window. Toggled by the mouseIn and mouseOut events.  */
         bool mouseIn_;
         /** The target for mouse events. */
@@ -413,7 +418,6 @@ namespace ui2 {
         bool keyboardIn_;
         /** The target for keyboard events (focused widget). */
         Widget * keyboardFocus_;
-
 
 #ifndef NDEBUG
         /** \name UI Thread Checking. 

@@ -72,6 +72,19 @@ namespace ui2 {
             ASSERT(parent_ == nullptr) << "Widget must be detached from its parent before it is deleted";    
         }
 
+        /** Determines if the given widget is transitive parent of the current widget or the widget itself. 
+         */
+        bool isDominatedBy(Widget const * w) const {
+            UI_THREAD_CHECK;
+            Widget const * x = this;
+            while (x != nullptr) {
+                if (x == w)
+                    return true;
+                x = x->parent_;
+            }
+            return false;
+        }
+
         /** Returns the rectangle occupied by the widget in its parent's contents area. 
          */
         Rect const & rect() const {
