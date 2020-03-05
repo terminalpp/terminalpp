@@ -290,6 +290,122 @@ namespace ui2 {
         }
     }; // ui::Color
 
+    /** Border properties. 
+     
+        Determines the border color and border types (none, thin or thick) for top, left, right and bottom borders. 
+     */
+    class Border {
+    public:
+
+        /** Border kind. 
+         */
+        enum class Kind {
+            None,
+            Thin,
+            Thick
+        }; // ui::Border::Kind
+
+        Color color() const {
+            return color_;
+        }
+
+        Kind left() const {
+            return static_cast<Kind>((border_ >> LEFT) & MASK);
+        }
+
+        Kind right() const {
+            return static_cast<Kind>((border_ >> RIGHT) & MASK);
+        }
+
+        Kind top() const {
+            return static_cast<Kind>((border_ >> TOP) & MASK);
+        }
+
+        Kind bottom() const {
+            return static_cast<Kind>((border_ >> BOTTOM) & MASK);
+        }
+
+        Border & setLeft(Kind kind) {
+            border_ = border_ & (~ (MASK << LEFT)) | (static_cast<uint16_t>(kind) << LEFT); 
+            return *this;
+        }
+
+        Border & setRight(Kind kind) {
+            border_ = border_ & (~ (MASK << RIGHT)) | (static_cast<uint16_t>(kind) << RIGHT); 
+            return *this;
+        }
+
+        Border & setTop(Kind kind) {
+            border_ = border_ & (~ (MASK << TOP)) | (static_cast<uint16_t>(kind) << TOP); 
+            return *this;
+        }
+
+        Border & setBottom(Kind kind) {
+            border_ = border_ & (~ (MASK << BOTTOM)) | (static_cast<uint16_t>(kind) << BOTTOM); 
+            return *this;
+        }
+
+        Border & clear() {
+            border_ = 0;
+        }
+
+        bool hasBorder() const {
+            return border_ != 0;
+        }
+
+    private:
+        static constexpr uint16_t MASK = 0x03;
+        static constexpr uint16_t LEFT = 0;
+        static constexpr uint16_t RIGHT = 2;
+        static constexpr uint16_t TOP = 4;
+        static constexpr uint16_t BOTTOM = 6;
+
+        Color color_;
+        uint16_t border_;
+    }; // ui::Border
+
+    /** Font properties. 
+     */
+    class Font {
+    public:
+
+        enum class Kind {
+            Normal,
+            DoubleWidth
+        };
+
+        bool bold() const {
+            return font_ & BOLD;
+        }
+
+        bool italic() const {
+            return font_ & ITALIC;
+        }
+
+        bool underline() const {
+            return font_ & UNDERLINE;
+        }
+
+        bool strikethrough() const {
+            return font_ & STRIKETHROUGH;
+        }
+
+        bool blink() const {
+            return font_ & BLINK;
+        }
+
+    private:
+        static constexpr uint16_t BOLD = 1 << 15;
+        static constexpr uint16_t ITALIC = 1 << 14;
+        static constexpr uint16_t UNDERLINE = 1 << 13;
+        static constexpr uint16_t STRIKETHROUGH = 1 << 12;
+        static constexpr uint16_t BLINK = 1 << 11;
+
+        uint16_t font_;
+
+    }; // ui::Font
+
+
 	inline std::ostream & operator << (std::ostream & s, Color const & c) {
 		s << static_cast<unsigned>(c.r) << ";" << static_cast<unsigned>(c.g) << ";" << static_cast<unsigned>(c.b) << ";" << static_cast<unsigned>(c.a);
 		return s;

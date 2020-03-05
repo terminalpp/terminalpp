@@ -21,6 +21,9 @@ namespace ui2 {
         - make sure things are initialized in constructor
         - create the tab order of widgets and figure out how to work with it
         - and how to set the modal root and stuff
+        - and the actual widget painting and resizing stuff 
+        - i.e. create a real renderer
+        - do buffer
         
 
      */

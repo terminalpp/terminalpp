@@ -12,11 +12,105 @@ namespace ui2 {
      
         The cell represents the codepoint to be displayed and its graphic properties. 
      */
-    class Cell {
+    class Cell { 
     public:
-        
 
-    }; 
+        /** \name Codepoint
+          
+            The unencoded Unicode codepoint  to be displayed in the cell. 
+         */
+        //@{
+        char32_t const & codepoint() const {
+            return codepoint_;
+        }
+
+        char32_t & codepoint() {
+            return codepoint_;
+        }
+        //@}
+
+        /** \name Foreground Color
+         
+            The color of the character displayed in the cell.
+         */
+        //@{
+        Color const & fg() const {
+            return fg_;
+        }
+
+        Color & fg() {
+            return fg_;
+        }
+        //@}
+
+        /** \name Background Color
+         
+            The background color of the cell. 
+         */
+        //@{
+        Color const & bg() const {
+            return bg_;
+        }
+
+        Color & bg() {
+            return bg_;
+        }
+        //@}
+
+        /** \name Decoration Color. 
+         
+            The color of font decorations, such as underline or strikethrough. 
+         */
+        //@{
+        Color const & decor() const {
+            return decor_;
+        }
+
+        Color & decor() {
+            return decor_;
+        }
+        //@}
+
+        /** \name Font
+         
+            The font used to render the cell. 
+         */
+        //@{
+        Font const & font() const {
+            return font_;
+        }
+
+        Font & font() {
+            return font_;
+        }
+        //@}
+
+        /** \name Border
+         
+            The border of the cell. 
+         */
+        //@{
+        Border const & border() const {
+            return border_;
+        }
+
+        Border & border() {
+            return border_;
+        }
+        //@}
+
+    private:
+        char32_t codepoint_;
+
+        Color fg_;
+        Color bg_;
+        Color decor_;
+
+        Font font_;
+
+        Border border_;
+
+    }; // ui::Cell
 
     /** The UI backing buffer. 
      
