@@ -83,6 +83,21 @@ namespace ui2 {
             All coordinates are relative to renderer's top-left corner. 
          */
         //@{
+
+        /** Returns the mouse buttons that are current pressed. 
+         */
+        size_t mouseButtonsDown() const {
+            return mouseButtons_;            
+        }
+
+        /** Returns true if the mouse input is captured by the renderer. 
+         
+            That is either when the pointer is directly over the rendered area, or if the mouse pointer has been grabbed, such as when a button is pressed down.
+         */
+        bool mouseFocused() const {
+            return mouseIn_;
+        }
+
         /** Returns the widget that is current target for mouse events.
          
             This is either a widget over which the pointer is placed, or a widget that has captured the pointer. Note that the mouse focus can also be nullptr in case the mouse is not captured and outside of the renderer's window. 
@@ -141,15 +156,36 @@ namespace ui2 {
 
         /** Trigerred when mouse button is released. 
          
-            The mouseUp method is forwarded to the widget which has the mouse focus (mouseFocus())
+            The mouseUp method is forwarded to the widget which has the mouse focus (mouseFocus()). In case the last button has been released and therefore the mouse capture by the widget has been released, it is possible the mouse has moved to other widget and thefore the mouse focus transition events and the mouse move event at the target widget should be invoked. 
+
+            These two actions are provided in separate methods so that subclasses can interject the mouse down and mouse focus move with other stuff, if needed (such as clicks detection). 
          */
         virtual void rendererMouseUp(Point coords, MouseButton button, Key modifiers) {
+            rendererMouseUpEmit(coords, button, modifiers);
+            // if this was the last button to be released and the capture ended, the mouse focus widget must in theory be recalculated
+            if (mouseButtons_ == 0)
+                rendererMouseUpUpdateTarget(coords, modifiers);
+        }
+
+        /** Actually triggers the mouse up action. 
+         */
+        void rendererMouseUpEmit(Point coords, MouseButton button, Key modifiers) {
             ASSERT(mouseIn_ && mouseButtons_ > 0);
             // this is technically not necessary as the mouse should be captured, but for added robustness the mouse focus is checked 
             updateMouseFocus(coords);
             mouseButtons_ &= ~ static_cast<size_t>(button);
             Event<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
             mouseUp(p, mouseFocus_);
+        }
+
+        /** Checks that given coordinates do not change the mouseFocus widget and if they do, emits the focus transition events as well as mouseMove event on the new mouse target. 
+         */
+        void rendererMouseUpUpdateTarget(Point coords, Key modifiers) {
+            ASSERT(mouseButtons_ == 0);
+            Widget * last = mouseFocus_;
+            updateMouseFocus(coords);
+            if (last != mouseFocus_)
+                rendererMouseMove(coords, modifiers);
         }
 
         /** Triggered when the user clicks with the mouse.
@@ -176,7 +212,7 @@ namespace ui2 {
          
             The mouse focus widget is only updated if the pointer is not captured (no mouse buttons are pressed and valid mouse focus widget exists). It is possible that buttons are pressed and valid widget does not exist, such as when the widget is detached from the renderer while the buttons are pressed, in which case the mouse target is recalculated. 
          */
-        void updateMouseFocus(Point coords) {
+        virtual void updateMouseFocus(Point coords) {
             // don't change the mouse focus target if mouse is captured by a valid event
             if (mouseButtons_ != 0 && mouseFocus_ != nullptr)
                 return;
@@ -439,6 +475,126 @@ namespace ui2 {
 #endif
 
     }; // ui::Renderer
+
+    /** Simplified renderer for local applications. 
+     
+        If the communication between the renderer and the UI elements is reliable (such as if they both run in the same process), the LocalRenderer offers a simplified API that handles things such as mouse clicks. 
+     */
+    class LocalRenderer : public Renderer {
+    protected:
+        /** \name Mouse Input 
+         
+            - rendererMouseOut
+            - rendererMouseMove
+            - rendererMouseWheel
+            - rendererMouseDown
+            - rendererMouseUp
+
+         */
+        //@{
+        
+        /** Triggered when mouse moves over the renderer. 
+         
+            If this is the first mouse event received after a mouse focus has been lost, the rendererMouseIn() method is called first to initiate the mouseIn event apporopriately. 
+         */
+        void rendererMouseMove(Point coords, Key modifiers) override {
+            if (! mouseFocused())
+                rendererMouseIn();
+            Renderer::rendererMouseMove(coords, modifiers);
+        }
+
+        /** Triggered when mouse button is pressed. 
+         
+            If the button is the only button currently down, this can be the start of a mouse click so the current current time is stored in the mouse click time. Otherwise the click check state must be invalidated by setting mouseClickButton_ to 0. 
+         */
+        void rendererMouseDown(Point coords, MouseButton button, Key modifiers) override {
+            Renderer::rendererMouseDown(coords, button, modifiers);
+            // if this is the first button pressed, mark the time
+            if (mouseButtonsDown() == static_cast<size_t>(button)) {
+                mouseClickStart_ = helpers::SteadyClockMillis();
+                mouseClickButton_ = mouseButtonsDown();
+            // otherwise invalidate the click state
+            } else {
+                mouseClickButton_ = 0;
+            }
+        }
+
+        /** Triggered when mouse button is released. 
+         
+            Triggers the mouseDown action and determines whether the button release consituted a click or a double click.
+         */
+        void rendererMouseUp(Point coords, MouseButton button, Key modifiers) override {
+            if (mouseButtonsDown() != static_cast<size_t>(button) || mouseClickButton_ == 0) {
+                Renderer::rendererMouseUp(coords, button, modifiers);
+                mouseClickButton_ = 0;
+                lastMouseClickWidget_ = 0;
+            } else {
+                // emit the mouse up
+                rendererMouseUpEmit(coords, button, modifiers);
+                // check if click or double click should be emitted
+                // TODO
+                // TODO
+                // TODO
+                // TODO
+                // TODO
+                // update the mouse target if necessary
+                ASSERT(mouseButtonsDown() == 0);
+                rendererMouseUpUpdateTarget(coords, modifiers);
+            }
+            #ifdef HAHA
+            Renderer::rendererMouseUp(coords, button, modifiers);
+            // determine if we are dealing with single or double click end, i.e if the released button is the first button pressed
+            if (mouseClickButton_ == static_cast<size_t>(button)) {
+                ASSERT(mouseButtonsDown() == 0);
+                size_t now = helpers::SteadyClockMillis();
+                // check if it is a click
+                if (now - mouseClickStart_ <= mouseClickMaxDuration_) {
+                    // if the click is also a double click, emit double click and clear the doubleClick checking state
+                    if (mouseClickStart_ - lastMouseClickEnd_ < mouseDoubleClickMaxDistance_ && lastMouseClickWidget_ == mouseFocus()) {
+                        rendererMouseDoubleClick(coords, button, modifiers);
+                        lastMouseClickWidget_ = nullptr;
+                    // not a double click, emit single click and make the click candidate for a future double click
+                    } else {
+
+                    }
+
+
+
+                }
+
+            // otherwise a different button has been pressed and released while the first button is still down, which is not a click action, invalidate both single and double click state
+            } else {
+                mouseClickButton_ = 0;
+                lastMouseClickWidget_ = nullptr;
+            }
+            #endif
+        }
+
+        /** Changing mouse focus invalidates the possible double click state. 
+         */
+        void updateMouseFocus(Point coords) override {
+            Renderer::updateMouseFocus(coords);
+            if (lastMouseClickWidget_ != mouseFocus())
+                lastMouseClickWidget_ == nullptr;
+        }
+
+        //@}
+        
+    private:
+
+        /** Max number of milliseconds between a mouse click start and end. */
+        size_t mouseClickMaxDuration_;
+        /** Max number of milliseconds between the end of first and start of second click within a double click. */
+        size_t mouseDoubleClickMaxDistance_;
+
+        size_t mouseClickButton_;
+        size_t mouseClickStart_;
+        size_t lastMouseClickEnd_;
+        Widget * lastMouseClickWidget_;
+        
+
+
+    }; // ui::LocalRenderer
 
 
 } // namespace ui
