@@ -5,6 +5,8 @@
 #include <mutex>
 #endif
 
+#include "helpers/time.h"
+
 #include "common.h"
 #include "buffer.h"
 #include "widget.h"
@@ -531,43 +533,34 @@ namespace ui2 {
             } else {
                 // emit the mouse up
                 rendererMouseUpEmit(coords, button, modifiers);
-                // check if click or double click should be emitted
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // update the mouse target if necessary
                 ASSERT(mouseButtonsDown() == 0);
+                // check if the mouse press time was short enough for a click
+                size_t now = helpers::SteadyClockMillis();
+                if (now - mouseClickStart_ <= mouseClickMaxDuration_) {
+                    // if we have click, check whether the click is part of double click
+                    if (
+                        (lastMouseClickWidget_ == mouseFocus()) && // i.e. the same widget is focused
+                        (lastMouseClickButton_ == button) && // the same button
+                        (mouseClickStart_ - lastMouseClickEnd_ <= mouseDoubleClickMaxDistance_) // fast enough
+                    ) {
+                        // emit the double click
+                        rendererMouseDoubleClick(coords, button, modifiers);
+                        // clear the double click state
+                        lastMouseClickWidget_ = nullptr;
+                    // it's not a double click, so emit the single click
+                    } else {
+                        rendererMouseClick(coords, button, modifiers);
+                        // set the double click state in case the click becomes a double click in the future
+                        lastMouseClickEnd_ = now;
+                        lastMouseClickButton_ = button;
+                        lastMouseClickWidget_ = mouseFocus();
+                    }
+                    // clear the mouse click state so that new clicks can be registered
+                    mouseClickButton_ = 0;
+                }
+                // update the mouse target if necessary after the mouse capture has ended
                 rendererMouseUpUpdateTarget(coords, modifiers);
             }
-            #ifdef HAHA
-            Renderer::rendererMouseUp(coords, button, modifiers);
-            // determine if we are dealing with single or double click end, i.e if the released button is the first button pressed
-            if (mouseClickButton_ == static_cast<size_t>(button)) {
-                ASSERT(mouseButtonsDown() == 0);
-                size_t now = helpers::SteadyClockMillis();
-                // check if it is a click
-                if (now - mouseClickStart_ <= mouseClickMaxDuration_) {
-                    // if the click is also a double click, emit double click and clear the doubleClick checking state
-                    if (mouseClickStart_ - lastMouseClickEnd_ < mouseDoubleClickMaxDistance_ && lastMouseClickWidget_ == mouseFocus()) {
-                        rendererMouseDoubleClick(coords, button, modifiers);
-                        lastMouseClickWidget_ = nullptr;
-                    // not a double click, emit single click and make the click candidate for a future double click
-                    } else {
-
-                    }
-
-
-
-                }
-
-            // otherwise a different button has been pressed and released while the first button is still down, which is not a click action, invalidate both single and double click state
-            } else {
-                mouseClickButton_ = 0;
-                lastMouseClickWidget_ = nullptr;
-            }
-            #endif
         }
 
         /** Changing mouse focus invalidates the possible double click state. 
@@ -575,7 +568,7 @@ namespace ui2 {
         void updateMouseFocus(Point coords) override {
             Renderer::updateMouseFocus(coords);
             if (lastMouseClickWidget_ != mouseFocus())
-                lastMouseClickWidget_ == nullptr;
+                lastMouseClickWidget_ = nullptr;
         }
 
         //@}
@@ -590,6 +583,7 @@ namespace ui2 {
         size_t mouseClickButton_;
         size_t mouseClickStart_;
         size_t lastMouseClickEnd_;
+        MouseButton lastMouseClickButton_;
         Widget * lastMouseClickWidget_;
         
 
