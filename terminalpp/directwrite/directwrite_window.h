@@ -13,7 +13,7 @@ namespace tpp2 {
 
     using namespace ui2;
 
-    class DirectWriteWindow : public RendererWindow<DirectWriteWindow, DirectWriteFont,  HWND> {
+    class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND> {
     public:
 
         /** Bring the font to the class' namespace so that the RendererWindow can find it. 
@@ -38,9 +38,6 @@ namespace tpp2 {
         }
 
 
-    protected:
-        
-
     private:
 
         friend class DirectWriteApplication;
@@ -51,6 +48,87 @@ namespace tpp2 {
          */
         DirectWriteWindow(std::string const & title, int width, int height);
 
+        /** \name Rendering Functions
+         */
+        //@{
+
+        void initializeGlyphRun(int col, int row) {
+            glyphRun_.glyphCount = 0;
+            glyphRunCol_ = col;
+            glyphRunRow_ = row;
+        }
+
+        void addGlyph(int col, int row, ui::Cell const & cell) {
+            UINT32 cp = cell.codepoint();
+            font_->fontFace()->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
+            // if the glyph is not in the font, try callback
+            if (glyphIndices_[glyphRun_.glyphCount] == 0) {
+                // draw glyph run so far and initialize a new glyph run
+                drawGlyphRun();
+                initializeGlyphRun(col, row);
+                // obtain the fallback font and point the glyph run towards it
+                DirectWriteFont * oldFont = font_;
+                font_ = font_->fallbackFor(cp);
+                glyphRun_.fontFace = font_->fontFace();
+                glyphRun_.fontEmSize = font_->sizeEm();
+                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidth_ * font_->font().width());
+                font_->fontFace()->GetGlyphIndices(&cp, 1, glyphIndices_);
+                glyphRun_.glyphCount = 1;
+                drawGlyphRun();
+                // revert the font back to what we had before and reinitialize the glyphrun to start at next character
+                font_ = oldFont;
+                initializeGlyphRun(col + font_->font().width(), row);
+                glyphRun_.fontFace = font_->fontFace();
+                glyphRun_.fontEmSize = font_->sizeEm();
+            } else {
+                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidth_ * font_->font().width());
+                ++glyphRun_.glyphCount;
+            }
+        }
+
+        /** Updates the current font.
+         */
+        void setFont(ui2::Font font) {
+			font_ = DirectWriteFont::Get(font, cellWidth_, cellHeight_);
+			glyphRun_.fontFace = font_->fontFace();
+			glyphRun_.fontEmSize = font_->sizeEm();
+        }
+
+        /** Updates the foreground color.
+         */
+        void setForegroundColor(ui::Color color) {
+			fg_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
+        }
+
+        /** Updates the background color. 
+         */
+        void setBackgroundColor(ui::Color color) {
+		    bg_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
+        }
+
+        /** Updates the decoration color. 
+         */
+        void setDecorationColor(ui::Color color) {
+            decor_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
+        }
+
+        /** Updates the border color. 
+         */
+        void setBorderColor(ui::Color color) {
+            border_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
+        }
+
+        /** Draws the glyph run. 
+         
+            First clears the background with given background color, then draws the text and finally applies any decorations. 
+         */
+        void drawGlyphRun() {
+        }
+
+        //@}
+
+
+
         /* Window handle. */
         HWND hWnd_;
 
@@ -60,6 +138,25 @@ namespace tpp2 {
         /* Dimensions of the window frame so that we can the window client area can be calculated. */
         unsigned frameWidth_;
         unsigned frameHeight_;
+
+		/* Direct X structures. */
+		Microsoft::WRL::ComPtr<ID2D1HwndRenderTarget> rt_;
+		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> fg_; // foreground (text) style
+		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> bg_; // background style
+		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> decor_; // decoration color
+        Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> border_; // border color
+		DirectWriteFont* font_;
+
+		DWRITE_GLYPH_RUN glyphRun_;
+		UINT16 * glyphIndices_;
+		FLOAT * glyphAdvances_;
+		DWRITE_GLYPH_OFFSET * glyphOffsets_;
+		int glyphRunCol_;
+		int glyphRunRow_;
+
+
+
+
 
 	    static Key GetKey(unsigned vk);
 

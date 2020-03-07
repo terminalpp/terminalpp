@@ -62,7 +62,7 @@ namespace tpp2 {
     }; // DirectWriteFont::TextAnalysis
 
     DirectWriteFont::DirectWriteFont(ui2::Font font, int cellHeight, int cellWidth):
-        FontSpec{font, cellHeight, cellWidth} {
+        Font<DirectWriteFont>{font, cellHeight, cellWidth} {
         DirectWriteApplication * app = DirectWriteApplication::Instance();
         // find the required font family - first get the index then obtain the family by the index
         UINT32 findex;
@@ -86,6 +86,40 @@ namespace tpp2 {
             &drw);
         // finally get the font face and initialize the font structures accordingly
         drw->CreateFontFace(&fontFace_);
+        initializeFromFontFace();
+    }
+
+    DirectWriteFont::DirectWriteFont(DirectWriteFont const & base, char32_t codepoint):
+        Font<DirectWriteFont>{base.font_, base.cellHeight_, base.cellWidth_} {
+        DirectWriteApplication * app = DirectWriteApplication::Instance();
+        TextAnalysis ta(codepoint);
+        UINT32 mappedLength;
+        Microsoft::WRL::ComPtr<IDWriteFont> mappedFont;
+        FLOAT scale;
+        helpers::utf16_string fname = helpers::UTF8toUTF16(font_.doubleWidth() ? tpp::Config::Instance().font.doubleWidthFamily() : tpp::Config::Instance().font.family());
+        app->fontFallback_->MapCharacters(
+            &ta, // IDWriteTextAnalysisSource
+            0, // text position
+            1, // text length -- how about surrogate pairs?
+            app->systemFontCollection_.Get(), // base font collection
+            fname.c_str(), // base family name
+            font_.bold() ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR, // base weight
+            font_.italic() ? DWRITE_FONT_STYLE_OBLIQUE : DWRITE_FONT_STYLE_NORMAL, // base style			
+            DWRITE_FONT_STRETCH_NORMAL, // base stretch
+            &mappedLength,
+            &mappedFont,
+            &scale
+        );
+        if (mappedFont.Get() != nullptr) {
+            IDWriteFontFamily * matchedFamily;
+            IDWriteLocalizedStrings * names;
+            mappedFont->GetFontFamily(&matchedFamily);
+            matchedFamily->GetFamilyNames(&names);
+            mappedFont->CreateFontFace(&fontFace_);
+        } else {
+            // no-one implements the character, use the last known font face
+            fontFace_ = base.fontFace();
+        }
         initializeFromFontFace();
     }
 

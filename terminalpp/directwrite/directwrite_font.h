@@ -15,14 +15,8 @@ namespace tpp2 {
      
         
      */
-    class DirectWriteFont : public FontSpec {
+    class DirectWriteFont : public Font<DirectWriteFont> {
     public:
-
-        /** Creates a font corresponding to the given ui::Font and cell height. 
-         
-            This is a two-stage process, where first the closest typeface is selected and once known, the font specification is determined from the typeface.
-         */
-        DirectWriteFont(ui2::Font font, int cellHeight, int cellWidth = 0);
 
 	    float sizeEm() const {
 			return sizeEm_;
@@ -32,9 +26,26 @@ namespace tpp2 {
             return fontFace_.Get();
         }
 
+		bool supportsCodepoint(char32_t codepoint) {
+			UINT16 gi;
+			UINT32 cp = codepoint;
+			fontFace_->GetGlyphIndices(&cp, 1, &gi);
+			return (gi != 0);
+		}
+
     private:
 
+        friend class Font<DirectWriteFont>;
+
         class TextAnalysis;
+
+        /** Creates a font corresponding to the given ui::Font and cell height. 
+         
+            This is a two-stage process, where first the closest typeface is selected and once known, the font specification is determined from the typeface.
+         */
+        DirectWriteFont(ui2::Font font, int cellHeight, int cellWidth = 0);
+
+        DirectWriteFont(DirectWriteFont const & base, char32_t codepoint);
 
         /** Given a typeface, determines the font metrics to fit the specified cell dimensions. 
          

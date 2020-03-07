@@ -12,7 +12,7 @@ namespace tpp2 {
 
     /** Rendering font information. 
      */
-    class FontSpec {
+    class FontMetrics {
     public:
 
         /** Returns the font associated with the font specification. 
@@ -29,7 +29,7 @@ namespace tpp2 {
             return cellHeight_;
         }
 
-        virtual ~FontSpec() {
+        virtual ~FontMetrics() {
             // subclasses should free their native resources here
         }
 
@@ -37,14 +37,9 @@ namespace tpp2 {
             return f.setUnderline(false).setStrikethrough(false).setBlink(false);
         }
 
-        static size_t CreateIdFrom(ui2::Font font, int cellHeight) {
-            ui2::Font f = Strip(font);
-            return (static_cast<size_t>(cellHeight) << 16) + pointer_cast<uint16_t*>(&f)[0];
-        }
-
     protected:
 
-        FontSpec(ui2::Font const & font, int cellHeight, int cellWidth = 0):
+        FontMetrics(ui2::Font const & font, int cellHeight, int cellWidth = 0):
             font_{Strip(font)},
             cellWidth_{cellWidth},
             cellHeight_{cellHeight},
@@ -66,9 +61,58 @@ namespace tpp2 {
         float strikethroughOffset_;
         float strikethroughThickness_;
 
-    }; // tpp::Font
+    }; // tpp::FontMetrics
 
+    template<typename T>
+    class Font : public FontMetrics {
+    public:
+        static T * Get(ui2::Font font, int cellHeight, int cellWidth = 0) {
+            size_t id = CreateIdFrom(font, cellHeight);
+            auto i = Fonts_.find(id);
+            if (i == Fonts_.end()) {
+                T * f = new T(font, cellHeight, cellWidth);
+                i = Fonts_.insert(std::make_pair(id, f)).first;
+            }
+            return i->second;
+        }
 
+        T * fallbackFor(char32_t codepoint) {
+			std::vector<T*> & fallbackCache = FallbackFonts_[CreateIdFrom(font_, cellHeight_)];
+            for (auto i : fallbackCache) {
+				if (i != this && i->supportsCodepoint(codepoint))
+                    return i;
+			}
+			// if the character we search the fallback for is double width increase the cell width now
+			//cellWidth *= helpers::Char::ColumnWidth(codepoint);
+            T * f = new T(*static_cast<T const *>(this), codepoint);
+            fallbackCache.push_back(f);
+            return f;
+        }
+
+    protected:
+
+        Font(ui2::Font const & font, int cellHeight, int cellWidth):
+            FontMetrics(font, cellHeight, cellWidth) {
+        }
+
+        static size_t CreateIdFrom(ui2::Font font, int cellHeight) {
+            ui2::Font f = Strip(font);
+            return (static_cast<size_t>(cellHeight) << 16) + pointer_cast<uint16_t*>(&f)[0];
+        }
+
+    private:
+        
+        static std::unordered_map<size_t, T *> Fonts_;
+
+		static std::unordered_map<size_t, std::vector<T*>> FallbackFonts_;
+
+    }; 
+
+    template<typename T>
+    std::unordered_map<size_t, T *> Font<T>::Fonts_;
+
+	template<typename T>
+	std::unordered_map<size_t, std::vector<T*>> Font<T>::FallbackFonts_;
 
 } // namespace tpp
 
