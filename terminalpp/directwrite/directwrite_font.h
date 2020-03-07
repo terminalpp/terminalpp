@@ -8,6 +8,11 @@
 #include "../font.h"
 #include "directwrite_application.h"
 
+namespace tpp2 {
+
+
+} // namespace tpp
+
 namespace tpp {
 
 	class DirectWriteFont : public Font<DirectWriteFont> {

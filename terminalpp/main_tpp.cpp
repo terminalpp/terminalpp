@@ -83,6 +83,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MARK_AS_UNUSED(nCmdShow);
 	int argc = __argc;
 	char** argv = __argv;
+
+	tpp2::APPLICATION_CLASS::Initialize(argc, argv, hInstance);
+    tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
+    w->show();
+    tpp2::Application::Instance()->mainLoop();
+
+    return EXIT_SUCCESS;
+
 	APPLICATION_CLASS::Initialize(argc, argv, hInstance);
 #elif (defined ARCH_WINDOWS && defined RENDERER_QT)
 int main(int argc, char* argv[]) {

@@ -36,11 +36,10 @@ namespace ui2 {
             return title_;
         }
 
-        void setTitle(std::string const & value) {
+        virtual void setTitle(std::string const & value) {
             UI_THREAD_CHECK;
             if (title_ != value) {
                 title_ = value;
-                titleChanged();
             }
         }
 
@@ -82,10 +81,6 @@ namespace ui2 {
             This method should actually render the contents. While only the refresh of the given rectangle is necessary at the time the method is called, the entire buffer is guaranteed to be valid in case whole screen repaint is to be issued. 
          */
         virtual void render(Rect const & rect) = 0;
-
-        /** Called when the title of the renderer has changed. 
-         */
-        virtual void titleChanged() = 0;
 
         // ========================================================================================
         
@@ -510,7 +505,7 @@ namespace ui2 {
         }
 
         std::thread::id uiThreadId_;
-        size_t uiThreadChecksDepth_;
+        size_t uiThreadChecksDepth_ = 0;
         std::mutex uiThreadCheckMutex_;
         //@}
 #endif

@@ -5,6 +5,33 @@
 #include "helpers/char.h"
 
 #include "ui/font.h"
+#include "ui2/geometry.h"
+
+namespace tpp2 {
+
+    /** Base class for font rendering fonts. 
+     
+     */
+    class Font {
+    public:
+        int cellWidth() const {
+            return cellWidth_;
+        }
+
+        int cellHeight() const {
+            return cellHeight_;
+        }
+
+    private:
+        int cellWidth_ = 10;
+        int cellHeight_ = 10;
+
+    }; // tpp::Font
+
+
+
+} // namespace tpp
+
 
 namespace tpp {
 

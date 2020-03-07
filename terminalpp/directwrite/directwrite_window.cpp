@@ -5,6 +5,170 @@
 
 #include "directwrite_font.h"
 
+namespace tpp2 {
+
+    void DirectWriteWindow::setTitle(std::string const & value) {
+        if (title() != value) {
+            RendererWindow::setTitle(value);
+            // actually change the title since we are in the UI thread now
+            helpers::utf16_string t = helpers::UTF8toUTF16(value);
+            // ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+            SetWindowTextW(hWnd_, t.c_str());
+        }
+    }
+
+    void DirectWriteWindow::setFullscreen(bool value) {
+        if (fullscreen() != value) {
+            DWORD style = GetWindowLong(hWnd_, GWL_STYLE);
+            if (value == true) {
+                MONITORINFO mInfo = { sizeof(mInfo) };
+                if (GetWindowPlacement(hWnd_, &wndPlacement_) &&
+                    GetMonitorInfo(MonitorFromWindow(hWnd_, MONITOR_DEFAULTTOPRIMARY), &mInfo)) {
+                    SetWindowLong(hWnd_, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+                    int width = mInfo.rcMonitor.right - mInfo.rcMonitor.left;
+                    int height = mInfo.rcMonitor.bottom - mInfo.rcMonitor.top;
+                    SetWindowPos(hWnd_, HWND_TOP, mInfo.rcMonitor.left, mInfo.rcMonitor.top, width, height, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+                } else {
+                    // we are not actually fullscreen
+                    return;
+                }
+            } else {
+                SetWindowLong(hWnd_, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+                SetWindowPlacement(hWnd_, &wndPlacement_);
+                SetWindowPos(hWnd_, nullptr, 0, 0, 0, 0,
+                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                    SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+            }
+            RendererWindow::setFullscreen(value);
+        }
+    }
+
+
+
+    DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows):
+        RendererWindow<DirectWriteWindow, HWND>{cols, rows, Font{}, 1.0},
+        wndPlacement_{ sizeof(wndPlacement_) },
+        frameWidth_{0},
+        frameHeight_{0} {
+        // create the window with given title
+        helpers::utf16_string t = helpers::UTF8toUTF16(title);
+        hWnd_ = CreateWindowExW(
+            WS_EX_LEFT, // the default
+            DirectWriteApplication::Instance()->WindowClassName_, // window class
+            // ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+            t.c_str(), // window name (all start as terminal++)
+            WS_OVERLAPPEDWINDOW,
+            CW_USEDEFAULT, // x position
+            CW_USEDEFAULT, // y position
+            widthPx(),
+            heightPx(),
+            nullptr, // handle to parent
+            nullptr, // handle to menu 
+            DirectWriteApplication::Instance()->hInstance_, // module handle
+            this // lParam for WM_CREATE message
+        );
+        // initialize the rendering structures
+
+
+        // register the window
+        RegisterWindowHandle(this, hWnd_);        
+    }
+
+
+	LRESULT CALLBACK DirectWriteWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+        DirectWriteWindow * window = GetWindowForHandle(hWnd);
+        switch (msg) {
+			/* When the window is created, the border width and height of a terminal window is determined and the window's size is updated to adjust for it. */
+			case WM_CREATE: {
+				// now calculate the border and actually update the window size to account for it
+				CREATESTRUCT& cs = *reinterpret_cast<CREATESTRUCT*>(lParam);
+				// get the tw member from the create struct argument
+				ASSERT(window == nullptr);
+				window = reinterpret_cast<DirectWriteWindow*>(cs.lpCreateParams);
+				ASSERT(window != nullptr);
+				RECT r;
+				r.left = cs.x;
+				r.right = cs.x + cs.cx;
+				r.top = cs.y;
+				r.bottom = cs.y + cs.cy;
+				AdjustWindowRectEx(&r, cs.style, false, cs.dwExStyle);
+				unsigned fw = r.right - r.left - cs.cx;
+				unsigned fh = r.bottom - r.top - cs.cy;
+				if (fw != 0 || fh != 0) {
+					window->frameWidth_ = fw;
+					window->frameHeight_ = fh;
+					SetWindowPos(hWnd, HWND_TOP, cs.x, cs.y, cs.cx + fw, cs.cy + fh, SWP_NOZORDER | SWP_NOACTIVATE);
+				}
+				break;
+			}
+            /** Window gains keyboard focus. 
+			 */
+			case WM_SETFOCUS:
+				if (window != nullptr)
+    				window->rendererFocusIn();
+				break;
+			/** Window loses keyboard focus. 
+			 */
+			case WM_KILLFOCUS:
+				if (window != nullptr)
+    				window->rendererFocusOut();
+				break;
+			/* Called when the window is resized interactively by the user. Makes sure that the window size snaps to discrete terminal sizes. */
+			case WM_SIZING: {
+				RECT* winRect = reinterpret_cast<RECT*>(lParam);
+				switch (wParam) {
+                    case WMSZ_BOTTOM:
+                    case WMSZ_BOTTOMRIGHT:
+                    case WMSZ_BOTTOMLEFT:
+                        winRect->bottom -= (winRect->bottom - winRect->top - window->frameHeight_) % window->cellHeight_;
+                        break;
+                    default:
+                        winRect->top += (winRect->bottom - winRect->top - window->frameHeight_) % window->cellHeight_;
+                        break;
+				}
+				switch (wParam) {
+                    case WMSZ_RIGHT:
+                    case WMSZ_TOPRIGHT:
+                    case WMSZ_BOTTOMRIGHT:
+                        winRect->right -= (winRect->right - winRect->left - window->frameWidth_) % window->cellWidth_;
+                        break;
+                    default:
+                        winRect->left += (winRect->right - winRect->left - window->frameWidth_) % window->cellWidth_;
+                        break;
+				}
+				break;
+			}
+			/* Called when the window is resized to given values.
+
+			   No resize is performed if the window is minimized (we would have terminal size of length 0).
+
+			   It is ok if no terminal window is associated with the handle as the message can be sent from the WM_CREATE when window is resized to account for the window border which has to be calculated.
+			 */
+			case WM_SIZE: {
+				if (wParam == SIZE_MINIMIZED)
+					break;
+				if (window != nullptr) {
+					RECT rect;
+					GetClientRect(hWnd, &rect);
+					window->windowResized(rect.right, rect.bottom);
+				}
+				break;
+			}
+			/* Repaint of the window is requested. 
+             */
+			case WM_PAINT: {
+				ASSERT(window != nullptr) << "Attempt to paint unknown window";
+				window->render(Rect::FromWH(window->width(), window->height()));
+				break;
+			}
+
+        }
+        return DefWindowProc(hWnd, msg, wParam, lParam);
+    }
+
+
+} // namespace tpp
+
 namespace tpp {
 
 	DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows, unsigned baseCellHeightPx):

@@ -14,8 +14,11 @@
 #include "config.h"
 
 #include "application.h"
+#include "font.h"
 
 namespace tpp2 {
+
+    using tpp::Config;
 
     using namespace ui2;
 
@@ -52,16 +55,22 @@ namespace tpp2 {
                 fullscreen_ = value;
         }
 
+        virtual void show(bool value = true) = 0;
+
     protected:
-        Window(int width, int height, int cellWidthPx, int cellHeightPx):
+        Window(int width, int height, Font const & font, double zoom):
             LocalRenderer{width, height},
-            widthPx_{width * cellWidthPx},
-            heightPx_{height * cellHeightPx},
-            baseCellWidthPx_{cellWidthPx},
-            baseCellHeightPx_{cellHeightPx},
-            zoom_{1.0},
+            zoom_{zoom},
             fullscreen_{false},
             activeModifiers_{0} {
+            // calculate the width and height in pixels and the cell dimensions from the font at given zoom level
+            baseCellWidth_ = font.cellWidth();
+            baseCellHeight_ = font.cellHeight();
+            // TODO do I want round, or float instead? 
+            cellWidth_ = static_cast<int>(baseCellWidth_ * zoom);
+            cellHeight_ = static_cast<int>(baseCellHeight_ * zoom);
+            widthPx_ = cellWidth_ * width;
+            heightPx_ = cellHeight_ * height;
         }
 
         virtual void windowResized(int width, int height) {
@@ -69,14 +78,14 @@ namespace tpp2 {
                 widthPx_ = width;
                 heightPx_ = height;
                 // tell the renderer to resize 
-                resize(width / cellWidthPx_, height / cellHeightPx_);
+                resize(width / cellWidth_, height / cellHeight_);
             }
         }
 
         /** Converts the x & y coordinates in pixels to cell coordinates. 
          */
         Point pixelsToCoords(Point xy) {
-            return Point{ xy.x() / cellWidthPx_, xy.y() / cellHeightPx_};
+            return Point{ xy.x() / cellWidth_, xy.y() / cellHeight_};
         }
 
         /** \name Renderer API
@@ -111,7 +120,7 @@ namespace tpp2 {
                 setFullscreen(! fullscreen_);
                 e.stop();
             } else if (*e == SHORTCUT_SETTINGS) {
-                //Application::Open(Config::GetSettingsFile(), /* edit = */ true);
+                Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit = */ true);
                 e.stop();
             } else if (*e == SHORTCUT_ZOOM_IN) {
                 if (zoom_ < 10)
@@ -127,16 +136,14 @@ namespace tpp2 {
 
         //@}
 
-    private:
-
         int widthPx_;
         int heightPx_;
 
-        int baseCellWidthPx_;
-        int baseCellHeightPx_;
+        int baseCellWidth_;
+        int baseCellHeight_;
 
-        int cellWidthPx_;
-        int cellHeightPx_;
+        int cellWidth_;
+        int cellHeight_;
 
         double zoom_;
 
@@ -153,10 +160,38 @@ namespace tpp2 {
     template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
     class RendererWindow : public Window {
     protected:
-        
+        RendererWindow(int width, int height, Font const & font, double zoom):
+            Window{width, height, font, zoom} {
+        }
 
+        void render(Rect const & rect) override {
+            //NOT_IMPLEMENTED;
+        }
+
+        static IMPLEMENTATION * GetWindowForHandle(NATIVE_HANDLE handle) {
+            auto i = Windows_.find(handle);
+            return i == Windows_.end() ? nullptr : i->second;
+        } 
+
+        static void RegisterWindowHandle(IMPLEMENTATION * window, NATIVE_HANDLE handle) {
+            ASSERT(Windows_.find(handle) == Windows_.end());
+            Windows_.insert(std::make_pair(handle, window));
+        }
+
+        /** Removes the window with given handle from the list of windows. 
+         */
+        static void RemoveWindow(NATIVE_HANDLE handle) {
+            Windows_.erase(handle);
+        }
+
+        /* A map which points from the native handles to the windows. 
+         */
+        static std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> Windows_;
 
     }; // tpp::RendererWindow
+
+    template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
+    std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::Windows_;
 
 } // namespace tpp
 

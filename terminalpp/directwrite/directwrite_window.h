@@ -9,6 +9,61 @@
 
 #include "directwrite_font.h"
 
+namespace tpp2 {
+
+    using namespace ui2;
+
+    class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND> {
+    public:
+
+        /** Repainting the window simply sends the repaint message to it. 
+         
+            Since each repaint redraws the entire window, the widget is ignored. 
+         */
+        void repaint(Widget * widget) override {
+            MARK_AS_UNUSED(widget);
+            PostMessage(hWnd_, WM_PAINT, 0, 0);
+        }
+
+        void setTitle(std::string const & value) override;
+
+        void setFullscreen(bool value = true) override;
+
+        void show(bool value = true) override {
+            ShowWindow(hWnd_, SW_SHOWNORMAL);
+        }
+
+
+    protected:
+        
+
+    private:
+
+        friend class DirectWriteApplication;
+
+        /** Creates the renderer window of appropriate size using the default font and zoom of 1.0. 
+         
+            TODO in the future, I want the zoom to be configurable. 
+         */
+        DirectWriteWindow(std::string const & title, int width, int height);
+
+        /* Window handle. */
+        HWND hWnd_;
+
+        /* Window placement to which the window should be returned when fullscreen mode is toggled off. */
+        WINDOWPLACEMENT wndPlacement_;
+
+        /* Dimensions of the window frame so that we can the window client area can be calculated. */
+        unsigned frameWidth_;
+        unsigned frameHeight_;
+
+        static LRESULT CALLBACK EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+    }; // tpp::DirectWriteWindow
+
+
+} // namespace tpp
+
 namespace tpp {
 
     class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND> {
