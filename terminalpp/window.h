@@ -9,9 +9,156 @@
 #include "ui/canvas.h"
 #include "ui/renderer.h"
 
+#include "ui2/renderer.h"
+
 #include "config.h"
 
 #include "application.h"
+
+namespace tpp2 {
+
+    using namespace ui2;
+
+    /** Base class for displaying an UI window content. 
+     
+        Builds upon the local renderer and adds the basic properties required for GUI windows, such as width and height in pixels, etc.  
+     */
+    class Window: public LocalRenderer {
+    public:
+
+        int widthPx() const {
+            return widthPx_;
+        }
+
+        int heightPx() const {
+            return heightPx_;
+        }
+
+        double zoom() const {
+            return zoom_;
+        }
+
+        virtual void setZoom(double value) {
+            if (zoom_ != value)
+                zoom_ = value;
+        }
+
+        bool fullscreen() const {
+            return fullscreen_;
+        }
+
+        virtual void setFullscreen(bool value = true) {
+            if (fullscreen_ != value)
+                fullscreen_ = value;
+        }
+
+    protected:
+        Window(int width, int height, int cellWidthPx, int cellHeightPx):
+            LocalRenderer{width, height},
+            widthPx_{width * cellWidthPx},
+            heightPx_{height * cellHeightPx},
+            baseCellWidthPx_{cellWidthPx},
+            baseCellHeightPx_{cellHeightPx},
+            zoom_{1.0},
+            fullscreen_{false},
+            activeModifiers_{0} {
+        }
+
+        virtual void windowResized(int width, int height) {
+            if (width != widthPx_ && height != heightPx_) {
+                widthPx_ = width;
+                heightPx_ = height;
+                // tell the renderer to resize 
+                resize(width / cellWidthPx_, height / cellHeightPx_);
+            }
+        }
+
+        /** Converts the x & y coordinates in pixels to cell coordinates. 
+         */
+        Point pixelsToCoords(Point xy) {
+            return Point{ xy.x() / cellWidthPx_, xy.y() / cellHeightPx_};
+        }
+
+        /** \name Renderer API
+         
+            The coordinates reported to the renderer are in pixels and must be converted to terminal columns and rows before they are passed further.
+         */
+        //@{
+        void rendererMouseMove(Point coords, Key modifiers) override {
+            LocalRenderer::rendererMouseMove(pixelsToCoords(coords), modifiers);
+        }
+
+        void rendererMouseDown(Point coords, MouseButton button, Key modifiers) override {
+            LocalRenderer::rendererMouseDown(pixelsToCoords(coords), button, modifiers);
+        }
+
+        void rendererMouseUp(Point coords, MouseButton button, Key modifiers) override {
+            LocalRenderer::rendererMouseUp(pixelsToCoords(coords), button, modifiers);
+        }
+
+        void rendererMouseWheel(Point coords, int by, Key modifiers) override {
+            LocalRenderer::rendererMouseWheel(pixelsToCoords(coords), by, modifiers);
+        }
+
+        //@}
+
+        /** \name Global events
+         */
+        //@{
+
+        void keyDown(Event<Key>::Payload & e, Widget * target) {
+            if (*e == SHORTCUT_FULLSCREEN) {
+                setFullscreen(! fullscreen_);
+                e.stop();
+            } else if (*e == SHORTCUT_SETTINGS) {
+                //Application::Open(Config::GetSettingsFile(), /* edit = */ true);
+                e.stop();
+            } else if (*e == SHORTCUT_ZOOM_IN) {
+                if (zoom_ < 10)
+                    setZoom(zoom_ * 1.25);
+                e.stop();
+            } else if (*e == SHORTCUT_ZOOM_OUT) {
+                if (zoom() > 1)
+                    setZoom(std::max(1.0, zoom() / 1.25));
+                e.stop();
+            }   
+            LocalRenderer::keyDown(e, target);
+        }
+
+        //@}
+
+    private:
+
+        int widthPx_;
+        int heightPx_;
+
+        int baseCellWidthPx_;
+        int baseCellHeightPx_;
+
+        int cellWidthPx_;
+        int cellHeightPx_;
+
+        double zoom_;
+
+        bool fullscreen_;
+
+        ui2::Key activeModifiers_;
+
+        static unsigned BlinkSpeed_;
+
+    }; // tpp::Window
+
+    /** 
+     */
+    template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
+    class RendererWindow : public Window {
+    protected:
+        
+
+
+    }; // tpp::RendererWindow
+
+} // namespace tpp
 
 namespace tpp {
 

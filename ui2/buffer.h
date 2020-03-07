@@ -187,6 +187,14 @@ namespace ui2 {
             std::swap(rows_[first], rows_[second]);
         }
 
+        /** Resizes the buffer. 
+         */
+        void resize(int width, int height) {
+            MARK_AS_UNUSED(width);
+            MARK_AS_UNUSED(height);
+            NOT_IMPLEMENTED;
+        }
+
     private:
 
         void clear_() {

@@ -55,6 +55,20 @@ namespace ui2 {
         friend class Canvas;
         friend class Widget;
 
+        Renderer(int width, int height):
+            width_{width},
+            height_{height},
+            buffer_{width, height},
+            title_{""},
+            rootWidget_{nullptr},
+            modalRoot_{nullptr},
+            mouseIn_{false},
+            mouseFocus_{nullptr},
+            mouseButtons_{0},
+            keyboardIn_{false},
+            keyboardFocus_{nullptr} {
+        }
+
         /** \name Events
          
             - for keyboard best would be from 
@@ -436,7 +450,31 @@ namespace ui2 {
          */
         void paintWidget(Widget * widget);
 
+        int width() const {
+            UI_THREAD_CHECK;
+            return buffer_.width();
+        }
+
+        int height() const {
+            UI_THREAD_CHECK;
+            return buffer_.height();
+        }
+
+        virtual void resize(int newWidth, int newHeight) {
+            UI_THREAD_CHECK;
+            if (width_ != newWidth && height_ != newHeight) {
+                buffer_.resize(width_, height_);
+                // resize the UI elements
+                NOT_IMPLEMENTED;
+            }
+        }
+
     private:
+
+        /** Width of the renderer (columns). */
+        int width_;
+        /** Height of the renderer (rows). */
+        int height_;
 
         Buffer buffer_;
 
@@ -459,6 +497,7 @@ namespace ui2 {
         bool keyboardIn_;
         /** The target for keyboard events (focused widget). */
         Widget * keyboardFocus_;
+
 
 #ifndef NDEBUG
         /** \name UI Thread Checking. 
@@ -536,12 +575,12 @@ namespace ui2 {
                 ASSERT(mouseButtonsDown() == 0);
                 // check if the mouse press time was short enough for a click
                 size_t now = helpers::SteadyClockMillis();
-                if (now - mouseClickStart_ <= mouseClickMaxDuration_) {
+                if (now - mouseClickStart_ <= MouseClickMaxDuration_) {
                     // if we have click, check whether the click is part of double click
                     if (
                         (lastMouseClickWidget_ == mouseFocus()) && // i.e. the same widget is focused
-                        (lastMouseClickButton_ == button) && // the same button
-                        (mouseClickStart_ - lastMouseClickEnd_ <= mouseDoubleClickMaxDistance_) // fast enough
+                        (lastMouseClickButton_ == static_cast<size_t>(button)) && // the same button
+                        (mouseClickStart_ - lastMouseClickEnd_ <= MouseDoubleClickMaxDistance_) // fast enough
                     ) {
                         // emit the double click
                         rendererMouseDoubleClick(coords, button, modifiers);
@@ -552,7 +591,7 @@ namespace ui2 {
                         rendererMouseClick(coords, button, modifiers);
                         // set the double click state in case the click becomes a double click in the future
                         lastMouseClickEnd_ = now;
-                        lastMouseClickButton_ = button;
+                        lastMouseClickButton_ = static_cast<size_t>(button);
                         lastMouseClickWidget_ = mouseFocus();
                     }
                     // clear the mouse click state so that new clicks can be registered
@@ -572,21 +611,30 @@ namespace ui2 {
         }
 
         //@}
+
+    protected:
+
+        LocalRenderer(int width, int height):
+            Renderer{width, height},
+            mouseClickButton_{0},
+            mouseClickStart_{0},
+            lastMouseClickEnd_{0},
+            lastMouseClickButton_{0},
+            lastMouseClickWidget_{nullptr} {
+        }
         
     private:
 
         /** Max number of milliseconds between a mouse click start and end. */
-        size_t mouseClickMaxDuration_;
+        static size_t MouseClickMaxDuration_;
         /** Max number of milliseconds between the end of first and start of second click within a double click. */
-        size_t mouseDoubleClickMaxDistance_;
+        static size_t MouseDoubleClickMaxDistance_;
 
         size_t mouseClickButton_;
         size_t mouseClickStart_;
         size_t lastMouseClickEnd_;
-        MouseButton lastMouseClickButton_;
+        size_t lastMouseClickButton_;
         Widget * lastMouseClickWidget_;
-        
-
 
     }; // ui::LocalRenderer
 

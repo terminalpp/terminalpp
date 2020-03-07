@@ -4,6 +4,8 @@
 
 namespace ui2 {
 
+    // Renderer ===================================================================================
+
 
     // TODO how to deal with invalid widgets? 
 
@@ -16,6 +18,11 @@ namespace ui2 {
         // actually render the updated part of the buffer
         render(widget->visibleRect_);
     }
+
+    // LocalRenderer ==============================================================================
+
+    size_t LocalRenderer::MouseClickMaxDuration_ = 200;
+    size_t LocalRenderer::MouseDoubleClickMaxDistance_ = 200;
 
 
 } // namespace ui2
