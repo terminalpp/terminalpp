@@ -74,6 +74,21 @@ namespace tpp2 {
         RegisterWindowHandle(this, hWnd_);        
     }
 
+	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
+	Key DirectWriteWindow::GetKey(unsigned vk) {
+		// we don't distinguish between left and right win keys
+		if (vk == VK_RWIN)
+			vk = VK_LWIN;
+		if (! Key::IsValidCode(vk))
+			return Key(Key::Invalid);
+		// MSB == pressed, LSB state since last time
+		unsigned shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? ui::Key::Shift : 0;
+		unsigned ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) ? ui::Key::Ctrl : 0;
+		unsigned alt = (GetAsyncKeyState(VK_MENU) & 0x8000) ? ui::Key::Alt : 0;
+		unsigned win = (GetAsyncKeyState(VK_LWIN) & 0x8000) || (GetAsyncKeyState(VK_RWIN) & 0x8000) ? ui::Key::Win : 0;
+
+		return Key(vk, shift | ctrl | alt | win);
+	}
 
 	LRESULT CALLBACK DirectWriteWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         DirectWriteWindow * window = GetWindowForHandle(hWnd);
@@ -161,6 +176,53 @@ namespace tpp2 {
 				window->render(Rect::FromWH(window->width(), window->height()));
 				break;
 			}
+			/* No need to use WM_UNICHAR since WM_CHAR is already unicode aware */
+			case WM_UNICHAR:
+				UNREACHABLE;
+				break;
+			/* If a system character is intercepted, do nothing & bypass the default implementation.
+			 
+			    This silences sounds played when alt + enter was pressed multiple times and some other weird behavior. 
+
+				TODO Maybe a better way how to distinguish when to pass the character to the default handler and when to ignore it based on whether the shortcut is actually used?
+			 */
+			case WM_SYSCHAR:
+			    switch (wParam) {
+					case helpers::Char::LF:
+					case helpers::Char::CR:
+					    return 0;
+					default:
+					    break;
+				}
+			    break;
+			case WM_CHAR:
+				if (wParam >= 0x20)
+					window->rendererKeyChar(helpers::Char::FromCodepoint(static_cast<unsigned>(wParam)));
+				break;
+			/* Processes special key events.
+			
+			   TODO perhaps all the syskeydown & syskeyup events should be stopped? 
+			 */
+			case WM_SYSKEYDOWN:
+			case WM_KEYDOWN: {
+				Key k = GetKey(static_cast<unsigned>(wParam));
+				if (k != ui::Key::Invalid)
+					window->rendererKeyDown(k);
+				// returning w/o calling the default window proc means that the OS will not interfere by interpreting own shortcuts
+				// NOTE add other interfering shortcuts as necessary
+				if (k == ui::Key::F10 || k.code() == ui::Key::AltKey)
+				    return 0;
+				break;
+			}
+			/* The modifier part of the key corresponds to the state of the modifiers *after* the key has been released. 
+			 */
+			case WM_SYSKEYUP:
+			case WM_KEYUP: {
+				Key k = GetKey(static_cast<unsigned>(wParam));
+				window->rendererKeyUp(k);
+				break;
+			}
+
 
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);

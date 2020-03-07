@@ -57,6 +57,8 @@ namespace tpp2 {
         unsigned frameWidth_;
         unsigned frameHeight_;
 
+	    static Key GetKey(unsigned vk);
+
         static LRESULT CALLBACK EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     }; // tpp::DirectWriteWindow
