@@ -85,6 +85,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	char** argv = __argv;
 
 	tpp2::APPLICATION_CLASS::Initialize(argc, argv, hInstance);
+	Config const & config = Config::Setup(argc, argv);
+
     tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
     w->show();
     tpp2::Application::Instance()->mainLoop();

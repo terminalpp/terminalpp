@@ -49,7 +49,6 @@ inline T pointer_cast(W * from) {
 
 namespace helpers {
 
-
     class Exception : public std::exception {
     public:
         /** Simple class responsible for storing the exception origin and message.

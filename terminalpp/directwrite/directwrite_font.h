@@ -11,6 +11,46 @@
 namespace tpp2 {
 
 
+    /** Font implementation for DirectWrite rendering.
+     
+        
+     */
+    class DirectWriteFont : public FontSpec {
+    public:
+
+        /** Creates a font corresponding to the given ui::Font and cell height. 
+         
+            This is a two-stage process, where first the closest typeface is selected and once known, the font specification is determined from the typeface.
+         */
+        DirectWriteFont(ui2::Font font, int cellHeight, int cellWidth = 0);
+
+	    float sizeEm() const {
+			return sizeEm_;
+		}
+
+        IDWriteFontFace * fontFace() const {
+            return fontFace_.Get();
+        }
+
+    private:
+
+        class TextAnalysis;
+
+        /** Given a typeface, determines the font metrics to fit the specified cell dimensions. 
+         
+            If cellWidth is 0, then the cell width is determined by the font metrics at given cell height, otherwise the font size is resized and centered to fit the fully specified cell. 
+         */
+        void initializeFromFontFace();
+
+        /** Size of the font face to be used when rendering. 
+         */
+        float sizeEm_;
+
+        /** The DirectWrite font face. */
+		Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace_;
+
+    }; // DirectWriteFont
+
 } // namespace tpp
 
 namespace tpp {

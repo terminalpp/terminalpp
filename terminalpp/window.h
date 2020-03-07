@@ -58,7 +58,7 @@ namespace tpp2 {
         virtual void show(bool value = true) = 0;
 
     protected:
-        Window(int width, int height, Font const & font, double zoom):
+        Window(int width, int height, FontSpec const & font, double zoom):
             LocalRenderer{width, height},
             zoom_{zoom},
             fullscreen_{false},
@@ -157,15 +157,25 @@ namespace tpp2 {
 
     /** 
      */
-    template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
+    template<typename IMPLEMENTATION, typename FONT, typename NATIVE_HANDLE>
     class RendererWindow : public Window {
     protected:
-        RendererWindow(int width, int height, Font const & font, double zoom):
+        RendererWindow(int width, int height, FontSpec const & font, double zoom):
             Window{width, height, font, zoom} {
         }
 
         void render(Rect const & rect) override {
             //NOT_IMPLEMENTED;
+        }
+
+        static FONT & GetFont(ui2::Font font, int cellHeight, int cellWidth = 0) {
+            size_t id = FontSpec::CreateIdFrom(font, cellHeight);
+            auto i = Fonts_.find(id);
+            if (i == Fonts_.end()) {
+                FONT * f = new FONT(font, cellHeight, cellWidth);
+                i = Fonts_.insert(std::make_pair(id, f)).first;
+            }
+            return *(i->second);
         }
 
         static IMPLEMENTATION * GetWindowForHandle(NATIVE_HANDLE handle) {
@@ -188,10 +198,15 @@ namespace tpp2 {
          */
         static std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> Windows_;
 
+        static std::unordered_map<size_t, FONT *> Fonts_;
+
     }; // tpp::RendererWindow
 
-    template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
-    std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::Windows_;
+    template<typename IMPLEMENTATION, typename FONT, typename NATIVE_HANDLE>
+    std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> RendererWindow<IMPLEMENTATION, FONT, NATIVE_HANDLE>::Windows_;
+
+    template<typename IMPLEMENTATION, typename FONT, typename NATIVE_HANDLE>
+    std::unordered_map<size_t, FONT *> RendererWindow<IMPLEMENTATION, FONT, NATIVE_HANDLE>::Fonts_;
 
 } // namespace tpp
 

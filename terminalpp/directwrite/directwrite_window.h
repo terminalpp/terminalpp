@@ -13,8 +13,12 @@ namespace tpp2 {
 
     using namespace ui2;
 
-    class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND> {
+    class DirectWriteWindow : public RendererWindow<DirectWriteWindow, DirectWriteFont,  HWND> {
     public:
+
+        /** Bring the font to the class' namespace so that the RendererWindow can find it. 
+         */
+        using Font = DirectWriteFont;
 
         /** Repainting the window simply sends the repaint message to it. 
          

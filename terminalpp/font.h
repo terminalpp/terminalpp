@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 
+#include "helpers/helpers.h"
 #include "helpers/char.h"
 
 #include "ui/font.h"
@@ -9,11 +10,17 @@
 
 namespace tpp2 {
 
-    /** Base class for font rendering fonts. 
-     
+    /** Rendering font information. 
      */
-    class Font {
+    class FontSpec {
     public:
+
+        /** Returns the font associated with the font specification. 
+         */
+        ui2::Font font() const {
+            return font_;
+        }
+
         int cellWidth() const {
             return cellWidth_;
         }
@@ -22,9 +29,42 @@ namespace tpp2 {
             return cellHeight_;
         }
 
-    private:
-        int cellWidth_ = 10;
-        int cellHeight_ = 10;
+        virtual ~FontSpec() {
+            // subclasses should free their native resources here
+        }
+
+        static ui2::Font Strip(ui2::Font f) {
+            return f.setUnderline(false).setStrikethrough(false).setBlink(false);
+        }
+
+        static size_t CreateIdFrom(ui2::Font font, int cellHeight) {
+            ui2::Font f = Strip(font);
+            return (static_cast<size_t>(cellHeight) << 16) + pointer_cast<uint16_t*>(&f)[0];
+        }
+
+    protected:
+
+        FontSpec(ui2::Font const & font, int cellHeight, int cellWidth = 0):
+            font_{Strip(font)},
+            cellWidth_{cellWidth},
+            cellHeight_{cellHeight},
+            offsetLeft_{0},
+            offsetTop_{0} {
+        }
+
+        ui2::Font font_;
+
+        int cellWidth_;
+        int cellHeight_;
+        // offset of the character in the cell if the characters need to be centered (for fallback fonts)
+        int offsetLeft_;
+        int offsetTop_;
+
+        float ascent_;
+        float underlineOffset_;
+        float underlineThickness_;
+        float strikethroughOffset_;
+        float strikethroughThickness_;
 
     }; // tpp::Font
 

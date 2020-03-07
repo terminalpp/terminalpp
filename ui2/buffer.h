@@ -123,10 +123,8 @@ namespace ui2 {
 
         Buffer(int width, int height):
             width_{width},
-            height_{height},
-            rows_{new Cell*[height]} {
-            for (int i = 0; i < height; ++i)
-                rows_[i] = new Cell[width];
+            height_{height} {
+            create_(width, height);
         }
 
         Buffer(Buffer && from):
@@ -188,14 +186,19 @@ namespace ui2 {
         }
 
         /** Resizes the buffer. 
+         
+            Backing buffer resize is destructive operation and after a resize the whole contents has to be repainted. 
          */
         void resize(int width, int height) {
-            MARK_AS_UNUSED(width);
-            MARK_AS_UNUSED(height);
-            NOT_IMPLEMENTED;
+            clear_();
+            create_(width, height);
         }
 
-    private:
+        void create_(int width, int height) {
+            rows_ = new Cell*[height];
+            for (int i = 0; i < height; ++i)
+                rows_[i] = new Cell[width];
+        }
 
         void clear_() {
             for (int i = 0; i < height_; ++i)

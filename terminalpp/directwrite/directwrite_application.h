@@ -45,6 +45,7 @@ namespace tpp2 {
     private:
 
         friend class DirectWriteWindow;
+        friend class DirectWriteFont;
 
         DirectWriteApplication(HINSTANCE hInstance);
 

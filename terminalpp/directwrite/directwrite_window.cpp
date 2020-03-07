@@ -46,7 +46,7 @@ namespace tpp2 {
 
 
     DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows):
-        RendererWindow<DirectWriteWindow, HWND>{cols, rows, Font{}, 1.0},
+        RendererWindow<DirectWriteWindow, DirectWriteFont, HWND>{cols, rows, GetFont(ui2::Font(), tpp::Config::Instance().font.size()), 1.0},
         wndPlacement_{ sizeof(wndPlacement_) },
         frameWidth_{0},
         frameHeight_{0} {
