@@ -289,7 +289,44 @@ namespace tpp2 {
 				window->rendererKeyUp(k);
 				break;
 			}
-
+			/* Mouse events which simply obtain the mouse coordinates, convert the buttons and wheel values to vterm standards and then calls the DirectWriteTerminalWindow's events, which perform the pixels to cols & rows translation and then call the terminal itself.
+			 */
+#define MOUSE_X static_cast<unsigned>(lParam & 0xffff)
+#define MOUSE_Y static_cast<unsigned>((lParam >> 16) & 0xffff)
+			case WM_LBUTTONDOWN:
+				window->rendererMouseDown(Point{MOUSE_X, MOUSE_Y}, MouseButton::Left, window->activeModifiers_);
+				break;
+			case WM_LBUTTONUP:
+				window->rendererMouseUp(Point{MOUSE_X, MOUSE_Y}, MouseButton::Left, window->activeModifiers_);
+				break;
+			case WM_RBUTTONDOWN:
+				window->rendererMouseDown(Point{MOUSE_X, MOUSE_Y}, MouseButton::Right, window->activeModifiers_);
+				break;
+			case WM_RBUTTONUP:
+				window->rendererMouseUp(Point{MOUSE_X, MOUSE_Y}, MouseButton::Right, window->activeModifiers_);
+				break;
+			case WM_MBUTTONDOWN:
+				window->rendererMouseDown(Point{MOUSE_X, MOUSE_Y}, MouseButton::Wheel, window->activeModifiers_);
+				break;
+			case WM_MBUTTONUP:
+				window->rendererMouseUp(Point{MOUSE_X, MOUSE_Y}, MouseButton::Wheel, window->activeModifiers_);
+				break;
+			/* Mouse wheel contains the position relative to screen top/left, so we must first translate it to window coordinates. 
+			 */
+			case WM_MOUSEWHEEL: {
+				POINT pos{ MOUSE_X, MOUSE_Y };
+				ScreenToClient(hWnd, &pos);
+				window->rendererMouseWheel(Point{pos.x, pos.y}, GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA, window->activeModifiers_);
+				break;
+			}
+			case WM_MOUSEMOVE:
+				window->rendererMouseMove(Point{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)}, window->activeModifiers_);
+				break;
+			/* Triggered when mouse leaves the window.
+ 			 */
+			case WM_MOUSELEAVE:
+				window->rendererMouseOut();
+				break;
 
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);

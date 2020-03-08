@@ -75,12 +75,16 @@ namespace ui2 {
 
         /** Called when the renderer is to be closed.
 
-         
+            By default the method simpy calls the rendererClose() method that actually does the closing, but overriding the behavior may add additional features, such as confirmation dialogs, etc. 
          */     
         virtual void requestClose() {
             rendererClose();
         }
 
+        /** Closes the renderer. [thread-safe]
+         
+            Actually closes the renderer, no questions asked. Calling this method must eventually lead to a call to the renderer's destructor. 
+         */
         virtual void rendererClose() = 0;
 
         /** \name Events
@@ -126,10 +130,9 @@ namespace ui2 {
 
         /** Returns the widget that is current target for mouse events.
          
-            This is either a widget over which the pointer is placed, or a widget that has captured the pointer. Note that the mouse focus can also be nullptr in case the mouse is not captured and outside of the renderer's window. 
+            This is either a widget over which the pointer is placed, or a widget that has captured the pointer. Note that the mouse focus can also be nullptr in case the mouse is not captured and outside of the renderer's window, or if the renderer does not have any widgets. 
          */
         Widget * mouseFocus() const {
-            ASSERT(! mouseIn_ || mouseFocus_ != nullptr);
             return mouseFocus_;
         }
 

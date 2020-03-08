@@ -57,6 +57,17 @@ namespace tpp2 {
             DestroyWindow(hWnd_);
         }
 
+        /** Enable mouse tracking so that the mouseOut event is properly reported. 
+         */
+        void rendererMouseIn() override {
+            TRACKMOUSEEVENT tm;
+            tm.cbSize = sizeof(tm);
+            tm.dwFlags = TME_LEAVE;
+            tm.hwndTrack = hWnd_;
+            TrackMouseEvent(&tm);                    
+            RendererWindow::rendererMouseIn();
+        }
+
     private:
 
         friend class DirectWriteApplication;
