@@ -448,6 +448,14 @@ namespace ui2 {
             return size();
         }
 
+        bool operator == (Font const & other) const {
+            return font_ == other.font_;
+        } 
+
+        bool operator != (Font const & other) const {
+            return font_ != other.font_;
+        }
+
     private:
         static constexpr uint16_t BOLD = 1 << 15;
         static constexpr uint16_t ITALIC = 1 << 14;

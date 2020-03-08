@@ -183,26 +183,24 @@ namespace tpp2 {
                 static_cast<float>(glyphRunCol_* cellWidth_ + font_->offsetLeft()),
                 ((glyphRunRow_ + 1 - state_.font().height()) * cellHeight_ + font_->ascent()) + font_->offsetTop());
             //if (!attrs_.blink() || blinkVisible_)
+            {
                 rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
-            // see if there are any attributes to be drawn 
-            /*
-            if (!attrs_.emptyDecorations()) {
-                if (attrs_.underline() && (!attrs_.blink() || blinkVisible_)) {
-					D2D1_POINT_2F start = origin;
-					start.y -= font_->underlineOffset();
-					D2D1_POINT_2F end = start;
-					end.x += glyphRun_.glyphCount * cellWidthPx_;
-					rt_->DrawLine(start, end, decor_.Get(), font_->underlineThickness());
+                // see if there are any attributes to be drawn 
+                if (state_.font().underline()) {
+                    D2D1_POINT_2F start = origin;
+                    start.y -= font_->underlineOffset();
+                    D2D1_POINT_2F end = start;
+                    end.x += glyphRun_.glyphCount * cellWidth_;
+                    rt_->DrawLine(start, end, decor_.Get(), font_->underlineThickness());
                 }
-                if (attrs_.strikethrough() && (!attrs_.blink() || blinkVisible_)) {
-					D2D1_POINT_2F start = origin;
-					start.y -= font_->strikethroughOffset();
-					D2D1_POINT_2F end = start;
-					end.x += glyphRun_.glyphCount * cellWidthPx_;
-					rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness());
+                if (state_.font().strikethrough()) {
+                    D2D1_POINT_2F start = origin;
+                    start.y -= font_->strikethroughOffset();
+                    D2D1_POINT_2F end = start;
+                    end.x += glyphRun_.glyphCount * cellWidth_;
+                    rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness());
                 }
             }
-            */
 			glyphRun_.glyphCount = 0;
         }
 

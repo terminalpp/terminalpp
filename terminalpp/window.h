@@ -168,33 +168,65 @@ namespace tpp2 {
         #define initializeGlyphRun(...) static_cast<IMPLEMENTATION*>(this)->initializeGlyphRun(__VA_ARGS__)
         #define addGlyph(...) static_cast<IMPLEMENTATION*>(this)->addGlyph(__VA_ARGS__)
         #define changeFont(...) static_cast<IMPLEMENTATION*>(this)->changeFont(__VA_ARGS__)
-        #define changeForegroundColor(...) static_cast<IMPLEMENTATION*>(this)->changeForegroundColor(__VA_ARGS__)
-        #define changeBackgroundColor(...) static_cast<IMPLEMENTATION*>(this)->changeBackgroundColor(__VA_ARGS__)
-        #define changeDecorationColor(...) static_cast<IMPLEMENTATION*>(this)->changeDecorationColor(__VA_ARGS__)
+        #define changeFg(...) static_cast<IMPLEMENTATION*>(this)->changeForegroundColor(__VA_ARGS__)
+        #define changeBg(...) static_cast<IMPLEMENTATION*>(this)->changeBackgroundColor(__VA_ARGS__)
+        #define changeDecor(...) static_cast<IMPLEMENTATION*>(this)->changeDecorationColor(__VA_ARGS__)
         #define drawGlyphRun(...) static_cast<IMPLEMENTATION*>(this)->drawGlyphRun(__VA_ARGS__)
         #define drawBorder(...) static_cast<IMPLEMENTATION*>(this)->drawBorder(__VA_ARGS__)
         #define finalizeDraw(...) static_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
 
 
         void render(Rect const & rect) override {
+            MARK_AS_UNUSED(rect);
             helpers::Stopwatch t;
             t.start();
             // initialize the drawing and set the state for the first cell
             initializeDraw();
             state_ = buffer().at(0,0);
             changeFont(state_.font());
-            changeForegroundColor(state_.fg());
-            changeBackgroundColor(state_.bg());
-            changeDecorationColor(state_.decor());
+            changeFg(state_.fg());
+            changeBg(state_.bg());
+            changeDecor(state_.decor());
             // loop over the buffer and draw the cells
             for (int row = 0, re = height(); row < re; ++row) {
                 initializeGlyphRun(0, row);
                 for (int col = 0, ce = width(); col < ce; ) {
                     Cell const & c = buffer().at(col, row);
-                    // TODO detect & change the colors etc. 
-
-
-
+                    // detect if there were changes in the font & colors and update the state & draw the glyph run if present. The code looks a bit ugly as we have to first draw the glyph run and only then change the state.
+                    bool drawRun = true;
+                    if (state_.font() != c.font()) {
+                        if (drawRun) {
+                            drawGlyphRun();
+                            drawRun = false;
+                        }
+                        changeFont(c.font());
+                        state_.font() = c.font();
+                    }
+                    if (state_.fg() != c.fg()) {
+                        if (drawRun) {
+                            drawGlyphRun();
+                            drawRun = false;
+                        }
+                        changeFg(c.fg());
+                        state_.fg() = c.fg();
+                    }
+                    if (state_.bg() != c.bg()) {
+                        if (drawRun) {
+                            drawGlyphRun();
+                            drawRun = false;
+                        }
+                        changeBg(c.bg());
+                        state_.bg() = c.bg();
+                    }
+                    if (state_.decor() != c.decor()) {
+                        if (drawRun) {
+                            drawGlyphRun();
+                            drawRun = false;
+                        }
+                        changeDecor(c.decor());
+                        state_.decor() = c.decor();
+                    }
+                    // we don't care about the border at this stage
                     // draw the cell
                     addGlyph(col, row, c);
                     // move to the next column (skip invisible cols if double width or larger font)
@@ -203,9 +235,13 @@ namespace tpp2 {
                 drawGlyphRun();
             }
             // TODO cursor
+            // - determine how multiple cursors can be drawn, either here, or by the actual widgets when their cursor is set? 
+            // - perhaps the widgets are better positioned as they can determine whether to update the canvas, or to inform the renderer
+
+
 
             // TODO border
-
+            // - enable showing line endings via border changes
 
             finalizeDraw();
         }
@@ -214,14 +250,13 @@ namespace tpp2 {
         #undef initializeGlyphRun
         #undef addGlyph
         #undef changeFont
-        #undef changeForegroundColor
-        #undef changeBackgroundColor
-        #undef changeDecorationColor
+        #undef changeFg
+        #undef changeBg
+        #undef changeDecor
         #undef changeBorderColor
         #undef drawGlyphRun
         #undef drawBorder
         #undef finalizeDraw
-
 
         Cell state_;
 
