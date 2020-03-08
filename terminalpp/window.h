@@ -164,9 +164,66 @@ namespace tpp2 {
             Window{width, height, font, zoom} {
         }
 
+        #define initializeDraw(...) static_cast<IMPLEMENTATION*>(this)->initializeDraw(__VA_ARGS__)
+        #define initializeGlyphRun(...) static_cast<IMPLEMENTATION*>(this)->initializeGlyphRun(__VA_ARGS__)
+        #define addGlyph(...) static_cast<IMPLEMENTATION*>(this)->addGlyph(__VA_ARGS__)
+        #define changeFont(...) static_cast<IMPLEMENTATION*>(this)->changeFont(__VA_ARGS__)
+        #define changeForegroundColor(...) static_cast<IMPLEMENTATION*>(this)->changeForegroundColor(__VA_ARGS__)
+        #define changeBackgroundColor(...) static_cast<IMPLEMENTATION*>(this)->changeBackgroundColor(__VA_ARGS__)
+        #define changeDecorationColor(...) static_cast<IMPLEMENTATION*>(this)->changeDecorationColor(__VA_ARGS__)
+        #define drawGlyphRun(...) static_cast<IMPLEMENTATION*>(this)->drawGlyphRun(__VA_ARGS__)
+        #define drawBorder(...) static_cast<IMPLEMENTATION*>(this)->drawBorder(__VA_ARGS__)
+        #define finalizeDraw(...) static_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
+
+
         void render(Rect const & rect) override {
-            //NOT_IMPLEMENTED;
+            helpers::Stopwatch t;
+            t.start();
+            // initialize the drawing and set the state for the first cell
+            initializeDraw();
+            state_ = buffer().at(0,0);
+            changeFont(state_.font());
+            changeForegroundColor(state_.fg());
+            changeBackgroundColor(state_.bg());
+            changeDecorationColor(state_.decor());
+            // loop over the buffer and draw the cells
+            for (int row = 0, re = height(); row < re; ++row) {
+                initializeGlyphRun(0, row);
+                for (int col = 0, ce = width(); col < ce; ) {
+                    Cell const & c = buffer().at(col, row);
+                    // TODO detect & change the colors etc. 
+
+
+
+                    // draw the cell
+                    addGlyph(col, row, c);
+                    // move to the next column (skip invisible cols if double width or larger font)
+                    col += c.font().width();
+                }
+                drawGlyphRun();
+            }
+            // TODO cursor
+
+            // TODO border
+
+
+            finalizeDraw();
         }
+
+        #undef initializeDraw
+        #undef initializeGlyphRun
+        #undef addGlyph
+        #undef changeFont
+        #undef changeForegroundColor
+        #undef changeBackgroundColor
+        #undef changeDecorationColor
+        #undef changeBorderColor
+        #undef drawGlyphRun
+        #undef drawBorder
+        #undef finalizeDraw
+
+
+        Cell state_;
 
         static IMPLEMENTATION * GetWindowForHandle(NATIVE_HANDLE handle) {
             auto i = Windows_.find(handle);

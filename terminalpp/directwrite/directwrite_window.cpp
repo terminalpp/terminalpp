@@ -49,7 +49,11 @@ namespace tpp2 {
         RendererWindow<DirectWriteWindow, HWND>{cols, rows, *DirectWriteFont::Get(ui2::Font(), tpp::Config::Instance().font.size()), 1.0},
         wndPlacement_{ sizeof(wndPlacement_) },
         frameWidth_{0},
-        frameHeight_{0} {
+        frameHeight_{0},
+        font_(nullptr),
+        glyphIndices_(nullptr),
+        glyphAdvances_(nullptr),
+        glyphOffsets_(nullptr) {
         // create the window with given title
         helpers::utf16_string t = helpers::UTF8toUTF16(title);
         hWnd_ = CreateWindowExW(
@@ -68,11 +72,56 @@ namespace tpp2 {
             this // lParam for WM_CREATE message
         );
         // initialize the rendering structures
+        D2D1_SIZE_U size = D2D1::SizeU(widthPx_, heightPx_);
+        OSCHECK(SUCCEEDED(DirectWriteApplication::Instance()->d2dFactory_->CreateHwndRenderTarget(
+            D2D1::RenderTargetProperties(),
+            D2D1::HwndRenderTargetProperties(
+                hWnd_,
+                size
+            ),
+            &rt_
+        )));
+        rt_->SetTransform(D2D1::IdentityMatrix());
+        OSCHECK(SUCCEEDED(rt_->CreateSolidColorBrush(
+            D2D1::ColorF(D2D1::ColorF::White),
+            &fg_
+        )));
+        OSCHECK(SUCCEEDED(rt_->CreateSolidColorBrush(
+            D2D1::ColorF(D2D1::ColorF::Black),
+            &bg_
+        )));
+        OSCHECK(SUCCEEDED(rt_->CreateSolidColorBrush(
+            D2D1::ColorF(D2D1::ColorF::White),
+            &decor_
+        )));
+        OSCHECK(SUCCEEDED(rt_->CreateSolidColorBrush(
+            D2D1::ColorF(0xffffff, 0.5),
+            &border_
+        )));
+        ZeroMemory(&glyphRun_, sizeof(DWRITE_GLYPH_RUN));
 
+        // create the glyph run buffer and size it appropriately
+        updateDirectWriteStructures(width());
 
         // register the window
         RegisterWindowHandle(this, hWnd_);        
     }
+
+    void DirectWriteWindow::updateDirectWriteStructures(int cols) {
+		delete[] glyphIndices_;
+		delete[] glyphAdvances_;
+		delete[] glyphOffsets_;
+		glyphIndices_ = new UINT16[cols];
+		glyphAdvances_ = new FLOAT[cols];
+		glyphOffsets_ = new DWRITE_GLYPH_OFFSET[cols];
+		glyphRun_.glyphIndices = glyphIndices_;
+		glyphRun_.glyphAdvances = glyphAdvances_;
+		glyphRun_.glyphOffsets = glyphOffsets_;
+		ZeroMemory(glyphOffsets_, sizeof(DWRITE_GLYPH_OFFSET) * cols);
+		// nothing to be done with advances and indices as these are filled by the drawing method 
+		glyphRun_.glyphCount = 0;
+    }
+
 
 	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/virtual-key-codes
 	Key DirectWriteWindow::GetKey(unsigned vk) {

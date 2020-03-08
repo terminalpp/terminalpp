@@ -40,6 +40,10 @@ namespace ui2 {
             }
         }
 
+        Color const &  backgroundColor() const {
+            return backgroundColor_;
+        }
+
         /** Requests repaint of the given widget. [thread-safe]
          
             The purpose of this method is to use whatever event queue (or other mechanism) the target rendering supports to schedule repaint of the specified widget in the main UI thread. 
@@ -469,6 +473,8 @@ namespace ui2 {
         int height_;
 
         Buffer buffer_;
+
+        Color backgroundColor_;
 
         /** Renderer's window title. */
         std::string title_;

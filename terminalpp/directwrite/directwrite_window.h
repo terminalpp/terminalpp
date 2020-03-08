@@ -38,9 +38,18 @@ namespace tpp2 {
         }
 
 
+
+        void resize(int newWidth, int newHeight) override {
+            if (newWidth != width())
+                updateDirectWriteStructures(newWidth);
+            RendererWindow::resize(newWidth, newHeight);
+        }
+
     private:
 
         friend class DirectWriteApplication;
+
+        friend class RendererWindow<DirectWriteWindow, HWND>;
 
         /** Creates the renderer window of appropriate size using the default font and zoom of 1.0. 
          
@@ -52,13 +61,40 @@ namespace tpp2 {
          */
         //@{
 
+        void initializeDraw() {
+            rt_->BeginDraw();
+        }
+
+        void finalizeDraw() {
+            changeBackgroundColor(backgroundColor());
+            if (widthPx_ % cellWidth_ != 0) {
+                D2D1_RECT_F rect = D2D1::RectF(
+                    static_cast<FLOAT>(width() * cellWidth_),
+                    static_cast<FLOAT>(0),
+                    static_cast<FLOAT>(widthPx_),
+                    static_cast<FLOAT>(heightPx_)
+                );
+    			rt_->FillRectangle(rect, bg_.Get());
+            }
+            if (heightPx_ % cellHeight_ != 0) {
+                D2D1_RECT_F rect = D2D1::RectF(
+                    static_cast<FLOAT>(0),
+                    static_cast<FLOAT>(height() * cellHeight_),
+                    static_cast<FLOAT>(widthPx_),
+                    static_cast<FLOAT>(heightPx_)
+                );
+    			rt_->FillRectangle(rect, bg_.Get());
+            }
+            rt_->EndDraw();
+        }
+
         void initializeGlyphRun(int col, int row) {
             glyphRun_.glyphCount = 0;
             glyphRunCol_ = col;
             glyphRunRow_ = row;
         }
 
-        void addGlyph(int col, int row, ui::Cell const & cell) {
+        void addGlyph(int col, int row, Cell const & cell) {
             UINT32 cp = cell.codepoint();
             font_->fontFace()->GetGlyphIndices(&cp, 1, glyphIndices_ + glyphRun_.glyphCount);
             // if the glyph is not in the font, try callback
@@ -88,33 +124,33 @@ namespace tpp2 {
 
         /** Updates the current font.
          */
-        void setFont(ui2::Font font) {
-			font_ = DirectWriteFont::Get(font, cellWidth_, cellHeight_);
+        void changeFont(ui2::Font font) {
+			font_ = DirectWriteFont::Get(font, cellHeight_, cellWidth_);
 			glyphRun_.fontFace = font_->fontFace();
 			glyphRun_.fontEmSize = font_->sizeEm();
         }
 
         /** Updates the foreground color.
          */
-        void setForegroundColor(ui::Color color) {
+        void changeForegroundColor(Color color) {
 			fg_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
         }
 
         /** Updates the background color. 
          */
-        void setBackgroundColor(ui::Color color) {
+        void changeBackgroundColor(Color color) {
 		    bg_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
         }
 
         /** Updates the decoration color. 
          */
-        void setDecorationColor(ui::Color color) {
+        void changeDecorationColor(Color color) {
             decor_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
         }
 
         /** Updates the border color. 
          */
-        void setBorderColor(ui::Color color) {
+        void changeBorderColor(Color color) {
             border_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
         }
 
@@ -123,11 +159,58 @@ namespace tpp2 {
             First clears the background with given background color, then draws the text and finally applies any decorations. 
          */
         void drawGlyphRun() {
+            if (glyphRun_.glyphCount == 0)
+                return;
+            // get the glyph run rectange
+			D2D1_RECT_F rect = D2D1::RectF(
+				static_cast<FLOAT>(glyphRunCol_ * cellWidth_),
+				static_cast<FLOAT>((glyphRunRow_ + 1 - state_.font().height()) * cellHeight_),
+				static_cast<FLOAT>((glyphRunCol_ + glyphRun_.glyphCount * state_.font().width()) * cellWidth_),
+				static_cast<FLOAT>((glyphRunRow_ + 1) * cellHeight_)
+			);
+            // fill it with the background
+			rt_->FillRectangle(rect, bg_.Get());
+#ifdef SHOW_LINE_ENDINGS
+            if (attrs_.endOfLine()) {
+                auto oldC = bg_->GetColor();
+                bg_->SetColor(D2D1::ColorF(0xffff00, 1.0f));
+                rt_->DrawRectangle(rect, bg_.Get());
+                bg_->SetColor(oldC);
+            }
+#endif
+            // determine the originl and draw the glyph run
+            D2D1_POINT_2F origin = D2D1::Point2F(
+                static_cast<float>(glyphRunCol_* cellWidth_ + font_->offsetLeft()),
+                ((glyphRunRow_ + 1 - state_.font().height()) * cellHeight_ + font_->ascent()) + font_->offsetTop());
+            //if (!attrs_.blink() || blinkVisible_)
+                rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
+            // see if there are any attributes to be drawn 
+            /*
+            if (!attrs_.emptyDecorations()) {
+                if (attrs_.underline() && (!attrs_.blink() || blinkVisible_)) {
+					D2D1_POINT_2F start = origin;
+					start.y -= font_->underlineOffset();
+					D2D1_POINT_2F end = start;
+					end.x += glyphRun_.glyphCount * cellWidthPx_;
+					rt_->DrawLine(start, end, decor_.Get(), font_->underlineThickness());
+                }
+                if (attrs_.strikethrough() && (!attrs_.blink() || blinkVisible_)) {
+					D2D1_POINT_2F start = origin;
+					start.y -= font_->strikethroughOffset();
+					D2D1_POINT_2F end = start;
+					end.x += glyphRun_.glyphCount * cellWidthPx_;
+					rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness());
+                }
+            }
+            */
+			glyphRun_.glyphCount = 0;
         }
 
         //@}
 
-
+        /** Updates the glyph run structures so that up to an entire line can be fit in a single glyph run. 
+         */
+        void updateDirectWriteStructures(int cols);
 
         /* Window handle. */
         HWND hWnd_;

@@ -15,6 +15,13 @@ namespace ui2 {
     class Cell { 
     public:
 
+        // TODO the default constructor should really be different!
+        Cell():
+            codepoint_{'X'},
+            fg_{Color::Red},
+            bg_{Color::Green} {
+        }
+
         /** \name Codepoint
           
             The unencoded Unicode codepoint  to be displayed in the cell. 

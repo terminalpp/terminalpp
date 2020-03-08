@@ -372,6 +372,10 @@ namespace ui2 {
     class Font {
     public:
 
+        Font():
+            font_{0} {
+        }
+
         bool bold() const {
             return font_ & BOLD;
         }
@@ -436,11 +440,11 @@ namespace ui2 {
             return *this;
         }
 
-        int width() {
+        int width() const {
             return doubleWidth() ? size() * 2 : size();
         }
 
-        int height() {
+        int height() const {
             return size();
         }
 

@@ -29,6 +29,35 @@ namespace tpp2 {
             return cellHeight_;
         }
 
+        // TODO offset should be point
+        int offsetTop() const {
+            return offsetTop_;
+        }
+
+        int offsetLeft() const {
+            return offsetLeft_;
+        }
+
+        float ascent() const {
+            return ascent_;
+        }
+
+        float underlineOffset() const {
+            return underlineOffset_;
+        }
+
+        float underlineThickness() const {
+            return underlineThickness_;
+        }
+
+        float strikethroughOffset() const {
+            return strikethroughOffset_;
+        }
+
+        float strikethroughThickness() const {
+            return strikethroughThickness_;
+        }
+
         virtual ~FontMetrics() {
             // subclasses should free their native resources here
         }
