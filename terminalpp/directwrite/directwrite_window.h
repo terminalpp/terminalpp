@@ -20,6 +20,10 @@ namespace tpp2 {
          */
         using Font = DirectWriteFont;
 
+        ~DirectWriteWindow() override {
+            UnregisterWindowHandle(hWnd_);
+        }
+
         /** Repainting the window simply sends the repaint message to it. 
          
             Since each repaint redraws the entire window, the widget is ignored. 
@@ -43,6 +47,14 @@ namespace tpp2 {
             if (newWidth != width())
                 updateDirectWriteStructures(newWidth);
             RendererWindow::resize(newWidth, newHeight);
+        }
+
+    protected:
+
+        /** Destroys the renderer's window. 
+         */
+        void rendererClose() override {
+            DestroyWindow(hWnd_);
         }
 
     private:
@@ -234,9 +246,6 @@ namespace tpp2 {
 		DWRITE_GLYPH_OFFSET * glyphOffsets_;
 		int glyphRunCol_;
 		int glyphRunRow_;
-
-
-
 
 
 	    static Key GetKey(unsigned vk);

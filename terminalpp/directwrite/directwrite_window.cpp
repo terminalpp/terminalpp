@@ -165,6 +165,24 @@ namespace tpp2 {
 				}
 				break;
 			}
+			/** Closes the current window. 
+             
+                Calls the renderer's requestClose() method which shoudl in call renderer's closing function that calls DestroyWindow. 
+             */
+			case WM_CLOSE: {
+				ASSERT(window != nullptr) << "Unknown window";
+                window->requestClose();
+                return 0;
+			}
+			/** Destroys the window, if it is the last window, quits the app. */
+			case WM_DESTROY: {
+				ASSERT(window != nullptr) << "Attempt to destroy unknown window";
+				// delete the window object
+                delete window;
+                if (Windows_.empty())
+                    PostQuitMessage(EXIT_SUCCESS);
+				break;
+			}
             /** Window gains keyboard focus. 
 			 */
 			case WM_SETFOCUS:

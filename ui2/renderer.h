@@ -29,6 +29,10 @@ namespace ui2 {
     class Renderer {
     public:
 
+        virtual ~Renderer() {
+            // TODO delete the attached widgets            
+        }
+
         std::string const & title() const {
             return title_;
         }
@@ -68,6 +72,16 @@ namespace ui2 {
             keyboardIn_{false},
             keyboardFocus_{nullptr} {
         }
+
+        /** Called when the renderer is to be closed.
+
+         
+         */     
+        virtual void requestClose() {
+            rendererClose();
+        }
+
+        virtual void rendererClose() = 0;
 
         /** \name Events
          

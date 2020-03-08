@@ -272,7 +272,7 @@ namespace tpp2 {
 
         /** Removes the window with given handle from the list of windows. 
          */
-        static void RemoveWindow(NATIVE_HANDLE handle) {
+        static void UnregisterWindowHandle(NATIVE_HANDLE handle) {
             Windows_.erase(handle);
         }
 
