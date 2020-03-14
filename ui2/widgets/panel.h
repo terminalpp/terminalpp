@@ -10,14 +10,12 @@ namespace ui2 {
     protected:
 
         void paint(Canvas & canvas) {
-            for (int x = 0; x < canvas.width(); ++x)
-                for (int y = 0; y < canvas.height(); ++y) {
-
-                }
+            canvas.setBg(Color::Red);
+            canvas.fillRect(canvas.rect());
+            // paint the children
+            Container::paint(canvas);
         }
 
     }; // ui::Panel
-
-
 
 } // namespace ui

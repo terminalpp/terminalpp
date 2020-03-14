@@ -48,6 +48,8 @@
 #include <thread>
 
 
+#include "ui2/widgets/panel.h"
+
 #include "helpers/json.h"
 
 #include "helpers/filesystem.h"
@@ -88,6 +90,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Config const & config = Config::Setup(argc, argv);
 
     tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
+    ui2::Panel * p = new ui2::Panel();
+    w->setRootWidget(p);
     w->show();
     tpp2::Application::Instance()->mainLoop();
 

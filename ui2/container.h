@@ -29,7 +29,7 @@ namespace ui2 {
          */
         virtual void add(Widget * widget) {
             for (auto i = children_.begin(), e = children_.end(); i != e; ++i)
-                if (i == widget) {
+                if (*i == widget) {
                     children_.erase(i);
                     children_.push_back(widget);
                     // TODO how to handle invalidations
@@ -42,8 +42,8 @@ namespace ui2 {
          */
         virtual void remove(Widget * widget) {
             for (auto i = children_.begin(), e = children_.end(); i != e; ++i)
-                if (i == widget) {
-                    *i->detachFrom(this);
+                if (*i == widget) {
+                    (*i)->detachFrom(this);
                     children_.erase(i);
                     return;
                 }
@@ -53,6 +53,7 @@ namespace ui2 {
     protected:
 
         /** \name Geometry and Layout
+         
          */
         //@{
 

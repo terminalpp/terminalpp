@@ -291,6 +291,11 @@ namespace ui2 {
         }
     }; // ui::Color
 
+	inline std::ostream & operator << (std::ostream & s, Color const & c) {
+		s << static_cast<unsigned>(c.r) << ";" << static_cast<unsigned>(c.g) << ";" << static_cast<unsigned>(c.b) << ";" << static_cast<unsigned>(c.a);
+		return s;
+	}
+
     /** Border properties. 
      
         Determines the border color and border types (none, thin or thick) for top, left, right and bottom borders. 
@@ -472,9 +477,65 @@ namespace ui2 {
     }; // ui::Font
 
 
-	inline std::ostream & operator << (std::ostream & s, Color const & c) {
-		s << static_cast<unsigned>(c.r) << ";" << static_cast<unsigned>(c.g) << ";" << static_cast<unsigned>(c.b) << ";" << static_cast<unsigned>(c.a);
-		return s;
-	}
+
+    class Brush {
+    public:
+
+        Brush():
+            fill_{0x20},
+            fillColor_{Color::None} {
+        }
+
+        Brush(Color color):
+            color_{color},
+            fill_{0x20},
+            fillColor_{Color::None} {
+        }
+
+        Color color() const {
+            return color_;
+        }
+
+        Brush & setColor(Color value) {
+            color_ = value; 
+            return *this;
+        }
+
+        Font font() const {
+            return font_;
+        }
+
+        Brush & setFont(Font value) {
+            font_ = value;
+            return *this;
+        }
+
+        char32_t fill() const {
+            return fill_;
+        }
+
+        Brush & setFill(char32_t value) {
+            fill_ = value;
+            return *this;
+        }
+
+        Color fillColor() const {
+            return fillColor_;
+        }
+
+        Brush & setFillColor(Color value) {
+            fillColor_ = value;
+            return *this;
+        }
+
+    private:
+
+        Color color_;
+        Font font_;
+        char32_t fill_;
+        Color fillColor_;
+
+    }; // ui::Brush
+
 
 } // namespace ui

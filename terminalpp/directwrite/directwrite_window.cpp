@@ -43,17 +43,15 @@ namespace tpp2 {
         }
     }
 
-
-
     DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows):
         RendererWindow<DirectWriteWindow, HWND>{cols, rows, *DirectWriteFont::Get(ui2::Font(), tpp::Config::Instance().font.size()), 1.0},
         wndPlacement_{ sizeof(wndPlacement_) },
         frameWidth_{0},
         frameHeight_{0},
         font_(nullptr),
-        glyphIndices_(nullptr),
-        glyphAdvances_(nullptr),
-        glyphOffsets_(nullptr) {
+        glyphIndices_{nullptr},
+        glyphAdvances_{nullptr},
+        glyphOffsets_{nullptr} {
         // create the window with given title
         helpers::utf16_string t = helpers::UTF8toUTF16(title);
         hWnd_ = CreateWindowExW(
@@ -240,7 +238,12 @@ namespace tpp2 {
              */
 			case WM_PAINT: {
 				ASSERT(window != nullptr) << "Attempt to paint unknown window";
-				window->render(Rect::FromWH(window->width(), window->height()));
+                Widget * widget = reinterpret_cast<Widget*>(lParam);
+                if (widget == nullptr)
+                    widget = window->rootWidget(); 
+                if (widget != nullptr)
+                    window->render(widget);
+				//window->render(Rect::FromWH(window->width(), window->height()));
 				break;
 			}
 			/* No need to use WM_UNICHAR since WM_CHAR is already unicode aware */

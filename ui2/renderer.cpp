@@ -9,7 +9,7 @@ namespace ui2 {
 
     // TODO how to deal with invalid widgets? 
 
-    void Renderer::paintWidget(Widget * widget) {
+    void Renderer::render(Widget * widget) {
         UI_THREAD_CHECK;
         while (widget->isOverlaid() && widget->parent() != nullptr)
             widget = widget->parent();

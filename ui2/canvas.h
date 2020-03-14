@@ -72,6 +72,60 @@ namespace ui2 {
             };
         }
 
+        // ========================================================================================
+
+        /** \name Painting structures
+         */
+        //@{
+
+        Color fg() const {
+            return fg_;
+        }
+
+        Canvas & setFg(Color value) {
+            fg_ = value;
+            return *this;
+        }
+
+        Brush const & bg() const {
+            return bg_;
+        }
+
+        Canvas & setBg(Brush const & value) {
+            bg_ = value;
+            return *this;
+        }
+
+        Color decor() const {
+            return decor_;
+        }
+
+        Canvas & setDecor(Color value) {
+            decor_ = value;
+            return *this;
+        }
+
+        Font font() const {
+            return font_;
+        }
+
+        Canvas & setFont(Font value) {
+            font_ = value;
+            return *this;
+        }
+
+        //@}
+
+        // ========================================================================================
+
+        /** \name Painting functions
+         */
+        //@{
+        
+        Canvas & fillRect(Rect const & rect);
+
+        //@}
+
     protected:
 
         Canvas(int width, int height, Buffer & buffer, Rect visibleRect, Point visibleRectOffset):
@@ -100,6 +154,15 @@ namespace ui2 {
         }
         //@}
 
+        void applyBrush(Cell & cell, Brush const & brush) {
+            cell.setBg(brush.color()).setFont(brush.font());
+            if (brush.fill() != 0) {
+                cell.setCodepoint(brush.fill());
+                cell.setFg((brush.fillColor() != Color::None) ? brush.fillColor() : fg_);
+                cell.setDecor((brush.fillColor() != Color::None) ? brush.fillColor() : fg_);
+            }
+        }
+
     private:
 
         int width_;
@@ -125,6 +188,14 @@ namespace ui2 {
             I.e. value that needs to be added to a point in canvas coordinates to convert it to renderer's buffer coordinates.  
          */
         Point bufferOffset_;
+
+
+
+
+        Color fg_;
+        Brush bg_;
+        Color decor_;
+        Font font_;
 
     };
 

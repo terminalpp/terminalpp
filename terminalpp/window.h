@@ -74,7 +74,7 @@ namespace tpp2 {
         }
 
         virtual void windowResized(int width, int height) {
-            if (width != widthPx_ && height != heightPx_) {
+            if (width != widthPx_ || height != heightPx_) {
                 widthPx_ = width;
                 heightPx_ = height;
                 // tell the renderer to resize 
@@ -175,9 +175,11 @@ namespace tpp2 {
         #define drawBorder(...) static_cast<IMPLEMENTATION*>(this)->drawBorder(__VA_ARGS__)
         #define finalizeDraw(...) static_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
 
+        using Renderer::render;
 
         void render(Rect const & rect) override {
             MARK_AS_UNUSED(rect);
+            // then actually render the entire window
             helpers::Stopwatch t;
             t.start();
             // initialize the drawing and set the state for the first cell
@@ -200,7 +202,7 @@ namespace tpp2 {
                             drawRun = false;
                         }
                         changeFont(c.font());
-                        state_.font() = c.font();
+                        state_.setFont(c.font());
                     }
                     if (state_.fg() != c.fg()) {
                         if (drawRun) {
@@ -208,7 +210,7 @@ namespace tpp2 {
                             drawRun = false;
                         }
                         changeFg(c.fg());
-                        state_.fg() = c.fg();
+                        state_.setFg(c.fg());
                     }
                     if (state_.bg() != c.bg()) {
                         if (drawRun) {
@@ -216,7 +218,7 @@ namespace tpp2 {
                             drawRun = false;
                         }
                         changeBg(c.bg());
-                        state_.bg() = c.bg();
+                        state_.setBg(c.bg());
                     }
                     if (state_.decor() != c.decor()) {
                         if (drawRun) {
@@ -224,7 +226,7 @@ namespace tpp2 {
                             drawRun = false;
                         }
                         changeDecor(c.decor());
-                        state_.decor() = c.decor();
+                        state_.setDecor(c.decor());
                     }
                     // we don't care about the border at this stage
                     // draw the cell

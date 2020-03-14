@@ -24,13 +24,12 @@ namespace tpp2 {
             UnregisterWindowHandle(hWnd_);
         }
 
-        /** Repainting the window simply sends the repaint message to it. 
+        /** Repaint request for given widget. 
          
-            Since each repaint redraws the entire window, the widget is ignored. 
+            The WM_PAINT message is sent with the appropriate widget. 
          */
         void repaint(Widget * widget) override {
-            MARK_AS_UNUSED(widget);
-            PostMessage(hWnd_, WM_PAINT, 0, 0);
+            PostMessage(hWnd_, WM_PAINT, 0, reinterpret_cast<LPARAM>(widget));
         }
 
         void setTitle(std::string const & value) override;
@@ -40,8 +39,6 @@ namespace tpp2 {
         void show(bool value = true) override {
             ShowWindow(hWnd_, SW_SHOWNORMAL);
         }
-
-
 
         void resize(int newWidth, int newHeight) override {
             if (newWidth != width())

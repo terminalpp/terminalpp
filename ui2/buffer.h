@@ -31,8 +31,9 @@ namespace ui2 {
             return codepoint_;
         }
 
-        char32_t & codepoint() {
-            return codepoint_;
+        Cell & setCodepoint(char32_t value) {
+            codepoint_ = value;
+            return *this;
         }
         //@}
 
@@ -45,8 +46,9 @@ namespace ui2 {
             return fg_;
         }
 
-        Color & fg() {
-            return fg_;
+        Cell & setFg(Color value) {
+            fg_ = value;
+            return *this;
         }
         //@}
 
@@ -59,8 +61,9 @@ namespace ui2 {
             return bg_;
         }
 
-        Color & bg() {
-            return bg_;
+        Cell & setBg(Color value) {
+            bg_ = value;
+            return *this;
         }
         //@}
 
@@ -73,8 +76,9 @@ namespace ui2 {
             return decor_;
         }
 
-        Color & decor() {
-            return decor_;
+        Cell & setDecor(Color value) {
+            decor_ = value;
+            return *this;
         }
         //@}
 
@@ -87,8 +91,9 @@ namespace ui2 {
             return font_;
         }
 
-        Font & font() {
-            return font_;
+        Cell & setFont(Font value) {
+            font_ = value;
+            return *this;
         }
         //@}
 
@@ -101,8 +106,9 @@ namespace ui2 {
             return border_;
         }
 
-        Border & border() {
-            return border_;
+        Cell & border(Border const & value) {
+            border_ = value;
+            return *this;
         }
         //@}
 
@@ -205,6 +211,8 @@ namespace ui2 {
             rows_ = new Cell*[height];
             for (int i = 0; i < height; ++i)
                 rows_[i] = new Cell[width];
+            width_ = width;
+            height_ = height;
         }
 
         void clear_() {

@@ -85,6 +85,14 @@ namespace ui2 {
             return false;
         }
 
+        /** Returns the parent widget. 
+         */
+        Widget * parent() const {
+            UI_THREAD_CHECK;
+            return parent_;
+        }
+
+
         /** Returns the rectangle occupied by the widget in its parent's contents area. 
          */
         Rect const & rect() const {
@@ -106,6 +114,7 @@ namespace ui2 {
     protected:
 
         friend class Renderer;
+        friend class Container;
 
         Widget(int x = 0, int y = 0, int width = 0, int height = 0):
             renderer_{nullptr},
@@ -121,7 +130,8 @@ namespace ui2 {
 
         /** Triggered when the widget's geometry changes. 
          */
-        Event<GeometryEvent> onGeometryChange;
+        Event<void> onResize;
+        Event<void> onMove;
 
         Event<void> onShow;
         Event<void> onHide;
@@ -152,15 +162,13 @@ namespace ui2 {
             - simple changes are ok
             - layouting is ok, but anchors are complicated, unless anchors are done via anchored layout, which will check all children and update those that have anchors specified, which is perhaps the way to go.   
             - YEAH !!!!
+
          */
         //@{
 
         /** Sets the position and size of the widget.
          
             Subclasses can override this method to inject modifications to the requested size and position. Doing so must be done with great care otherwise the automatic layouting can easily be broken. 
-
-            TODO what to do with size hints? 
-
          */
         virtual void setRect(Rect const & value) {
             UI_THREAD_CHECK;
@@ -168,21 +176,35 @@ namespace ui2 {
             if (rect_ == value)
                 return;
             // update the rectangle
-            bool resized = rect_.width() != value.width() || rect_.height() != value.height();
-            bool moved = rect_.topLeft() != value.topLeft();
+            bool wasResized = rect_.width() != value.width() || rect_.height() != value.height();
+            bool wasMoved = rect_.topLeft() != value.topLeft();
             rect_ = value;
-            // raise the event
-            Event<GeometryEvent>::Payload p{GeometryEvent{rect_, resized, moved}};
-            onGeometryChange(p, this);
-            // inform the parent that the child has been resized, which should also trigger the parent's repaint
+            // trigger the appropriate events
+            if (wasResized)
+                resized();
+            if (wasMoved)
+                moved();
+            // inform the parent that the child has been resized, which should also trigger the parent's repaint and so ultimately repaint the widget as well
             if (parent_ != nullptr)
                 parent_->childRectChanged(this);
         }
 
-        /** Changing the rectangle of a child widget triggers repaint of the parent. 
+        /** Called *after* the widget has been resized. 
+         
+            Triggers the resize event. 
          */
-        virtual void childRectChanged(Widget * child) {
-            repaint();
+        virtual void resized() {
+            Event<void>::Payload p;
+            onResize(p, this);
+        }
+
+        /** Called *after* the widget has been moved.
+         
+            Triggers the move event. 
+         */
+        virtual void moved() {
+            Event<void>::Payload p;
+            onMove(p, this);
         }
 
         /** Returns true if the widget is overlaid by other widgets. 
@@ -194,7 +216,19 @@ namespace ui2 {
             return overlaid_;
         }
 
+        /** Changing the rectangle of a child widget triggers repaint of the parent. 
+         */
+        virtual void childRectChanged(Widget * child) {
+            repaint();
+        }
+
         //@}
+
+        // ========================================================================================
+
+        /** \name Widget's Tree
+         */
+        //@{
 
         /** Attaches the widget to given parent. 
          
@@ -232,18 +266,19 @@ namespace ui2 {
          */
         virtual void detachRenderer();
 
-        /** Returns the parent widget. 
-         */
-        Widget * parent() const {
-            UI_THREAD_CHECK;
-            return parent_;
-        }
-
         /** Returns the renderer of the widget. [thread-safe]
          */
         Renderer * renderer() const {
             return renderer_.load();
         }
+
+        //@}
+
+        // ========================================================================================
+
+        /** \name Painting 
+         */
+        //@{
 
         /** Returns the canvas to be used for drawing the contents of the widget. 
          */
@@ -257,6 +292,8 @@ namespace ui2 {
             The canvas is guaranteed to have the width and height of the widget itself. This method *must* be implemented in widget subclasses to actually draw the contents of the widget. 
          */
         virtual void paint(Canvas & canvas) = 0;
+
+        //@}
 
         // ========================================================================================
 

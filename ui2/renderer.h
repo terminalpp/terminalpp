@@ -48,6 +48,26 @@ namespace ui2 {
             return backgroundColor_;
         }
 
+        Widget * rootWidget() const {
+            return rootWidget_;
+        }
+
+        void setRootWidget(Widget * widget) {
+            UI_THREAD_CHECK;
+            // detach the old root widget if any
+            if (rootWidget_ != nullptr)
+                rootWidget_->detachRenderer();
+            rootWidget_ = widget;
+            // attach the new widget & resize it to the renderer
+            if (rootWidget_ != nullptr) {
+                rootWidget_->attachRenderer(this);
+                rootWidget_->setRect(Rect::FromWH(width(), height()));
+                rootWidget_->visibleRect_ = Rect::FromWH(width(), height());
+                rootWidget_->bufferOffset_ = Point{0,0};
+                repaint(rootWidget_);
+            }
+        }
+
         /** Requests repaint of the given widget. [thread-safe]
          
             The purpose of this method is to use whatever event queue (or other mechanism) the target rendering supports to schedule repaint of the specified widget in the main UI thread. 
@@ -60,8 +80,6 @@ namespace ui2 {
         friend class Widget;
 
         Renderer(int width, int height):
-            width_{width},
-            height_{height},
             buffer_{width, height},
             title_{""},
             rootWidget_{nullptr},
@@ -94,6 +112,12 @@ namespace ui2 {
         //@{
 
         //@}
+
+        /** Immediately repaints the given widget. 
+         
+            If the widget is overlaid with another widgets, the widget parent will be painted instead. When the painting is done, i.e. the buffer has been updated, the render method is called to actually render the update.  
+         */
+        void render(Widget * widget);
 
         /** Called when the selected rectangle of the backing buffer has been updated and needs rendered. 
          
@@ -457,12 +481,6 @@ namespace ui2 {
             return buffer_;
         }
 
-        /** Immediately repaints the given widget. 
-         
-            If the widget is overlaid with another widgets, the widget parent will be painted instead. When the painting is done, i.e. the buffer has been updated, the render method is called to actually render the update.  
-         */
-        void paintWidget(Widget * widget);
-
         int width() const {
             UI_THREAD_CHECK;
             return buffer_.width();
@@ -475,19 +493,19 @@ namespace ui2 {
 
         virtual void resize(int newWidth, int newHeight) {
             UI_THREAD_CHECK;
-            if (width_ != newWidth && height_ != newHeight) {
-                buffer_.resize(width_, height_);
+            if (buffer_.width() != newWidth || buffer_.height() != newHeight) {
+                buffer_.resize(newWidth, newHeight);
                 // resize the UI elements
-                NOT_IMPLEMENTED;
+                if (rootWidget_ != nullptr) {
+                    rootWidget_->setRect(Rect::FromWH(newWidth, newHeight));
+                    rootWidget_->visibleRect_ = Rect::FromWH(width(), height());
+                    rootWidget_->bufferOffset_ = Point{0,0};
+                    repaint(rootWidget_);
+                }
             }
         }
 
     private:
-
-        /** Width of the renderer (columns). */
-        int width_;
-        /** Height of the renderer (rows). */
-        int height_;
 
         Buffer buffer_;
 
