@@ -219,6 +219,7 @@ namespace ui2 {
         /** Changing the rectangle of a child widget triggers repaint of the parent. 
          */
         virtual void childRectChanged(Widget * child) {
+            MARK_AS_UNUSED(child);
             repaint();
         }
 

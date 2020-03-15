@@ -12,8 +12,6 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- click and double click should be handled by special renderer subclass, such as LocalRenderer (whereas remote renderers must trigger the events themselves because the timing over network would be painful)
-
 - fix the events payload to not contain references, and the event should take the payload as argument already
 
 - design proper and simple layouts and autosizing of widgets

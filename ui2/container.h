@@ -113,8 +113,10 @@ namespace ui2 {
             UI_THREAD_CHECK;
             Canvas childrenCanvas{getContentsCanvas(canvas)};
             for (Widget * child : children_)
-                if (child->visible())
-                    child->paint(childrenCanvas.clip(child->rect()));
+                if (child->visible()) {
+                    Canvas childCanvas{childrenCanvas.clip(child->rect())};
+                    child->paint(childCanvas);
+                }
         }
 
     private:

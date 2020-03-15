@@ -33,7 +33,18 @@ namespace ui2 {
             // TODO delete the attached widgets            
         }
 
+        int width() const {
+            UI_THREAD_CHECK;
+            return buffer_.width();
+        }
+
+        int height() const {
+            UI_THREAD_CHECK;
+            return buffer_.height();
+        }
+
         std::string const & title() const {
+            UI_THREAD_CHECK;
             return title_;
         }
 
@@ -479,16 +490,6 @@ namespace ui2 {
         Buffer & buffer() {
             UI_THREAD_CHECK;
             return buffer_;
-        }
-
-        int width() const {
-            UI_THREAD_CHECK;
-            return buffer_.width();
-        }
-
-        int height() const {
-            UI_THREAD_CHECK;
-            return buffer_.height();
         }
 
         virtual void resize(int newWidth, int newHeight) {

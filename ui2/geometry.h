@@ -332,27 +332,28 @@ namespace ui2 {
         }
 
         Border & setLeft(Kind kind) {
-            border_ = border_ & (~ (MASK << LEFT)) | (static_cast<uint16_t>(kind) << LEFT); 
+            border_ = (border_ & (~ (MASK << LEFT))) | (static_cast<uint16_t>(kind) << LEFT); 
             return *this;
         }
 
         Border & setRight(Kind kind) {
-            border_ = border_ & (~ (MASK << RIGHT)) | (static_cast<uint16_t>(kind) << RIGHT); 
+            border_ = (border_ & (~ (MASK << RIGHT))) | (static_cast<uint16_t>(kind) << RIGHT); 
             return *this;
         }
 
         Border & setTop(Kind kind) {
-            border_ = border_ & (~ (MASK << TOP)) | (static_cast<uint16_t>(kind) << TOP); 
+            border_ = (border_ & (~ (MASK << TOP))) | (static_cast<uint16_t>(kind) << TOP); 
             return *this;
         }
 
         Border & setBottom(Kind kind) {
-            border_ = border_ & (~ (MASK << BOTTOM)) | (static_cast<uint16_t>(kind) << BOTTOM); 
+            border_ = (border_ & (~ (MASK << BOTTOM))) | (static_cast<uint16_t>(kind) << BOTTOM); 
             return *this;
         }
 
         Border & clear() {
             border_ = 0;
+            return *this;
         }
 
         bool hasBorder() const {
