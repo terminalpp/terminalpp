@@ -48,6 +48,14 @@ namespace tpp2 {
 
     protected:
 
+        void windowResized(int width, int height) {
+            ASSERT(rt_ != nullptr);
+            D2D1_SIZE_U size = D2D1::SizeU(width, height);
+            rt_->Resize(size);
+            RendererWindow::windowResized(width, height);
+        }
+
+
         /** Destroys the renderer's window. 
          */
         void rendererClose() override {
@@ -221,6 +229,7 @@ namespace tpp2 {
                     rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness());
                 }
             }
+            glyphRunCol_ += glyphRun_.glyphCount;
 			glyphRun_.glyphCount = 0;
         }
 

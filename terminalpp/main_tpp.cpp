@@ -49,6 +49,7 @@
 
 
 #include "ui2/widgets/panel.h"
+#include "ui-terminal/ansi-terminal.h"
 
 #include "helpers/json.h"
 
@@ -90,12 +91,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Config const & config = Config::Setup(argc, argv);
 
     tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
-    ui2::Panel * p = new ui2::Panel();
-    w->setRootWidget(p);
+    ui2::AnsiTerminal * t = new ui2::AnsiTerminal{80, 25};
+    w->setRootWidget(t);
+    //ui2::Panel * p = new ui2::Panel();
+    //w->setRootWidget(p);
     w->show();
-    ui2::Renderer::SendEvent([]() {
+    /*ui2::Renderer::SendEvent([]() {
         tpp2::Application::Instance()->alert("Event received");
     });
+    */
     tpp2::Application::Instance()->mainLoop();
 
     return EXIT_SUCCESS;

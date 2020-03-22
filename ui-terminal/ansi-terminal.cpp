@@ -133,10 +133,11 @@ namespace ui2 {
 
     } // anonymous namespace
 
-    helpers::Log AnsiTerminal::SEQ("VT100");
-    helpers::Log AnsiTerminal::SEQ_UNKNOWN("VT100_UNKNOWN");
-    helpers::Log AnsiTerminal::SEQ_ERROR("VT100_ERROR");
-    helpers::Log AnsiTerminal::SEQ_WONT_SUPPORT("VT100_WONT_SUPPORT");
+    // TODO remove the underscores
+    helpers::Log AnsiTerminal::SEQ("VT100_");
+    helpers::Log AnsiTerminal::SEQ_UNKNOWN("VT100_UNKNOWN_");
+    helpers::Log AnsiTerminal::SEQ_ERROR("VT100_ERROR_");
+    helpers::Log AnsiTerminal::SEQ_WONT_SUPPORT("VT100_WONT_SUPPORT_");
 
     std::unordered_map<Key, std::string> AnsiTerminal::KeyMap_(InitializeVT100KeyMap());
 
@@ -150,6 +151,20 @@ namespace ui2 {
     }
 
     AnsiTerminal::~AnsiTerminal() {
+    }
+
+    void AnsiTerminal::paint(Canvas & canvas) {
+        // draw the buffer
+        canvas.drawBuffer(state_.buffer, Point{0,0});
+    }
+
+    void AnsiTerminal::setRect(Rect const & value) {
+        // if resized, resize the terminal buffers
+        if (value.width() != width() || value.height() != height()) {
+            state_.resize(value.width(), value.height());
+        }
+        
+        Widget::setRect(value);
     }
 
 
@@ -173,6 +188,14 @@ namespace ui2 {
                 }
             }
         }
+    }
+
+    void AnsiTerminal::parseCodepoint(char32_t codepoint) {
+
+    }
+
+    void AnsiTerminal::parseNotification() {
+        
     }
 
     size_t AnsiTerminal::parseEscapeSequence(char const * buffer, char const * bufferEnd) {

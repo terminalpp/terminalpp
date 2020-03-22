@@ -21,8 +21,16 @@ namespace ui2 {
          */
         class Buffer : public ui2::Buffer {
         public:
-            Buffer(int cols, int rows):
-                ui2::Buffer{cols, rows} {
+            Buffer(int width, int height):
+                ui2::Buffer{width, height} {
+                fill();
+            }
+
+            void fill() {
+                for (int x = 0; x < width(); ++x)
+                    for (int y = 0; y < height(); ++y) {
+                        at(x, y).setCodepoint('0' + (x + y) % 10).setBg(Color{static_cast<unsigned char>(x), static_cast<unsigned char>(y), static_cast<unsigned char>(x + y)});
+                    }
             }
 
         }; // ui::AnsiTerminal::Buffer
@@ -55,6 +63,11 @@ namespace ui2 {
                 buffer{cols, rows} {
             }
 
+            void resize(int cols, int rows) {
+                buffer.resize(cols, rows);
+                buffer.fill();
+            }
+
             Buffer buffer;
             Cell cell;
 
@@ -75,7 +88,17 @@ namespace ui2 {
 
         }; // AnsiTerminal::State
 
-        AnsiTerminal();
+        /** \name Rendering & user input
+         */
+        //@{
+
+        void paint(Canvas & canvas) override;
+
+        void setRect(Rect const & value) override;
+
+        //@}
+
+
 
         /** \name PTY Interface 
          */
@@ -95,6 +118,11 @@ namespace ui2 {
             Input processing can happen in non-UI thread.
          */
         //@{
+
+        void parseCodepoint(char32_t codepoint);
+
+        void parseNotification();
+
         size_t parseEscapeSequence(char const * buffer, char const * bufferEnd);
 
 

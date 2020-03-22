@@ -99,6 +99,14 @@ namespace ui2 {
             return rect_;
         }
 
+        int width() const {
+            return rect_.width();
+        }
+
+        int height() const {
+            return rect_.height();
+        }
+
         /** Returns true if the widget is visible.
           
             Invisible widgets are not painted and do not receive any user input events (mouse or keyboard).  

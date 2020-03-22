@@ -121,6 +121,8 @@ namespace ui2 {
         /** \name Painting functions
          */
         //@{
+
+        Canvas & drawBuffer(Buffer const & buffer, Point topLeft);
         
         Canvas & fillRect(Rect const & rect);
 
