@@ -59,6 +59,8 @@ namespace tpp2 {
          */
         void registerWindowClass();
 
+        void registerDummyClass();
+
 
         /* Default locale for the user. */
         wchar_t localeName_[LOCALE_NAME_MAX_LENGTH];
@@ -78,11 +80,20 @@ namespace tpp2 {
         HICON iconDefault_;
         HICON iconNotification_;
 
-        static constexpr WPARAM MSG_TITLE_CHANGE = 0;        
+        /* Dummy window for scheduling user messages. */
+        HWND dummy_;
 
-		static wchar_t const* const WindowClassName_;
+
+        static LRESULT CALLBACK UserEventHandler_(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+        //static constexpr WPARAM MSG_TITLE_CHANGE = 0;   
+
+		static wchar_t const * const WindowClassName_;
+        static wchar_t const * const DummyWindowName_;
 
     }; // DirectWriteApplication
+
+
 
 } // namespace tpp
 

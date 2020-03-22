@@ -5,41 +5,25 @@
 #include "helpers/log.h"
 #include "helpers/process.h"
 
+#include "ui2/renderer.h"
 #include "ui2/widget.h"
+
+#include "pty.h"
 
 namespace ui2 {
 
-    using helpers::ExitCode;
-
-    class AnsiTerminal : public Widget {
+    class AnsiTerminal : public Widget, public PTY::Client {
     public:
-
-        // ========================================================================================
-
-        /** Pseudoterminal connection. 
-         */
-        class PTY {
-        public:
-            virtual void send(char const * buffer, size_t bufferSize) = 0;
-
-            virtual size_t receive(char * buffer, size_t bufferSize) = 0;
-
-            virtual void terminate() = 0;
-
-            virtual ExitCode waitFor() = 0;
-
-            virtual void resize(int cols, int rows) = 0;
-
-            virtual ~PTY() {
-            }
-
-        }; // ui::AnsiTerminal::PTY
 
         // ========================================================================================
 
         /** 
          */
         class Buffer : public ui2::Buffer {
+        public:
+            Buffer(int cols, int rows):
+                ui2::Buffer{cols, rows} {
+            }
 
         }; // ui::AnsiTerminal::Buffer
 
@@ -56,6 +40,8 @@ namespace ui2 {
 
         //@}
 
+        AnsiTerminal(int width = 0, int height = 0, int x = 0, int y = 0); 
+
         ~AnsiTerminal() override;
 
     protected:
@@ -65,6 +51,10 @@ namespace ui2 {
 
         class State {
         public:
+            State(int cols, int rows):
+                buffer{cols, rows} {
+            }
+
             Buffer buffer;
             Cell cell;
 
@@ -77,6 +67,8 @@ namespace ui2 {
             /** Determines whether inverse mode is active or not. */
             bool inverseMode;
 
+
+
         protected:
 
             std::vector<Point> cursorStack_;
@@ -85,19 +77,39 @@ namespace ui2 {
 
         AnsiTerminal();
 
+        /** \name PTY Interface 
+         */
+        //@{
+
+        /** Parses the given input. Returns the number of bytes actually parsed. 
+         */
+        size_t processInput(char const * buffer, char const * bufferEnd) override;
+
+        void ptyTerminated(ExitCode exitCode) override {
+            Renderer::SendEvent([this, exitCode](){ });
+        }
+        //@}
+
+        /** \name Input Parsing
+         
+            Input processing can happen in non-UI thread.
+         */
+        //@{
+        size_t parseEscapeSequence(char const * buffer, char const * bufferEnd);
+
+
+        //@}
+
+        /** The terminal state. 
+         */
+        State state_;
+
 
 
 
         static std::unordered_map<Key, std::string> KeyMap_;
         static char32_t LineDrawingChars_[15];
 
-    private:
-
-        /** Pseudoterminal for cummincation. */
-        PTY * pty_;
-        /** Input reading thread. */
-        std::thread ptyReader_;
-        
     }; // ui2::AnsiTerminal
 
     // ============================================================================================

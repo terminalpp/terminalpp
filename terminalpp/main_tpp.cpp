@@ -93,6 +93,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     ui2::Panel * p = new ui2::Panel();
     w->setRootWidget(p);
     w->show();
+    ui2::Renderer::SendEvent([]() {
+        tpp2::Application::Instance()->alert("Event received");
+    });
     tpp2::Application::Instance()->mainLoop();
 
     return EXIT_SUCCESS;

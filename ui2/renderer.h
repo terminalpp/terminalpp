@@ -1,9 +1,13 @@
 #pragma once
 
+#include <deque>
+#include <mutex>
+
+
 #ifndef NDEBUG
 #include <thread>
-#include <mutex>
 #endif
+
 
 #include "helpers/time.h"
 
@@ -84,6 +88,42 @@ namespace ui2 {
             The purpose of this method is to use whatever event queue (or other mechanism) the target rendering supports to schedule repaint of the specified widget in the main UI thread. 
          */
         virtual void repaint(Widget * widget) = 0;
+
+        /** Schedules an user event to be executed in the main thread. [thread-safe]
+         
+            The sendEvent() method provides a simple mechanism to execute arbitrary code in the main UI event loop.
+         */
+        static void SendEvent(std::function<void(void)> handler) {
+            {
+                std::lock_guard<std::mutex> g{M_};
+                UserEvents_.push_back(handler);
+            }
+            ASSERT(UserEventScheduler_) << "UserEventScheduler not provided before user events raised";
+            UserEventScheduler_();
+        }
+
+        /** Initializes the renderer by providing the scheduler function for the user events. 
+         
+            This is important so that user events can be scheduled even from widgets with no associated renderers, or even if no active renderers exist in the system. 
+         */
+        static void Initialize(std::function<void(void)> userEventScheduler) {
+            ASSERT(! UserEventScheduler_) << "UserEventScheduler already specified";
+            UserEventScheduler_ = userEventScheduler;
+        }
+        /** Executes user event and removes it from the queue.
+         
+            Takes the next handler from the user events queue and executes it in the main UI thread. The renderer implementation should call this function every time the main thread is informed about user event waiting to be executed. 
+         */
+        static void ExecuteUserEvent() {
+            std::function<void(void)> handler;
+            {
+                if (UserEvents_.empty())
+                    return;
+                handler = UserEvents_.front();
+                UserEvents_.pop_front();
+            }
+            handler();
+        }
 
     protected:
 
@@ -507,6 +547,14 @@ namespace ui2 {
         }
 
     private:
+
+        /** Queue of scheduled user events. */
+        static std::deque<std::function<void(void)>> UserEvents_;
+        /** UserEvents queue synchronization access */
+        static std::mutex M_;
+
+        static std::function<void(void)> UserEventScheduler_;
+
 
         Buffer buffer_;
 

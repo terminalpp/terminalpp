@@ -13,8 +13,8 @@
 
 namespace tpp2 {
 
-	wchar_t const* const DirectWriteApplication::WindowClassName_ = L"TppWindowClass";
-
+	wchar_t const * const DirectWriteApplication::WindowClassName_ = L"TppWindowClass";
+    wchar_t const * const DirectWriteApplication::DummyWindowName_ = L"dummy";
 
     void DirectWriteApplication::alert(std::string const & message) {
         helpers::utf16_string text{helpers::UTF8toUTF16(message)};
@@ -62,6 +62,7 @@ namespace tpp2 {
 		iconDefault_ = LoadIcon(hInstance_, L"IDI_ICON1");
 		iconNotification_ = LoadIcon(hInstance_, L"IDI_ICON2");
         registerWindowClass();
+        registerDummyClass();
 		D2D1_FACTORY_OPTIONS options;
 		ZeroMemory(&options, sizeof(D2D1_FACTORY_OPTIONS));
 		OSCHECK(SUCCEEDED(D2D1CreateFactory(
@@ -83,6 +84,26 @@ namespace tpp2 {
 		OSCHECK(SUCCEEDED(dwFactory_->GetSystemFontCollection(&systemFontCollection_, false))) << "Unable to get system font collection";
 		// start the blinker thread
 		//DirectWriteWindow::StartBlinkerThread();
+
+        dummy_ = CreateWindowExW(
+            WS_EX_LEFT, // the default
+            DummyWindowName_, // window class
+            // ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+            L"dummy", // window name (all start as terminal++)
+            WS_OVERLAPPEDWINDOW,
+            CW_USEDEFAULT, // x position
+            CW_USEDEFAULT, // y position
+            0,
+            0,
+            nullptr, // handle to parent
+            nullptr, // handle to menu 
+            hInstance_, // module handle
+            this // lParam for WM_CREATE message
+        );
+        // initialize the renderer's user with an WM_USER message broadcast
+        Renderer::Initialize([](){
+            PostMessage(DirectWriteApplication::Instance()->dummy_, WM_USER, 0, 0);
+        });
     }
 
     void DirectWriteApplication::registerWindowClass() {
@@ -103,6 +124,28 @@ namespace tpp2 {
 		OSCHECK(RegisterClassExW(&wClass) != 0) << "Unable to register window class";
     }
 
+    void DirectWriteApplication::registerDummyClass() {
+		WNDCLASSEXW wClass = { 0 };
+		wClass.cbSize = sizeof(WNDCLASSEX); // size of the class info
+		wClass.hInstance = hInstance_;
+		wClass.style = CS_HREDRAW | CS_VREDRAW;
+		wClass.lpfnWndProc = DirectWriteApplication::UserEventHandler_; // event handler function for the window class
+		wClass.cbClsExtra = 0; // extra memory to be allocated for the class
+		wClass.cbWndExtra = 0; // extra memory to be allocated for each window
+		wClass.lpszClassName = DummyWindowName_; // class name
+		wClass.lpszMenuName = nullptr; // menu name
+		wClass.hbrBackground = nullptr; // do not display background
+		OSCHECK(RegisterClassExW(&wClass) != 0) << "Unable to register window class";
+    }
+
+	LRESULT CALLBACK DirectWriteApplication::UserEventHandler_(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+        switch (msg) {
+            case WM_USER:
+                Renderer::ExecuteUserEvent();
+                break;
+        }
+        return DefWindowProc(hWnd, msg, wParam, lParam);
+    }
 
 
 

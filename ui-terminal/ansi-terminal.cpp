@@ -142,13 +142,47 @@ namespace ui2 {
 
     // ============================================================================================
 
+
+    AnsiTerminal::AnsiTerminal(int width, int height, int x, int y):
+        Widget{width, height, x, y}, 
+        state_{width, height} {
+
+    }
+
     AnsiTerminal::~AnsiTerminal() {
+    }
+
+
+    size_t AnsiTerminal::processInput(char const * buffer, char const * bufferEnd) {
+        char const * x = buffer;
+        while (x != bufferEnd) {
+            switch (*x) {
+                /* Parse the escape sequence */
+                case Char::ESC: {
+                    size_t processed = parseEscapeSequence(x, bufferEnd);
+                    // if no characters were processed, the sequence was incomplete and we should end processing
+                    if (processed == 0)
+                        return x - buffer;
+                    // move past the sequence
+                    x += processed;
+                    break;
+                }
+                /* BEL triggers the notification */
+                case Char::BEL: {
+                    NOT_IMPLEMENTED;
+                }
+            }
+        }
+    }
+
+    size_t AnsiTerminal::parseEscapeSequence(char const * buffer, char const * bufferEnd) {
+        ASSERT(*buffer == Char::ESC);
+        // if we have nothing after the escape character, it is incomplete sequence
+        if (++buffer == bufferEnd)
+            return 0;
 
     }
 
-    AnsiTerminal::AnsiTerminal() {
-
-    }
 
     
 

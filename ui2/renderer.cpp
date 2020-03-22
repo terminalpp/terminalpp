@@ -6,6 +6,9 @@ namespace ui2 {
 
     // Renderer ===================================================================================
 
+    std::deque<std::function<void(void)>> Renderer::UserEvents_;
+    std::mutex Renderer::M_;
+    std::function<void(void)> Renderer::UserEventScheduler_;
 
     // TODO how to deal with invalid widgets? 
 

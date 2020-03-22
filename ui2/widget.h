@@ -116,7 +116,7 @@ namespace ui2 {
         friend class Renderer;
         friend class Container;
 
-        Widget(int x = 0, int y = 0, int width = 0, int height = 0):
+        Widget(int width = 0, int height = 0, int x = 0, int y = 0):
             renderer_{nullptr},
             parent_{nullptr},
             rect_{Rect::FromTopLeftWH(x, y, width, height)},
