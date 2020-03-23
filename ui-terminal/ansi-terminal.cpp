@@ -133,6 +133,8 @@ namespace ui2 {
 
     } // anonymous namespace
 
+    // ============================================================================================
+
     // TODO remove the underscores
     helpers::Log AnsiTerminal::SEQ("VT100_");
     helpers::Log AnsiTerminal::SEQ_UNKNOWN("VT100_UNKNOWN_");
@@ -141,7 +143,8 @@ namespace ui2 {
 
     std::unordered_map<Key, std::string> AnsiTerminal::KeyMap_(InitializeVT100KeyMap());
 
-    // ============================================================================================
+    char32_t AnsiTerminal::LineDrawingChars_[15] = {0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0, 0, 0x2500, 0, 0, 0x251c, 0x2524, 0x2534, 0x252c, 0x2502};
+
 
 
     AnsiTerminal::AnsiTerminal(int width, int height, int x, int y):
@@ -159,9 +162,12 @@ namespace ui2 {
     }
 
     void AnsiTerminal::setRect(Rect const & value) {
-        // if resized, resize the terminal buffers
+        // if resized, resize the terminal buffers and the pty
+        // TODO lock the buffer!
         if (value.width() != width() || value.height() != height()) {
             state_.resize(value.width(), value.height());
+
+            ptyResize(value.width(), value.height());
         }
         
         Widget::setRect(value);
@@ -183,26 +189,182 @@ namespace ui2 {
                     break;
                 }
                 /* BEL triggers the notification */
-                case Char::BEL: {
-                    NOT_IMPLEMENTED;
+                case Char::BEL:
+                    parseNotification();
+                    ++x;
+                    break;
+                case Char::TAB:
+                    parseTab();
+                    ++x;
+                    break;
+                case Char::LF:
+                    parseLF();
+                    ++x;
+                    break;
+                case Char::CR:
+                    parseCR();
+                    ++x;
+                    break;
+                case Char::BACKSPACE:
+                    parseBackspace();
+                    ++x;
+                    break;
+                default: {
+                    // while this is a code duplication from the helpers::Char class, since this code is a bottleneck for processing large ammounts of text, the code is copied for performance
+                    char32_t cp = 0;
+                    unsigned char const * ux = pointer_cast<unsigned char const *>(x);
+                    if (*ux < 0x80) {
+                        cp = *ux;
+                        ++x;
+                    } else if (*ux < 0xe0) {
+                        if (x + 2 > bufferEnd)
+                            return x - buffer;
+                        cp = ((ux[0] & 0x1f) << 6) + (ux[1] & 0x3f);
+                        x += 2;
+                    } else if (*ux < 0xf0) {
+                        if (x + 3 > bufferEnd)
+                            return x - buffer;
+                        cp = ((ux[0] & 0x0f) << 12) + ((ux[1] & 0x3f) << 6) + (ux[2] & 0x3f);
+                        x += 3;
+                    } else {
+                        if (x + 4 > bufferEnd)
+                            return x - buffer;
+                        cp = ((ux[0] & 0x07) << 18) + ((ux[1] & 0x3f) << 12) + ((ux[2] & 0x3f) << 6) + (ux[3] & 0x3f);
+                        x += 4;
+                    }
+                    parseCodepoint(cp);
+                    break;
                 }
             }
         }
+        repaint();
+        return bufferEnd - buffer;
     }
 
     void AnsiTerminal::parseCodepoint(char32_t codepoint) {
+        if (state_.lineDrawingSet && codepoint >= 0x6a && codepoint < 0x79)
+            codepoint = LineDrawingChars_[codepoint-0x6a];
+        LOG(SEQ) << "codepoint " << codepoint << " " << static_cast<char>(codepoint & 0xff);
+        updateCursorPosition();
+        // set the cell state
+        Cell & cell = state_.buffer.at(state_.cursor);
+        cell = state_.cell;
+        cell.setCodepoint(codepoint);
+        // advance cursor's column
+        state_.cursor += Point{1, 0};
 
+        // what's left is to deal with corner cases, such as larger fonts & double width characters
+        int columnWidth = Char::ColumnWidth(codepoint);
+
+        // if the character's column width is 2 and current font is not double width, update to double width font
+        if (columnWidth == 2 && ! cell.font().doubleWidth()) {
+            columnWidth = 1;
+            cell.setFont(cell.font().setDoubleWidth(true));
+        }
+
+        // TODO do double width & height characters properly for the per-line 
+
+        /*
+        // if the character's column width is 2 and current font is not double width, update to double width font
+        // if the font's size is greater than 1, copy the character as required (if we are at the top row of double height characters, increase the size artificially)
+        int charWidth = state_.doubleHeightTopLine ? cell.font().width() * 2 : cell.font().width();
+
+        while (columnWidth > 0 && buffer_.cursor().pos.x < buffer_.cols()) {
+            for (int i = 1; (i < charWidth) && buffer_.cursor().pos.x < buffer_.cols(); ++i) {
+                Cell& cell2 = buffer_.at(buffer_.cursor().pos);
+                // copy current cell properties
+                cell2 = cell;
+                // make sure the cell's font is normal size and width and display a space
+                cell2.setCodepoint(' ').setFont(cell.font().setSize(1).setDoubleWidth(false));
+                ++buffer_.cursor().pos.x;
+            } 
+            if (--columnWidth > 0 && buffer_.cursor().pos.x < buffer_.cols()) {
+                Cell& cell2 = buffer_.at(buffer_.cursor().pos);
+                // copy current cell properties
+                cell2 = cell;
+                cell2.setCodepoint(' ');
+                ++buffer_.cursor().pos.x;
+            } 
+        }
+        */
     }
 
     void AnsiTerminal::parseNotification() {
-        
+        // NOT_IMPLEMENTED;
+    }
+
+    void AnsiTerminal::parseTab() {
+        // NOT_IMPLEMENTED;
+    }
+
+    void AnsiTerminal::parseLF() {
+        // NOT_IMPLEMENTED;
+    }
+
+    void AnsiTerminal::parseCR() {
+        // NOT_IMPLEMENTED;
+    }
+
+    void AnsiTerminal::parseBackspace() {
+        // NOT_IMPLEMENTED;
     }
 
     size_t AnsiTerminal::parseEscapeSequence(char const * buffer, char const * bufferEnd) {
         ASSERT(*buffer == Char::ESC);
         // if we have nothing after the escape character, it is incomplete sequence
-        if (++buffer == bufferEnd)
+        char const * x = buffer;
+        if (++x == bufferEnd)
             return 0;
+        switch (*x++) {
+            /* CSI Sequence. */
+            case '[': {
+                CSISequence seq{CSISequence::Parse(x, bufferEnd)};
+                // if the sequence is not valid, it has been reported already and we should just exit
+                if (!seq.valid())
+                    break;
+                // if the sequence is not complete, return false and do not advance the buffer
+                if (!seq.complete())
+                    return false;
+                // otherwise parse the CSI sequence
+                parseCSISequence(seq);
+                break;
+            }
+            /* OSC (Operating System Command) */
+            case ']': {
+                OSCSequence seq{OSCSequence::Parse(x, bufferEnd)};
+                // if the sequence is not valid, it has been reported already and we should just exit
+                if (!seq.valid())
+                    break;
+                // if the sequence is not complete, return false and do not advance the buffer
+                if (!seq.complete())
+                    return false;
+                parseOSCSequence(seq);
+				break;
+            }
+            default:
+				LOG(SEQ_UNKNOWN) << "Unknown escape sequence \x1b" << *(x-1);
+				break;
+        }
+        return x - buffer;
+    }
+
+    void AnsiTerminal::parseCSISequence(CSISequence & seq) {
+
+    }
+
+    void AnsiTerminal::parseOSCSequence(OSCSequence & seq) {
+
+    }
+
+
+    void AnsiTerminal::updateCursorPosition() {
+        while (state_.cursor.x() >= state_.buffer.width()) {
+            state_.cursor -= Point{state_.buffer.width(), -1};
+            // if the cursor is on the last line, evict the lines above
+            if (state_.cursor.y() == state_.scrollEnd) 
+                state_.cursor.setY(0);
+        }
+        // TODO also set the last char position here to the one we update to
 
     }
 
@@ -217,9 +379,9 @@ namespace ui2 {
 
     // ============================================================================================
 
-    AnsiTerminal::CSISequence AnsiTerminal::CSISequence::Parse(char * & start, char const * end) {
+    AnsiTerminal::CSISequence AnsiTerminal::CSISequence::Parse(char const * & start, char const * end) {
         CSISequence result;
-        char * x = start;
+        char const * x = start;
         // if we are at the end, return incomplete
         if (x == end) {
             result.firstByte_ = INCOMPLETE;
@@ -274,9 +436,9 @@ namespace ui2 {
 
     // ============================================================================================
 
-    AnsiTerminal::OSCSequence AnsiTerminal::OSCSequence::Parse(char * & start, char const * end) {
+    AnsiTerminal::OSCSequence AnsiTerminal::OSCSequence::Parse(char const * & start, char const * end) {
         OSCSequence result;
-        char * x = start;
+        char const * x = start;
         if (x == end) {
             result.num_ = INCOMPLETE;
             return result;
@@ -294,7 +456,7 @@ namespace ui2 {
             } 
         }
         // parse the value, which is terminated by either BEL, or ST, which is ESC followed by backslash
-        char * valueStart = x;
+        char const * valueStart = x;
         while (true) {
             if (x == end) {
                 result.num_ = INCOMPLETE;

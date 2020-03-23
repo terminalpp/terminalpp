@@ -51,6 +51,7 @@ namespace ui2 {
 		// we can close our handles to the other ends now
 		OSCHECK(CloseHandle(pipePTYOut));
 		OSCHECK(CloseHandle(pipePTYIn));
+        start();
     }
 
     BypassPTY::~BypassPTY() {

@@ -60,7 +60,12 @@ namespace ui2 {
         class State {
         public:
             State(int cols, int rows):
-                buffer{cols, rows} {
+                buffer{cols, rows},
+                cursor{0,0},
+                scrollStart{0},
+                scrollEnd{rows},
+                inverseMode{false},
+                lineDrawingSet{false} {
             }
 
             void resize(int cols, int rows) {
@@ -79,8 +84,8 @@ namespace ui2 {
             int scrollEnd;
             /** Determines whether inverse mode is active or not. */
             bool inverseMode;
-
-
+            /** Determines whether the line drawing character set is currently active. */
+            bool lineDrawingSet;
 
         protected:
 
@@ -123,10 +128,24 @@ namespace ui2 {
 
         void parseNotification();
 
+        void parseTab();
+
+        void parseLF();
+
+        void parseCR();
+
+        void parseBackspace();
+
         size_t parseEscapeSequence(char const * buffer, char const * bufferEnd);
+
+        void parseCSISequence(CSISequence & seq);
+
+        void parseOSCSequence(OSCSequence & seq);
 
 
         //@}
+
+        void updateCursorPosition();
 
         /** The terminal state. 
          */
@@ -202,7 +221,7 @@ namespace ui2 {
         /** Parses the CSI sequence from given input. 
 
          */
-        static CSISequence Parse(char * & buffer, char const * end);
+        static CSISequence Parse(char const * & buffer, char const * end);
 
     private:
 
@@ -254,6 +273,7 @@ namespace ui2 {
     // ============================================================================================
 
     class AnsiTerminal::OSCSequence {
+    public:
         OSCSequence():
             num_{INVALID} {
         }
@@ -276,7 +296,7 @@ namespace ui2 {
 
         /** Parses the OSC sequence from given input. 
          */
-        static OSCSequence Parse(char * & buffer, char const * end);
+        static OSCSequence Parse(char const * & buffer, char const * end);
 
     private:
 

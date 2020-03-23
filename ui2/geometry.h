@@ -25,12 +25,32 @@ namespace ui2 {
             return y_;
         }
 
+        void setX(int value) {
+            x_ = value;
+        }
+
+        void setY(int value) {
+            y_ = value;
+        }
+
         Point operator + (Point other) const {
             return Point{x_ + other.x_, y_ + other.y_};
         }
 
         Point operator - (Point other) const {
             return Point{x_ - other.x_, y_ - other.y_};
+        }
+
+        Point & operator += (Point other) {
+            x_ += other.x_;
+            y_ += other.y_;
+            return *this;
+        }
+
+        Point & operator -= (Point other) {
+            x_ -= other.x_;
+            y_ -= other.y_;
+            return *this;
         }
 
         bool operator >= (Point other) const {

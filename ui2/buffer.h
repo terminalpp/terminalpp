@@ -42,7 +42,7 @@ namespace ui2 {
             The color of the character displayed in the cell.
          */
         //@{
-        Color const & fg() const {
+        Color fg() const {
             return fg_;
         }
 
@@ -57,7 +57,7 @@ namespace ui2 {
             The background color of the cell. 
          */
         //@{
-        Color const & bg() const {
+        Color bg() const {
             return bg_;
         }
 
@@ -72,7 +72,7 @@ namespace ui2 {
             The color of font decorations, such as underline or strikethrough. 
          */
         //@{
-        Color const & decor() const {
+        Color decor() const {
             return decor_;
         }
 
@@ -87,7 +87,7 @@ namespace ui2 {
             The font used to render the cell. 
          */
         //@{
-        Font const & font() const {
+        Font font() const {
             return font_;
         }
 
@@ -102,7 +102,7 @@ namespace ui2 {
             The border of the cell. 
          */
         //@{
-        Border const & border() const {
+        Border border() const {
             return border_;
         }
 

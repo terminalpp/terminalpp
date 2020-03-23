@@ -83,6 +83,10 @@ namespace ui2 {
                 }
             }
 
+            virtual void ptyAttached(PTY * pty) {
+                pty_ = pty;
+            }
+
             /** Called when the attached process has been terminated. 
              */
             virtual void ptyTerminated(ExitCode exitCode) {
@@ -114,6 +118,8 @@ namespace ui2 {
 
         PTY(Client * client):
             client_{client} {
+            ASSERT(client != nullptr);
+            client->ptyAttached(this);
         }
 
         /** Returns the client the PTY is attached to. 
