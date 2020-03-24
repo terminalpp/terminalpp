@@ -12,6 +12,7 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
+- terminal buffer should be locked properly
 - and start working on the terminal input
 - then finish terminal rendering (modulo cursor)
 - then do cursor and selection

@@ -157,16 +157,23 @@ namespace ui2 {
     }
 
     void AnsiTerminal::paint(Canvas & canvas) {
+        // lock the buffer
+        bufferLock_.priorityLock();
+        helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_, false};
         // draw the buffer
         canvas.drawBuffer(state_.buffer, Point{0,0});
     }
 
     void AnsiTerminal::setRect(Rect const & value) {
         // if resized, resize the terminal buffers and the pty
-        // TODO lock the buffer!
         if (value.width() != width() || value.height() != height()) {
+            // lock the buffer
+            bufferLock_.priorityLock();
+            helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_, false};
+            // resize the state
             state_.resize(value.width(), value.height());
-
+            // TODO resize the alternate buffer as well
+            // resize the PTY
             ptyResize(value.width(), value.height());
         }
         Widget::setRect(value);
@@ -210,6 +217,9 @@ namespace ui2 {
     }
 
     size_t AnsiTerminal::processInput(char const * buffer, char const * bufferEnd) {
+        // lock the buffer first
+        helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_};
+        // then process the input
         char const * x = buffer;
         while (x != bufferEnd) {
             switch (*x) {
@@ -344,6 +354,11 @@ namespace ui2 {
         // disable double width and height chars
         state_.cell.setFont(state_.cell.font().setSize(1).setDoubleWidth(false));
         state_.cursor += Point{0, 1};
+        // determine if region should be scrolled
+        if (state_.cursor.y() == state_.scrollEnd) {
+            deleteLines(1, state_.scrollStart, state_.scrollEnd, state_.cell);
+            state_.cursor -= Point{0, 1};
+        }
         // update the cursor position as LF takes immediate effect
         updateCursorPosition();
     }
@@ -410,16 +425,13 @@ namespace ui2 {
 				break;
 			/* Reverse line feed - move up 1 row, same column.
 			 */
-            /*
 			case 'M':
 				LOG(SEQ) << "RI: move cursor 1 line up";
-				if (state_.cursor.y() == state_.scrollStart) {
-					buffer_.insertLines(1, state_.scrollStart, state_.scrollEnd, state_.cell);
-				} else {
-					setCursor(state_.cursor.x(), state_.cursor.y() - 1);
-				}
+				if (state_.cursor.y() == state_.scrollStart) 
+					insertLines(1, state_.scrollStart, state_.scrollEnd, state_.cell);
+				else
+                    state_.setCursor(state_.cursor.x(), state_.cursor.y() - 1);
 				break;
-            */
             /* Device Control String (DCS). 
              */
             /*case 'P':
@@ -1106,11 +1118,47 @@ namespace ui2 {
 		return Color::White;
     }
 
-
-
-
     void AnsiTerminal::parseOSCSequence(OSCSequence & seq) {
-
+        switch (seq.num()) {
+            /* OSC 0 - change the terminal title.
+             */
+            /*
+            case 0:
+    			LOG(SEQ) << "Title change to " << seq.value();
+                buffer_.unlock();
+                try {
+                    setTitle(seq.value());
+                } catch (std::exception const & e) {
+                    LOG(SEQ_ERROR) << e.what();
+                } catch (...) {
+                    LOG(SEQ_ERROR) << "unknown error";
+                }
+                buffer_.lock();
+                break;
+            */
+            /* OSC 52 - set clipboard to given value. 
+             */
+            /*
+            case 52:
+                LOG(SEQ) << "Clipboard set to " << seq.value();
+                buffer_.unlock();
+                try {
+                    setClipboardContents(seq.value());
+                } catch (std::exception const & e) {
+                    LOG(SEQ_ERROR) << e.what();
+                } catch (...) {
+                    LOG(SEQ_ERROR) << "unknown error";
+                }
+                buffer_.lock();
+                break;
+            */
+            /* OSC 112 - reset cursor color. 
+             */
+            case 112:
+                NOT_IMPLEMENTED;
+            default:
+        		LOG(SEQ_UNKNOWN) << "Invalid OSC sequence: " << seq;
+        }
     }
 
     void AnsiTerminal::fillRect(Rect const& rect, Cell const & cell) {
@@ -1145,10 +1193,11 @@ namespace ui2 {
         // now move the lines accordingly by swapping the rows in the buffer
         // TODO this could be done faster if more than 1 line is being used
         while (lines-- > 0) {
-            Cell * x = state_.buffer.rows_[top];
-            memmove(x, x + 1, sizeof(Cell*) * (bottom - top - 1));
+            Cell ** rows = state_.buffer.rows_;
+            Cell * x = rows[top];
+            memmove(rows + top, rows + top + 1, sizeof(Cell*) * (bottom - top - 1));
             state_.buffer.fillRow(x, state_.cell, state_.buffer.width());
-            state_.buffer.rows_[bottom - 1] = x;
+            rows[bottom - 1] = x;
         }
         // if lines are deleted from the top row and alternate buffer is not enabled, notify the terminal history that given number of lines is about to be scrolled out
         /*
@@ -1168,8 +1217,9 @@ namespace ui2 {
 
     void AnsiTerminal::insertLines(int lines, int top, int bottom, Cell const & cell) {
         while (lines-- > 0) {
-            Cell * x = state_.buffer.rows_[bottom - 1];
-            memmove(x + 1, x, sizeof(Cell*) * (bottom - top - 1));
+            Cell ** rows = state_.buffer.rows_;
+            Cell * x = rows[bottom - 1];
+            memmove(rows + top + 1, rows + top, sizeof(Cell*) * (bottom - top - 1));
             state_.buffer.fillRow(x, state_.cell, state_.buffer.width());
             state_.buffer.rows_[top] = x;
         }

@@ -4,6 +4,7 @@
 
 #include "helpers/log.h"
 #include "helpers/process.h"
+#include "helpers/locks.h"
 
 #include "ui2/renderer.h"
 #include "ui2/widget.h"
@@ -293,6 +294,8 @@ namespace ui2 {
         //@}
 
         void updateCursorPosition();
+
+        helpers::PriorityLock bufferLock_;
 
         Palette * palette_;
 
