@@ -15,6 +15,8 @@ namespace ui2 {
     class AnsiTerminal : public Widget, public PTY::Client {
     public:
 
+        class Palette;
+
         // ========================================================================================
 
         /** 
@@ -33,6 +35,18 @@ namespace ui2 {
                     }
             }
 
+        protected:
+
+            friend class AnsiTerminal;
+
+            /** Fills the specified row with given character. 
+
+                Copies larger and larger number of cells at once to be more efficient than simple linear copy. 
+             */
+            void fillRow(Cell * row, Cell const & fill, unsigned cols);
+
+
+
         }; // ui::AnsiTerminal::Buffer
 
         // ========================================================================================
@@ -48,7 +62,7 @@ namespace ui2 {
 
         //@}
 
-        AnsiTerminal(int width = 0, int height = 0, int x = 0, int y = 0); 
+        AnsiTerminal(Palette * palette, int width = 0, int height = 0, int x = 0, int y = 0); 
 
         ~AnsiTerminal() override;
 
@@ -57,15 +71,46 @@ namespace ui2 {
         class CSISequence;
         class OSCSequence;
 
+        enum class MouseMode {
+            Off,
+            Normal,
+            ButtonEvent,
+            All
+        }; // AnsiTerminal::MouseMode
+
+        enum class MouseEncoding {
+            Default,
+            UTF8,
+            SGR
+        }; // AnsiTerminal::MouseEncoding
+
+        enum class CursorMode {
+            Normal,
+            Application
+        }; // AnsiTerminal::CursorMode
+
+        enum class KeypadMode {
+            Normal, 
+            Application
+        }; // AnsiTerminal::KeypadMode
+
         class State {
         public:
             State(int cols, int rows):
                 buffer{cols, rows},
+                cursorMode{CursorMode::Normal},
+                cursorVisible{true},
+                cursorBlink{true},
                 cursor{0,0},
+                lastCharacter{0,0},
+                mouseMode{MouseMode::Off},
+                mouseEncoding{MouseEncoding::Default},
                 scrollStart{0},
                 scrollEnd{rows},
                 inverseMode{false},
-                lineDrawingSet{false} {
+                lineDrawingSet{false},
+                keypadMode{KeypadMode::Normal},
+                bracketedPaste{false} {
             }
 
             void resize(int cols, int rows) {
@@ -73,11 +118,43 @@ namespace ui2 {
                 buffer.fill();
             }
 
+            void setCursor(int col, int row) {
+                cursor = Point{col, row};
+                // invalidate the last character's position
+                lastCharacter = Point{-1, -1};
+            }
+
+            void saveCursor() {
+                cursorStack_.push_back(cursor);
+            }
+
+            void restoreCursor() {
+                if (cursorStack_.empty())
+                    return;
+                cursor = cursorStack_.back();
+                cursorStack_.pop_back();
+                if (cursor.x() >= buffer.width())
+                    cursor.setX(buffer.width() - 1);
+                if (cursor.y() >= buffer.height())
+                    cursor.setX(buffer.height() - 1);
+            }
+
             Buffer buffer;
             Cell cell;
 
+            CursorMode cursorMode;
+            bool cursorVisible;
+            bool cursorBlink;
             /** Current cursor position. */
             Point cursor;
+            /** Determines the coordinates of last valid cursor position so that newline cells can be identified. */
+            Point lastCharacter;
+
+
+            MouseMode mouseMode;
+            MouseEncoding mouseEncoding;
+
+
             /** Start of the scrolling region (inclusive row) */
             int scrollStart;
             /** End of the scrolling rehion (exclusive row) */
@@ -87,13 +164,17 @@ namespace ui2 {
             /** Determines whether the line drawing character set is currently active. */
             bool lineDrawingSet;
 
+            KeypadMode keypadMode;
+            /* Determines whether pasted text will be surrounded by ESC[200~ and ESC[201~ */
+            bool bracketedPaste;
+
         protected:
 
             std::vector<Point> cursorStack_;
 
         }; // AnsiTerminal::State
 
-        /** \name Rendering & user input
+        /** \name Rendering
          */
         //@{
 
@@ -101,6 +182,13 @@ namespace ui2 {
 
         void setRect(Rect const & value) override;
 
+        //@}
+
+        /** \name User Input
+         */
+        //@{
+        void keyChar(Event<Char>::Payload & event) override;
+        void keyDown(Event<Key>::Payload & event) override;
         //@}
 
 
@@ -136,28 +224,181 @@ namespace ui2 {
 
         void parseBackspace();
 
+        /** Parses ANSI and similar escape sequences in the input. 
+         
+            CSI, OSC and few others are supported. 
+         */
         size_t parseEscapeSequence(char const * buffer, char const * bufferEnd);
 
+        /** Processes given CSI sequence. 
+         
+            Special sequences, such as get/set and save/restore sequences are delegated to their own functions, others are processed directly in the method. 
+         */
         void parseCSISequence(CSISequence & seq);
 
+        /** Parses CSI getters and setters.
+         
+            These are sequences `?` as the first byte, followed by arbitrary numbers, ending with either `h` or `l`. 
+         */
+        void parseCSIGetterOrSetter(CSISequence & seq, bool value);
+
+        /** Parses the CSI save and restore commands. 
+         
+            These are sequences staring with `?` and ending with `r` or `s`. 
+
+            At the moment, save and restore commands are not supported. 
+         */
+        void parseCSISaveOrRestore(CSISequence & seq);
+
+        /** Parses special graphic rendition commands. 
+         
+            These have final byte of `m`, preceded by numeric arguments.
+         */
+        void parseSGR(CSISequence & seq);
+
+        /** Parses the SGR extended color specification, i.e. either TrueColor RGB values, or 256 palette specification.
+         */
+        Color parseSGRExtendedColor(CSISequence & seq, size_t & i);
+
+        /** Parses the operating system sequence. 
+         */
         void parseOSCSequence(OSCSequence & seq);
 
+
+
+        //@}
+
+        /** \name Buffer manipulation. 
+         */
+        //@{
+        /** Fills the given rectangle with character, colors and font.
+         */
+        void fillRect(Rect const& rect, Cell const & cell);
+
+        void deleteCharacters(unsigned num);
+        void insertCharacters(unsigned num);
+
+        /** Deletes lines and triggers the onLineScrolledOut event if appropriate. 
+         
+            The event is triggered only if the terminal is in normal mode and if the scroll region starts at the top of the window. 
+            */
+        void deleteLines(int lines, int top, int bottom, Cell const & fill);
+
+        /** Inserts given number of lines at given top row.
+            
+            Scrolls down all lines between top and bottom accordingly. Fills the new lines with the provided cell.
+         */
+        void insertLines(int lines, int top, int bottom, Cell const & fill);
 
         //@}
 
         void updateCursorPosition();
 
-        /** The terminal state. 
-         */
+        Palette * palette_;
+
+        /** The terminal state. */
         State state_;
+        /** Determines whether alternate mode is active or not. */
+        bool alternateMode_;
+
+        /** Backup of the normal state when alternate mode is enabled. */
+        //State stateBackup_;
+
+        /** If true, bold font means bright colors too. */
+        bool boldIsBright_;
 
 
-
+        static std::string const * GetSequenceForKey_(Key key) {
+            auto i = KeyMap_.find(key);
+            if (i == KeyMap_.end())
+                return nullptr;
+            else
+                return &(i->second);
+        }
 
         static std::unordered_map<Key, std::string> KeyMap_;
         static char32_t LineDrawingChars_[15];
 
     }; // ui2::AnsiTerminal
+
+    // ============================================================================================
+
+    /** Palette
+     */
+    class AnsiTerminal::Palette {
+    public:
+
+        static Palette Colors16();
+        static Palette XTerm256(); 
+
+        Palette(size_t size, size_t defaultFg = 15, size_t defaultBg = 0):
+            size_(size),
+            defaultFg_(defaultFg),
+            defaultBg_(defaultBg),
+            colors_(new Color[size]) {
+            ASSERT(defaultFg < size && defaultBg < size);
+        }
+
+        Palette(std::initializer_list<Color> colors, size_t defaultFg = 15, size_t defaultBg = 0);
+
+        Palette(Palette const & from);
+
+        Palette(Palette && from);
+
+        ~Palette() {
+            delete [] colors_;
+        }
+
+        size_t size() const {
+            return size_;
+        }
+
+        Color defaultForeground() const {
+            return colors_[defaultFg_];
+        }
+
+        Color defaultBackground() const {
+            return colors_[defaultBg_];
+        }
+
+        void setDefaultForegroundIndex(size_t value) {
+            defaultFg_ = value;
+        }
+
+        void setDefaultBackgroundIndex(size_t value) {
+            defaultBg_ = value;
+        }
+
+        void setColor(size_t index, Color color) {
+            ASSERT(index < size_);
+            colors_[index] = color;
+        }
+
+        Color operator [] (size_t index) const {
+            ASSERT(index < size_);
+            return colors_[index];
+        } 
+
+        Color & operator [] (size_t index) {
+            ASSERT(index < size_);
+            return colors_[index];
+        } 
+
+        Color at(size_t index) const {
+            return (*this)[index];
+        }
+        Color & at(size_t index) {
+            return (*this)[index];
+        }
+
+    private:
+
+        size_t size_;
+        size_t defaultFg_;
+        size_t defaultBg_;
+        Color * colors_;
+
+    }; // AnsiTerminal::Palette
 
     // ============================================================================================
 

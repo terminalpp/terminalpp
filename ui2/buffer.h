@@ -17,9 +17,10 @@ namespace ui2 {
 
         // TODO the default constructor should really be different!
         Cell():
-            codepoint_{'X'},
-            fg_{Color::Red},
-            bg_{Color::Green} {
+            codepoint_{' '},
+            fg_{Color::White},
+            bg_{Color::Black},
+            decor_{Color::Black} {
         }
 
         /** \name Codepoint
@@ -206,6 +207,8 @@ namespace ui2 {
             clear_();
             create_(width, height);
         }
+
+    protected:
 
         void create_(int width, int height) {
             rows_ = new Cell*[height];

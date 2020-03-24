@@ -83,6 +83,23 @@ namespace ui2 {
             }
         }
 
+        Widget * keyboardFocus() const {
+            return keyboardIn_ ? keyboardFocus_ : nullptr;
+        }
+
+        void setKeyboardFocus(Widget * widget) {
+            ASSERT(widget == nullptr || widget->renderer() == this);
+            if (keyboardFocus_ != nullptr && keyboardIn_) {
+                Event<void>::Payload p{};
+                focusOut(p, keyboardFocus_);
+            }
+            keyboardFocus_ = widget;
+            if (keyboardFocus_ != nullptr && keyboardIn_) {
+                Event<void>::Payload p{};
+                focusIn(p, keyboardFocus_);
+            }
+        }
+
         /** Requests repaint of the given widget. [thread-safe]
          
             The purpose of this method is to use whatever event queue (or other mechanism) the target rendering supports to schedule repaint of the specified widget in the main UI thread. 
@@ -345,10 +362,6 @@ namespace ui2 {
 
          */
         //@{
-
-        Widget * keyboardFocus() const {
-            return keyboardIn_ ? keyboardFocus_ : nullptr;
-        }
 
         virtual void rendererFocusIn() {
             ASSERT(! keyboardIn_);

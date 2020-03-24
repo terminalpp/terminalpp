@@ -12,6 +12,13 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
+- and start working on the terminal input
+- then finish terminal rendering (modulo cursor)
+- then do cursor and selection
+- then back to the UI elements
+- and X11 and QT renderers...
+
+
 - fix the events payload to not contain references, and the event should take the payload as argument already
 
 - design proper and simple layouts and autosizing of widgets

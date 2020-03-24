@@ -400,7 +400,7 @@ namespace ui2 {
         //@{
 
         bool focused() const;
-        
+
         virtual void focusIn(Event<void>::Payload & event) {
             if (event.active())
                 onFocusIn(event, this);

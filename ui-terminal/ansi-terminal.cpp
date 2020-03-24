@@ -147,10 +147,10 @@ namespace ui2 {
 
 
 
-    AnsiTerminal::AnsiTerminal(int width, int height, int x, int y):
+    AnsiTerminal::AnsiTerminal(Palette * palette, int width, int height, int x, int y):
         Widget{width, height, x, y}, 
+        palette_{palette},
         state_{width, height} {
-
     }
 
     AnsiTerminal::~AnsiTerminal() {
@@ -169,10 +169,45 @@ namespace ui2 {
 
             ptyResize(value.width(), value.height());
         }
-        
         Widget::setRect(value);
     }
 
+
+
+    void AnsiTerminal::keyChar(Event<Char>::Payload & event) {
+        ASSERT(event->codepoint() >= 32);
+        ptySend(event->toCharPtr(), event->size());
+        Widget::keyChar(event);
+    }
+
+    void AnsiTerminal::keyDown(Event<Key>::Payload & event) {
+		std::string const* seq = GetSequenceForKey_(*event);
+		if (seq != nullptr) {
+			switch (event->code()) {
+			case Key::Up:
+			case Key::Down:
+			case Key::Left:
+			case Key::Right:
+			case Key::Home:
+			case Key::End:
+				if (event->modifiers() == 0 && state_.cursorMode == CursorMode::Application) {
+					std::string sa(*seq);
+					sa[1] = 'O';
+					ptySend(sa.c_str(), sa.size());
+					return;
+				}
+				break;
+			default:
+				break;
+			}
+			ptySend(seq->c_str(), seq->size());
+		}
+        // only scroll to prompt if the key down is not a simple modifier key
+        /*if (key != Key::Shift + Key::ShiftKey && key != Key::Alt + Key::AltKey && key != Key::Ctrl + Key::CtrlKey && key != Key::Win + Key::WinKey)
+            scrollToPrompt();
+            */
+        Widget::keyDown(event);
+    }
 
     size_t AnsiTerminal::processInput(char const * buffer, char const * bufferEnd) {
         char const * x = buffer;
@@ -269,21 +304,21 @@ namespace ui2 {
         // if the font's size is greater than 1, copy the character as required (if we are at the top row of double height characters, increase the size artificially)
         int charWidth = state_.doubleHeightTopLine ? cell.font().width() * 2 : cell.font().width();
 
-        while (columnWidth > 0 && buffer_.cursor().pos.x < buffer_.cols()) {
-            for (int i = 1; (i < charWidth) && buffer_.cursor().pos.x < buffer_.cols(); ++i) {
+        while (columnWidth > 0 && state_.cursor.x() < state_.buffer.width()) {
+            for (int i = 1; (i < charWidth) && state_.cursor.x() < state_.buffer.width(); ++i) {
                 Cell& cell2 = buffer_.at(buffer_.cursor().pos);
                 // copy current cell properties
                 cell2 = cell;
                 // make sure the cell's font is normal size and width and display a space
                 cell2.setCodepoint(' ').setFont(cell.font().setSize(1).setDoubleWidth(false));
-                ++buffer_.cursor().pos.x;
+                ++state_.cursor.x();
             } 
-            if (--columnWidth > 0 && buffer_.cursor().pos.x < buffer_.cols()) {
+            if (--columnWidth > 0 && state_.cursor.x() < state_.buffer.width()) {
                 Cell& cell2 = buffer_.at(buffer_.cursor().pos);
                 // copy current cell properties
                 cell2 = cell;
                 cell2.setCodepoint(' ');
-                ++buffer_.cursor().pos.x;
+                ++state_.cursor.x();
             } 
         }
         */
@@ -294,19 +329,41 @@ namespace ui2 {
     }
 
     void AnsiTerminal::parseTab() {
-        // NOT_IMPLEMENTED;
+        updateCursorPosition();
+        if (state_.cursor.x() % 8 == 0)
+            state_.cursor += Point{8, 0};
+        else
+            state_.cursor += Point{8 - state_.cursor.x() % 8, 0};
+        LOG(SEQ) << "Tab: cursor col is " << state_.cursor.x();
     }
 
     void AnsiTerminal::parseLF() {
-        // NOT_IMPLEMENTED;
+        LOG(SEQ) << "LF";
+        // mark the last character position as line end
+        // TODO
+        // disable double width and height chars
+        state_.cell.setFont(state_.cell.font().setSize(1).setDoubleWidth(false));
+        state_.cursor += Point{0, 1};
+        // update the cursor position as LF takes immediate effect
+        updateCursorPosition();
     }
 
     void AnsiTerminal::parseCR() {
-        // NOT_IMPLEMENTED;
+        LOG(SEQ) << "CR";
+        // mark the last character as line end? 
+        // TODO
+        state_.cursor.setX(0);
     }
 
     void AnsiTerminal::parseBackspace() {
-        // NOT_IMPLEMENTED;
+        LOG(SEQ) << "BACKSPACE";
+        if (state_.cursor.x() == 0) {
+            if (state_.cursor.y() > 0)
+                state_.cursor -= Point{0, 1};
+            state_.cursor.setX(state_.buffer.width() - 1);
+        } else {
+            state_.cursor -= Point{1, 0};
+        }
     }
 
     size_t AnsiTerminal::parseEscapeSequence(char const * buffer, char const * bufferEnd) {
@@ -341,6 +398,93 @@ namespace ui2 {
                 parseOSCSequence(seq);
 				break;
             }
+			/* Save Cursor. */
+			case '7':
+				LOG(SEQ) << "DECSC: Cursor position saved";
+                state_.saveCursor();
+				break;
+			/* Restore Cursor. */
+			case '8':
+                LOG(SEQ) << "DECRC: Cursor position restored";
+                state_.restoreCursor();
+				break;
+			/* Reverse line feed - move up 1 row, same column.
+			 */
+            /*
+			case 'M':
+				LOG(SEQ) << "RI: move cursor 1 line up";
+				if (state_.cursor.y() == state_.scrollStart) {
+					buffer_.insertLines(1, state_.scrollStart, state_.scrollEnd, state_.cell);
+				} else {
+					setCursor(state_.cursor.x(), state_.cursor.y() - 1);
+				}
+				break;
+            */
+            /* Device Control String (DCS). 
+             */
+            /*case 'P':
+                if (x == bufferEnd)
+                    return false;
+                if (*x == '+') {
+                    ++x;
+                    tpp::Sequence seq(tpp::Sequence::Parse(x, bufferEnd));
+                    if (!seq.complete())
+                        return false;
+                    if (!seq.valid())
+                        break;
+                    parseTppSequence(std::move(seq));
+                }
+                break;
+            */
+    		/* Character set specification - most cases are ignored, with the exception of the box drawing and reset to english (0 and B) respectively. 
+             */
+			case '(':
+                if (x != bufferEnd) {
+                    if (*x == '0') {
+                        ++x;
+                        state_.lineDrawingSet = true;
+                        LOG(SEQ) << "Line drawing set selected";
+                        break;
+                    } else if (*x == 'B') {
+                        ++x;
+                        state_.lineDrawingSet = false;
+                        LOG(SEQ) << "Normal character set selected";
+                        break;
+                    }
+                }
+                // fallthrough
+			case ')':
+			case '*':
+			case '+':
+				// missing character set specification
+				if (x == bufferEnd)
+					return false;
+				if (*x == 'B') { // US
+					++x;
+					break;
+				}
+				LOG(SEQ_WONT_SUPPORT) << "Unknown (possibly mismatched) character set final char " << *x;
+				++x;
+				break;
+			/* ESC = -- Application keypad */
+			case '=':
+				LOG(SEQ) << "Application keypad mode enabled";
+                state_.keypadMode = KeypadMode::Application;
+				break;
+			/* ESC > -- Normal keypad */
+			case '>':
+				LOG(SEQ) << "Normal keypad mode enabled";
+                state_.keypadMode = KeypadMode::Normal;
+				break;
+            /* ESC # number -- font size changes */
+            /*
+            case '#':
+                if (x == bufferEnd)
+                    return false;
+                parseFontSizeSpecifier(*x);
+                ++x;
+                break;
+                */
             default:
 				LOG(SEQ_UNKNOWN) << "Unknown escape sequence \x1b" << *(x-1);
 				break;
@@ -349,35 +493,821 @@ namespace ui2 {
     }
 
     void AnsiTerminal::parseCSISequence(CSISequence & seq) {
+        switch (seq.firstByte()) {
+            // the "normal" CSI sequences
+            case 0: 
+                switch (seq.finalByte()) {
+                    // CSI <n> @ -- insert blank characters (ICH)
+                    case '@':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "ICH: deleteCharacter " << seq[0];
+                        insertCharacters(seq[0]);
+                        return;
+                    // CSI <n> A -- moves cursor n rows up (CUU)
+                    case 'A': {
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        unsigned r = state_.cursor.y() >= seq[0] ? state_.cursor.y() - seq[0] : 0;
+                        LOG(SEQ) << "CUU: setCursor " << state_.cursor.x() << ", " << r;
+                        state_.setCursor(state_.cursor.x(), r);
+                        return;
+                    }
+                    // CSI <n> B -- moves cursor n rows down (CUD)
+                    case 'B':
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        LOG(SEQ) << "CUD: setCursor " << state_.cursor.x() << ", " << state_.cursor.y() + seq[0];
+                        state_.setCursor(state_.cursor.x(), state_.cursor.y() + seq[0]);
+                        return;
+                    // CSI <n> C -- moves cursor n columns forward (right) (CUF)
+                    case 'C':
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        LOG(SEQ) << "CUF: setCursor " << state_.cursor.x() + seq[0] << ", " << state_.cursor.y();
+                        state_.setCursor(state_.cursor.x() + seq[0], state_.cursor.y());
+                        return;
+                    // CSI <n> D -- moves cursor n columns back (left) (CUB)
+                    case 'D': {// cursor backward
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        unsigned c = state_.cursor.x() >= seq[0] ? state_.cursor.x() - seq[0] : 0;
+                        LOG(SEQ) << "CUB: setCursor " << c << ", " << state_.cursor.y();
+                        state_.setCursor(c, state_.cursor.y());
+                        return;
+                    }
+                    /* CSI <n> G -- set cursor character absolute (CHA)
+                    */
+                    case 'G':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "CHA: set column " << seq[0] - 1;
+                        state_.setCursor(seq[0] - 1, state_.cursor.y());
+                        return;
+                    /* set cursor position (CUP) */
+                    case 'H': // CUP
+                    case 'f': // HVP
+                        seq.setDefault(0, 1).setDefault(1, 1);
+                        if (seq.numArgs() != 2)
+                            break;
+                        seq.conditionalReplace(0, 0, 1);
+                        seq.conditionalReplace(1, 0, 1);
+                        LOG(SEQ) << "CUP: setCursor " << seq[1] - 1 << ", " << seq[0] - 1;
+                        state_.setCursor(seq[1] - 1, seq[0] - 1);
+                        return;
+                    /* CSI <n> J -- erase display, depending on <n>:
+                        0 = erase from the current position (inclusive) to the end of display
+                        1 = erase from the beginning to the current position(inclusive)
+                        2 = erase entire display
+                    */
+                    case 'J':
+                        if (seq.numArgs() > 1)
+                            break;
+                        switch (seq[0]) {
+                            case 0:
+                                updateCursorPosition();
+                                fillRect(Rect::FromCorners(state_.cursor.x(), state_.cursor.y(), state_.buffer.width(), state_.cursor.y() + 1), state_.cell);
+                                fillRect(Rect::FromCorners(0, state_.cursor.y() + 1, state_.buffer.width(), state_.buffer.height()), state_.cell);
+                                return;
+                            case 1:
+                                updateCursorPosition();
+                                fillRect(Rect::FromCorners(0, 0, state_.buffer.width(), state_.cursor.y()), state_.cell);
+                                fillRect(Rect::FromCorners(0, state_.cursor.y(), state_.cursor.x() + 1, state_.cursor.y() + 1), state_.cell);
+                                return;
+                            case 2:
+                                fillRect(Rect::FromWH(state_.buffer.width(), state_.buffer.height()), state_.cell);
+                                return;
+                            default:
+                                break;
+                        }
+                        break;
+                    /* CSI <n> K -- erase in line, depending on <n>
+                        0 = Erase to Right
+                        1 = Erase to Left
+                        2 = Erase entire line
+                    */
+                    case 'K':
+                        if (seq.numArgs() > 1)
+                            break;
+                        switch (seq[0]) {
+                            case 0:
+                                updateCursorPosition();
+                                fillRect(Rect::FromCorners(state_.cursor.x(), state_.cursor.y(), state_.buffer.width(), state_.cursor.y() + 1), state_.cell);
+                                return;
+                            case 1:
+                                updateCursorPosition();
+                                fillRect(Rect::FromCorners(0, state_.cursor.y(), state_.cursor.x() + 1, state_.cursor.y() + 1), state_.cell);
+                                return;
+                            case 2:
+                                updateCursorPosition();
+                                fillRect(Rect::FromCorners(0, state_.cursor.y(), state_.buffer.width(), state_.cursor.y() + 1), state_.cell);
+                                return;
+                            default:
+                                break;
+                        }
+					break;
+                    /* CSI <n> L -- Insert n lines. (IL)
+                     */
+                    case 'L':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "IL: scrollUp " << seq[0];
+                        insertLines(seq[0], state_.cursor.y(), state_.scrollEnd, state_.cell);
+                        return;
+                    /* CSI <n> M -- Remove n lines. (DL)
+                     */
+                    case 'M':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "DL: scrollDown " << seq[0];
+                        deleteLines(seq[0], state_.cursor.y(), state_.scrollEnd, state_.cell);
+                        return;
+                    /* CSI <n> P -- Delete n charcters. (DCH) 
+                     */
+                    case 'P':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "DCH: deleteCharacter " << seq[0];
+                        deleteCharacters(seq[0]);
+                        return;
+                    /* CSI <n> S -- Scroll up n lines
+                     */
+                    case 'S':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "SU: scrollUp " << seq[0];
+                        deleteLines(seq[0], state_.scrollStart, state_.scrollEnd, state_.cell);
+                        return;
+                    /* CSI <n> T -- Scroll down n lines
+                     */
+                    case 'T':
+                        seq.setDefault(0, 1);
+                        LOG(SEQ) << "SD: scrollDown " << seq[0];
+                        insertLines(seq[0], state_.cursor.y(), state_.scrollEnd, state_.cell);
+                        return;
+                    /* CSI <n> X -- erase <n> characters from the current position
+                     */
+                    case 'X': {
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        updateCursorPosition();
+                        // erase from first line
+                        int n = static_cast<unsigned>(seq[0]);
+                        int l = std::min(state_.buffer.width() - state_.cursor.x(), n);
+                        fillRect(Rect::FromTopLeftWH(state_.cursor, l, 1), state_.cell);
+                        n -= l;
+                        // while there is enough stuff left to be larger than a line, erase entire line
+                        l = state_.cursor.y() + 1;
+                        while (n >= state_.buffer.width() && l < state_.buffer.height()) {
+                            fillRect(Rect::FromCorners(0, l, state_.buffer.width(), l + 1), state_.cell);
+                            ++l;
+                            n -= state_.buffer.width();
+                        }
+                        // if there is still something to erase, erase from the beginning
+                        if (n != 0 && l < state_.buffer.height())
+                            fillRect(Rect::FromCorners(0, l, n, l + 1), state_.cell);
+                        return;
+                    }
+                    /* CSI <n> b - repeat the previous character n times (REP)
+                     */
+                    case 'b': {
+                        seq.setDefault(0, 1);
+                        if (state_.cursor.x() == 0 || state_.cursor.x() + seq[0] >= state_.buffer.width()) {
+                            LOG(SEQ_ERROR) << "Repeat previous character out of bounds";
+                        } else {
+                            LOG(SEQ) << "Repeat previous character " << seq[0] << " times";
+                            Cell const & prev = state_.buffer.at(state_.cursor - Point{1, 0});
+                            for (size_t i = 0, e = seq[0]; i < e; ++i) {
+                                state_.buffer.at(state_.cursor) = prev;
+                                state_.cursor += Point{1,0};
+                            }
+                        }
+                        return;
+                    }
+                    /* CSI <n> c - primary device attributes.
+                     */
+                    case 'c': {
+                        if (seq[0] != 0)
+                            break;
+                        LOG(SEQ) << "Device Attributes - VT102 sent";
+                        ptySend("\033[?6c", 5); // send VT-102 for now, go for VT-220? 
+                        return;
+                    }
+                    /* CSI <n> d -- Line position absolute (VPA)
+                     */
+                    case 'd': {
+                        seq.setDefault(0, 1);
+                        if (seq.numArgs() != 1)
+                            break;
+                        int r = seq[0];
+                        if (r < 1)
+                            r = 1;
+                        else if (r > state_.buffer.height())
+                            r = state_.buffer.height();
+                        LOG(SEQ) << "VPA: setCursor " << state_.cursor.x() << ", " << r - 1;
+                        state_.setCursor(state_.cursor.x(), r - 1);
+                        return;
+                    }
+                    /* CSI <n> h -- Reset mode enable
+                      
+                       Depending on the argument, certain things are turned on. None of the RM settings are currently supported.
+                     */
+                    case 'h':
+                        break;
+                    /* CSI <n> l -- Reset mode disable
+                    
+                       Depending on the argument, certain things are turned off. Turning the features on/off is not allowed, but if the client wishes to disable something that is disabled, it's happily ignored.
+                     */
+                    case 'l':
+                        seq.setDefault(0, 0);
+                        // enable replace mode (IRM) since this is the only mode we allow, do nothing
+                        if (seq[0] == 4)
+                            return;
+                        break;
+                    /* SGR
+                     */
+                    case 'm':
+                        return parseSGR(seq);
+                    /* CSI <n> ; <n> r -- Set scrolling region (default is the whole window) (DECSTBM)
+                     */
+                    case 'r':
+                        seq.setDefault(0, 1); // inclusive
+                        seq.setDefault(1, state_.cursor.y()); // inclusive
+                        if (seq.numArgs() != 2)
+                            break;
+                        // This is not proper 
+                        seq.conditionalReplace(0, 0, 1);
+                        seq.conditionalReplace(1, 0, 1);
+                        if (seq[0] > state_.buffer.height())
+                            break;
+                        if (seq[1] > state_.buffer.height())
+                            break;
+                        state_.scrollStart = std::min(seq[0] - 1, state_.buffer.height() - 1); // inclusive
+                        state_.scrollEnd = std::min(seq[1], state_.buffer.height()); // exclusive 
+                        state_.setCursor(0, 0);
+                        LOG(SEQ) << "Scroll region set to " << state_.scrollStart << " - " << state_.scrollEnd;
+                        return;
+                    /* CSI <n> : <n> : <n> t -- window manipulation (xterm)
 
+                        We do nothing for these at the moment, just recognize the few possibly interesting ones.
+                     */
+                    case 't':
+                        seq.setDefault(0, 0).setDefault(1, 0).setDefault(2, 0);
+                        switch (seq[0]) {
+                        case 22:
+                            // 22;0;0 -- save xterm icon and window title on stack
+                            if (seq[1] == 0 && seq[2] == 0)
+                                return;
+                            break;
+                        case 23:
+                            // 23;0;0 -- restore xterm icon and window title from stack
+                            if (seq[1] == 0 && seq[2] == 0)
+                                return;
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            // getters and setters
+            case '?':
+                switch (seq.finalByte()) {
+                    case 'h':
+                        return parseCSIGetterOrSetter(seq, true);
+                    case 'l':
+                        return parseCSIGetterOrSetter(seq, false);
+                    case 's':
+                    case 'r':
+                        return parseCSISaveOrRestore(seq);
+                    default:
+                        break;
+                }
+                break;
+            // other CSI sequences
+            case '>':
+                switch (seq.finalByte()) {
+    				/* CSI > 0 c -- Send secondary device attributes.
+                     */
+                    case 'c':
+                        if (seq[0] != 0)
+                            break;
+					LOG(SEQ) << "Secondary Device Attributes - VT100 sent";
+					ptySend("\033[>0;0;0c", 9); // we are VT100, no version third must always be zero (ROM cartridge)
+					return;
+				default:
+					break;
+                }
+                break;
+            default:
+                break;
+        }
+		LOG(SEQ_UNKNOWN) << " Unknown CSI sequence " << seq;
     }
+
+    void AnsiTerminal::parseCSIGetterOrSetter(CSISequence & seq, bool value) {
+		for (size_t i = 0; i < seq.numArgs(); ++i) {
+			int id = seq[i];
+			switch (id) {
+				/* application cursor mode on/off
+				 */
+				case 1:
+					state_.cursorMode = value ? CursorMode::Application : CursorMode::Normal;
+					LOG(SEQ) << "application cursor mode: " << value;
+					continue;
+				/* Smooth scrolling -- ignored*/
+				case 4:
+					LOG(SEQ_WONT_SUPPORT) << "Smooth scrolling: " << value;
+					continue;
+				/* DECAWM - autowrap mode on/off */
+				case 7:
+					if (value) {
+						LOG(SEQ) << "autowrap mode enable (by default)";
+                    } else {
+						LOG(SEQ_UNKNOWN) << "CSI?7l, DECAWM does not support being disabled";
+                    }
+					continue;
+				// cursor blinking
+				case 12:
+                    state_.cursorBlink = value;
+					LOG(SEQ) << "cursor blinking: " << value;
+					continue;
+				// cursor show/hide
+				case 25:
+                    state_.cursorVisible = value;
+					LOG(SEQ) << "cursor visible: " << value;
+					continue;
+				/* Mouse tracking movement & buttons.
+
+				https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
+				*/
+				/* Enable normal mouse mode, i.e. report button press & release events only.
+				 */
+				case 1000:
+                    state_.mouseMode = value ? MouseMode::Normal : MouseMode::Off;
+					LOG(SEQ) << "normal mouse tracking: " << value;
+					continue;
+				/* Mouse highlighting - will not support because it requires supporting application and may hang terminal if not used properly, which sounds rather dangerous.
+				 */
+				case 1001:
+					LOG(SEQ_WONT_SUPPORT) << "hilite mouse mode";
+					continue;
+				/* Mouse button events (report mouse button press & release and mouse movement if any of the buttons is down.
+				 */
+				case 1002:
+                    state_.mouseMode = value ? MouseMode::ButtonEvent : MouseMode::Off;
+					LOG(SEQ) << "button-event mouse tracking: " << value;
+					continue;
+				/* Report all mouse events (i.e. report mouse move even when buttons are not pressed).
+				 */
+				case 1003:
+                    state_.mouseMode = value ? MouseMode::All : MouseMode::Off;
+					LOG(SEQ) << "all mouse tracking: " << value;
+					continue;
+				/* UTF8 encoded tracking.
+				 */
+				case 1005:
+					//mouseEncoding_ = value ? MouseEncoding::UTF8 : MouseEncoding::Default;
+					LOG(SEQ_WONT_SUPPORT) << "UTF8 mouse encoding: " << value;
+					continue;
+				/* SGR mouse encoding.
+				 */
+				case 1006: // 
+					state_.mouseEncoding = value ? MouseEncoding::SGR : MouseEncoding::Default;
+					LOG(SEQ) << "UTF8 mouse encoding: " << value;
+					continue;
+				/* Enable or disable the alternate screen buffer.
+				 */
+				case 47:
+				case 1049: /*
+                    // stop autoscrolling so that we don't scroll the alternate buffer at all
+                    stopAutoScroll();
+					if (value) {
+						// flip to alternate buffer and clear it
+						if (!alternateBufferMode_) {
+							alternateBuffer_ = buffer_;
+							std::swap(state_, alternateState_);
+							invalidateLastCharPosition();
+                            // disable terminal history for alternate mode
+                            enableScrolling(false);
+						}
+                        state_.cell.setFg(palette_->defaultForeground()) 
+                                   .setDecoration(palette_->defaultForeground()) 
+                                   .setBg(palette_->defaultBackground())
+                                   .setFont(Font{})
+                                   .setAttributes(Attributes{});
+						fillRect(Rect::FromWH(buffer_.cols(), buffer_.rows()), state_.cell);
+						buffer_.cursor().pos = Point{0,0};
+                        buffer_.cursor().visible = true;
+						LOG(SEQ) << "Alternate screen on";
+					} else {
+						// go back from alternate buffer
+						if (alternateBufferMode_) {
+							buffer_ = alternateBuffer_;
+							std::swap(state_, alternateState_);
+                            // enable history for normal mode
+	                        enableScrolling();
+					    }
+						LOG(SEQ) << "Alternate screen off";
+					}
+					alternateBufferMode_ = value;
+                    */
+					continue;
+				/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. 
+				 */
+				case 2004:
+					state_.bracketedPaste = value;
+					continue;
+				default:
+					break;
+			}
+			LOG(SEQ_UNKNOWN) << "Invalid Get/Set command: " << seq;
+		}
+    }
+
+    void AnsiTerminal::parseCSISaveOrRestore(CSISequence & seq) {
+		for (size_t i = 0; i < seq.numArgs(); ++i)
+			LOG(SEQ_WONT_SUPPORT) << "Private mode " << (seq.finalByte() == 's' ? "save" : "restore") << ", id " << seq[i];
+    }
+
+    void AnsiTerminal::parseSGR(CSISequence & seq) {
+        seq.setDefault(0, 0);
+		for (size_t i = 0; i < seq.numArgs(); ++i) {
+			switch (seq[i]) {
+				/* Resets all attributes. */
+				case 0:
+                    state_.cell.setFg(palette_->defaultForeground()) 
+                               .setDecor(palette_->defaultForeground()) 
+                               .setBg(palette_->defaultBackground())
+                               .setFont(Font{});
+                    state_.inverseMode = false;
+                    LOG(SEQ) << "font fg bg reset";
+					break;
+				/* Bold / bright foreground. */
+				case 1:
+					state_.cell.setFont(state_.cell.font().setBold());
+					LOG(SEQ) << "bold set";
+					break;
+				/* faint font (light) - won't support for now, though in theory we easily can. */
+				case 2:
+					LOG(SEQ_WONT_SUPPORT) << "faint font";
+					break;
+				/* Italics */
+				case 3:
+					state_.cell.setFont(state_.cell.font().setItalic());
+					LOG(SEQ) << "italics set";
+					break;
+				/* Underline */
+				case 4:
+                    state_.cell.setFont(state_.cell.font().setUnderline());
+					LOG(SEQ) << "underline set";
+					break;
+				/* Blinking text */
+				case 5:
+                    state_.cell.setFont(state_.cell.font().setBlink());
+					LOG(SEQ) << "blink set";
+					break;
+				/* Inverse on */
+				case 7:
+                    if (! state_.inverseMode) {
+                        state_.inverseMode = true;
+                        Color fg = state_.cell.fg();
+                        Color bg = state_.cell.bg();
+                        state_.cell.setFg(bg).setDecor(bg).setBg(fg);
+    					LOG(SEQ) << "inverse mode on";
+                    }
+                    break;
+				/* Strikethrough */
+				case 9:
+                    state_.cell.setFont(state_.cell.font().setStrikethrough());
+					LOG(SEQ) << "strikethrough";
+					break;
+				/* Bold off */
+				case 21:
+					state_.cell.setFont(state_.cell.font().setBold(false));
+					LOG(SEQ) << "bold off";
+					break;
+				/* Normal - neither bold, nor faint. */
+				case 22:
+					state_.cell.setFont(state_.cell.font().setBold(false).setItalic(false));
+					LOG(SEQ) << "normal font set";
+					break;
+				/* Italics off. */
+				case 23:
+					state_.cell.setFont(state_.cell.font().setItalic(false));
+					LOG(SEQ) << "italics off";
+					break;
+				/* Disable underline. */
+				case 24:
+                    state_.cell.setFont(state_.cell.font().setUnderline(false));
+					LOG(SEQ) << "undeline off";
+					break;
+				/* Disable blinking. */
+				case 25:
+                    state_.cell.setFont(state_.cell.font().setBlink(false));
+					LOG(SEQ) << "blink off";
+					break;
+                /* Inverse off */
+				case 27: 
+                    if (state_.inverseMode) {
+                        state_.inverseMode = false;
+                        Color fg = state_.cell.fg();
+                        Color bg = state_.cell.bg();
+                        state_.cell.setFg(bg).setDecor(bg).setBg(fg);
+    					LOG(SEQ) << "inverse mode off";
+                    }
+                    break;
+				/* Disable strikethrough. */
+				case 29:
+                    state_.cell.setFont(state_.cell.font().setStrikethrough(false));
+					LOG(SEQ) << "Strikethrough off";
+					break;
+				/* 30 - 37 are dark foreground colors, handled in the default case. */
+				/* 38 - extended foreground color */
+				case 38: {
+                    Color fg = parseSGRExtendedColor(seq, i);
+                    state_.cell.setFg(fg).setDecor(fg);    
+					LOG(SEQ) << "fg set to " << fg;
+					break;
+                }
+				/* Foreground default. */
+				case 39:
+                    state_.cell.setFg(palette_->defaultForeground())
+                               .setDecor(palette_->defaultForeground());
+					LOG(SEQ) << "fg reset";
+					break;
+				/* 40 - 47 are dark background color, handled in the default case. */
+				/* 48 - extended background color */
+				case 48: {
+                    Color bg = parseSGRExtendedColor(seq, i);
+                    state_.cell.setBg(bg);    
+					LOG(SEQ) << "bg set to " << bg;
+					break;
+                }
+				/* Background default */
+				case 49:
+					state_.cell.setBg(palette_->defaultBackground());
+					LOG(SEQ) << "bg reset";
+					break;
+				/* 90 - 97 are bright foreground colors, handled in the default case. */
+				/* 100 - 107 are bright background colors, handled in the default case. */
+				default:
+					if (seq[i] >= 30 && seq[i] <= 37) {
+                        int colorIndex = seq[i] - 30;
+                        if (boldIsBright_ && state_.cell.font().bold())
+                            colorIndex += 8;
+						state_.cell.setFg(palette_->at(colorIndex))
+                                   .setDecor(palette_->at(colorIndex));
+						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 30);
+					} else if (seq[i] >= 40 && seq[i] <= 47) {
+						state_.cell.setBg(palette_->at(seq[i] - 40));
+						LOG(SEQ) << "bg set to " << palette_->at(seq[i] - 40);
+					} else if (seq[i] >= 90 && seq[i] <= 97) {
+						state_.cell.setFg(palette_->at(seq[i] - 82))
+                                   .setDecor(palette_->at(seq[i] - 82));
+						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 82);
+					} else if (seq[i] >= 100 && seq[i] <= 107) {
+						state_.cell.setBg(palette_->at(seq[i] - 92));
+						LOG(SEQ) << "bg set to " << palette_->at(seq[i] - 92);
+					} else {
+						LOG(SEQ_UNKNOWN) << "Invalid SGR code: " << seq;
+					}
+					break;
+			}
+		}
+    }
+
+    Color AnsiTerminal::parseSGRExtendedColor(CSISequence & seq, size_t & i) {
+		++i;
+		if (i < seq.numArgs()) {
+			switch (seq[i++]) {
+				/* index from 256 colors */
+				case 5:
+					if (i >= seq.numArgs()) // not enough args 
+						break;
+					if (seq[i] > 255) // invalid color spec
+						break;
+                    return palette_->at(seq[i]);
+				/* true color rgb */
+				case 2:
+					i += 2;
+					if (i >= seq.numArgs()) // not enough args
+						break;
+					if (seq[i - 2] > 255 || seq[i - 1] > 255 || seq[i] > 255) // invalid color spec
+						break;
+					return Color(seq[i - 2] & 0xff, seq[i - 1] & 0xff, seq[i] & 0xff);
+				/* everything else is an error */
+				default:
+					break;
+			}
+		}
+		LOG(SEQ_UNKNOWN) << "Invalid extended color: " << seq;
+		return Color::White;
+    }
+
+
+
 
     void AnsiTerminal::parseOSCSequence(OSCSequence & seq) {
 
     }
 
+    void AnsiTerminal::fillRect(Rect const& rect, Cell const & cell) {
+		for (int row = rect.top(); row < rect.bottom(); ++row) {
+			for (int col = rect.left(); col < rect.right(); ++col) {
+				state_.buffer.at(col, row) = cell;
+			}
+		}
+    }
+
+    // TODO change to int 
+    void AnsiTerminal::deleteCharacters(unsigned num) {
+		int r = state_.cursor.y();
+		for (unsigned c = state_.cursor.x(), e = state_.buffer.width() - num; c < e; ++c) 
+			Cell& cell = state_.buffer.at(c, r) = state_.buffer.at(c + num, r);
+		for (unsigned c = state_.buffer.width() - num, e = state_.buffer.width(); c < e; ++c)
+			state_.buffer.at(c, r) = state_.cell;
+    }
+
+    void AnsiTerminal::insertCharacters(unsigned num) {
+		unsigned r = state_.cursor.y();
+		// first copy the characters
+		for (unsigned c = state_.buffer.width() - 1, e = state_.cursor.x() + num; c >= e; --c)
+			state_.buffer.at(c, r) = state_.buffer.at(c - num, r);
+		for (unsigned c = state_.cursor.x(), e = state_.cursor.x() + num; c < e; ++c)
+			state_.buffer.at(c, r) = state_.cell;
+    }
+
+    void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
+        // if we are deleting lines from the top of the screen, they can go to the history buffer if any
+        // TODO check this and make them go
+        // now move the lines accordingly by swapping the rows in the buffer
+        // TODO this could be done faster if more than 1 line is being used
+        while (lines-- > 0) {
+            Cell * x = state_.buffer.rows_[top];
+            memmove(x, x + 1, sizeof(Cell*) * (bottom - top - 1));
+            state_.buffer.fillRow(x, state_.cell, state_.buffer.width());
+            state_.buffer.rows_[bottom - 1] = x;
+        }
+        // if lines are deleted from the top row and alternate buffer is not enabled, notify the terminal history that given number of lines is about to be scrolled out
+        /*
+        while (lines-- > 0) {
+            //if (top == 0)
+            //    lineScrolledOut(&buffer_.at(0,0), buffer_.cols());
+            buffer_.deleteLines(1, top, bottom, fill);
+        }
+        */
+        /*
+        if (top == 0)
+            lineScrolledOut(lines);
+        // delete the lines
+        buffer_.deleteLines(lines, top, bottom, fill);
+        */
+    }
+
+    void AnsiTerminal::insertLines(int lines, int top, int bottom, Cell const & cell) {
+        while (lines-- > 0) {
+            Cell * x = state_.buffer.rows_[bottom - 1];
+            memmove(x + 1, x, sizeof(Cell*) * (bottom - top - 1));
+            state_.buffer.fillRow(x, state_.cell, state_.buffer.width());
+            state_.buffer.rows_[top] = x;
+        }
+    }
 
     void AnsiTerminal::updateCursorPosition() {
         while (state_.cursor.x() >= state_.buffer.width()) {
             state_.cursor -= Point{state_.buffer.width(), -1};
             // if the cursor is on the last line, evict the lines above
             if (state_.cursor.y() == state_.scrollEnd) 
-                state_.cursor.setY(0);
+                deleteLines(1, state_.scrollStart, state_.scrollEnd, state_.cell);
         }
-        // TODO also set the last char position here to the one we update to
+        if (state_.cursor.y() >= state_.buffer.height())
+            state_.cursor.setY(state_.buffer.height() - 1);
+        // the cursor position must be valid now
+        ASSERT(state_.cursor.x() < state_.buffer.width());
+        ASSERT(state_.cursor.y() < state_.buffer.height());
+        // set last character position to the now definitely valid cursor coordinates
+        state_.lastCharacter = state_.cursor;
+    }
 
+    // ============================================================================================
+    // AnsiTerminal::Palette
+
+    AnsiTerminal::Palette AnsiTerminal::Palette::Colors16() {
+		return Palette{
+			Color::Black, // 0
+			Color::DarkRed, // 1
+			Color::DarkGreen, // 2
+			Color::DarkYellow, // 3
+			Color::DarkBlue, // 4
+			Color::DarkMagenta, // 5
+			Color::DarkCyan, // 6
+			Color::Gray, // 7
+			Color::DarkGray, // 8
+			Color::Red, // 9
+			Color::Green, // 10
+			Color::Yellow, // 11
+			Color::Blue, // 12
+			Color::Magenta, // 13
+			Color::Cyan, // 14
+			Color::White // 15
+		};
+    }
+
+    AnsiTerminal::Palette AnsiTerminal::Palette::XTerm256() {
+        Palette result(256);
+        // first the basic 16 colors
+		result[0] =	Color::Black;
+		result[1] =	Color::DarkRed;
+		result[2] =	Color::DarkGreen;
+		result[3] =	Color::DarkYellow;
+		result[4] =	Color::DarkBlue;
+		result[5] =	Color::DarkMagenta;
+		result[6] =	Color::DarkCyan;
+		result[7] =	Color::Gray;
+		result[8] =	Color::DarkGray;
+		result[9] =	Color::Red;
+		result[10] = Color::Green;
+		result[11] = Color::Yellow;
+		result[12] = Color::Blue;
+		result[13] = Color::Magenta;
+		result[14] = Color::Cyan;
+		result[15] = Color::White;
+		// now do the xterm color cube
+		unsigned i = 16;
+		for (unsigned r = 0; r < 256; r += 40) {
+			for (unsigned g = 0; g < 256; g += 40) {
+				for (unsigned b = 0; b < 256; b += 40) {
+					result[i] = Color(
+						static_cast<unsigned char>(r),
+						static_cast<unsigned char>(g),
+						static_cast<unsigned char>(b)
+					);
+					++i;
+					if (b == 0)
+						b = 55;
+				}
+				if (g == 0)
+					g = 55;
+			}
+			if (r == 0)
+				r = 55;
+		}
+		// and finally do the grayscale
+		for (unsigned char x = 8; x <= 238; x += 10) {
+			result[i] = Color(x, x, x);
+			++i;
+		}
+        return result;
+    }
+
+    AnsiTerminal::Palette::Palette(std::initializer_list<Color> colors, size_t defaultFg, size_t defaultBg):
+        size_(colors.size()),
+        defaultFg_(defaultFg),
+        defaultBg_(defaultBg),
+        colors_(new Color[colors.size()]) {
+        ASSERT(defaultFg < size_ && defaultBg < size_);
+		unsigned i = 0;
+		for (Color c : colors)
+			colors_[i++] = c;
+    }
+
+    AnsiTerminal::Palette::Palette(Palette const & from):
+        size_(from.size_),
+        defaultFg_(from.defaultFg_),
+        defaultBg_(from.defaultBg_),
+        colors_(new Color[from.size_]) {
+		memcpy(colors_, from.colors_, sizeof(Color) * size_);
+    }
+
+    AnsiTerminal::Palette::Palette(Palette && from):
+        size_(from.size_),
+        defaultFg_(from.defaultFg_),
+        defaultBg_(from.defaultBg_),
+        colors_(from.colors_) {
+        from.colors_ = nullptr;
+        from.size_ = 0;
     }
 
 
-    
+    // ============================================================================================
+    // AnsiTerminal::Buffer
 
-
+    void AnsiTerminal::Buffer::fillRow(Cell * row, Cell const & fill, unsigned cols) {
+        row[0] = fill;
+        size_t i = 1;
+        size_t next = 2;
+        while (next < cols) {
+            memcpy(row + i, row, sizeof(Cell) * i);
+            i = next;
+            next *= 2;
+        }
+        memcpy(row + i, row, sizeof(Cell) * (cols - i));
+    }
 
     // ============================================================================================
-
-    // Palette
-
-    // ============================================================================================
+    // AnsiTerminal::CSISequence
 
     AnsiTerminal::CSISequence AnsiTerminal::CSISequence::Parse(char const * & start, char const * end) {
         CSISequence result;
