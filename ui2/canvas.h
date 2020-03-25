@@ -122,6 +122,12 @@ namespace ui2 {
          */
         //@{
 
+        void set(Point coords, Cell const & cell) {
+            Cell * c = at(coords);
+            if (c != nullptr)
+                *c = cell;
+        }
+
         Canvas & drawBuffer(Buffer const & buffer, Point topLeft);
         
         Canvas & fillRect(Rect const & rect);
@@ -146,13 +152,13 @@ namespace ui2 {
          */
         //@{
         Cell const * at(Point p) const {
-            if (! visibleRect_.contains(p))
-                return nullptr;
-            return & buffer_.at(p + bufferOffset_);
+            return const_cast<Canvas*>(this)->at(p);
         }
 
         Cell * at(Point p) {
-            return const_cast<Canvas*>(this)->at(p);
+            if (! visibleRect_.contains(p))
+                return nullptr;
+            return & buffer_.at(p + bufferOffset_);
         }
         //@}
 

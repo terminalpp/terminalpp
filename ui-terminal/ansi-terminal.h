@@ -111,7 +111,8 @@ namespace ui2 {
                 inverseMode{false},
                 lineDrawingSet{false},
                 keypadMode{KeypadMode::Normal},
-                bracketedPaste{false} {
+                bracketedPaste{false},
+                maxHistoryRows{1000} {
             }
 
             void resize(int cols, int rows) {
@@ -139,6 +140,14 @@ namespace ui2 {
                 if (cursor.y() >= buffer.height())
                     cursor.setX(buffer.height() - 1);
             }
+
+            int historyRows() const {
+                return history_.size();
+            }
+
+            void addHistoryRows(int numCols, Color defaultBg);
+
+            void drawHistoryRows(Canvas & canvas, int start, int end);
 
             Buffer buffer;
             Cell cell;
@@ -169,9 +178,13 @@ namespace ui2 {
             /* Determines whether pasted text will be surrounded by ESC[200~ and ESC[201~ */
             bool bracketedPaste;
 
+            size_t maxHistoryRows;
+
         protected:
 
             std::vector<Point> cursorStack_;
+
+            std::deque<std::pair<int, Cell*>> history_;
 
         }; // AnsiTerminal::State
 
@@ -182,6 +195,13 @@ namespace ui2 {
         void paint(Canvas & canvas) override;
 
         void setRect(Rect const & value) override;
+
+        /** The contents canvas is as long as the terminal itself and any history rows. 
+         */
+        Canvas getContentsCanvas(Canvas & canvas) override {
+            // TODO also scroll the canvas properly
+            return canvas.resize(canvas.width(), canvas.height() + state_.historyRows()); //.offset(0, state_.historyRows());
+        }
 
         //@}
 
@@ -309,7 +329,6 @@ namespace ui2 {
 
         /** If true, bold font means bright colors too. */
         bool boldIsBright_;
-
 
         static std::string const * GetSequenceForKey_(Key key) {
             auto i = KeyMap_.find(key);

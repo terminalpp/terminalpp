@@ -12,7 +12,7 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- terminal buffer should be locked properly
+- scrolling trait for terminal & autoscrolling (issue fix too)
 - and start working on the terminal input
 - then finish terminal rendering (modulo cursor)
 - then do cursor and selection
@@ -35,6 +35,8 @@ The following is very short description of the versions planned and their main n
 
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
+
+- ubuntu ppa distribution
 
 ### v0.7
 

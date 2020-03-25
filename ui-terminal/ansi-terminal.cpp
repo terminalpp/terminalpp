@@ -150,18 +150,28 @@ namespace ui2 {
     AnsiTerminal::AnsiTerminal(Palette * palette, int width, int height, int x, int y):
         Widget{width, height, x, y}, 
         palette_{palette},
-        state_{width, height} {
+        state_{width, height},
+        alternateMode_{false} {
     }
 
     AnsiTerminal::~AnsiTerminal() {
     }
 
     void AnsiTerminal::paint(Canvas & canvas) {
+        Canvas c{getContentsCanvas(canvas)};
         // lock the buffer
         bufferLock_.priorityLock();
         helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_, false};
+        // draw the history 
+        {
+            int firstVisible = 0;
+            int lastVisible = state_.historyRows();
+            canvas.setBg(palette_->defaultBackground());
+            canvas.fillRect(Rect::FromTopLeftWH(0, firstVisible, canvas.width(), lastVisible - firstVisible));
+            state_.drawHistoryRows(canvas, firstVisible, lastVisible);
+        }
         // draw the buffer
-        canvas.drawBuffer(state_.buffer, Point{0,0});
+        c.drawBuffer(state_.buffer, Point{0,state_.historyRows()});
     }
 
     void AnsiTerminal::setRect(Rect const & value) {
@@ -1189,7 +1199,8 @@ namespace ui2 {
 
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         // if we are deleting lines from the top of the screen, they can go to the history buffer if any
-        // TODO check this and make them go
+        if (top == 0 && ! alternateMode_)
+            state_.addHistoryRows(lines, palette_->defaultBackground());
         // now move the lines accordingly by swapping the rows in the buffer
         // TODO this could be done faster if more than 1 line is being used
         while (lines-- > 0) {
@@ -1199,20 +1210,6 @@ namespace ui2 {
             state_.buffer.fillRow(x, state_.cell, state_.buffer.width());
             rows[bottom - 1] = x;
         }
-        // if lines are deleted from the top row and alternate buffer is not enabled, notify the terminal history that given number of lines is about to be scrolled out
-        /*
-        while (lines-- > 0) {
-            //if (top == 0)
-            //    lineScrolledOut(&buffer_.at(0,0), buffer_.cols());
-            buffer_.deleteLines(1, top, bottom, fill);
-        }
-        */
-        /*
-        if (top == 0)
-            lineScrolledOut(lines);
-        // delete the lines
-        buffer_.deleteLines(lines, top, bottom, fill);
-        */
     }
 
     void AnsiTerminal::insertLines(int lines, int top, int bottom, Cell const & cell) {
@@ -1340,6 +1337,38 @@ namespace ui2 {
         from.size_ = 0;
     }
 
+    // ============================================================================================
+    // AnsiTerminal::Buffer
+
+    void AnsiTerminal::State::addHistoryRows(int numRows, Color defaultBg) {
+        if (maxHistoryRows == 0)
+            return;
+        for (int i = 0; i < numRows; ++i) {
+            Cell * row = buffer.rows_[i];
+            int lastCol = buffer.width() - 1;
+            while (lastCol > 0) {
+                Cell const & c = row[lastCol];
+                if (c.codepoint() != ' ' || c.bg() != defaultBg)
+                    break;
+                --lastCol;
+            }
+            ++lastCol;
+            Cell * historyRow = new Cell[lastCol];
+            memcpy(historyRow, row, sizeof(Cell) * lastCol);
+            if (history_.size() >= maxHistoryRows) {
+                delete history_.front().second;
+                history_.pop_front();
+            }
+            history_.push_back(std::make_pair(lastCol, historyRow));
+        }
+    }
+
+    void AnsiTerminal::State::drawHistoryRows(Canvas & canvas, int start, int end) {
+        for (; start < end; ++start) {
+            for (int col = 0, ce = history_[start].first; col < ce; ++col)
+                canvas.set(Point{col, start}, history_[start].second[col]);
+        }
+    }
 
     // ============================================================================================
     // AnsiTerminal::Buffer
@@ -1458,8 +1487,5 @@ namespace ui2 {
         start = x;
         return result;
     }
-
-
-
 
 } // namespace ui
