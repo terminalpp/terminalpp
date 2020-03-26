@@ -70,8 +70,9 @@ namespace ui2 {
         void setRootWidget(Widget * widget) {
             UI_THREAD_CHECK;
             // detach the old root widget if any
-            if (rootWidget_ != nullptr)
+            if (rootWidget_ != nullptr) {
                 rootWidget_->detachRenderer();
+            }
             rootWidget_ = widget;
             // attach the new widget & resize it to the renderer
             if (rootWidget_ != nullptr) {
@@ -79,6 +80,7 @@ namespace ui2 {
                 rootWidget_->setRect(Rect::FromWH(width(), height()));
                 rootWidget_->visibleRect_ = Rect::FromWH(width(), height());
                 rootWidget_->bufferOffset_ = Point{0,0};
+                modalRoot_ = rootWidget_;
                 repaint(rootWidget_);
             }
         }
@@ -527,6 +529,8 @@ namespace ui2 {
          */
         virtual void widgetDetached(Widget * widget) {
             UI_THREAD_CHECK;
+            if (modalRoot_ == widget)
+                modalRoot_ = rootWidget_;
             if (mouseFocus_ == widget) {
                 Event<void>::Payload p{};
                 widget->mouseOut(p);
@@ -535,6 +539,7 @@ namespace ui2 {
             if (keyboardFocus_ == widget) {
                 NOT_IMPLEMENTED;
             }
+            
         }
         //@}
 

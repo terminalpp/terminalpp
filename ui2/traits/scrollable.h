@@ -2,6 +2,8 @@
 
 #include "helpers/time.h"
 
+#include "../widget.h"
+
 #include "trait_base.h"
 
 namespace ui2 {
@@ -15,25 +17,78 @@ namespace ui2 {
 	class Scrollable : public TraitBase<Scrollable, T> {
 	public:
 
+        int scrollWidth() const {
+            return scrollWidth_;
+        }
+
+        int scrollHeight() const {
+            return scrollHeight_;
+        }
+
         Point scrollOffset() const {
             return scrollOffset_;
         }
 
-        virtual void setScrollOffset(Point offset) {
-
-        }
-
     protected:
 
+        Scrollable(int width, int height):
+            scrollWidth_{width},
+            scrollHeight_{height},
+            scrollOffset_{0,0} {
+        } 
 
+        virtual void setScrollOffset(Point offset) {
+            scrollOffset_ = offset;
+            downcastThis()->repaint();
+        }
+
+        /** \name Incremental scrolling
+         */
+        //@{
+        bool scrollBy(Point by) {
+            return scrollBy(by, downcastThis()->width(), downcastThis()->height());
+        }
+
+        bool scrollBy(Point by, int visibleWidth, int visibleHeight) {
+            Point offset = scrollOffset_ + by;
+            Point adjusted = Point::MinCoordWise(
+                Point::MaxCoordWise(Point{0,0}, offset), 
+                Point{scrollWidth_ - visibleWidth, scrollHeight_ - visibleHeight}
+            );
+            setScrollOffset(adjusted);
+            return adjusted == offset;
+        }
+        //@}
+
+        virtual void setScrollWidth(int value) {
+            scrollWidth_ = value;
+        }
+
+        virtual void setScrollHeight(int value) {
+            scrollHeight_ = value;
+        }
+
+        Canvas getContentsCanvas(Canvas canvas) {
+            return canvas.resize(scrollWidth_, scrollHeight_).offset(scrollOffset_);
+        }
+
+        void setRect(Rect const & value) {
+            if (value.width() > scrollWidth_)
+                scrollWidth_ = value.width();
+            if (value.height() > scrollHeight_)
+                scrollHeight_ = value.height();
+        }
 
     private:
+        int scrollWidth_;
+        int scrollHeight_;
         Point scrollOffset_;
 
     }; // ui::Scrollable
 
-
 } // namespace ui
+
+#ifdef HAHA
 
 namespace uix {
 
@@ -196,3 +251,5 @@ namespace uix {
     }; // ui::Autoscroller
 
 } // namespace ui
+
+#endif

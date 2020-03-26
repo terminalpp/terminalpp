@@ -145,10 +145,9 @@ namespace ui2 {
 
     char32_t AnsiTerminal::LineDrawingChars_[15] = {0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0, 0, 0x2500, 0, 0, 0x251c, 0x2524, 0x2534, 0x252c, 0x2502};
 
-
-
     AnsiTerminal::AnsiTerminal(Palette * palette, int width, int height, int x, int y):
         Widget{width, height, x, y}, 
+        Scrollable{width, height},
         palette_{palette},
         state_{width, height},
         alternateMode_{false} {
@@ -166,9 +165,9 @@ namespace ui2 {
         {
             int firstVisible = 0;
             int lastVisible = state_.historyRows();
-            canvas.setBg(palette_->defaultBackground());
-            canvas.fillRect(Rect::FromTopLeftWH(0, firstVisible, canvas.width(), lastVisible - firstVisible));
-            state_.drawHistoryRows(canvas, firstVisible, lastVisible);
+            c.setBg(palette_->defaultBackground());
+            c.fillRect(Rect::FromTopLeftWH(0, firstVisible, c.width(), lastVisible - firstVisible));
+            state_.drawHistoryRows(c, firstVisible, lastVisible);
         }
         // draw the buffer
         c.drawBuffer(state_.buffer, Point{0,state_.historyRows()});
@@ -185,11 +184,23 @@ namespace ui2 {
             // TODO resize the alternate buffer as well
             // resize the PTY
             ptyResize(value.width(), value.height());
+            // update the scrolling information            
+            Scrollable::setRect(value);
+            setScrollWidth(value.width());
+            setScrollHeight(value.height() + state_.historyRows());
+
         }
         Widget::setRect(value);
     }
 
 
+    void AnsiTerminal::mouseWheel(Event<MouseWheelEvent>::Payload & event) {
+        if (event->by > 0)
+            scrollBy(Point{0, -1});
+        else 
+            scrollBy(Point{0, 1});
+        Widget::mouseWheel(event);
+    }
 
     void AnsiTerminal::keyChar(Event<Char>::Payload & event) {
         ASSERT(event->codepoint() >= 32);
@@ -1199,8 +1210,10 @@ namespace ui2 {
 
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         // if we are deleting lines from the top of the screen, they can go to the history buffer if any
-        if (top == 0 && ! alternateMode_)
+        if (top == 0 && ! alternateMode_) {
             state_.addHistoryRows(lines, palette_->defaultBackground());
+            setScrollHeight(height() + state_.historyRows());
+        }
         // now move the lines accordingly by swapping the rows in the buffer
         // TODO this could be done faster if more than 1 line is being used
         while (lines-- > 0) {

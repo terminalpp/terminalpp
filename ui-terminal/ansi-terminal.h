@@ -8,12 +8,13 @@
 
 #include "ui2/renderer.h"
 #include "ui2/widget.h"
+#include "ui2/traits/scrollable.h"
 
 #include "pty.h"
 
 namespace ui2 {
 
-    class AnsiTerminal : public Widget, public PTY::Client {
+    class AnsiTerminal : public Widget, public PTY::Client, public Scrollable<AnsiTerminal> {
     public:
 
         class Palette;
@@ -198,16 +199,16 @@ namespace ui2 {
 
         /** The contents canvas is as long as the terminal itself and any history rows. 
          */
-        Canvas getContentsCanvas(Canvas & canvas) override {
-            // TODO also scroll the canvas properly
-            return canvas.resize(canvas.width(), canvas.height() + state_.historyRows()); //.offset(0, state_.historyRows());
-        }
+        using Scrollable::getContentsCanvas;
 
         //@}
 
         /** \name User Input
          */
         //@{
+        void mouseWheel(Event<MouseWheelEvent>::Payload & event) override;
+
+
         void keyChar(Event<Char>::Payload & event) override;
         void keyDown(Event<Key>::Payload & event) override;
         //@}

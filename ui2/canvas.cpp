@@ -16,7 +16,7 @@ namespace ui2 {
         // calculate the target rectangle in the canvas and its intersection with the visible rectangle and offset it to the backing buffer coordinates
         Rect r = (Rect::FromTopLeftWH(topLeft, buffer.width(), buffer.height()) & visibleRect_) + bufferOffset_;
         // calculate the buffer offset for the input buffer
-        Point bufferOffset = r.topLeft() - topLeft - bufferOffset_;
+        Point bufferOffset = topLeft + bufferOffset_;
         for (int row = r.top(), re = r.bottom(); row < re; ++row) {
             for (int col = r.left(), ce = r.right(); col < ce; ++col) {
                 buffer_.at(col, row) = buffer.at(col - bufferOffset.x(), row - bufferOffset.y());

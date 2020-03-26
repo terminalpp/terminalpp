@@ -13,11 +13,11 @@ The following is very short description of the versions planned and their main n
 ##### TODO
 
 - scrolling trait for terminal & autoscrolling (issue fix too)
-- and start working on the terminal input
+- terminal mouse input
 - then finish terminal rendering (modulo cursor)
 - then do cursor and selection
-- then back to the UI elements
 - and X11 and QT renderers...
+- then back to the UI elements
 
 
 - fix the events payload to not contain references, and the event should take the payload as argument already
