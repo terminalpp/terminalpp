@@ -12,6 +12,8 @@ namespace ui2 {
      
         Implements the basic data and functionality for scrolling. 
 
+        - scrolling does not really support borders around the the scrollthingy, i.e. scrollbox must have no borders
+
      */
 	template<typename T>
 	class Scrollable : public TraitBase<Scrollable, T> {
@@ -42,23 +44,17 @@ namespace ui2 {
             downcastThis()->repaint();
         }
 
-        /** \name Incremental scrolling
+        /** Incremental scrolling
          */
-        //@{
         bool scrollBy(Point by) {
-            return scrollBy(by, downcastThis()->width(), downcastThis()->height());
-        }
-
-        bool scrollBy(Point by, int visibleWidth, int visibleHeight) {
             Point offset = scrollOffset_ + by;
             Point adjusted = Point::MinCoordWise(
                 Point::MaxCoordWise(Point{0,0}, offset), 
-                Point{scrollWidth_ - visibleWidth, scrollHeight_ - visibleHeight}
+                Point{scrollWidth_ - downcastThis()->width(), scrollHeight_ - downcastThis()->height()}
             );
             setScrollOffset(adjusted);
             return adjusted == offset;
         }
-        //@}
 
         virtual void setScrollWidth(int value) {
             scrollWidth_ = value;
@@ -77,6 +73,28 @@ namespace ui2 {
                 scrollWidth_ = value.width();
             if (value.height() > scrollHeight_)
                 scrollHeight_ = value.height();
+        }
+
+        /** Displays the scrollbars. 
+         
+            Scrollbars are displayed only when the canvas size is smaller than the scrollWidth and height. 
+         */
+        void paint(Canvas & canvas) {
+            if (scrollHeight_ > canvas.height()) {
+                
+
+            }
+            if (scrollWidth_ > canvas.width()) {
+
+            }
+        }
+
+        virtual void paintHorizontalScrollbar(Canvas & canvas, int start, int end) {
+
+        }
+
+        virtual void paintVerticalScrollbar(Canvas & canvas, int start, int end) {
+
         }
 
     private:

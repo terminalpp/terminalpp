@@ -176,12 +176,6 @@ namespace tpp2 {
             decor_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
         }
 
-        /** Updates the border color. 
-         */
-        void changeBorderColor(Color color) {
-            border_->SetColor(D2D1::ColorF(color.toRGB(), color.floatAlpha()));
-        }
-
         /** Draws the glyph run. 
          
             First clears the background with given background color, then draws the text and finally applies any decorations. 
@@ -198,14 +192,6 @@ namespace tpp2 {
 			);
             // fill it with the background
 			rt_->FillRectangle(rect, bg_.Get());
-#ifdef SHOW_LINE_ENDINGS
-            if (attrs_.endOfLine()) {
-                auto oldC = bg_->GetColor();
-                bg_->SetColor(D2D1::ColorF(0xffff00, 1.0f));
-                rt_->DrawRectangle(rect, bg_.Get());
-                bg_->SetColor(oldC);
-            }
-#endif
             // determine the originl and draw the glyph run
             D2D1_POINT_2F origin = D2D1::Point2F(
                 static_cast<float>(glyphRunCol_* cellWidth_ + font_->offsetLeft()),
@@ -231,6 +217,39 @@ namespace tpp2 {
             }
             glyphRunCol_ += glyphRun_.glyphCount;
 			glyphRun_.glyphCount = 0;
+        }
+
+        /** Draws the borders of a single cell. 
+         */
+        void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
+            float fLeft = static_cast<float>(col * cellWidth_);
+            float fTop = static_cast<float>(row * cellHeight_);
+            float widthTop = static_cast<float>(border.top() == Border::Kind::None ? 0 : (border.top() == Border::Kind::Thick ? widthThick : widthThin));
+            float widthLeft = static_cast<float>(border.left() == Border::Kind::None ? 0 : (border.left() == Border::Kind::Thick ? widthThick : widthThin));
+            float widthBottom = static_cast<float>(border.bottom() == Border::Kind::None ? 0 : (border.bottom() == Border::Kind::Thick ? widthThick : widthThin));
+            float widthRight = static_cast<float>(border.right() == Border::Kind::None ? 0 : (border.right() == Border::Kind::Thick ? widthThick : widthThin));
+
+            // start with top bar
+            D2D1_RECT_F rect = D2D1::RectF(fLeft, fTop, fLeft + cellWidth_, fTop + widthTop);
+            if (widthTop != 0)
+                rt_->FillRectangle(rect, bg_.Get());
+            // update the rectangle for bottom bar
+            rect.bottom = fTop + cellHeight_;
+            rect.top = rect.bottom - widthBottom;
+            if (widthBottom != 0)
+                rt_->FillRectangle(rect, bg_.Get());
+            // and finally deal with the middle section (left and right)
+            rect.bottom = rect.top;
+            rect.top = fTop + widthTop;
+            if (widthLeft != 0) {
+                rect.right = fLeft + widthLeft;
+                rt_->FillRectangle(rect, bg_.Get());
+            }
+            if (widthRight != 0) {
+                rect.right = fLeft + cellWidth_;
+                rect.left = rect.right - widthRight;
+                rt_->FillRectangle(rect, bg_.Get());
+            }
         }
 
         //@}

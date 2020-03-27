@@ -539,7 +539,6 @@ namespace ui2 {
             if (keyboardFocus_ == widget) {
                 NOT_IMPLEMENTED;
             }
-            
         }
         //@}
 

@@ -339,6 +339,11 @@ namespace ui2 {
             Thick
         }; // ui::Border::Kind
 
+        Border():
+            color_{Color::None},
+            border_{0} {
+        }
+
         Color color() const {
             return color_;
         }

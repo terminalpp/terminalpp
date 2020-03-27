@@ -240,10 +240,23 @@ namespace tpp2 {
             // - determine how multiple cursors can be drawn, either here, or by the actual widgets when their cursor is set? 
             // - perhaps the widgets are better positioned as they can determine whether to update the canvas, or to inform the renderer
 
-
-
-            // TODO border
-            // - enable showing line endings via border changes
+            // finally, draw the border, which is done on the base cell level over the already drawn text
+            //  void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
+            int wThin = std::min(cellWidth_, cellHeight_) / 4;
+            int wThick = std::min(cellWidth_, cellHeight_) / 2;
+            Color borderColor = buffer().at(0,0).border().color();
+            changeBg(borderColor);
+            for (int row = 0, re = height(); row < re; ++row) {
+                for (int col = 0, ce = width(); col < ce; ++col) {
+                    Border b = buffer().at(col, row).border();
+                    if (b.color() != borderColor) {
+                        borderColor = b.color();
+                        changeBg(borderColor);
+                    }
+                    if (b.hasBorder())
+                        drawBorder(col, row, b, wThin, wThick);
+                }
+            }
 
             finalizeDraw();
         }
