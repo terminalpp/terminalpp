@@ -35,5 +35,25 @@ namespace ui2 {
         return *this;
     }
 
+    Canvas & Canvas::drawBorder(Border const & border, Point from, Point to) {
+        if (from.x() == to.x()) {
+            int inc = (from.y() < to.y()) ? 1 : -1;
+            for (; from != to; from.setY(from.y() + inc)) {
+                Cell * c = at(from);
+                if (c != nullptr)
+                    c->setBorder(c->border().updateWith(border));
+            }
+        } else if (from.y() == to.y()) {
+            int inc = (from.x() < to.x()) ? 1 : -1;
+            for (; from != to; from.setX(from.x() + inc)) {
+                Cell * c = at(from);
+                if (c != nullptr)
+                    c->setBorder(c->border().updateWith(border));
+            }
+        } else {
+            ASSERT(false) << "Only straight lines are supported";
+        }
+        return *this;
+    }
 
 } // namespace ui2

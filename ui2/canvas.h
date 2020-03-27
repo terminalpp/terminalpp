@@ -132,6 +132,10 @@ namespace ui2 {
         
         Canvas & fillRect(Rect const & rect);
 
+        /** Draws the specified border. 
+         */
+        Canvas & drawBorder(Border const & border, Point from, Point to);
+
         //@}
 
     protected:

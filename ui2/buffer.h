@@ -107,7 +107,7 @@ namespace ui2 {
             return border_;
         }
 
-        Cell & border(Border const & value) {
+        Cell & setBorder(Border const & value) {
             border_ = value;
             return *this;
         }

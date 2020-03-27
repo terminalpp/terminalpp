@@ -339,8 +339,8 @@ namespace ui2 {
             Thick
         }; // ui::Border::Kind
 
-        Border():
-            color_{Color::None},
+        Border(Color color = Color::None):
+            color_{color},
             border_{0} {
         }
 
@@ -391,6 +391,19 @@ namespace ui2 {
 
         bool hasBorder() const {
             return border_ != 0;
+        }
+
+        Border & updateWith(Border const & other) {
+            color_ = other.color_;
+            if (other.top() != Kind::None)
+                setTop(other.top());
+            if (other.left() != Kind::None)
+                setLeft(other.left());
+            if (other.bottom() != Kind::None)
+                setBottom(other.bottom());
+            if (other.right() != Kind::None)
+                setRight(other.right());
+            return *this;
         }
 
     private:

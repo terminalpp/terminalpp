@@ -81,26 +81,52 @@ namespace ui2 {
          */
         void paint(Canvas & canvas) {
             if (scrollHeight_ > canvas.height()) {
-                
-
+                std::pair<int, int> slider{ScrollBarDimensions(canvas.height(), scrollHeight_, scrollOffset_.y())};
+                paintHorizontalScrollbar(canvas, slider.first, slider.second);
             }
             if (scrollWidth_ > canvas.width()) {
-
+                std::pair<int, int> slider{ScrollBarDimensions(canvas.width(), scrollWidth_, scrollOffset_.x())};
+                paintVerticalScrollbar(canvas, slider.first, slider.second);
             }
         }
 
         virtual void paintHorizontalScrollbar(Canvas & canvas, int start, int end) {
-
+            Border b{Color::White.withAlpha(64)};
+            b.setRight(Border::Kind::Thin);
+            int x = canvas.width() - 1;
+            canvas.drawBorder(b, Point{x, 0}, Point{x, start});
+            canvas.drawBorder(b, Point{x, end}, Point{x, canvas.height()});
+            b.setRight(Border::Kind::Thick);
+            canvas.drawBorder(b, Point{x, start}, Point{x, end});
         }
 
         virtual void paintVerticalScrollbar(Canvas & canvas, int start, int end) {
-
+            Border b{Color::White.withAlpha(64)};
+            b.setRight(Border::Kind::Thin);
+            int y = canvas.height() - 1;
+            canvas.drawBorder(b, Point{0, y}, Point{start, y});
+            canvas.drawBorder(b, Point{end, y}, Point{canvas.height(), y});
+            b.setRight(Border::Kind::Thick);
+            canvas.drawBorder(b, Point{start, y}, Point{end, y});
         }
 
     private:
         int scrollWidth_;
         int scrollHeight_;
         Point scrollOffset_;
+
+        static std::pair<int, int> ScrollBarDimensions(int length, int max, int offset) {
+            int sliderSize = std::max(1, length * length / max);
+            int sliderStart = (offset + length == max) ? (length - sliderSize) : (offset * length / max);
+			// make sure that slider starts at the top only if we are really at the top
+			if (sliderStart == 0 && offset != 0)
+			    sliderStart = 1;
+            // if the slider would go beyond the length, adjust the slider start
+            if (sliderStart + sliderSize > length)
+                sliderStart = length - sliderSize;
+            return std::make_pair(sliderStart, sliderStart + sliderSize);
+        }	
+
 
     }; // ui::Scrollable
 

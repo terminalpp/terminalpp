@@ -171,6 +171,8 @@ namespace ui2 {
         }
         // draw the buffer
         c.drawBuffer(state_.buffer, Point{0,state_.historyRows()});
+        // draw the scrollbars if any
+        Scrollable::paint(canvas);
     }
 
     void AnsiTerminal::setRect(Rect const & value) {
