@@ -68,6 +68,33 @@ namespace ui2 {
 
         ~AnsiTerminal() override;
 
+        /** \name Repainting
+         
+            To improve speed and reduce power consumption the terminal offers either immediate repaints (fps == 0), or allows the repaints to be buffered and only issued after a time (fps > 0). 
+         */
+        //@{
+        /** Returns the maximum terminal refreshes per second. 
+         */
+        size_t fps() const {
+            return fps_;
+        }
+
+        /** Sets the maximum frames per second for the terminal. 
+         */
+        virtual void setFps(unsigned value);
+
+        /** Repaints the terminal. 
+         
+            If fps is set to 0 the terminal will request its repaint immediately, otherwise the repaint request is buffered and only one repaint request per the fps period is requested by the terminal. 
+         */
+        void repaint() override {
+            if (fps_ == 0)
+                Widget::repaint();
+            else
+                repaint_ = true;
+        }
+        //@}
+
     protected:
         
         class CSISequence;
@@ -143,7 +170,7 @@ namespace ui2 {
             }
 
             int historyRows() const {
-                return history_.size();
+                return static_cast<int>(history_.size());
             }
 
             void addHistoryRows(int numCols, Color defaultBg);
@@ -179,7 +206,7 @@ namespace ui2 {
             /* Determines whether pasted text will be surrounded by ESC[200~ and ESC[201~ */
             bool bracketedPaste;
 
-            size_t maxHistoryRows;
+            int maxHistoryRows;
 
         protected:
 
@@ -315,6 +342,13 @@ namespace ui2 {
         //@}
 
         void updateCursorPosition();
+
+        /** Maximal refresh rate for the terminal. */
+        std::atomic<unsigned> fps_;
+        /** Repaint trigger. */
+        std::atomic<bool> repaint_;
+        /** Repaint trigger thread. */
+        std::thread repainter_;
 
         helpers::PriorityLock bufferLock_;
 

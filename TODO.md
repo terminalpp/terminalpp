@@ -12,7 +12,6 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- terminal FPS repainting
 - terminal mouse input
 - alternate buffer
 - terminal resize

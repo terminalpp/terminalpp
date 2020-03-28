@@ -148,12 +148,45 @@ namespace ui2 {
     AnsiTerminal::AnsiTerminal(Palette * palette, int width, int height, int x, int y):
         Widget{width, height, x, y}, 
         Scrollable{width, height},
+        fps_{0},
+        repaint_{false},
         palette_{palette},
         state_{width, height},
         alternateMode_{false} {
+        setFps(60);
     }
 
     AnsiTerminal::~AnsiTerminal() {
+        setFps(0);
+        // wait for the repainter thread to terminate
+        if (repainter_.joinable())
+            repainter_.join();
+    }
+
+    /** The method initializes a repainter thread which sleeps for the appropriate time and then checks whether the repaint has been requested in the meantime, clearing the flag and issuing the actual repaint if so. 
+     */
+    void AnsiTerminal::setFps(unsigned value) {
+        UI_THREAD_CHECK;
+        if (fps_ != value) {
+            // if the previously set fps is 0, that change would make active repainter terminate itself, so we must wait & make sure this is the case as the repainter will be restarted
+            if (fps_ == 0 && repainter_.joinable())
+                repainter_.join();
+            size_t oldFps = fps_;
+            fps_ = value;
+            // if previous fps value was 0, the repainter thread must be restarted
+            if (oldFps == 0) {
+                repainter_ = std::thread([this](){
+                    while (fps_ > 0) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / fps_));
+                        if (repaint_) {
+                            repaint_ = false;
+                            // trigger the repaint by calling widget's repaint implementation
+                            Widget::repaint();
+                        }
+                    }
+                });
+            }
+        }
     }
 
     void AnsiTerminal::paint(Canvas & canvas) {
