@@ -151,10 +151,20 @@ namespace ui2 {
         fps_{0},
         repaint_{false},
         palette_{palette},
+        cursorMode_{CursorMode::Normal},
+        cursorVisible_{true},
+        cursorBlink_{true},
+        keypadMode_{KeypadMode::Normal},
+        mouseMode_{MouseMode::Off},
+        mouseEncoding_{MouseEncoding::Default},
         mouseButtonsDown_{0},
         mouseLastButton_{0},
+        lineDrawingSet_{false},
+        bracketedPaste_{false},
         state_{width, height},
-        alternateMode_{false} {
+        stateBackup_{width, height},
+        alternateMode_{false},
+        boldIsBright_{false} {
         setFps(60);
     }
 
@@ -218,7 +228,7 @@ namespace ui2 {
             helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_, false};
             // resize the state
             state_.resize(value.width(), value.height());
-            // TODO resize the alternate buffer as well
+            stateBackup_.resize(value.width(), value.height());
             // resize the PTY
             ptyResize(value.width(), value.height());
             // update the scrolling information            
@@ -231,8 +241,8 @@ namespace ui2 {
     }
 
     void AnsiTerminal::mouseMove(Event<MouseMoveEvent>::Payload & event) {
-        if (state_.mouseMode != MouseMode::Off 
-            && (state_.mouseMode != MouseMode::ButtonEvent || mouseButtonsDown_ != 0)
+        if (mouseMode_ != MouseMode::Off 
+            && (mouseMode_ != MouseMode::ButtonEvent || mouseButtonsDown_ != 0)
             // only send the mouse information if the mouse is in the range of the window
             && Rect::FromWH(width(), height()).contains(event->coords)) {
                 // mouse move adds 32 to the last known button press
@@ -262,7 +272,7 @@ namespace ui2 {
 
     void AnsiTerminal::mouseDown(Event<MouseButtonEvent>::Payload & event) {
         ++mouseButtonsDown_;
-		if (state_.mouseMode != MouseMode::Off) {
+		if (mouseMode_ != MouseMode::Off) {
             mouseLastButton_ = encodeMouseButton(event->button, event->modifiers);
             sendMouseEvent(mouseLastButton_, event->coords, 'M');
             LOG(SEQ) << "Button " << event->button << " down at " << event->coords;
@@ -286,7 +296,7 @@ namespace ui2 {
         // a bit of defensive programming
         if (mouseLastButton_ > 0) {
             --mouseButtonsDown_;
-            if (state_.mouseMode != MouseMode::Off) {
+            if (mouseMode_ != MouseMode::Off) {
                 mouseLastButton_ = encodeMouseButton(event->button, event->modifiers);
                 sendMouseEvent(mouseLastButton_, event->coords, 'm');
                 LOG(SEQ) << "Button " << event->button << " up at " << event->coords;
@@ -302,7 +312,7 @@ namespace ui2 {
     }
 
     void AnsiTerminal::mouseWheel(Event<MouseWheelEvent>::Payload & event) {
-		if (state_.mouseMode != MouseMode::Off) {
+		if (mouseMode_ != MouseMode::Off) {
     		// mouse wheel adds 64 to the value
             mouseLastButton_ = encodeMouseButton((event->by > 0) ? MouseButton::Left : MouseButton::Right, event->modifiers) + 64;
             sendMouseEvent(mouseLastButton_, event->coords, 'M');
@@ -337,7 +347,7 @@ namespace ui2 {
     void AnsiTerminal::sendMouseEvent(unsigned button, Point coords, char end) {
 		// first increment col & row since terminal starts from 1
         coords += Point{1,1};
-		switch (state_.mouseEncoding) {
+		switch (mouseEncoding_) {
 			case MouseEncoding::Default: {
 				// if the event is release, button number is 3
 				if (end == 'm')
@@ -387,7 +397,7 @@ namespace ui2 {
 			case Key::Right:
 			case Key::Home:
 			case Key::End:
-				if (event->modifiers() == 0 && state_.cursorMode == CursorMode::Application) {
+				if (event->modifiers() == 0 && cursorMode_ == CursorMode::Application) {
 					std::string sa(*seq);
 					sa[1] = 'O';
 					ptySend(sa.c_str(), sa.size());
@@ -476,7 +486,7 @@ namespace ui2 {
     }
 
     void AnsiTerminal::parseCodepoint(char32_t codepoint) {
-        if (state_.lineDrawingSet && codepoint >= 0x6a && codepoint < 0x79)
+        if (lineDrawingSet_ && codepoint >= 0x6a && codepoint < 0x79)
             codepoint = LineDrawingChars_[codepoint-0x6a];
         LOG(SEQ) << "codepoint " << codepoint << " " << static_cast<char>(codepoint & 0xff);
         updateCursorPosition();
@@ -643,12 +653,12 @@ namespace ui2 {
                 if (x != bufferEnd) {
                     if (*x == '0') {
                         ++x;
-                        state_.lineDrawingSet = true;
+                        lineDrawingSet_ = true;
                         LOG(SEQ) << "Line drawing set selected";
                         break;
                     } else if (*x == 'B') {
                         ++x;
-                        state_.lineDrawingSet = false;
+                        lineDrawingSet_ = false;
                         LOG(SEQ) << "Normal character set selected";
                         break;
                     }
@@ -670,12 +680,12 @@ namespace ui2 {
 			/* ESC = -- Application keypad */
 			case '=':
 				LOG(SEQ) << "Application keypad mode enabled";
-                state_.keypadMode = KeypadMode::Application;
+                keypadMode_ = KeypadMode::Application;
 				break;
 			/* ESC > -- Normal keypad */
 			case '>':
 				LOG(SEQ) << "Normal keypad mode enabled";
-                state_.keypadMode = KeypadMode::Normal;
+                keypadMode_ = KeypadMode::Normal;
 				break;
             /* ESC # number -- font size changes */
             /*
@@ -1014,7 +1024,7 @@ namespace ui2 {
 				/* application cursor mode on/off
 				 */
 				case 1:
-					state_.cursorMode = value ? CursorMode::Application : CursorMode::Normal;
+					cursorMode_ = value ? CursorMode::Application : CursorMode::Normal;
 					LOG(SEQ) << "application cursor mode: " << value;
 					continue;
 				/* Smooth scrolling -- ignored*/
@@ -1031,12 +1041,12 @@ namespace ui2 {
 					continue;
 				// cursor blinking
 				case 12:
-                    state_.cursorBlink = value;
+                    cursorBlink_ = value;
 					LOG(SEQ) << "cursor blinking: " << value;
 					continue;
 				// cursor show/hide
 				case 25:
-                    state_.cursorVisible = value;
+                    cursorVisible_ = value;
 					LOG(SEQ) << "cursor visible: " << value;
 					continue;
 				/* Mouse tracking movement & buttons.
@@ -1046,7 +1056,7 @@ namespace ui2 {
 				/* Enable normal mouse mode, i.e. report button press & release events only.
 				 */
 				case 1000:
-                    state_.mouseMode = value ? MouseMode::Normal : MouseMode::Off;
+                    mouseMode_ = value ? MouseMode::Normal : MouseMode::Off;
 					LOG(SEQ) << "normal mouse tracking: " << value;
 					continue;
 				/* Mouse highlighting - will not support because it requires supporting application and may hang terminal if not used properly, which sounds rather dangerous.
@@ -1057,13 +1067,13 @@ namespace ui2 {
 				/* Mouse button events (report mouse button press & release and mouse movement if any of the buttons is down.
 				 */
 				case 1002:
-                    state_.mouseMode = value ? MouseMode::ButtonEvent : MouseMode::Off;
+                    mouseMode_ = value ? MouseMode::ButtonEvent : MouseMode::Off;
 					LOG(SEQ) << "button-event mouse tracking: " << value;
 					continue;
 				/* Report all mouse events (i.e. report mouse move even when buttons are not pressed).
 				 */
 				case 1003:
-                    state_.mouseMode = value ? MouseMode::All : MouseMode::Off;
+                    mouseMode_ = value ? MouseMode::All : MouseMode::Off;
 					LOG(SEQ) << "all mouse tracking: " << value;
 					continue;
 				/* UTF8 encoded tracking.
@@ -1075,50 +1085,34 @@ namespace ui2 {
 				/* SGR mouse encoding.
 				 */
 				case 1006: // 
-					state_.mouseEncoding = value ? MouseEncoding::SGR : MouseEncoding::Default;
+					mouseEncoding_ = value ? MouseEncoding::SGR : MouseEncoding::Default;
 					LOG(SEQ) << "UTF8 mouse encoding: " << value;
 					continue;
 				/* Enable or disable the alternate screen buffer.
 				 */
 				case 47:
-				case 1049: /*
+				case 1049: 
                     // stop autoscrolling so that we don't scroll the alternate buffer at all
-                    stopAutoScroll();
-					if (value) {
-						// flip to alternate buffer and clear it
-						if (!alternateBufferMode_) {
-							alternateBuffer_ = buffer_;
-							std::swap(state_, alternateState_);
-							invalidateLastCharPosition();
-                            // disable terminal history for alternate mode
-                            enableScrolling(false);
-						}
-                        state_.cell.setFg(palette_->defaultForeground()) 
-                                   .setDecoration(palette_->defaultForeground()) 
-                                   .setBg(palette_->defaultBackground())
-                                   .setFont(Font{})
-                                   .setAttributes(Attributes{});
-						fillRect(Rect::FromWH(buffer_.cols(), buffer_.rows()), state_.cell);
-						buffer_.cursor().pos = Point{0,0};
-                        buffer_.cursor().visible = true;
-						LOG(SEQ) << "Alternate screen on";
-					} else {
-						// go back from alternate buffer
-						if (alternateBufferMode_) {
-							buffer_ = alternateBuffer_;
-							std::swap(state_, alternateState_);
-                            // enable history for normal mode
-	                        enableScrolling();
-					    }
-						LOG(SEQ) << "Alternate screen off";
-					}
-					alternateBufferMode_ = value;
-                    */
+                    //stopAutoScroll();
+                    if (alternateMode_ != value) {
+                        std::swap(state_, stateBackup_);
+                        alternateMode_ = value;
+                        setScrollHeight(state_.historyRows() + state_.buffer.height());
+                        // if we are entering the alternate mode, reset the state to default values
+                        if (value) {
+                            state_.reset(palette_->defaultForeground(), palette_->defaultBackground());
+                            setScrollOffset(Point{0,0});
+                            LOG(SEQ) << "Alternate mode on";
+                        } else {
+                            setScrollOffset(Point{0, state_.historyRows()});
+                            LOG(SEQ) << "Alternate mode off";
+                        }
+                    }
 					continue;
 				/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. 
 				 */
 				case 2004:
-					state_.bracketedPaste = value;
+					bracketedPaste_ = value;
 					continue;
 				default:
 					break;
@@ -1525,7 +1519,21 @@ namespace ui2 {
     }
 
     // ============================================================================================
-    // AnsiTerminal::Buffer
+    // AnsiTerminal::State
+
+    void AnsiTerminal::State::reset(Color fg, Color bg) {
+        // reset the cell state
+        cell = Cell{};
+        cell.setFg(fg).setDecor(fg).setBg(bg);
+        // reset the cursor
+        cursor = Point{0,0};
+        // reset state
+        scrollStart = 0;
+        scrollEnd = buffer.height();
+        inverseMode = false;
+        // clear the buffer
+        buffer.fill(cell);
+    }
 
     void AnsiTerminal::State::addHistoryRows(int numRows, Color defaultBg) {
         if (maxHistoryRows == 0)

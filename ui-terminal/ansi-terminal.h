@@ -27,14 +27,11 @@ namespace ui2 {
         public:
             Buffer(int width, int height):
                 ui2::Buffer{width, height} {
-                fill();
             }
 
-            void fill() {
-                for (int x = 0; x < width(); ++x)
-                    for (int y = 0; y < height(); ++y) {
-                        at(x, y).setCodepoint('0' + (x + y) % 10).setBg(Color{static_cast<unsigned char>(x), static_cast<unsigned char>(y), static_cast<unsigned char>(x + y)});
-                    }
+            void fill(Cell const & cell) {
+                for (int y = 0; y < height(); ++y)
+                    fillRow(rows_[y], cell, width());
             }
 
         protected:
@@ -127,25 +124,18 @@ namespace ui2 {
         public:
             State(int cols, int rows):
                 buffer{cols, rows},
-                cursorMode{CursorMode::Normal},
-                cursorVisible{true},
-                cursorBlink{true},
                 cursor{0,0},
                 lastCharacter{0,0},
-                mouseMode{MouseMode::Off},
-                mouseEncoding{MouseEncoding::Default},
                 scrollStart{0},
                 scrollEnd{rows},
                 inverseMode{false},
-                lineDrawingSet{false},
-                keypadMode{KeypadMode::Normal},
-                bracketedPaste{false},
                 maxHistoryRows{1000} {
             }
 
+            void reset(Color fg, Color bg);
+
             void resize(int cols, int rows) {
                 buffer.resize(cols, rows);
-                buffer.fill();
             }
 
             void setCursor(int col, int row) {
@@ -180,18 +170,10 @@ namespace ui2 {
             Buffer buffer;
             Cell cell;
 
-            CursorMode cursorMode;
-            bool cursorVisible;
-            bool cursorBlink;
             /** Current cursor position. */
             Point cursor;
             /** Determines the coordinates of last valid cursor position so that newline cells can be identified. */
             Point lastCharacter;
-
-
-            MouseMode mouseMode;
-            MouseEncoding mouseEncoding;
-
 
             /** Start of the scrolling region (inclusive row) */
             int scrollStart;
@@ -199,12 +181,6 @@ namespace ui2 {
             int scrollEnd;
             /** Determines whether inverse mode is active or not. */
             bool inverseMode;
-            /** Determines whether the line drawing character set is currently active. */
-            bool lineDrawingSet;
-
-            KeypadMode keypadMode;
-            /* Determines whether pasted text will be surrounded by ESC[200~ and ESC[201~ */
-            bool bracketedPaste;
 
             int maxHistoryRows;
 
@@ -367,18 +343,32 @@ namespace ui2 {
 
         Palette * palette_;
 
+
+        CursorMode cursorMode_;
+        bool cursorVisible_;
+        bool cursorBlink_;
+
+        KeypadMode keypadMode_;
+
+        MouseMode mouseMode_;
+        MouseEncoding mouseEncoding_;
         /** Number of pressed mouse buttons to determine mouse capture. */
         unsigned mouseButtonsDown_;
         /** Last pressed mouse button for mouse move reporting. */
         unsigned mouseLastButton_;
 
+        /** Determines whether the line drawing character set is currently active. */
+        bool lineDrawingSet_;
+
+        /* Determines whether pasted text will be surrounded by ESC[200~ and ESC[201~ */
+        bool bracketedPaste_;
+
         /** The terminal state. */
         State state_;
+        /** Backup of the normal state when alternate mode is enabled. */
+        State stateBackup_;
         /** Determines whether alternate mode is active or not. */
         bool alternateMode_;
-
-        /** Backup of the normal state when alternate mode is enabled. */
-        //State stateBackup_;
 
         /** If true, bold font means bright colors too. */
         bool boldIsBright_;

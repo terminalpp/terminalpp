@@ -12,7 +12,6 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- alternate buffer
 - terminal resize
 - blinking text
 
