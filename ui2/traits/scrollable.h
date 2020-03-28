@@ -33,6 +33,8 @@ namespace ui2 {
 
     protected:
 
+        using TraitBase<Scrollable, T>::downcastThis;
+
         Scrollable(int width, int height):
             scrollWidth_{width},
             scrollHeight_{height},
