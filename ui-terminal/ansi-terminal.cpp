@@ -233,9 +233,8 @@ namespace ui2 {
 			ptySend(seq->c_str(), seq->size());
 		}
         // only scroll to prompt if the key down is not a simple modifier key
-        /*if (key != Key::Shift + Key::ShiftKey && key != Key::Alt + Key::AltKey && key != Key::Ctrl + Key::CtrlKey && key != Key::Win + Key::WinKey)
-            scrollToPrompt();
-            */
+        if (*event != Key::Shift + Key::ShiftKey && *event != Key::Alt + Key::AltKey && *event != Key::Ctrl + Key::CtrlKey && *event != Key::Win + Key::WinKey)
+            setScrollOffset(Point{0, state_.historyRows()});
         Widget::keyDown(event);
     }
 
@@ -1213,8 +1212,14 @@ namespace ui2 {
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         // if we are deleting lines from the top of the screen, they can go to the history buffer if any
         if (top == 0 && ! alternateMode_) {
+            int oldHistoryRows = state_.historyRows();
             state_.addHistoryRows(lines, palette_->defaultBackground());
             setScrollHeight(height() + state_.historyRows());
+            // if the window was scrolled to the end, keep it scrolled to the end as well
+            // this means that when the scroll buffer overflows, the scroll offset won't change, but its contents would
+            // for now I think this is a feature as you then know that your scroll buffer is overflowing
+            if (oldHistoryRows == scrollOffset().y()) 
+                setScrollOffset(Point{0, state_.historyRows()});
         }
         // now move the lines accordingly by swapping the rows in the buffer
         // TODO this could be done faster if more than 1 line is being used

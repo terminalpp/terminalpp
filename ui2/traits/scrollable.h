@@ -40,8 +40,10 @@ namespace ui2 {
         } 
 
         virtual void setScrollOffset(Point offset) {
-            scrollOffset_ = offset;
-            downcastThis()->repaint();
+            if (scrollOffset_ != offset) {
+                scrollOffset_ = offset;
+                downcastThis()->repaint();
+            }
         }
 
         /** Incremental scrolling

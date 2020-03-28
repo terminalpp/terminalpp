@@ -12,11 +12,19 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- scrolling trait for terminal & autoscrolling (issue fix too)
+- terminal FPS repainting
 - terminal mouse input
-- then finish terminal rendering (modulo cursor)
+- alternate buffer
+- terminal resize
+- blinking text
+
+- UI title & icon & stuff
+- UI cursor 
+- UI selection & SelectionOwner trait, AutoScrolling (as child of Scrollable trait)
+- X11 renderer
+- QT Renderer
+
 - then do cursor and selection
-- and X11 and QT renderers...
 - then back to the UI elements
 
 
