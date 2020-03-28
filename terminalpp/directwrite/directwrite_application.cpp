@@ -83,7 +83,7 @@ namespace tpp2 {
 		// and get system font collection
 		OSCHECK(SUCCEEDED(dwFactory_->GetSystemFontCollection(&systemFontCollection_, false))) << "Unable to get system font collection";
 		// start the blinker thread
-		//DirectWriteWindow::StartBlinkerThread();
+		DirectWriteWindow::StartBlinkerThread();
 
         dummy_ = CreateWindowExW(
             WS_EX_LEFT, // the default

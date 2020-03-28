@@ -136,6 +136,7 @@ namespace tpp2 {
 
         //@}
 
+
         int widthPx_;
         int heightPx_;
 
@@ -151,6 +152,9 @@ namespace tpp2 {
 
         ui2::Key activeModifiers_;
 
+
+        
+        /** The speed of the blinking text, same for all windows in the application. */
         static unsigned BlinkSpeed_;
 
     }; // tpp::Window
@@ -276,11 +280,13 @@ namespace tpp2 {
         Cell state_;
 
         static IMPLEMENTATION * GetWindowForHandle(NATIVE_HANDLE handle) {
+            std::lock_guard<std::mutex> g(MWindows_);
             auto i = Windows_.find(handle);
             return i == Windows_.end() ? nullptr : i->second;
         } 
 
         static void RegisterWindowHandle(IMPLEMENTATION * window, NATIVE_HANDLE handle) {
+            std::lock_guard<std::mutex> g(MWindows_);
             ASSERT(Windows_.find(handle) == Windows_.end());
             Windows_.insert(std::make_pair(handle, window));
         }
@@ -288,17 +294,46 @@ namespace tpp2 {
         /** Removes the window with given handle from the list of windows. 
          */
         static void UnregisterWindowHandle(NATIVE_HANDLE handle) {
+            std::lock_guard<std::mutex> g(MWindows_);
             Windows_.erase(handle);
         }
 
-        /* A map which points from the native handles to the windows. 
+        /** Starts the blinker thread that runs for the duration of the application and periodically repaints all windows so that blinking text is properly displayed. 
+         
+            The method must be called by the Application instance startup.  
          */
+        static void StartBlinkerThread() {
+            std::thread t([](){
+                BlinkVisible_ = true;
+                while (true) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(BlinkSpeed_));
+                    BlinkVisible_ = ! BlinkVisible_;
+                    {
+                        std::lock_guard<std::mutex> g(MWindows_);
+                        for (auto i : Windows_)
+                            i.second->repaint(nullptr);
+                    }
+                }
+            });
+            t.detach();
+        }
+
+        /** A map which points from the native handles to the windows. */
         static std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> Windows_;
+        /** Guard for the list of windows (ui thread and the blinker thread). */
+        static std::mutex MWindows_;
+        /** Current visibility of the blinking text. */
+        static std::atomic<bool> BlinkVisible_;
 
     }; // tpp::RendererWindow
 
     template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
     std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::Windows_;
+
+    template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
+    std::mutex RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::MWindows_;
+    template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
+    std::atomic<bool> RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::BlinkVisible_;
 
 } // namespace tpp
 

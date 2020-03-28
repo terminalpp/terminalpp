@@ -13,10 +13,10 @@ The following is very short description of the versions planned and their main n
 ##### TODO
 
 - terminal resize
-- blinking text
 
 - UI title & icon & stuff
 - UI cursor 
+    - how to deal with cursor of inactive terminal in active window - this seems to lead to multiple cursors per window and how to handle them... (?)
 - UI selection & SelectionOwner trait, AutoScrolling (as child of Scrollable trait)
 - X11 renderer
 - QT Renderer
@@ -29,7 +29,6 @@ The following is very short description of the versions planned and their main n
 
 - design proper and simple layouts and autosizing of widgets
 
-- how to deal with cursor of inactive terminal in active window - this seems to lead to multiple cursors per window and how to handle them... (?)
 
 - simpler UI framework
 - remove / refactor builders
