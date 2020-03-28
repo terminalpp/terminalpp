@@ -12,7 +12,6 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- terminal mouse input
 - alternate buffer
 - terminal resize
 - blinking text
@@ -24,8 +23,8 @@ The following is very short description of the versions planned and their main n
 - QT Renderer
 
 - then do cursor and selection
+- PTY++ and remote files version 2.0
 - then back to the UI elements
-
 
 - fix the events payload to not contain references, and the event should take the payload as argument already
 

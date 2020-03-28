@@ -151,6 +151,8 @@ namespace ui2 {
         fps_{0},
         repaint_{false},
         palette_{palette},
+        mouseButtonsDown_{0},
+        mouseLastButton_{0},
         state_{width, height},
         alternateMode_{false} {
         setFps(60);
@@ -228,13 +230,145 @@ namespace ui2 {
         Widget::setRect(value);
     }
 
+    void AnsiTerminal::mouseMove(Event<MouseMoveEvent>::Payload & event) {
+        if (state_.mouseMode != MouseMode::Off 
+            && (state_.mouseMode != MouseMode::ButtonEvent || mouseButtonsDown_ != 0)
+            // only send the mouse information if the mouse is in the range of the window
+            && Rect::FromWH(width(), height()).contains(event->coords)) {
+                // mouse move adds 32 to the last known button press
+                sendMouseEvent(mouseLastButton_ + 32, event->coords, 'M');
+                LOG(SEQ) << "Mouse moved to " << event->coords;
+        }
+        /*
+        if (modifiers == 0) {
+            if (updatingSelection()) {
+                updateSelection(Point{col, row} + scrollOffset(), clientSize());
+                if (scrollable_) {
+                    if (row < 0 || row >= height()) 
+                        startAutoScroll(Point{0, row < 0 ? -1 : 1});
+                    else 
+                        stopAutoScroll();
+                }
+            }
+            bool x = col == width() - 1;
+            if (x != scrollBarActive_) {
+                scrollBarActive_ = x;
+                repaint();
+            }
+        }
+        */
+        Widget::mouseMove(event);
+    }
+
+    void AnsiTerminal::mouseDown(Event<MouseButtonEvent>::Payload & event) {
+        ++mouseButtonsDown_;
+		if (state_.mouseMode != MouseMode::Off) {
+            mouseLastButton_ = encodeMouseButton(event->button, event->modifiers);
+            sendMouseEvent(mouseLastButton_, event->coords, 'M');
+            LOG(SEQ) << "Button " << event->button << " down at " << event->coords;
+        }
+        /*
+        if (modifiers == 0) {
+            if (button == MouseButton::Left) {
+                startSelection(Point{col, row} + scrollOffset());
+            } else if (button == MouseButton::Wheel) {
+                requestSelectionContents(); 
+            } else if (button == MouseButton::Right && ! selection().empty()) {
+                setClipboardContents(getSelectionContents());
+                clearSelection();
+            }
+        }
+        */
+        Widget::mouseDown(event);
+    }
+
+    void AnsiTerminal::mouseUp(Event<MouseButtonEvent>::Payload & event) {
+        // a bit of defensive programming
+        if (mouseLastButton_ > 0) {
+            --mouseButtonsDown_;
+            if (state_.mouseMode != MouseMode::Off) {
+                mouseLastButton_ = encodeMouseButton(event->button, event->modifiers);
+                sendMouseEvent(mouseLastButton_, event->coords, 'm');
+                LOG(SEQ) << "Button " << event->button << " up at " << event->coords;
+            }
+        }
+        /*
+        if (modifiers == 0) {
+            if (button == MouseButton::Left) 
+                endSelection();
+        }
+        */
+        Widget::mouseUp(event);
+    }
 
     void AnsiTerminal::mouseWheel(Event<MouseWheelEvent>::Payload & event) {
-        if (event->by > 0)
-            scrollBy(Point{0, -1});
-        else 
-            scrollBy(Point{0, 1});
+		if (state_.mouseMode != MouseMode::Off) {
+    		// mouse wheel adds 64 to the value
+            mouseLastButton_ = encodeMouseButton((event->by > 0) ? MouseButton::Left : MouseButton::Right, event->modifiers) + 64;
+            sendMouseEvent(mouseLastButton_, event->coords, 'M');
+            LOG(SEQ) << "Wheel offset " << event->by << " at " << event->coords;
+        }
+        if (state_.historyRows() > 0) {
+            if (event->by > 0)
+                scrollBy(Point{0, -1});
+            else 
+                scrollBy(Point{0, 1});
+        }
         Widget::mouseWheel(event);
+    }
+
+    unsigned AnsiTerminal::encodeMouseButton(MouseButton btn, Key modifiers) {
+		unsigned result =
+			((modifiers & Key::Shift) ? 4 : 0) +
+			((modifiers & Key::Alt) ? 8 : 0) +
+			((modifiers & Key::Ctrl) ? 16 : 0);
+		switch (btn) {
+			case MouseButton::Left:
+				return result;
+			case MouseButton::Right:
+				return result + 1;
+			case MouseButton::Wheel:
+				return result + 2;
+			default:
+				UNREACHABLE;
+		}
+    }
+
+    void AnsiTerminal::sendMouseEvent(unsigned button, Point coords, char end) {
+		// first increment col & row since terminal starts from 1
+        coords += Point{1,1};
+		switch (state_.mouseEncoding) {
+			case MouseEncoding::Default: {
+				// if the event is release, button number is 3
+				if (end == 'm')
+					button |= 3;
+				// increment all values so that we start at 32
+				button += 32;
+                coords += Point{32, 32};
+				// if the col & row are too high, ignore the event
+				if (coords.x() > 255 || coords.y() > 255)
+					return;
+				// otherwise output the sequence
+				char buffer[6];
+				buffer[0] = '\033';
+				buffer[1] = '[';
+				buffer[2] = 'M';
+				buffer[3] = button & 0xff;
+				buffer[4] = static_cast<char>(coords.x());
+				buffer[5] = static_cast<char>(coords.y());
+				ptySend(buffer, 6);
+				break;
+			}
+			case MouseEncoding::UTF8: {
+				LOG(SEQ_WONT_SUPPORT) << "utf8 mouse encoding";
+				break;
+			}
+			case MouseEncoding::SGR: {
+				std::string buffer = STR("\033[<" << button << ';' << coords.x() << ';' << coords.y() << end);
+				ptySend(buffer.c_str(), buffer.size());
+				break;
+			}
+		}
     }
 
     void AnsiTerminal::keyChar(Event<Char>::Payload & event) {

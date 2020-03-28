@@ -233,8 +233,21 @@ namespace ui2 {
         /** \name User Input
          */
         //@{
+        /** Reset the mouse buttons state on mouse leave. 
+         */
+        void mouseOut(Event<void>::Payload & event) override {
+            mouseButtonsDown_ = 0;
+            mouseLastButton_ = 0;
+            Widget::mouseOut(event);
+            
+        }
+        void mouseMove(Event<MouseMoveEvent>::Payload & event) override;
+        void mouseDown(Event<MouseButtonEvent>::Payload & event) override;
+        void mouseUp(Event<MouseButtonEvent>::Payload & event) override;
         void mouseWheel(Event<MouseWheelEvent>::Payload & event) override;
 
+        unsigned encodeMouseButton(MouseButton btn, Key modifiers);
+        void sendMouseEvent(unsigned button, Point coords, char end);
 
         void keyChar(Event<Char>::Payload & event) override;
         void keyDown(Event<Key>::Payload & event) override;
@@ -353,6 +366,11 @@ namespace ui2 {
         helpers::PriorityLock bufferLock_;
 
         Palette * palette_;
+
+        /** Number of pressed mouse buttons to determine mouse capture. */
+        unsigned mouseButtonsDown_;
+        /** Last pressed mouse button for mouse move reporting. */
+        unsigned mouseLastButton_;
 
         /** The terminal state. */
         State state_;

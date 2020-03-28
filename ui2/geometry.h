@@ -82,6 +82,11 @@ namespace ui2 {
         int x_;
         int y_;
 
+        friend std::ostream & operator << (std::ostream & s, Point const & p) {
+            s << "[" << p.x_ << ", " << p.y_ << "]";
+            return s;
+        }
+
     }; // ui::Point
 
 
