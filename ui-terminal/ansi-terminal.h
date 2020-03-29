@@ -26,7 +26,8 @@ namespace ui2 {
         class Buffer : public ui2::Buffer {
         public:
             Buffer(int width, int height):
-                ui2::Buffer{width, height} {
+                ui2::Buffer{width, height},
+                maxHistoryRows_{1000} {
             }
 
             void fill(Cell const & cell) {
@@ -70,7 +71,7 @@ namespace ui2 {
              */
             void drawOnCanvas(Canvas & canvas, int top) const {
                 canvas.drawBuffer(*this, Point{0, top});
-//#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
+#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
                 // now add borders to the cells that are marked as end of line
                 Rect visibleRect{canvas.visibleRect()};
                 Border endOfLine{Border{Color::Red}.setAll(Border::Kind::Thin)};
@@ -82,8 +83,17 @@ namespace ui2 {
                             canvas.setBorderAt(Point{col, row}, endOfLine);
                     }
                 }
-//#endif
+#endif
             }
+
+            int historyRows() const {
+                return static_cast<int>(history_.size());
+            }
+
+            void addHistoryRows(int numCols, Color defaultBg);
+
+            void drawHistoryRows(Canvas & canvas, int start, int end);
+
 
         protected:
 
@@ -94,6 +104,14 @@ namespace ui2 {
                 Copies larger and larger number of cells at once to be more efficient than simple linear copy. 
              */
             void fillRow(Cell * row, Cell const & fill, unsigned cols);
+
+
+            /** The buffer history. */
+            std::deque<std::pair<int, Cell*>> history_;
+
+            int maxHistoryRows_;
+
+
 
             /** Flag designating the end of line in the buffer. 
              */
@@ -181,8 +199,7 @@ namespace ui2 {
                 lastCharacter{0,0},
                 scrollStart{0},
                 scrollEnd{rows},
-                inverseMode{false},
-                maxHistoryRows{1000} {
+                inverseMode{false} {
             }
 
             void reset(Color fg, Color bg);
@@ -212,13 +229,6 @@ namespace ui2 {
                     cursor.setX(buffer.height() - 1);
             }
 
-            int historyRows() const {
-                return static_cast<int>(history_.size());
-            }
-
-            void addHistoryRows(int numCols, Color defaultBg);
-
-            void drawHistoryRows(Canvas & canvas, int start, int end);
 
             Buffer buffer;
             Cell cell;
@@ -235,13 +245,9 @@ namespace ui2 {
             /** Determines whether inverse mode is active or not. */
             bool inverseMode;
 
-            int maxHistoryRows;
-
         protected:
 
             std::vector<Point> cursorStack_;
-
-            std::deque<std::pair<int, Cell*>> history_;
 
         }; // AnsiTerminal::State
 

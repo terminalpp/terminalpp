@@ -209,13 +209,13 @@ namespace ui2 {
         // draw the history 
         {
             int firstVisible = 0;
-            int lastVisible = state_.historyRows();
+            int lastVisible = state_.buffer.historyRows();
             c.setBg(palette_->defaultBackground());
             c.fillRect(Rect::FromTopLeftWH(0, firstVisible, c.width(), lastVisible - firstVisible));
-            state_.drawHistoryRows(c, firstVisible, lastVisible);
+            state_.buffer.drawHistoryRows(c, firstVisible, lastVisible);
         }
         // draw the buffer
-        state_.buffer.drawOnCanvas(c, state_.historyRows());
+        state_.buffer.drawOnCanvas(c, state_.buffer.historyRows());
         //c.drawBuffer(state_.buffer, Point{0,state_.historyRows()});
         // draw the scrollbars if any
         Scrollable::paint(canvas);
@@ -235,7 +235,7 @@ namespace ui2 {
             // update the scrolling information            
             Scrollable::setRect(value);
             setScrollWidth(value.width());
-            setScrollHeight(value.height() + state_.historyRows());
+            setScrollHeight(value.height() + state_.buffer.historyRows());
 
         }
         Widget::setRect(value);
@@ -319,7 +319,7 @@ namespace ui2 {
             sendMouseEvent(mouseLastButton_, event->coords, 'M');
             LOG(SEQ) << "Wheel offset " << event->by << " at " << event->coords;
         }
-        if (state_.historyRows() > 0) {
+        if (state_.buffer.historyRows() > 0) {
             if (event->by > 0)
                 scrollBy(Point{0, -1});
             else 
@@ -412,7 +412,7 @@ namespace ui2 {
 		}
         // only scroll to prompt if the key down is not a simple modifier key
         if (*event != Key::Shift + Key::ShiftKey && *event != Key::Alt + Key::AltKey && *event != Key::Ctrl + Key::CtrlKey && *event != Key::Win + Key::WinKey)
-            setScrollOffset(Point{0, state_.historyRows()});
+            setScrollOffset(Point{0, state_.buffer.historyRows()});
         Widget::keyDown(event);
     }
 
@@ -1097,14 +1097,14 @@ namespace ui2 {
                     if (alternateMode_ != value) {
                         std::swap(state_, stateBackup_);
                         alternateMode_ = value;
-                        setScrollHeight(state_.historyRows() + state_.buffer.height());
+                        setScrollHeight(state_.buffer.historyRows() + state_.buffer.height());
                         // if we are entering the alternate mode, reset the state to default values
                         if (value) {
                             state_.reset(palette_->defaultForeground(), palette_->defaultBackground());
                             setScrollOffset(Point{0,0});
                             LOG(SEQ) << "Alternate mode on";
                         } else {
-                            setScrollOffset(Point{0, state_.historyRows()});
+                            setScrollOffset(Point{0, state_.buffer.historyRows()});
                             LOG(SEQ) << "Alternate mode off";
                         }
                     }
@@ -1373,14 +1373,14 @@ namespace ui2 {
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         // if we are deleting lines from the top of the screen, they can go to the history buffer if any
         if (top == 0 && ! alternateMode_) {
-            int oldHistoryRows = state_.historyRows();
-            state_.addHistoryRows(lines, palette_->defaultBackground());
-            setScrollHeight(height() + state_.historyRows());
+            int oldHistoryRows = state_.buffer.historyRows();
+            state_.buffer.addHistoryRows(lines, palette_->defaultBackground());
+            setScrollHeight(height() + state_.buffer.historyRows());
             // if the window was scrolled to the end, keep it scrolled to the end as well
             // this means that when the scroll buffer overflows, the scroll offset won't change, but its contents would
             // for now I think this is a feature as you then know that your scroll buffer is overflowing
             if (oldHistoryRows == scrollOffset().y()) 
-                setScrollOffset(Point{0, state_.historyRows()});
+                setScrollOffset(Point{0, state_.buffer.historyRows()});
         }
         // now move the lines accordingly by swapping the rows in the buffer
         // TODO this could be done faster if more than 1 line is being used
@@ -1535,44 +1535,6 @@ namespace ui2 {
         buffer.fill(cell);
     }
 
-    void AnsiTerminal::State::addHistoryRows(int numRows, Color defaultBg) {
-        if (maxHistoryRows == 0)
-            return;
-        for (int i = 0; i < numRows; ++i) {
-            Cell * row = buffer.rows_[i];
-            int lastCol = buffer.width() - 1;
-            while (lastCol > 0) {
-                Cell const & c = row[lastCol];
-                if (c.codepoint() != ' ' || c.bg() != defaultBg)
-                    break;
-                --lastCol;
-            }
-            ++lastCol;
-            Cell * historyRow = new Cell[lastCol];
-            memcpy(historyRow, row, sizeof(Cell) * lastCol);
-            if (history_.size() >= maxHistoryRows) {
-                delete history_.front().second;
-                history_.pop_front();
-            }
-            history_.push_back(std::make_pair(lastCol, historyRow));
-        }
-    }
-
-    void AnsiTerminal::State::drawHistoryRows(Canvas & canvas, int start, int end) {
-#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
-        Border endOfLine{Border{Color::Red}.setAll(Border::Kind::Thin)};
-#endif
-        for (; start < end; ++start) {
-            for (int col = 0, ce = history_[start].first; col < ce; ++col) {
-                canvas.setAt(Point{col, start}, history_[start].second[col]);
-#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
-                if (Buffer::GetUnusedBytes(history_[start].second[col]) & Buffer::END_OF_LINE)
-                    canvas.setBorderAt(Point{col, start}, endOfLine);
-#endif
-            }
-        }
-    }
-
     // ============================================================================================
     // AnsiTerminal::Buffer
 
@@ -1587,6 +1549,45 @@ namespace ui2 {
         }
         memcpy(row + i, row, sizeof(Cell) * (cols - i));
     }
+
+    void AnsiTerminal::Buffer::addHistoryRows(int numRows, Color defaultBg) {
+        if (maxHistoryRows_ == 0)
+            return;
+        for (int i = 0; i < numRows; ++i) {
+            Cell * row = rows_[i];
+            int lastCol = width() - 1;
+            while (lastCol > 0) {
+                Cell const & c = row[lastCol];
+                if (c.codepoint() != ' ' || c.bg() != defaultBg)
+                    break;
+                --lastCol;
+            }
+            ++lastCol;
+            Cell * historyRow = new Cell[lastCol];
+            memcpy(historyRow, row, sizeof(Cell) * lastCol);
+            if (history_.size() >= maxHistoryRows_) {
+                delete history_.front().second;
+                history_.pop_front();
+            }
+            history_.push_back(std::make_pair(lastCol, historyRow));
+        }
+    }
+
+    void AnsiTerminal::Buffer::drawHistoryRows(Canvas & canvas, int start, int end) {
+#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
+        Border endOfLine{Border{Color::Red}.setAll(Border::Kind::Thin)};
+#endif
+        for (; start < end; ++start) {
+            for (int col = 0, ce = history_[start].first; col < ce; ++col) {
+                canvas.setAt(Point{col, start}, history_[start].second[col]);
+#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
+                if (Buffer::GetUnusedBytes(history_[start].second[col]) & Buffer::END_OF_LINE)
+                    canvas.setBorderAt(Point{col, start}, endOfLine);
+#endif
+            }
+        }
+    }
+
 
     // ============================================================================================
     // AnsiTerminal::CSISequence
