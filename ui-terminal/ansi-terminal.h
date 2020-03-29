@@ -34,6 +34,57 @@ namespace ui2 {
                     fillRow(rows_[y], cell, width());
             }
 
+            /** Marks the given cell as end of line. 
+             */
+            void markAsLineEnd(Point p) {
+                if (p.x() >= 0)
+                    SetUnusedBytes(at(p), END_OF_LINE);
+            }
+
+            /** \name Modifying cells.
+             
+                When a cell is modified (non-const variant of the at() method), the flags of the cell are cleared first to make sure that new information clears the end of line flag.
+             */
+            //@{
+            Cell & at(Point p) {
+                Cell & result = ui2::Buffer::at(p);
+                SetUnusedBytes(result, 0);
+                return result;
+            }
+
+            Cell & at(int col, int row) {
+                return at(Point{col, row});
+            }
+
+            Cell const & at(Point p) const {
+                return ui2::Buffer::at(p);
+            }
+
+            Cell const & at(int col, int row) const {
+                return at(Point{col, row});
+            }
+            //@}
+
+            /** Draws the buffer on given canvas from the provided top row index. 
+                
+             */
+            void drawOnCanvas(Canvas & canvas, int top) const {
+                canvas.drawBuffer(*this, Point{0, top});
+//#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
+                // now add borders to the cells that are marked as end of line
+                Rect visibleRect{canvas.visibleRect()};
+                Border endOfLine{Border{Color::Red}.setAll(Border::Kind::Thin)};
+                for (int row = std::max(top, visibleRect.top()), re = std::min(top + height(), visibleRect.bottom()); ; ++row) {
+                    if (row >= re)
+                        break;
+                    for (int col = 0; col < width(); ++col) {
+                        if (GetUnusedBytes(at(col, row - top)) & END_OF_LINE)
+                            canvas.setBorderAt(Point{col, row}, endOfLine);
+                    }
+                }
+//#endif
+            }
+
         protected:
 
             friend class AnsiTerminal;
@@ -44,7 +95,9 @@ namespace ui2 {
              */
             void fillRow(Cell * row, Cell const & fill, unsigned cols);
 
-
+            /** Flag designating the end of line in the buffer. 
+             */
+            static constexpr char32_t END_OF_LINE = 0x200000;
 
         }; // ui::AnsiTerminal::Buffer
 

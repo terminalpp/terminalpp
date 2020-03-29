@@ -25,15 +25,17 @@ namespace ui2 {
 
         /** \name Codepoint
           
-            The unencoded Unicode codepoint  to be displayed in the cell. 
+            The unencoded Unicode codepoint to be displayed in the cell.
+
+            Since the codepoint is stored in a 32bit character and unicode only supports up to 0x10ffff codepoints, there are 11 unused bits. These are masked by the codepoint getter and setter so that they can be used by the buffers for extra information. 
          */
         //@{
         char32_t const & codepoint() const {
-            return codepoint_;
+            return codepoint_ & 0x1fffff;
         }
 
         Cell & setCodepoint(char32_t value) {
-            codepoint_ = value;
+            codepoint_ = (codepoint_ & 0xffe00000) + (value & 0x1fffff);
             return *this;
         }
         //@}
@@ -114,6 +116,9 @@ namespace ui2 {
         //@}
 
     private:
+
+        friend class Buffer;
+
         char32_t codepoint_;
 
         Color fg_;
@@ -138,7 +143,7 @@ namespace ui2 {
         Buffer(int width, int height):
             width_{width},
             height_{height} {
-            create_(width, height);
+            create(width, height);
         }
 
         Buffer(Buffer && from):
@@ -151,7 +156,7 @@ namespace ui2 {
         }
 
         Buffer & operator = (Buffer && from) {
-            clear_();
+            clear();
             width_ = from.width_;
             height_ = from.height_;
             rows_ = from.rows_;
@@ -162,7 +167,7 @@ namespace ui2 {
         }
 
         ~Buffer() {
-            clear_();
+            clear();
         }
 
         int width() const {
@@ -204,13 +209,13 @@ namespace ui2 {
             Backing buffer resize is destructive operation and after a resize the whole contents has to be repainted. 
          */
         void resize(int width, int height) {
-            clear_();
-            create_(width, height);
+            clear();
+            create(width, height);
         }
 
     protected:
 
-        void create_(int width, int height) {
+        void create(int width, int height) {
             rows_ = new Cell*[height];
             for (int i = 0; i < height; ++i)
                 rows_[i] = new Cell[width];
@@ -218,7 +223,7 @@ namespace ui2 {
             height_ = height;
         }
 
-        void clear_() {
+        void clear() {
             for (int i = 0; i < height_; ++i)
                 delete rows_[i];
             delete rows_;
@@ -227,6 +232,19 @@ namespace ui2 {
         int width_;
         int height_;
         Cell ** rows_;
+
+        /** Returns the value of the unused bits in the given cell's codepoint so that the buffer can store extra information for each cell. 
+         */
+        static char32_t GetUnusedBytes(Cell const & cell) {
+            return cell.codepoint_ & 0xffe00000;
+        }
+
+        /** Sets the unused bytes value for the given cell to store extra information by the buffer. 
+         */
+        static void SetUnusedBytes(Cell & cell, char32_t value) {
+            cell.codepoint_ = (cell.codepoint_ & 0x1fffff) + (value & 0xffe00000);
+        }
+
     };
 
 } // namespace ui2

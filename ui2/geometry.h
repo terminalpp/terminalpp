@@ -389,6 +389,14 @@ namespace ui2 {
             return *this;
         }
 
+        Border & setAll(Kind kind) {
+            setLeft(kind);
+            setRight(kind);
+            setTop(kind);
+            setBottom(kind);
+            return *this;
+        }
+
         Border & clear() {
             border_ = 0;
             return *this;

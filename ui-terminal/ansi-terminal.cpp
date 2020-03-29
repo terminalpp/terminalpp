@@ -215,7 +215,8 @@ namespace ui2 {
             state_.drawHistoryRows(c, firstVisible, lastVisible);
         }
         // draw the buffer
-        c.drawBuffer(state_.buffer, Point{0,state_.historyRows()});
+        state_.buffer.drawOnCanvas(c, state_.historyRows());
+        //c.drawBuffer(state_.buffer, Point{0,state_.historyRows()});
         // draw the scrollbars if any
         Scrollable::paint(canvas);
     }
@@ -548,8 +549,7 @@ namespace ui2 {
 
     void AnsiTerminal::parseLF() {
         LOG(SEQ) << "LF";
-        // mark the last character position as line end
-        // TODO
+        state_.buffer.markAsLineEnd(state_.lastCharacter);
         // disable double width and height chars
         state_.cell.setFont(state_.cell.font().setSize(1).setDoubleWidth(false));
         state_.cursor += Point{0, 1};
@@ -1559,9 +1559,17 @@ namespace ui2 {
     }
 
     void AnsiTerminal::State::drawHistoryRows(Canvas & canvas, int start, int end) {
+#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
+        Border endOfLine{Border{Color::Red}.setAll(Border::Kind::Thin)};
+#endif
         for (; start < end; ++start) {
-            for (int col = 0, ce = history_[start].first; col < ce; ++col)
-                canvas.set(Point{col, start}, history_[start].second[col]);
+            for (int col = 0, ce = history_[start].first; col < ce; ++col) {
+                canvas.setAt(Point{col, start}, history_[start].second[col]);
+#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
+                if (Buffer::GetUnusedBytes(history_[start].second[col]) & Buffer::END_OF_LINE)
+                    canvas.setBorderAt(Point{col, start}, endOfLine);
+#endif
+            }
         }
     }
 

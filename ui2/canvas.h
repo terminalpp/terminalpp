@@ -72,6 +72,14 @@ namespace ui2 {
             };
         }
 
+        /** Returns the visible rectangle of the canvas, i.e. the part of the canvas that is backed by an underlying buffer. 
+         
+            Drawing outside the visible rect is permitted, but has no effect. 
+         */
+        Rect visibleRect() const {
+            return visibleRect_;
+        }
+
         // ========================================================================================
 
         /** \name Painting structures
@@ -122,10 +130,18 @@ namespace ui2 {
          */
         //@{
 
-        void set(Point coords, Cell const & cell) {
+        Canvas & setAt(Point coords, Cell const & cell) {
             Cell * c = at(coords);
             if (c != nullptr)
                 *c = cell;
+            return *this;
+        }
+
+        Canvas & setBorderAt(Point coords, Border const & border) {
+            Cell * c = at(coords);
+            if (c != nullptr)
+                c->setBorder(border);
+            return *this;
         }
 
         Canvas & drawBuffer(Buffer const & buffer, Point topLeft);
