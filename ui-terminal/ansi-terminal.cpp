@@ -206,17 +206,8 @@ namespace ui2 {
         // lock the buffer
         bufferLock_.priorityLock();
         helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_, false};
-        // draw the history 
-        {
-            int firstVisible = 0;
-            int lastVisible = state_.buffer.historyRows();
-            c.setBg(palette_->defaultBackground());
-            c.fillRect(Rect::FromTopLeftWH(0, firstVisible, c.width(), lastVisible - firstVisible));
-            state_.buffer.drawHistoryRows(c, firstVisible, lastVisible);
-        }
-        // draw the buffer
-        state_.buffer.drawOnCanvas(c, state_.buffer.historyRows());
-        //c.drawBuffer(state_.buffer, Point{0,state_.historyRows()});
+        // draw the buffer and the history
+        state_.buffer.drawOnCanvas(c, palette_->defaultBackground());
         // draw the scrollbars if any
         Scrollable::paint(canvas);
     }
@@ -1573,21 +1564,40 @@ namespace ui2 {
         }
     }
 
-    void AnsiTerminal::Buffer::drawHistoryRows(Canvas & canvas, int start, int end) {
+    void AnsiTerminal::Buffer::drawOnCanvas(Canvas & canvas, Color defaultBackground) const {
 #ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
         Border endOfLine{Border{Color::Red}.setAll(Border::Kind::Thin)};
 #endif
-        for (; start < end; ++start) {
-            for (int col = 0, ce = history_[start].first; col < ce; ++col) {
-                canvas.setAt(Point{col, start}, history_[start].second[col]);
+        canvas.setBg(defaultBackground);
+        Rect visibleRect{canvas.visibleRect()};
+        int top = historyRows();
+        // see if there are any history lines that need to be drawn
+        for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); ; ++row) {
+            if (row >= re)
+                break;
+            for (int col = 0, ce = history_[row].first; col < ce; ++col) {
+                canvas.setAt(Point{col, row}, history_[row].second[col]);
 #ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
-                if (Buffer::GetUnusedBytes(history_[start].second[col]) & Buffer::END_OF_LINE)
-                    canvas.setBorderAt(Point{col, start}, endOfLine);
+                if (Buffer::GetUnusedBytes(history_[row].second[col]) & Buffer::END_OF_LINE)
+                    canvas.setBorderAt(Point{col, row}, endOfLine);
 #endif
             }
+            canvas.fillRect(Rect::FromCorners(history_[row].first, row, width(), row + 1));
         }
+        // now draw the actual buffer
+        canvas.drawBuffer(*this, Point{0, top});
+#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
+        // now add borders to the cells that are marked as end of line
+        for (int row = std::max(top, visibleRect.top()), re = visibleRect.bottom(); ; ++row) {
+            if (row >= re)
+                break;
+            for (int col = 0; col < width(); ++col) {
+                if (GetUnusedBytes(at(col, row - top)) & END_OF_LINE)
+                    canvas.setBorderAt(Point{col, row}, endOfLine);
+            }
+        }
+#endif
     }
-
 
     // ============================================================================================
     // AnsiTerminal::CSISequence

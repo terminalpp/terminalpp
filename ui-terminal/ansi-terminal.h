@@ -66,34 +66,17 @@ namespace ui2 {
             }
             //@}
 
-            /** Draws the buffer on given canvas from the provided top row index. 
-                
+            /** Draws the buffer on given canvas. 
+             
+                The canvas must be the size of the buffer plus the size of the available history. 
              */
-            void drawOnCanvas(Canvas & canvas, int top) const {
-                canvas.drawBuffer(*this, Point{0, top});
-#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
-                // now add borders to the cells that are marked as end of line
-                Rect visibleRect{canvas.visibleRect()};
-                Border endOfLine{Border{Color::Red}.setAll(Border::Kind::Thin)};
-                for (int row = std::max(top, visibleRect.top()), re = std::min(top + height(), visibleRect.bottom()); ; ++row) {
-                    if (row >= re)
-                        break;
-                    for (int col = 0; col < width(); ++col) {
-                        if (GetUnusedBytes(at(col, row - top)) & END_OF_LINE)
-                            canvas.setBorderAt(Point{col, row}, endOfLine);
-                    }
-                }
-#endif
-            }
+            void drawOnCanvas(Canvas & canvas, Color defaultBackground) const; 
 
             int historyRows() const {
                 return static_cast<int>(history_.size());
             }
 
             void addHistoryRows(int numCols, Color defaultBg);
-
-            void drawHistoryRows(Canvas & canvas, int start, int end);
-
 
         protected:
 
