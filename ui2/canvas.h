@@ -189,6 +189,8 @@ namespace ui2 {
                 cell.setFg((brush.fillColor() != Color::None) ? brush.fillColor() : fg_);
                 cell.setDecor((brush.fillColor() != Color::None) ? brush.fillColor() : fg_);
             }
+            // clear the border information of the cell as well
+            cell.setBorder(cell.border().clear());
         }
 
     private:
