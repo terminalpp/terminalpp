@@ -290,6 +290,20 @@ namespace ui2 {
         unsigned encodeMouseButton(MouseButton btn, Key modifiers);
         void sendMouseEvent(unsigned button, Point coords, char end);
 
+        /** Keyboard focus in triggers repaint as the cursor must be updated. 
+         */
+        void focusIn(Event<void>::Payload & event) override {
+            Widget::focusIn(event);
+            repaint();
+        }
+
+        /** Keyboard focus out triggers repaint as the cursor must be updated. 
+         */
+        void focusOut(Event<void>::Payload & event) override {
+            Widget::focusOut(event);
+            repaint();
+        }
+
         void keyChar(Event<Char>::Payload & event) override;
         void keyDown(Event<Key>::Payload & event) override;
         //@}

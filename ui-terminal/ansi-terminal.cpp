@@ -210,6 +210,14 @@ namespace ui2 {
         state_.buffer.drawOnCanvas(c, palette_->defaultBackground());
         // draw the scrollbars if any
         Scrollable::paint(canvas);
+        // draw the cursor 
+        if (focused()) {
+            // TODO set the cursor via the canvas
+
+        } else {
+            // TODO the color of this should be configurable
+            c.setBorderAt(state_.cursor + Point{0, state_.buffer.historyRows()}, Border{Color::Green}.setAll(Border::Kind::Thin));
+        }
     }
 
     void AnsiTerminal::setRect(Rect const & value) {
