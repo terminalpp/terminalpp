@@ -217,17 +217,21 @@ namespace ui2 {
         if (value.width() != width() || value.height() != height()) {
             // lock the buffer
             bufferLock_.priorityLock();
+            bool scrollToTerm = scrollOffset().y() == state_.buffer.historyRows();
             helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_, false};
-            // resize the state
-            state_.resize(value.width(), value.height());
-            stateBackup_.resize(value.width(), value.height());
+            // resize the state & buffers, resize the contents of the normal and active buffers
+            // inactive alternate buffer does not need resizing as it will be cleared when entered
+            state_.resize(value.width(), value.height(), true, palette_->defaultBackground());
+            stateBackup_.resize(value.width(), value.height(), alternateMode_, palette_->defaultBackground());
             // resize the PTY
             ptyResize(value.width(), value.height());
             // update the scrolling information            
             Scrollable::setRect(value);
             setScrollWidth(value.width());
             setScrollHeight(value.height() + state_.buffer.historyRows());
-
+            // scroll to the terminal if appropriate (terminal was fully visible before)
+            if (scrollToTerm)
+                setScrollOffset(Point{0, state_.buffer.historyRows()});
         }
         Widget::setRect(value);
     }
@@ -618,7 +622,7 @@ namespace ui2 {
 			case 'M':
 				LOG(SEQ) << "RI: move cursor 1 line up";
 				if (state_.cursor.y() == state_.scrollStart) 
-					insertLines(1, state_.scrollStart, state_.scrollEnd, state_.cell);
+					state_.buffer.insertLines(1, state_.scrollStart, state_.scrollEnd, state_.cell);
 				else
                     state_.setCursor(state_.cursor.x(), state_.cursor.y() - 1);
 				break;
@@ -815,7 +819,7 @@ namespace ui2 {
                     case 'L':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "IL: scrollUp " << seq[0];
-                        insertLines(seq[0], state_.cursor.y(), state_.scrollEnd, state_.cell);
+                        state_.buffer.insertLines(seq[0], state_.cursor.y(), state_.scrollEnd, state_.cell);
                         return;
                     /* CSI <n> M -- Remove n lines. (DL)
                      */
@@ -843,7 +847,7 @@ namespace ui2 {
                     case 'T':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "SD: scrollDown " << seq[0];
-                        insertLines(seq[0], state_.cursor.y(), state_.scrollEnd, state_.cell);
+                        state_.buffer.insertLines(seq[0], state_.cursor.y(), state_.scrollEnd, state_.cell);
                         return;
                     /* CSI <n> X -- erase <n> characters from the current position
                      */
@@ -1093,6 +1097,7 @@ namespace ui2 {
                         if (value) {
                             state_.reset(palette_->defaultForeground(), palette_->defaultBackground());
                             setScrollOffset(Point{0,0});
+                            state_.lastCharacter = Point{-1,-1};
                             LOG(SEQ) << "Alternate mode on";
                         } else {
                             setScrollOffset(Point{0, state_.buffer.historyRows()});
@@ -1362,35 +1367,15 @@ namespace ui2 {
     }
 
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
-        // if we are deleting lines from the top of the screen, they can go to the history buffer if any
-        if (top == 0 && ! alternateMode_) {
-            int oldHistoryRows = state_.buffer.historyRows();
-            state_.buffer.addHistoryRows(lines, palette_->defaultBackground());
-            setScrollHeight(height() + state_.buffer.historyRows());
+        if (top == 0 && scrollOffset().y() == state_.buffer.historyRows()) {
+            state_.buffer.deleteLines(lines, top, bottom, fill, palette_->defaultBackground());
+            setScrollHeight(height() + state_.buffer.historyRows());            
             // if the window was scrolled to the end, keep it scrolled to the end as well
             // this means that when the scroll buffer overflows, the scroll offset won't change, but its contents would
             // for now I think this is a feature as you then know that your scroll buffer is overflowing
-            if (oldHistoryRows == scrollOffset().y()) 
-                setScrollOffset(Point{0, state_.buffer.historyRows()});
-        }
-        // now move the lines accordingly by swapping the rows in the buffer
-        // TODO this could be done faster if more than 1 line is being used
-        while (lines-- > 0) {
-            Cell ** rows = state_.buffer.rows_;
-            Cell * x = rows[top];
-            memmove(rows + top, rows + top + 1, sizeof(Cell*) * (bottom - top - 1));
-            state_.buffer.fillRow(x, state_.cell, state_.buffer.width());
-            rows[bottom - 1] = x;
-        }
-    }
-
-    void AnsiTerminal::insertLines(int lines, int top, int bottom, Cell const & cell) {
-        while (lines-- > 0) {
-            Cell ** rows = state_.buffer.rows_;
-            Cell * x = rows[bottom - 1];
-            memmove(rows + top + 1, rows + top, sizeof(Cell*) * (bottom - top - 1));
-            state_.buffer.fillRow(x, state_.cell, state_.buffer.width());
-            state_.buffer.rows_[top] = x;
+            setScrollOffset(Point{0, state_.buffer.historyRows()});
+        } else {
+            state_.buffer.deleteLines(lines, top, bottom, fill, palette_->defaultBackground());
         }
     }
 
@@ -1529,6 +1514,47 @@ namespace ui2 {
     // ============================================================================================
     // AnsiTerminal::Buffer
 
+    void AnsiTerminal::Buffer::deleteLines(int lines, int top, int bottom, Cell const & fill, Color defaultBg) {
+        while (lines-- > 0) {
+            Cell * x = rows_[top];
+            // if we are deleting the first line, it gets retired to the history buffer instead. Right-most characters that are empty (i.e. space with no font effects and default background color) are excluded if the line ends with an end of line character
+            if (top == 0) {
+                int lastCol = width();
+                while (lastCol-- > 0) {
+                    Cell & c = x[lastCol];
+                    // if we have found end of line character, good
+                    if (isEndOfLine(c))
+                        break;
+                    // if we have found a visible character, we must remember the whole line, break the search - any end of line characters left of it will make no difference
+                    if (c.codepoint() != ' ' || c.bg() != defaultBg || c.font().underline() || c.font().strikethrough()) {
+                        break;
+                    }
+                }
+                // if we are not at the end of line, we must remember the whole line
+                if (isEndOfLine(x[lastCol])) 
+                    lastCol += 1;
+                else
+                    lastCol = width();
+                // make the copy and add it to the history line
+                Cell * row = new Cell[lastCol];
+                memcpy(row, x, sizeof(Cell) * lastCol);
+                addHistoryRow(lastCol, row);
+            }
+            memmove(rows_ + top, rows_ + top + 1, sizeof(Cell*) * (bottom - top - 1));
+            fillRow(x, fill, width());
+            rows_[bottom - 1] = x;
+        }
+    }
+
+    void AnsiTerminal::Buffer::insertLines(int lines, int top, int bottom, Cell const & fill) {
+        while (lines-- > 0) {
+            Cell * x = rows_[bottom - 1];
+            memmove(rows_ + top + 1, rows_ + top, sizeof(Cell*) * (bottom - top - 1));
+            fillRow(x, fill, width());
+            rows_[top] = x;
+        }
+    }
+
     void AnsiTerminal::Buffer::fillRow(Cell * row, Cell const & fill, unsigned cols) {
         row[0] = fill;
         size_t i = 1;
@@ -1541,26 +1567,25 @@ namespace ui2 {
         memcpy(row + i, row, sizeof(Cell) * (cols - i));
     }
 
-    void AnsiTerminal::Buffer::addHistoryRows(int numRows, Color defaultBg) {
-        if (maxHistoryRows_ == 0)
-            return;
-        for (int i = 0; i < numRows; ++i) {
-            Cell * row = rows_[i];
-            int lastCol = width() - 1;
-            while (lastCol > 0) {
-                Cell const & c = row[lastCol];
-                if (c.codepoint() != ' ' || c.bg() != defaultBg)
-                    break;
-                --lastCol;
+    void AnsiTerminal::Buffer::addHistoryRow(int cols, Cell * row) {
+        if (cols <= width()) {
+            history_.push_back(std::make_pair(cols, row));
+        // if the line is too long, simply chop it in pieces of maximal length
+        } else {
+            Cell * i = row;
+            while (cols != 0) {
+                int xSize = std::min(width(), cols);
+                Cell * x = new Cell[xSize];
+                memcpy(x, i, sizeof(Cell) * xSize);
+                i += xSize;
+                cols -= xSize;
+                history_.push_back(std::make_pair(xSize, x));
             }
-            ++lastCol;
-            Cell * historyRow = new Cell[lastCol];
-            memcpy(historyRow, row, sizeof(Cell) * lastCol);
-            if (history_.size() >= maxHistoryRows_) {
-                delete history_.front().second;
-                history_.pop_front();
-            }
-            history_.push_back(std::make_pair(lastCol, historyRow));
+            delete row;
+        }
+        while (history_.size() > maxHistoryRows_) {
+            delete [] history_.front().second;
+            history_.pop_front();
         }
     }
 
@@ -1578,7 +1603,7 @@ namespace ui2 {
             for (int col = 0, ce = history_[row].first; col < ce; ++col) {
                 canvas.setAt(Point{col, row}, history_[row].second[col]);
 #ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
-                if (Buffer::GetUnusedBytes(history_[row].second[col]) & Buffer::END_OF_LINE)
+                if (isEndOfLine(history_[row].second[col]))
                     canvas.setBorderAt(Point{col, row}, endOfLine);
 #endif
             }
@@ -1592,11 +1617,102 @@ namespace ui2 {
             if (row >= re)
                 break;
             for (int col = 0; col < width(); ++col) {
-                if (GetUnusedBytes(at(col, row - top)) & END_OF_LINE)
+                if (isEndOfLine(at(col, row - top)))
                     canvas.setBorderAt(Point{col, row}, endOfLine);
             }
         }
 #endif
+    }
+
+    Point AnsiTerminal::Buffer::resize(int width, int height, bool resizeContents, Cell const & fill, Point cursor) {
+        if (! resizeContents) {
+            ui2::Buffer::resize(width, height);
+            return cursor;
+        }
+        // create backup of the cells and new cells
+        Cell ** oldRows = rows_;
+        int oldWidth = this->width();
+        int oldHeight = this->height();
+        rows_ = nullptr;
+        ui2::Buffer::resize(width, height);
+        // resize the history
+        std::deque<std::pair<int, Cell*>> oldHistory;
+        std::swap(oldHistory, history_);
+        resizeHistory(oldHistory);
+		// now determine the row at which we should stop - this is done by going back from cursor's position until we hit end of line, that would be the last line we will use
+		int stopRow = cursor.y() - 1;
+		while (stopRow >= 0) {
+			Cell* row = oldRows[stopRow];
+			int i = 0;
+			for (; i < oldWidth; ++i)
+                if (isEndOfLine(row[i]))
+					break;
+			// we have found the line end
+			if (i < oldWidth) {
+				++stopRow; // stop after current row
+				break;
+			}
+			// otherwise try the above line
+			--stopRow;
+		}
+        if (stopRow < 0)
+            stopRow = 0;
+        // now transfer the contents, moving any lines that won't fit into the terminal will be moved to the history 
+		int oldCursorRow = cursor.y();
+		cursor = Point{0,0};
+		for (int y = 0; y < stopRow; ++y) {
+			for (int x = 0; x < oldWidth; ++x) {
+				Cell& cell = oldRows[y][x];
+				rows_[cursor.y()][cursor.x()] = cell;
+				// if the copied cell is end of line, or if we are at the end of new line, increase the cursor row
+				if (isEndOfLine(cell) || (cursor += Point{1,0}).x() == width)
+                    cursor += Point{-cursor.x(),1};
+				// scroll the new lines if necessary
+				if (cursor.y() == height) {
+                    deleteLines(1, 0, height, fill, fill.bg());
+                    cursor -= Point{0,1};
+				}
+				// if it was new line, skip whatever was afterwards
+                if (isEndOfLine(cell))
+					break;
+			}
+		}
+		// the contents was transferred, delete the old cells
+        for (int i = 0; i < oldHeight; ++i)
+            delete [] oldRows[i];
+        delete [] oldRows;
+		// because the first thing the app will do after resize is to adjust the cursor position if the current line span more than 1 terminal line, we must account for this and update cursor position
+		cursor += Point{0, oldCursorRow - stopRow};
+        return cursor;
+    }
+
+    void AnsiTerminal::Buffer::resizeHistory(std::deque<std::pair<int, Cell*>> & oldHistory) {
+        Cell * row = nullptr;
+        int rowSize = 0;
+        for (auto & i : oldHistory) {
+            if (row == nullptr) {
+                row = i.second;
+                rowSize = i.first;
+            } else {
+                Cell * newRow = new Cell[rowSize + i.first];
+                memcpy(newRow, row, sizeof(Cell) * rowSize);
+                memcpy(newRow + rowSize, i.second, sizeof(Cell) * i.first);
+                rowSize += i.first;
+                delete [] i.second;
+                delete [] row;
+                row = newRow;
+            }
+            ASSERT(row != nullptr);
+            if (isEndOfLine(row[rowSize - 1])) {
+                addHistoryRow(rowSize, row);
+                row = nullptr;
+                rowSize = 0;
+            }
+        }
+        if (row != nullptr)
+            addHistoryRow(rowSize, row);
+        // clear the old history - the elements have already been deleted or moved
+        oldHistory.clear();        
     }
 
     // ============================================================================================

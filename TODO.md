@@ -12,8 +12,8 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- terminal resize
-
+- double width and double size fonts dropped from the terminal (not from the UI)
+- history gets resized when terminal gets resized
 - UI title & icon & stuff
 - UI cursor 
     - how to deal with cursor of inactive terminal in active window - this seems to lead to multiple cursors per window and how to handle them... (?)
@@ -29,6 +29,8 @@ The following is very short description of the versions planned and their main n
 
 - design proper and simple layouts and autosizing of widgets
 
+- design settings via abstract configurator classes that provide the interface
+    - do settings for terminal history, including history, or shared history for the alternate buffer if requested
 
 - simpler UI framework
 - remove / refactor builders

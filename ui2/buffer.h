@@ -224,6 +224,9 @@ namespace ui2 {
         }
 
         void clear() {
+            // do nothing if the rows are unallocated
+            if (rows_ == nullptr)
+                return;
             for (int i = 0; i < height_; ++i)
                 delete rows_[i];
             delete rows_;
@@ -235,13 +238,13 @@ namespace ui2 {
 
         /** Returns the value of the unused bits in the given cell's codepoint so that the buffer can store extra information for each cell. 
          */
-        static char32_t GetUnusedBytes(Cell const & cell) {
+        static char32_t GetUnusedBits(Cell const & cell) {
             return cell.codepoint_ & 0xffe00000;
         }
 
         /** Sets the unused bytes value for the given cell to store extra information by the buffer. 
          */
-        static void SetUnusedBytes(Cell & cell, char32_t value) {
+        static void SetUnusedBits(Cell & cell, char32_t value) {
             cell.codepoint_ = (cell.codepoint_ & 0x1fffff) + (value & 0xffe00000);
         }
 

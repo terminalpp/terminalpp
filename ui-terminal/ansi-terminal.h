@@ -39,7 +39,7 @@ namespace ui2 {
              */
             void markAsLineEnd(Point p) {
                 if (p.x() >= 0)
-                    SetUnusedBytes(at(p), END_OF_LINE);
+                    SetUnusedBits(at(p), END_OF_LINE);
             }
 
             /** \name Modifying cells.
@@ -49,7 +49,7 @@ namespace ui2 {
             //@{
             Cell & at(Point p) {
                 Cell & result = ui2::Buffer::at(p);
-                SetUnusedBytes(result, 0);
+                SetUnusedBits(result, 0);
                 return result;
             }
 
@@ -76,7 +76,15 @@ namespace ui2 {
                 return static_cast<int>(history_.size());
             }
 
-            void addHistoryRows(int numCols, Color defaultBg);
+            void deleteLines(int lines, int top, int bottom, Cell const & fill, Color defaultBg);
+
+            /** Inserts given number of lines at given top row.
+                
+                Scrolls down all lines between top and bottom accordingly. Fills the new lines with the provided cell.
+            */
+            void insertLines(int lines, int top, int bottom, Cell const & fill);    
+
+            Point resize(int width, int height, bool resizeContents, Cell const & fill, Point cursor);
 
         protected:
 
@@ -88,9 +96,20 @@ namespace ui2 {
              */
             void fillRow(Cell * row, Cell const & fill, unsigned cols);
 
+            /** Adds the given row of cells as a history row. 
+
+                If the row is longer than current width, it will be split and multiple actual rows will be added. If the history buffer is full, the appropriate ammount of oldest history rows will be deleted.   
+             */
+            void addHistoryRow(int cols, Cell * row);
+
+            void resizeHistory(std::deque<std::pair<int, Cell*>> & oldHistory);
 
             /** The buffer history. */
             std::deque<std::pair<int, Cell*>> history_;
+
+            bool isEndOfLine(Cell const & cell) const {
+                return GetUnusedBits(cell) & END_OF_LINE;
+            }
 
             int maxHistoryRows_;
 
@@ -187,8 +206,12 @@ namespace ui2 {
 
             void reset(Color fg, Color bg);
 
-            void resize(int cols, int rows) {
-                buffer.resize(cols, rows);
+            void resize(int cols, int rows, bool resizeContents, Color defaultBg) {
+                Cell fill;
+                fill.setBg(defaultBg);
+                cursor = buffer.resize(cols, rows, resizeContents, fill, cursor);
+                scrollStart = 0;
+                scrollEnd = rows;
             }
 
             void setCursor(int col, int row) {
@@ -364,11 +387,6 @@ namespace ui2 {
             */
         void deleteLines(int lines, int top, int bottom, Cell const & fill);
 
-        /** Inserts given number of lines at given top row.
-            
-            Scrolls down all lines between top and bottom accordingly. Fills the new lines with the provided cell.
-         */
-        void insertLines(int lines, int top, int bottom, Cell const & fill);
 
         //@}
 
