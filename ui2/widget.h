@@ -1,6 +1,6 @@
 #pragma once
 
-#include <atomic>
+#include <mutex>
 
 #include "helpers/helpers.h"
 #include "helpers/events.h"
@@ -284,7 +284,7 @@ namespace ui2 {
         /** Returns the renderer of the widget. [thread-safe]
          */
         Renderer * renderer() const {
-            return renderer_.load();
+            return renderer_;
         }
 
         //@}
@@ -450,8 +450,11 @@ namespace ui2 {
 
         friend class Canvas;
 
+        /** Mutex guarding the renderer property access. */
+        mutable std::mutex mRenderer_;
+
         /** The renderer the widget is attached to. */
-        std::atomic<Renderer*> renderer_;
+        Renderer* renderer_;
 
         /** Parent widget, nullptr if none. */
         Widget * parent_;
@@ -488,7 +491,7 @@ namespace ui2 {
         friend class UiThreadChecker_;
         
         Renderer * getRenderer_() const  {
-            return renderer_.load();
+            return renderer_;
         }
 #endif
 

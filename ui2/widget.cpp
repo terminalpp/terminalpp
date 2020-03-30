@@ -5,15 +5,15 @@
 namespace ui2 {
 
     void Widget::repaint() {
-        Renderer * r = renderer();
-        if (r != nullptr)
-            r->repaint(this);
+        std::lock_guard<std::mutex> g{mRenderer_};
+        if (renderer_ != nullptr)
+            renderer_->repaint(this);
     }
 
     bool Widget::focused() const {
         UI_THREAD_CHECK;
-        Renderer * r = renderer();
-        return (r == nullptr) ? false : (r->keyboardFocus() == this);
+        std::lock_guard<std::mutex> g{mRenderer_};
+        return (renderer_ == nullptr) ? false : (renderer_->keyboardFocus() == this);
     }
 
     void Widget::setCursor(Canvas & canvas, Cursor const & cursor, Point position) {
@@ -32,7 +32,10 @@ namespace ui2 {
         UI_THREAD_CHECK;
         ASSERT(this->renderer() == nullptr && renderer != nullptr);
         ASSERT(parent_ == nullptr || parent_->renderer() == renderer);
-        renderer_.store(renderer);
+        {
+            std::lock_guard<std::mutex> g{mRenderer_};
+            renderer_ = renderer;
+        }
         renderer->widgetAttached(this);
     }
 
@@ -41,7 +44,10 @@ namespace ui2 {
         ASSERT(renderer() != nullptr);
         ASSERT(parent_ == nullptr || parent_->renderer() != nullptr);
         renderer()->widgetDetached(this);
-        renderer_.store(nullptr);
+        {
+            std::lock_guard<std::mutex> g{mRenderer_};
+            renderer_ = nullptr;
+        }
     }
 
 } // namespace ui

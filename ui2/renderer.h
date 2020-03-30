@@ -574,7 +574,6 @@ namespace ui2 {
 
         static std::function<void(void)> UserEventScheduler_;
 
-
         Buffer buffer_;
 
         Color backgroundColor_;
