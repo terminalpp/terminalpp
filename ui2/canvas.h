@@ -156,6 +156,8 @@ namespace ui2 {
 
     protected:
 
+        friend class Widget;
+
         Canvas(int width, int height, Buffer & buffer, Rect visibleRect, Point visibleRectOffset):
             width_{width},
             height_{height},
@@ -164,7 +166,6 @@ namespace ui2 {
             bufferOffset_{visibleRectOffset} {
             // TODO check the validity of the visible rectangle and update accordingly
         }
-
 
         /** Returns the cell at given coordinates.
          
@@ -219,15 +220,11 @@ namespace ui2 {
          */
         Point bufferOffset_;
 
-
-
-
         Color fg_;
         Brush bg_;
         Color decor_;
         Font font_;
 
     };
-
 
 } // namespace ui2

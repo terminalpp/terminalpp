@@ -165,7 +165,8 @@ namespace tpp2 {
     class RendererWindow : public Window {
     protected:
         RendererWindow(int width, int height, FontMetrics const & font, double zoom):
-            Window{width, height, font, zoom} {
+            Window{width, height, font, zoom},
+            lastCursorPos_{-1,-1} {
         }
 
         #define initializeDraw(...) static_cast<IMPLEMENTATION*>(this)->initializeDraw(__VA_ARGS__)
@@ -183,12 +184,14 @@ namespace tpp2 {
 
         void render(Rect const & rect) override {
             MARK_AS_UNUSED(rect);
+            // get constant reference so that reading does not change the unused bits in the cells we use for cursor
+            Buffer const & buf{buffer()};
             // then actually render the entire window
             helpers::Stopwatch t;
             t.start();
             // initialize the drawing and set the state for the first cell
             initializeDraw();
-            state_ = buffer().at(0,0);
+            state_ = buf.at(0,0);
             changeFont(state_.font());
             changeFg(state_.fg());
             changeBg(state_.bg());
@@ -197,7 +200,7 @@ namespace tpp2 {
             for (int row = 0, re = height(); row < re; ++row) {
                 initializeGlyphRun(0, row);
                 for (int col = 0, ce = width(); col < ce; ) {
-                    Cell const & c = buffer().at(col, row);
+                    Cell const & c = buf.at(col, row);
                     // detect if there were changes in the font & colors and update the state & draw the glyph run if present. The code looks a bit ugly as we have to first draw the glyph run and only then change the state.
                     bool drawRun = true;
                     if (state_.font() != c.font()) {
@@ -240,12 +243,26 @@ namespace tpp2 {
                 }
                 drawGlyphRun();
             }
-            // TODO cursor
-            // - determine how multiple cursors can be drawn, either here, or by the actual widgets when their cursor is set? 
-            // - perhaps the widgets are better positioned as they can determine whether to update the canvas, or to inform the renderer
+            
+            // determine the cursor, its visibility and its position and draw it if necessary. The cursor is drawn when it is not blinking, when its position has changed since last time it was drawn with blink on or if it is blinking and blink is visible. This prevents the cursor for disappearing while moving
+            ui2::Cursor cursor = buf.cursor();
+            Point cursorPos = buf.cursorPosition();
+            if (cursor.visible() && (! cursor.blink() || BlinkVisible_ || cursorPos != lastCursorPos_)) {
+                state_.setCodepoint(cursor.codepoint())
+                      .setFg(cursor.color())
+                      .setBg(Color::None)
+                      .setFont(buf.at(cursorPos).font());
+                changeFont(state_.font());
+                changeFg(state_.fg());
+                changeBg(state_.bg());
+                initializeGlyphRun(cursorPos.x(), cursorPos.y());
+                addGlyph(cursorPos.x(), cursorPos.y(), state_);
+                drawGlyphRun();
+                if (BlinkVisible_)
+                    lastCursorPos_ = cursorPos;
+            }
 
             // finally, draw the border, which is done on the base cell level over the already drawn text
-            //  void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
             int wThin = std::min(cellWidth_, cellHeight_) / 4;
             int wThick = std::min(cellWidth_, cellHeight_) / 2;
             Color borderColor = buffer().at(0,0).border().color();
@@ -278,6 +295,7 @@ namespace tpp2 {
         #undef finalizeDraw
 
         Cell state_;
+        Point lastCursorPos_;
 
         static IMPLEMENTATION * GetWindowForHandle(NATIVE_HANDLE handle) {
             std::lock_guard<std::mutex> g(MWindows_);

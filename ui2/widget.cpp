@@ -16,6 +16,17 @@ namespace ui2 {
         return (r == nullptr) ? false : (r->keyboardFocus() == this);
     }
 
+    void Widget::setCursor(Canvas & canvas, Cursor const & cursor, Point position) {
+        if (focused()) {
+            canvas.buffer_.setCursor(cursor);
+            if (canvas.visibleRect_.contains(position))
+                canvas.buffer_.setCursorPosition(position + canvas.bufferOffset_);
+            else
+                canvas.buffer_.setCursorPosition(Point{-1, -1});
+        } else {
+            ASSERT("Attempt to set cursor from unfocused widget");
+        }
+    }
 
     void Widget::attachRenderer(Renderer * renderer) {
         UI_THREAD_CHECK;

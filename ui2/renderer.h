@@ -94,6 +94,8 @@ namespace ui2 {
             if (keyboardFocus_ != nullptr && keyboardIn_) {
                 Event<void>::Payload p{};
                 focusOut(p, keyboardFocus_);
+                // just make sure the cursor of the old widget won't be displayed
+                buffer_.setCursor(buffer_.cursor().setVisible(false));
             }
             keyboardFocus_ = widget;
             if (keyboardFocus_ != nullptr && keyboardIn_) {

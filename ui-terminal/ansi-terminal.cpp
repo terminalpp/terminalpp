@@ -152,8 +152,6 @@ namespace ui2 {
         repaint_{false},
         palette_{palette},
         cursorMode_{CursorMode::Normal},
-        cursorVisible_{true},
-        cursorBlink_{true},
         keypadMode_{KeypadMode::Normal},
         mouseMode_{MouseMode::Off},
         mouseEncoding_{MouseEncoding::Default},
@@ -212,8 +210,8 @@ namespace ui2 {
         Scrollable::paint(canvas);
         // draw the cursor 
         if (focused()) {
-            // TODO set the cursor via the canvas
-
+            // set the cursor via the canvas
+            setCursor(c, cursor_, state_.cursor + Point{0, state_.buffer.historyRows()});
         } else {
             // TODO the color of this should be configurable
             c.setBorderAt(state_.cursor + Point{0, state_.buffer.historyRows()}, Border{Color::Green}.setAll(Border::Kind::Thin));
@@ -1044,12 +1042,12 @@ namespace ui2 {
 					continue;
 				// cursor blinking
 				case 12:
-                    cursorBlink_ = value;
+                    cursor_.setBlink(value);
 					LOG(SEQ) << "cursor blinking: " << value;
 					continue;
 				// cursor show/hide
 				case 25:
-                    cursorVisible_ = value;
+                    cursor_.setVisible(value);
 					LOG(SEQ) << "cursor visible: " << value;
 					continue;
 				/* Mouse tracking movement & buttons.

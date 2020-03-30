@@ -42,30 +42,6 @@ namespace ui2 {
                     SetUnusedBits(at(p), END_OF_LINE);
             }
 
-            /** \name Modifying cells.
-             
-                When a cell is modified (non-const variant of the at() method), the flags of the cell are cleared first to make sure that new information clears the end of line flag.
-             */
-            //@{
-            Cell & at(Point p) {
-                Cell & result = ui2::Buffer::at(p);
-                SetUnusedBits(result, 0);
-                return result;
-            }
-
-            Cell & at(int col, int row) {
-                return at(Point{col, row});
-            }
-
-            Cell const & at(Point p) const {
-                return ui2::Buffer::at(p);
-            }
-
-            Cell const & at(int col, int row) const {
-                return at(Point{col, row});
-            }
-            //@}
-
             /** Draws the buffer on given canvas. 
              
                 The canvas must be the size of the buffer plus the size of the available history. 
@@ -419,8 +395,8 @@ namespace ui2 {
 
 
         CursorMode cursorMode_;
-        bool cursorVisible_;
-        bool cursorBlink_;
+        /** The cursor to be displayed. */
+        Cursor cursor_;
 
         KeypadMode keypadMode_;
 

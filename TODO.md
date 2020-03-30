@@ -22,9 +22,12 @@ The following is very short description of the versions planned and their main n
 - X11 renderer
 - QT Renderer
 
-- then do cursor and selection
+- UI title & icon & stuff
+- UI selection & SelectionOwner trait, AutoScrolling (as child of Scrollable trait)
+
 - PTY++ and remote files version 2.0
 - then back to the UI elements
+
 
 - fix the events payload to not contain references, and the event should take the payload as argument already
 
@@ -32,9 +35,8 @@ The following is very short description of the versions planned and their main n
 
 - design settings via abstract configurator classes that provide the interface
     - do settings for terminal history, including history, or shared history for the alternate buffer if requested
+- change settings to reflect other changes (cursors etc)
 
-- simpler UI framework
-- remove / refactor builders
 - shapes.h is areally bad name for the classes defined therein
 
 - snapcraft build has dirty stamp, see why & fix

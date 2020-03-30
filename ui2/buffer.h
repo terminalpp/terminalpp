@@ -131,6 +131,61 @@ namespace ui2 {
 
     }; // ui::Cell
 
+    /** Basic properties for an active cursor. 
+     */
+    class Cursor {
+    public:
+
+        Cursor():
+            codepoint_{0x2581},
+            visible_{true},
+            blink_{true},
+            color_{Color::White} {
+        }
+           
+        char32_t codepoint() const {
+            return codepoint_;
+        }
+
+        bool visible() const {
+            return visible_;
+        }
+
+        bool blink() const {
+            return blink_;
+        }
+
+        Color color() const {
+            return color_;
+        }
+
+        Cursor & setCodepoint(char32_t value) {
+            codepoint_ = value;
+            return *this;
+        }
+
+        Cursor & setVisible(bool value = true) {
+            visible_ = value;
+            return *this;
+        }
+
+        Cursor & setBlink(bool value = true) {
+            blink_ = value;
+            return *this;
+        }
+
+        Cursor & setColor(Color value) {
+            color_ = value;
+            return *this;
+        }
+
+    private:
+        char32_t codepoint_;
+        bool visible_;
+        bool blink_;
+        Color color_;
+    }; // ui::Cursor
+
     /** The UI backing buffer. 
      
         The buffer contains a 2D array of cells describing the physical screen and allows their basic access. 
@@ -178,6 +233,41 @@ namespace ui2 {
             return height_;
         }
 
+        /** Returns the cursor to be displayed. 
+         
+            If the cursor position has been invalidated in the meanting, returns the storec cursor with visibility set to false. 
+         */
+        Cursor cursor() const {
+            if (Rect::FromWH(width_, height_).contains(cursorPosition_) && GetUnusedBits(at(cursorPosition_)) & CURSOR_POSITION)
+                return cursor_;
+            else
+                return Cursor{cursor_}.setVisible(false);
+        }
+
+        /** Sets the cursor to be displayed at the stored position. 
+         */
+        void setCursor(Cursor const & value) {
+            cursor_ = value;
+        }
+
+        /** Returns the cursor position. 
+         */
+        Point cursorPosition() const {
+            return cursorPosition_;
+        }
+
+        /** Sets the cursor position. 
+         
+            Marks the cell as containing the cursor. If the cell is overwritten in the future, the flag is cleared and the cursor visibility will be disabled. 
+
+            Cursor position can also be set to out of bounds coordinates, which also hides the cursor. 
+         */
+        void setCursorPosition(Point value) {
+            cursorPosition_ = value;
+            if (Rect::FromWH(width_, height_).contains(value))
+                SetUnusedBits(at(value), CURSOR_POSITION);
+        }
+        
         Cell const & at(int x, int y) const {
             ASSERT(x >= 0 && x < width_);
             ASSERT(y >= 0 && y < height_);
@@ -191,17 +281,12 @@ namespace ui2 {
         Cell & at(int x, int y) {
             ASSERT(x >= 0 && x < width_);
             ASSERT(y >= 0 && y < height_);
+            SetUnusedBits(rows_[y][x], 0);
             return rows_[y][x];
         }
 
         Cell & at(Point p) {
             return at(p.x(), p.y());
-        }
-
-        void swapRows(int first, int second) {
-            ASSERT(first >= 0 && first < height_);
-            ASSERT(second>= 0 && second < height_);
-            std::swap(rows_[first], rows_[second]);
         }
 
         /** Resizes the buffer. 
@@ -236,6 +321,11 @@ namespace ui2 {
         int height_;
         Cell ** rows_;
 
+        /** Cursor properties.  */
+        Cursor cursor_;
+        /** Cursor position. */
+        Point cursorPosition_;
+
         /** Returns the value of the unused bits in the given cell's codepoint so that the buffer can store extra information for each cell. 
          */
         static char32_t GetUnusedBits(Cell const & cell) {
@@ -247,6 +337,10 @@ namespace ui2 {
         static void SetUnusedBits(Cell & cell, char32_t value) {
             cell.codepoint_ = (cell.codepoint_ & 0x1fffff) + (value & 0xffe00000);
         }
+
+        /** Unused bits flag that confirms that the cell has a visible cursor in it. 
+         */
+        static char32_t constexpr CURSOR_POSITION = 0x200000;
 
     };
 

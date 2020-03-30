@@ -163,6 +163,12 @@ namespace ui2 {
 
         Event<std::string> onPaste;
 
+        /** Sets the position of the cursor within given cavas. 
+         
+            Must be called in the paint() method and only currently focused widget can set cursor. 
+         */
+        void setCursor(Canvas & canvas, Cursor const & cursor, Point position);
+
         //@}
 
         /** \name Geometry
