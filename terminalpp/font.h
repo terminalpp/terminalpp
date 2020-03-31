@@ -120,7 +120,7 @@ namespace tpp2 {
 
     protected:
 
-        Font(ui2::Font const & font, int cellHeight, int cellWidth):
+        Font(ui2::Font font, int cellHeight, int cellWidth):
             FontMetrics(font, cellHeight, cellWidth) {
         }
 

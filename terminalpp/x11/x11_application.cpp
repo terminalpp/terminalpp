@@ -7,6 +7,32 @@
 
 #include "x11_application.h"
 
+namespace tpp2 {
+
+    X11Application::X11Application() {
+        
+    }
+
+    void X11Application::alert(std::string const & message) {
+
+    }
+
+    void X11Application::openLocalFile(std::string const & filename, bool edit) {
+
+    }
+
+    Window * X11Application::createWindow(std::string const & title, int cols, int rows) {
+		//return new X11Window{title, cols, rows};
+        return nullptr;
+    }
+
+    void X11Application::mainLoop() {
+
+    }
+
+
+}
+
 
 namespace tpp {
 

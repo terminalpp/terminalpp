@@ -6,6 +6,44 @@
 #include "x11.h"
 #include "../application.h"
 
+namespace tpp2 {
+
+    class X11Application : public Application {
+    public:
+        static void Initialize(int argc, char ** argv) {
+
+        }
+
+        static X11Application * Instance() {
+            return dynamic_cast<X11Application*>(Application::Instance());
+        }
+
+        void alert(std::string const & message) override ;
+
+        void openLocalFile(std::string const & filename, bool edit) override; 
+
+        Window * createWindow(std::string const & title, int cols, int rows) override;
+
+        void mainLoop() override;
+
+    private:
+
+        friend class X11Font;
+        friend class X11Window;
+
+        X11Application();
+
+        
+		/* X11 display. */
+	    Display* xDisplay_;
+		int xScreen_;
+
+    }; // X11Application
+
+} // namespace tpp
+
+
+
 namespace tpp {
 
     class X11Window;
