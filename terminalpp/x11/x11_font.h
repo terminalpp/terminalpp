@@ -37,9 +37,12 @@ namespace tpp2 {
 
         X11Font(X11Font const & base, char32_t codepoint);
 
+        void initializeFromPattern();
 
         XftFont * xftFont_;
         FcPattern * pattern_;
+
+        static XftFont * MatchFont(FcPattern * pattern);
 
         static void CloseFont(XftFont * font);
 
