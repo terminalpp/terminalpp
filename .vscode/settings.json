@@ -66,6 +66,9 @@
         "map": "cpp",
         "xlocbuf": "cpp",
         "concepts": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "optional": "cpp",
+        "array": "cpp",
+        "variant": "cpp"
     }
 }

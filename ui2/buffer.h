@@ -30,7 +30,7 @@ namespace ui2 {
             Since the codepoint is stored in a 32bit character and unicode only supports up to 0x10ffff codepoints, there are 11 unused bits. These are masked by the codepoint getter and setter so that they can be used by the buffers for extra information. 
          */
         //@{
-        char32_t const & codepoint() const {
+        char32_t codepoint() const {
             return codepoint_ & 0x1fffff;
         }
 

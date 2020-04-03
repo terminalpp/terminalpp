@@ -48,7 +48,7 @@ namespace tpp2 {
 
     protected:
 
-        void windowResized(int width, int height) {
+        void windowResized(int width, int height) override{
             ASSERT(rt_ != nullptr);
             D2D1_SIZE_U size = D2D1::SizeU(width, height);
             rt_->Resize(size);

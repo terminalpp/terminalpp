@@ -60,6 +60,7 @@ namespace ui2 {
         /** Change in child's rectangle triggers relayout of the container. 
          */
         void childRectChanged(Widget * child) override {
+            MARK_AS_UNUSED(child);
             if (! relayouting_) {
                 relayouting_ = true;
                 relayout();

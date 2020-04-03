@@ -113,6 +113,27 @@ int main(int argc, char* argv[]) {
 	APPLICATION_CLASS::Initialize(argc, argv);
 #else
 int main(int argc, char* argv[]) {
+	tpp2::APPLICATION_CLASS::Initialize(argc, argv);
+	Config const & config = Config::Setup(argc, argv);
+
+    tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
+    ui2::AnsiTerminal::Palette palette{ui2::AnsiTerminal::Palette::XTerm256()};
+    ui2::AnsiTerminal * t = new ui2::AnsiTerminal{&palette, 80, 25};
+    ui2::LocalPTY * pty = new ui2::LocalPTY{t, config.session.command()};
+    w->setRootWidget(t);
+    w->setKeyboardFocus(t);
+    //ui2::Panel * p = new ui2::Panel();
+    //w->setRootWidget(p);
+    w->show();
+    /*ui2::Renderer::SendEvent([]() {
+        tpp2::Application::Instance()->alert("Event received");
+    });
+    */
+    tpp2::Application::Instance()->mainLoop();
+
+    return EXIT_SUCCESS;
+
+
     try {
 	    APPLICATION_CLASS::Initialize(argc, argv);
     } catch (helpers::Exception const & e) {

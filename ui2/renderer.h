@@ -522,6 +522,7 @@ namespace ui2 {
          */
         virtual void widgetAttached(Widget * widget) {
             UI_THREAD_CHECK;
+            MARK_AS_UNUSED(widget);
             // TODO do nothing ? or make abstract?
         }
 

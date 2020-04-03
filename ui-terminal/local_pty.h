@@ -7,6 +7,48 @@
 
 #include "terminal.h"
 
+#include "pty.h"
+
+namespace ui2 {
+
+    class LocalPTY : public PTY {
+    public:
+        LocalPTY(Client * client, helpers::Command const & command);
+        LocalPTY(Client * client, helpers::Command const & command, helpers::Environment const & env);
+        ~LocalPTY() override;
+
+        void terminate() override;
+
+    protected:
+        void start();
+
+        void resize(int cols, int rows) override;
+        void send(char const * buffer, size_t bufferSize) override;
+
+    private: 
+
+        std::thread reader_;
+        std::thread wait_;
+
+        helpers::Command command_;
+        helpers::Environment environment_;
+
+#if (defined ARCH_WINDOWS)
+
+#elif (defined ARCH_UNIX)
+
+        /* Pipe to the process. */
+		int pipe_;
+
+        /* Pid of the process. */
+		pid_t pid_;
+#endif
+
+    }; 
+
+} // namespace ui
+
+
 namespace tpp {
 
     class LocalPTY : public ui::Terminal::PTY {

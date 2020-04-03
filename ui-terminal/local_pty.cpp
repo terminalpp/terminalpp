@@ -18,6 +18,120 @@
 
 #include "local_pty.h"
 
+namespace ui2 {
+
+#if (defined ARCH_UNIX)
+
+    LocalPTY::LocalPTY(Client * client, helpers::Command const & command):
+        PTY{client},
+        command_{command} {
+        start();
+
+    }
+
+    LocalPTY::LocalPTY(Client * client, helpers::Command const & command, helpers::Environment const & env):
+        PTY{client},
+        command_{command},
+        environment_{env} {
+        start();
+    }
+
+    LocalPTY::~LocalPTY() {
+        terminate();
+        reader_.join();
+        wait_.join();
+    }
+
+    void LocalPTY::terminate() {
+        kill(pid_, SIGKILL);
+    }
+
+    void LocalPTY::start() {
+		// fork & open the pty
+		switch (pid_ = forkpty(&pipe_, nullptr, nullptr, nullptr)) {
+			// forkpty failed
+			case -1:
+			    OSCHECK(false) << "Fork failed";
+		    // running the child process,
+			case 0: {
+				setsid();
+				if (ioctl(1, TIOCSCTTY, nullptr) < 0)
+					UNREACHABLE;
+				environment_.unsetIfUnspecified("COLUMNS");
+				environment_.unsetIfUnspecified("LINES");
+				environment_.unsetIfUnspecified("TERMCAP");
+				environment_.setIfUnspecified("TERM", "xterm-256color");
+				environment_.setIfUnspecified("COLORTERM", "truecolor");
+				environment_.apply();
+
+				signal(SIGCHLD, SIG_DFL);
+				signal(SIGHUP, SIG_DFL);
+				signal(SIGINT, SIG_DFL);
+				signal(SIGQUIT, SIG_DFL);
+				signal(SIGTERM, SIG_DFL);
+				signal(SIGALRM, SIG_DFL);
+
+				char** argv = command_.toArgv();
+				// execvp never returns
+				OSCHECK(execvp(command_.command().c_str(), argv) != -1) << "Unable to execute command " << command_;
+				UNREACHABLE;
+			}
+			// continuing the terminal program 
+			default:
+				break;
+		}
+
+        reader_ = std::thread{[this](){
+            // create the buffer, and read while we can 
+            char * buffer = new char[DEFAULT_BUFFER_SIZE];
+            int cnt = 0;
+            while (true) {
+                cnt = ::read(pipe_, (void*)buffer, DEFAULT_BUFFER_SIZE);
+                if (cnt == -1) {
+                    if (errno == EINTR || errno == EAGAIN)
+                        continue;
+                    // the pipe is broken, which is direct action of the process terminating, exit the reader thread
+                    break;
+                }
+                receive(buffer, cnt);
+            } 
+            delete [] buffer;
+        }};
+
+        wait_ = std::thread{[this](){
+            helpers::ExitCode ec;
+            pid_t x = waitpid(pid_, &ec, 0);
+            ec = WEXITSTATUS(ec);
+            // it is ok to see errno ECHILD, happens when process has already been terminated
+            if (x < 0 && errno != ECHILD) 
+                NOT_IMPLEMENTED; // error
+            terminated(ec);
+        }};
+    }
+
+    void LocalPTY::resize(int cols, int rows) {
+        struct winsize s;
+        s.ws_row = rows;
+        s.ws_col = cols;
+        s.ws_xpixel = 0;
+        s.ws_ypixel = 0;
+        if (ioctl(pipe_, TIOCSWINSZ, &s) < 0)
+            NOT_IMPLEMENTED;
+    }
+
+    void LocalPTY::send(char const * buffer, size_t bufferSize) {
+		int nw = ::write(pipe_, (void*)buffer, bufferSize);
+		// TODO check errors properly 
+		ASSERT(nw >= 0 && static_cast<unsigned>(nw) == bufferSize);
+    }
+
+
+
+#endif
+
+}
+
+
 
 namespace tpp {
 

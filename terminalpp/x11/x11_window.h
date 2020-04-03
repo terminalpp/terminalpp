@@ -6,6 +6,323 @@
 #include "x11_font.h"
 #include "../window.h"
 
+namespace tpp2 {
+
+    using namespace ui2;
+
+    class X11Window : public RendererWindow<X11Window, x11::Window> {
+    public:
+
+        //using Font = X11Font;
+
+        ~X11Window() override;
+
+        void repaint(Widget * widget) {
+            MARK_AS_UNUSED(widget);
+            // trigger a refresh
+            XEvent e;
+            memset(&e, 0, sizeof(XEvent));
+            e.xexpose.type = Expose;
+            e.xexpose.display = display_;
+            e.xexpose.window = window_;
+            X11Application::Instance()->xSendEvent(this, e, ExposureMask);
+        }
+
+        void setTitle(std::string const & value) override;
+
+        void setFullscreen(bool value = true) override;
+
+        void show(bool value = true) override;
+
+        void resize(int newWidth, int newHeight) override {
+            if (newWidth != width())
+                updateXftStructures(newWidth);
+            RendererWindow::resize(newWidth, newHeight);
+        }
+
+    protected:
+
+        void windowResized(int width, int height) override {
+            MARK_AS_UNUSED(width);
+            MARK_AS_UNUSED(height);
+            /*
+            ASSERT(rt_ != nullptr);
+            D2D1_SIZE_U size = D2D1::SizeU(width, height);
+            rt_->Resize(size);
+            RendererWindow::windowResized(width, height);
+            */
+        }
+
+
+        /** Destroys the renderer's window. 
+         */
+        void rendererClose() override {
+            /*
+            DestroyWindow(hWnd_);
+            */
+        }
+
+        /** Enable mouse tracking so that the mouseOut event is properly reported. 
+         */
+        void rendererMouseIn() override {
+            /*
+            TRACKMOUSEEVENT tm;
+            tm.cbSize = sizeof(tm);
+            tm.dwFlags = TME_LEAVE;
+            tm.hwndTrack = hWnd_;
+            TrackMouseEvent(&tm);                    
+            RendererWindow::rendererMouseIn();
+            */
+        }
+
+    private:
+        friend class X11Application;
+        friend class RendererWindow<X11Window, x11::Window>;
+
+		class MotifHints {
+		public:
+			unsigned long   flags;
+			unsigned long   functions;
+			unsigned long   decorations;
+			long            inputMode;
+			unsigned long   status;
+		};
+
+        /** Creates the renderer window of appropriate size using the default font and zoom of 1.0. 
+         */
+        X11Window(std::string const & title, int cols, int rows);
+
+        /** \name Rendering Functions
+         */
+        //@{
+        void initializeDraw() {
+            ASSERT(draw_ == nullptr);
+            if (buffer_ == 0) {
+                buffer_ = XCreatePixmap(display_, window_, widthPx_, heightPx_, DefaultDepth(display_, screen_));
+                ASSERT(buffer_ != 0);
+            }
+            draw_ = XftDrawCreate(display_, buffer_, visual_, colorMap_);
+        }
+
+        void finalizeDraw() {
+            changeBackgroundColor(backgroundColor());
+            if (widthPx_ % cellWidth_ != 0)
+                XftDrawRect(draw_, &bg_, width() * cellWidth_, 0, widthPx_ % cellWidth_, heightPx_);
+            if (heightPx_ % cellHeight_ != 0)
+                XftDrawRect(draw_, &bg_, 0, height() * cellHeight_, width(), heightPx_ % cellHeight_);
+            // now bitblt the buffer
+            XCopyArea(display_, buffer_, window_, gc_, 0, 0, widthPx_, heightPx_, 0, 0);
+            XftDrawDestroy(draw_);
+            draw_ = nullptr;
+            XFlush(display_);
+        }
+
+        void initializeGlyphRun(int col, int row) {
+            textSize_ = 0;
+            textCol_ = col;
+            textRow_ = row;
+        }
+
+        void addGlyph(int col, int row, Cell const & cell) {
+            FT_UInt glyph = XftCharIndex(display_, font_->xftFont(), cell.codepoint());
+            if (glyph == 0) {
+                // draw glyph run so far and initialize a new glyph run
+                drawGlyphRun();
+                initializeGlyphRun(col, row);
+                // obtain the fallback font and initialize the glyph run with it
+                X11Font * oldFont = font_;
+                font_ = font_->fallbackFor(cell.codepoint());
+                text_[0].glyph = XftCharIndex(display_, font_->xftFont(), cell.codepoint());
+                text_[0].x = textCol_ * cellWidth_ + font_->offsetLeft();
+                text_[0].y = (textRow_ + 1 - font_->font().height()) * cellHeight_ + font_->ascent() + font_->offsetTop();
+                ++textSize_;
+                drawGlyphRun();
+                initializeGlyphRun(col + font_->font().width(), row);
+                font_ = oldFont;
+            } else {
+                if (textSize_ == 0) {
+                    text_[0].x = textCol_ * cellWidth_ + font_->offsetLeft();
+                    text_[0].y = (textRow_ + 1 - state_.font().height()) * cellHeight_ + font_->ascent() + font_->offsetTop();
+                } else {
+                    text_[textSize_].x = text_[textSize_ - 1].x + cellWidth_ * state_.font().width();
+                    text_[textSize_].y = text_[textSize_ - 1].y;
+                }
+                text_[textSize_].glyph = glyph;
+                ++textSize_;
+            }
+        }
+
+        /** Updates the current font.
+         */
+        void changeFont(ui2::Font font) {
+			font_ = X11Font::Get(font, cellHeight_, cellWidth_);
+        }
+
+        /** Updates the foreground color.
+         */
+        void changeForegroundColor(Color color) {
+            fg_ = toXftColor(color);
+        }
+
+        /** Updates the background color. 
+         */
+        void changeBackgroundColor(Color color) {
+            bg_ = toXftColor(color);
+        }
+
+        /** Updates the decoration color. 
+         */
+        void changeDecorationColor(Color color) {
+            decor_ = toXftColor(color);
+        }
+
+        /** Draws the glyph run. 
+         
+            First clears the background with given background color, then draws the text and finally applies any decorations. 
+         */
+        void drawGlyphRun() {
+            if (textSize_ == 0)
+                return;
+            int fontWidth = state_.font().width();
+            int fontHeight = state_.font().height();
+            // fill the background unless it is fully transparent
+            if (bg_.color.alpha != 0)
+			    XftDrawRect(draw_, &bg_, textCol_ * cellWidth_, (textRow_ + 1 - fontHeight) * cellHeight_, textSize_ * cellWidth_ * fontWidth, cellHeight_ * fontHeight);
+            // draw the text
+            if (!state_.font().blink() || BlinkVisible_) {
+                XftDrawGlyphSpec(draw_, &fg_, font_->xftFont(), text_, textSize_);
+                // deal with the attributes
+                if (state_.font().underline())
+					XftDrawRect(draw_, &decor_, textCol_ * cellWidth_, textRow_ * cellHeight_ + font_->underlineOffset(), cellWidth_ * textSize_, font_->underlineThickness());
+                if (state_.font().strikethrough())
+					XftDrawRect(draw_, &decor_, textCol_ * cellWidth_, textRow_ * cellHeight_ + font_->strikethroughOffset(), cellWidth_ * textSize_, font_->strikethroughThickness());
+            }
+            textSize_ = 0;
+        }
+        void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
+            MARK_AS_UNUSED(col);
+            MARK_AS_UNUSED(row);
+            MARK_AS_UNUSED(border);
+            MARK_AS_UNUSED(widthThin);
+            MARK_AS_UNUSED(widthThick);
+            /*
+            int cLeft = left;
+            int cTop = top;
+            int cWidth = cellWidthPx_;
+            int cHeight = width;
+            // if top border is selected, draw the top line 
+            if (attrs.borderTop()) {
+                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+            // otherwise see if the left or right parts of the border should be drawn
+            } else {
+                if (attrs.borderLeft()) {
+                    cWidth = width;
+                    XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+                }
+                if (attrs.borderRight()) {
+                    cWidth = width;
+                    cLeft = left + cellWidthPx_ - width;
+                    XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+                }
+            }
+            // check the left and right border in the middle part
+            cTop += width;
+            cHeight = cellHeightPx_ - 2 * width;
+            if (attrs.borderLeft()) {
+                cLeft = left;
+                cWidth = width;
+                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+            }
+            if (attrs.borderRight()) {
+                cWidth = width;
+                cLeft = left + cellWidthPx_ - width;
+                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+            }
+            // check if the bottom part should be drawn, first by checking whether the whole bottom part should be drawn, if not then by separate checking the left and right corner
+            cTop = top + cellHeightPx_ - width;
+            cHeight = width;
+            if (attrs.borderBottom()) {
+                cLeft = left;
+                cWidth = cellWidthPx_;
+                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+            } else {
+                if (attrs.borderLeft()) {
+                    cLeft = left;
+                    cWidth = width;
+                    XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+                }
+                if (attrs.borderRight()) {
+                    cWidth = width;
+                    cLeft = left + cellWidthPx_ - width;
+                    XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
+                }
+            }
+            */
+        }
+        //@}
+
+        void updateXftStructures(int cols) {
+            delete [] text_;
+            text_ = new XftGlyphSpec[cols];
+        }
+
+		XftColor toXftColor(ui2::Color const& c) {
+			XftColor result;
+			result.color.red = c.r * 256;
+			result.color.green = c.g * 256;
+			result.color.blue = c.b * 256;
+			result.color.alpha = c.a * 256;
+			return result;
+		}
+
+        x11::Window window_;
+        Display * display_;
+        int screen_;
+        Visual * visual_;
+        Colormap colorMap_;
+        XIC ic_;
+
+        GC gc_;
+        Pixmap buffer_;
+
+		XftDraw * draw_;
+		XftColor fg_;
+		XftColor bg_;
+        XftColor decor_;
+        XftColor border_;
+		X11Font * font_;
+
+        XftGlyphSpec * text_;
+
+        /** Text buffer rendering data.
+         */
+        unsigned textCol_;
+        unsigned textRow_;
+        unsigned textSize_;
+
+		/** Info about the window state before fullscreen was triggered. 
+		 */
+        XWindowChanges fullscreenRestore_;
+
+
+		/** Given current state as reported from X11, translates it to vterm::Key modifiers
+		 */
+		static unsigned GetStateModifiers(int state);
+
+        /** Converts the KeySym and preexisting modifiers as reported by X11 into key. 
+
+		    Because the modifiers are preexisting, but the terminal requires post-state, Shift, Ctrl, Alt and Win keys also update the modifiers based on whether they key was pressed, or released
+         */
+        static Key GetKey(KeySym k, unsigned modifiers, bool pressed);
+
+        static void EventHandler(XEvent & e);
+
+
+    }; // tpp::X11Window
+
+} // namespace tpp
+
+
 namespace tpp {
 
     class X11Window : public RendererWindow<X11Window, x11::Window> {

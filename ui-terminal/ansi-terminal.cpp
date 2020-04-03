@@ -1358,7 +1358,7 @@ namespace ui2 {
     void AnsiTerminal::deleteCharacters(unsigned num) {
 		int r = state_.cursor.y();
 		for (unsigned c = state_.cursor.x(), e = state_.buffer.width() - num; c < e; ++c) 
-			Cell& cell = state_.buffer.at(c, r) = state_.buffer.at(c + num, r);
+			state_.buffer.at(c, r) = state_.buffer.at(c + num, r);
 		for (unsigned c = state_.buffer.width() - num, e = state_.buffer.width(); c < e; ++c)
 			state_.buffer.at(c, r) = state_.cell;
     }
@@ -1589,7 +1589,7 @@ namespace ui2 {
             }
             delete row;
         }
-        while (history_.size() > maxHistoryRows_) {
+        while (history_.size() > static_cast<size_t>(maxHistoryRows_)) {
             delete [] history_.front().second;
             history_.pop_front();
         }
