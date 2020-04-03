@@ -65,6 +65,11 @@ namespace tpp2 {
 		) THROW(helpers::Exception()) << "X11 Atoms instantiation failed";
 
         fcConfig_ = FcInitLoadConfigAndFonts();
+
+        Renderer::Initialize([](){
+            // send the message that informs the renderer to process the queue
+            LOG() << "Here";
+        });
         
     }
 

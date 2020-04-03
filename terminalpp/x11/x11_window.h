@@ -43,14 +43,11 @@ namespace tpp2 {
     protected:
 
         void windowResized(int width, int height) override {
-            MARK_AS_UNUSED(width);
-            MARK_AS_UNUSED(height);
-            /*
-            ASSERT(rt_ != nullptr);
-            D2D1_SIZE_U size = D2D1::SizeU(width, height);
-            rt_->Resize(size);
+			if (buffer_ != 0) {
+				XFreePixmap(display_, buffer_);
+				buffer_ = 0;
+			}
             RendererWindow::windowResized(width, height);
-            */
         }
 
 
@@ -59,19 +56,6 @@ namespace tpp2 {
         void rendererClose() override {
             /*
             DestroyWindow(hWnd_);
-            */
-        }
-
-        /** Enable mouse tracking so that the mouseOut event is properly reported. 
-         */
-        void rendererMouseIn() override {
-            /*
-            TRACKMOUSEEVENT tm;
-            tm.cbSize = sizeof(tm);
-            tm.dwFlags = TME_LEAVE;
-            tm.hwndTrack = hWnd_;
-            TrackMouseEvent(&tm);                    
-            RendererWindow::rendererMouseIn();
             */
         }
 
@@ -197,8 +181,10 @@ namespace tpp2 {
                 if (state_.font().strikethrough())
 					XftDrawRect(draw_, &decor_, textCol_ * cellWidth_, textRow_ * cellHeight_ + font_->strikethroughOffset(), cellWidth_ * textSize_, font_->strikethroughThickness());
             }
+            textCol_ += textSize_;
             textSize_ = 0;
         }
+
         void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
             MARK_AS_UNUSED(col);
             MARK_AS_UNUSED(row);
