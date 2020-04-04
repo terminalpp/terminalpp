@@ -41,7 +41,7 @@ namespace tpp2 {
 		formatTargets_ = XInternAtom(xDisplay_, "TARGETS", false);
 		clipboardIncr_ = XInternAtom(xDisplay_, "INCR", false);
 		wmDeleteMessage_ = XInternAtom(xDisplay_, "WM_DELETE_WINDOW", false);
-		fpsTimerMessage_ = XInternAtom(xDisplay_, "TPP_BLINK_TIMER", false);
+		wmUserEventMessage_ = XInternAtom(xDisplay_, "WM_USER_EVENT", false);
 		motifWmHints_ = XInternAtom(xDisplay_, "_MOTIF_WM_HINTS", false);
 		netWmIcon_ = XInternAtom(xDisplay_, "_NET_WM_ICON", false);
 
@@ -58,7 +58,7 @@ namespace tpp2 {
 			formatTargets_ == x11::None ||
 			clipboardIncr_ == x11::None ||
 			wmDeleteMessage_ == x11::None ||
-			fpsTimerMessage_ == x11::None ||
+			wmUserEventMessage_ == x11::None ||
 			broadcastWindow_ == x11::None ||
 			motifWmHints_ == x11::None ||
 			netWmIcon_ == x11::None
@@ -66,10 +66,19 @@ namespace tpp2 {
 
         fcConfig_ = FcInitLoadConfigAndFonts();
 
-        Renderer::Initialize([](){
+        Renderer::Initialize([this](){
+            XEvent e;
+            memset(&e, 0, sizeof(XEvent));
+            e.xany.type = ClientMessage;
+            e.xexpose.display = xDisplay_;
+            e.xexpose.window = broadcastWindow_;
+            e.xclient.data.l[0] = wmUserEventMessage_;
             // send the message that informs the renderer to process the queue
-            LOG() << "Here";
+            XSendEvent(xDisplay_, broadcastWindow_, false, NoEventMask, &e);
+    		XFlush(xDisplay_);
         });
+
+		X11Window::StartBlinkerThread();
         
     }
 
@@ -100,11 +109,20 @@ namespace tpp2 {
 
     void X11Application::mainLoop() {
         XEvent e;
-        while (true) { 
-            XNextEvent(xDisplay_, &e);
-            if (XFilterEvent(&e, x11::None))
-                continue;
-            X11Window::EventHandler(e);
+        try {
+            while (true) { 
+                XNextEvent(xDisplay_, &e);
+                if (XFilterEvent(&e, x11::None))
+                    continue;
+                if (e.xany.window == broadcastWindow_ && e.type == ClientMessage) {
+                    if (static_cast<unsigned long>(e.xclient.data.l[0]) == X11Application::Instance()->wmUserEventMessage_) 
+                        Renderer::ExecuteUserEvent();
+                } else {
+                    X11Window::EventHandler(e);
+                }
+            }
+        } catch (TerminateException const &) {
+            // don't do anything
         }
     }
 

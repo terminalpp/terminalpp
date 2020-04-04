@@ -389,6 +389,23 @@ namespace tpp2 {
             case LeaveNotify:
                 window->rendererMouseOut();
                 break;
+
+            case DestroyNotify: {
+                // delete the window object and remove it from the list of active windows
+                delete window;
+                std::lock_guard<std::mutex> g(MWindows_);
+                if (Windows_.empty()) 
+                    throw X11Application::TerminateException();
+                break;
+            }
+			/* User-defined messages. 
+			 */
+			case ClientMessage:
+			    if (static_cast<unsigned long>(e.xclient.data.l[0]) == X11Application::Instance()->wmDeleteMessage_) {
+					ASSERT(window != nullptr) << "Attempt to destroy unknown window";
+                    window->requestClose();
+				}
+				break;
         }
     }
 

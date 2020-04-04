@@ -54,9 +54,7 @@ namespace tpp2 {
         /** Destroys the renderer's window. 
          */
         void rendererClose() override {
-            /*
-            DestroyWindow(hWnd_);
-            */
+            XDestroyWindow(display_, window_);
         }
 
     private:
