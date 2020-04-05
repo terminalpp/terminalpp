@@ -73,7 +73,7 @@ namespace tpp2 {
 		x11::Window broadcastWindow_;
         XIM xIm_;
 		Atom wmDeleteMessage_;
-		Atom wmUserEventMessage_;
+		Atom xAppEvent_;
         Atom primaryName_;
 		Atom clipboardName_;
 		Atom formatString_;

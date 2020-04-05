@@ -295,7 +295,9 @@ namespace ui2 {
         size_t processInput(char const * buffer, char const * bufferEnd) override;
 
         void ptyTerminated(ExitCode exitCode) override {
-            Renderer::SendEvent([this, exitCode](){ });
+            Renderer::SendEvent([this, exitCode](){
+                LOG() << "Terminated";
+             });
         }
         //@}
 
