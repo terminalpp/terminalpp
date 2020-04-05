@@ -184,64 +184,21 @@ namespace tpp2 {
         }
 
         void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
-            MARK_AS_UNUSED(col);
-            MARK_AS_UNUSED(row);
-            MARK_AS_UNUSED(border);
-            MARK_AS_UNUSED(widthThin);
-            MARK_AS_UNUSED(widthThick);
-            /*
-            int cLeft = left;
-            int cTop = top;
-            int cWidth = cellWidthPx_;
-            int cHeight = width;
-            // if top border is selected, draw the top line 
-            if (attrs.borderTop()) {
-                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-            // otherwise see if the left or right parts of the border should be drawn
-            } else {
-                if (attrs.borderLeft()) {
-                    cWidth = width;
-                    XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-                }
-                if (attrs.borderRight()) {
-                    cWidth = width;
-                    cLeft = left + cellWidthPx_ - width;
-                    XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-                }
-            }
-            // check the left and right border in the middle part
-            cTop += width;
-            cHeight = cellHeightPx_ - 2 * width;
-            if (attrs.borderLeft()) {
-                cLeft = left;
-                cWidth = width;
-                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-            }
-            if (attrs.borderRight()) {
-                cWidth = width;
-                cLeft = left + cellWidthPx_ - width;
-                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-            }
-            // check if the bottom part should be drawn, first by checking whether the whole bottom part should be drawn, if not then by separate checking the left and right corner
-            cTop = top + cellHeightPx_ - width;
-            cHeight = width;
-            if (attrs.borderBottom()) {
-                cLeft = left;
-                cWidth = cellWidthPx_;
-                XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-            } else {
-                if (attrs.borderLeft()) {
-                    cLeft = left;
-                    cWidth = width;
-                    XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-                }
-                if (attrs.borderRight()) {
-                    cWidth = width;
-                    cLeft = left + cellWidthPx_ - width;
-                    XftDrawRect(draw_, &border_, cLeft, cTop, cWidth, cHeight);
-                }
-            }
-            */
+            int left = col * cellWidth_;
+            int top = row * cellHeight_;
+            int widthTop = border.top() == Border::Kind::None ? 0 : (border.top() == Border::Kind::Thick ? widthThick : widthThin);
+            int widthLeft = border.left() == Border::Kind::None ? 0 : (border.left() == Border::Kind::Thick ? widthThick : widthThin);
+            int widthBottom = border.bottom() == Border::Kind::None ? 0 : (border.bottom() == Border::Kind::Thick ? widthThick : widthThin);
+            int widthRight = border.right() == Border::Kind::None ? 0 : (border.right() == Border::Kind::Thick ? widthThick : widthThin);
+
+            if (widthTop != 0)
+                XftDrawRect(draw_, &bg_, left, top, cellWidth_, widthTop);
+            if (widthBottom != 0)
+                XftDrawRect(draw_, &bg_, left, top + cellHeight_ - widthBottom, cellWidth_, widthBottom);
+            if (widthLeft != 0) 
+                XftDrawRect(draw_, &bg_, left, top + widthTop, widthLeft, cellHeight_ - widthTop - widthBottom);
+            if (widthRight != 0) 
+                XftDrawRect(draw_, &bg_, left + cellWidth_ - widthRight, top + widthTop, widthRight, cellHeight_ - widthTop - widthBottom);
         }
         //@}
 

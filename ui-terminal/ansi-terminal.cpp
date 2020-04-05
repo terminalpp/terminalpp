@@ -296,7 +296,7 @@ namespace ui2 {
 
     void AnsiTerminal::mouseUp(Event<MouseButtonEvent>::Payload & event) {
         // a bit of defensive programming
-        if (mouseLastButton_ > 0) {
+        if (mouseButtonsDown_ > 0) {
             --mouseButtonsDown_;
             if (mouseMode_ != MouseMode::Off) {
                 mouseLastButton_ = encodeMouseButton(event->button, event->modifiers);

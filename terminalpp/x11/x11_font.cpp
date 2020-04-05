@@ -1,3 +1,4 @@
+#if (defined ARCH_LINUX && defined RENDERER_NATIVE)
 #include "x11_font.h"
 
 namespace tpp2 {
@@ -127,3 +128,5 @@ namespace tpp2 {
     }
 
 } // namespace tpp2
+
+#endif

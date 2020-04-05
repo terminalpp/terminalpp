@@ -7,6 +7,60 @@
 
 #include "../application.h"
 
+namespace tpp2{
+    class QtWindow;
+
+    class QtApplication : public QApplication, public Application {
+        Q_OBJECT
+    public:
+
+        static void Initialize(int & argc, char ** argv) {
+            new QtApplication{argc, argv};
+        }
+
+        static QtApplication * Instance() {
+            return dynamic_cast<QtApplication*>(Application::Instance());
+        }
+
+        void alert(std::string const & message) override ;
+
+        void openLocalFile(std::string const & filename, bool edit) override; 
+
+        Window * createWindow(std::string const & title, int cols, int rows) override;
+
+        void mainLoop() override {
+            exec();
+        }
+
+        QIcon const & iconDefault() const {
+            return iconDefault_;
+        }
+
+        QIcon const & iconNotification() const {
+            return iconNotification_;
+        }
+
+    signals:
+       void tppUserEvent();
+
+    protected slots:
+
+        void userEvent();
+
+
+    private:
+        friend class QtFont;
+        friend class QtWindow;
+
+        QtApplication(int & argc, char ** argv);
+
+
+        QIcon iconDefault_;
+        QIcon iconNotification_;
+    }; // tpp::QtApplication
+
+}
+
 namespace tpp {
 
     class QtWindow;

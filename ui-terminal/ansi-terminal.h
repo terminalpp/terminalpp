@@ -284,8 +284,6 @@ namespace ui2 {
         void keyDown(Event<Key>::Payload & event) override;
         //@}
 
-
-
         /** \name PTY Interface 
          */
         //@{

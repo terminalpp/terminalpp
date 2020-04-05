@@ -82,7 +82,6 @@ namespace tpp2 {
         });
 
 		X11Window::StartBlinkerThread();
-        
     }
 
 	X11Application::~X11Application() {
