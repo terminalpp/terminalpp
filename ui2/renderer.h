@@ -47,18 +47,6 @@ namespace ui2 {
             return buffer_.height();
         }
 
-        std::string const & title() const {
-            UI_THREAD_CHECK;
-            return title_;
-        }
-
-        virtual void setTitle(std::string const & value) {
-            UI_THREAD_CHECK;
-            if (title_ != value) {
-                title_ = value;
-            }
-        }
-
         Color const &  backgroundColor() const {
             return backgroundColor_;
         }
@@ -153,7 +141,6 @@ namespace ui2 {
 
         Renderer(int width, int height):
             buffer_{width, height},
-            title_{""},
             rootWidget_{nullptr},
             modalRoot_{nullptr},
             mouseIn_{false},
@@ -578,9 +565,6 @@ namespace ui2 {
         Buffer buffer_;
 
         Color backgroundColor_;
-
-        /** Renderer's window title. */
-        std::string title_;
 
         /** The root widget being rendered. */
         Widget * rootWidget_;

@@ -29,6 +29,34 @@ namespace tpp2 {
     class Window: public LocalRenderer {
     public:
 
+        /** Determines the icon of the renderer's window where appropriate. 
+         
+            Instead of specifying the actual icon, which is left to the actual renderers being used, the icon specifies the meaning of the icon.
+         */
+        enum class Icon {
+            Default,
+            Notification,
+        }; // Window::Icon
+
+
+        std::string const & title() const {
+            return title_;
+        }
+
+        virtual void setTitle(std::string const & value) {
+            if (value != title_)
+                title_ = value;
+        }
+
+        Icon icon() const {
+            return icon_;
+        }
+
+        virtual void setIcon(Icon value) {
+            if (value != icon_)
+                icon_ = value;
+        }
+
         int widthPx() const {
             return widthPx_;
         }
@@ -60,6 +88,8 @@ namespace tpp2 {
     protected:
         Window(int width, int height, FontMetrics const & font, double zoom):
             LocalRenderer{width, height},
+            title_{"terminal++"},
+            icon_{Icon::Default},
             zoom_{zoom},
             fullscreen_{false},
             activeModifiers_{0} {
@@ -136,6 +166,10 @@ namespace tpp2 {
 
         //@}
 
+        /** Title of the window. 
+         */
+        std::string title_;
+        Icon icon_;
 
         int widthPx_;
         int heightPx_;

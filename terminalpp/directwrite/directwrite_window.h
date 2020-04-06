@@ -34,6 +34,8 @@ namespace tpp2 {
 
         void setTitle(std::string const & value) override;
 
+        void setIcon(Window::Icon icon) override;
+
         void setFullscreen(bool value = true) override;
 
         void show(bool value = true) override {

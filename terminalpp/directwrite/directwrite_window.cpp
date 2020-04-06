@@ -7,14 +7,29 @@
 
 namespace tpp2 {
 
+
     void DirectWriteWindow::setTitle(std::string const & value) {
-        if (title() != value) {
-            RendererWindow::setTitle(value);
-            // actually change the title since we are in the UI thread now
-            helpers::utf16_string t = helpers::UTF8toUTF16(value);
-            // ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-            SetWindowTextW(hWnd_, t.c_str());
+        RendererWindow::setTitle(value);
+        // actually change the title since we are in the UI thread now
+        helpers::utf16_string t = helpers::UTF8toUTF16(value);
+        // ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+        SetWindowTextW(hWnd_, t.c_str());
+    }
+
+    void DirectWriteWindow::setIcon(Window::Icon icon) {
+        RendererWindow::setIcon(icon);
+        DirectWriteApplication *app = DirectWriteApplication::Instance();
+        WPARAM iconHandle;
+        switch (icon) {
+            case Icon::Notification:
+                iconHandle = reinterpret_cast<WPARAM>(app->iconNotification_);
+                break;
+            default:
+                iconHandle = reinterpret_cast<WPARAM>(app->iconDefault_);
+                break;
         }
+        PostMessage(hWnd_, WM_SETICON, ICON_BIG, iconHandle);
+        PostMessage(hWnd_, WM_SETICON, ICON_SMALL, iconHandle);
     }
 
     void DirectWriteWindow::setFullscreen(bool value) {
@@ -102,7 +117,9 @@ namespace tpp2 {
         updateDirectWriteStructures(width());
 
         // register the window
-        RegisterWindowHandle(this, hWnd_);        
+        RegisterWindowHandle(this, hWnd_);  
+        setTitle(title_);
+        setIcon(icon_);      
     }
 
     void DirectWriteWindow::updateDirectWriteStructures(int cols) {
