@@ -21,9 +21,9 @@ namespace tpp2 {
             emit tppRequestUpdate();
         };
 
-        void setTitle(std::string const & value) {
-            NOT_IMPLEMENTED;
-        }
+        void setTitle(std::string const & value) override;
+
+        void setIcon(Window::Icon icon) override;
 
         void setFullscreen(bool value = true) override {
             if (value)

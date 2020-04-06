@@ -22,9 +22,10 @@ The following is very short description of the versions planned and their main n
 - X11 renderer
 - QT Renderer
 
-- UI title & icon & stuff
 - UI selection & SelectionOwner trait, AutoScrolling (as child of Scrollable trait)
 
+
+- ansiterminal events for title & notification change and their mapping in session for the window
 - PTY++ and remote files version 2.0
 - then back to the UI elements
 

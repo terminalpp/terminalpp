@@ -4,7 +4,22 @@
 
 #include "x11_window.h"
 
+// TODO this unify with the text below when we get rid of the old tpp namespace
+namespace tpp {
+	/** The statically generated icon description stored in an array so that in can be part of the executable. 
+	
+	    To change its contents, run the `icons` build target. 
+	 */
+	extern unsigned long tppIcon[];
+	extern unsigned long tppIconNotification[];
+}
+
+
+
 namespace tpp2 {
+
+    using tpp::tppIcon;
+    using tpp::tppIconNotification;
 
     X11Window::X11Window(std::string const & title, int cols, int rows):
         RendererWindow{cols, rows, *X11Font::Get(ui2::Font(), tpp::Config::Instance().font.size()), 1.0},
@@ -57,14 +72,14 @@ namespace tpp2 {
 
         updateXftStructures(width());
 
-        // set the icon
-		//setIcon(ui::RootWindow::Icon::Default);
-
 		// register the window
         RegisterWindowHandle(this, window_);
 
         border_ = toXftColor(Color::White);
 
+        // set the icon & title 
+        setTitle(title_);
+        setIcon(icon_);
     }
 
 
@@ -75,8 +90,36 @@ namespace tpp2 {
     }
 
     void X11Window::setTitle(std::string const & value) {
-
+        RendererWindow::setTitle(value);
+        XSetStandardProperties(display_, window_, value.c_str(), nullptr, x11::None, nullptr, 0, nullptr);
     }
+
+    void X11Window::setIcon(Window::Icon icon) {
+        RendererWindow::setIcon(icon);
+        /* 
+		    The window icon must be an array of BGRA colors for the different icon sizes where the first element is the total size of the array followed by arbitrary icon sizes encoded by first 2 items representing the icon width and height followed by the actual pixels. 
+         */
+        unsigned long * iconHandle;
+        switch (icon) {
+            case Icon::Notification:
+                iconHandle = tppIconNotification;
+                break;
+            default:
+                iconHandle = tppIcon;
+                break;
+        }
+		XChangeProperty(
+			display_,
+			window_,
+			X11Application::Instance()->netWmIcon_,
+			XA_CARDINAL,
+			32,
+			PropModeReplace,
+			reinterpret_cast<unsigned char*>(&iconHandle[1]),
+			iconHandle[0]
+		);
+    }
+
 
     void X11Window::setFullscreen(bool value) {
         X11Application * app = X11Application::Instance();

@@ -18,9 +18,6 @@ namespace tpp2 {
         connect(this, &QtWindow::tppWindowClose, this, &QtWindow::close, Qt::ConnectionType::QueuedConnection);
 
         /*
-        connect(this, &QtWindow::tppSetTitle, this, static_cast<void (QtWindow::*)(QString const &)>(&QtWindow::setTitle), Qt::ConnectionType::QueuedConnection);
-        connect(this, &QtWindow::tppSetIcon, this, static_cast<void (QtWindow::*)(QIcon const &)>(&QtWindow::setIcon), Qt::ConnectionType::QueuedConnection);
-        connect(this, &QtWindow::tppSetIcon, QtApplication::Instance(), &QtApplication::setWindowIcon, Qt::ConnectionType::QueuedConnection);
 
         connect(this, &QtWindow::tppSetClipboard, QtApplication::Instance(), &QtApplication::setClipboard, Qt::ConnectionType::QueuedConnection);
         connect(this, &QtWindow::tppSetSelection, QtApplication::Instance(), &QtApplication::setSelection, Qt::ConnectionType::QueuedConnection);
@@ -32,11 +29,35 @@ namespace tpp2 {
 
         //setMouseTracking(true);
         RegisterWindowHandle(this, this);
-        //setIcon(ui::RootWindow::Icon::Default);
+        
+        setTitle(title_);
+        setIcon(icon_);
     }
 
     QtWindow::~QtWindow() {
         UnregisterWindowHandle(this);
+    }
+
+    void QtWindow::setTitle(std::string const & value) {
+        RendererWindow::setTitle(value);
+        QWindowBase::setTitle(QString{value.c_str()});
+    }
+
+    void QtWindow::setIcon(Window::Icon icon) {
+        RendererWindow::setIcon(icon);
+        QtApplication * app = QtApplication::Instance();
+        switch (icon) {
+            case Icon::Default:
+                QWindowBase::setIcon(app->iconDefault_);
+                app->setWindowIcon(app->iconDefault_);
+                break;
+            case Icon::Notification:
+                QWindowBase::setIcon(app->iconNotification_);
+                app->setWindowIcon(app->iconNotification_);
+                break;
+            default:
+                UNREACHABLE;
+        }
     }
 
     void QtWindow::show(bool value) {

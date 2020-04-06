@@ -118,6 +118,7 @@ namespace tpp2 {
 
         // register the window
         RegisterWindowHandle(this, hWnd_);  
+        
         setTitle(title_);
         setIcon(icon_);      
     }
