@@ -12,7 +12,6 @@
 
 #include "about_box.h"
 
-
 namespace tpp {
 
     /** An alert displayed when pasting into the terminal. 

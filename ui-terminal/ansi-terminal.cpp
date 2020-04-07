@@ -536,7 +536,12 @@ namespace ui2 {
     }
 
     void AnsiTerminal::parseNotification() {
-        // NOT_IMPLEMENTED;
+        bufferLock_.unlock();
+        Renderer::SendEvent([this](){
+            Event<void>::Payload p;
+            onNotification(p, this);
+        });
+        bufferLock_.lock();
     }
 
     void AnsiTerminal::parseTab() {
@@ -1307,20 +1312,16 @@ namespace ui2 {
         switch (seq.num()) {
             /* OSC 0 - change the terminal title.
              */
-            /*
-            case 0:
+            case 0: {
     			LOG(SEQ) << "Title change to " << seq.value();
-                buffer_.unlock();
-                try {
-                    setTitle(seq.value());
-                } catch (std::exception const & e) {
-                    LOG(SEQ_ERROR) << e.what();
-                } catch (...) {
-                    LOG(SEQ_ERROR) << "unknown error";
-                }
-                buffer_.lock();
+                bufferLock_.unlock();
+                Event<std::string>::Payload p(seq.value());
+                Renderer::SendEvent([this, & p](){
+                    onTitleChange(p, this);
+                });
+                bufferLock_.lock();
                 break;
-            */
+            }
             /* OSC 52 - set clipboard to given value. 
              */
             /*

@@ -141,6 +141,21 @@ namespace ui2 {
         }
         //@}
 
+        /** \name Events
+         */
+        //@{
+        
+        /** Triggered when the title of the terminal changes. 
+         */
+        Event<std::string> onTitleChange;
+
+        /** Triggered when the terminal receives a notification. 
+         
+            This means receiving the BEL character for now, but other notification forms might be possible in the future.
+         */
+        Event<void> onNotification; 
+        //@}
+
     protected:
         
         class CSISequence;
