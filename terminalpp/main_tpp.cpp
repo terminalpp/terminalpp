@@ -91,6 +91,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Config const & config = Config::Setup(argc, argv);
 
     tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
+    tpp2::Session * session = new tpp2::Session{w};
+    w->show();
+
+    /*    
     ui2::AnsiTerminal::Palette palette{ui2::AnsiTerminal::Palette::XTerm256()};
     ui2::AnsiTerminal * t = new ui2::AnsiTerminal{&palette, 80, 25};
     ui2::BypassPTY * pty = new ui2::BypassPTY{t, config.session.command()};

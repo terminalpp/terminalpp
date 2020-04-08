@@ -33,9 +33,12 @@ namespace ui2 {
                     children_.erase(i);
                     children_.push_back(widget);
                     // TODO how to handle invalidations
+                    NOT_IMPLEMENTED;
                 }
-            // TODO this is not done by far
-
+            // attach the child widget
+            children_.push_back(widget);
+            if (widget->parent() != this)
+                widget->attachTo(this);
         }
 
         /** Remove the widget from the container. 
@@ -78,8 +81,15 @@ namespace ui2 {
          */
         //@{
 
+        /** Returns the mouse target. 
+         
+            Scans the children widgets in their visibility order and if the mouse coordinates are found in the widget, propagates the mouse target request to it. If the mouse is not over any child, returns itself.
+         */
         Widget * getMouseTarget(Point coords) override {
-            NOT_IMPLEMENTED;
+            for (auto i = children_.rbegin(), e = children_.rend(); i != e; ++i)
+                if ((*i)->visible() && (*i)->rect().contains(coords))
+                    return (*i)->getMouseTarget(coords - (*i)->rect().topLeft());
+            return this;
         }
 
         //@}
@@ -116,8 +126,13 @@ namespace ui2 {
             for (Widget * child : children_)
                 if (child->visible()) {
                     Canvas childCanvas{childrenCanvas.clip(child->rect())};
-                    child->paint(childCanvas);
+                    paintChild(child, childCanvas);
                 }
+        }
+
+        void paintChild(Widget * child, Canvas & childCanvas) {
+            child->visibleRect_ = childCanvas.visibleRect();
+            child->paint(childCanvas);
         }
 
     private:

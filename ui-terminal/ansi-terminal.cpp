@@ -1315,8 +1315,8 @@ namespace ui2 {
             case 0: {
     			LOG(SEQ) << "Title change to " << seq.value();
                 bufferLock_.unlock();
-                Event<std::string>::Payload p(seq.value());
-                Renderer::SendEvent([this, & p](){
+                Renderer::SendEvent([this, title = seq.value()](){
+                Event<std::string>::Payload p(title);
                     onTitleChange(p, this);
                 });
                 bufferLock_.lock();

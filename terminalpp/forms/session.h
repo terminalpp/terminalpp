@@ -12,6 +12,54 @@
 
 #include "about_box.h"
 
+#include "ui2/widgets/panel.h"
+#include "ui-terminal/ansi-terminal.h"
+#include "ui-terminal/bypass_pty.h"
+
+
+namespace tpp2 {
+
+    /** The terminal session. 
+     */
+
+    // TODO fix container's add method
+    class Session : public ui2::Panel {
+    public:
+
+        Session(Window * window):
+            window_{window},
+            palette_{AnsiTerminal::Palette::XTerm256()} {
+            window_->setRootWidget(this);
+        	Config const & config = Config::Instance();
+            terminal_ = new AnsiTerminal{& palette_, width(), height()};
+            terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
+            add(terminal_);
+            pty_ = new ui2::BypassPTY{terminal_, config.session.command()};
+            window_->setKeyboardFocus(terminal_);
+        }
+
+    protected:
+        void terminalTitleChanged(Event<std::string>::Payload & e) {
+            window_->setTitle(*e);
+        }
+
+        void terminalNotification(Event<void>::Payload & e) {
+
+        }
+
+    private:
+
+        /** The window in which the session is rendered.
+         */
+        Window * window_;
+
+        AnsiTerminal::Palette palette_;
+        AnsiTerminal * terminal_;
+        PTY * pty_;
+    }; 
+
+}
+
 namespace tpp {
 
     /** An alert displayed when pasting into the terminal. 
