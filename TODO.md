@@ -10,17 +10,19 @@
 
 The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-##### TODO
+### v0.7
 
 - double width and double size fonts dropped from the terminal (not from the UI)
 - history gets resized when terminal gets resized
-- UI title & icon & stuff
-- UI cursor 
-    - how to deal with cursor of inactive terminal in active window - this seems to lead to multiple cursors per window and how to handle them... (?)
-- UI title & icon & stuff
-- UI selection & SelectionOwner trait, AutoScrolling (as child of Scrollable trait)
-- X11 renderer
-- QT Renderer
+- inactive cursor properly displayed
+
+##### TODO
+
+- unify - and _ in filenames
+- revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
+
+- directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
+- qfont should keep the width if set
 
 - UI selection & SelectionOwner trait, AutoScrolling (as child of Scrollable trait)
 
@@ -46,17 +48,17 @@ The following is very short description of the versions planned and their main n
 
 - ubuntu ppa distribution
 
-### v0.7
+### v0.8
 
 - multiple sessions (in same window)
 
-### v0.8
+### v0.9
 
 - multiple sessions in multiple windows or tiling
 - better bug reporting support and optional checking of updates for non-store installers
 - systray support & platform notifications
 
-### v0.9
+### v0.10
 
 - proper multiplexing of the terminal sessions (wrt remote files)
 - remote files should use absolute path, or some other form of same file detection
@@ -81,6 +83,5 @@ The following is very short description of the versions planned and their main n
 - xim is wrong, it works on linux, but fails on mac
 - how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
 - add transparency for entire window? on Windows - https://msdn.microsoft.com/en-us/magazine/ee819134.aspx?f=255&MSPPError=-2147217396 and use layered windows
-
 
 

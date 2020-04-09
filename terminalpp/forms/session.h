@@ -33,6 +33,8 @@ namespace tpp2 {
         	Config const & config = Config::Instance();
             terminal_ = new AnsiTerminal{& palette_, width(), height()};
             terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
+            terminal_->onNotification.setHandler(&Session::terminalNotification, this);
+            terminal_->onKeyDown.setHandler(&Session::terminalKeyDown, this);
             add(terminal_);
             pty_ = new ui2::BypassPTY{terminal_, config.session.command()};
             window_->setKeyboardFocus(terminal_);
@@ -44,7 +46,14 @@ namespace tpp2 {
         }
 
         void terminalNotification(Event<void>::Payload & e) {
+            MARK_AS_UNUSED(e);
+            window_->setIcon(Window::Icon::Notification);
+        }
 
+        void terminalKeyDown(Event<Key>::Payload & e) {
+            MARK_AS_UNUSED(e);
+            if (window_->icon() != Window::Icon::Default)
+                window_->setIcon(Window::Icon::Default);
         }
 
     private:

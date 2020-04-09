@@ -144,6 +144,10 @@ namespace ui2 {
         /** \name Events
          */
         //@{
+
+        using Widget::onKeyDown;
+        using Widget::onKeyUp;
+        using Widget::onKeyChar;
         
         /** Triggered when the title of the terminal changes. 
          */
