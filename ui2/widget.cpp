@@ -50,4 +50,17 @@ namespace ui2 {
         }
     }
 
+    void Widget::requestClipboard() {
+        UI_THREAD_CHECK;
+        if (renderer_ != nullptr)
+            renderer_->requestClipboard(this);
+    }
+
+    void Widget::requestSelection() {
+        UI_THREAD_CHECK;
+        if (renderer_ != nullptr)
+            renderer_->requestSelection(this);
+    }
+
+
 } // namespace ui

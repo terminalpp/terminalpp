@@ -139,6 +139,9 @@ namespace ui2 {
         friend class Canvas;
         friend class Widget;
 
+        template<typename T>
+        friend class SelectionOwner;
+
         Renderer(int width, int height):
             buffer_{width, height},
             rootWidget_{nullptr},
@@ -147,7 +150,9 @@ namespace ui2 {
             mouseFocus_{nullptr},
             mouseButtons_{0},
             keyboardIn_{false},
-            keyboardFocus_{nullptr} {
+            keyboardFocus_{nullptr},
+            clipboardRequestTarget_{nullptr},
+            selectionRequestTarget_{nullptr} {
         }
 
         /** Called when the renderer is to be closed.
@@ -391,14 +396,34 @@ namespace ui2 {
 
         // ========================================================================================
 
-        /** \name Clipboard & Selection Input
+        /** \name Clipboard & Selection
+
          */
         //@{
-        virtual void rendererPaste(std::string const & contents) {
-            ASSERT(keyboardIn_);
-            Event<std::string>::Payload p{contents};
-            paste(p, keyboardFocus_);
+        /** Requests the clipboard contents. 
+         */
+        virtual void requestClipboard(Widget * sender) {
+            ASSERT(keyboardIn_ && sender == keyboardFocus_);
+            clipboardRequestTarget_ = sender;
         }
+
+        virtual void requestSelection(Widget * sender) {
+            ASSERT(keyboardIn_ && sender == keyboardFocus_);
+            selectionRequestTarget_ = sender;
+        }
+
+        virtual void rendererClipboardPaste(std::string const & contents) {
+            Event<std::string>::Payload p{contents};
+            paste(p, clipboardRequestTarget_);
+            clipboardRequestTarget_ = nullptr;
+        }
+
+        virtual void rendererSelectionPaste(std::string const & contents) {
+            Event<std::string>::Payload p{contents};
+            paste(p, selectionRequestTarget_);
+            selectionRequestTarget_ = nullptr;
+        }
+
         //@}
 
         // ========================================================================================
@@ -529,6 +554,11 @@ namespace ui2 {
             if (keyboardFocus_ == widget) {
                 NOT_IMPLEMENTED;
             }
+            // make sure that if there were pending clipboard or selection requests for the widget, these are cancelled
+            if (clipboardRequestTarget_ == widget)
+                clipboardRequestTarget_ = nullptr;
+            if (selectionRequestTarget_ == widget)
+                selectionRequestTarget_ = nullptr;
         }
         //@}
 
@@ -583,6 +613,11 @@ namespace ui2 {
         /** The target for keyboard events (focused widget). */
         Widget * keyboardFocus_;
 
+        /** Widget which requested clipboard contents (if the focus changed since the request). */
+        Widget * clipboardRequestTarget_;
+
+        /** Widget which requested selection contents (if the focus changed since the request). */
+        Widget * selectionRequestTarget_;
 
 #ifndef NDEBUG
         /** \name UI Thread Checking. 

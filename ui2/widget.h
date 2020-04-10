@@ -435,11 +435,22 @@ namespace ui2 {
 
         // ========================================================================================
 
-        /** \name Clipboard Actions
+        /** \name Clipboard & Selection Actions
 
-            Default implementation the clipboard actions simply calls the attached events when present.
          */
         //@{
+        /** Requests the clipboard contents to be returned via the paste() event. 
+         */
+        void requestClipboard();
+
+        /** Requests the selection contents to be returned via the paste() event. 
+         */
+        void requestSelection();
+
+        /** Paste event. 
+         
+            When a clipboard, or selection contents have been requested, the paste event is triggered when the contents is available. By default, the onPaste() event is triggered. 
+         */
         virtual void paste(Event<std::string>::Payload & event) {
             if (event.active())
                 onPaste(event, this);
