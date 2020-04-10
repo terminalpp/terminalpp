@@ -77,9 +77,13 @@ namespace tpp2 {
 
         void requestClipboard(Widget * sender) override;
 
-        void requestSelection(Widget * sender) override {
-            NOT_IMPLEMENTED;
-        }
+        void requestSelection(Widget * sender) override;
+
+        void rendererSetClipboard(std::string const & contents) override;
+
+        void rendererRegisterSelection(std::string const & contents, Widget * owner) override;
+
+        void rendererClearSelection() override;
 
     private:
 

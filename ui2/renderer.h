@@ -152,7 +152,8 @@ namespace ui2 {
             keyboardIn_{false},
             keyboardFocus_{nullptr},
             clipboardRequestTarget_{nullptr},
-            selectionRequestTarget_{nullptr} {
+            selectionRequestTarget_{nullptr},
+            selectionOwner_{nullptr} {
         }
 
         /** Called when the renderer is to be closed.
@@ -426,6 +427,38 @@ namespace ui2 {
             selectionRequestTarget_ = nullptr;
         }
 
+        /** Sets the clipboard contents. 
+         
+            Must be provided by the actual renderer implementation. 
+         */
+        virtual void rendererSetClipboard(std::string const & contents) = 0;
+
+        /** Registers new selection contents and selection owner. 
+         
+            If there is already a selection owner associated with the renderer that is different from the new owner, first rendererClearSelection is called. 
+
+            Simply updates the selection owner. 
+         */
+        virtual void rendererRegisterSelection(std::string const & contents, Widget * owner) {
+            if (selectionOwner_ != nullptr && selectionOwner_ != owner)
+                rendererClearSelection();
+            selectionOwner_ = owner;
+        }
+
+        /** Clears the selection. 
+
+            If the selection is associated with the renderer, revokes it and then tells the owner its selection has been cleared.  
+         */
+        virtual void rendererClearSelection() {
+            if (selectionOwner_ !=  nullptr) {
+                // first remove the selection from the owner, thus preventing the infinite loop calls
+                Widget * owner = selectionOwner_;
+                selectionOwner_ = nullptr;
+                // then call clearSelection on the old renderer
+                owner->clearSelection();
+            }
+        }
+
         //@}
 
         // ========================================================================================
@@ -620,6 +653,9 @@ namespace ui2 {
 
         /** Widget which requested selection contents (if the focus changed since the request). */
         Widget * selectionRequestTarget_;
+
+        /** Owner of the selection buffer, if the buffer is owned by a widget under the renderer. */
+        Widget * selectionOwner_;
 
 #ifndef NDEBUG
         /** \name UI Thread Checking. 

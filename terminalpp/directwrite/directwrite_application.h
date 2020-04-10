@@ -83,6 +83,11 @@ namespace tpp2 {
         /* Dummy window for scheduling user messages. */
         HWND dummy_;
 
+        /** Holds the selection so that it can be pasted when requested by the windows. 
+         */
+        std::string selection_;
+        DirectWriteWindow * selectionOwner_;
+
 
         static LRESULT CALLBACK UserEventHandler_(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

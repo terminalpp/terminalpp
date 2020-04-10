@@ -87,6 +87,10 @@ namespace tpp2 {
          */
         FcConfig * fcConfig_;
 
+        std::string clipboard_;
+        std::string selection_;
+        X11Window * selectionOwner_;
+
 
     }; // X11Application
 

@@ -15,6 +15,7 @@
 #include "ui2/widgets/panel.h"
 #include "ui-terminal/ansi-terminal.h"
 #include "ui-terminal/bypass_pty.h"
+#include "ui-terminal/local_pty.h"
 
 
 namespace tpp2 {
@@ -36,7 +37,11 @@ namespace tpp2 {
             terminal_->onNotification.setHandler(&Session::terminalNotification, this);
             terminal_->onKeyDown.setHandler(&Session::terminalKeyDown, this);
             add(terminal_);
+            #if (ARCH_WINDOWS)
             pty_ = new ui2::BypassPTY{terminal_, config.session.command()};
+            #else
+            pty_ = new ui2::LocalPTY{terminal_, config.session.command()};
+            #endif
             window_->setKeyboardFocus(terminal_);
         }
 

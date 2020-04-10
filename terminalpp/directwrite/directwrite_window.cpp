@@ -76,6 +76,56 @@ namespace tpp2 {
         rendererClipboardPaste(result);
     }
 
+    void DirectWriteWindow::requestSelection(Widget * sender) {
+        RendererWindow::requestSelection(sender);
+        DirectWriteApplication * app = DirectWriteApplication::Instance();
+        if (app->selectionOwner_ != nullptr)
+            rendererSelectionPaste(app->selection_);
+    }
+
+    void DirectWriteWindow::rendererSetClipboard(std::string const & contents) {
+		if (OpenClipboard(nullptr)) {
+			EmptyClipboard();
+			// encode the string into UTF16 and get the size of the data we need
+			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+			helpers::utf16_string str = helpers::UTF8toUTF16(contents);
+			// the str is null-terminated
+			size_t size = (str.size() + 1) * 2;
+			HGLOBAL clip = GlobalAlloc(0, size);
+			if (clip) {
+				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clip));
+				if (data) {
+					memcpy(data, str.c_str(), size);
+					GlobalUnlock(clip);
+					SetClipboardData(CF_UNICODETEXT, clip);
+				}
+			}
+			CloseClipboard();
+		}
+    }
+
+    void DirectWriteWindow::rendererRegisterSelection(std::string const & contents, Widget * owner) {
+        DirectWriteApplication * app = DirectWriteApplication::Instance();
+        // first we clear the selection if it belongs to different window
+        if (app->selectionOwner_ != nullptr && app->selectionOwner_ != this)
+            app->selectionOwner_->rendererClearSelection();
+        // set the contents and the selection owner to ourselves
+        app->selectionOwner_ = this;
+        app->selection_ = contents;
+        // call the parent implementation which will deal with the intra-renderer selection management
+        RendererWindow::rendererRegisterSelection(contents, owner);
+    }
+
+    void DirectWriteWindow::rendererClearSelection() {
+        // on windows, this is rather simple, first deal with the application global selection, then call the parent implementation
+        DirectWriteApplication * app = DirectWriteApplication::Instance();
+        if (app->selectionOwner_ == this) {
+            app->selectionOwner_ = nullptr;
+            app->selection_.clear();
+        }
+        RendererWindow::rendererClearSelection();
+    }
+
     DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows):
         RendererWindow<DirectWriteWindow, HWND>{cols, rows, *DirectWriteFont::Get(ui2::Font(), tpp::Config::Instance().font.size()), 1.0},
         wndPlacement_{ sizeof(wndPlacement_) },

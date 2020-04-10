@@ -165,7 +165,52 @@ namespace tpp2 {
             NOT_IMPLEMENTED;        
     }
 
+    void X11Window::requestClipboard(Widget * sender) {
+        RendererWindow::requestClipboard(sender);
+        X11Application * app = X11Application::Instance();
+		XConvertSelection(display_, app->clipboardName_, app->formatStringUTF8_, app->clipboardName_, window_, CurrentTime);
+    }
 
+    void X11Window::requestSelection(Widget * sender) {
+        RendererWindow::requestSelection(sender);
+        X11Application * app = X11Application::Instance();
+		XConvertSelection(display_, app->primaryName_, app->formatStringUTF8_, app->primaryName_, window_, CurrentTime);
+    }
+
+    void X11Window::rendererSetClipboard(std::string const & contents) {
+        X11Application * app = X11Application::Instance();
+        // let the app manage the clipboard requests from other windows now
+        app->clipboard_ = contents;
+        // inform X that we own the clipboard selection
+		XSetSelectionOwner(display_, app->clipboardName_, window_, CurrentTime);
+    }
+
+    void X11Window::rendererRegisterSelection(std::string const & contents, Widget * owner) {
+        X11Application * app = X11Application::Instance();
+        X11Window * oldOwner = app->selectionOwner_;
+        // set the contents in the application
+		app->selection_ = contents;
+		app->selectionOwner_ = this;
+        // if there was a different owner before, clear its selection (no X11 event will be emited because selectionOwner is someone else already)
+        if (oldOwner != nullptr && oldOwner != this)
+            oldOwner->rendererClearSelection();
+        // inform X that we own the clipboard selection
+        XSetSelectionOwner(display_, app->primaryName_, window_, CurrentTime);
+        // deal with the selection in own window
+        RendererWindow::rendererRegisterSelection(contents, owner);
+    }
+
+    void X11Window::rendererClearSelection() {
+        X11Application * app = X11Application::Instance();
+        if (app->selectionOwner_ == this) {
+            app->selectionOwner_ = nullptr;
+            app->selection_.clear();
+            // emit the X11 event that the selection has been cleared
+            XSetSelectionOwner(display_, app->primaryName_, x11::None, CurrentTime);
+        }
+        // deal with the selection clear in itself
+        RendererWindow::rendererClearSelection();
+    }
 
     unsigned X11Window::GetStateModifiers(int state) {
 		unsigned modifiers = 0;
@@ -432,7 +477,96 @@ namespace tpp2 {
             case LeaveNotify:
                 window->rendererMouseOut();
                 break;
-
+			/** Called when we are notified that clipboard or selection contents is available for previously requested paste.
+			 */
+			case SelectionNotify:
+				if (e.xselection.property) {
+    				X11Application* app = X11Application::Instance();
+					char * result;
+					unsigned long resSize, resTail;
+					Atom type = x11::None;
+					int format = 0;
+					XGetWindowProperty(window->display_, window->window_, e.xselection.property, 0, LONG_MAX / 4, False, AnyPropertyType,
+						&type, &format, &resSize, &resTail, (unsigned char**)& result);
+					if (type == X11Application::Instance()->clipboardIncr_) {
+						// buffer too large, incremental reads must be implemented
+						// https://stackoverflow.com/questions/27378318/c-get-string-from-clipboard-on-linux
+						NOT_IMPLEMENTED;
+                    } else {
+                        if (e.xselection.selection == app->clipboardName_)
+						    window->rendererClipboardPaste(std::string(result, resSize));
+                        else if (e.xselection.selection == app->primaryName_)
+						    window->rendererSelectionPaste(std::string(result, resSize));
+                    }
+					XFree(result);
+                 }
+				 break;
+			/** If we lose ownership, clear the clipboard contents with the application, or if we lose primary ownership, just clear the selection.   
+			 */
+			case SelectionClear: {
+				X11Application* app = X11Application::Instance();
+                if (e.xselectionclear.selection == app->clipboardName_) {
+    				app->clipboard_.clear();
+                } else {
+                    X11Window * owner = app->selectionOwner_;
+                    app->selectionOwner_ = nullptr;
+                    app->selection_.clear();
+                    // clears the selection in the renderer without triggering any X events
+                    owner->rendererClearSelection();
+                }
+				break;
+            }
+			/** Called when the clipboard contents is requested by an outside app. 
+			 */
+			case SelectionRequest: {
+				X11Application* app = X11Application::Instance();
+				XSelectionEvent response;
+				response.type = SelectionNotify;
+				response.requestor = e.xselectionrequest.requestor;
+				response.selection = e.xselectionrequest.selection;
+				response.target = e.xselectionrequest.target;
+				response.time = e.xselectionrequest.time;
+				// by default, the request is rejected
+				response.property = x11::None; 
+				// if the target is TARGETS, then all supported formats should be sent, in our case this is simple, only UTF8_STRING is supported
+				if (response.target == app->formatTargets_) {
+					XChangeProperty(
+						window->display_,
+						e.xselectionrequest.requestor,
+						e.xselectionrequest.property,
+						e.xselectionrequest.target,
+						32, // atoms are 4 bytes, so 32 bits
+						PropModeReplace,
+						reinterpret_cast<unsigned char const*>(&app->formatStringUTF8_),
+						1
+					);
+					response.property = e.xselectionrequest.property;
+				// otherwise, if UTF8_STRING, or a STRING is requested, we just send what we have 
+				} else if (response.target == app->formatString_ || response.target == app->formatStringUTF8_) {
+                    std::string clipboard = (response.selection == app->clipboardName_) ? app->clipboard_ : app->selection_;
+					XChangeProperty(
+						window->display_,
+						e.xselectionrequest.requestor,
+						e.xselectionrequest.property,
+						e.xselectionrequest.target,
+						8, // utf-8 is encoded in chars, i.e. 8 bits
+						PropModeReplace,
+						reinterpret_cast<unsigned char const *>(clipboard.c_str()),
+						clipboard.size()
+					);
+					response.property = e.xselectionrequest.property;
+				}
+				// send the event to the requestor
+				if (!XSendEvent(
+					e.xselectionrequest.display,
+					e.xselectionrequest.requestor,
+					1, // propagate
+					0, // event mask
+					reinterpret_cast<XEvent*>(&response)
+				))
+					LOG() << "Error sending selection notify";
+				break;
+			}
             case DestroyNotify: {
                 // delete the window object and remove it from the list of active windows
                 delete window;
@@ -441,6 +575,7 @@ namespace tpp2 {
                     throw X11Application::TerminateException();
                 break;
             }
+
 			/* User-defined messages. 
 			 */
 			case ClientMessage:

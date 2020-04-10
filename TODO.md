@@ -18,15 +18,20 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
+- UI selection & SelectionOwner trait, AutoScrolling (as child of Scrollable trait)
+- clipboard in X11 and Qt
+
+- keyboard events in ansiterminal can be stopped in the user implementation, mouse events cannot (mouse events are triggered *after* the terminal deals with them, this should be updated and changed to be reasonable)
+
 - unify - and _ in filenames
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
 
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set
 
-- UI selection & SelectionOwner trait, AutoScrolling (as child of Scrollable trait)
 
 - PTY++ and remote files version 2.0
+- localPTY for Win32
 - then back to the UI elements
 
 

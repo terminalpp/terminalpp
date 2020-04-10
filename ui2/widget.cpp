@@ -62,5 +62,28 @@ namespace ui2 {
             renderer_->requestSelection(this);
     }
 
+    void Widget::registerSelection(std::string const & contents) {
+        if (renderer_ != nullptr)
+            renderer_->rendererRegisterSelection(contents, this);
+    }
+
+    /** Gives up the selection and informs the renderer. 
+     */
+    void Widget::clearSelection() {
+        if (hasSelectionOwnership()) {
+            ASSERT(renderer_ != nullptr);
+            renderer_->rendererClearSelection();
+        }
+    }
+
+    /** Returns true if the widget currently holds the selection ownership. 
+     */
+    bool Widget::hasSelectionOwnership() const {
+        if (renderer_ == nullptr)
+            return false;
+        return renderer_->selectionOwner_ == this;
+    }
+
+
 
 } // namespace ui

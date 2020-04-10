@@ -455,6 +455,19 @@ namespace ui2 {
             if (event.active())
                 onPaste(event, this);
         }
+
+        /** Makes the current widget selection owner and informs the renderer of the ownership and selection contents. 
+         */
+        virtual void registerSelection(std::string const & contents);
+
+        /** Gives up the selection and informs the renderer. 
+         */
+        virtual void clearSelection();
+
+        /** Returns true if the widget currently holds the selection ownership. 
+         */
+        bool hasSelectionOwnership() const;
+
         //@}
 
     private:
