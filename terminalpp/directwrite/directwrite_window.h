@@ -75,6 +75,12 @@ namespace tpp2 {
             RendererWindow::rendererMouseIn();
         }
 
+        void requestClipboard(Widget * sender) override;
+
+        void requestSelection(Widget * sender) override {
+            NOT_IMPLEMENTED;
+        }
+
     private:
 
         friend class DirectWriteApplication;

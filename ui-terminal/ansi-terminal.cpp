@@ -199,6 +199,19 @@ namespace ui2 {
         }
     }
 
+    void AnsiTerminal::paste(Event<std::string>::Payload & e) {
+        Widget::paste(e);
+        if (e.active()) {
+            if (bracketedPaste_) {
+                ptySend("\033[200~", 6);
+                ptySend(e->c_str(), e->size());
+                ptySend("\033[201~", 6);
+            } else {
+                ptySend(e->c_str(), e->size());
+            }
+        }
+    }
+
     void AnsiTerminal::paint(Canvas & canvas) {
         Canvas c{getContentsCanvas(canvas)};
         // lock the buffer
@@ -384,12 +397,17 @@ namespace ui2 {
     }
 
     void AnsiTerminal::keyChar(Event<Char>::Payload & event) {
+        Widget::keyChar(event);
+        if (! event.active())
+            return;
         ASSERT(event->codepoint() >= 32);
         ptySend(event->toCharPtr(), event->size());
-        Widget::keyChar(event);
     }
 
     void AnsiTerminal::keyDown(Event<Key>::Payload & event) {
+        Widget::keyDown(event);
+        if (! event.active())
+            return;
 		std::string const* seq = GetSequenceForKey_(*event);
 		if (seq != nullptr) {
 			switch (event->code()) {
@@ -414,7 +432,6 @@ namespace ui2 {
         // only scroll to prompt if the key down is not a simple modifier key
         if (*event != Key::Shift + Key::ShiftKey && *event != Key::Alt + Key::AltKey && *event != Key::Ctrl + Key::CtrlKey && *event != Key::Win + Key::WinKey)
             setScrollOffset(Point{0, state_.buffer.historyRows()});
-        Widget::keyDown(event);
     }
 
     size_t AnsiTerminal::processInput(char const * buffer, char const * bufferEnd) {

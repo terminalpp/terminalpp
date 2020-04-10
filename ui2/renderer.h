@@ -401,14 +401,16 @@ namespace ui2 {
          */
         //@{
         /** Requests the clipboard contents. 
+         
+            Any widget can request clipboard contents. 
          */
         virtual void requestClipboard(Widget * sender) {
-            ASSERT(keyboardIn_ && sender == keyboardFocus_);
+            ASSERT(keyboardIn_);
             clipboardRequestTarget_ = sender;
         }
 
         virtual void requestSelection(Widget * sender) {
-            ASSERT(keyboardIn_ && sender == keyboardFocus_);
+            ASSERT(keyboardIn_);
             selectionRequestTarget_ = sender;
         }
 

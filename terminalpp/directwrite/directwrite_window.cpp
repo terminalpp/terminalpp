@@ -58,6 +58,24 @@ namespace tpp2 {
         }
     }
 
+    void DirectWriteWindow::requestClipboard(Widget * sender) {
+        RendererWindow::requestClipboard(sender);
+		std::string result;
+		if (OpenClipboard(nullptr)) {
+			HANDLE clip = GetClipboardData(CF_UNICODETEXT);
+			if (clip) {
+				// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+				helpers::utf16_char* data = reinterpret_cast<helpers::utf16_char*>(GlobalLock(clip));
+				if (data) {
+					result = helpers::UTF16toUTF8(data);
+					GlobalUnlock(clip);
+				}
+			}
+			CloseClipboard();
+		}
+        rendererClipboardPaste(result);
+    }
+
     DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows):
         RendererWindow<DirectWriteWindow, HWND>{cols, rows, *DirectWriteFont::Get(ui2::Font(), tpp::Config::Instance().font.size()), 1.0},
         wndPlacement_{ sizeof(wndPlacement_) },

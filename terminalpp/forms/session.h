@@ -51,9 +51,17 @@ namespace tpp2 {
         }
 
         void terminalKeyDown(Event<Key>::Payload & e) {
-            MARK_AS_UNUSED(e);
             if (window_->icon() != Window::Icon::Default)
                 window_->setIcon(Window::Icon::Default);
+            // trigger paste event for ourselves so that the paste can be intercepted
+            if (*e == (Key::V + Key::Ctrl + Key::Shift)) {
+                requestClipboard();
+                e.stop();
+            }
+        }
+
+        void paste(Event<std::string>::Payload & e) override {
+            terminal_->paste(e);
         }
 
     private:

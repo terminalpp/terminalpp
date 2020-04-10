@@ -160,6 +160,8 @@ namespace ui2 {
         Event<void> onNotification; 
         //@}
 
+        void paste(Event<std::string>::Payload & e) override;
+
     protected:
         
         class CSISequence;
