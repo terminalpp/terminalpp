@@ -92,7 +92,8 @@ namespace tpp2 {
             icon_{Icon::Default},
             zoom_{zoom},
             fullscreen_{false},
-            activeModifiers_{0} {
+            activeModifiers_{0},
+            mouseButtonsDown_{0} {
             // calculate the width and height in pixels and the cell dimensions from the font at given zoom level
             baseCellWidth_ = font.cellWidth();
             baseCellHeight_ = font.cellHeight();
@@ -115,12 +116,19 @@ namespace tpp2 {
         /** Converts the x & y coordinates in pixels to cell coordinates. 
          */
         Point pixelsToCoords(Point xy) {
-            return Point{ xy.x() / cellWidth_, xy.y() / cellHeight_};
+            int px = xy.x() / cellWidth_;
+            int py = xy.y() / cellHeight_;
+            // there is no -0, so coordinates smaller than 0 are immediately at least -1
+            if (xy.x() < 0)
+              --px;
+            if (xy.y() < 0)
+              --py;
+            return Point{px, py};
         }
 
         /** \name Renderer API
          
-            The coordinates reported to the renderer are in pixels and must be converted to terminal columns and rows before they are passed further.
+            The coordinates reported to the renderer are in pixels and must be converted to terminal columns and rows before they are passed further. 
          */
         //@{
         void rendererMouseMove(Point coords, Key modifiers) override {
@@ -128,15 +136,28 @@ namespace tpp2 {
         }
 
         void rendererMouseDown(Point coords, MouseButton button, Key modifiers) override {
+            ++mouseButtonsDown_; 
             LocalRenderer::rendererMouseDown(pixelsToCoords(coords), button, modifiers);
         }
 
         void rendererMouseUp(Point coords, MouseButton button, Key modifiers) override {
-            LocalRenderer::rendererMouseUp(pixelsToCoords(coords), button, modifiers);
+            if (mouseButtonsDown_ > 0) {
+                --mouseButtonsDown_;
+                LocalRenderer::rendererMouseUp(pixelsToCoords(coords), button, modifiers);
+            }
         }
 
         void rendererMouseWheel(Point coords, int by, Key modifiers) override {
             LocalRenderer::rendererMouseWheel(pixelsToCoords(coords), by, modifiers);
+        }
+
+        /** A more relaxed version of mouse out event.
+
+            Mouse leave translates to mouseOut in cases when the mouse is not captured, i.e. no buttons are currently down.  
+         */
+        void rendererMouseLeave() {
+            if (mouseButtonsDown_ == 0)
+                rendererMouseOut();
         }
 
         //@}
@@ -185,6 +206,9 @@ namespace tpp2 {
         bool fullscreen_;
 
         ui2::Key activeModifiers_;
+
+        /** Mouse buttons that are currently down so that we know when to release the mouse capture. */
+        unsigned mouseButtonsDown_;
 
 
         

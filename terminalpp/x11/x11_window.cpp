@@ -475,7 +475,7 @@ namespace tpp2 {
             /* Mouse leaves the window. 
              */
             case LeaveNotify:
-                window->rendererMouseOut();
+                window->rendererMouseLeave();
                 break;
 			/** Called when we are notified that clipboard or selection contents is available for previously requested paste.
 			 */

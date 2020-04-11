@@ -16,7 +16,7 @@ set(TPP_SUMMARY "Cross-platform terminal emulator.")
 set(TPP_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows, Linux and macOS.")
 
 # the list of libraries to link the executable with
-set(TPP_LINK_LIBRARIES libui libuiterminal libui2 )
+set(TPP_LINK_LIBRARIES libuiterminal libui libui2)
 
 # Default renderer selection
 #

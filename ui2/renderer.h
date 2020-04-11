@@ -10,6 +10,7 @@
 
 
 #include "helpers/time.h"
+#include "helpers/log.h"
 
 #include "common.h"
 #include "buffer.h"

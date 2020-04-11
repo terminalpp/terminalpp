@@ -88,11 +88,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	char** argv = __argv;
 
 	tpp2::APPLICATION_CLASS::Initialize(argc, argv, hInstance);
-	Config const & config = Config::Setup(argc, argv);
-
-    tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
-    tpp2::Session * session = new tpp2::Session{w};
-    w->show();
 
     /*    
     ui2::AnsiTerminal::Palette palette{ui2::AnsiTerminal::Palette::XTerm256()};
@@ -114,12 +109,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	APPLICATION_CLASS::Initialize(argc, argv, hInstance);
 #elif (defined ARCH_WINDOWS && defined RENDERER_QT)
 int main(int argc, char* argv[]) {
-	APPLICATION_CLASS::Initialize(argc, argv);
+	tpp2::APPLICATION_CLASS::Initialize(argc, argv);
 #else
 int main(int argc, char* argv[]) {
 	tpp2::APPLICATION_CLASS::Initialize(argc, argv);
-	Config const & config = Config::Setup(argc, argv);
 
+/*
     tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
     ui2::AnsiTerminal::Palette palette{ui2::AnsiTerminal::Palette::XTerm256()};
     ui2::AnsiTerminal * t = new ui2::AnsiTerminal{&palette, 80, 25};
@@ -132,7 +127,6 @@ int main(int argc, char* argv[]) {
     /*ui2::Renderer::SendEvent([]() {
         tpp2::Application::Instance()->alert("Event received");
     });
-    */
     tpp2::Application::Instance()->mainLoop();
 
     return EXIT_SUCCESS;
@@ -143,8 +137,43 @@ int main(int argc, char* argv[]) {
     } catch (helpers::Exception const & e) {
         std::cerr << e << std::endl;
         return EXIT_FAILURE;
-    }
+    } */
 #endif
+/*
+    try {
+        */
+        Config const & config = Config::Setup(argc, argv);
+
+		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
+		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 
+			helpers::Logger::DefaultLog(),
+			ui::Terminal::SEQ_ERROR,
+			ui::Terminal::SEQ_UNKNOWN,
+		});
+		LOG() << "t++ started";
+
+        tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
+        tpp2::Session * session = new tpp2::Session{w};
+        w->show();
+        tpp2::Application::Instance()->mainLoop();
+        return EXIT_SUCCESS;
+/*        
+	} catch (helpers::Exception const& e) {
+		Application::Alert(STR(e));
+		LOG() << "Error: " << e;
+	} catch (std::exception const& e) {
+		Application::Alert(e.what());
+		LOG() << "Error: " << e.what();
+	} catch (...) {
+		Application::Alert("Unknown error");
+		LOG() << "Error: Unknown error";
+	} 
+	return EXIT_FAILURE;
+*/
+    /*
+
+	Config const & config = Config::Setup(argc, argv);
+
 	try {
 		Config const & config = Config::Setup(argc, argv);
 		// make sure the log & remote files directories exist
@@ -197,4 +226,5 @@ int main(int argc, char* argv[]) {
 		LOG() << "Error: Unknown error";
 	} 
 	return EXIT_FAILURE;
+    */ 
 }
