@@ -39,7 +39,8 @@ namespace tpp2 {
             terminal_->onMouseDown.setHandler(&Session::terminalMouseDown, this);
             terminal_->onMouseUp.setHandler(&Session::terminalMouseUp, this);
             terminal_->onMouseWheel.setHandler(&Session::terminalMouseWheel, this);
-
+            terminal_->onSetClipboard.setHandler(&Session::terminalSetClipboard, this);
+            
             add(terminal_);
             #if (ARCH_WINDOWS)
             pty_ = new ui2::BypassPTY{terminal_, config.session.command()};
@@ -103,6 +104,10 @@ namespace tpp2 {
                     terminal_->scrollBy(Point{0, 1});
                 event.stop();
             //}
+        }
+
+        void terminalSetClipboard(Event<std::string>::Payload & event) {
+            setClipboard(*event);
         }
 
         void paste(Event<std::string>::Payload & e) override {

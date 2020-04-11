@@ -20,7 +20,6 @@ The following is very short description of the versions planned and their main n
 
 - clipboard and selection in X11 and Qt
 
-
 - mouse capture does not work on Windows (check on other platforms too)
 - AutoScrolling (as child of Scrollable trait)
 
@@ -31,8 +30,8 @@ The following is very short description of the versions planned and their main n
 - qfont should keep the width if set
 
 - make terminal tell if mouse is captured and update selection grabbing accordingly
-- make terminal setting clipboard on event
-- and make these configurable
+- terminal should scroll only when needed (i.e. buffer is available and mouse is not captured)
+- add configuration option to confirm setting clipboard from the terminal
 
 - PTY++ and remote files version 2.0
 - localPTY for Win32

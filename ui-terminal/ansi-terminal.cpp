@@ -1316,7 +1316,7 @@ namespace ui2 {
     			LOG(SEQ) << "Title change to " << seq.value();
                 bufferLock_.unlock();
                 Renderer::SendEvent([this, title = seq.value()](){
-                Event<std::string>::Payload p(title);
+                    Event<std::string>::Payload p(title);
                     onTitleChange(p, this);
                 });
                 bufferLock_.lock();
@@ -1327,13 +1327,10 @@ namespace ui2 {
             case 52:
                 LOG(SEQ) << "Clipboard set to " << seq.value();
                 bufferLock_.unlock();
-                try {
-                    setClipboard(seq.value());
-                } catch (std::exception const & e) {
-                    LOG(SEQ_ERROR) << e.what();
-                } catch (...) {
-                    LOG(SEQ_ERROR) << "unknown error";
-                }
+                Renderer::SendEvent([this, contents = seq.value()]() {
+                    Event<std::string>::Payload p{contents};
+                    onSetClipboard(p, this);
+                });
                 bufferLock_.lock();
                 break;
             /* OSC 112 - reset cursor color. 

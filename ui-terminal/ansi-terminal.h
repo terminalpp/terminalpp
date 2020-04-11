@@ -168,6 +168,12 @@ namespace ui2 {
             This means receiving the BEL character for now, but other notification forms might be possible in the future.
          */
         Event<void> onNotification; 
+
+        /** Triggered when the attached application wishes to set the local clipboard contents. 
+
+            Having this implemented as an event allows the containing application to deal with the event according to own security rules. 
+         */
+        Event<std::string> onSetClipboard;
         //@}
 
         void paste(Event<std::string>::Payload & e) override;
