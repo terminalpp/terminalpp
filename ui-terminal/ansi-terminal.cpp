@@ -1324,20 +1324,18 @@ namespace ui2 {
             }
             /* OSC 52 - set clipboard to given value. 
              */
-            /*
             case 52:
                 LOG(SEQ) << "Clipboard set to " << seq.value();
-                buffer_.unlock();
+                bufferLock_.unlock();
                 try {
-                    setClipboardContents(seq.value());
+                    setClipboard(seq.value());
                 } catch (std::exception const & e) {
                     LOG(SEQ_ERROR) << e.what();
                 } catch (...) {
                     LOG(SEQ_ERROR) << "unknown error";
                 }
-                buffer_.lock();
+                bufferLock_.lock();
                 break;
-            */
             /* OSC 112 - reset cursor color. 
              */
             case 112:

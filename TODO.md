@@ -30,10 +30,14 @@ The following is very short description of the versions planned and their main n
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set
 
+- make terminal tell if mouse is captured and update selection grabbing accordingly
+- make terminal setting clipboard on event
+- and make these configurable
 
 - PTY++ and remote files version 2.0
 - localPTY for Win32
 - then back to the UI elements
+
 
 
 - fix the events payload to not contain references, and the event should take the payload as argument already
