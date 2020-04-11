@@ -184,14 +184,16 @@ namespace ui2 {
         //@}
 
         void applyBrush(Cell & cell, Brush const & brush) {
-            cell.setBg(brush.color()).setFont(brush.font());
-            if (brush.fill() != 0) {
-                cell.setCodepoint(brush.fill());
-                cell.setFg((brush.fillColor() != Color::None) ? brush.fillColor() : fg_);
-                cell.setDecor((brush.fillColor() != Color::None) ? brush.fillColor() : fg_);
-            }
-            // clear the border information of the cell as well
+            // first apply the background color and clear the border
+            cell.setBg(brush.color().blendOver(cell.bg()));
             cell.setBorder(cell.border().clear());
+            // if the fillCharacter is different from NUL, update the character
+            if (brush.fillChar() != Char::NUL)
+                cell.setCodepoint(brush.fillChar()).setFont(brush.fillFont());
+            // if the fill color is different from None, update the fill color and the decoration color
+            if (brush.fillColor() != Color::None)
+                cell.setFg(brush.fillColor().blendOver(cell.fg()))
+                    .setDecor(brush.fillColor().blendOver(cell.decor()));
         }
 
     private:

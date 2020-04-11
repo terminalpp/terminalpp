@@ -56,7 +56,8 @@ namespace tpp2 {
     }
 
     DirectWriteApplication::DirectWriteApplication(HINSTANCE hInstance):
-        hInstance_{hInstance} {
+        hInstance_{hInstance},
+        selectionOwner_{nullptr} {
         AttachConsole();
 		// load the icons from the resource file
 		iconDefault_ = LoadIcon(hInstance_, L"IDI_ICON1");

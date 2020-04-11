@@ -22,7 +22,8 @@ namespace tpp2 {
     X11Application::X11Application():
 		xDisplay_{nullptr},
 		xScreen_{0},
-	    xIm_{nullptr} {
+	    xIm_{nullptr}, 
+        selectionOwner_{nullptr} {
         XInitThreads();
 		xDisplay_ = XOpenDisplay(nullptr);
 		if (xDisplay_ == nullptr) 

@@ -116,6 +116,9 @@ namespace ui2 {
 		static Rect FromCorners(int left, int top, int right, int bottom) {
 			return Rect{left, top, right - left, bottom - top};
 		}
+		static Rect FromCorners(Point const & topLeft, Point const & bottomRight) {
+			return Rect{topLeft.x(), topLeft.y(), bottomRight.x() - topLeft.x(), bottomRight.y() - topLeft.y()};
+		}
 
 		int left() const {
 			return left_;
@@ -538,20 +541,25 @@ namespace ui2 {
 
 
 
+    /** Fill brush. 
+        
+     */
     class Brush {
     public:
 
         Brush():
-            fill_{0x20},
+            fillChar_{0x20},
             fillColor_{Color::None} {
         }
 
-        Brush(Color color):
+        Brush(Color color, char32_t fillChar = 0x20):
             color_{color},
-            fill_{0x20},
+            fillChar_{fillChar},
             fillColor_{Color::None} {
         }
 
+        /** Returns the background color of the brush. 
+         */
         Color color() const {
             return color_;
         }
@@ -561,21 +569,21 @@ namespace ui2 {
             return *this;
         }
 
-        Font font() const {
-            return font_;
+        Font fillFont() const {
+            return fillFont_;
         }
 
-        Brush & setFont(Font value) {
-            font_ = value;
+        Brush & setFillFont(Font value) {
+            fillFont_ = value;
             return *this;
         }
 
-        char32_t fill() const {
-            return fill_;
+        char32_t fillChar() const {
+            return fillChar_;
         }
 
-        Brush & setFill(char32_t value) {
-            fill_ = value;
+        Brush & setFillChar(char32_t value) {
+            fillChar_ = value;
             return *this;
         }
 
@@ -591,8 +599,8 @@ namespace ui2 {
     private:
 
         Color color_;
-        Font font_;
-        char32_t fill_;
+        Font fillFont_;
+        char32_t fillChar_;
         Color fillColor_;
 
     }; // ui::Brush

@@ -221,6 +221,8 @@ namespace ui2 {
         state_.buffer.drawOnCanvas(c, palette_->defaultBackground());
         // draw the scrollbars if any
         Scrollable::paint(canvas);
+        // draw the selection
+        paintSelection(c, Brush{Color::Blue.withAlpha(64), Char::NUL});
         // draw the cursor 
         if (focused()) {
             // set the cursor via the canvas
@@ -264,24 +266,24 @@ namespace ui2 {
                 sendMouseEvent(mouseLastButton_ + 32, event->coords, 'M');
                 LOG(SEQ) << "Mouse moved to " << event->coords;
         }
-        /*
-        if (modifiers == 0) {
+        if (event->modifiers == 0) {
             if (updatingSelection()) {
-                updateSelection(Point{col, row} + scrollOffset(), clientSize());
+                updateSelection(event->coords + scrollOffset(), Point{scrollWidth(), scrollHeight()});
+                /*
                 if (scrollable_) {
                     if (row < 0 || row >= height()) 
                         startAutoScroll(Point{0, row < 0 ? -1 : 1});
                     else 
                         stopAutoScroll();
-                }
+                } */
             }
+            /*
             bool x = col == width() - 1;
             if (x != scrollBarActive_) {
                 scrollBarActive_ = x;
                 repaint();
-            }
+            } */
         }
-        */
         Widget::mouseMove(event);
     }
 
@@ -292,18 +294,16 @@ namespace ui2 {
             sendMouseEvent(mouseLastButton_, event->coords, 'M');
             LOG(SEQ) << "Button " << event->button << " down at " << event->coords;
         }
-        /*
-        if (modifiers == 0) {
-            if (button == MouseButton::Left) {
-                startSelection(Point{col, row} + scrollOffset());
-            } else if (button == MouseButton::Wheel) {
-                requestSelectionContents(); 
-            } else if (button == MouseButton::Right && ! selection().empty()) {
-                setClipboardContents(getSelectionContents());
-                clearSelection();
+        if (event->modifiers == 0) {
+            if (event->button == MouseButton::Left) {
+                startSelectionUpdate(event->coords + scrollOffset());
+            } else if (event->button == MouseButton::Wheel) {
+                requestSelection(); 
+            } else if (event->button == MouseButton::Right && ! selection().empty()) {
+                //setClipboardContents(getSelectionContents());
+                //clearSelection();
             }
         }
-        */
         Widget::mouseDown(event);
     }
 
@@ -317,12 +317,10 @@ namespace ui2 {
                 LOG(SEQ) << "Button " << event->button << " up at " << event->coords;
             }
         }
-        /*
-        if (modifiers == 0) {
-            if (button == MouseButton::Left) 
-                endSelection();
+        if (event->modifiers == 0) {
+            if (event->button == MouseButton::Left) 
+                endSelectionUpdate();
         }
-        */
         Widget::mouseUp(event);
     }
 

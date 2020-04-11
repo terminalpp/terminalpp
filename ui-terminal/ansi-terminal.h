@@ -9,12 +9,13 @@
 #include "ui2/renderer.h"
 #include "ui2/widget.h"
 #include "ui2/traits/scrollable.h"
+#include "ui2/traits/selection_owner.h"
 
 #include "pty.h"
 
 namespace ui2 {
 
-    class AnsiTerminal : public Widget, public PTY::Client, public Scrollable<AnsiTerminal> {
+    class AnsiTerminal : public Widget, public PTY::Client, public Scrollable<AnsiTerminal>, public SelectionOwner<AnsiTerminal> {
     public:
 
         class Palette;
@@ -163,6 +164,8 @@ namespace ui2 {
         void paste(Event<std::string>::Payload & e) override;
 
     protected:
+
+        friend class SelectionOwner<AnsiTerminal>;
         
         class CSISequence;
         class OSCSequence;
@@ -381,6 +384,10 @@ namespace ui2 {
 
 
         //@}
+
+        std::string getSelectionContents() const override {
+            return "foobar";
+        }
 
         /** \name Buffer manipulation. 
          */
