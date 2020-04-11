@@ -456,6 +456,8 @@ namespace ui2 {
                 onPaste(event, this);
         }
 
+        virtual void setClipboard(std::string const & contents);
+
         /** Makes the current widget selection owner and informs the renderer of the ownership and selection contents. 
          */
         virtual void registerSelection(std::string const & contents);

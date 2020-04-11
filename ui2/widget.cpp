@@ -62,7 +62,14 @@ namespace ui2 {
             renderer_->requestSelection(this);
     }
 
+    void Widget::setClipboard(std::string const & contents) {
+        UI_THREAD_CHECK;
+        if (renderer_ != nullptr)
+            renderer_->rendererSetClipboard(contents);
+    }
+
     void Widget::registerSelection(std::string const & contents) {
+        UI_THREAD_CHECK;
         if (renderer_ != nullptr)
             renderer_->rendererRegisterSelection(contents, this);
     }
@@ -70,6 +77,7 @@ namespace ui2 {
     /** Gives up the selection and informs the renderer. 
      */
     void Widget::clearSelection() {
+        UI_THREAD_CHECK;
         if (hasSelectionOwnership()) {
             ASSERT(renderer_ != nullptr);
             renderer_->rendererClearSelection();

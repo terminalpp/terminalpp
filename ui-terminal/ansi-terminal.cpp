@@ -258,16 +258,17 @@ namespace ui2 {
     }
 
     void AnsiTerminal::mouseMove(Event<MouseMoveEvent>::Payload & event) {
-        if (mouseMode_ != MouseMode::Off 
-            && (mouseMode_ != MouseMode::ButtonEvent || mouseButtonsDown_ != 0)
+        Widget::mouseMove(event);
+        if (event.active() &&
+            mouseMode_ != MouseMode::Off &&
+            (mouseMode_ != MouseMode::ButtonEvent || mouseButtonsDown_ != 0) &&
             // only send the mouse information if the mouse is in the range of the window
-            && Rect::FromWH(width(), height()).contains(event->coords)) {
+            Rect::FromWH(width(), height()).contains(event->coords)) {
                 // mouse move adds 32 to the last known button press
                 sendMouseEvent(mouseLastButton_ + 32, event->coords, 'M');
                 LOG(SEQ) << "Mouse moved to " << event->coords;
         }
-        if (event->modifiers == 0) {
-            if (updatingSelection()) {
+        if (event->modifiers == 0 && updatingSelection()) {
                 updateSelection(event->coords + scrollOffset(), Point{scrollWidth(), scrollHeight()});
                 /*
                 if (scrollable_) {
@@ -276,7 +277,6 @@ namespace ui2 {
                     else 
                         stopAutoScroll();
                 } */
-            }
             /*
             bool x = col == width() - 1;
             if (x != scrollBarActive_) {
@@ -284,60 +284,45 @@ namespace ui2 {
                 repaint();
             } */
         }
-        Widget::mouseMove(event);
     }
 
     void AnsiTerminal::mouseDown(Event<MouseButtonEvent>::Payload & event) {
+        Widget::mouseDown(event);
         ++mouseButtonsDown_;
 		if (mouseMode_ != MouseMode::Off) {
             mouseLastButton_ = encodeMouseButton(event->button, event->modifiers);
-            sendMouseEvent(mouseLastButton_, event->coords, 'M');
-            LOG(SEQ) << "Button " << event->button << " down at " << event->coords;
-        }
-        if (event->modifiers == 0) {
-            if (event->button == MouseButton::Left) {
-                startSelectionUpdate(event->coords + scrollOffset());
-            } else if (event->button == MouseButton::Wheel) {
-                requestSelection(); 
-            } else if (event->button == MouseButton::Right && ! selection().empty()) {
-                //setClipboardContents(getSelectionContents());
-                //clearSelection();
+            if (event.active()) {
+                sendMouseEvent(mouseLastButton_, event->coords, 'M');
+                LOG(SEQ) << "Button " << event->button << " down at " << event->coords;
             }
         }
-        Widget::mouseDown(event);
     }
 
     void AnsiTerminal::mouseUp(Event<MouseButtonEvent>::Payload & event) {
+        Widget::mouseUp(event);
         // a bit of defensive programming
         if (mouseButtonsDown_ > 0) {
             --mouseButtonsDown_;
             if (mouseMode_ != MouseMode::Off) {
                 mouseLastButton_ = encodeMouseButton(event->button, event->modifiers);
-                sendMouseEvent(mouseLastButton_, event->coords, 'm');
-                LOG(SEQ) << "Button " << event->button << " up at " << event->coords;
+                if (event.active()) {
+                    sendMouseEvent(mouseLastButton_, event->coords, 'm');
+                    LOG(SEQ) << "Button " << event->button << " up at " << event->coords;
+                }
             }
         }
-        if (event->modifiers == 0) {
-            if (event->button == MouseButton::Left) 
-                endSelectionUpdate();
-        }
-        Widget::mouseUp(event);
     }
 
     void AnsiTerminal::mouseWheel(Event<MouseWheelEvent>::Payload & event) {
+        Widget::mouseWheel(event);
 		if (mouseMode_ != MouseMode::Off) {
     		// mouse wheel adds 64 to the value
             mouseLastButton_ = encodeMouseButton((event->by > 0) ? MouseButton::Left : MouseButton::Right, event->modifiers) + 64;
-            sendMouseEvent(mouseLastButton_, event->coords, 'M');
-            LOG(SEQ) << "Wheel offset " << event->by << " at " << event->coords;
+            if (event.active()) {
+                sendMouseEvent(mouseLastButton_, event->coords, 'M');
+                LOG(SEQ) << "Wheel offset " << event->by << " at " << event->coords;
+            }
         }
-        if (state_.buffer.historyRows() > 0) {
-            if (event->by > 0)
-                scrollBy(Point{0, -1});
-            else 
-                scrollBy(Point{0, 1});
-        }
-        Widget::mouseWheel(event);
     }
 
     unsigned AnsiTerminal::encodeMouseButton(MouseButton btn, Key modifiers) {
@@ -1362,6 +1347,12 @@ namespace ui2 {
         }
     }
 
+    std::string AnsiTerminal::getSelectionContents() const {
+        // first grab the lock on the buffer
+        // TODO
+        return state_.buffer.getSelectionContents(selection());
+    }
+
     void AnsiTerminal::fillRect(Rect const& rect, Cell const & cell) {
 		for (int row = rect.top(); row < rect.bottom(); ++row) {
 			for (int col = rect.left(); col < rect.right(); ++col) {
@@ -1706,6 +1697,55 @@ namespace ui2 {
 		// because the first thing the app will do after resize is to adjust the cursor position if the current line span more than 1 terminal line, we must account for this and update cursor position
 		cursor += Point{0, oldCursorRow - stopRow};
         return cursor;
+    }
+
+    // TODO will not work properly with double size characters and stuff
+    std::string AnsiTerminal::Buffer::getSelectionContents(Selection const & selection) const {
+        std::stringstream result;
+        int row = selection.start().y();
+        int endRow = selection.end().y();
+        int col = selection.start().x();
+        while (row < endRow) {
+            int endCol = (row < endRow - 1) ? width_ : selection.end().x();
+            Cell * rowCells;
+            // if the current row comes from the history, get the appropriate cells
+            if (row < history_.size()) {
+                rowCells = history_[row].second;
+                // if the stored row is shorter than the start of the selection, adjust the endCol so that no processing will be involved
+                if (endCol > history_[row].first)
+                    endCol = history_[row].first;
+            } else {
+                rowCells = rows_[row - history_.size()];
+            }
+            // analyze the line and add it to the selection now
+            std::stringstream line;
+            for (; col < endCol; ) {
+                line << Char::FromCodepoint(rowCells[col].codepoint());
+                if (isEndOfLine(rowCells[col]))
+                    line << std::endl;
+                col += rowCells[col].font().width();
+            }
+            // remove whitespace at the end of the line if the line ends with enter
+            std::string l{line.str()};
+            if (! l.empty()) {
+                size_t lineEnd = l.size();
+                while (lineEnd > 0) {
+                    --lineEnd;
+                    if (l[lineEnd] == '\n')
+                        break;
+                    if (l[lineEnd] != ' ' && l[lineEnd] != '\t')
+                        break;
+                }
+                if (l[lineEnd] == '\n')
+                    result << l.substr(0, lineEnd + 1);
+                else
+                    result << l;
+            }
+            // do next row, all next rows start from 0
+            ++row;
+            col = 0;
+        }
+        return result.str();
     }
 
     void AnsiTerminal::Buffer::resizeHistory(std::deque<std::pair<int, Cell*>> & oldHistory) {

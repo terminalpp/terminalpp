@@ -36,6 +36,10 @@ namespace tpp2 {
             terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
             terminal_->onNotification.setHandler(&Session::terminalNotification, this);
             terminal_->onKeyDown.setHandler(&Session::terminalKeyDown, this);
+            terminal_->onMouseDown.setHandler(&Session::terminalMouseDown, this);
+            terminal_->onMouseUp.setHandler(&Session::terminalMouseUp, this);
+            terminal_->onMouseWheel.setHandler(&Session::terminalMouseWheel, this);
+
             add(terminal_);
             #if (ARCH_WINDOWS)
             pty_ = new ui2::BypassPTY{terminal_, config.session.command()};
@@ -63,6 +67,42 @@ namespace tpp2 {
                 requestClipboard();
                 e.stop();
             }
+        }
+
+        void terminalMouseDown(Event<MouseButtonEvent>::Payload & event) {
+            if (event->modifiers == 0) {
+                if (event->button == MouseButton::Left) {
+                    terminal_->startSelectionUpdate(event->coords);
+                } else if (event->button == MouseButton::Wheel) {
+                    requestSelection(); 
+                } else if (event->button == MouseButton::Right && ! terminal_->selection().empty()) {
+                    setClipboard(terminal_->getSelectionContents());
+                    terminal_->clearSelection();
+                } else {
+                    return;
+                }
+            }
+            event.stop();
+        }
+
+        void terminalMouseUp(Event<MouseButtonEvent>::Payload & event) {
+            if (event->modifiers == 0) {
+                if (event->button == MouseButton::Left) 
+                    terminal_->endSelectionUpdate();
+                else
+                    return;
+            }
+            event.stop();
+        }
+
+        void terminalMouseWheel(Event<MouseWheelEvent>::Payload & event) {
+            //if (state_.buffer.historyRows() > 0) {
+                if (event->by > 0)
+                    terminal_->scrollBy(Point{0, -1});
+                else 
+                    terminal_->scrollBy(Point{0, 1});
+                event.stop();
+            //}
         }
 
         void paste(Event<std::string>::Payload & e) override {

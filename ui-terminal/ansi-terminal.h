@@ -63,6 +63,10 @@ namespace ui2 {
 
             Point resize(int width, int height, bool resizeContents, Cell const & fill, Point cursor);
 
+            /** Returns the contents of the selection from the buffer. 
+             */
+            std::string getSelectionContents(Selection const & selection) const;
+
         protected:
 
             friend class AnsiTerminal;
@@ -146,6 +150,11 @@ namespace ui2 {
          */
         //@{
 
+        using Widget::onMouseDown;
+        using Widget::onMouseUp;
+        using Widget::onMouseWheel;
+        using Widget::onMouseMove;
+
         using Widget::onKeyDown;
         using Widget::onKeyUp;
         using Widget::onKeyChar;
@@ -162,6 +171,28 @@ namespace ui2 {
         //@}
 
         void paste(Event<std::string>::Payload & e) override;
+
+        using SelectionOwner::selection;
+        using SelectionOwner::endSelectionUpdate;
+
+        void startSelectionUpdate(Point from) {
+            SelectionOwner::startSelectionUpdate(from + scrollOffset());
+        }
+
+        void clearSelection() override {
+            Widget::clearSelection();
+            SelectionOwner::clearSelection();
+        }
+
+        /** Returns the contents of the selection. 
+         
+            Trims the right of each line.
+         */
+        std::string getSelectionContents() const override;
+
+        using Scrollable::scrollBy;
+
+
 
     protected:
 
@@ -384,17 +415,6 @@ namespace ui2 {
 
 
         //@}
-
-        void clearSelection() override {
-            Widget::clearSelection();
-            SelectionOwner::clearSelection();
-        }
-
-        std::string getSelectionContents() const override {
-            return "foobar";
-        }
-
-
 
         /** \name Buffer manipulation. 
          */
