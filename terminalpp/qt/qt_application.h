@@ -47,6 +47,9 @@ namespace tpp2{
 
         void userEvent();
 
+        void selectionChanged();
+
+    protected:
 
     private:
         friend class QtFont;
@@ -54,6 +57,8 @@ namespace tpp2{
 
         QtApplication(int & argc, char ** argv);
 
+        std::string selection_;
+        QtWindow * selectionOwner_;
 
         QIcon iconDefault_;
         QIcon iconNotification_;

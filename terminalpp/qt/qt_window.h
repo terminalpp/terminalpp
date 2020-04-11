@@ -68,6 +68,16 @@ namespace tpp2 {
             emit tppWindowClose();
         }
 
+        void requestClipboard(Widget * sender) override;
+
+        void requestSelection(Widget * sender) override;
+
+        void rendererSetClipboard(std::string const & contents) override;
+
+        void rendererRegisterSelection(std::string const & contents, Widget * owner) override;
+
+        void rendererClearSelection() override;
+
     private:
         friend class QtApplication;
         friend class RendererWindow<QtWindow, QWindow*>;

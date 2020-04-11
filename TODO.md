@@ -18,7 +18,7 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- clipboard and selection in Qt
+- mouseOut is not reported at all in QT
 
 - AutoScrolling (as child of Scrollable trait)
 

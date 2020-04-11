@@ -67,6 +67,58 @@ namespace tpp2 {
             QWindowBase::hide();
     }
 
+    void QtWindow::requestClipboard(Widget * sender) {
+        RendererWindow::requestClipboard(sender);
+        QString text{QtApplication::Instance()->clipboard()->text(QClipboard::Mode::Clipboard)};
+        rendererClipboardPaste(text.toStdString());
+    }
+
+    void QtWindow::requestSelection(Widget * sender) {
+        RendererWindow::requestSelection(sender);
+        QtApplication * app = QtApplication::Instance();
+        if (app->clipboard()->supportsSelection()) {
+            QString text{QtApplication::Instance()->clipboard()->text(QClipboard::Mode::Selection)};
+            rendererSelectionPaste(text.toStdString());
+        } else {
+            if (app->selectionOwner_ != nullptr)
+                rendererSelectionPaste(app->selection_);
+        }
+    }
+
+    void QtWindow::rendererSetClipboard(std::string const & contents) {
+        QtApplication::Instance()->clipboard()->setText(QString{contents.c_str()}, QClipboard::Mode::Clipboard);
+    }
+
+    void QtWindow::rendererRegisterSelection(std::string const & contents, Widget * owner) {
+        QtApplication * app = QtApplication::Instance();
+        QtWindow * oldOwner = app->selectionOwner_;
+        // set the owner of the selection
+        app->selectionOwner_ = this;
+        // if there was a different owner before, clear its selection (since selection owner is already someone else, it will only clear the selection in the widget)
+        if (oldOwner != nullptr && oldOwner != this)
+            oldOwner->rendererClearSelection();
+        // if selection is supported, update it, else store its contents in the application
+        if (app->clipboard()->supportsSelection())
+            app->clipboard()->setText(QString{contents.c_str()}, QClipboard::Mode::Selection);
+        else
+            app->selection_ = contents;
+        // deal with the selection in own window
+        RendererWindow::rendererRegisterSelection(contents, owner);
+    }
+
+    void QtWindow::rendererClearSelection() {
+        QtApplication * app = QtApplication::Instance();
+        if (app->selectionOwner_ == this) {
+            app->selectionOwner_ = nullptr;
+            if (app->clipboard()->supportsSelection())
+                app->clipboard()->clear(QClipboard::Mode::Selection);
+            else
+                app->selection_.clear();
+        }
+        // deal with the selection clear in itself
+        RendererWindow::rendererClearSelection();
+    }
+
     void QtWindow::keyPressEvent(QKeyEvent* ev) {
         static_assert(sizeof(QChar) == sizeof(helpers::utf16_char));
         activeModifiers_ = Key{Key::Invalid, GetStateModifiers(ev->modifiers())};

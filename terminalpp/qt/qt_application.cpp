@@ -9,7 +9,7 @@ namespace tpp2 {
 
     QtApplication::QtApplication(int & argc, char ** argv):
         QApplication{argc, argv},
-        //selectionOwner_{nullptr},
+        selectionOwner_{nullptr},
         iconDefault_{":/icon_32x32.png"},
         iconNotification_{":/icon-notification_32x32.png"} {
 #if (defined ARCH_WINDOWS)
@@ -17,7 +17,7 @@ namespace tpp2 {
         AttachConsole();
 #endif
 
-        //connect(clipboard(), &QClipboard::selectionChanged, this, &QtApplication::selectionChanged);
+        connect(clipboard(), &QClipboard::selectionChanged, this, &QtApplication::selectionChanged);
         connect(this, &QtApplication::tppUserEvent, this, static_cast<void (QtApplication::*)()>(&QtApplication::userEvent), Qt::ConnectionType::QueuedConnection);
 
         iconDefault_.addFile(":/icon_16x16.png");
@@ -33,8 +33,6 @@ namespace tpp2 {
         // assertions to verify that the qt resources were built properly
         ASSERT(QFile::exists(":/icon_32x32.png"));
         ASSERT(QFile::exists(":/icon-notification_32x32.png"));
-
-
 
         Renderer::Initialize([this](){
             emit tppUserEvent();
@@ -59,6 +57,15 @@ namespace tpp2 {
 
     void QtApplication::userEvent() {
         Renderer::ExecuteUserEvent();
+    }
+
+    void QtApplication::selectionChanged() {
+        if (! clipboard()->ownsSelection() && selectionOwner_ != nullptr) {
+            QtWindow * owner = selectionOwner_;
+            selectionOwner_ = nullptr;
+            ASSERT(selection_.empty());
+            owner->rendererClearSelection();
+        }
     }
 
 } // namespace tpp
