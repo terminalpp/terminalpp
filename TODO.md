@@ -18,9 +18,8 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- clipboard and selection in X11 and Qt
+- clipboard and selection in Qt
 
-- mouse capture does not work on Windows (check on other platforms too)
 - AutoScrolling (as child of Scrollable trait)
 
 - unify - and _ in filenames
@@ -36,8 +35,6 @@ The following is very short description of the versions planned and their main n
 - PTY++ and remote files version 2.0
 - localPTY for Win32
 - then back to the UI elements
-
-
 
 - fix the events payload to not contain references, and the event should take the payload as argument already
 

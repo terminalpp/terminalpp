@@ -64,6 +64,7 @@ namespace tpp2 {
             DestroyWindow(hWnd_);
         }
 
+
         /** Enable mouse tracking so that the mouseOut event is properly reported. 
          */
         void rendererMouseIn() override {
@@ -73,6 +74,43 @@ namespace tpp2 {
             tm.hwndTrack = hWnd_;
             TrackMouseEvent(&tm);                    
             RendererWindow::rendererMouseIn();
+        }
+
+        /** Registers mouse button down.
+          
+            Starts mouse capture if no mouse button has been pressed previously, which allows the terminal window to track mouse movement outside of the window if at least one mouse button is pressed. 
+         */ 
+        void rendererMouseDown(Point coords, MouseButton button, Key modifiers) override {
+            RendererWindow::rendererMouseDown(coords, button, modifiers);
+            if (mouseButtonsDown_ == 1)
+                SetCapture(hWnd_);
+        }
+
+        /** Registers mouse button up. 
+          
+            If there are no more pressed buttons left, releases the mouse capture previously obtained. 
+         */
+        void rendererMouseUp(Point coords, MouseButton button, Key modifiers) override {
+            RendererWindow::rendererMouseUp(coords, button, modifiers);
+            if (mouseButtonsDown_ == 0)
+                ReleaseCapture();
+        }
+
+        /** Mouse moves. 
+         
+            Since we need to track mouse leave, checks whether the mouse leave event is currently tracked and if not, enables the tracking, which is disabled when the mouseOut event is emited. 
+         */
+        void rendererMouseMove(Point coords, Key modifiers) override {
+            // enable tracking if not enabled
+            if (! mouseLeaveTracked_) {
+                TRACKMOUSEEVENT tm;
+                tm.cbSize = sizeof(tm);
+                tm.dwFlags = TME_LEAVE;
+                tm.hwndTrack = hWnd_;
+                mouseLeaveTracked_ = TrackMouseEvent(&tm);
+                ASSERT(mouseLeaveTracked_);
+            }
+            RendererWindow::rendererMouseMove(coords, modifiers);
         }
 
         void requestClipboard(Widget * sender) override;
@@ -294,6 +332,8 @@ namespace tpp2 {
 		int glyphRunCol_;
 		int glyphRunRow_;
 
+        /** Determines if the mouse leaving the window are tracked, since there is no WM_MOUSEENTER message in Win32. */
+        bool mouseLeaveTracked_;
 
 	    static Key GetKey(unsigned vk);
 

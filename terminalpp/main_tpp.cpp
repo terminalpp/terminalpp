@@ -101,12 +101,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     /*ui2::Renderer::SendEvent([]() {
         tpp2::Application::Instance()->alert("Event received");
     });
-    */
     tpp2::Application::Instance()->mainLoop();
 
     return EXIT_SUCCESS;
 
 	APPLICATION_CLASS::Initialize(argc, argv, hInstance);
+    */
 #elif (defined ARCH_WINDOWS && defined RENDERER_QT)
 int main(int argc, char* argv[]) {
 	tpp2::APPLICATION_CLASS::Initialize(argc, argv);

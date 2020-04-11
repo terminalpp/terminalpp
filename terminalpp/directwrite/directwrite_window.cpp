@@ -134,7 +134,8 @@ namespace tpp2 {
         font_(nullptr),
         glyphIndices_{nullptr},
         glyphAdvances_{nullptr},
-        glyphOffsets_{nullptr} {
+        glyphOffsets_{nullptr},
+        mouseLeaveTracked_{false} {
         // create the window with given title
         helpers::utf16_string t = helpers::UTF8toUTF16(title);
         hWnd_ = CreateWindowExW(
@@ -414,7 +415,8 @@ namespace tpp2 {
 			/* Triggered when mouse leaves the window.
  			 */
 			case WM_MOUSELEAVE:
-				window->rendererMouseOut();
+				window->mouseLeaveTracked_ = false;
+				window->rendererMouseLeave();
 				break;
 
         }
