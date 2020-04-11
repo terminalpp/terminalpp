@@ -385,9 +385,16 @@ namespace ui2 {
 
         //@}
 
+        void clearSelection() override {
+            Widget::clearSelection();
+            SelectionOwner::clearSelection();
+        }
+
         std::string getSelectionContents() const override {
             return "foobar";
         }
+
+
 
         /** \name Buffer manipulation. 
          */

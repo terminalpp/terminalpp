@@ -103,7 +103,7 @@ namespace ui2 {
 
         /** Clears the selection and repaints the control. 
          */
-        void clearSelection() {
+        virtual void clearSelection() {
             selection_.clear();
             selectionStart_ = Point{-1, -1};
             downcastThis()->repaint();

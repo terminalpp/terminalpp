@@ -507,7 +507,7 @@ namespace tpp2 {
 				X11Application* app = X11Application::Instance();
                 if (e.xselectionclear.selection == app->clipboardName_) {
     				app->clipboard_.clear();
-                } else {
+                } else if (app->selectionOwner_ != nullptr) {
                     X11Window * owner = app->selectionOwner_;
                     app->selectionOwner_ = nullptr;
                     app->selection_.clear();
