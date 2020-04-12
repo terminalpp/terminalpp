@@ -7,7 +7,7 @@
 #include "helpers/string.h"
 #include "helpers/bits.h"
 
-namespace ui2 {
+namespace ui {
 
     class Point {
     public:

@@ -3,7 +3,7 @@
 #include "helpers/helpers.h"
 
 
-namespace ui2 {
+namespace ui {
 
     /** Mouse buttons are organized as a bitset. 
      */
@@ -134,8 +134,8 @@ namespace ui2 {
 namespace std {
 
 	template<>
-	struct hash<ui2::Key> {
-		size_t operator () (ui2::Key const & key) const {
+	struct hash<ui::Key> {
+		size_t operator () (ui::Key const & key) const {
 			return std::hash<unsigned>{}(key.raw_);
 		}
 	}; // std::hash<ui::Key>

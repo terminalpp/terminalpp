@@ -7,7 +7,7 @@
 
 #include "pty.h"
 
-namespace ui2 {
+namespace ui {
 
     class LocalPTY : public PTY {
     public:

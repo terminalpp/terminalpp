@@ -2,7 +2,7 @@
 #include "widget.h"
 #include "renderer.h"
 
-namespace ui2 {
+namespace ui {
 
     // Renderer ===================================================================================
 
@@ -28,4 +28,4 @@ namespace ui2 {
     size_t LocalRenderer::MouseDoubleClickMaxDistance_ = 200;
 
 
-} // namespace ui2
+} // namespace ui

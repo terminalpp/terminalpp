@@ -2,7 +2,7 @@
 
 #include "renderer.h"
 
-namespace ui2 {
+namespace ui {
 
     void Widget::repaint() {
         std::lock_guard<std::mutex> g{mRenderer_};

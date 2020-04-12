@@ -2,7 +2,7 @@
 #include "widget.h"
 #include "renderer.h"
 
-namespace ui2 {
+namespace ui {
 
     Canvas::Canvas(Widget * widget):
         width_{widget->rect_.width()},
@@ -56,4 +56,4 @@ namespace ui2 {
         return *this;
     }
 
-} // namespace ui2
+} // namespace ui

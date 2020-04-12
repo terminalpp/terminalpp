@@ -223,7 +223,7 @@ endif()
 # A simple counter of lines of code in the entire project. Note that this is only useful if all repos have been downloaded first. 
 if(ARCH_UNIX)
     add_custom_target(cloc
-        COMMAND cloc helpers ropen terminalpp tests tools tpp-bypass tpp-lib ui ui2 ui-terminal
+        COMMAND cloc helpers ropen terminalpp tests tools tpp-bypass tpp-lib ui ui-terminal
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
     set_target_properties(cloc PROPERTIES EXCLUDE_FROM_ALL TRUE)

@@ -13,7 +13,7 @@
 
 #include "pty.h"
 
-namespace ui2 {
+namespace ui {
 
     class AnsiTerminal : public Widget, public PTY::Client, public Scrollable<AnsiTerminal>, public SelectionOwner<AnsiTerminal> {
     public:
@@ -24,10 +24,10 @@ namespace ui2 {
 
         /** 
          */
-        class Buffer : public ui2::Buffer {
+        class Buffer : public ui::Buffer {
         public:
             Buffer(int width, int height):
-                ui2::Buffer{width, height},
+                ui::Buffer{width, height},
                 maxHistoryRows_{1000} {
             }
 
@@ -502,7 +502,7 @@ namespace ui2 {
         static std::unordered_map<Key, std::string> KeyMap_;
         static char32_t LineDrawingChars_[15];
 
-    }; // ui2::AnsiTerminal
+    }; // ui::AnsiTerminal
 
     // ============================================================================================
 

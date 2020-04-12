@@ -11,7 +11,7 @@
 
 namespace tpp {
 
-    using namespace ui2;
+    using namespace ui;
 
     class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND> {
     public:
@@ -202,7 +202,7 @@ namespace tpp {
 
         /** Updates the current font.
          */
-        void changeFont(ui2::Font font) {
+        void changeFont(ui::Font font) {
 			font_ = DirectWriteFont::Get(font, cellHeight_, cellWidth_);
 			glyphRun_.fontFace = font_->fontFace();
 			glyphRun_.fontEmSize = font_->sizeEm();

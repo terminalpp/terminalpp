@@ -2,7 +2,7 @@
 
 #include "renderer.h"
 
-namespace ui2 {
+namespace ui {
 
 #ifndef NDEBUG
 

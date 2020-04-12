@@ -2,7 +2,7 @@
 
 #include "widget.h"
 
-namespace ui2 {
+namespace ui {
 
     /** Container manages its child widgets dynamically. 
      

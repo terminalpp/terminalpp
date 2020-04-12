@@ -162,7 +162,7 @@ namespace tpp {
 
         /** Updates the current font.
          */
-        void changeFont(ui2::Font font) {
+        void changeFont(ui::Font font) {
             font_ = QtFont::Get(font, cellHeight_, cellWidth_);
             painter_.setFont(font_->qFont());
         }

@@ -5,7 +5,7 @@
 
 #include "bypass_pty.h"
 
-namespace ui2 {
+namespace ui {
 
     BypassPTY::BypassPTY(Client * client, helpers::Command const & command):
         PTY{client},
@@ -113,6 +113,6 @@ namespace ui2 {
 		WriteFile(pipeOut_, buffer + start, static_cast<DWORD>(i - start), &bytesWritten, nullptr);
     }
 
-} // namespace ui2 
+} // namespace ui 
 
 #endif

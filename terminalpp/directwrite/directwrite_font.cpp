@@ -61,7 +61,7 @@ namespace tpp {
 
     }; // DirectWriteFont::TextAnalysis
 
-    DirectWriteFont::DirectWriteFont(ui2::Font font, int cellHeight, int cellWidth):
+    DirectWriteFont::DirectWriteFont(ui::Font font, int cellHeight, int cellWidth):
         Font<DirectWriteFont>{font, cellHeight, cellWidth} {
         DirectWriteApplication * app = DirectWriteApplication::Instance();
         // find the required font family - first get the index then obtain the family by the index

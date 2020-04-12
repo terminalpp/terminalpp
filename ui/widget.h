@@ -10,7 +10,7 @@
 #include "buffer.h"
 #include "canvas.h"
 
-namespace ui2 {
+namespace ui {
 
     class Canvas;
     class Renderer;
@@ -314,7 +314,7 @@ namespace ui2 {
 
         /** \name Mouse Input Handling
          
-            Default implementation for mouse action simply calls the attached events when present as long as the propagation of the event has not been stopped. For more details about mouse events, see the \ref ui_renderer_mouse_input "mouse input" and \ref ui_renderer_event_triggers "event triggers" in ui2::Renderer.
+            Default implementation for mouse action simply calls the attached events when present as long as the propagation of the event has not been stopped. For more details about mouse events, see the \ref ui_renderer_mouse_input "mouse input" and \ref ui_renderer_event_triggers "event triggers" in ui::Renderer.
          */
         //@{
 
@@ -498,7 +498,7 @@ namespace ui2 {
             
             Note that the values are only valid when the widget is visible and has a renderer attached. 
 
-            \sa ui2::Canvas and its \ref ui_canvas_visible_rect "visible rectangle".
+            \sa ui::Canvas and its \ref ui_canvas_visible_rect "visible rectangle".
          */
         //@{
         /** The visible rectangle of the widget it its own coordinates. 
@@ -523,4 +523,4 @@ namespace ui2 {
 
     };
 
-} // namespace ui2
+} // namespace ui

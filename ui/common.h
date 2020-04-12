@@ -10,14 +10,14 @@
 /** TODO this will be represented by a templated monstrosity that would lock based on the renderer, i.e. one thread per renderer. 
  */
 #ifndef NDEBUG
-#define UI_THREAD_CHECK ui2::UiThreadChecker_ uiThreadChecker_{this}
+#define UI_THREAD_CHECK ui::UiThreadChecker_ uiThreadChecker_{this}
 #else
 #define UI_THREAD_CHECK
 #endif
 
 
 
-namespace ui2 {
+namespace ui {
 
     class Widget;
 

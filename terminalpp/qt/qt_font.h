@@ -20,7 +20,7 @@ namespace tpp {
     protected:
         friend class Font<QtFont>;
 
-        QtFont(ui2::Font font, int cellHeight, int cellWidth = 0):
+        QtFont(ui::Font font, int cellHeight, int cellWidth = 0):
             Font<QtFont>{font, cellHeight, cellWidth} {
             tpp::Config const & config{tpp::Config::Instance()};
             //widthPx_ = cellWidth * font.width();

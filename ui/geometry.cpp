@@ -1,6 +1,6 @@
 #include "geometry.h"
 
-namespace ui2 {
+namespace ui {
 
     Color const Color::None(0, 0, 0, 0);
     Color const Color::Black(0, 0, 0); 
@@ -20,4 +20,4 @@ namespace ui2 {
     Color const Color::DarkYellow(128, 128, 0); 
     Color const Color::DarkGray(128, 128, 128); 
 
-} // namespace ui2
+} // namespace ui

@@ -2,7 +2,7 @@
 
 #include "../container.h"
 
-namespace ui2 {
+namespace ui {
 
     class Panel : public Container {
     public:

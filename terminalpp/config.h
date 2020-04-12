@@ -51,24 +51,24 @@ namespace helpers {
 	}
 
 	template<>
-	inline ui2::AnsiTerminal::Palette JSONConfig::ParseValue(JSON const & json) {
+	inline ui::AnsiTerminal::Palette JSONConfig::ParseValue(JSON const & json) {
 		if (json.kind() != JSON::Kind::Array)
 		    THROW(JSONError()) << "Element must be an array";
-		ui2::AnsiTerminal::Palette result{ui2::AnsiTerminal::Palette::XTerm256()};
+		ui::AnsiTerminal::Palette result{ui::AnsiTerminal::Palette::XTerm256()};
 		size_t i = 0;
 		for (auto c : json) {
 			if (c.kind() != JSON::Kind::String) 
 			    THROW(JSONError()) << "Element items must be HTML colors, but " << c.kind() << " found";
-			result[i] = ui2::Color::FromHTML(c.toString());
+			result[i] = ui::Color::FromHTML(c.toString());
 		}
 		return result;
 	}
 
 	template<>
-	inline ui2::Color JSONConfig::ParseValue(JSON const & json) {
+	inline ui::Color JSONConfig::ParseValue(JSON const & json) {
 		if (json.kind() != JSON::Kind::String)
 		    THROW(JSONError()) << "Element must be an array";
-		return ui2::Color::FromHTML(json.toString());
+		return ui::Color::FromHTML(json.toString());
 	}
 
 	/** Parts of the command argument are just JSON strings so they are only surrounded by double quotes. 
@@ -197,7 +197,7 @@ namespace tpp {
 					colors, 
 					"Overrides the predefined palette. Up to 256 colors can be specified in HTML format. These colors will override the default xterm palette used.",
 					"[]",
-				    ui2::AnsiTerminal::Palette
+				    ui::AnsiTerminal::Palette
 				);
 				CONFIG_OPTION(
 				    defaultForeground,
@@ -213,8 +213,8 @@ namespace tpp {
 				);
 				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
 				 */
-				ui2::AnsiTerminal::Palette operator () () const {
-					ui2::AnsiTerminal::Palette result{colors()};
+				ui::AnsiTerminal::Palette operator () () const {
+					ui::AnsiTerminal::Palette result{colors()};
 					result.setDefaultForegroundIndex(defaultForeground());
 					result.setDefaultBackgroundIndex(defaultBackground());
 					return result;
@@ -240,7 +240,7 @@ namespace tpp {
                     color,
                     "Color of the cursor",
                     "\"#ffffff\"",
-                    ui2::Color
+                    ui::Color
                 );
                 CONFIG_OPTION(
                     blink,
@@ -250,8 +250,8 @@ namespace tpp {
                 );
 				/** Value getter for cursor properies aggregated in a ui::Cursor object.
 				 */
-				ui2::Cursor operator () () const {
-					ui2::Cursor result{};
+				ui::Cursor operator () () const {
+					ui::Cursor result{};
 					result.setVisible(true);
 					result.setCodepoint(codepoint());
 					result.setColor(color());

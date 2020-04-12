@@ -78,15 +78,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	tpp::APPLICATION_CLASS::Initialize(argc, argv, hInstance);
 
     /*    
-    ui2::AnsiTerminal::Palette palette{ui2::AnsiTerminal::Palette::XTerm256()};
-    ui2::AnsiTerminal * t = new ui2::AnsiTerminal{&palette, 80, 25};
-    ui2::BypassPTY * pty = new ui2::BypassPTY{t, config.session.command()};
+    ui::AnsiTerminal::Palette palette{ui::AnsiTerminal::Palette::XTerm256()};
+    ui::AnsiTerminal * t = new ui::AnsiTerminal{&palette, 80, 25};
+    ui::BypassPTY * pty = new ui::BypassPTY{t, config.session.command()};
     w->setRootWidget(t);
     w->setKeyboardFocus(t);
-    //ui2::Panel * p = new ui2::Panel();
+    //ui::Panel * p = new ui::Panel();
     //w->setRootWidget(p);
     w->show();
-    /*ui2::Renderer::SendEvent([]() {
+    /*ui::Renderer::SendEvent([]() {
         tpp2::Application::Instance()->alert("Event received");
     });
     tpp2::Application::Instance()->mainLoop();
@@ -104,15 +104,15 @@ int main(int argc, char* argv[]) {
 
 /*
     tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
-    ui2::AnsiTerminal::Palette palette{ui2::AnsiTerminal::Palette::XTerm256()};
-    ui2::AnsiTerminal * t = new ui2::AnsiTerminal{&palette, 80, 25};
-    ui2::LocalPTY * pty = new ui2::LocalPTY{t, config.session.command()};
+    ui::AnsiTerminal::Palette palette{ui::AnsiTerminal::Palette::XTerm256()};
+    ui::AnsiTerminal * t = new ui::AnsiTerminal{&palette, 80, 25};
+    ui::LocalPTY * pty = new ui::LocalPTY{t, config.session.command()};
     w->setRootWidget(t);
     w->setKeyboardFocus(t);
-    //ui2::Panel * p = new ui2::Panel();
+    //ui::Panel * p = new ui::Panel();
     //w->setRootWidget(p);
     w->show();
-    /*ui2::Renderer::SendEvent([]() {
+    /*ui::Renderer::SendEvent([]() {
         tpp2::Application::Instance()->alert("Event received");
     });
     tpp2::Application::Instance()->mainLoop();
@@ -135,8 +135,8 @@ int main(int argc, char* argv[]) {
 		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
 		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 
 			helpers::Logger::DefaultLog(),
-			ui2::AnsiTerminal::SEQ_ERROR,
-			ui2::AnsiTerminal::SEQ_UNKNOWN,
+			ui::AnsiTerminal::SEQ_ERROR,
+			ui::AnsiTerminal::SEQ_UNKNOWN,
 		});
 		LOG() << "t++ started";
 

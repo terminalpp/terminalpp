@@ -3,7 +3,7 @@
 #include "buffer.h"
 #include "geometry.h"
 
-namespace ui2 {
+namespace ui {
 
     class Widget;
 
@@ -229,4 +229,4 @@ namespace ui2 {
 
     };
 
-} // namespace ui2
+} // namespace ui

@@ -5,7 +5,7 @@
 #include "common.h"
 #include "geometry.h"
 
-namespace ui2 {
+namespace ui {
 
 
     /** Single cell of the buffer. 
@@ -344,4 +344,4 @@ namespace ui2 {
 
     };
 
-} // namespace ui2
+} // namespace ui

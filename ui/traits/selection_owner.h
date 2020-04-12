@@ -2,7 +2,7 @@
 
 #include "../geometry.h"
 
-namespace ui2 {
+namespace ui {
 
     /** Determines selection coordinates on a widget. 
 

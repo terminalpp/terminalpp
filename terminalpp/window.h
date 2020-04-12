@@ -17,7 +17,7 @@
 
 namespace tpp {
 
-    using namespace ui2;
+    using namespace ui;
 
     /** Base class for displaying an UI window content. 
      
@@ -202,7 +202,7 @@ namespace tpp {
 
         bool fullscreen_;
 
-        ui2::Key activeModifiers_;
+        ui::Key activeModifiers_;
 
         /** Mouse buttons that are currently down so that we know when to release the mouse capture. */
         unsigned mouseButtonsDown_;
@@ -300,7 +300,7 @@ namespace tpp {
             }
             
             // determine the cursor, its visibility and its position and draw it if necessary. The cursor is drawn when it is not blinking, when its position has changed since last time it was drawn with blink on or if it is blinking and blink is visible. This prevents the cursor for disappearing while moving
-            ui2::Cursor cursor = buf.cursor();
+            ui::Cursor cursor = buf.cursor();
             Point cursorPos = buf.cursorPosition();
             if (cursor.visible() && (! cursor.blink() || BlinkVisible_ || cursorPos != lastCursorPos_)) {
                 state_.setCodepoint(cursor.codepoint())

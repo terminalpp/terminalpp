@@ -16,7 +16,7 @@ namespace tpp {
 
         /** Returns the font associated with the font specification. 
          */
-        ui2::Font font() const {
+        ui::Font font() const {
             return font_;
         }
 
@@ -61,13 +61,13 @@ namespace tpp {
             // subclasses should free their native resources here
         }
 
-        static ui2::Font Strip(ui2::Font f) {
+        static ui::Font Strip(ui::Font f) {
             return f.setUnderline(false).setStrikethrough(false).setBlink(false);
         }
 
     protected:
 
-        FontMetrics(ui2::Font const & font, int cellHeight, int cellWidth = 0):
+        FontMetrics(ui::Font const & font, int cellHeight, int cellWidth = 0):
             font_{Strip(font)},
             cellWidth_{cellWidth},
             cellHeight_{cellHeight},
@@ -75,7 +75,7 @@ namespace tpp {
             offsetTop_{0} {
         }
 
-        ui2::Font font_;
+        ui::Font font_;
 
         int cellWidth_;
         int cellHeight_;
@@ -94,7 +94,7 @@ namespace tpp {
     template<typename T>
     class Font : public FontMetrics {
     public:
-        static T * Get(ui2::Font font, int cellHeight, int cellWidth = 0) {
+        static T * Get(ui::Font font, int cellHeight, int cellWidth = 0) {
             size_t id = CreateIdFrom(font, cellHeight);
             auto i = Fonts_.find(id);
             if (i == Fonts_.end()) {
@@ -119,12 +119,12 @@ namespace tpp {
 
     protected:
 
-        Font(ui2::Font font, int cellHeight, int cellWidth):
+        Font(ui::Font font, int cellHeight, int cellWidth):
             FontMetrics(font, cellHeight, cellWidth) {
         }
 
-        static size_t CreateIdFrom(ui2::Font font, int cellHeight) {
-            ui2::Font f = Strip(font);
+        static size_t CreateIdFrom(ui::Font font, int cellHeight) {
+            ui::Font f = Strip(font);
             return (static_cast<size_t>(cellHeight) << 16) + pointer_cast<uint16_t*>(&f)[0];
         }
 

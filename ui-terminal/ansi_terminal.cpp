@@ -1,6 +1,6 @@
 #include "ansi_terminal.h"
 
-namespace ui2 {
+namespace ui {
 
     namespace {
 
@@ -14,7 +14,7 @@ namespace ui2 {
                                                 KEY(Key(K) + Key::Ctrl + Key::Alt, SEQ1 << 7 << SEQ2); \
                                                 KEY(Key(K) + Key::Ctrl + Key::Alt + Key::Shift, SEQ1 << 8 << SEQ2);
 
-            using namespace ui2;
+            using namespace ui;
 
             std::unordered_map<Key, std::string> km;
             // first add letter keys in their modifications
@@ -1622,7 +1622,7 @@ namespace ui2 {
 
     Point AnsiTerminal::Buffer::resize(int width, int height, bool resizeContents, Cell const & fill, Point cursor) {
         if (! resizeContents) {
-            ui2::Buffer::resize(width, height);
+            ui::Buffer::resize(width, height);
             return cursor;
         }
         // create backup of the cells and new cells
@@ -1630,7 +1630,7 @@ namespace ui2 {
         int oldWidth = this->width();
         int oldHeight = this->height();
         rows_ = nullptr;
-        ui2::Buffer::resize(width, height);
+        ui::Buffer::resize(width, height);
         // resize the history
         std::deque<std::pair<int, Cell*>> oldHistory;
         std::swap(oldHistory, history_);

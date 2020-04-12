@@ -8,7 +8,7 @@
 
 namespace tpp {
 
-    using namespace ui2;
+    using namespace ui;
 
     class X11Window : public RendererWindow<X11Window, x11::Window> {
     public:
@@ -148,7 +148,7 @@ namespace tpp {
 
         /** Updates the current font.
          */
-        void changeFont(ui2::Font font) {
+        void changeFont(ui::Font font) {
 			font_ = X11Font::Get(font, cellHeight_, cellWidth_);
         }
 
@@ -219,7 +219,7 @@ namespace tpp {
             text_ = new XftGlyphSpec[cols];
         }
 
-		XftColor toXftColor(ui2::Color const& c) {
+		XftColor toXftColor(ui::Color const& c) {
 			XftColor result;
 			result.color.red = c.r * 256;
 			result.color.green = c.g * 256;

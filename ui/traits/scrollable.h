@@ -6,7 +6,7 @@
 
 #include "trait_base.h"
 
-namespace ui2 {
+namespace ui {
 
     /** Scrollable widgets trait. 
      

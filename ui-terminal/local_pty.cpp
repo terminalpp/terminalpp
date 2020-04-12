@@ -18,7 +18,7 @@
 
 #include "local_pty.h"
 
-namespace ui2 {
+namespace ui {
 
 #if (defined ARCH_UNIX)
 

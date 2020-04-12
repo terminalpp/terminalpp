@@ -43,7 +43,7 @@ namespace tpp {
          
             This is a two-stage process, where first the closest typeface is selected and once known, the font specification is determined from the typeface.
          */
-        DirectWriteFont(ui2::Font font, int cellHeight, int cellWidth = 0);
+        DirectWriteFont(ui::Font font, int cellHeight, int cellWidth = 0);
 
         DirectWriteFont(DirectWriteFont const & base, char32_t codepoint);
 

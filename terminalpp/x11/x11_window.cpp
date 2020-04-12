@@ -13,7 +13,7 @@ namespace tpp {
 	extern unsigned long tppIconNotification[];
 
     X11Window::X11Window(std::string const & title, int cols, int rows):
-        RendererWindow{cols, rows, *X11Font::Get(ui2::Font(), tpp::Config::Instance().font.size()), 1.0},
+        RendererWindow{cols, rows, *X11Font::Get(ui::Font(), tpp::Config::Instance().font.size()), 1.0},
 		display_{X11Application::Instance()->xDisplay_},
 		screen_{X11Application::Instance()->xScreen_},
 	    visual_{DefaultVisual(display_, screen_)},

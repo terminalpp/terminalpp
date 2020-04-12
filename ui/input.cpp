@@ -1,6 +1,6 @@
 #include "input.h"
 
-namespace ui2 {
+namespace ui {
 
 	bool Key::IsValidCode(unsigned c) {
 		switch (c) {

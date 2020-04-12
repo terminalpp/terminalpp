@@ -16,7 +16,7 @@
 #include "buffer.h"
 #include "widget.h"
 
-namespace ui2 {
+namespace ui {
 
 
     /** UI Renderer

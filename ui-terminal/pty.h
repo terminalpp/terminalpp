@@ -2,7 +2,7 @@
 
 #include "helpers/process.h"
 
-namespace ui2 {
+namespace ui {
 
     using helpers::ExitCode;
 

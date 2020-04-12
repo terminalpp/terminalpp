@@ -14,7 +14,7 @@ namespace tpp {
      */
 
     // TODO fix container's add method
-    class Session : public ui2::Panel, public ui2::AutoScroller<Session> {
+    class Session : public ui::Panel, public ui::AutoScroller<Session> {
     public:
 
         Session(Window * window):
@@ -34,9 +34,9 @@ namespace tpp {
             
             add(terminal_);
             #if (ARCH_WINDOWS)
-            pty_ = new ui2::BypassPTY{terminal_, config.session.command()};
+            pty_ = new ui::BypassPTY{terminal_, config.session.command()};
             #else
-            pty_ = new ui2::LocalPTY{terminal_, config.session.command()};
+            pty_ = new ui::LocalPTY{terminal_, config.session.command()};
             #endif
             window_->setKeyboardFocus(terminal_);
         }

@@ -33,7 +33,7 @@ namespace tpp {
     private:
         friend class Font<X11Font>;
 
-        X11Font(ui2::Font font, int cellHeight, int cellWidth = 0);
+        X11Font(ui::Font font, int cellHeight, int cellWidth = 0);
 
         X11Font(X11Font const & base, char32_t codepoint);
 

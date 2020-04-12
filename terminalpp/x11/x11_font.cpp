@@ -5,7 +5,7 @@ namespace tpp {
 
     std::unordered_map<XftFont*, unsigned> X11Font::ActiveFontsMap_;
     
-    X11Font::X11Font(ui2::Font font, int cellHeight, int cellWidth):
+    X11Font::X11Font(ui::Font font, int cellHeight, int cellWidth):
         Font<X11Font>{font, cellHeight, cellWidth} {
         // update the cell size accordingly
         //cellWidth *= font.width();

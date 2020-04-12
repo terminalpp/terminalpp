@@ -10,7 +10,7 @@
 
 #include "pty.h"
 
-namespace ui2 {
+namespace ui {
 
     /** A big mess of thread unsafe stuff for now, but the light at the end of the tunnel is visible...
      */
@@ -47,8 +47,8 @@ namespace ui2 {
 
         std::thread wait_;
 
-    }; // ui2::BypassPTY
+    }; // ui::BypassPTY
 
-} // namespace ui2
+} // namespace ui
 
 #endif
