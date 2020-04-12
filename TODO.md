@@ -18,9 +18,9 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- add zoom functionality
-
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
+- design proper and simple layouts and autosizing of widgets
+- for now terminal does not resize as the session does not translate the resizing to its size
 
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set
@@ -31,7 +31,6 @@ The following is very short description of the versions planned and their main n
 
 - fix the events payload to not contain references, and the event should take the payload as argument already
 
-- design proper and simple layouts and autosizing of widgets
 
 - hide console window in windows (arbitrary make the window visible on a configuration condition)
 
@@ -55,6 +54,7 @@ Issues to be raised:
 - add configuration option to confirm setting clipboard from the terminal
 - add a way to copy from mouse capturing terminal
 - how to & when invalidate selection when there are changes in the terminal's contents
+- when multiple sessions are supported, the RendererWindow can set the font instead of the subclasses
 
 ### v0.8
 

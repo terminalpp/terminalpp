@@ -214,13 +214,27 @@ namespace tpp {
 
     }; // tpp::Window
 
-    /** 
+    /** Templated child of the Window that provides support for fast rendering via CRTP. 
      */
     template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
     class RendererWindow : public Window {
+    public:
+
+        void setZoom(double value) override {
+            if (value != zoom_) {
+                Window::setZoom(value);
+                // get the font dimensions 
+                typename IMPLEMENTATION::Font * f = IMPLEMENTATION::Font::Get(ui::Font(), static_cast<int>(baseCellHeight_ * zoom_));
+                cellWidth_ = f->cellWidth();
+                cellHeight_ = f->cellHeight();
+                // tell the renderer to resize
+                resize(widthPx_ / cellWidth_, heightPx_ / cellHeight_);
+            }
+        }
+
     protected:
         RendererWindow(int width, int height, FontMetrics const & font, double zoom):
-            Window{width, height, font, zoom},
+            Window{width, height, font, 1.0},
             lastCursorPos_{-1,-1} {
         }
 

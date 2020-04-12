@@ -12,8 +12,9 @@ namespace tpp {
 
     class X11Window : public RendererWindow<X11Window, x11::Window> {
     public:
-
-        //using Font = X11Font;
+        /** Bring the font to the class' namespace so that the RendererWindow can find it. 
+         */
+        using Font = X11Font;
 
         ~X11Window() override;
 

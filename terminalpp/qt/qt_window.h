@@ -15,6 +15,10 @@ namespace tpp {
         Q_OBJECT
     public:
 
+        /** Bring the font to the class' namespace so that the RendererWindow can find it. 
+         */
+        using Font = QtFont;
+
         ~QtWindow() override;
 
         void repaint(Widget * widget) {
