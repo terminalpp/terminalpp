@@ -33,6 +33,22 @@ namespace ui {
 
 #if (defined ARCH_WINDOWS)
 
+        /* Startupo info which must be alive throughout the execution of the process.
+         */
+        STARTUPINFOEX startupInfo_;
+
+		/* Handle to the ConPTY object created for the command. */
+		HPCON conPTY_;
+
+		/* The pipe from which input should be read. */
+		HANDLE pipeIn_;
+
+		/* Pipe to which data for the application should be sent. */
+		HANDLE pipeOut_;
+
+		/* Information about the process being executed. */
+		PROCESS_INFORMATION pInfo_;
+
 #elif (defined ARCH_UNIX)
 
         /* Pipe to the process. */

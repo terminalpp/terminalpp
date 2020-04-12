@@ -33,11 +33,12 @@ namespace tpp {
             terminal_->onSetClipboard.setHandler(&Session::terminalSetClipboard, this);
             
             add(terminal_);
-            #if (ARCH_WINDOWS)
+#if (ARCH_WINDOWS)
             pty_ = new ui::BypassPTY{terminal_, config.session.command()};
-            #else
+//            pty_ = new ui::LocalPTY{terminal_, helpers::Command{"cmd.exe", {}}};
+#else
             pty_ = new ui::LocalPTY{terminal_, config.session.command()};
-            #endif
+#endif
             window_->setKeyboardFocus(terminal_);
         }
 

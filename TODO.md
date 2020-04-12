@@ -26,8 +26,7 @@ The following is very short description of the versions planned and their main n
 - qfont should keep the width if set
 
 - PTY++ and remote files version 2.0
-- localPTY for Win32
-- then back to the UI elements
+- deal with how PTYs are deleted (and the entire session)
 
 - hide console window in windows (arbitrary make the window visible on a configuration condition)
 
