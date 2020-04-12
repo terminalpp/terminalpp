@@ -12,6 +12,8 @@ The following is very short description of the versions planned and their main n
 
 ### v0.6
 
+This is a cummulative release before switching to the simpler UI framework currently in development. 
+
 - simple tests framework in helpers, tests target added
 - reentrant lock in helpers
 - simpler events (single handler, std::function, method and fptr handlers)
@@ -21,6 +23,7 @@ The following is very short description of the versions planned and their main n
 - build fixed so that stamp is only generated when required
 - better errors for invalid JSON settings
 - paste confirmation dialog
+- numeric keypad enter works (#6)
 
 ##### TODO
 
