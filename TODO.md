@@ -18,7 +18,6 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- unify - and _ in filenames
 - terminal should scroll only when needed (i.e. buffer is available and mouse is not captured)
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
 

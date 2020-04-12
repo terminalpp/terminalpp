@@ -13,7 +13,7 @@
 #include "about_box.h"
 
 #include "ui2/widgets/panel.h"
-#include "ui-terminal/ansi-terminal.h"
+#include "ui-terminal/ansi_terminal.h"
 #include "ui-terminal/bypass_pty.h"
 #include "ui-terminal/local_pty.h"
 

@@ -47,10 +47,6 @@
 #include "ui-terminal/terminal.h"
 #include <thread>
 
-
-#include "ui2/widgets/panel.h"
-#include "ui-terminal/ansi-terminal.h"
-
 #include "helpers/json.h"
 
 #include "helpers/filesystem.h"
