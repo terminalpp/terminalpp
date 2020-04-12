@@ -24,7 +24,7 @@ namespace tpp2 {
      */
 
     // TODO fix container's add method
-    class Session : public ui2::Panel {
+    class Session : public ui2::Panel, public ui2::AutoScroller<Session> {
     public:
 
         Session(Window * window):
@@ -36,6 +36,7 @@ namespace tpp2 {
             terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
             terminal_->onNotification.setHandler(&Session::terminalNotification, this);
             terminal_->onKeyDown.setHandler(&Session::terminalKeyDown, this);
+            terminal_->onMouseMove.setHandler(&Session::terminalMouseMove, this);
             terminal_->onMouseDown.setHandler(&Session::terminalMouseDown, this);
             terminal_->onMouseUp.setHandler(&Session::terminalMouseUp, this);
             terminal_->onMouseWheel.setHandler(&Session::terminalMouseWheel, this);
@@ -51,6 +52,11 @@ namespace tpp2 {
         }
 
     protected:
+
+        bool autoScrollStep(Point by) override {
+            return terminal_->scrollBy(by);
+        }
+
         void terminalTitleChanged(Event<std::string>::Payload & e) {
             window_->setTitle(*e);
         }
@@ -67,6 +73,15 @@ namespace tpp2 {
             if (*e == (Key::V + Key::Ctrl + Key::Shift)) {
                 requestClipboard();
                 e.stop();
+            }
+        }
+
+        void terminalMouseMove(Event<MouseMoveEvent>::Payload & event) {
+            if (terminal_->updatingSelection()) {
+                if (event->coords.y() < 0 || event->coords.y() >= terminal_->height())
+                    startAutoScroll(Point{0, event->coords.y() < 0 ? -1 : 1});
+                else
+                    stopAutoScroll();
             }
         }
 
@@ -264,6 +279,7 @@ namespace tpp {
         }
 
     private:
+
 
         void terminalTitleChanged(ui::Event<std::string>::Payload & e) {
             setTitle(*e);

@@ -268,22 +268,8 @@ namespace ui2 {
                 sendMouseEvent(mouseLastButton_ + 32, event->coords, 'M');
                 LOG(SEQ) << "Mouse moved to " << event->coords;
         }
-        if (event->modifiers == 0 && updatingSelection()) {
-                updateSelection(event->coords + scrollOffset(), Point{scrollWidth(), scrollHeight()});
-                /*
-                if (scrollable_) {
-                    if (row < 0 || row >= height()) 
-                        startAutoScroll(Point{0, row < 0 ? -1 : 1});
-                    else 
-                        stopAutoScroll();
-                } */
-            /*
-            bool x = col == width() - 1;
-            if (x != scrollBarActive_) {
-                scrollBarActive_ = x;
-                repaint();
-            } */
-        }
+        if (updatingSelection()) 
+            updateSelection(event->coords + scrollOffset(), Point{scrollWidth(), scrollHeight()});
     }
 
     void AnsiTerminal::mouseDown(Event<MouseButtonEvent>::Payload & event) {

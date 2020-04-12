@@ -229,7 +229,6 @@ namespace ui2 {
         /** Triggered when mouse enters the rendered area.
          */
         virtual void rendererMouseIn() {
-            LOG() << "MouseIn";
             ASSERT(mouseIn_ == false);
             ASSERT(mouseFocus_ == nullptr && mouseButtons_ == 0) << "Looks like mouseOut was not called properly";
             mouseFocus_ = nullptr;
@@ -242,7 +241,6 @@ namespace ui2 {
             This must be the last mouse event sent to the renderer until new mouseIn call. The method should only be called
          */
         virtual void rendererMouseOut() {
-            LOG() << "MouseOut";
             // trigger the mouseOut event on existing mouse focus
             Event<void>::Payload p{};
             mouseOut(p, mouseFocus_);
@@ -253,7 +251,6 @@ namespace ui2 {
         }
 
         virtual void rendererMouseMove(Point coords, Key modifiers) {
-            LOG() << "Mousemove " << coords;
             ASSERT(mouseIn_);
             updateMouseFocus(coords);
             Event<MouseMoveEvent>::Payload p{MouseMoveEvent{coords, modifiers}};

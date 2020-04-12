@@ -18,18 +18,14 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- mouseOut is not reported at all in QT
-
-- AutoScrolling (as child of Scrollable trait)
-
 - unify - and _ in filenames
+- terminal should scroll only when needed (i.e. buffer is available and mouse is not captured)
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
 
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set
 
 - make terminal tell if mouse is captured and update selection grabbing accordingly
-- terminal should scroll only when needed (i.e. buffer is available and mouse is not captured)
 - add configuration option to confirm setting clipboard from the terminal
 
 - PTY++ and remote files version 2.0
@@ -39,6 +35,8 @@ The following is very short description of the versions planned and their main n
 - fix the events payload to not contain references, and the event should take the payload as argument already
 
 - design proper and simple layouts and autosizing of widgets
+
+- hide console window in windows (arbitrary make the window visible on a configuration condition)
 
 - design settings via abstract configurator classes that provide the interface
     - do settings for terminal history, including history, or shared history for the alternate buffer if requested
@@ -53,6 +51,10 @@ The following is very short description of the versions planned and their main n
 - revisit how errors are reported and logged and how things are checked before releases
 
 - ubuntu ppa distribution
+
+Issues to be raised:
+
+- mouseOut is not reported at all in QT
 
 ### v0.8
 

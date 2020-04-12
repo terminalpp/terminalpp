@@ -180,6 +180,7 @@ namespace ui2 {
 
         using SelectionOwner::selection;
         using SelectionOwner::endSelectionUpdate;
+        using SelectionOwner::updatingSelection;
 
         void startSelectionUpdate(Point from) {
             SelectionOwner::startSelectionUpdate(from + scrollOffset());
