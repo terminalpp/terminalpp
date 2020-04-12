@@ -47,12 +47,6 @@ namespace helpers {
 		private:
 		    friend class Event;
 
-            // TODO remoev this
-			Payload(PAYLOAD & payload, SENDER * sender):
-			    payload_(payload),
-				sender_(sender) {
-			}
-
 			PAYLOAD payload_;
 			SENDER * sender_;
 
@@ -82,32 +76,6 @@ namespace helpers {
 		void setHandler(void(C::*method)(Payload &), C * object) {
 			handler_ = std::bind(method, object, std::placeholders::_1);
 		}
-
-        /* TODO DEPRECATED
-         */
-		void operator() (SENDER * sender, PAYLOAD & payload) {
-			if (handler_) {
-				Payload p{payload, sender};
-				handler_(p);
-			}
-		}
-
-		void operator() (SENDER * sender, PAYLOAD const & payload) {
-			if (handler_) {
-				PAYLOAD p{payload};
-				Payload pp{p, sender};
-				handler_(pp);
-			}
-		}
-
-		void operator() (SENDER * sender, PAYLOAD && payload) {
-			if (handler_) {
-				Payload p{payload, sender};
-				handler_(p);
-			}
-		}
-
-        // END DEPRECATED
 
         void operator() (Payload & payload, SENDER * sender) {
             payload.sender_ = sender;
@@ -177,15 +145,6 @@ namespace helpers {
 		void setHandler(void(C::*method)(Payload &), C * object) {
 			handler_ = std::bind(method, object, std::placeholders::_1);
 		}
-
-        // TODO DEPRECATED
-		void operator() (SENDER * sender) {
-			if (handler_) {
-				Payload p{sender};
-			    handler_(p);
-			}
-		}
-        // TODO END DEPRECATED
 
         void operator() (Payload & payload, SENDER * sender) {
             payload.sender_ = sender;

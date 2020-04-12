@@ -29,9 +29,6 @@ The following is very short description of the versions planned and their main n
 - localPTY for Win32
 - then back to the UI elements
 
-- fix the events payload to not contain references, and the event should take the payload as argument already
-
-
 - hide console window in windows (arbitrary make the window visible on a configuration condition)
 
 - design settings via abstract configurator classes that provide the interface
