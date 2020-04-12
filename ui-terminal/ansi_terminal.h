@@ -146,6 +146,12 @@ namespace ui2 {
         }
         //@}
 
+        /** Returns true if the currently running application has requested mouse events to be sent to it. 
+         */
+        bool mouseCaptured() const {
+            return (mouseMode_ != MouseMode::Off);
+        }
+
         /** \name Events
          */
         //@{

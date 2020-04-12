@@ -1084,9 +1084,11 @@ namespace ui2 {
 				 */
 				case 47:
 				case 1049: 
-                    // stop autoscrolling so that we don't scroll the alternate buffer at all
-                    //stopAutoScroll();
                     if (alternateMode_ != value) {
+                        // if the selection update was in progress, cancel it. If the selection is not empty, clear it
+                        cancelSelectionUpdate();
+                        clearSelection();
+                        // perform the mode change
                         std::swap(state_, stateBackup_);
                         alternateMode_ = value;
                         setScrollHeight(state_.buffer.historyRows() + state_.buffer.height());

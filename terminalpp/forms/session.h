@@ -77,6 +77,8 @@ namespace tpp2 {
         }
 
         void terminalMouseMove(Event<MouseMoveEvent>::Payload & event) {
+            if (terminal_->mouseCaptured())
+                return;
             if (terminal_->updatingSelection()) {
                 if (event->coords.y() < 0 || event->coords.y() >= terminal_->height())
                     startAutoScroll(Point{0, event->coords.y() < 0 ? -1 : 1});
@@ -86,6 +88,8 @@ namespace tpp2 {
         }
 
         void terminalMouseDown(Event<MouseButtonEvent>::Payload & event) {
+            if (terminal_->mouseCaptured())
+                return;
             if (event->modifiers == 0) {
                 if (event->button == MouseButton::Left) {
                     terminal_->startSelectionUpdate(event->coords);
@@ -102,6 +106,8 @@ namespace tpp2 {
         }
 
         void terminalMouseUp(Event<MouseButtonEvent>::Payload & event) {
+            if (terminal_->mouseCaptured())
+                return;
             if (event->modifiers == 0) {
                 if (event->button == MouseButton::Left) 
                     terminal_->endSelectionUpdate();
@@ -112,7 +118,9 @@ namespace tpp2 {
         }
 
         void terminalMouseWheel(Event<MouseWheelEvent>::Payload & event) {
-            //if (state_.buffer.historyRows() > 0) {
+            if (terminal_->mouseCaptured())
+                return;
+              //if (state_.buffer.historyRows() > 0) {
                 if (event->by > 0)
                     terminal_->scrollBy(Point{0, -1});
                 else 

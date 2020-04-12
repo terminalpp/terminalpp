@@ -18,14 +18,10 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- terminal should scroll only when needed (i.e. buffer is available and mouse is not captured)
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
 
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set
-
-- make terminal tell if mouse is captured and update selection grabbing accordingly
-- add configuration option to confirm setting clipboard from the terminal
 
 - PTY++ and remote files version 2.0
 - localPTY for Win32
@@ -54,6 +50,9 @@ The following is very short description of the versions planned and their main n
 Issues to be raised:
 
 - mouseOut is not reported at all in QT
+- add configuration option to confirm setting clipboard from the terminal
+- add a way to copy from mouse capturing terminal
+- how to & when invalidate selection when there are changes in the terminal's contents
 
 ### v0.8
 
