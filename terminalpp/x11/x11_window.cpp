@@ -236,6 +236,7 @@ namespace tpp {
             case XK_Tab:
                 return Key(Key::Tab, modifiers);
             case XK_Return:
+            case XK_KP_Enter:            
                 return Key(Key::Enter, modifiers);
             case XK_Caps_Lock:
                 return Key(Key::CapsLock, modifiers);
