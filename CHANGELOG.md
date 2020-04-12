@@ -5,6 +5,21 @@ layout: titled
 
 Lists the most important improvements for recent `terminalpp` versions.
 
+### v0.6 - Cummulative
+
+This is a cummulative release before switching to the simpler UI framework currently in development. 
+
+- simple tests framework in helpers, tests target added
+- reentrant lock in helpers
+- simpler events (single handler, std::function, method and fptr handlers)
+- configuration code refactoring
+- simpler UI code
+- more automation for releases
+- build fixed so that stamp is only generated when required
+- better errors for invalid JSON settings
+- paste confirmation dialog
+- numeric keypad enter works (#6)
+
 ### 0.5.4
 
 - macOS supported via QT

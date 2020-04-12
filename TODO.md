@@ -10,21 +10,6 @@
 
 The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-### v0.6
-
-This is a cummulative release before switching to the simpler UI framework currently in development. 
-
-- simple tests framework in helpers, tests target added
-- reentrant lock in helpers
-- simpler events (single handler, std::function, method and fptr handlers)
-- configuration code refactoring
-- simpler UI code
-- more automation for releases
-- build fixed so that stamp is only generated when required
-- better errors for invalid JSON settings
-- paste confirmation dialog
-- numeric keypad enter works (#6)
-
 ##### TODO
 
 - design proper and simple layouts and autosizing of widgets
