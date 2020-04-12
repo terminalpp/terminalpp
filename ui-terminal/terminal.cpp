@@ -660,13 +660,14 @@ namespace ui {
         if (! scrollable_) 
             return;
         if (historySizeLimit_ > 0) {
+            bool autoscroll = scrollOffset().y == history_.size();
             addHistoryLine(line, cols);
             if (history_.size() > historySizeLimit_) {
                 popHistoryLine();
             } else {
                 updateClientRect();
-                // TODO only scroll if we were at the top
-                setScrollOffset(scrollOffset() + Point{0, 1});
+                if (autoscroll)
+                    setScrollOffset(ui::Point{0, static_cast<int>(history_.size())});
             }
         }
 
