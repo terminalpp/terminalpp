@@ -2,50 +2,20 @@
 
 #include "../container.h"
 
-#include "../traits/box.h"
+namespace ui2 {
 
-namespace ui {
+    class Panel : public Container {
+    public:
 
-	/** A simple container with custom background and a possibility of a border. 
+    protected:
 
-	 */
-	class Panel : public Container, public Box<Panel> {
-	public:
+        void paint(Canvas & canvas) {
+            canvas.setBg(Color::Red);
+            canvas.fillRect(canvas.rect());
+            // paint the children
+            Container::paint(canvas);
+        }
 
-		Panel(int width = 0, int height = 0) :
-			Container{width, height},
-			showHeader_{false} {
-		}
-
-		Rect childRect() const override {
-			if (showHeader_) 
-				return Rect::FromCorners(0, headerFont_.height(), width(), height());
-			else
-				return Rect::FromCorners(0, 0, width(), height());
-		}
-
-	protected:
-
-		void paint(Canvas & canvas) override {
-			Box::paint(canvas);
-			if (showHeader_) {
-				canvas.setBg(headerBackground_).fill(Rect::FromTopLeftWH(0,0,canvas.width(), headerFont_.height()));
-				canvas.setFg(headerColor_).setFont(headerFont_).lineOut(Point{0, 0}, headerText_);
-			}
-			Container::paint(canvas);
-		}
-
-	//private:
-
-		// invalidate on change to font as childRect changes...
-	    Font headerFont_;
-		Color headerColor_;
-		Brush headerBackground_;
-		std::string headerText_;
-		bool showHeader_;
-
-	}; // ui::Panel
-
+    }; // ui::Panel
 
 } // namespace ui
-

@@ -131,7 +131,7 @@ namespace ui2 {
 
 }
 
-
+#ifdef HAHA
 
 namespace tpp {
 
@@ -385,3 +385,5 @@ namespace tpp {
 
 
 } // namespace vterm
+
+#endif

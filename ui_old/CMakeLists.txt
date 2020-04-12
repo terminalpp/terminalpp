@@ -3,8 +3,8 @@
 #
 cmake_minimum_required (VERSION 3.5)
 
-project(libui2)
+project(libui)
 
 file(GLOB_RECURSE SRC "*.cpp" "*.h")
 
-add_library(libui2 ${SRC})
+add_library(libui ${SRC})

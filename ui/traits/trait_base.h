@@ -1,6 +1,6 @@
 #pragma once
 
-namespace ui {
+namespace ui2 {
 
     template<template<typename> typename X, typename T>
     class TraitBase {

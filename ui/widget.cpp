@@ -1,149 +1,97 @@
 #include "widget.h"
-#include "container.h"
-#include "root_window.h"
 
-namespace ui {
+#include "renderer.h"
 
-    Widget::~Widget() {
-        // detach from parent if not detached alerady
-        if (parent_) 
-            parent_->detachChild(this);
+namespace ui2 {
+
+    void Widget::repaint() {
+        std::lock_guard<std::mutex> g{mRenderer_};
+        if (renderer_ != nullptr)
+            renderer_->repaint(this);
     }
 
-	bool Widget::isChildOf(Widget const * parent) const {
-		Widget const * p = this->parent_;
-		while (p != nullptr) {
-			if (p == parent)
-				return true;
-			p = p->parent_;
-		}
-		return false;
-	}
-
-	void Widget::setVisible(bool value) {
-		if (visible_ != value) {
-			updateVisible(value);
-			if (parent_ != nullptr)
-				parent_->childInvalidated(this);
-		}
-	}
-
-	void Widget::setEnabled(bool value) {
-		if (enabled_ != value) {
-			updateEnabled(value);
-			if (parent_ != nullptr)
-				parent_->childInvalidated(this);
-		}
-	}
-	
-	void Widget::setFocused(bool value) {
-		if (focused_ != value && visibleRect_.valid())
-			visibleRect_.rootWindow()->focusWidget(this, value); 
-	}
-
-	void Widget::repaint() {
-		// only repaint the control if it is visible
-		if (visible_ && visibleRect_.valid()) {
-			// if the widget is overlaid, the parent must be repainted, if the parent is not known, it is likely a root window, so just repainting it is ok
-			if (parent_ != nullptr && (forceOverlay_ || overlay_)) {
-				parent_->repaint();
-			// otherwise repainting the widget is enough
-			} else {
-				// TODO this is an issue, if the widget has been invalidated before we get the canvas, the canvas construction would fail
-				Canvas canvas{this};
-                // now that the canvas was created, make sure that we are still valid under the lock, otherwise ignore the paint request
-                if (visibleRect_.valid())
-				    paint(canvas);
-			}
-		} 
-	}
-
-	void Widget::invalidate() {
-		if (visibleRect_.valid()) {
-			invalidateContents();
-			if (parent_ != nullptr)
-				parent_->childInvalidated(this);
-		}
-	}
-
-	void Widget::setWidthHint(Layout::SizeHint value) {
-		if (widthHint_ != value) {
-			widthHint_ = value;
-			if (parent_ != nullptr)
-				parent_->childInvalidated(this);
-		}
-	}
-
-	void Widget::setHeightHint(Layout::SizeHint value) {
-		if (heightHint_ != value) {
-			heightHint_ = value;
-			if (parent_ != nullptr)
-				parent_->childInvalidated(this);
-		}
-	}
-
-	void Widget::updateFocusStop(bool value) {
-		focusStop_ = value;
-		RootWindow * root = rootWindow();
-		if (root != nullptr) 
-		    focusStop_ ? root->addFocusStop(this) : root->removeFocusStop(this);
-	}
-
-	void Widget::updateFocusIndex(unsigned value) {
-		RootWindow * root = rootWindow();
-		if (focusStop_ && root)
-		    root->removeFocusStop(this);
-		focusIndex_ = value;
-		if (focusStop_ && root)
-		    root->addFocusStop(this);
-	}
-
-    void Widget::requestClipboardContents() {
-        RootWindow * root = rootWindow();
-        if (root)
-            root->requestClipboardContents(this);
+    bool Widget::focused() const {
+        UI_THREAD_CHECK;
+        std::lock_guard<std::mutex> g{mRenderer_};
+        return (renderer_ == nullptr) ? false : (renderer_->keyboardFocus() == this);
     }
 
-    void Widget::requestSelectionContents() {
-        RootWindow * root = rootWindow();
-        if (root)
-            root->requestSelectionContents(this);
+    void Widget::setCursor(Canvas & canvas, Cursor const & cursor, Point position) {
+        if (focused()) {
+            canvas.buffer_.setCursor(cursor);
+            if (canvas.visibleRect_.contains(position))
+                canvas.buffer_.setCursorPosition(position + canvas.bufferOffset_);
+            else
+                canvas.buffer_.setCursorPosition(Point{-1, -1});
+        } else {
+            ASSERT("Attempt to set cursor from unfocused widget");
+        }
     }
 
-	void Widget::setClipboardContents(std::string const & value) {
-        RootWindow * root = rootWindow();
-		ASSERT(root != nullptr);
-		if (root != nullptr)
-		    root->setClipboard(value);
-	}
-
-	void Widget::setSelectionContents(std::string const & value) {
-        RootWindow * root = rootWindow();
-		ASSERT(root != nullptr);
-		if (root != nullptr)
-		    root->setSelection(this, value);
-	}
-
-    void Widget::windowToWidgetCoordinates(int & col, int & row) {
-        ASSERT(parent_ != nullptr) << "Not expected to be called un detached widget.";
-        // adjust for the offset of the widget inside its parent widget
-        col -= x_;
-        row -= y_;
-        parent_->windowToWidgetCoordinates(col, row);
+    void Widget::attachRenderer(Renderer * renderer) {
+        UI_THREAD_CHECK;
+        ASSERT(this->renderer() == nullptr && renderer != nullptr);
+        ASSERT(parent_ == nullptr || parent_->renderer() == renderer);
+        {
+            std::lock_guard<std::mutex> g{mRenderer_};
+            renderer_ = renderer;
+        }
+        renderer->widgetAttached(this);
     }
 
-	void Widget::attachRootWindow(RootWindow * root) {
-		ASSERT(visibleRect_.rootWindow() == nullptr);
-		visibleRect_.attach(root);
-		root->widgetAttached(this);
-	}
+    void Widget::detachRenderer() {
+        UI_THREAD_CHECK;
+        ASSERT(renderer() != nullptr);
+        ASSERT(parent_ == nullptr || parent_->renderer() != nullptr);
+        renderer()->widgetDetached(this);
+        {
+            std::lock_guard<std::mutex> g{mRenderer_};
+            renderer_ = nullptr;
+        }
+    }
 
-	void Widget::detachRootWindow() {
-		// it is possible the visible rect is not attached in case the widget was never drawn
-		if (visibleRect_.rootWindow() != nullptr) {
-			visibleRect_.rootWindow()->widgetDetached(this);
-			visibleRect_.detach();
-		}
-	}
+    void Widget::requestClipboard() {
+        UI_THREAD_CHECK;
+        if (renderer_ != nullptr)
+            renderer_->requestClipboard(this);
+    }
+
+    void Widget::requestSelection() {
+        UI_THREAD_CHECK;
+        if (renderer_ != nullptr)
+            renderer_->requestSelection(this);
+    }
+
+    void Widget::setClipboard(std::string const & contents) {
+        UI_THREAD_CHECK;
+        if (renderer_ != nullptr)
+            renderer_->rendererSetClipboard(contents);
+    }
+
+    void Widget::registerSelection(std::string const & contents) {
+        UI_THREAD_CHECK;
+        if (renderer_ != nullptr)
+            renderer_->rendererRegisterSelection(contents, this);
+    }
+
+    /** Gives up the selection and informs the renderer. 
+     */
+    void Widget::clearSelection() {
+        UI_THREAD_CHECK;
+        if (hasSelectionOwnership()) {
+            ASSERT(renderer_ != nullptr);
+            renderer_->rendererClearSelection();
+        }
+    }
+
+    /** Returns true if the widget currently holds the selection ownership. 
+     */
+    bool Widget::hasSelectionOwnership() const {
+        if (renderer_ == nullptr)
+            return false;
+        return renderer_->selectionOwner_ == this;
+    }
+
+
 
 } // namespace ui

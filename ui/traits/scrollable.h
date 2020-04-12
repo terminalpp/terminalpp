@@ -2,91 +2,122 @@
 
 #include "helpers/time.h"
 
+#include "../widget.h"
+
 #include "trait_base.h"
 
-namespace ui {
+namespace ui2 {
 
+    /** Scrollable widgets trait. 
+     
+        Implements the basic data and functionality for scrolling. 
+
+        - scrolling does not really support borders around the the scrollthingy, i.e. scrollbox must have no borders
+
+     */
 	template<typename T>
 	class Scrollable : public TraitBase<Scrollable, T> {
 	public:
 
-		Scrollable(int width, int height) :
-			scrollOffset_{0,0},
-			clientSize_{width, height} {
-		}
-
-        Point clientSize() const {
-            return clientSize_;
+        int scrollWidth() const {
+            return scrollWidth_;
         }
 
-		/** Returns the visible rectangle. 
-		 */
-		Point scrollOffset() const {
-			return scrollOffset_;
-		}
+        int scrollHeight() const {
+            return scrollHeight_;
+        }
 
-        /** Sets the scroll offset. 
-         
-            The scroll offset is first trimmed to the client size and rect, i.e. values less than 0 or the canvas size subtracted by the client rectangle are changed accordingly. 
-            Returns true if the possibly updated scroll offset (i.e. new valid scroll offset) was different from existing scroll offset, i.e. whether the requested scroll was valid, or out of bounds (false).
-         */
-        bool setScrollOffset(Point offset) {
-            Rect clientRect = static_cast<T*>(this)->childRect();
-            offset.x = std::max(offset.x, 0);
-            offset.x = std::min(offset.x, clientSize_.x - clientRect.width());
-            offset.y = std::max(offset.y, 0);
-            offset.y = std::min(offset.y, clientSize_.y - clientRect.height());
-            if (scrollOffset_ == offset)
-                return false;
-            updateScrollOffset(offset);
-            return true;
-        }		
+        Point scrollOffset() const {
+            return scrollOffset_;
+        }
 
-	protected:
+    protected:
+
         using TraitBase<Scrollable, T>::downcastThis;
 
-		Canvas getChildrenCanvas(Canvas & canvas) {
-            return Canvas{canvas}.clip(downcastThis()->childRect()).resize(clientSize_).scrollBy(scrollOffset_);
-        }	
+        Scrollable(int width, int height):
+            scrollWidth_{width},
+            scrollHeight_{height},
+            scrollOffset_{0,0} {
+        } 
 
-        void setClientSize(Point const & size) {
-            if (clientSize_ == size)
-                return;
-            updateClientSize(size);
+        virtual void setScrollOffset(Point offset) {
+            if (scrollOffset_ != offset) {
+                scrollOffset_ = offset;
+                downcastThis()->repaint();
+            }
         }
 
-        virtual void updateClientSize(Point const & size) {
-            clientSize_ = size;
-            downcastThis()->repaint();
+        /** Incremental scrolling
+         */
+        bool scrollBy(Point by) {
+            Point offset = scrollOffset_ + by;
+            Point adjusted = Point::MinCoordWise(
+                Point::MaxCoordWise(Point{0,0}, offset), 
+                Point{scrollWidth_ - downcastThis()->width(), scrollHeight_ - downcastThis()->height()}
+            );
+            setScrollOffset(adjusted);
+            return adjusted == offset;
         }
 
-		virtual void updateScrollOffset(Point const & value) {
-			scrollOffset_ = value;
-			downcastThis()->repaint();			
-		}
+        virtual void setScrollWidth(int value) {
+            scrollWidth_ = value;
+        }
 
-        /** Updates the coordinates of the widget based on the current scroll offset. 
+        virtual void setScrollHeight(int value) {
+            scrollHeight_ = value;
+        }
+
+        Canvas getContentsCanvas(Canvas canvas) {
+            return canvas.resize(scrollWidth_, scrollHeight_).offset(scrollOffset_);
+        }
+
+        void setRect(Rect const & value) {
+            if (value.width() > scrollWidth_)
+                scrollWidth_ = value.width();
+            if (value.height() > scrollHeight_)
+                scrollHeight_ = value.height();
+        }
+
+        /** Displays the scrollbars. 
          
-            This method is to be called from the class inheriting from scrollable. 
+            Scrollbars are displayed only when the canvas size is smaller than the scrollWidth and height. 
          */
-        void windowToWidgetCoordinates(int & col, int & row) {
-            col += scrollOffset_.x;
-            row += scrollOffset_.y;
-        }        
-
-        /** Returns the start and length of a vertical scrollbar. 
-         */
-        std::pair<int, int> verticalScrollbar(int length) {
-            return ScrollBarDimensions(length, clientSize_.y, scrollOffset_.y);
+        void paint(Canvas & canvas) {
+            if (scrollHeight_ > canvas.height()) {
+                std::pair<int, int> slider{ScrollBarDimensions(canvas.height(), scrollHeight_, scrollOffset_.y())};
+                paintHorizontalScrollbar(canvas, slider.first, slider.second);
+            }
+            if (scrollWidth_ > canvas.width()) {
+                std::pair<int, int> slider{ScrollBarDimensions(canvas.width(), scrollWidth_, scrollOffset_.x())};
+                paintVerticalScrollbar(canvas, slider.first, slider.second);
+            }
         }
 
-        /** Returns the start and length of a horizontal scrollbar. 
-         */
-        std::pair<int, int> horizontalScrollbar(int length) {
-            return ScrollBarDimensions(length, clientSize_.x, scrollOffset_.x);
-        }		
+        virtual void paintHorizontalScrollbar(Canvas & canvas, int start, int end) {
+            Border b{Color::White.withAlpha(64)};
+            b.setRight(Border::Kind::Thin);
+            int x = canvas.width() - 1;
+            canvas.drawBorder(b, Point{x, 0}, Point{x, start});
+            canvas.drawBorder(b, Point{x, end}, Point{x, canvas.height()});
+            b.setRight(Border::Kind::Thick);
+            canvas.drawBorder(b, Point{x, start}, Point{x, end});
+        }
 
-	private:
+        virtual void paintVerticalScrollbar(Canvas & canvas, int start, int end) {
+            Border b{Color::White.withAlpha(64)};
+            b.setRight(Border::Kind::Thin);
+            int y = canvas.height() - 1;
+            canvas.drawBorder(b, Point{0, y}, Point{start, y});
+            canvas.drawBorder(b, Point{end, y}, Point{canvas.height(), y});
+            b.setRight(Border::Kind::Thick);
+            canvas.drawBorder(b, Point{start, y}, Point{end, y});
+        }
+
+    private:
+        int scrollWidth_;
+        int scrollHeight_;
+        Point scrollOffset_;
 
         static std::pair<int, int> ScrollBarDimensions(int length, int max, int offset) {
             int sliderSize = std::max(1, length * length / max);
@@ -97,20 +128,21 @@ namespace ui {
             // if the slider would go beyond the length, adjust the slider start
             if (sliderStart + sliderSize > length)
                 sliderStart = length - sliderSize;
-            return std::make_pair(sliderStart, sliderSize);
+            return std::make_pair(sliderStart, sliderStart + sliderSize);
         }	
 
-		Point scrollOffset_;
 
-		Point clientSize_;
+    }; // ui::Scrollable
 
-	}; // ui::Scrollable
 
-    /** Autoscrolling trait for scrollable widgets.
+    /** Autoscrolling trait
+     
+        The autoscrolling trait provides a timer and increment that can be used to auto scroll widgets when needed. The AutoScroller does not implement the actual scrolling so that it can be inherited by any Widget. This is useful when a non-scrollable widget controls a scrollable widget and therefore has to provide this forwarding.
+
+        If the widget to be autoscrolled is the widget itself, then OwnAutoScroller should be used. 
      */
     template<typename T>
     class AutoScroller : public TraitBase<AutoScroller, T> {
-
     protected:
         using TraitBase<AutoScroller, T>::downcastThis;
 
@@ -120,11 +152,11 @@ namespace ui {
             autoScrollIncrement_{0,0} {
             autoScrollTimer_.setInterval(50);
             autoScrollTimer_.setHandler([this]() {
-                return autoScrollStep();
+                return autoScrollStep(autoScrollIncrement_);
             });
         }
 
-        virtual ~AutoScroller() { }
+        virtual ~AutoScroller() noexcept(false) { }
 
         /** Starts the autoscroll feature. 
          
@@ -151,17 +183,34 @@ namespace ui {
         }
 
         /** A single step of the autoscroll feature. 
+         
+            Should perform the scrolling and return true if more scrolling in the desired direction is possible, false otherwise. When false is returned, the auto scrolling is stopped. 
          */    
-        virtual bool autoScrollStep() {
-            T* self = downcastThis();
-            return self->setScrollOffset(self->scrollOffset() + autoScrollIncrement_);
-        }
+        virtual bool autoScrollStep(Point by) = 0;
 
     private:
         Point autoScrollIncrement_;
 
         helpers::Timer autoScrollTimer_;
 
-    }; // ui::Autoscroller
+    }; // ui::AutoScroller
+
+    /** AutoScroller specialization that scrolls its own contents.
+     
+        This class simply provides the autoScrollStep() method implementation so that the widget scrolls itself. 
+     */
+    template<typename T>
+    class OwnAutoScroller : public AutoScroller<T> {
+    protected:
+        using AutoScroller<T>::downcastThis;
+
+        /** Scrolls the widget itself. 
+         */
+        bool autoScrollStep(Point by) override {
+            T* self = downcastThis();
+            return self->scrollBy(by);
+        }
+    };
 
 } // namespace ui
+

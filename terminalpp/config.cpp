@@ -1,7 +1,7 @@
 #include <fstream>
-#include <filesystem>
 
 #include "helpers/stamp.h"
+#include "helpers/filesystem.h"
 
 #include "application.h"
 #include "config.h"
@@ -31,7 +31,7 @@ namespace tpp {
 						verifyConfigurationVersion(settings);
 						// specify, check errors, make copy if wrong
 						specify(settings, [& saveSettings, & filename](std::exception const & e){
-							Application::Alert(STR(e.what() << " while parsing terminalpp settings at " << filename));
+							Application::Instance()->alert(STR(e.what() << " while parsing terminalpp settings at " << filename));
 							saveSettings = true;
 						});
 					} catch (helpers::JSONError & e) {
@@ -39,20 +39,20 @@ namespace tpp {
 						throw;
 					}
 				} catch (std::exception const & e) {
-					Application::Alert(e.what());
+					Application::Instance()->alert(e.what());
 					saveSettings = true;
 				}
 				// if there were any errors with the settings, create backup of the old settings as new settings will be stored. 
 				if (saveSettings) {
 					std::string backup{helpers::MakeUnique(filename)};
-					Application::Alert(STR("New settings file will be saved, backup stored in " << backup));
+					Application::Instance()->alert(STR("New settings file will be saved, backup stored in " << backup));
 					f.close();
 					helpers::Rename(filename, backup);
 				}
 			// if there are no settings, then the settings should be saved after default values are calculated
 			} else {
 				saveSettings = true;
-				Application::Alert(STR("No settings file found, default settings will be calculated and stored in " << filename));
+				Application::Instance()->alert(STR("No settings file found, default settings will be calculated and stored in " << filename));
 			}
 		}
 		saveSettings = fixMissingDefaultValues() || saveSettings;
@@ -75,7 +75,7 @@ namespace tpp {
 			    return;
 			userConfig.erase("version");
 		}
-		Application::Alert(STR("Settings version differs from current terminal version (" << PROJECT_VERSION << "). The configuration will be updated to the new version."));
+		Application::Instance()->alert(STR("Settings version differs from current terminal version (" << PROJECT_VERSION << "). The configuration will be updated to the new version."));
 	}
 
 
@@ -107,7 +107,7 @@ namespace tpp {
 			    return STR("\"" << *f << "\"");
 			++f;
 		}
-		Application::Alert("Cannot guess valid font - please specify manually for best results");
+		Application::Instance()->alert("Cannot guess valid font - please specify manually for best results");
 		return "\"\"";
 #endif
 	}

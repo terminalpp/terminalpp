@@ -5,8 +5,6 @@
     #include "sys/types.h"
 #endif
 
-#include "terminal.h"
-
 #include "pty.h"
 
 namespace ui2 {
@@ -48,6 +46,7 @@ namespace ui2 {
 
 } // namespace ui
 
+#ifdef HAHA
 
 namespace tpp {
 
@@ -116,3 +115,5 @@ namespace tpp {
 
 
 } // namespace vterm
+
+#endif

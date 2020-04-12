@@ -2,7 +2,7 @@
 #include "helpers/process.h"
 #include "helpers/json_config.h"
 
-#include "ui-terminal/terminal.h"
+#include "ui-terminal/ansi_terminal.h"
 
 /** \page tppconfig Configuration
  
@@ -28,12 +28,12 @@
 
 /** Keyboard shortcuts for various actions.
  */
-#define SHORTCUT_FULLSCREEN (ui::Key::Enter + ui::Key::Alt)
-#define SHORTCUT_ABOUT (ui::Key::F1 + ui::Key::Alt)
-#define SHORTCUT_SETTINGS (ui::Key::F10 + ui::Key::Alt)
-#define SHORTCUT_ZOOM_IN (ui::Key::Equals + ui::Key::Ctrl)
-#define SHORTCUT_ZOOM_OUT (ui::Key::Minus + ui::Key::Ctrl)
-#define SHORTCUT_PASTE (ui::Key::V + ui::Key::Ctrl + ui::Key::Shift)
+#define SHORTCUT_FULLSCREEN (Key::Enter + Key::Alt)
+#define SHORTCUT_ABOUT (Key::F1 + Key::Alt)
+#define SHORTCUT_SETTINGS (Key::F10 + Key::Alt)
+#define SHORTCUT_ZOOM_IN (Key::Equals + Key::Ctrl)
+#define SHORTCUT_ZOOM_OUT (Key::Minus + Key::Ctrl)
+#define SHORTCUT_PASTE (Key::V + Key::Ctrl + Key::Shift)
 
 namespace helpers {
 
@@ -51,24 +51,24 @@ namespace helpers {
 	}
 
 	template<>
-	inline ui::Terminal::Palette JSONConfig::ParseValue(JSON const & json) {
+	inline ui2::AnsiTerminal::Palette JSONConfig::ParseValue(JSON const & json) {
 		if (json.kind() != JSON::Kind::Array)
 		    THROW(JSONError()) << "Element must be an array";
-		ui::Terminal::Palette result{ui::Terminal::Palette::XTerm256()};
+		ui2::AnsiTerminal::Palette result{ui2::AnsiTerminal::Palette::XTerm256()};
 		size_t i = 0;
 		for (auto c : json) {
 			if (c.kind() != JSON::Kind::String) 
 			    THROW(JSONError()) << "Element items must be HTML colors, but " << c.kind() << " found";
-			result[i] = ui::Color::FromHTML(c.toString());
+			result[i] = ui2::Color::FromHTML(c.toString());
 		}
 		return result;
 	}
 
 	template<>
-	inline ui::Color JSONConfig::ParseValue(JSON const & json) {
+	inline ui2::Color JSONConfig::ParseValue(JSON const & json) {
 		if (json.kind() != JSON::Kind::String)
 		    THROW(JSONError()) << "Element must be an array";
-		return ui::Color::FromHTML(json.toString());
+		return ui2::Color::FromHTML(json.toString());
 	}
 
 	/** Parts of the command argument are just JSON strings so they are only surrounded by double quotes. 
@@ -197,7 +197,7 @@ namespace tpp {
 					colors, 
 					"Overrides the predefined palette. Up to 256 colors can be specified in HTML format. These colors will override the default xterm palette used.",
 					"[]",
-				    ui::Terminal::Palette
+				    ui2::AnsiTerminal::Palette
 				);
 				CONFIG_OPTION(
 				    defaultForeground,
@@ -213,8 +213,8 @@ namespace tpp {
 				);
 				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
 				 */
-				ui::Terminal::Palette operator () () const {
-					ui::Terminal::Palette result{colors()};
+				ui2::AnsiTerminal::Palette operator () () const {
+					ui2::AnsiTerminal::Palette result{colors()};
 					result.setDefaultForegroundIndex(defaultForeground());
 					result.setDefaultBackgroundIndex(defaultBackground());
 					return result;
@@ -229,62 +229,33 @@ namespace tpp {
 			CONFIG_GROUP(
 				cursor,
 			    "Cursor properties",
-				CONFIG_GROUP(
-					active,
-				    "Cursor properties when the window is focused",
-					CONFIG_OPTION(
-						codepoint,
-						"UTF codepoint of the cursor",
-						"0x2581",
-					    unsigned
-					);
-					// TODO change to color
-					CONFIG_OPTION(
-						color,
-						"Color of the cursor",
-						"\"#ffffff\"",
-						ui::Color
-					);
-					CONFIG_OPTION(
-						blink,
-						"Determines whether the cursor blinks or not.",
-						"true",
-					    bool
-					);
-				);
-				CONFIG_GROUP(
-					inactive,
-				    "Cursor properties when the window is not focused",
-					CONFIG_OPTION(
-						codepoint,
-						"UTF codepoint of the cursor",
-						"0x2581",
-					    unsigned
-					);
-					CONFIG_OPTION(
-						color,
-						"Color of the cursor",
-						"\"#ffffff\"",
-					    ui::Color
-					);
-					CONFIG_OPTION(
-						blink,
-						"Determines whether the cursor blinks or not.",
-						"false",
-					    bool
-					);
-				);
+                CONFIG_OPTION(
+                    codepoint,
+                    "UTF codepoint of the cursor",
+                    "0x2581",
+                    unsigned
+                );
+                // TODO change to color
+                CONFIG_OPTION(
+                    color,
+                    "Color of the cursor",
+                    "\"#ffffff\"",
+                    ui2::Color
+                );
+                CONFIG_OPTION(
+                    blink,
+                    "Determines whether the cursor blinks or not.",
+                    "true",
+                    bool
+                );
 				/** Value getter for cursor properies aggregated in a ui::Cursor object.
 				 */
-				ui::Cursor operator () () const {
-					ui::Cursor result{};
-					result.visible = true;
-					result.activeCodepoint = active.codepoint();
-					result.activeColor = active.color();
-					result.activeBlink = active.blink();
-					result.inactiveCodepoint = inactive.codepoint();
-					result.inactiveColor = inactive.color();
-					result.inactiveBlink = inactive.blink();
+				ui2::Cursor operator () () const {
+					ui2::Cursor result{};
+					result.setVisible(true);
+					result.setCodepoint(codepoint());
+					result.setColor(color());
+					result.setBlink(blink());
 					return result;
 				}
 			);

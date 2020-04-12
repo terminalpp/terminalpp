@@ -1,592 +1,526 @@
 #pragma once
 
+#include <mutex>
+
 #include "helpers/helpers.h"
 #include "helpers/events.h"
-#include "helpers/log.h"
 
+#include "common.h"
+#include "input.h"
+#include "buffer.h"
 #include "canvas.h"
-#include "mouse.h"
-#include "key.h"
-#include "layout.h"
 
-/** \page uiwidget ui - Widget
-  
-    \brief Basic information about the ui::Widget class and its usage. 
+namespace ui2 {
 
-	The ui::Widget is the base class of all user elements visible in the interface. 
+    class Canvas;
+    class Renderer;
 
-	\section widgetPosSize Position, Size and Rectangles
+    class GeometryEvent {
+    public:
+        Rect rect;
+        bool resized;
+        bool moved;
+    }; // GeometryEvent
 
-	The position and size of widget and its children/parents is determined by the following rectangles and point. Each widget defines these via the functions described below and with the exception of ui::Widget::Rect(), these can be overriden in child classes to specify extra behavior (see the notes below for examples):
-
-	ui::Widget::rect() returns the widget's rectangle in its parent's client coordinates (see below). The rectangle is composed of the `x` and `y` offsets of the widget and its `width` and `height`. 
-
-	ui::Widget::childRect() returns the rectangle of the widget's area that is available for the widget's children to draw on. Its implementation defaults to a rectangle `[0,0,width,height]`, which means that the entire area of the widget is available for its children. 
-
-	> Widgets with features such as borders should overwrite this method to restrict the children available area only to subset of their own. For instance if a widget with `rect` of `[100,100,10,10]` wants to have 2 rows border at the top and 1 cell border on all other sides, its `childRect` would be `[1,2,9,9]`. 
-
-	ui::Widget::clientRect() returns the area the widget presents to its children. The client rectangle should always start at `[0,0]`, while its width and height can be smaller, equal to, or greater than the `childRect`'s dimensions. If the `clientRect` is greater than `childRect`, scrolling may be used to determine which part of the `clientRect` will map to the visible area of the widget. 
-
-	ui::Widget::scrollOffset() returns the scrolling offset. The scrolling offset determines the point in the `clientRect` that corresponds to the op-left corner of the `childRect`. 
-
-	> A scrollable widget with `rect` of `[100,100,10,10]` has width and height of `10` cells and its top-left corner will be displayed at the `[100,100]` coordinates of its parent's clientRect. The `childRect` will again be `[1,2,9,9]`, corresponding to border of 2 rows at the top and 1 row/cell at other sides. The `clientRect` is `[0,0,100,100]`, which means that although the widget is capable of drawing only `8` cols by `7` rows, it presents an area of `[100,100]` cells and rows to its client. If the `scrollOffset` is `[0,0]` (the default), then only first 8 cols and 7 rows will be visible. If however the `scrollOffset` is `[10,20]`, then the visible rectangle of `clientRect` will be `[10,20,18,27]`.
-	
-    \section widgetDrawing Drawing the Widgets
-
-	Drawing of the widget is done in their ui::Widget::paint() method, which takes a Canvas as an argument. The Widget class and other base UI classes make sure that repainting occurs when it should and only the necessary part of the screen is updated at each paint event, details of which are given later in this section. 
+    /** Base class for all UI widgets. 
+     
+        A widget can paint itself and can react to user interaction. 
 
 
+        Setting the geometry must support the following scenarios:
 
-	\subsection widgetCanvas Canvas
+        - manual
 
-	The ui::Canvas class provides the basic drawing tools, such as text, borders, fills, etc. Furthermore the Canvas also keeps track of its visible region, i.e. the subset of the canvas that is visible, and therefore is backed by proper screen buffer cells. Only updates to the visible region of the canvas will actually have observable effect, but canvas users do not have to worry about which region is visible. 
+        The manual position is the default for widgets. It means that widget has control over its position 
 
-	> For performance reasons, large widgets may choose to limit their drawing to the visible area only, but this is not required. 
+        - anchors
 
-	Each widget remembers its visible canvas region and when painting should occur, uses it to create actual canvas object, which is then passed to the ui::Widget::paint() method.
+        When parent resizes, the widget can update its own size as well based on the anchors, this will be done via the anchored trait. 
 
-	> For more details on drawing tools available, see the documentation of the `ui::Canvas` class itself. 
-	
-    \subsection widgetInvalidation Invalidating a widget
+        => I need to notify the widget that parent has resized
 
-	ui::Widget::getClientCanvas()
+        - layout managed
 
-	When the widget is drawn, the children of the widget should be drawn next, if any. The children may not necessarily be drawn using the same canvas as the widget and the task of this method is to return the canvas on which the children should be drawn given the widget's own canvas as an argument. 
+        => 
 
-	The default implementation is to return the widget's own canvas, but the method is overriden in subclasses for purposes such as scrollable contents (in which case the client canvas has to be moved according to the scrolling offset), or when the widget contains borders (so that the client canvas does not allow drawing over them). 
 
- */
 
-namespace ui {
+        # This deals with the manual settings:
 
-	class Widget;
-	class Container;
+        setRect() sets the size, can actually adjust the size, i.e. widgets can override the behavior and update the size before calling the parent's implementation
 
-	template<typename P, typename T = Widget>
-	using Event = helpers::Event<P, T>;
+        The onRectChanged() event is then emitted, the event itself has flags for resize and reposition so that apps can tell 
 
-	class MouseButtonEvent {
-	public:
-		int x;	
-		int y;
-		MouseButton button;
-		Key modifiers;
-	};
+        # Anchors 
 
-	class MouseWheelEvent {
-	public:
-		int x;
-		int y;
-		int by;
-		Key modifiers;
-	};
+        When parent gets resized, it informs all of its children and they are free to act on that knowledge. Or do nothing. When they do something, they can then resize themselves. 
 
-	class MouseMoveEvent {
-	public:
-		int x;
-		int y;
-		Key modifiers;
-	};
+        # Layout
 
-	/** Base class for all UI widgets. 
+        - when parent is resized, it needs to relayout the children, i.e. change their size and position according to its own layout
 
-	    The widget manages the basic properties of every ui element, namely the position, size, visibility, drawing of its contents and events corresponding to this functionality as well as basic input & output events from the terminal (mouse, keyboard and clipboard). 
-	 */
-	class Widget {
-	protected:
+        - when child is resized, it needs to notify the parent so that the whole thing can be relaid out 
 
-		// events
+        - how to make these not cycle!!!!!
 
-		/** Triggered when visibility changes to true. 
-		 */
-		Event<void> onShow;
 
-		/** Triggered when visibility changes to false. 
-		 */
-		Event<void> onHide;
+     */
+    class Widget {
+    public:
 
-		/** Triggered when the widget's size has been updated. 
-		 */
-		Event<void> onResize;
+        virtual ~Widget() noexcept(false) {
+            ASSERT(parent_ == nullptr) << "Widget must be detached from its parent before it is deleted";    
+        }
 
-		/** Triggered when the widget's position has been updated. 
-		 */
-		Event<void> onMove;
+        /** Determines if the given widget is transitive parent of the current widget or the widget itself. 
+         */
+        bool isDominatedBy(Widget const * w) const {
+            UI_THREAD_CHECK;
+            Widget const * x = this;
+            while (x != nullptr) {
+                if (x == w)
+                    return true;
+                x = x->parent_;
+            }
+            return false;
+        }
 
-		/** Triggered when the widget has obtained focus, i.e. it will receive keyboard events. 
-		 */
-		Event<void> onFocusIn;
+        /** Returns the parent widget. 
+         */
+        Widget * parent() const {
+            UI_THREAD_CHECK;
+            return parent_;
+        }
 
-		/** Triggered when the widget has lost focus, i.e. it will no longer receive keyboard events. 
-		 */
-		Event<void> onFocusOut;
 
-		/** Triggered when the widget has been enabled or disabled. 
-		 */
-		Event<void> onEnabled;
-		Event<void> onDisabled;
+        /** Returns the rectangle occupied by the widget in its parent's contents area. 
+         */
+        Rect const & rect() const {
+            return rect_;
+        }
 
-		Event<MouseButtonEvent> onMouseDown;
-		Event<MouseButtonEvent> onMouseUp;
-		Event<MouseButtonEvent> onMouseClick;
-		Event<MouseButtonEvent> onMouseDoubleClick;
-		Event<MouseWheelEvent> onMouseWheel;
-		Event<MouseMoveEvent> onMouseMove;
-		Event<void> onMouseEnter;
-		Event<void> onMouseLeave;
+        int width() const {
+            return rect_.width();
+        }
 
-		// keyboard events
+        int height() const {
+            return rect_.height();
+        }
 
-	public:
+        /** Returns true if the widget is visible.
+          
+            Invisible widgets are not painted and do not receive any user input events (mouse or keyboard).  
+         */
+        bool visible() const {
+            return visible_;
+        }
 
-        virtual ~Widget();
-
-		Widget(int width = 0, int height = 0):
-			parent_(nullptr),
-			visibleRect_{},
-			overlay_(false),
-			forceOverlay_(false),
-			visible_(true),
-			enabled_(true),
-			focused_(false),
-			focusStop_(false),
-			focusIndex_(0),
-			x_(0),
-			y_(0),
-			width_(width),
-			height_(height),
-			widthHint_(Layout::SizeHint::Auto()),
-			heightHint_(Layout::SizeHint::Auto()) {
-		}
-
-		Widget(Widget &&) = delete;
-
-		Container* parent() const {
-			return parent_;
-		}
-
-		/** Returns true if the widget is child (transitively) of the given widget. 
-		 */
-		bool isChildOf(Widget const * parent) const;
-
-		/** Returns the root window of the widget, or nullptr if the window is not attached.
-		 */
-		RootWindow * rootWindow() const {
-			return visibleRect_.rootWindow();
-		}
-
-		bool visible() const {
-			return visible_;
-		}
-
-		bool enabled() const {
-			return enabled_;
-		}
-
-		/** Returns true if the widget has keyboard focus. 
-		 */
-		bool focused() const {
-			return focused_;
-		}
-
-		/** Returns true if the widget is a focus stop, i.e. if the widget can be explicitly selected by the user. 
-		 */
-		bool focusStop() const {
-			return focusStop_;
-		}
-
-		/** Returns the focus index, 
-		 
-		    Focus indexia a number that determines the order of the explicit focus acquisition by the user for focus stoppable elements. 
-		 */
-		unsigned focusIndex() const {
-			return focusIndex_;
-		}
-
-		/** Returns the x coordinate of the top-left corner of the widget in its parent 
-		 */
-		int x() const {
-			return x_;
-		}
-
-		/** Returns the y coordinate of the top-left corner of the widget in its parent 
-		 */
-		int y() const {
-			return y_;
-		}
-
-		int width() const {
-			return width_;
-		}
-
-		int height() const {
-			return height_;
-		}
-
-		/** Returns the rectangle of the widget in its parent's client rectangle. 
-		 */
-		Rect rect() const {
-			return Rect::FromCorners(x_, y_, x_ + width_, y_ + height_);
-		}
-
-		/** Returns the subset of the widget's canvas rectangle that is available to widget's children. 
-		 
-		    The default implementation returns the entire rectangle of the widget. 
-		 */
-		virtual Rect childRect() const {
-			return Rect::FromWH(width_, height_);
-		}
-
-		Layout::SizeHint widthHint() const {
-			return widthHint_;
-		}
-
-		Layout::SizeHint heightHint() const {
-			return heightHint_;
-		}
-
-		/** Repaints the widget.
-
-			Only repaints the widget if the VisibleRect is valid. If the visible region is invalid, does nothing because when the region was invalidated, the repaint was automatically triggered, so there is either repaint pending, or in progress.
-		 */
-		virtual void repaint();
-
-		/** Whenever user or widget requested clipboard or selection contents is received, the paste method is called with the contents. 
-		 */
-		virtual void paste(std::string const & contents) {
-			MARK_AS_UNUSED(contents);
-			// do nothing by default
-		}
+        /** Triggers the repaint of the widget. [thread-safe]
+         */
+        virtual void repaint();
 
     protected:
 
-		/** Widget is friends with TraitBase so that the traits can get access to its protected functions via methods in the TraitBase class. While this is not perfect, it is better than not having traits at all. 
-		 */
-	    template<template<typename> typename X, typename T>
-		friend class TraitBase;
+        friend class Renderer;
+        friend class Container;
 
-		/** Sets the widget as visible or hidden.
+        Widget(int width = 0, int height = 0, int x = 0, int y = 0):
+            renderer_{nullptr},
+            parent_{nullptr},
+            rect_{Rect::FromTopLeftWH(x, y, width, height)},
+            overlaid_{false},
+            visible_{true} {
+        }
 
-		    Also triggers the repaint of entire parent, because the widget may interfere with other children of its own parent.
-		 */
-		void setVisible(bool value);
+        /** \name Events
+         */
+        //@{
 
-		void setEnabled(bool value);
+        /** Triggered when the widget's geometry changes. 
+         */
+        Event<void> onResize;
+        Event<void> onMove;
 
-		/** Focuses or defocuses the widget. 
-		 
-		    Relays the request to the root window, which means that only valid widgets can be focused or defocused.
-		 */
-		void setFocused(bool value);
+        Event<void> onShow;
+        Event<void> onHide;
+        Event<void> onEnabled;
+        Event<void> onDisabled;
 
-		/** Sets whether the widget acts as keboard focus stop, i.e. if it can be explicitly focused by the user. 
-		 */
-		void setFocusStop(bool value) {
-			if (focusStop_ != value)
-			    updateFocusStop(value);
-		}
+        Event<void> onMouseIn;
+        Event<void> onMouseOut;
+        Event<MouseMoveEvent> onMouseMove;
+        Event<MouseWheelEvent> onMouseWheel;
+        Event<MouseButtonEvent> onMouseDown;
+        Event<MouseButtonEvent> onMouseUp;
+        Event<MouseButtonEvent> onMouseClick;
+        Event<MouseButtonEvent> onMouseDoubleClick;
 
-		/** Sets the order of explicit keyboard focus activation. 
-		 */
-		void setFocusIndex(unsigned value) {
-			if (focusIndex_ != value)
-			    updateFocusIndex(value);
-		}
+        Event<void> onFocusIn;
+        Event<void> onFocusOut;
+        Event<Char> onKeyChar;
+        Event<Key> onKeyDown;
+        Event<Key> onKeyUp;
 
-		/** Moves the widget to the given coordinates relative to its parent.
-		 */
-		void move(int x, int y) {
-			if (x_ != x || y_ != y) {
-				updatePosition(x, y);
-				repaint();
-			}
-		}
+        Event<std::string> onPaste;
 
-		/** Resizes the widget. 
-		 */
-		void resize(int width, int height) {
-			if (width_ != width || height_ != height) {
-				updateSize(width, height);
-				repaint();
-			}
-		}
-
-		void setOverlay(bool value) {
-			if (value != overlay_)
-				updateOverlay(value);
-		}
-
-		void setWidthHint(Layout::SizeHint value);
-
-		void setHeightHint(Layout::SizeHint value);
-
-		bool forceOverlay() const {
-			return forceOverlay_;
-		}	
-
-		void setForceOverlay(bool value) {
-			if (forceOverlay_ != value) {
-				forceOverlay_ = value;
-			}
-		}
-
-		virtual void updateVisible(bool value) {
-			visible_ = value;
-			if (value)
-			    onShow(this);
-			else
-			    onHide(this);
-		}
-
-		virtual void updateFocused(bool value) {
-			focused_ = value;
-			if (value)
-				onFocusIn(this);
-			else
-				onFocusOut(this);
-		}
-
-		virtual void updateFocusStop(bool value);
-		virtual void updateFocusIndex(unsigned value);
-
-		virtual void updateEnabled(bool value) {
-			enabled_ = value;
-			// disabled window can;t be focused
-			if (!enabled_)
-			    setFocused(false);
-			if (enabled_)
-			    onEnabled(this);
-			else 
-			    onDisabled(this);
-		}
-
-		/** Requests the contents of the clipboard to be sent back to the widget via the paste method. 
-		 */
-		void requestClipboardContents();
-
-		/** Requests the contents of the selection to be sent back to the widget via the paste method. 
-		 */
-		void requestSelectionContents();
-
-		void setClipboardContents(std::string const & value);
-
-		void setSelectionContents(std::string const & value);
-
-		virtual void selectionInvalidated() {
-			ASSERT(false) << "selectionInvalidated must be implemented at widgets which handle selection";
-		}
-
-		virtual void mouseDown(int col, int row, MouseButton button, Key modifiers) {
-			if (!focused_ && focusStop_)
-			    setFocused(true);
-			onMouseUp(this, MouseButtonEvent{ col, row, button, modifiers });
-		}
-
-		virtual void mouseUp(int col, int row, MouseButton button, Key modifiers) {
-			if (!focused_ && focusStop_)
-			    setFocused(true);
-			onMouseUp(this, MouseButtonEvent{ col, row, button, modifiers });
-		}
-
-		virtual void mouseClick(int col, int row, MouseButton button, Key modifiers) {
-			onMouseClick(this, MouseButtonEvent{ col, row, button, modifiers });
-		}
-
-		virtual void mouseDoubleClick(int col, int row, MouseButton button, Key modifiers) {
-			onMouseDoubleClick(this, MouseButtonEvent{ col, row, button, modifiers });
-		}
-
-		virtual void mouseWheel(int col, int row, int by, Key modifiers) {
-			if (!focused_ && focusStop_)
-			    setFocused(true);
-			onMouseWheel(this, MouseWheelEvent{ col, row, by, modifiers });
-		}
-
-		virtual void mouseMove(int col, int row, Key modifiers) {
-			onMouseMove(this, MouseMoveEvent{ col, row, modifiers });
-		}
-
-		virtual void mouseEnter() {
-			onMouseEnter(this);
-		}
-
-		virtual void mouseLeave() {
-			onMouseLeave(this);
-		}
-
-		virtual void keyChar(helpers::Char c) {
-			MARK_AS_UNUSED(c);
-		}
-
-		virtual void keyDown(Key k) {
-			MARK_AS_UNUSED(k);
-		}
-
-		virtual void keyUp(Key k) {
-			MARK_AS_UNUSED(k);
-		}
-
-		/** Invalidates the widget and request its parent repaint,
-
-		    If the widget is valid, invalidates its visible region and informs its parent that a child was invalidated. If the widget is already not valid, does nothing because the parent has already been notified. 
-		 */
-		void invalidate();
-
-		/** Invalidates the contents of the widget. 
+        /** Sets the position of the cursor within given cavas. 
          
-            This invalidates the widget itself and any of its children.
-		
-		 */
-		virtual void invalidateContents() {
-			visibleRect_.invalidate();
-		}
+            Must be called in the paint() method and only currently focused widget can set cursor. 
+         */
+        void setCursor(Canvas & canvas, Cursor const & cursor, Point position);
 
-		/** Updates the position of the widget. 
-		
-		    Already assumes that the new position is different from the current position. However, in case the requested position is invalid, the widget may adjust the size before setting it. After the size is updated, the control is invalidated and onMove event triggered. 
-		 */
-		virtual void updatePosition(int x, int y) {
-			x_ = x;
-			y_ = y;
-			invalidate();
-			onMove(this);
-		}
+        //@}
 
-		/** Updates the size of the widget. 
-		
-		    Assumes the size is different that current size. However, if the size is invalid, the widget may choose to update the requested width and height accordingly. Invalidates the widget and triggers the onResize event. 
-		 */
-		virtual void updateSize(int width, int height) {
-			ASSERT(width >= 0 && height >= 0);
-			width_ = width;
-			height_ = height;
-			invalidate();
-			onResize(this);
-		}
+        /** \name Geometry
 
-		/** Re-layouts the control within its parent. 
+            - simple changes are ok
+            - layouting is ok, but anchors are complicated, unless anchors are done via anchored layout, which will check all children and update those that have anchors specified, which is perhaps the way to go.   
+            - YEAH !!!!
 
-		    This method can be called by the parent's layout in cases the parent allows the children to layout themselves. It should update the position of the widget according to the provided parent width and height. 
+         */
+        //@{
 
-			If the parent's layout has own layout specification, then this method will not be called. 
-		 */
-		virtual void relayout(int parentWidth, int parentHeight) {
-			MARK_AS_UNUSED(parentWidth);
-			MARK_AS_UNUSED(parentHeight);
-			// TODO do fancy stuff like anchors, etc. 
-		}
+        /** Sets the position and size of the widget.
+         
+            Subclasses can override this method to inject modifications to the requested size and position. Doing so must be done with great care otherwise the automatic layouting can easily be broken. 
+         */
+        virtual void setRect(Rect const & value) {
+            UI_THREAD_CHECK;
+            // do nothing if the new rectangle is identical to the existing geometry
+            if (rect_ == value)
+                return;
+            // update the rectangle
+            bool wasResized = rect_.width() != value.width() || rect_.height() != value.height();
+            bool wasMoved = rect_.topLeft() != value.topLeft();
+            rect_ = value;
+            // trigger the appropriate events
+            if (wasResized)
+                resized();
+            if (wasMoved)
+                moved();
+            // inform the parent that the child has been resized, which should also trigger the parent's repaint and so ultimately repaint the widget as well
+            if (parent_ != nullptr)
+                parent_->childRectChanged(this);
+        }
 
-		/** Paints the widget's contents on the provided canvas. 
-		 */
-		virtual void paint(Canvas& canvas) = 0;
+        /** Called *after* the widget has been resized. 
+         
+            Triggers the resize event. 
+         */
+        virtual void resized() {
+            Event<void>::Payload p;
+            onResize(p, this);
+        }
 
-		virtual void updateOverlay(bool value) {
-			overlay_ = value;
-		}
+        /** Called *after* the widget has been moved.
+         
+            Triggers the move event. 
+         */
+        virtual void moved() {
+            Event<void>::Payload p;
+            onMove(p, this);
+        }
 
-        /** Returns the target widget for mouse events on the given coordinates. 
-		 
-		    For widget, this is always the widget itself, but the method is overriden in widget's subclasses.
-		 */
-		virtual Widget * getMouseTarget(int & col, int & row) {
-			MARK_AS_UNUSED(col);
-			MARK_AS_UNUSED(row);
-			return this;
-		}        
+        /** Returns true if the widget is overlaid by other widgets. 
+         
+            Note that this is an implication, i.e. if the widget is not overlaid by other widgets, it can still return true. 
+         */
+        bool isOverlaid() const {
+            UI_THREAD_CHECK;
+            return overlaid_;
+        }
 
-        virtual void windowToWidgetCoordinates(int & col, int & row);
+        /** Changing the rectangle of a child widget triggers repaint of the parent. 
+         */
+        virtual void childRectChanged(Widget * child) {
+            MARK_AS_UNUSED(child);
+            repaint();
+        }
 
-	private:
+        //@}
 
-		friend class Layout;
-		friend class Container;
-		friend class RootWindow;
-		friend class Canvas;
+        // ========================================================================================
 
-		/** Attaches the root window to the widget. 
-		 */
-		virtual void attachRootWindow(RootWindow * root);
+        /** \name Widget's Tree
+         */
+        //@{
 
-		/** Detaches the wdget from its root window. 
-		 
-		    Informs the root window that the widget is to be detached. 
-		 */
-        virtual void detachRootWindow();
+        /** Attaches the widget to given parent. 
+         
+            If the parent has valid renderer attaches the renderer as well.
+         */
+        virtual void attachTo(Widget * parent) {
+            UI_THREAD_CHECK;
+            ASSERT(parent_ == nullptr && parent != nullptr);
+            parent_ = parent;
+            if (parent_->renderer() != nullptr)
+                attachRenderer(parent_->renderer());
+        }
 
+        /** Detaches the widget from its parent. 
+         
+            If the widget has renderer attached, detaches from the parent first and then detaches from the renderer.
+         */
+        virtual void detachFrom(Widget * parent) {
+            UI_THREAD_CHECK;
+            ASSERT(parent_ == parent);
+            parent_ = nullptr;
+            if (renderer() != nullptr)
+                detachRenderer();
+        }
 
-		/* Parent widget or none. 
-		 */
-		Container * parent_;
+        /** Attaches the widget to specified renderer. 
+         
+            The renderer must be valid and parent must already be attached if parent exists. 
+         */
+        virtual void attachRenderer(Renderer * renderer);
 
-		/* Visible region of the canvas. 
-		 */
-		Canvas::VisibleRect visibleRect_;
+        /** Detaches the renderer. 
+         
+            If parent is valid, its renderer must be attached to enforce detachment of all children before the detachment of the parent. 
+         */
+        virtual void detachRenderer();
 
-		/* If true, the rectangle of the widget is shared with other widgets, i.e. when the widget is to be repainted, its parent must be repainted instead. */
-		bool overlay_;
+        /** Returns the renderer of the widget. [thread-safe]
+         */
+        Renderer * renderer() const {
+            return renderer_;
+        }
 
-		/** Forces the overlay to be always true. This is especially useful for controls with transparent backgrounds. */
-		bool forceOverlay_;
+        //@}
 
-		/* Visibility */
-		bool visible_;
+        // ========================================================================================
 
-		/** Determines whether the widget is enabled (i.e. can accept user input), or not. */
-		bool enabled_;
+        /** \name Painting 
+         */
+        //@{
 
-		/** Determines whether the widget receives keyboard events. */
-		bool focused_;
+        /** Returns the canvas to be used for drawing the contents of the widget. 
+         */
+        virtual Canvas getContentsCanvas(Canvas & canvas) {
+            UI_THREAD_CHECK;
+            return canvas;
+        }
 
-		/** Determines whether the widget can be focused by user's action, usually by the TAB key, and if so, what is the widget's index in the circular list of focusable elements. */
-		bool focusStop_;
-		unsigned focusIndex_;
+        /** Paints the widget on the given canvas. 
+         
+            The canvas is guaranteed to have the width and height of the widget itself. This method *must* be implemented in widget subclasses to actually draw the contents of the widget. 
+         */
+        virtual void paint(Canvas & canvas) = 0;
 
-		/* Position */
-		int x_;
-		int y_;
+        //@}
 
-		/* Size */
-		int width_;
-		int height_;
+        // ========================================================================================
 
-		Layout::SizeHint widthHint_;
-		Layout::SizeHint heightHint_;
+        /** \name Mouse Input Handling
+         
+            Default implementation for mouse action simply calls the attached events when present as long as the propagation of the event has not been stopped. For more details about mouse events, see the \ref ui_renderer_mouse_input "mouse input" and \ref ui_renderer_event_triggers "event triggers" in ui2::Renderer.
+         */
+        //@{
 
-	};
+        /** Triggered when the mouse enters the area of the widget. 
+         */
+        virtual void mouseIn(Event<void>::Payload & event) {
+            if (event.active())
+                onMouseIn(event, this);
+        }
 
+        /** Triggered when the mouse leaves the area of the widget. 
+         */
+        virtual void mouseOut(Event<void>::Payload & event) {
+            if (event.active())
+                onMouseOut(event, this);
+        }
 
-	/** Public widget simply exposes the widget's protected events and methods as public ones. 
+        /** Triggered when the mouse changes position inside the widget. 
+         
+            When mouse enters the widget, first mouseIn is called and then mouseMove as two separate events. When the mouse moves away from the widget then only mouseOut is called on the widget. 
+         */
+        virtual void mouseMove(Event<MouseMoveEvent>::Payload & event) {
+            if (event.active())
+                onMouseMove(event, this);
+        }
 
-	    It is a suitable class for most user available controls. 
-	 */
-	class PublicWidget : public Widget {
-	public:
+        /** Triggered when the mouse wheel rotates while the mouse is over the widget, or captured. 
+         */
+        virtual void mouseWheel(Event<MouseWheelEvent>::Payload & event) {
+            if (event.active())
+                onMouseWheel(event, this);
+        }
 
-		// Events 
+        /** Triggered when a mouse button is pressed down. 
+         */
+        virtual void mouseDown(Event<MouseButtonEvent>::Payload & event) {
+            if (event.active())
+                onMouseDown(event, this);
+        }
 
-		using Widget::onShow;
-		using Widget::onHide;
-		using Widget::onResize;
-		using Widget::onMove;
-		using Widget::onMouseDown;
-		using Widget::onMouseUp;
-		using Widget::onMouseClick;
-		using Widget::onMouseDoubleClick;
-		using Widget::onMouseWheel;
-		using Widget::onMouseMove;
-		using Widget::onMouseEnter;
-		using Widget::onMouseLeave;
+        /** Triggered when a mouse button is released.
+         */
+        virtual void mouseUp(Event<MouseButtonEvent>::Payload & event) {
+            if (event.active())
+                onMouseUp(event, this);
+        }
 
-		// Methods 
+        /** Triggered when mouse button is clicked on the widget. 
+         */
+        virtual void mouseClick(Event<MouseButtonEvent>::Payload & event) {
+            if (event.active())
+                onMouseClick(event, this);
+        }
+        /** Triggered when mouse button is double-clicked on the widget. 
+         */
+        virtual void mouseDoubleClick(Event<MouseButtonEvent>::Payload & event) {
+            if (event.active())
+                onMouseDoubleClick(event, this);
+        }
 
-		using Widget::setVisible;
-		using Widget::move;
-		using Widget::resize;
-		using Widget::setWidthHint;
-		using Widget::setHeightHint;
+        /** Returns the mouse target within the widget itself corresponding to the given coordinates. 
+         
+            The default implementation returns the widget itself, but subclasses with child widgets must override this method and implement the logic to determine whether one of their children is the actual target. 
+         */
+        virtual Widget * getMouseTarget(Point coords) {
+            MARK_AS_UNUSED(coords);
+            return this;
+        }
 
-	}; // ui::Control
+        /** Takes the renderer's coordinates and converts them to widget's coordinates.
+         
+            It is expected that this function is only called for visible widgets with valid positions, otherwise the functions asserts in debug mode and returns the origin otherwise. 
+         */
+        Point toWidgetCoordinates(Point rendererCoords) const {
+            ASSERT(visible_ && renderer() != nullptr);
+            // for robustness, return the origin if widget is in invalid state
+            if (!visible_ || renderer() == nullptr) 
+                return Point{0,0};
+            return rendererCoords - bufferOffset_;
+        }
+        //@}
 
-} // namespace ui
+        // ========================================================================================
 
+        /** \name Keyboard Input Handling
+         
+            Default implementation for keyboard actions simply calls the attached events when present.
+         */
+        //@{
 
+        bool focused() const;
+
+        virtual void focusIn(Event<void>::Payload & event) {
+            if (event.active())
+                onFocusIn(event, this);
+        }
+
+        virtual void focusOut(Event<void>::Payload & event) {
+            if (event.active())
+                onFocusOut(event, this);
+        }
+
+        virtual void keyChar(Event<Char>::Payload & event) {
+            if (event.active())
+                onKeyChar(event, this);
+        }
+
+        virtual void keyDown(Event<Key>::Payload & event) {
+            if (event.active())
+                onKeyDown(event, this);
+        }
+
+        virtual void keyUp(Event<Key>::Payload & event) {
+            if (event.active())
+                onKeyUp(event, this);
+        }
+        //@}
+
+        // ========================================================================================
+
+        /** \name Clipboard & Selection Actions
+
+         */
+        //@{
+        /** Requests the clipboard contents to be returned via the paste() event. 
+         */
+        void requestClipboard();
+
+        /** Requests the selection contents to be returned via the paste() event. 
+         */
+        void requestSelection();
+
+        /** Paste event. 
+         
+            When a clipboard, or selection contents have been requested, the paste event is triggered when the contents is available. By default, the onPaste() event is triggered. 
+         */
+        virtual void paste(Event<std::string>::Payload & event) {
+            if (event.active())
+                onPaste(event, this);
+        }
+
+        virtual void setClipboard(std::string const & contents);
+
+        /** Makes the current widget selection owner and informs the renderer of the ownership and selection contents. 
+         */
+        virtual void registerSelection(std::string const & contents);
+
+        /** Gives up the selection and informs the renderer. 
+         */
+        virtual void clearSelection();
+
+        /** Returns true if the widget currently holds the selection ownership. 
+         */
+        bool hasSelectionOwnership() const;
+
+        //@}
+
+    private:
+
+        friend class Canvas;
+
+        /** Mutex guarding the renderer property access. */
+        mutable std::mutex mRenderer_;
+
+        /** The renderer the widget is attached to. */
+        Renderer* renderer_;
+
+        /** Parent widget, nullptr if none. */
+        Widget * parent_;
+
+        /** The rectangle occupied by the widget in its parent's contents area. */
+        Rect rect_;
+
+        /** If true, parts of the widget can be overlaid by other widgets and therefore any repaint request of the widget is treated as a repaint request of its parent. */
+        bool overlaid_;
+
+        /** \anchor ui_widget_visible_rect 
+            \name Visible Rectangle properties
+
+            Each widget contains its visible rectangle and offset of its origin from the renderer's origin. These values can be used for immediate conversions of coordinates and painting on the renderer's canvas so that the canvas can easily determine the buffer coordinates and whether to render a particular cell or not. 
+            
+            Note that the values are only valid when the widget is visible and has a renderer attached. 
+
+            \sa ui2::Canvas and its \ref ui_canvas_visible_rect "visible rectangle".
+         */
+        //@{
+        /** The visible rectangle of the widget it its own coordinates. 
+         */
+        Rect visibleRect_;
+        /** The top-left corner of the widget in the renderer's coordinates. 
+         */
+        Point bufferOffset_;
+        //@}
+
+        /** True if the widget should be visible. Widgets that are not visible will never get painted. 
+         */
+        bool visible_;
+
+#ifndef NDEBUG
+        friend class UiThreadChecker_;
+        
+        Renderer * getRenderer_() const  {
+            return renderer_;
+        }
+#endif
+
+    };
+
+} // namespace ui2

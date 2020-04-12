@@ -6,10 +6,10 @@
 #include "helpers/process.h"
 #include "helpers/locks.h"
 
-#include "ui2/renderer.h"
-#include "ui2/widget.h"
-#include "ui2/traits/scrollable.h"
-#include "ui2/traits/selection_owner.h"
+#include "ui/renderer.h"
+#include "ui/widget.h"
+#include "ui/traits/scrollable.h"
+#include "ui/traits/selection_owner.h"
 
 #include "pty.h"
 

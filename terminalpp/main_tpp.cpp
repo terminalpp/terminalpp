@@ -1,4 +1,7 @@
 ﻿#include <iostream>
+#include <thread>
+
+
 
 #include "helpers/log.h"
 #include "helpers/char.h"
@@ -37,21 +40,10 @@
 
 #include "forms/session.h"
 
-#include "ui/widgets/panel.h"
-#include "ui/widgets/label.h"
-#include "ui/builders.h"
-#include "ui/layout.h"
-
-#include "ui-terminal/bypass_pty.h"
-#include "ui-terminal/local_pty.h"
-#include "ui-terminal/terminal.h"
-#include <thread>
 
 #include "helpers/json.h"
 
 #include "helpers/filesystem.h"
-
-using namespace tpp;
 
 void reportError(std::string const & message) {
 #if (defined ARCH_WINDOWS)
@@ -83,7 +75,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	int argc = __argc;
 	char** argv = __argv;
 
-	tpp2::APPLICATION_CLASS::Initialize(argc, argv, hInstance);
+	tpp::APPLICATION_CLASS::Initialize(argc, argv, hInstance);
 
     /*    
     ui2::AnsiTerminal::Palette palette{ui2::AnsiTerminal::Palette::XTerm256()};
@@ -105,10 +97,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     */
 #elif (defined ARCH_WINDOWS && defined RENDERER_QT)
 int main(int argc, char* argv[]) {
-	tpp2::APPLICATION_CLASS::Initialize(argc, argv);
+	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 #else
 int main(int argc, char* argv[]) {
-	tpp2::APPLICATION_CLASS::Initialize(argc, argv);
+	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 
 /*
     tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
@@ -138,20 +130,20 @@ int main(int argc, char* argv[]) {
 /*
     try {
         */
-        Config const & config = Config::Setup(argc, argv);
+        tpp::Config const & config = tpp::Config::Setup(argc, argv);
 
 		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
 		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 
 			helpers::Logger::DefaultLog(),
-			ui::Terminal::SEQ_ERROR,
-			ui::Terminal::SEQ_UNKNOWN,
+			ui2::AnsiTerminal::SEQ_ERROR,
+			ui2::AnsiTerminal::SEQ_UNKNOWN,
 		});
 		LOG() << "t++ started";
 
-        tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
-        tpp2::Session * session = new tpp2::Session{w};
+        tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", 80, 25);
+        tpp::Session * session = new tpp::Session{w};
         w->show();
-        tpp2::Application::Instance()->mainLoop();
+        tpp::Application::Instance()->mainLoop();
         return EXIT_SUCCESS;
 /*        
 	} catch (helpers::Exception const& e) {
