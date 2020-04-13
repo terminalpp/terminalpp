@@ -20,7 +20,6 @@ The following is very short description of the versions planned and their main n
 
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
 - design proper and simple layouts and autosizing of widgets
-- for now terminal does not resize as the session does not translate the resizing to its size
 
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set

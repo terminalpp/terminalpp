@@ -118,7 +118,7 @@ namespace ui {
 			)
 		) << "Unable to start process " << command_;
 
-        PTY::start();
+        IOPTY::start();
     }
 
     void LocalPTY::resize(int cols, int rows) {
@@ -218,7 +218,7 @@ namespace ui {
 				break;
 		}
 
-        PTY::start();
+        IOPTY::start();
     }
 
     void LocalPTY::resize(int cols, int rows) {

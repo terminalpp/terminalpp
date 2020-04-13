@@ -1,6 +1,7 @@
 #pragma once
 
 #include "widget.h"
+#include "layout.h"
 
 namespace ui {
 
@@ -13,6 +14,11 @@ namespace ui {
     class Container : public Widget {
     public:
 
+        Container():
+            layout_{Layout::None},
+            relayouting_{false} {
+        }
+
         /** Container destructor also destroys its children. 
          */
         ~Container() override {
@@ -21,6 +27,8 @@ namespace ui {
                 remove(w);
                 delete w;
             }
+            if (layout_ != Layout::None)
+                delete layout_;
         }
 
         /** Adds the given widget as child. 
@@ -31,14 +39,14 @@ namespace ui {
             for (auto i = children_.begin(), e = children_.end(); i != e; ++i)
                 if (*i == widget) {
                     children_.erase(i);
-                    children_.push_back(widget);
-                    // TODO how to handle invalidations
-                    NOT_IMPLEMENTED;
+                    break;
                 }
             // attach the child widget
             children_.push_back(widget);
             if (widget->parent() != this)
                 widget->attachTo(this);
+            // relayout the children widgets
+            relayout();
         }
 
         /** Remove the widget from the container. 
@@ -48,9 +56,11 @@ namespace ui {
                 if (*i == widget) {
                     (*i)->detachFrom(this);
                     children_.erase(i);
+                    // relayout the children widgets after the child has been removed
+                    relayout();
                     return;
                 }
-            ASSERT(false);
+            UNREACHABLE;
         }
 
     protected:
@@ -60,18 +70,26 @@ namespace ui {
          */
         //@{
 
+        /** Relayout the children widgets when the container has been resized. 
+         */
+        void resized() override {
+            relayout();
+            Widget::resized();
+        }
+
         /** Change in child's rectangle triggers relayout of the container. 
          */
         void childRectChanged(Widget * child) override {
             MARK_AS_UNUSED(child);
-            if (! relayouting_) {
-                relayouting_ = true;
-                relayout();
-            }
+            relayout();
         }
 
-        virtual void relayout() {
-            // TODO actually relayout the stuff
+        void relayout() {
+            if (relayouting_)
+                return;
+            relayouting_ = true;
+            // actually relayout the stuff
+            layout_->relayout(this);
             relayouting_ = false;    
             repaint();
         }
@@ -136,8 +154,12 @@ namespace ui {
         }
 
     private:
+
+        friend class Layout;
+
         std::vector<Widget *> children_;
 
+        Layout * layout_;
         bool relayouting_;
 
     };

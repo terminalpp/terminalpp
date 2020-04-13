@@ -75,7 +75,7 @@ namespace ui {
 		// we can close our handles to the other ends now
 		OSCHECK(CloseHandle(pipePTYOut));
 		OSCHECK(CloseHandle(pipePTYIn));
-        PTY::start();
+        IOPTY::start();
     }
 
     void BypassPTY::resize(int cols, int rows) {
