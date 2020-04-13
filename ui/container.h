@@ -63,6 +63,23 @@ namespace ui {
             UNREACHABLE;
         }
 
+        /** Returns the layout used by the container. 
+         */
+        Layout * layout() const {
+            return layout_;
+        }
+
+        /** Sets the layout for the container. 
+         */
+        virtual void setLayout(Layout * value) {
+            if (layout_ != value) {
+                if (layout_ != Layout::None)
+                    delete layout_;
+                layout_ = value;
+                relayout();
+            }
+        }
+
     protected:
 
         /** \name Geometry and Layout
@@ -82,6 +99,13 @@ namespace ui {
         void childRectChanged(Widget * child) override {
             MARK_AS_UNUSED(child);
             relayout();
+        }
+
+        void setOverlay(bool value) {
+            if (value != isOverlaid()) {
+                Widget::setOverlay(value);
+                layout_->recalculateOverlay(this);
+            }
         }
 
         void relayout() {

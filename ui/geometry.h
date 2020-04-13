@@ -101,6 +101,10 @@ namespace ui {
 			height_{0} {
 		}
 
+        static Rect Empty() {
+            return Rect{};
+        }
+
 		static Rect FromWH(int width, int height) {
 			return Rect{0,0, width, height};
 		}

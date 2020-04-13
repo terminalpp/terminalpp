@@ -3,6 +3,7 @@
 #include "../config.h"
 
 #include "ui/widgets/panel.h"
+#include "ui/layouts/maximize.h"
 #include "ui-terminal/ansi_terminal.h"
 #include "ui-terminal/bypass_pty.h"
 #include "ui-terminal/local_pty.h"
@@ -31,6 +32,7 @@ namespace tpp {
             terminal_->onMouseUp.setHandler(&Session::terminalMouseUp, this);
             terminal_->onMouseWheel.setHandler(&Session::terminalMouseWheel, this);
             terminal_->onSetClipboard.setHandler(&Session::terminalSetClipboard, this);
+            setLayout(new MaximizeLayout());
             
             add(terminal_);
 #if (ARCH_WINDOWS)

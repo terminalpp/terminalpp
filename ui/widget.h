@@ -232,6 +232,13 @@ namespace ui {
             return overlaid_;
         }
 
+        /** Sets the overlay property of the widget. 
+         */
+        virtual void setOverlay(bool value) {
+            UI_THREAD_CHECK;
+            overlaid_ = value;
+        }
+
         /** Changing the rectangle of a child widget triggers repaint of the parent. 
          */
         virtual void childRectChanged(Widget * child) {
