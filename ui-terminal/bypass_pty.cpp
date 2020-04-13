@@ -8,7 +8,7 @@
 namespace ui {
 
     BypassPTY::BypassPTY(Client * client, helpers::Command const & command):
-        PTY{client},
+        IOPTY{client},
         command_{command},
 		pipeIn_{ INVALID_HANDLE_VALUE },
 		pipeOut_{ INVALID_HANDLE_VALUE } {

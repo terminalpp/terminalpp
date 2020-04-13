@@ -9,7 +9,7 @@
 
 namespace ui {
 
-    class LocalPTY : public PTY {
+    class LocalPTY : public IOPTY {
     public:
         LocalPTY(Client * client, helpers::Command const & command);
         LocalPTY(Client * client, helpers::Command const & command, helpers::Environment const & env);

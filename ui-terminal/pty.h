@@ -144,26 +144,7 @@ namespace ui {
         /** Starts the PTY. 
          */
         virtual void start() {
-
-            reader_ = std::thread{[this](){
-                // create the buffer, and read while we can 
-                char * buffer = new char[DEFAULT_BUFFER_SIZE];
-                bool success = false;
-                while (true) {
-                    size_t bytesRead = receive(buffer, DEFAULT_BUFFER_SIZE, success);
-                    if (!success)
-                        break;
-                    receive(buffer, bytesRead);
-                }
-                delete [] buffer;
-            }};
-
-            waiter_ = std::thread{[this](){
-                helpers::ExitCode ec = waitAndGetExitCode();
-                if (client_ != nullptr)
-                    client_->ptyTerminated(ec);
-            }};
-
+            // do nothing
         }
 
         /** Resizes the pseudoterminal. 
@@ -197,12 +178,52 @@ namespace ui {
                 client_->ptyReceive(buffer, bufferSize);
         }
 
+        void terminated(helpers::ExitCode ec) {
+                if (client_ != nullptr)
+                    client_->ptyTerminated(ec);
+        }
+
         Client * client_;
+
+    }; // ui::PTY
+
+    /** PTY implementation for direct I/O access.
+     
+        Provides two threads for reading the input and waiting on the termination condition. 
+     */
+    class IOPTY : public PTY {
+    public:
+        IOPTY(Client * client):
+            PTY{client} {
+        }
+
+    protected:
+
+        void start() override {
+            reader_ = std::thread{[this](){
+                // create the buffer, and read while we can 
+                char * buffer = new char[DEFAULT_BUFFER_SIZE];
+                bool success = false;
+                while (true) {
+                    size_t bytesRead = receive(buffer, DEFAULT_BUFFER_SIZE, success);
+                    if (!success)
+                        break;
+                    receive(buffer, bytesRead);
+                }
+                delete [] buffer;
+            }};
+
+            waiter_ = std::thread{[this](){
+                helpers::ExitCode ec = waitAndGetExitCode();
+                terminated(ec);
+            }};
+        }
 
         std::thread reader_;
         std::thread waiter_;
 
-    }; // ui::AnsiTerminal::PTY
+
+    };
 
 
 } // namespace ui

@@ -23,7 +23,7 @@ namespace ui {
 #if (defined ARCH_WINDOWS)    
 
     LocalPTY::LocalPTY(Client * client, helpers::Command const & command):
-        PTY{client},
+        IOPTY{client},
         command_{command},
 		startupInfo_{},
    		pipeIn_{ INVALID_HANDLE_VALUE },
@@ -32,7 +32,7 @@ namespace ui {
     }
 
     LocalPTY::LocalPTY(Client * client, helpers::Command const & command, helpers::Environment const & env):
-        PTY{client},
+        IOPTY{client},
 		command_(command),
 		environment_(env),
 		startupInfo_{},
@@ -160,14 +160,14 @@ namespace ui {
 #elif (defined ARCH_UNIX)
 
     LocalPTY::LocalPTY(Client * client, helpers::Command const & command):
-        PTY{client},
+        IOPTY{client},
         command_{command} {
         start();
 
     }
 
     LocalPTY::LocalPTY(Client * client, helpers::Command const & command, helpers::Environment const & env):
-        PTY{client},
+        IOPTY{client},
         command_{command},
         environment_{env} {
         start();

@@ -14,7 +14,7 @@ namespace ui {
 
     /** A big mess of thread unsafe stuff for now, but the light at the end of the tunnel is visible...
      */
-    class BypassPTY : public PTY {
+    class BypassPTY : public IOPTY {
     public:
 
         BypassPTY(Client * client, helpers::Command const & command);
