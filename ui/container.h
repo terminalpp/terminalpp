@@ -166,15 +166,7 @@ namespace ui {
             UI_THREAD_CHECK;
             Canvas childrenCanvas{getContentsCanvas(canvas)};
             for (Widget * child : children_)
-                if (child->visible()) {
-                    Canvas childCanvas{childrenCanvas.clip(child->rect())};
-                    paintChild(child, childCanvas);
-                }
-        }
-
-        void paintChild(Widget * child, Canvas & childCanvas) {
-            child->visibleRect_ = childCanvas.visibleRect();
-            child->paint(childCanvas);
+                paintChild(child, childrenCanvas);
         }
 
     private:

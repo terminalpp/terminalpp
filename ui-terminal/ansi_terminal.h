@@ -94,8 +94,6 @@ namespace ui {
 
             int maxHistoryRows_;
 
-
-
             /** Flag designating the end of line in the buffer. 
              */
             static constexpr char32_t END_OF_LINE = 0x200000;

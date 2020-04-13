@@ -5,6 +5,9 @@
 namespace ui {
 
     void Widget::repaint() {
+        // don't do anything if repaint has already been requested
+        if (repaintRequested_.exchange(true)) 
+            return;
         std::lock_guard<std::mutex> g{mRenderer_};
         if (renderer_ != nullptr)
             renderer_->repaint(this);

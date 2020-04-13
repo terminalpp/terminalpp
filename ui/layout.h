@@ -39,6 +39,8 @@ namespace ui {
         /** Sets the rectangle of the children. 
          */
         void setChildRect(Widget * child, Rect const & rect) {
+            // make sure that repaints will be ignored since parent relayout will trigger repaint eventually 
+            child->repaintRequested_.store(true);
             child->setRect(rect);
         }
 
@@ -51,6 +53,8 @@ namespace ui {
             If the parent of the child is overlaid itself, then all its children are overlaid regardless of the value.  
          */
         void setChildOverlay(Widget * child, bool value) {
+            // make sure that repaints will be ignored since parent relayout will trigger repaint eventually 
+            child->repaintRequested_.store(true);
             child->setOverlay(child->parent()->isOverlaid() || value);
         }
 

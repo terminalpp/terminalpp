@@ -18,12 +18,10 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
+- rendererClose is invoked before all user events are processed and therefore segfaults on already deleted window - figure out how to fix this
+
 - design proper and simple layouts and autosizing of widgets
-- minimize the amount of UI repaints on resize and relayouting... (but how?)
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
-
-
-
 
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set
@@ -53,6 +51,7 @@ Issues to be raised:
 - add configuration option to confirm setting clipboard from the terminal
 - add a way to copy from mouse capturing terminal
 - how to & when invalidate selection when there are changes in the terminal's contents
+- fillRect should also update border color
 
 ### v0.8
 

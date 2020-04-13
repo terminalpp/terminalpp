@@ -18,6 +18,8 @@ namespace ui {
             widget = widget->parent();
         Canvas canvas(widget); 
         widget->paint(canvas);
+        // clear the repaint request flag
+        widget->repaintRequested_.store(false);
         // actually render the updated part of the buffer
         render(widget->visibleRect_);
     }

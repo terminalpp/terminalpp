@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+#include <atomic>
 
 #include "helpers/helpers.h"
 #include "helpers/events.h"
@@ -128,6 +129,7 @@ namespace ui {
 
         Widget(int width = 0, int height = 0, int x = 0, int y = 0):
             renderer_{nullptr},
+            repaintRequested_{false},
             parent_{nullptr},
             rect_{Rect::FromTopLeftWH(x, y, width, height)},
             overlaid_{false},
@@ -314,8 +316,29 @@ namespace ui {
         /** Paints the widget on the given canvas. 
          
             The canvas is guaranteed to have the width and height of the widget itself. This method *must* be implemented in widget subclasses to actually draw the contents of the widget. 
+
+            The paint method should never be called directly by other widgets, which should use the paintChild() method instead. 
          */
         virtual void paint(Canvas & canvas) = 0;
+
+        /** Paints given child widget. 
+         
+            Takes the widget itself and the contents canvas against which all children are positioned. 
+         */
+        void paintChild(Widget * child, Canvas & contentsCanvas) {
+            ASSERT(child->parent() == this);
+            // no need to paint children that are not visible
+            if (! child->visible())
+                return;
+            // create the child's canvas
+            Canvas childCanvas = contentsCanvas.clip(child->rect());
+            // update the visible rect of the child according to the calculated canvas and repaint
+            child->visibleRect_ = childCanvas.visibleRect();
+            child->paint(childCanvas);
+            // once the child was painted, clear the repaint request flag
+            child->repaintRequested_.store(false);
+        }
+
 
         //@}
 
@@ -490,6 +513,10 @@ namespace ui {
 
         /** The renderer the widget is attached to. */
         Renderer* renderer_;
+
+        /** Determines if repaint of the widget has already been requested to limit multiple simultaneous repaint requests. 
+         */
+        std::atomic<bool> repaintRequested_;
 
         /** Parent widget, nullptr if none. */
         Widget * parent_;
