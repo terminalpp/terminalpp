@@ -114,12 +114,15 @@ namespace ui {
             size_t inputBufferUnprocessed_;
             size_t inputBufferSize_;
 
-        }; 
+        }; // PTY::Client
 
         PTY(Client * client):
             client_{client} {
             ASSERT(client != nullptr);
             client->ptyAttached(this);
+        }
+
+        virtual ~PTY() {
         }
 
         /** Returns the client the PTY is attached to. 
@@ -138,6 +141,31 @@ namespace ui {
 
     protected:
 
+        /** Starts the PTY. 
+         */
+        virtual void start() {
+
+            reader_ = std::thread{[this](){
+                // create the buffer, and read while we can 
+                char * buffer = new char[DEFAULT_BUFFER_SIZE];
+                bool success = false;
+                while (true) {
+                    size_t bytesRead = receive(buffer, DEFAULT_BUFFER_SIZE, success);
+                    if (!success)
+                        break;
+                    receive(buffer, bytesRead);
+                }
+                delete [] buffer;
+            }};
+
+            waiter_ = std::thread{[this](){
+                helpers::ExitCode ec = waitAndGetExitCode();
+                if (client_ != nullptr)
+                    client_->ptyTerminated(ec);
+            }};
+
+        }
+
         /** Resizes the pseudoterminal. 
          
             Must be provided by the implementation. 
@@ -150,6 +178,16 @@ namespace ui {
          */
         virtual void send(char const * buffer, size_t bufferSize) = 0;
 
+        /** Receives data from the PTY in given buffer.
+         
+            At most maxBufferSize bytes will be read. Returns the actual number of bytes written in the buffer, which can be 0. The success argument is set to true, or to false if there was an error while reading.
+         */
+        virtual size_t receive(char * buffer, size_t maxBufferSize, bool & success) = 0;
+
+        /** Waits for the exit code of the attached process and returns it. 
+         */
+        virtual helpers::ExitCode waitAndGetExitCode() = 0;
+
         /** Called by the implementation when new data is received. 
          
             If client exists, makes the client process the data, otherwise does nothing. 
@@ -159,19 +197,12 @@ namespace ui {
                 client_->ptyReceive(buffer, bufferSize);
         }
 
-        // TODO archive the exit code here and do stuff? 
-        void terminated(ExitCode exitCode) {
-            if (client_ != nullptr)
-                client_->ptyTerminated(exitCode);
-        }
-
-        virtual ~PTY() {
-        }
-
         Client * client_;
 
-    }; // ui::AnsiTerminal::PTY
+        std::thread reader_;
+        std::thread waiter_;
 
+    }; // ui::AnsiTerminal::PTY
 
 
 } // namespace ui

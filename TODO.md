@@ -36,13 +36,13 @@ The following is very short description of the versions planned and their main n
 
 - shapes.h is areally bad name for the classes defined therein
 
-- snapcraft build has dirty stamp, see why & fix
-- change from msi to appx (this would also remove the dependency on .NET 3.5 for wix)
 
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
 
+- snapcraft build has dirty stamp, see why & fix
 - ubuntu ppa distribution
+- change from msi to appx (this would also remove the dependency on .NET 3.5 for wix)
 
 Issues to be raised:
 
@@ -50,11 +50,11 @@ Issues to be raised:
 - add configuration option to confirm setting clipboard from the terminal
 - add a way to copy from mouse capturing terminal
 - how to & when invalidate selection when there are changes in the terminal's contents
-- when multiple sessions are supported, the RendererWindow can set the font instead of the subclasses
 
 ### v0.8
 
 - multiple sessions (in same window)
+- when multiple sessions are supported, the RendererWindow can set the font instead of the subclasses
 
 ### v0.9
 

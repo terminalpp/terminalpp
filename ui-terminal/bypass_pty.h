@@ -25,10 +25,12 @@ namespace ui {
 
     protected:
 
-        void start();
+        void start() override ;
 
         void resize(int cols, int rows) override;
         void send(char const * buffer, size_t bufferSize) override;
+        size_t receive(char * buffer, size_t bufferSize, bool & success) override;
+        helpers::ExitCode waitAndGetExitCode() override;
 
     private:
 
@@ -42,10 +44,6 @@ namespace ui {
 
 		/* Information about the process being executed. */
 		PROCESS_INFORMATION pInfo_;
-
-        std::thread reader_;
-
-        std::thread wait_;
 
     }; // ui::BypassPTY
 

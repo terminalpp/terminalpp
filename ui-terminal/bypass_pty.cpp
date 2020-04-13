@@ -12,6 +12,30 @@ namespace ui {
         command_{command},
 		pipeIn_{ INVALID_HANDLE_VALUE },
 		pipeOut_{ INVALID_HANDLE_VALUE } {
+        start();
+    }
+
+    BypassPTY::~BypassPTY() {
+        terminate();
+        reader_.join();
+        waiter_.join();
+        CloseHandle(pInfo_.hProcess);
+        CloseHandle(pInfo_.hThread);
+        CloseHandle(pipeIn_);
+        CloseHandle(pipeOut_);
+    }
+
+    void BypassPTY::terminate() {
+        if (TerminateProcess(pInfo_.hProcess, std::numeric_limits<unsigned>::max()) != ERROR_SUCCESS) {
+            // it could be that the process has already terminated
+    		helpers::ExitCode ec = STILL_ACTIVE;
+	    	GetExitCodeProcess(pInfo_.hProcess, &ec);
+			// the process has been terminated already, it's ok, otherwise throw last error (this could in theory be error from the GetExitCodeProcess, but that's ok for now)
+            OSCHECK(ec != STILL_ACTIVE);
+        }
+    }
+
+    void BypassPTY::start() {
 		//  input and output handles for the process
 		HANDLE pipePTYOut;
 		HANDLE pipePTYIn;
@@ -51,45 +75,7 @@ namespace ui {
 		// we can close our handles to the other ends now
 		OSCHECK(CloseHandle(pipePTYOut));
 		OSCHECK(CloseHandle(pipePTYIn));
-        start();
-    }
-
-    BypassPTY::~BypassPTY() {
-        terminate();
-        reader_.join();
-        wait_.join();
-        CloseHandle(pInfo_.hProcess);
-        CloseHandle(pInfo_.hThread);
-        CloseHandle(pipeIn_);
-        CloseHandle(pipeOut_);
-    }
-
-    void BypassPTY::terminate() {
-        if (TerminateProcess(pInfo_.hProcess, std::numeric_limits<unsigned>::max()) != ERROR_SUCCESS) {
-            // it could be that the process has already terminated
-    		helpers::ExitCode ec = STILL_ACTIVE;
-	    	GetExitCodeProcess(pInfo_.hProcess, &ec);
-			// the process has been terminated already, it's ok, otherwise throw last error (this could in theory be error from the GetExitCodeProcess, but that's ok for now)
-            OSCHECK(ec != STILL_ACTIVE);
-        }
-    }
-
-    void BypassPTY::start() {
-        reader_ = std::thread{[this](){
-            // create the buffer, and read while we can 
-            char * buffer = new char[DEFAULT_BUFFER_SIZE];
-            DWORD bytesRead = 0;
-            while (ReadFile(pipeIn_, buffer, static_cast<DWORD>(DEFAULT_BUFFER_SIZE), &bytesRead, nullptr))
-                receive(buffer, bytesRead);
-            delete [] buffer;
-        }};
-
-        wait_ = std::thread{[this](){
-            OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) != WAIT_FAILED);
-            helpers::ExitCode ec;
-            OSCHECK(GetExitCodeProcess(pInfo_.hProcess, &ec) != 0);
-            terminated(ec);
-        }};
+        PTY::start();
     }
 
     void BypassPTY::resize(int cols, int rows) {
@@ -111,6 +97,19 @@ namespace ui {
 			++i;
 		}
 		WriteFile(pipeOut_, buffer + start, static_cast<DWORD>(i - start), &bytesWritten, nullptr);
+    }
+
+    size_t BypassPTY::receive(char * buffer, size_t bufferSize, bool & success) {
+        DWORD bytesRead = 0;
+        success = ReadFile(pipeIn_, buffer, static_cast<DWORD>(bufferSize), &bytesRead, nullptr);
+        return bytesRead;
+    }
+
+    helpers::ExitCode BypassPTY::waitAndGetExitCode() {
+        OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) != WAIT_FAILED);
+        helpers::ExitCode ec;
+        OSCHECK(GetExitCodeProcess(pInfo_.hProcess, &ec) != 0);
+        return ec;
     }
 
 } // namespace ui 
