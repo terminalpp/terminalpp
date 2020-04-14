@@ -6,7 +6,11 @@ namespace ui {
 
     // Renderer ===================================================================================
 
-    std::deque<std::function<void(void)>> Renderer::UserEvents_;
+#ifndef NDEBUG
+    std::thread::id Renderer::UIThreadId_;
+#endif
+
+    std::deque<std::pair<std::function<void(void)>, Widget*>> Renderer::UserEvents_;
     std::mutex Renderer::M_;
     std::function<void(void)> Renderer::UserEventScheduler_;
 

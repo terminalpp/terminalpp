@@ -61,6 +61,7 @@ namespace tpp {
         /** Destroys the renderer's window. 
          */
         void rendererClose() override {
+            RendererWindow::rendererClose();
             DestroyWindow(hWnd_);
         }
 

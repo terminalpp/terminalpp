@@ -18,8 +18,6 @@ The following is very short description of the versions planned and their main n
 
 ##### TODO
 
-- rendererClose is invoked before all user events are processed and therefore segfaults on already deleted window - figure out how to fix this
-
 - design proper and simple layouts and autosizing of widgets
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
 

@@ -69,6 +69,8 @@ namespace tpp {
         /** Destroys the renderer's window. 
          */
         void rendererClose() override {
+            // TODO is the signal really necessary this should be already running in the UI thread
+            RendererWindow::rendererClose();
             emit tppWindowClose();
         }
 

@@ -57,6 +57,7 @@ namespace tpp {
         /** Destroys the renderer's window. 
          */
         void rendererClose() override {
+            RendererWindow::rendererClose();
             XDestroyWindow(display_, window_);
         }
 

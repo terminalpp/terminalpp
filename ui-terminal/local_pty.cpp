@@ -80,7 +80,7 @@ namespace ui {
 			CloseHandle(pipePTYOut);
 		OSCHECK(result == S_OK) << "Unable to open pseudo console";
         // generate the startup info
-		size_t attrListSize = 0;
+		SIZE_T attrListSize = 0;
 		startupInfo_.StartupInfo.cb = sizeof(STARTUPINFOEX);
 		// allocate the attribute list of required size
 		InitializeProcThreadAttributeList(nullptr, 1, 0, &attrListSize); // get size of list of 1 attribute

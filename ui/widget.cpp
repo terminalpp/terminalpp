@@ -19,6 +19,12 @@ namespace ui {
         return (renderer_ == nullptr) ? false : (renderer_->keyboardFocus() == this);
     }
 
+    void Widget::sendEvent(std::function<void(void)> handler) {
+        std::lock_guard<std::mutex> g{mRenderer_};
+        if (renderer_ != nullptr)
+            Renderer::SendEvent(handler, this);
+    }
+
     void Widget::setCursor(Canvas & canvas, Cursor const & cursor, Point position) {
         if (focused()) {
             canvas.buffer_.setCursor(cursor);
@@ -94,7 +100,5 @@ namespace ui {
             return false;
         return renderer_->selectionOwner_ == this;
     }
-
-
 
 } // namespace ui

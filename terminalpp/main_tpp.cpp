@@ -127,9 +127,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     } */
 #endif
-/*
     try {
-        */
         tpp::Config const & config = tpp::Config::Setup(argc, argv);
 
 		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
@@ -145,19 +143,17 @@ int main(int argc, char* argv[]) {
         w->show();
         tpp::Application::Instance()->mainLoop();
         return EXIT_SUCCESS;
-/*        
 	} catch (helpers::Exception const& e) {
-		Application::Alert(STR(e));
+		tpp::Application::Instance()->alert(STR(e));
 		LOG() << "Error: " << e;
 	} catch (std::exception const& e) {
-		Application::Alert(e.what());
+		tpp::Application::Instance()->alert(e.what());
 		LOG() << "Error: " << e.what();
 	} catch (...) {
-		Application::Alert("Unknown error");
+		tpp::Application::Instance()->alert("Unknown error");
 		LOG() << "Error: Unknown error";
 	} 
 	return EXIT_FAILURE;
-*/
     /*
 
 	Config const & config = Config::Setup(argc, argv);

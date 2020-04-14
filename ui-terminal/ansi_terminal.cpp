@@ -523,7 +523,7 @@ namespace ui {
 
     void AnsiTerminal::parseNotification() {
         bufferLock_.unlock();
-        Renderer::SendEvent([this](){
+        sendEvent([this](){
             Event<void>::Payload p;
             onNotification(p, this);
         });
@@ -1085,9 +1085,11 @@ namespace ui {
 				case 47:
 				case 1049: 
                     if (alternateMode_ != value) {
-                        // if the selection update was in progress, cancel it. If the selection is not empty, clear it
-                        cancelSelectionUpdate();
-                        clearSelection();
+                        // if the selection update was in progress, cancel it. If the selection is not empty, clear it - this has to be an UI event as clearSelection is UI action
+                        sendEvent([this](){
+                            cancelSelectionUpdate();
+                            clearSelection();
+                        });
                         // perform the mode change
                         std::swap(state_, stateBackup_);
                         alternateMode_ = value;
@@ -1303,7 +1305,7 @@ namespace ui {
             case 0: {
     			LOG(SEQ) << "Title change to " << seq.value();
                 bufferLock_.unlock();
-                Renderer::SendEvent([this, title = seq.value()](){
+                sendEvent([this, title = seq.value()](){
                     Event<std::string>::Payload p(title);
                     onTitleChange(p, this);
                 });
@@ -1315,7 +1317,7 @@ namespace ui {
             case 52:
                 LOG(SEQ) << "Clipboard set to " << seq.value();
                 bufferLock_.unlock();
-                Renderer::SendEvent([this, contents = seq.value()]() {
+                sendEvent([this, contents = seq.value()]() {
                     Event<std::string>::Payload p{contents};
                     onSetClipboard(p, this);
                 });

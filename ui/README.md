@@ -15,6 +15,6 @@ Widget is a control that can interact with a user and draw itself on a buffer
 - widget are aware of their parent widget, 
 
 
-# Multi\-Threadded Operation
+# Threading & Synchronization
 
-All modifications are expected to be done by a single thread. 
+All modifications to the UI must be done b

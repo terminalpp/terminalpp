@@ -128,6 +128,7 @@ namespace ui {
         friend class Layout;
 
         Widget(int width = 0, int height = 0, int x = 0, int y = 0):
+            pendingEvents_{0},
             renderer_{nullptr},
             repaintRequested_{false},
             parent_{nullptr},
@@ -135,6 +136,14 @@ namespace ui {
             overlaid_{false},
             visible_{true} {
         }
+
+        /** Schedules an user event to be executed in the main thread. [thread-safe]
+         
+            The scheduled event will be associated with the widget and if the widget is removed from its renderer before the event gets to be executed, the event is cancelled. 
+
+            A widget can only send event if its renderer is attached. Events from unattached widgets are ignored. 
+         */ 
+        void sendEvent(std::function<void(void)> handler);
 
         /** \name Events
          */
@@ -507,6 +516,12 @@ namespace ui {
     private:
 
         friend class Canvas;
+
+        /** Number of pending user events registered with the current widget. [thread-safe]
+         
+            Only ever accessed via renderer which provides global synchronization via its user events lock. 
+         */
+        size_t pendingEvents_;
 
         /** Mutex guarding the renderer property access. */
         mutable std::mutex mRenderer_;

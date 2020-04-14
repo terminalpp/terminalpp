@@ -16,6 +16,9 @@
 #include "buffer.h"
 #include "widget.h"
 
+/** \page UI Rendering 
+ 
+ */
 namespace ui {
 
 
@@ -99,19 +102,6 @@ namespace ui {
          */
         virtual void repaint(Widget * widget) = 0;
 
-        /** Schedules an user event to be executed in the main thread. [thread-safe]
-         
-            The sendEvent() method provides a simple mechanism to execute arbitrary code in the main UI event loop.
-         */
-        static void SendEvent(std::function<void(void)> handler) {
-            {
-                std::lock_guard<std::mutex> g{M_};
-                UserEvents_.push_back(handler);
-            }
-            ASSERT(UserEventScheduler_) << "UserEventScheduler not provided before user events raised";
-            UserEventScheduler_();
-        }
-
         /** Initializes the renderer by providing the scheduler function for the user events. 
          
             This is important so that user events can be scheduled even from widgets with no associated renderers, or even if no active renderers exist in the system. 
@@ -119,19 +109,30 @@ namespace ui {
         static void Initialize(std::function<void(void)> userEventScheduler) {
             ASSERT(! UserEventScheduler_) << "UserEventScheduler already specified";
             UserEventScheduler_ = userEventScheduler;
+            UIThreadId_ = std::this_thread::get_id();
         }
         /** Executes user event and removes it from the queue.
          
             Takes the next handler from the user events queue and executes it in the main UI thread. The renderer implementation should call this function every time the main thread is informed about user event waiting to be executed. 
          */
         static void ExecuteUserEvent() {
+            UI_THREAD_CHECK;
             std::function<void(void)> handler;
+            Widget * widget;
+            // first get the event
             {
+                std::lock_guard<std::mutex> g{M_};
                 if (UserEvents_.empty())
                     return;
-                handler = UserEvents_.front();
+                handler = UserEvents_.front().first;
+                widget = UserEvents_.front().second;
                 UserEvents_.pop_front();
+                if (widget == nullptr)
+                    return;
+                ASSERT(widget->pendingEvents_ > 0);
+                --widget->pendingEvents_;
             }
+            // then execute the event if it has not been invalidated in the meantime
             handler();
         }
 
@@ -157,6 +158,37 @@ namespace ui {
             selectionOwner_{nullptr} {
         }
 
+        /** Schedules an user event to be executed in the main thread. [thread-safe]
+
+            This is not to be 
+         */
+        static void SendEvent(std::function<void(void)> handler, Widget * sender) {
+            ASSERT(sender != nullptr);
+            {
+                std::lock_guard<std::mutex> g{M_};
+                UserEvents_.push_back(std::make_pair(handler, sender));
+                ++sender->pendingEvents_;
+            }
+            ASSERT(UserEventScheduler_) << "UserEventScheduler not provided before user events raised";
+            UserEventScheduler_();
+        }
+
+        static void CancelUserEvents(Widget * widget) {
+            UI_THREAD_CHECK;
+            std::lock_guard<std::mutex> g{M_};
+            // nothing to do
+            if (widget->pendingEvents_ == 0)
+                return;
+            // otherwise look through all the events and invalidate those that have the widget as sender
+            for (auto & i : UserEvents_) 
+                if (i.second == widget) {
+                    i.second = nullptr;
+                    if (--widget->pendingEvents_ == 0)
+                        break;
+                }
+            ASSERT(widget->pendingEvents_ == 0);
+        }
+
         /** Called when the renderer is to be closed.
 
             By default the method simpy calls the rendererClose() method that actually does the closing, but overriding the behavior may add additional features, such as confirmation dialogs, etc. 
@@ -167,9 +199,14 @@ namespace ui {
 
         /** Closes the renderer. [thread-safe]
          
-            Actually closes the renderer, no questions asked. Calling this method must eventually lead to a call to the renderer's destructor. 
+            Actually closes the renderer, no questions asked. Calling this method must eventually lead to a call to the renderer's destructor. If the renderer has a root widget attached at this time, the root widget is deleted. 
          */
-        virtual void rendererClose() = 0;
+        virtual void rendererClose() {
+            // detach the root widget and delete it
+            Widget * root = rootWidget_;
+            setRootWidget(nullptr);
+            delete root;
+        }
 
         /** \name Events
          
@@ -588,13 +625,18 @@ namespace ui {
                 mouseFocus_ = nullptr;
             }
             if (keyboardFocus_ == widget) {
-                NOT_IMPLEMENTED;
+                // TODO we should actually select new keyboard focus element
+                Event<void>::Payload p{};
+                widget->focusOut(p);
+                keyboardFocus_ = nullptr;
             }
             // make sure that if there were pending clipboard or selection requests for the widget, these are cancelled
             if (clipboardRequestTarget_ == widget)
                 clipboardRequestTarget_ = nullptr;
             if (selectionRequestTarget_ == widget)
                 selectionRequestTarget_ = nullptr;
+            // make sure the detached widget has no pending events attached to it
+            CancelUserEvents(widget);
         }
         //@}
 
@@ -621,8 +663,15 @@ namespace ui {
 
     private:
 
-        /** Queue of scheduled user events. */
-        static std::deque<std::function<void(void)>> UserEvents_;
+#ifndef NDEBUG
+        friend class UIThreadChecker_;
+        
+        static std::thread::id UIThreadId_;
+#endif
+
+
+        /** Queue of scheduled user events. Each handler is associated with a widget. */
+        static std::deque<std::pair<std::function<void(void)>, Widget*>> UserEvents_;
         /** UserEvents queue synchronization access */
         static std::mutex M_;
 
@@ -657,22 +706,6 @@ namespace ui {
 
         /** Owner of the selection buffer, if the buffer is owned by a widget under the renderer. */
         Widget * selectionOwner_;
-
-#ifndef NDEBUG
-        /** \name UI Thread Checking. 
-         */
-        //@{
-        friend class UiThreadChecker_;
-        
-        Renderer * getRenderer_() const {
-            return const_cast<Renderer*>(this);
-        }
-
-        std::thread::id uiThreadId_;
-        size_t uiThreadChecksDepth_ = 0;
-        std::mutex uiThreadCheckMutex_;
-        //@}
-#endif
 
     }; // ui::Renderer
 
