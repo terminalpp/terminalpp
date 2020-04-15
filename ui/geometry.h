@@ -426,6 +426,14 @@ namespace ui {
             return *this;
         }
 
+        bool operator == (Border const & other) const {
+            return color_ == other.color_ && border_ == other.border_;
+        }
+
+        bool operator != (Border const & other) const {
+            return color_ != other.color_ || border_ != other.border_;
+        }
+
     private:
         static constexpr uint16_t MASK = 0x03;
         static constexpr uint16_t LEFT = 0;
@@ -598,6 +606,14 @@ namespace ui {
         Brush & setFillColor(Color value) {
             fillColor_ = value;
             return *this;
+        }
+
+        bool operator == (Brush const & other) const {
+            return color_ == other.color_ && fillFont_ == other.fillFont_ && fillChar_ == other.fillChar_ && fillColor_ == other.fillColor_;
+        }
+
+        bool operator != (Brush const & other) const {
+            return color_ != other.color_ || fillFont_ != other.fillFont_ || fillChar_ != other.fillChar_ || fillColor_ != other.fillColor_;
         }
 
     private:

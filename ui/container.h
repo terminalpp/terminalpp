@@ -81,6 +81,9 @@ namespace ui {
         }
 
     protected:
+    
+        template<template<typename> typename X, typename T>
+        friend class TraitBase;
 
         /** \name Geometry and Layout
          
@@ -101,8 +104,8 @@ namespace ui {
             relayout();
         }
 
-        void setOverlay(bool value) {
-            if (value != isOverlaid()) {
+        void setOverlay(Overlay value) {
+            if (value != overlay()) {
                 Widget::setOverlay(value);
                 layout_->recalculateOverlay(this);
             }

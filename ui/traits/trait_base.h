@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../widget.h"
+
 namespace ui {
 
     template<template<typename> typename X, typename T>
@@ -14,8 +16,8 @@ namespace ui {
             return static_cast<T const *>(this);
         }
 
-        void downcastSetForceOverlay(bool value) {
-            downcastThis()->setForceOverlay(value);
+        void setWidgetOverlay(Widget::Overlay overlay) {
+            downcastThis()->setOverlay(overlay);
         }
 
     }; // ui::TraitBase

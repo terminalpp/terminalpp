@@ -45,7 +45,7 @@ namespace ui {
         }
 
         bool isOverlaid(Widget * widget) const {
-            return widget->isOverlaid();
+            return widget->overlay() != Widget::Overlay::No;
         }
 
         /** Sets the overlay of the widget. 
@@ -55,7 +55,8 @@ namespace ui {
         void setChildOverlay(Widget * child, bool value) {
             // make sure that repaints will be ignored since parent relayout will trigger repaint eventually 
             child->repaintRequested_.store(true);
-            child->setOverlay(child->parent()->isOverlaid() || value);
+            if (child->overlay() != Widget::Overlay::Force)
+                child->setOverlay(((child->parent()->overlay() != Widget::Overlay::No) || value) ? Widget::Overlay::Yes : Widget::Overlay::No);
         }
 
     };

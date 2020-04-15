@@ -18,7 +18,7 @@ namespace ui {
 
     void Renderer::render(Widget * widget) {
         UI_THREAD_CHECK;
-        while (widget->isOverlaid() && widget->parent() != nullptr)
+        while ((widget->overlay() != Widget::Overlay::No) && widget->parent() != nullptr)
             widget = widget->parent();
         Canvas canvas(widget); 
         widget->paint(canvas);

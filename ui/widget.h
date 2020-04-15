@@ -70,6 +70,18 @@ namespace ui {
     class Widget {
     public:
 
+        /** Determines the overlay of the widget. 
+         
+            If overlay is set to Overlay::No, then no part of the widget is overlaid by other widgets and therefore a repaint of such widget will only repaint the widget itself. If the widget is overlaid, then repaint of the widget triggers repaint of its parent as some of its siblings intereferes with the widget's area. 
+
+            The widget's overlay is typically set by the layout engine to either Overlay::Yes or Overlay::No. However if the widget sets its overlay to Overlay::Force, then the widget will always be overlaid, regardless of what the layout determines (this is useful for transparent widgets, etc.). 
+         */
+        enum class Overlay {
+            No,
+            Yes,
+            Force
+        };
+
         virtual ~Widget() noexcept(false) {
             ASSERT(parent_ == nullptr) << "Widget must be detached from its parent before it is deleted";    
         }
@@ -126,6 +138,8 @@ namespace ui {
         friend class Renderer;
         friend class Container;
         friend class Layout;
+        template<template<typename> typename X, typename T>
+        friend class TraitBase;
 
         Widget(int width = 0, int height = 0, int x = 0, int y = 0):
             pendingEvents_{0},
@@ -133,7 +147,7 @@ namespace ui {
             repaintRequested_{false},
             parent_{nullptr},
             rect_{Rect::FromTopLeftWH(x, y, width, height)},
-            overlaid_{false},
+            overlay_{Overlay::No},
             visible_{true} {
         }
 
@@ -238,16 +252,16 @@ namespace ui {
          
             Note that this is an implication, i.e. if the widget is not overlaid by other widgets, it can still return true. 
          */
-        bool isOverlaid() const {
+        Overlay overlay() const {
             UI_THREAD_CHECK;
-            return overlaid_;
+            return overlay_;
         }
 
         /** Sets the overlay property of the widget. 
          */
-        virtual void setOverlay(bool value) {
+        virtual void setOverlay(Overlay value) {
             UI_THREAD_CHECK;
-            overlaid_ = value;
+            overlay_ = value;
         }
 
         /** Changing the rectangle of a child widget triggers repaint of the parent. 
@@ -540,7 +554,7 @@ namespace ui {
         Rect rect_;
 
         /** If true, parts of the widget can be overlaid by other widgets and therefore any repaint request of the widget is treated as a repaint request of its parent. */
-        bool overlaid_;
+        Overlay overlay_;
 
         /** \anchor ui_widget_visible_rect 
             \name Visible Rectangle properties

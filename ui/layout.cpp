@@ -18,9 +18,12 @@ namespace ui {
 
     void Layout::recalculateOverlay(Container * widget) {
         std::vector<Widget*> const & children = containerChildren(widget);
-        if (widget->isOverlaid()) {
-            for (Widget * child : children) 
-                child->setOverlay(true);
+        if (widget->overlay() != Widget::Overlay::No) {
+            for (Widget * child : children) {
+                child->repaintRequested_.store(true);
+                if (child->overlay() != Widget::Overlay::Force)
+                    child->setOverlay(Widget::Overlay::Yes);
+            }
         } else {
             Rect rect{Rect::Empty()};
             for (auto i = children.rbegin(), e = children.rend(); i != e; ++i) {

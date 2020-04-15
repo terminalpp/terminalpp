@@ -33,7 +33,6 @@ namespace tpp {
             terminal_->onMouseWheel.setHandler(&Session::terminalMouseWheel, this);
             terminal_->onSetClipboard.setHandler(&Session::terminalSetClipboard, this);
             setLayout(new MaximizeLayout());
-            
             add(terminal_);
 #if (ARCH_WINDOWS)
             pty_ = new ui::BypassPTY{terminal_, config.session.command()};

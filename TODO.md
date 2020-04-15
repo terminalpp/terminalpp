@@ -1,22 +1,20 @@
-﻿# Known Bugs
+﻿The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-### Win32 Bugs
+## Next version: v0.7
 
-### X11 Bugs
+> This is the next release target and things that have already changed. When released this is copied to the CHANGELOG.md
 
-- transparency of the background does not seem to work
-
-# Roadmap
-
-The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
-
-### v0.7
+More robust UI framework, better configuration options and slightly increased security.
 
 - double width and double size fonts dropped from the terminal (not from the UI)
 - history gets resized when terminal gets resized
 - inactive cursor properly displayed
 
-##### TODO
+### TODO
+
+> These are items I currently work on towards the next version. When they are done, they die.  
+
+- modal widgets
 
 - design proper and simple layouts and autosizing of widgets
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
@@ -24,7 +22,7 @@ The following is very short description of the versions planned and their main n
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set
 
-- PTY++ and remote files version 2.0
+- PTY++ and remote files version 2.0 - or maybe just do the old PTY but in PTY++ pty in the new architecture.
 - deal with how PTYs are deleted (and the entire session)
 
 - hide console window in windows (arbitrary make the window visible on a configuration condition)
@@ -35,7 +33,6 @@ The following is very short description of the versions planned and their main n
 
 - shapes.h is areally bad name for the classes defined therein
 
-
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
 
@@ -45,11 +42,14 @@ The following is very short description of the versions planned and their main n
 
 Issues to be raised:
 
-- mouseOut is not reported at all in QT
 - add configuration option to confirm setting clipboard from the terminal
 - add a way to copy from mouse capturing terminal
 - how to & when invalidate selection when there are changes in the terminal's contents
 - fillRect should also update border color
+
+# Roadmap
+
+> This section discusses plan for next versions and drafts the features planned. 
 
 ### v0.8
 
@@ -73,17 +73,13 @@ Issues to be raised:
 - remove the tpp application from snap (tpp.yaml)
 - change from msi to appx, add windows store submission if possible 
 
-### Later
+# Unassigned Features
 
-- keyboard shortcuts, actions, better settings than JSON, etc. 
+> These are features that I am considering to add, but no immediate plans to do so, noty even sure if they will happen.  
 
-## Non-version TODOs
-
+- keyboard shortcuts
+- UI actions
 - add zoom out? and default zoom? 
-- add JSON schema and validator support
-- allow container to reverse order of its elements (so that maximized and horizontal layouts can be used nicely with header lines both up and down)
-- onChange handler for generic changes
-- make canvas do more
 - xim is wrong, it works on linux, but fails on mac
 - how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
 - add transparency for entire window? on Windows - https://msdn.microsoft.com/en-us/magazine/ee819134.aspx?f=255&MSPPError=-2147217396 and use layered windows
