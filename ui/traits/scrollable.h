@@ -98,20 +98,20 @@ namespace ui {
             Border b{Color::White.withAlpha(64)};
             b.setRight(Border::Kind::Thin);
             int x = canvas.width() - 1;
-            canvas.drawBorder(b, Point{x, 0}, Point{x, start});
-            canvas.drawBorder(b, Point{x, end}, Point{x, canvas.height()});
+            canvas.drawBorderLine(b, Point{x, 0}, Point{x, start});
+            canvas.drawBorderLine(b, Point{x, end}, Point{x, canvas.height()});
             b.setRight(Border::Kind::Thick);
-            canvas.drawBorder(b, Point{x, start}, Point{x, end});
+            canvas.drawBorderLine(b, Point{x, start}, Point{x, end});
         }
 
         virtual void paintVerticalScrollbar(Canvas & canvas, int start, int end) {
             Border b{Color::White.withAlpha(64)};
             b.setRight(Border::Kind::Thin);
             int y = canvas.height() - 1;
-            canvas.drawBorder(b, Point{0, y}, Point{start, y});
-            canvas.drawBorder(b, Point{end, y}, Point{canvas.height(), y});
+            canvas.drawBorderLine(b, Point{0, y}, Point{start, y});
+            canvas.drawBorderLine(b, Point{end, y}, Point{canvas.height(), y});
             b.setRight(Border::Kind::Thick);
-            canvas.drawBorder(b, Point{start, y}, Point{end, y});
+            canvas.drawBorderLine(b, Point{start, y}, Point{end, y});
         }
 
     private:

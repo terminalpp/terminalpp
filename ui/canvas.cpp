@@ -35,25 +35,32 @@ namespace ui {
         return *this;
     }
 
-    Canvas & Canvas::drawBorder(Border const & border, Point from, Point to) {
+    Canvas & Canvas::drawBorderLine(Border const & border, Point from, Point to) {
+        if (border.empty())
+            return *this;
         if (from.x() == to.x()) {
             int inc = (from.y() < to.y()) ? 1 : -1;
             for (; from != to; from.setY(from.y() + inc)) {
-                Cell * c = at(from);
-                if (c != nullptr)
-                    c->setBorder(c->border().updateWith(border));
+                updateBorder(from, border);
             }
         } else if (from.y() == to.y()) {
             int inc = (from.x() < to.x()) ? 1 : -1;
             for (; from != to; from.setX(from.x() + inc)) {
-                Cell * c = at(from);
-                if (c != nullptr)
-                    c->setBorder(c->border().updateWith(border));
+                updateBorder(from, border);
             }
         } else {
             ASSERT(false) << "Only straight lines are supported";
         }
         return *this;
     }
+
+    Canvas & Canvas::drawBorderRect(Border const & border, Rect const & rect) {
+        drawBorderLine(Border{border.color()}.setTop(border.top()), rect.topLeft(), rect.topRight());
+        drawBorderLine(Border{border.color()}.setBottom(border.bottom()), rect.bottomLeft() - Point{0,1}, rect.bottomRight() - Point{0,1});
+        drawBorderLine(Border{border.color()}.setLeft(border.left()), rect.topLeft(), rect.bottomLeft());
+        drawBorderLine(Border{border.color()}.setRight(border.right()), rect.topRight() - Point{1,0}, rect.bottomRight() - Point{1,0});
+        return *this;
+    }
+
 
 } // namespace ui

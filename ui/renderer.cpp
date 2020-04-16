@@ -20,10 +20,13 @@ namespace ui {
         UI_THREAD_CHECK;
         while ((widget->overlay() != Widget::Overlay::No) && widget->parent() != nullptr)
             widget = widget->parent();
-        Canvas canvas(widget); 
-        widget->paint(canvas);
-        // clear the repaint request flag
-        widget->repaintRequested_.store(false);
+        // have the canvas in a block so that its finalizers are called before the renderer
+        {
+            Canvas canvas(widget); 
+            widget->paint(canvas);
+            // clear the repaint request flag
+            widget->repaintRequested_.store(false);
+        }
         // actually render the updated part of the buffer
         render(widget->visibleRect_);
     }

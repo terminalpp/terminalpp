@@ -11,11 +11,22 @@ namespace ui {
      */
     class Canvas {
     public:
+        /** Finalizer function for a canvas. 
+         
+            Finalizer function runs when the canvas is to be destroyed, i.e. after all other painting on the canvas, which allows the finalizer to override any existing content (which is useful for drawing borders or transparent overlays). 
+         */
+        using Finalizer = std::function<void(Canvas&)>;
+
         /** Creates a canvas that encompasses the entire buffer. 
          
             Only the main UI thread can create a canvas. 
          */
         Canvas(Widget * widget);
+
+        ~Canvas() {
+            if (finalizer_)
+                finalizer_(*this);
+        }
 
         /** Returns the width of the canvas. 
          */
@@ -148,11 +159,36 @@ namespace ui {
         
         Canvas & fillRect(Rect const & rect);
 
-        /** Draws the specified border. 
+        /** Draws the specified border line. 
+         
+            The line must be either horizontal, or vertical. The border of all cells along the line will be updated with the provided one. The update allows drawBorderLine to be used to draw even corners of border rectangles. 
          */
-        Canvas & drawBorder(Border const & border, Point from, Point to);
+        Canvas & drawBorderLine(Border const & border, Point from, Point to);
+
+        /** Applies the border to given rectangle edges.
+         
+            Sets the border 
+         */
+        Canvas & drawBorderRect(Border const & border, Rect const & rect);
+
 
         //@}
+
+        /** Adds new finalizer to the canvas. 
+         
+            If the canvas already has a finalizer, the new finalizer will first call itself and then call the old one, ensuring that first registered finalizer will run last. 
+         */
+        void addFinalizer(Finalizer value) {
+            if (! finalizer_) {
+                finalizer_ = value;
+            } else {
+                Finalizer old = finalizer_;
+                finalizer_ = [old, value](Canvas & canvas){
+                    value(canvas);
+                    old(canvas);
+                };
+            }
+        }
 
     protected:
 
@@ -196,6 +232,19 @@ namespace ui {
                     .setDecor(brush.fillColor().blendOver(cell.decor()));
         }
 
+        /** Updates border of given cell if the cell is in the visible area. 
+         
+            Does not change the unused bits. 
+         */
+        void updateBorder(Point p, Border const & border) {
+            if (visibleRect_.contains(p)) {
+                // get the cell ourselves bypassing the buffer's unused bits clear
+                p += bufferOffset_;
+                Cell & c = buffer_.rows_[p.y()][p.x()];
+                c.setBorder(c.border().updateWith(border));
+            }
+        }
+
     private:
 
         int width_;
@@ -226,6 +275,8 @@ namespace ui {
         Brush bg_;
         Color decor_;
         Font font_;
+
+        Finalizer finalizer_;
 
     };
 

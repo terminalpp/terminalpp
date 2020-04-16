@@ -300,6 +300,8 @@ namespace ui {
 
     protected:
 
+        friend class Canvas;
+
         void create(int width, int height) {
             rows_ = new Cell*[height];
             for (int i = 0; i < height; ++i)

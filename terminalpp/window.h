@@ -343,7 +343,7 @@ namespace tpp {
                         borderColor = b.color();
                         changeBg(borderColor);
                     }
-                    if (b.hasBorder())
+                    if (! b.empty())
                         drawBorder(col, row, b, wThin, wThick);
                 }
             }

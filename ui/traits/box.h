@@ -21,8 +21,10 @@ namespace ui {
         virtual void setBackground(Brush const & value) {
             if (background_ != value) {
                 background_ = value;
-                if (! background_.color().opaque())
+                if (! border_.empty() || background_.color().opaque())
                     setWidgetOverlay(Widget::Overlay::Force);
+                else 
+                    setWidgetOverlay(Widget::Overlay::Yes);
                 downcastThis()->repaint();
             }
         }
@@ -34,6 +36,10 @@ namespace ui {
         virtual void setBorder(Border const & value) {
             if (border_ != value) {
                 border_ = value;
+                if (! border_.empty() || background_.color().opaque())
+                    setWidgetOverlay(Widget::Overlay::Force);
+                else 
+                    setWidgetOverlay(Widget::Overlay::Yes);
                 downcastThis()->repaint();
             }
         }
@@ -58,8 +64,10 @@ namespace ui {
         void paint(Canvas & canvas) {
             canvas.setBg(background_);
             canvas.fillRect(canvas.rect());
-            //if (border_.visible())
-            //    canvas.borderRect(canvas.rect(), border_);
+            if (! border_.empty())
+                canvas.addFinalizer([this](Canvas & canvas) {
+                    canvas.drawBorderRect(border_, canvas.rect());
+                });
         }
 
         Brush background_;

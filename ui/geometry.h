@@ -152,6 +152,14 @@ namespace ui {
             return Point{left_, top_};
         }
 
+        Point topRight() const {
+            return Point{left_ + width_, top_};
+        }
+
+        Point bottomLeft() const {
+            return Point{left_, top_ + height_};
+        }
+
         Point bottomRight() const {
             return Point{left_ + width_, top_ + height_};
         }
@@ -409,8 +417,8 @@ namespace ui {
             return *this;
         }
 
-        bool hasBorder() const {
-            return border_ != 0;
+        bool empty() const {
+            return border_ == 0 || color_ == Color::None;
         }
 
         Border & updateWith(Border const & other) {
