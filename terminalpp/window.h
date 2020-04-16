@@ -82,6 +82,10 @@ namespace tpp {
 
         virtual void show(bool value = true) = 0;
 
+        /** Requests the renderer window to be closed. 
+         */
+        using Renderer::requestClose;
+
     protected:
         Window(int width, int height, FontMetrics const & font, double zoom):
             LocalRenderer{width, height},

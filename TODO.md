@@ -14,7 +14,6 @@ More robust UI framework, better configuration options and slightly increased se
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- terminal exit event should close the window
 - modal widgets
 
 - design proper and simple layouts and autosizing of widgets

@@ -129,6 +129,10 @@ namespace ui {
             return visible_;
         }
 
+        bool enabled() const {
+            return enabled_;
+        }
+
         /** Triggers the repaint of the widget. [thread-safe]
          */
         virtual void repaint();
@@ -148,7 +152,8 @@ namespace ui {
             parent_{nullptr},
             rect_{Rect::FromTopLeftWH(x, y, width, height)},
             overlay_{Overlay::No},
-            visible_{true} {
+            visible_{true},
+            enabled_{true} {
         }
 
         /** Schedules an user event to be executed in the main thread. [thread-safe]
@@ -190,13 +195,31 @@ namespace ui {
 
         Event<std::string> onPaste;
 
+        //@}
+
         /** Sets the position of the cursor within given cavas. 
          
             Must be called in the paint() method and only currently focused widget can set cursor. 
          */
         void setCursor(Canvas & canvas, Cursor const & cursor, Point position);
 
-        //@}
+        virtual void setVisible(bool value = true) {
+            UI_THREAD_CHECK;
+            if (visible_ != value) {
+                visible_ = value;
+                if (parent_ != nullptr)
+                    parent_->childChanged(this);
+            }
+        }
+
+        virtual void setEnabled(bool value = true) {
+            UI_THREAD_CHECK;
+            if (enabled_ != value) {
+                enabled_ = value;
+                // TODO yield keyboard focus if disabled? 
+            }
+        }
+
 
         /** \name Geometry
 
@@ -227,7 +250,7 @@ namespace ui {
                 moved();
             // inform the parent that the child has been resized, which should also trigger the parent's repaint and so ultimately repaint the widget as well
             if (parent_ != nullptr)
-                parent_->childRectChanged(this);
+                parent_->childChanged(this);
         }
 
         /** Called *after* the widget has been resized. 
@@ -264,9 +287,9 @@ namespace ui {
             overlay_ = value;
         }
 
-        /** Changing the rectangle of a child widget triggers repaint of the parent. 
+        /** Changing a child widget triggers repaint of the parent. 
          */
-        virtual void childRectChanged(Widget * child) {
+        virtual void childChanged(Widget * child) {
             MARK_AS_UNUSED(child);
             repaint();
         }
@@ -578,14 +601,7 @@ namespace ui {
          */
         bool visible_;
 
-#ifndef NDEBUG
-        friend class UiThreadChecker_;
-        
-        Renderer * getRenderer_() const  {
-            return renderer_;
-        }
-#endif
-
+        bool enabled_;
     };
 
 } // namespace ui

@@ -178,6 +178,12 @@ namespace ui {
             Having this implemented as an event allows the containing application to deal with the event according to own security rules. 
          */
         Event<std::string> onSetClipboard;
+
+        /** Triggered when the PTY attached to the temrinal terminates. 
+         
+            Has the exit code reported by the PTY as a payload. 
+         */
+        Event<helpers::ExitCode> onPTYTerminated;
         //@}
 
         void paste(Event<std::string>::Payload & e) override;
@@ -360,7 +366,11 @@ namespace ui {
 
         void ptyTerminated(ExitCode exitCode) override {
             sendEvent([this, exitCode](){
-                LOG() << "Terminated";
+                Event<ExitCode>::Payload p{exitCode};
+                // disable the terminal
+                setEnabled(false);
+                // call the event
+                onPTYTerminated(p, this);
             });
         }
         //@}

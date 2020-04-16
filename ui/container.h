@@ -99,7 +99,7 @@ namespace ui {
 
         /** Change in child's rectangle triggers relayout of the container. 
          */
-        void childRectChanged(Widget * child) override {
+        void childChanged(Widget * child) override {
             MARK_AS_UNUSED(child);
             relayout();
         }

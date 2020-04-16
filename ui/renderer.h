@@ -109,7 +109,9 @@ namespace ui {
         static void Initialize(std::function<void(void)> userEventScheduler) {
             ASSERT(! UserEventScheduler_) << "UserEventScheduler already specified";
             UserEventScheduler_ = userEventScheduler;
+#ifndef NDEBUG
             UIThreadId_ = std::this_thread::get_id();
+#endif
         }
         /** Executes user event and removes it from the queue.
          

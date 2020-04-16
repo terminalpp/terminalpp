@@ -24,6 +24,7 @@ namespace tpp {
             window_->setRootWidget(this);
         	Config const & config = Config::Instance();
             terminal_ = new AnsiTerminal{& palette_, width(), height()};
+            terminal_->onPTYTerminated.setHandler(&Session::terminalPTYTerminated, this);
             terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
             terminal_->onNotification.setHandler(&Session::terminalNotification, this);
             terminal_->onKeyDown.setHandler(&Session::terminalKeyDown, this);
@@ -49,6 +50,15 @@ namespace tpp {
         bool autoScrollStep(Point by) override {
             return terminal_->scrollBy(by);
         }
+
+        void terminalPTYTerminated(Event<ExitCode>::Payload & e) {
+            window_->setIcon(Window::Icon::Notification);
+            window_->setTitle(STR("Terminated, exit code " << *e));
+            Config & config = Config::Instance();
+            if (! config.session.waitAfterPtyTerminated())
+                window_->requestClose();
+            // TODO perform the wait for keypress here
+        }        
 
         void terminalTitleChanged(Event<std::string>::Payload & e) {
             window_->setTitle(*e);
@@ -113,7 +123,7 @@ namespace tpp {
         void terminalMouseWheel(Event<MouseWheelEvent>::Payload & event) {
             if (terminal_->mouseCaptured())
                 return;
-              //if (state_.buffer.historyRows() > 0) {
+            //if (state_.buffer.historyRows() > 0) {
                 if (event->by > 0)
                     terminal_->scrollBy(Point{0, -1});
                 else 
