@@ -91,6 +91,7 @@ namespace ui {
              */
             virtual void ptyTerminated(ExitCode exitCode) {
                 // do nothing, children can reimplement to react. 
+                MARK_AS_UNUSED(exitCode);
             }
 
             virtual size_t processInput(char const * buffer, char const * bufferEnd) = 0;

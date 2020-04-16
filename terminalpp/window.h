@@ -238,7 +238,7 @@ namespace tpp {
 
     protected:
         RendererWindow(int width, int height, FontMetrics const & font, double zoom):
-            Window{width, height, font, 1.0},
+            Window{width, height, font, zoom},
             lastCursorPos_{-1,-1} {
         }
 

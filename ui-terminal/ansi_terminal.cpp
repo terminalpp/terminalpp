@@ -490,7 +490,7 @@ namespace ui {
 
         // if the character's column width is 2 and current font is not double width, update to double width font
         if (columnWidth == 2 && ! cell.font().doubleWidth()) {
-            columnWidth = 1;
+            //columnWidth = 1;
             cell.setFont(cell.font().setDoubleWidth(true));
         }
 
@@ -1694,7 +1694,7 @@ namespace ui {
             int endCol = (row < endRow - 1) ? width_ : selection.end().x();
             Cell * rowCells;
             // if the current row comes from the history, get the appropriate cells
-            if (row < history_.size()) {
+            if (row < static_cast<int>(history_.size())) {
                 rowCells = history_[row].second;
                 // if the stored row is shorter than the start of the selection, adjust the endCol so that no processing will be involved
                 if (endCol > history_[row].first)

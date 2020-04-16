@@ -478,8 +478,11 @@ namespace ui {
             If there is already a selection owner associated with the renderer that is different from the new owner, first rendererClearSelection is called. 
 
             Simply updates the selection owner. 
+
+            This method must be overriden in the renderer implementation where the selection contents update must be implemented and this super method called to deal with the bookkeeping.
          */
         virtual void rendererRegisterSelection(std::string const & contents, Widget * owner) {
+            MARK_AS_UNUSED(contents);
             if (selectionOwner_ != nullptr && selectionOwner_ != owner)
                 rendererClearSelection();
             selectionOwner_ = owner;

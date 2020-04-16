@@ -50,7 +50,7 @@ namespace tpp {
             OSCHECK(xftFont_ != nullptr) << "Unable to initialize fallback font.";
         }
         // if the font height is not the cellHeight, update the pixel size accordingly and get the font again
-        if (static_cast<unsigned>(xftFont_->ascent + xftFont_->descent) != cellHeight_) {
+        if (static_cast<int>(xftFont_->ascent + xftFont_->descent) != cellHeight_) {
             fontHeight = fontHeight * fontHeight / (xftFont_->ascent + xftFont_->descent);
             CloseFont(xftFont_);
             FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);
@@ -75,7 +75,6 @@ namespace tpp {
         } else {
             double x = static_cast<double>(cellWidth_) / w;
             fontHeight *=  x;
-            w = cellWidth_;
             h = static_cast<unsigned>(h * x);
             CloseFont(xftFont_);
             FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);

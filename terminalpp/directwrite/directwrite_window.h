@@ -39,7 +39,10 @@ namespace tpp {
         void setFullscreen(bool value = true) override;
 
         void show(bool value = true) override {
-            ShowWindow(hWnd_, SW_SHOWNORMAL);
+            if (value)
+                ShowWindow(hWnd_, SW_SHOWNORMAL);
+            else
+                ShowWindow(hWnd_, SW_HIDE);
         }
 
         void resize(int newWidth, int newHeight) override {

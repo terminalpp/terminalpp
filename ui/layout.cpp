@@ -12,7 +12,7 @@ namespace ui {
             }
         };
 
-    }; // anonymous namespace
+    } // anonymous namespace
 
     Layout * Layout::None = new NoLayout();
 

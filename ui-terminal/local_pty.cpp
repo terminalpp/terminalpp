@@ -146,7 +146,8 @@ namespace ui {
 
     size_t LocalPTY::receive(char * buffer, size_t bufferSize, bool & success) {
         DWORD bytesRead = 0;
-        success = ReadFile(pipeIn_, buffer, DEFAULT_BUFFER_SIZE, &bytesRead, nullptr);
+        ASSERT(static_cast<DWORD>(bufferSize) == bufferSize);
+        success = ReadFile(pipeIn_, buffer, static_cast<DWORD>(bufferSize), &bytesRead, nullptr);
         return bytesRead;
     }
 
@@ -240,7 +241,7 @@ namespace ui {
     size_t LocalPTY::receive(char * buffer, size_t bufferSize, bool & success) {
         while (true) {
             int cnt = 0;
-            cnt = ::read(pipe_, (void*)buffer, DEFAULT_BUFFER_SIZE);
+            cnt = ::read(pipe_, (void*)buffer, bufferSize);
             if (cnt == -1) {
                 if (errno == EINTR || errno == EAGAIN)
                     continue;

@@ -5,7 +5,7 @@ namespace tpp {
 
     class DirectWriteFont::TextAnalysis : public ::Microsoft::WRL::RuntimeClass<::Microsoft::WRL::RuntimeClassFlags<::Microsoft::WRL::ClassicCom | ::Microsoft::WRL::InhibitFtmBase>, IDWriteTextAnalysisSource> {
     public:
-        TextAnalysis(char32_t cp) {
+        explicit TextAnalysis(char32_t cp) {
             // TODO refactor this & helpers::Char::toUTF16 ?
             if (cp < 0x10000) {
                 c_[0] = static_cast<wchar_t>(cp);

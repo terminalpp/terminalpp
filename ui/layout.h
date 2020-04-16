@@ -18,6 +18,9 @@ namespace ui {
          */
         static Layout * None;
 
+        virtual ~Layout() { 
+        }
+
     protected:
 
         friend class Container;

@@ -107,7 +107,6 @@ namespace tpp {
 
     Window * X11Application::createWindow(std::string const & title, int cols, int rows) {
 		return new X11Window{title, cols, rows};
-        return nullptr;
     }
 
     void X11Application::mainLoop() {
