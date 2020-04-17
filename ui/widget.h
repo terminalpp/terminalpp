@@ -5,6 +5,7 @@
 
 #include "helpers/helpers.h"
 #include "helpers/events.h"
+#include "helpers/log.h"
 
 #include "common.h"
 #include "input.h"
@@ -82,8 +83,13 @@ namespace ui {
             Force
         };
 
-        virtual ~Widget() noexcept(false) {
-            ASSERT(parent_ == nullptr) << "Widget must be detached from its parent before it is deleted";    
+        virtual ~Widget() {
+#ifndef NDEBUG
+            if (parent_ != nullptr) {
+                LOG() << "Widget must be detached from its parent before it is deleted";
+                terminate();
+            }
+#endif
         }
 
         /** Determines if the given widget is transitive parent of the current widget or the widget itself. 

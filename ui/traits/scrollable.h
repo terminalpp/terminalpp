@@ -68,7 +68,7 @@ namespace ui {
             scrollHeight_ = value;
         }
 
-        Canvas getContentsCanvas(Canvas canvas) {
+        Canvas getContentsCanvas(Canvas const & canvas) {
             return canvas.resize(scrollWidth_, scrollHeight_).offset(scrollOffset_);
         }
 
@@ -156,7 +156,7 @@ namespace ui {
             });
         }
 
-        virtual ~AutoScroller() noexcept(false) { }
+        virtual ~AutoScroller() { }
 
         /** Starts the autoscroll feature. 
          

@@ -45,6 +45,10 @@ namespace tpp {
             window_->setKeyboardFocus(terminal_);
         }
 
+        ~Session() override {
+            //delete pty_;
+        }
+
     protected:
 
         bool autoScrollStep(Point by) override {

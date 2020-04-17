@@ -30,7 +30,7 @@ namespace ui {
                 inputBufferSize_{DEFAULT_BUFFER_SIZE} {
             }
 
-            virtual ~Client() noexcept(false) {
+            virtual ~Client() {
                 delete [] inputBuffer_;
             }
             

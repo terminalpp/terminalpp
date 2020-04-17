@@ -311,12 +311,11 @@ namespace ui {
         }
 
         void clear() {
-            // do nothing if the rows are unallocated
-            if (rows_ == nullptr)
-                return;
             for (int i = 0; i < height_; ++i)
-                delete rows_[i];
-            delete rows_;
+                delete [] rows_[i];
+            delete [] rows_;
+            height_ = 0;
+            width_ = 0;
         }
 
         int width_;
