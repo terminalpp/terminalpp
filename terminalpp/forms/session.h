@@ -21,7 +21,6 @@ namespace tpp {
         Session(Window * window):
             window_{window},
             palette_{AnsiTerminal::Palette::XTerm256()} {
-            window_->setRootWidget(this);
         	Config const & config = Config::Instance();
             terminal_ = new AnsiTerminal{& palette_, width(), height()};
             terminal_->onPTYTerminated.setHandler(&Session::terminalPTYTerminated, this);
@@ -37,16 +36,17 @@ namespace tpp {
             //setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
             add(terminal_);
 #if (ARCH_WINDOWS)
-//            pty_ = new ui::BypassPTY{terminal_, config.session.command()};
-            pty_ = new ui::LocalPTY{terminal_, helpers::Command{"cmd.exe", {}}};
+            pty_ = new ui::BypassPTY{terminal_, config.session.command()};
+//            pty_ = new ui::LocalPTY{terminal_, helpers::Command{"cmd.exe", {}}};
 #else
             pty_ = new ui::LocalPTY{terminal_, config.session.command()};
 #endif
+            window_->setRootWidget(this);
             window_->setKeyboardFocus(terminal_);
         }
 
         ~Session() override {
-            //delete pty_;
+            delete pty_;
         }
 
     protected:
@@ -59,8 +59,8 @@ namespace tpp {
             window_->setIcon(Window::Icon::Notification);
             window_->setTitle(STR("Terminated, exit code " << *e));
             Config & config = Config::Instance();
-            if (! config.session.waitAfterPtyTerminated())
-                window_->requestClose();
+            //if (! config.session.waitAfterPtyTerminated())
+            //    window_->requestClose();
             // TODO perform the wait for keypress here
         }        
 

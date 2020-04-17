@@ -9,6 +9,12 @@
 
 namespace ui {
 
+    /** Local pseudoterminal connection. 
+     
+        Utilises the operating system's native pseudoterminal to connect to the program. On UNIX uses pseudoterminals, while on Windows the ConPTY is used instead. 
+
+        NOTE: On Windows in Visual Studio Code, the executed program non-deterministically ends in certain cases when debugging only. 
+     */
     class LocalPTY : public IOPTY {
     public:
         LocalPTY(Client * client, helpers::Command const & command);

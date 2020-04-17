@@ -15,6 +15,7 @@
 
 #include "helpers/string.h"
 #include "helpers/locks.h"
+#include "helpers/log.h"
 
 #include "local_pty.h"
 
@@ -42,14 +43,18 @@ namespace ui {
     }
 
     LocalPTY::~LocalPTY() {
+        // first terminate the process and wait for it
         terminate();
-        reader_.join();
-        waiter_.join();
-        CloseHandle(pInfo_.hProcess);
-        CloseHandle(pInfo_.hThread);
+		waiter_.join();
+        // then close all handles and the PTY, which interrupts the reader thread
+		CloseHandle(pInfo_.hProcess);
+		CloseHandle(pInfo_.hThread);
 		ClosePseudoConsole(conPTY_);
 		CloseHandle(pipeIn_);
-        CloseHandle(pipeOut_);
+		CloseHandle(pipeOut_);
+        // finally wait for the reader
+		reader_.join();
+        // and free the rest of the resources
 		delete [] reinterpret_cast<char*>(startupInfo_.lpAttributeList);
     }
 
@@ -152,10 +157,13 @@ namespace ui {
     }
 
     helpers::ExitCode LocalPTY::waitAndGetExitCode() {
-        WaitForSingleObject(pInfo_.hProcess, INFINITE);
-        helpers::ExitCode ec;
-        OSCHECK(GetExitCodeProcess(pInfo_.hProcess, &ec) != 0);
-        return ec;
+        while (true) {
+            OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) == 0);
+            helpers::ExitCode ec;
+            OSCHECK(GetExitCodeProcess(pInfo_.hProcess, &ec) != 0);
+            if (ec != STILL_ACTIVE)
+                return ec;
+        }
     }
 
 #elif (defined ARCH_UNIX)

@@ -106,10 +106,13 @@ namespace ui {
     }
 
     helpers::ExitCode BypassPTY::waitAndGetExitCode() {
-        OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) != WAIT_FAILED);
-        helpers::ExitCode ec;
-        OSCHECK(GetExitCodeProcess(pInfo_.hProcess, &ec) != 0);
-        return ec;
+        while (true) {
+            OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) == 0);
+            helpers::ExitCode ec;
+            OSCHECK(GetExitCodeProcess(pInfo_.hProcess, &ec) != 0);
+            if (ec != STILL_ACTIVE)
+                return ec;
+        }
     }
 
 } // namespace ui 

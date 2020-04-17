@@ -14,7 +14,6 @@ More robust UI framework, better configuration options and slightly increased se
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- PTY deletion in session destructor hangs
 - modal widgets
 - keyboard focus
 
