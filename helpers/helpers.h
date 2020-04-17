@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <sstream>
+#include <exception>
+
 
 #if (defined ARCH_WINDOWS)
     #include <windows.h>

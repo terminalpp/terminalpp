@@ -61,6 +61,29 @@ namespace tpp {
             XDestroyWindow(display_, window_);
         }
 
+
+        /** Handles FocusIn message sent to the window. 
+         
+            On certain x servers (such as vcxsrv) a newly created window get FocusOut message before having been focused first, which causes asserts in renderer to fail. The X11Window therefore keep a check whether the window has really been focused and only propagates the rendererFocusIn if the state is consistent. 
+         */
+        void rendererFocusIn() override {
+            if (!focusCheck_) {
+                RendererWindow::rendererFocusIn();
+                focusCheck_ = true;
+            }
+        }
+
+        /** Handles FocusOut message sent to the window. 
+
+            On certain x servers (such as vcxsrv) a newly created window get FocusOut message before having been focused first, which causes asserts in renderer to fail. The X11Window therefore keep a check whether the window has really been focused and only propagates the rendererFocusIn if the state is consistent. 
+         */
+        void rendererFocusOut() override {
+            if (focusCheck_) {
+                RendererWindow::rendererFocusOut();
+                focusCheck_ = false;
+            }
+        }
+
         void requestClipboard(Widget * sender) override;
 
         void requestSelection(Widget * sender) override;
@@ -229,6 +252,10 @@ namespace tpp {
 			result.color.alpha = c.a * 256;
 			return result;
 		}
+
+        /** Check whether the window is focused or not (see rendererFocusIn() and rendererFocuysOut()).
+         */
+        bool focusCheck_;
 
         x11::Window window_;
         Display * display_;

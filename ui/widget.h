@@ -87,7 +87,7 @@ namespace ui {
 #ifndef NDEBUG
             if (parent_ != nullptr) {
                 LOG() << "Widget must be detached from its parent before it is deleted";
-                terminate();
+                std::terminate();
             }
 #endif
         }
