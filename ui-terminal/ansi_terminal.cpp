@@ -1574,12 +1574,12 @@ namespace ui {
             while (cols != 0) {
                 int xSize = std::min(width(), cols);
                 Cell * x = new Cell[xSize];
-                memcpy(x, i, sizeof(Cell) * xSize);
+                memcpy(x, i, sizeof(Cell) * xSize); 
                 i += xSize;
                 cols -= xSize;
                 history_.push_back(std::make_pair(xSize, x));
             }
-            delete row;
+            delete [] row;
         }
         while (history_.size() > static_cast<size_t>(maxHistoryRows_)) {
             delete [] history_.front().second;
