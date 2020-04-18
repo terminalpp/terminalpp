@@ -71,18 +71,6 @@ namespace ui {
     class Widget {
     public:
 
-        /** Determines the overlay of the widget. 
-         
-            If overlay is set to Overlay::No, then no part of the widget is overlaid by other widgets and therefore a repaint of such widget will only repaint the widget itself. If the widget is overlaid, then repaint of the widget triggers repaint of its parent as some of its siblings intereferes with the widget's area. 
-
-            The widget's overlay is typically set by the layout engine to either Overlay::Yes or Overlay::No. However if the widget sets its overlay to Overlay::Force, then the widget will always be overlaid, regardless of what the layout determines (this is useful for transparent widgets, etc.). 
-         */
-        enum class Overlay {
-            No,
-            Yes,
-            Force
-        };
-
         virtual ~Widget() {
 #ifndef NDEBUG
             if (parent_ != nullptr) {
@@ -157,7 +145,8 @@ namespace ui {
             repaintRequested_{false},
             parent_{nullptr},
             rect_{Rect::FromTopLeftWH(x, y, width, height)},
-            overlay_{Overlay::No},
+            overlaid_{false},
+            paintDelegationRequired_{false},
             visible_{true},
             enabled_{true} {
         }
@@ -277,22 +266,6 @@ namespace ui {
             onMove(p, this);
         }
 
-        /** Returns true if the widget is overlaid by other widgets. 
-         
-            Note that this is an implication, i.e. if the widget is not overlaid by other widgets, it can still return true. 
-         */
-        Overlay overlay() const {
-            UI_THREAD_CHECK;
-            return overlay_;
-        }
-
-        /** Sets the overlay property of the widget. 
-         */
-        virtual void setOverlay(Overlay value) {
-            UI_THREAD_CHECK;
-            overlay_ = value;
-        }
-
         /** Changing a child widget triggers repaint of the parent. 
          */
         virtual void childChanged(Widget * child) {
@@ -355,8 +328,33 @@ namespace ui {
         // ========================================================================================
 
         /** \name Painting 
+         
+            
          */
         //@{
+
+        /** Returns true if the repainting the widget should be delegated to its parent instead. 
+         */
+        bool shouldPaintParent() {
+            UI_THREAD_CHECK;
+            return (overlaid_ || delegatePaintToParent() || paintDelegationRequired_) && parent_ != nullptr;
+        }
+
+        /** Determines whether the widget itself has properties that require delegating its painting to the parent. 
+         
+            Such as if the widget is transparent, etc.
+         */
+        virtual bool delegatePaintToParent() {
+            return false;
+        }
+
+        /** Returns true if the widget requires its children to delegate the paint. 
+         
+            This is useful if the widget has some rendering to perform *after* its children, such as borders or painted overlays. 
+         */ 
+        virtual bool requireChildrenToDelegatePaint() {
+            return false;
+        }
 
         /** Returns the canvas to be used for drawing the contents of the widget. 
          */
@@ -386,6 +384,8 @@ namespace ui {
             Canvas childCanvas = contentsCanvas.clip(child->rect());
             // update the visible rect of the child according to the calculated canvas and repaint
             child->visibleRect_ = childCanvas.visibleRect();
+            // TODO this is not the most effective, the requireChildrenToDelegatePaint() can be precomputed if needs be
+            child->paintDelegationRequired_ = paintDelegationRequired_ || requireChildrenToDelegatePaint();
             child->paint(childCanvas);
             // once the child was painted, clear the repaint request flag
             child->repaintRequested_.store(false);
@@ -582,8 +582,11 @@ namespace ui {
         /** The rectangle occupied by the widget in its parent's contents area. */
         Rect rect_;
 
-        /** If true, parts of the widget can be overlaid by other widgets and therefore any repaint request of the widget is treated as a repaint request of its parent. */
-        Overlay overlay_;
+        /** Determines if the widget is overlaid by its siblings. */
+        bool overlaid_;
+
+        /** If true, paint methods must be overlaid to the parent. Propagates to children. */
+        bool paintDelegationRequired_;
 
         /** \anchor ui_widget_visible_rect 
             \name Visible Rectangle properties

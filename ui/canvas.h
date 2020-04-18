@@ -98,38 +98,41 @@ namespace ui {
         //@{
 
         Color fg() const {
-            return fg_;
+            return state_.fg();
         }
 
         Canvas & setFg(Color value) {
-            fg_ = value;
+            ASSERT(value.a == 255);
+            state_.setFg(value);
             return *this;
         }
 
-        Brush const & bg() const {
-            return bg_;
+        Color bg() const {
+            return state_.bg();
         }
 
-        Canvas & setBg(Brush const & value) {
-            bg_ = value;
+        Canvas & setBg(Color value) {
+            ASSERT(value.a == 255);
+            state_.setBg(value);
             return *this;
         }
 
         Color decor() const {
-            return decor_;
+            return state_.decor();
         }
 
         Canvas & setDecor(Color value) {
-            decor_ = value;
+            ASSERT(value.a == 255);
+            state_.setDecor(value);
             return *this;
         }
 
         Font font() const {
-            return font_;
+            return state_.font();
         }
 
         Canvas & setFont(Font value) {
-            font_ = value;
+            state_.setFont(value);
             return *this;
         }
 
@@ -158,6 +161,10 @@ namespace ui {
         Canvas & drawBuffer(Buffer const & buffer, Point topLeft);
         
         Canvas & fillRect(Rect const & rect);
+
+        /** Fills the given rectangle with specified background color, leaving everything else intact. 
+         */
+        Canvas & fillRect(Rect const & rect, Color background);
 
         /** Draws the specified border line. 
          
@@ -219,19 +226,6 @@ namespace ui {
         }
         //@}
 
-        void applyBrush(Cell & cell, Brush const & brush) {
-            // first apply the background color and clear the border
-            cell.setBg(brush.color().blendOver(cell.bg()));
-            cell.setBorder(cell.border().clear());
-            // if the fillCharacter is different from NUL, update the character
-            if (brush.fillChar() != Char::NUL)
-                cell.setCodepoint(brush.fillChar()).setFont(brush.fillFont());
-            // if the fill color is different from None, update the fill color and the decoration color
-            if (brush.fillColor() != Color::None)
-                cell.setFg(brush.fillColor().blendOver(cell.fg()))
-                    .setDecor(brush.fillColor().blendOver(cell.decor()));
-        }
-
         /** Updates border of given cell if the cell is in the visible area. 
          
             Does not change the unused bits. 
@@ -271,10 +265,9 @@ namespace ui {
          */
         Point bufferOffset_;
 
-        Color fg_;
-        Brush bg_;
-        Color decor_;
-        Font font_;
+        /** The drawing state (foreground, background, font, character etc.)
+         */
+        Cell state_;
 
         Finalizer finalizer_;
 

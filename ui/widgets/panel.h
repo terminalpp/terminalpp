@@ -10,7 +10,15 @@ namespace ui {
 
     protected:
 
-        void paint(Canvas & canvas) {
+        bool delegatePaintToParent() override {
+            return Box::delegatePaintToParent() || Container::delegatePaintToParent();
+        }
+
+        bool requireChildrenToDelegatePaint() override {
+            return Box::requireChildrenToDelegatePaint() || Container::requireChildrenToDelegatePaint();
+        }
+
+        void paint(Canvas & canvas) override {
             Box::paint(canvas);
             // paint the children
             Container::paint(canvas);

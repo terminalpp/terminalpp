@@ -3,6 +3,7 @@
 #include "../config.h"
 
 #include "ui/widgets/panel.h"
+#include "ui/widgets/modal_pane.h"
 #include "ui/layouts/maximize.h"
 #include "ui-terminal/ansi_terminal.h"
 #include "ui-terminal/bypass_pty.h"
@@ -33,8 +34,11 @@ namespace tpp {
             terminal_->onMouseWheel.setHandler(&Session::terminalMouseWheel, this);
             terminal_->onSetClipboard.setHandler(&Session::terminalSetClipboard, this);
             setLayout(new MaximizeLayout());
-            //setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
+            setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
             add(terminal_);
+
+            modalPane_ = new ModalPane();
+            //add(modalPane_);
 #if (ARCH_WINDOWS)
             pty_ = new ui::BypassPTY{terminal_, config.session.command()};
 //            pty_ = new ui::LocalPTY{terminal_, helpers::Command{"cmd.exe", {}}};
@@ -153,6 +157,7 @@ namespace tpp {
         AnsiTerminal::Palette palette_;
         AnsiTerminal * terminal_;
         PTY * pty_;
+        ModalPane * modalPane_;
     }; 
 
 }

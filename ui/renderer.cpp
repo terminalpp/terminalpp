@@ -18,7 +18,7 @@ namespace ui {
 
     void Renderer::render(Widget * widget) {
         UI_THREAD_CHECK;
-        while ((widget->overlay() != Widget::Overlay::No) && widget->parent() != nullptr)
+        while (widget->shouldPaintParent())
             widget = widget->parent();
         // have the canvas in a block so that its finalizers are called before the renderer
         {

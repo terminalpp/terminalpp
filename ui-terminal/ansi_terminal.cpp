@@ -222,7 +222,7 @@ namespace ui {
         // draw the scrollbars if any
         Scrollable::paint(canvas);
         // draw the selection
-        paintSelection(c, Brush{Color::Blue.withAlpha(64), Char::NUL});
+        paintSelection(c, Color::Blue.withAlpha(64));
         // draw the cursor 
         if (focused()) {
             // set the cursor via the canvas

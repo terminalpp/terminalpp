@@ -263,21 +263,20 @@ namespace ui {
 
 		/** Bleds the current color oven existing one. 
 		 */
-		Color blendOver(Color const& other) const {
-			if (a == 255) {
+		Color blendOver(Color other) const {
+            // if the color to blend over is none, or our color is completely transparent preserve the other color
+            if (other == Color::None || a == 0) {
+                return other;
+            } else if (a == 255) {
 				return *this;
-			} else if (a == 0) {
-				return other;
-			} else if (other.a == 255) {
+			} else { 
 				unsigned char aa = a + 1;
 				unsigned char aInv = static_cast<unsigned char>(256 - a);
 				unsigned char rr = static_cast<unsigned char>((aa * r + aInv * other.r) / 256);
 				unsigned char gg = static_cast<unsigned char>((aa * g + aInv * other.g) / 256);
 				unsigned char bb = static_cast<unsigned char>((aa * b + aInv * other.b) / 256);
-				return Color(rr, gg, bb, 255);
-			} else {
-				// TODO we can do this because the color always blends over an existing fully opaque color of the background.If this were not the case, the assert fails and we have to change the algorithm.
-				UNREACHABLE;
+                // TODO this is probably only correct when the other color is opaque... 
+				return Color{rr, gg, bb, other.a};
 			}
 		}
 
@@ -366,6 +365,11 @@ namespace ui {
 
         Color color() const {
             return color_;
+        }
+
+        Border & setColor(Color color) {
+            color_ = color;
+            return *this;
         }
 
         Kind left() const {

@@ -14,8 +14,9 @@ More robust UI framework, better configuration options and slightly increased se
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- modal widgets
-- keyboard focus
+- modal widgets & keyboard focus
+
+- Box trait should go to widget_background and widget_border traits...
 
 - design proper and simple layouts and autosizing of widgets
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly

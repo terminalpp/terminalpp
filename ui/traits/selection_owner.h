@@ -111,16 +111,15 @@ namespace ui {
         
         /** Marks the selection on the given canvas. 
          */
-        void paintSelection(Canvas & canvas, Brush const & brush) {
+        void paintSelection(Canvas & canvas, Color background) {
             if (selection_.empty())
                 return;
-            canvas.setBg(brush);
             if (selection_.start().y() + 1 == selection_.end().y()) {
-                canvas.fillRect(Rect::FromCorners(selection_.start(), selection_.end()));
+                canvas.fillRect(Rect::FromCorners(selection_.start(), selection_.end()), background);
             } else {
-                canvas.fillRect(Rect::FromCorners(selection_.start(), Point{canvas.width(), selection_.start().y() + 1}));
-                canvas.fillRect(Rect::FromTopLeftWH(0, selection_.start().y() + 1, canvas.width(), selection_.end().y() - selection_.start().y() - 2));
-                canvas.fillRect(Rect::FromCorners(Point{0, selection_.end().y() - 1}, selection_.end()));
+                canvas.fillRect(Rect::FromCorners(selection_.start(), Point{canvas.width(), selection_.start().y() + 1}), background);
+                canvas.fillRect(Rect::FromTopLeftWH(0, selection_.start().y() + 1, canvas.width(), selection_.end().y() - selection_.start().y() - 2), background);
+                canvas.fillRect(Rect::FromCorners(Point{0, selection_.end().y() - 1}, selection_.end()), background);
             }
         }
 

@@ -31,6 +31,11 @@ namespace ui {
                 delete layout_;
         }
 
+    protected:
+
+        template<template<typename> typename X, typename T>
+        friend class TraitBase;
+
         /** Adds the given widget as child. 
          
             The widget will appear as the topmost widget in the container. If the widget already exists in the container, it will be moved to the topmost position. 
@@ -63,6 +68,11 @@ namespace ui {
             UNREACHABLE;
         }
 
+        /** \name Geometry and Layout
+         
+         */
+        //@{
+
         /** Returns the layout used by the container. 
          */
         Layout * layout() const {
@@ -80,16 +90,6 @@ namespace ui {
             }
         }
 
-    protected:
-    
-        template<template<typename> typename X, typename T>
-        friend class TraitBase;
-
-        /** \name Geometry and Layout
-         
-         */
-        //@{
-
         /** Relayout the children widgets when the container has been resized. 
          */
         void resized() override {
@@ -104,12 +104,15 @@ namespace ui {
             relayout();
         }
 
+/*
         void setOverlay(Overlay value) {
             if (value != overlay()) {
                 Widget::setOverlay(value);
                 layout_->recalculateOverlay(this);
             }
         }
+
+    */
 
         void relayout() {
             if (relayouting_)

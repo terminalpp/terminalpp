@@ -14,20 +14,6 @@ namespace ui {
     template<typename T>
     class Box : public TraitBase<Box, T> {
     public:
-        Brush const & background() const {
-            return background_;
-        }
-
-        virtual void setBackground(Brush const & value) {
-            if (background_ != value) {
-                background_ = value;
-                if (! border_.empty() || background_.color().opaque())
-                    setWidgetOverlay(Widget::Overlay::Force);
-                else 
-                    setWidgetOverlay(Widget::Overlay::Yes);
-                downcastThis()->repaint();
-            }
-        }
 
         Border const & border() const {
             return border_;
@@ -36,20 +22,22 @@ namespace ui {
         virtual void setBorder(Border const & value) {
             if (border_ != value) {
                 border_ = value;
-                if (! border_.empty() || background_.color().opaque())
+                /*
+                if (! border_.empty() || background_.opaque())
                     setWidgetOverlay(Widget::Overlay::Force);
                 else 
                     setWidgetOverlay(Widget::Overlay::Yes);
+                */
                 downcastThis()->repaint();
             }
         }
 
     protected:
         using TraitBase<Box, T>::downcastThis;
-        using TraitBase<Box, T>::setWidgetOverlay;
+        //using TraitBase<Box, T>::setWidgetOverlay;
 
         Box():
-            background_(Color::None) {
+            background_(Color::Black) {
         }
 
         explicit Box(Color color):
@@ -61,16 +49,29 @@ namespace ui {
             border_{border} {
         }
 
+        virtual bool delegatePaintToParent() {
+            return ! background_.opaque();
+        }
+
+        virtual bool requireChildrenToDelegatePaint() {
+            return ! border_.empty();
+        }
+
+
         void paint(Canvas & canvas) {
-            canvas.setBg(background_);
-            canvas.fillRect(canvas.rect());
+            if (background_.opaque()) {
+                canvas.setBg(background_);
+                canvas.fillRect(canvas.rect());
+            } else {
+                canvas.fillRect(canvas.rect(), background_);
+            }
             if (! border_.empty())
                 canvas.addFinalizer([this](Canvas & canvas) {
                     canvas.drawBorderRect(border_, canvas.rect());
                 });
         }
 
-        Brush background_;
+        Color background_;
         Border border_;
 
     }; // ui::Box

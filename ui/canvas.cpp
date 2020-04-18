@@ -29,7 +29,21 @@ namespace ui {
         Rect r = (rect & visibleRect_) + bufferOffset_;
         for (int row = r.top(), re = r.bottom(); row < re; ++row) {
             for (int col = r.left(), ce = r.right(); col < ce; ++col) {
-                applyBrush(buffer_.at(col, row), bg_);
+                buffer_.at(col, row) = state_;
+            }
+        }
+        return *this;
+    }
+
+    Canvas & Canvas::fillRect(Rect const & rect, Color background) {
+        Rect r = (rect & visibleRect_) + bufferOffset_;
+        for (int row = r.top(), re = r.bottom(); row < re; ++row) {
+            for (int col = r.left(), ce = r.right(); col < ce; ++col) {
+                Cell & c = buffer_.at(col, row);
+                c.setFg(background.blendOver(c.fg()))
+                 .setBg(background.blendOver(c.bg()))
+                 .setDecor(background.blendOver(c.decor()))
+                 .setBorder(c.border().setColor(background.blendOver(c.border().color())));
             }
         }
         return *this;

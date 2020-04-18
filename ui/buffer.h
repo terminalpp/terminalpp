@@ -311,9 +311,12 @@ namespace ui {
         }
 
         void clear() {
-            for (int i = 0; i < height_; ++i)
-                delete [] rows_[i];
-            delete [] rows_;
+            // rows can be nullptr if they have been backed up by a swap when resizing
+            if (rows_ != nullptr) {
+                for (int i = 0; i < height_; ++i)
+                    delete [] rows_[i];
+                delete [] rows_;
+            }
             height_ = 0;
             width_ = 0;
         }
