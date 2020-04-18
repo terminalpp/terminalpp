@@ -329,7 +329,6 @@ namespace ui {
 
         /** \name Painting 
          
-            
          */
         //@{
 

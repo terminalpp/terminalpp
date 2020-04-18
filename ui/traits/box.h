@@ -22,29 +22,22 @@ namespace ui {
         virtual void setBorder(Border const & value) {
             if (border_ != value) {
                 border_ = value;
-                /*
-                if (! border_.empty() || background_.opaque())
-                    setWidgetOverlay(Widget::Overlay::Force);
-                else 
-                    setWidgetOverlay(Widget::Overlay::Yes);
-                */
                 downcastThis()->repaint();
             }
         }
 
     protected:
         using TraitBase<Box, T>::downcastThis;
-        //using TraitBase<Box, T>::setWidgetOverlay;
 
         Box():
-            background_(Color::Black) {
+            background_{Color::Black} {
         }
 
         explicit Box(Color color):
             background_{color} {
         }
 
-        Box(Brush const & background, Border const & border):
+        Box(Color const & background, Border const & border):
             background_{background},
             border_{border} {
         }
