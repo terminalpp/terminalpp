@@ -15,7 +15,7 @@
 
 namespace ui {
 
-    class AnsiTerminal : public Widget, public PTY::Client, public Scrollable<AnsiTerminal>, public SelectionOwner<AnsiTerminal> {
+    class AnsiTerminal : public PublicWidget, public PTY::Client, public Scrollable<AnsiTerminal>, public SelectionOwner<AnsiTerminal> {
     public:
 
         class Palette;

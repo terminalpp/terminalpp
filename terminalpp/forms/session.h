@@ -6,6 +6,7 @@
 #include "ui/widgets/modal_pane.h"
 #include "ui/widgets/dialog.h"
 #include "ui/layouts/maximize.h"
+#include "ui/layouts/horizontal_stack.h"
 #include "ui-terminal/ansi_terminal.h"
 #include "ui-terminal/bypass_pty.h"
 #include "ui-terminal/local_pty.h"
@@ -32,6 +33,7 @@ namespace tpp {
             palette_{AnsiTerminal::Palette::XTerm256()} {
         	Config const & config = Config::Instance();
             terminal_ = new AnsiTerminal{& palette_, width(), height()};
+            terminal_->setHeightHint(SizeHint::Percentage(75));
             terminal_->onPTYTerminated.setHandler(&Session::terminalPTYTerminated, this);
             terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
             terminal_->onNotification.setHandler(&Session::terminalNotification, this);
@@ -41,12 +43,13 @@ namespace tpp {
             terminal_->onMouseUp.setHandler(&Session::terminalMouseUp, this);
             terminal_->onMouseWheel.setHandler(&Session::terminalMouseWheel, this);
             terminal_->onSetClipboard.setHandler(&Session::terminalSetClipboard, this);
-            setLayout(new MaximizeLayout());
+            //setLayout(new MaximizeLayout());
+            setLayout(new HorizontalStackLayout(HorizontalAlign::Bottom));
             setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
             add(terminal_);
 
-            modalPane_ = new ModalPane();
-            add(modalPane_);
+            //modalPane_ = new ModalPane();
+            //add(modalPane_);
 
 #if (ARCH_WINDOWS)
             pty_ = new ui::BypassPTY{terminal_, config.session.command()};

@@ -29,8 +29,7 @@ namespace ui {
         };
 
         SizeHint():
-            //value_{static_cast<unsigned char>(Kind::Auto)} {
-            value_{70} {
+            value_{static_cast<unsigned char>(Kind::Auto)} {
         }
 
         static SizeHint Percentage(unsigned char pct) {
@@ -61,6 +60,22 @@ namespace ui {
                 return autoSize;
             else
                 return currentSize;
+        }
+
+        bool operator == (SizeHint const & other) const {
+            return value_ == other.value_;
+        }
+
+        bool operator != (SizeHint const & other) const {
+            return value_ != other.value_;
+        }
+
+        bool operator == (Kind k) const {
+            return kind() == k;
+        }
+
+        bool operator != (Kind k) const {
+            return kind() != k;
         }
 
     private:
@@ -288,6 +303,22 @@ namespace ui {
 
          */
         //@{
+
+        virtual void setWidthHint(SizeHint value) {
+            if (widthHint_ != value) {
+                widthHint_ = value;
+                if (parent_ != nullptr)
+                    parent_->childChanged(this);
+            }
+        }
+
+        virtual void setHeightHint(SizeHint value) {
+            if (heightHint_ != value) {
+                heightHint_ = value;
+                if (parent_ != nullptr)
+                    parent_->childChanged(this);
+            }
+        }
 
         /** Sets the position and size of the widget.
          
@@ -692,6 +723,18 @@ namespace ui {
         bool visible_;
 
         bool enabled_;
-    };
+    }; // ui::Widget
+
+    class PublicWidget : public Widget {
+    public:
+        using Widget::setWidthHint;
+        using Widget::setHeightHint;
+    
+    protected:
+        PublicWidget(int width = 0, int height = 0, int x = 0, int y = 0):
+            Widget{width, height, x, y} {
+        }
+
+    }; // ui::PublicWidget
 
 } // namespace ui

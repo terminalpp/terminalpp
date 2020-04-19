@@ -146,7 +146,7 @@ namespace ui {
     char32_t AnsiTerminal::LineDrawingChars_[15] = {0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0, 0, 0x2500, 0, 0, 0x251c, 0x2524, 0x2534, 0x252c, 0x2502};
 
     AnsiTerminal::AnsiTerminal(Palette * palette, int width, int height, int x, int y):
-        Widget{width, height, x, y}, 
+        PublicWidget{width, height, x, y}, 
         Scrollable{width, height},
         fps_{0},
         repaint_{false},
