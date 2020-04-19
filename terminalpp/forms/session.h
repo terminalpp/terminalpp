@@ -4,6 +4,7 @@
 
 #include "ui/widgets/panel.h"
 #include "ui/widgets/modal_pane.h"
+#include "ui/widgets/dialog.h"
 #include "ui/layouts/maximize.h"
 #include "ui-terminal/ansi_terminal.h"
 #include "ui-terminal/bypass_pty.h"
@@ -11,6 +12,13 @@
 
 
 namespace tpp {
+
+    /** Paste confirmation dialog. 
+     */
+    class PasteDialog : public ui::Dialog {
+
+
+    }; 
 
     /** The terminal session. 
      */
@@ -39,7 +47,7 @@ namespace tpp {
 
             modalPane_ = new ModalPane();
             add(modalPane_);
-            
+
 #if (ARCH_WINDOWS)
             pty_ = new ui::BypassPTY{terminal_, config.session.command()};
 //            pty_ = new ui::LocalPTY{terminal_, helpers::Command{"cmd.exe", {}}};
@@ -146,7 +154,11 @@ namespace tpp {
         }
 
         void paste(Event<std::string>::Payload & e) override {
-            terminal_->paste(e);
+            PasteDialog * pd = new PasteDialog();
+            pd->onSuccess.setHandler([this, e](Event<void>::Payload) mutable {
+                terminal_->paste(e);
+            });
+            modalPane_->show(pd);
         }
 
     private:

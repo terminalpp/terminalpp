@@ -7,7 +7,8 @@ namespace ui {
 
         class NoLayout : public Layout {
         protected:
-            void relayout(Container * widget) override {
+            void relayout(Container * widget, Canvas const & contentsCanvas) override {
+                MARK_AS_UNUSED(contentsCanvas);
                 recalculateOverlay(widget);
             }
         };

@@ -12,7 +12,12 @@ namespace ui {
     class Point {
     public:
 
-        Point(int x = 0, int y = 0):
+        Point():
+            x_{0},
+            y_{0} {
+        }
+
+        Point(int x, int y):
             x_{x}, 
             y_{y} {
         }
@@ -174,6 +179,10 @@ namespace ui {
 
 		Rect operator + (Point const & by) const {
 			return FromTopLeftWH(left_ + by.x(), top_ + by.y(), width_, height_);
+		}
+
+		Rect operator - (Point const & by) const {
+			return FromTopLeftWH(left_ - by.x(), top_ - by.y(), width_, height_);
 		}
 
 		/** Returns an intersection of two rectangles. 

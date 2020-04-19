@@ -78,8 +78,8 @@ namespace ui {
                 rect.width(),
                 rect.height(),
                 buffer_,
-                visibleRect_ & rect,
-                bufferOffset_ - rect.topLeft()
+                (rect & visibleRect_) - rect.topLeft(),
+                bufferOffset_ + rect.topLeft()
             };
         }
 

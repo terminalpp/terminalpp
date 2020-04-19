@@ -27,7 +27,7 @@ namespace ui {
 
         /** Recalculates the dimensions and layout of the children. 
          */
-        virtual void relayout(Container * widget) = 0;
+        virtual void relayout(Container * widget, Canvas const & contentsCanvas) = 0;
 
         /** Calculates the actual overlay of the children in the given container. 
          
@@ -45,6 +45,22 @@ namespace ui {
             // make sure that repaints will be ignored since parent relayout will trigger repaint eventually 
             child->repaintRequested_.store(true);
             child->setRect(rect);
+        }
+
+        int calculateChildWidth(Widget * child, int autoWidth, int availableWidth) {
+            return child->widthHint().calculateSize(child->width(), autoWidth, availableWidth);
+        }
+
+        int calculateChildHeight(Widget * child, int autoHeight, int availableHeight) {
+            return child->heightHint().calculateSize(child->height(), autoHeight, availableHeight);
+        }
+
+        Rect centerHorizontally(Rect const & what, int width) {
+            return what + Point{(width - what.width()) / 2, 0};
+        }
+
+        Rect centerVertically(Rect const & what, int height) {
+            return what + Point{0, (height - what.height()) / 2};
         }
 
         bool isOverlaid(Widget * widget) const {

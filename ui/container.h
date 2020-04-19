@@ -16,7 +16,7 @@ namespace ui {
 
         Container():
             layout_{Layout::None},
-            relayouting_{false} {
+            layoutScheduled_{false} {
         }
 
         /** Container destructor also destroys its children. 
@@ -104,24 +104,12 @@ namespace ui {
             relayout();
         }
 
-/*
-        void setOverlay(Overlay value) {
-            if (value != overlay()) {
-                Widget::setOverlay(value);
-                layout_->recalculateOverlay(this);
-            }
-        }
-
-    */
-
         void relayout() {
-            if (relayouting_)
-                return;
-            relayouting_ = true;
-            // actually relayout the stuff
-            layout_->relayout(this);
-            relayouting_ = false;    
-            repaint();
+            UI_THREAD_CHECK;
+            if (layoutScheduled_ != true) {
+                layoutScheduled_ = true;
+                repaint();
+            }
         }
         //@}
 
@@ -170,7 +158,13 @@ namespace ui {
          */
         void paint(Canvas & canvas) override {
             UI_THREAD_CHECK;
-            Canvas childrenCanvas{getContentsCanvas(canvas)};
+            Canvas contentsCanvas{getContentsCanvas(canvas)};
+            // relayout the widgets if layout was requested
+            if (layoutScheduled_) {
+                layout_->relayout(this, contentsCanvas);
+                layoutScheduled_ = false;    
+            }
+            Canvas childrenCanvas{contentsCanvas};
             for (Widget * child : children_)
                 paintChild(child, childrenCanvas);
         }
@@ -182,7 +176,7 @@ namespace ui {
         std::vector<Widget *> children_;
 
         Layout * layout_;
-        bool relayouting_;
+        bool layoutScheduled_;
 
     };
 

@@ -18,6 +18,62 @@ namespace ui {
     class Renderer;
     class Layout;
 
+    /** Defines a hint to the layout classes about widget dimensions. 
+     */
+    class SizeHint {
+    public:
+        enum class Kind : unsigned char {
+            Percentage = 100,
+            Auto,
+            Fixed
+        };
+
+        SizeHint():
+            //value_{static_cast<unsigned char>(Kind::Auto)} {
+            value_{70} {
+        }
+
+        static SizeHint Percentage(unsigned char pct) {
+            ASSERT(pct < 101);
+            return SizeHint{pct};
+        }
+
+        static SizeHint Auto() {
+            return SizeHint{static_cast<unsigned char>(Kind::Auto)};
+        }
+
+        static SizeHint Fixed() {
+            return SizeHint{static_cast<unsigned char>(Kind::Fixed)};
+        }
+
+        Kind kind() const {
+            if (value_ <= static_cast<unsigned char>(Kind::Percentage))
+                return Kind::Percentage;
+            return static_cast<Kind>(value_);
+        }
+
+        /** Calculates the size based on actual available and auto size values. 
+         */
+        int calculateSize(int currentSize, int autoSize, int availableSize) {
+            if (value_ < static_cast<unsigned char>(Kind::Percentage))
+                return availableSize * value_ / 100;
+            else if (value_ == static_cast<unsigned char>(Kind::Auto))
+                return autoSize;
+            else
+                return currentSize;
+        }
+
+    private:
+
+        SizeHint(unsigned char value):
+            value_{value} {
+        }
+
+        unsigned char value_;
+
+    }; // ui::SizeHint
+
+
     class GeometryEvent {
     public:
         Rect rect;
@@ -113,6 +169,14 @@ namespace ui {
 
         int height() const {
             return rect_.height();
+        }
+
+        SizeHint widthHint() const {
+            return widthHint_;
+        }
+
+        SizeHint heightHint() const {
+            return heightHint_;
         }
 
         /** Returns true if the widget is visible.
@@ -594,6 +658,10 @@ namespace ui {
 
         /** The rectangle occupied by the widget in its parent's contents area. */
         Rect rect_;
+
+        /** Size hints for the layouters. */
+        SizeHint widthHint_;
+        SizeHint heightHint_;
 
         /** Determines if the widget is overlaid by its siblings. */
         bool overlaid_;
