@@ -2,45 +2,23 @@
 
 #include "../container.h"
 
+#include "../traits/widget_background.h"
+
 namespace ui {
 
-    class ModalPane : public Container {
+    class ModalPane : public Container, public WidgetBackground<ModalPane> {
     public:
 
         ModalPane():
-            background_{Color::Black.withAlpha(128)} {
-        }
-
-        Color dimColor() const {
-            return background_;
-        }
-
-        virtual void setDimColor(Color value) {
-            if (background_ != value) {
-                background_ = value;
-                /*
-                if (background_.opaque())
-                    setOverlay(Overlay::Force);
-                else
-                    setOverlay(Overlay::Yes);
-                */
-                repaint();
-            }
+            WidgetBackground{Color::Black.withAlpha(128)} {
         }
 
     protected:
 
-        void paint(Canvas & canvas) override {
-            if (background_.opaque()) {
-                canvas.setBg(background_);
-                canvas.fillRect(canvas.rect());
-            } else {
-                canvas.fillRect(canvas.rect(), background_);
-            }
+        void paint(Canvas & canvas) {
+            WidgetBackground::paint(canvas);
             Container::paint(canvas);
         }
-
-        Color background_;
 
     };
 

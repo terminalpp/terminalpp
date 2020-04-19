@@ -16,12 +16,6 @@ namespace ui {
             return static_cast<T const *>(this);
         }
 
-        /*
-        void setWidgetOverlay(bool ) {
-            downcastThis()->setOverlay(overlay);
-        }
-        */
-
     }; // ui::TraitBase
 
 } // namespace ui

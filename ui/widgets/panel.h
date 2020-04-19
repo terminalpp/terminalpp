@@ -1,25 +1,27 @@
 #pragma once
 
 #include "../container.h"
-#include "../traits/box.h"
+#include "../traits/widget_background.h"
+#include "../traits/widget_border.h"
 
 namespace ui {
 
-    class Panel : public Container, public Box<Panel> {
+    class Panel : public Container, public WidgetBackground<Panel>, public WidgetBorder<Panel> {
     public:
 
     protected:
 
         bool delegatePaintToParent() override {
-            return Box::delegatePaintToParent() || Container::delegatePaintToParent();
+            return WidgetBackground::delegatePaintToParent() || Container::delegatePaintToParent();
         }
 
-        bool requireChildrenToDelegatePaint() override {
-            return Box::requireChildrenToDelegatePaint() || Container::requireChildrenToDelegatePaint();
+        bool requireChildToDelegatePaint(Widget * child) override {
+            return WidgetBorder::requireChildToDelegatePaint(child) || Container::requireChildToDelegatePaint(child);
         }
 
         void paint(Canvas & canvas) override {
-            Box::paint(canvas);
+            WidgetBackground::paint(canvas);
+            WidgetBorder::paint(canvas);
             // paint the children
             Container::paint(canvas);
         }

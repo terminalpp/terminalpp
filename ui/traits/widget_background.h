@@ -8,7 +8,7 @@
 namespace ui {
 
     template<typename T>
-    class WidgetBackround : public TraitBase<Box, T> {
+    class WidgetBackground : public TraitBase<WidgetBackground, T> {
     public:
 
         Color const & background() const {
@@ -18,18 +18,20 @@ namespace ui {
         virtual void setBackground(Color const & value) {
             if (background_ != value) {
                 background_ = value;
-                if (! border_.empty() || background_.opaque())
-                    setWidgetOverlay(Widget::Overlay::Force);
-                else 
-                    setWidgetOverlay(Widget::Overlay::Yes);
                 downcastThis()->repaint();
             }
         }
 
     protected:
         using TraitBase<WidgetBackground, T>::downcastThis;
-        using TraitBase<WidgetBackground, T>::widgetOverlay;
-        using TraitBase<WidgetBackground, T>::setWidgetOverlay;
+
+        WidgetBackground(Color background = Color::Black):
+            background_{background} {
+        }
+
+        virtual bool delegatePaintToParent() {
+            return ! background_.opaque();
+        }
 
         void paint(Canvas & canvas) {
             if (background_.opaque()) {

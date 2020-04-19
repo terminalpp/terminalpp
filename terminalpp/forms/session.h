@@ -38,7 +38,8 @@ namespace tpp {
             add(terminal_);
 
             modalPane_ = new ModalPane();
-            //add(modalPane_);
+            add(modalPane_);
+            
 #if (ARCH_WINDOWS)
             pty_ = new ui::BypassPTY{terminal_, config.session.command()};
 //            pty_ = new ui::LocalPTY{terminal_, helpers::Command{"cmd.exe", {}}};

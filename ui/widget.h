@@ -329,6 +329,21 @@ namespace ui {
 
         /** \name Painting 
          
+            When the widget is to be repainted, its repaint() method must be called. This method can be called from any thread and its invocation triggers a repaint event in the renderer's UI thread, which then constructs the widget's canvas and calls its paint() method. 
+
+            If a widget wishes to paint its children, it must call the paintChild() method with each appropriate child, giving it the child and the widget's contents canvas. 
+
+            The contents should be determined by calling the getContentsCanvas(), which by default returns the widget's own canvas. Scrollable widgets, or widgets with borders should however override this method and construct an appropriate canvas on which the children will be painted. 
+         
+            Important part of the paint process is to determine when to delegate the paint request on a widget to its parent (which could be transitive). The shouldPaintParent() method determines for each widget whether its repaint should instead trigger repaint of its entire parent. The layout, the widget itself and its parents may all need the paint delegation for the reasons detailed below:
+
+            The layout engine determines if the widget can be overlaid by one of its sibling widgets and if so, requests the paint method delegation so that the overlaid widget can be updated as well. This is set automatically by the layout object for all children of the widget in their overlaid_ fields. The overlaid_ value is not inherited from parent. 
+
+            The widget itself may determine its repaint should always trigger its parent repaint in certain cases, such as when the widget is transparent. To do so, the method delegatePaintToParent() must be overriden in the subclass to detect such a situation. This value is not stored anywhere and the widget asked this on each repaint (and so is not inherited).
+
+            Finally, the widget may require its children to delegate their repaints. This can be set on per child basis by overriding the requireChildToDelegatePaint() method and is useful for situations when the parent wishes to paint on the canvas *over* its children, such as when borders or scrollbars are used. 
+
+            If a widget is overlaid, or if its parent required delegation, then the widget itself and all its children transitively must also delegate. This is stored in the paintDelegationRequired_ field which is inherited by children. 
          */
         //@{
 
@@ -336,7 +351,7 @@ namespace ui {
          */
         bool shouldPaintParent() {
             UI_THREAD_CHECK;
-            return (overlaid_ || delegatePaintToParent() || paintDelegationRequired_) && parent_ != nullptr;
+            return (overlaid_ || paintDelegationRequired_ || delegatePaintToParent()) && parent_ != nullptr;
         }
 
         /** Determines whether the widget itself has properties that require delegating its painting to the parent. 
@@ -349,9 +364,9 @@ namespace ui {
 
         /** Returns true if the widget requires its children to delegate the paint. 
          
-            This is useful if the widget has some rendering to perform *after* its children, such as borders or painted overlays. 
+            This is useful if the widget has some rendering to perform *after* its children, such as borders or painted overlays.
          */ 
-        virtual bool requireChildrenToDelegatePaint() {
+        virtual bool requireChildToDelegatePaint(Widget * child) {
             return false;
         }
 
@@ -383,13 +398,12 @@ namespace ui {
             Canvas childCanvas = contentsCanvas.clip(child->rect());
             // update the visible rect of the child according to the calculated canvas and repaint
             child->visibleRect_ = childCanvas.visibleRect();
-            // TODO this is not the most effective, the requireChildrenToDelegatePaint() can be precomputed if needs be
-            child->paintDelegationRequired_ = paintDelegationRequired_ || requireChildrenToDelegatePaint();
+            // TODO this is not the most effective, the requireChildToDelegatePaint() can be precomputed if needs be
+            child->paintDelegationRequired_ = overlaid_ || paintDelegationRequired_ || requireChildToDelegatePaint(child);
             child->paint(childCanvas);
             // once the child was painted, clear the repaint request flag
             child->repaintRequested_.store(false);
         }
-
 
         //@}
 
