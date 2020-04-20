@@ -21,7 +21,8 @@ namespace tpp {
 
         ~QtWindow() override;
 
-        void repaint(Widget * widget) {
+        void repaint(Widget * widget) override {
+            MARK_AS_UNUSED(widget);
             emit tppRequestUpdate();
         };
 

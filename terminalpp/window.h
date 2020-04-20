@@ -167,7 +167,7 @@ namespace tpp {
          */
         //@{
 
-        void keyDown(Event<Key>::Payload & e, Widget * target) {
+        void keyDown(Event<Key>::Payload & e, Widget * target) override {
             if (*e == SHORTCUT_FULLSCREEN) {
                 setFullscreen(! fullscreen_);
                 e.stop();

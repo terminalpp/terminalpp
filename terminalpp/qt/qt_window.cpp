@@ -213,6 +213,7 @@ namespace tpp {
 
     // TODO check if shift meta and friends must do anything with the pressed
     Key QtWindow::GetKey(int qtKey, unsigned modifiers, bool pressed) {
+        MARK_AS_UNUSED(pressed);
         if (qtKey >= Qt::Key::Key_A && qtKey <= Qt::Key::Key_Z) 
             return Key{static_cast<unsigned>(qtKey), modifiers};
         if (qtKey >= Qt::Key::Key_0 && qtKey <= Qt::Key::Key_9) 

@@ -5,7 +5,6 @@
 #include <atomic>
 #include <condition_variable>
 
-
 namespace helpers {
 
     class ResourceGrabber {

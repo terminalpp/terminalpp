@@ -1379,6 +1379,7 @@ namespace ui {
 
     void AnsiTerminal::updateCursorPosition() {
         while (state_.cursor.x() >= state_.buffer.width()) {
+            ASSERT(state_.buffer.width() > 0);
             state_.cursor -= Point{state_.buffer.width(), -1};
             // if the cursor is on the last line, evict the lines above
             if (state_.cursor.y() == state_.scrollEnd) 

@@ -33,6 +33,7 @@ namespace tpp {
             window_{window},
             palette_{AnsiTerminal::Palette::XTerm256()} {
         	Config const & config = Config::Instance();
+            window_->setRootWidget(this);
             terminal_ = new AnsiTerminal{& palette_, width(), height()};
             terminal_->setHeightHint(SizeHint::Percentage(75));
             terminal_->onPTYTerminated.setHandler(&Session::terminalPTYTerminated, this);
@@ -58,7 +59,6 @@ namespace tpp {
 #else
             pty_ = new ui::LocalPTY{terminal_, config.session.command()};
 #endif
-            window_->setRootWidget(this);
             window_->setKeyboardFocus(terminal_);
         }
 
