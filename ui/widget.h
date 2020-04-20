@@ -462,6 +462,7 @@ namespace ui {
             This is useful if the widget has some rendering to perform *after* its children, such as borders or painted overlays.
          */ 
         virtual bool requireChildToDelegatePaint(Widget * child) {
+            MARK_AS_UNUSED(child);
             return false;
         }
 

@@ -74,58 +74,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MARK_AS_UNUSED(nCmdShow);
 	int argc = __argc;
 	char** argv = __argv;
-
 	tpp::APPLICATION_CLASS::Initialize(argc, argv, hInstance);
-
-    /*    
-    ui::AnsiTerminal::Palette palette{ui::AnsiTerminal::Palette::XTerm256()};
-    ui::AnsiTerminal * t = new ui::AnsiTerminal{&palette, 80, 25};
-    ui::BypassPTY * pty = new ui::BypassPTY{t, config.session.command()};
-    w->setRootWidget(t);
-    w->setKeyboardFocus(t);
-    //ui::Panel * p = new ui::Panel();
-    //w->setRootWidget(p);
-    w->show();
-    /*ui::Renderer::SendEvent([]() {
-        tpp2::Application::Instance()->alert("Event received");
-    });
-    tpp2::Application::Instance()->mainLoop();
-
-    return EXIT_SUCCESS;
-
-	APPLICATION_CLASS::Initialize(argc, argv, hInstance);
-    */
 #elif (defined ARCH_WINDOWS && defined RENDERER_QT)
 int main(int argc, char* argv[]) {
 	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 #else
 int main(int argc, char* argv[]) {
 	tpp::APPLICATION_CLASS::Initialize(argc, argv);
-
-/*
-    tpp2::Window * w = tpp2::Application::Instance()->createWindow("Foobar", 80, 25);
-    ui::AnsiTerminal::Palette palette{ui::AnsiTerminal::Palette::XTerm256()};
-    ui::AnsiTerminal * t = new ui::AnsiTerminal{&palette, 80, 25};
-    ui::LocalPTY * pty = new ui::LocalPTY{t, config.session.command()};
-    w->setRootWidget(t);
-    w->setKeyboardFocus(t);
-    //ui::Panel * p = new ui::Panel();
-    //w->setRootWidget(p);
-    w->show();
-    /*ui::Renderer::SendEvent([]() {
-        tpp2::Application::Instance()->alert("Event received");
-    });
-    tpp2::Application::Instance()->mainLoop();
-
-    return EXIT_SUCCESS;
-
-
-    try {
-	    APPLICATION_CLASS::Initialize(argc, argv);
-    } catch (helpers::Exception const & e) {
-        std::cerr << e << std::endl;
-        return EXIT_FAILURE;
-    } */
 #endif
     try {
         tpp::Config const & config = tpp::Config::Setup(argc, argv);
