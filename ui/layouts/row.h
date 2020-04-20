@@ -24,6 +24,7 @@ namespace ui {
         virtual void setHorizontalAlign(HorizontalAlign value) {
             if (hAlign_ != value) {
                 hAlign_ = value;
+                requestRelayout();
             }
         }
 
@@ -34,6 +35,7 @@ namespace ui {
         virtual void setVerticalAlign(VerticalAlign value) {
             if (vAlign_ != value) {
                 vAlign_ = value;
+                requestRelayout();
             }
         }
 

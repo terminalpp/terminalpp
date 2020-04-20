@@ -25,6 +25,10 @@ namespace ui {
 
         friend class Container;
 
+        Layout():
+            container_{nullptr} {
+        }
+
         /** Recalculates the dimensions and layout of the children. 
          */
         virtual void relayout(Container * widget, Canvas const & contentsCanvas) = 0;
@@ -92,6 +96,12 @@ namespace ui {
             child->repaintRequested_.store(true);
             child->overlaid_ = value;
         }
+
+        virtual void requestRelayout();
+
+    private:
+        /** The container controlled by the layout. */
+        Container * container_;
 
     };
 

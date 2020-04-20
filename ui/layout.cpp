@@ -32,4 +32,9 @@ namespace ui {
         return c->children_;
     }
 
+    void Layout::requestRelayout() {
+        if (container_ != nullptr)
+            container_->relayout();
+    }
+
 }

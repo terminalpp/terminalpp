@@ -82,10 +82,14 @@ namespace ui {
         /** Sets the layout for the container. 
          */
         virtual void setLayout(Layout * value) {
+            ASSERT(value != nullptr);
+            ASSERT(value->container_ == nullptr);
             if (layout_ != value) {
                 if (layout_ != Layout::None)
                     delete layout_;
                 layout_ = value;
+                if (layout_ != Layout::None)
+                    layout_->container_ = this;
                 relayout();
             }
         }
