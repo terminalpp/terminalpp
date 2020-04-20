@@ -9,6 +9,19 @@
 
 namespace ui {
 
+    enum class HorizontalAlign {
+        Left,
+        Center,
+        Right
+    }; // ui::HorizontalAlign
+
+    enum class VerticalAlign {
+        Top,
+        Middle,
+        Bottom
+    }; // ui::VerticalAlign
+
+
     class Point {
     public:
 

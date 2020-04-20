@@ -6,7 +6,8 @@
 #include "ui/widgets/modal_pane.h"
 #include "ui/widgets/dialog.h"
 #include "ui/layouts/maximize.h"
-#include "ui/layouts/horizontal_stack.h"
+#include "ui/layouts/column.h"
+#include "ui/layouts/row.h"
 #include "ui-terminal/ansi_terminal.h"
 #include "ui-terminal/bypass_pty.h"
 #include "ui-terminal/local_pty.h"
@@ -44,7 +45,7 @@ namespace tpp {
             terminal_->onMouseWheel.setHandler(&Session::terminalMouseWheel, this);
             terminal_->onSetClipboard.setHandler(&Session::terminalSetClipboard, this);
             //setLayout(new MaximizeLayout());
-            setLayout(new HorizontalStackLayout(HorizontalAlign::Bottom));
+            setLayout(new ColumnLayout(VerticalAlign::Bottom));
             setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
             add(terminal_);
 

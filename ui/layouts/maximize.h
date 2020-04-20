@@ -15,8 +15,8 @@ namespace ui {
                 int w = calculateChildWidth(child, autoWidth, autoWidth);
                 int h = calculateChildHeight(child, autoHeight, autoHeight);
                 Rect r{Rect::FromWH(w, h)};
-                r = centerHorizontally(r, autoWidth);
-                r = centerVertically(r, autoHeight);
+                r = align(r, autoWidth, HorizontalAlign::Center);
+                r = align(r, autoHeight, VerticalAlign::Middle);
                 setChildRect(child, r);
                 setChildOverlay(child, true);
             }

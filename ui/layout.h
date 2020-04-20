@@ -55,16 +55,32 @@ namespace ui {
             return child->heightHint().calculateSize(child->height(), autoHeight, availableHeight);
         }
 
-        Rect centerHorizontally(Rect const & what, int width) {
-            return what + Point{(width - what.width()) / 2, 0};
+        Rect align(Rect const & what, int maxWidth, HorizontalAlign hAlign) {
+            switch (hAlign) {
+                case HorizontalAlign::Left:
+                    return Rect::FromTopLeftWH(0, what.top(), what.width(), what.height());
+                case HorizontalAlign::Center:
+                    return Rect::FromTopLeftWH((maxWidth - what.width()) / 2, what.top(), what.width(), what.height());
+                case HorizontalAlign::Right:
+                    return Rect::FromTopLeftWH(maxWidth - what.width(), what.top(), what.width(), what.height());
+                default:
+                    UNREACHABLE;
+                    return what;
+            }
         }
 
-        Rect centerVertically(Rect const & what, int height) {
-            return what + Point{0, (height - what.height()) / 2};
-        }
-
-        bool isOverlaid(Widget * widget) const {
-            return widget->overlaid_;
+        Rect align(Rect const & what, int maxHeight, VerticalAlign vAlign) {
+            switch (vAlign) {
+                case VerticalAlign::Top:
+                    return Rect::FromTopLeftWH(what.left(), 0, what.width(), what.height());
+                case VerticalAlign::Middle:
+                    return Rect::FromTopLeftWH(what.left(), (maxHeight - what.height()) / 2, what.width(), what.height());
+                case VerticalAlign::Bottom:
+                    return Rect::FromTopLeftWH(what.left(), maxHeight - what.height(), what.width(), what.height());
+                default:
+                    UNREACHABLE;
+                    return what;
+            }
         }
 
         /** Sets the overlay of the widget. 

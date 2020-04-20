@@ -5,21 +5,17 @@
 
 namespace ui {
 
-    enum class HorizontalAlign {
-        Top,
-        Middle,
-        Bottom
-    }; // ui::HorizontalAlign
 
-    /** Horizontal Stack layout. 
+    /** Column layout. 
      
-        Stacks the widgets one on top of another using the entire width of the parent. 
+        Stacks the widgets to a single column. 
      */
-    class HorizontalStackLayout : public Layout {
+    class ColumnLayout : public Layout {
     public:
 
-        explicit HorizontalStackLayout(HorizontalAlign hAlign = HorizontalAlign::Top):
-            hAlign_{hAlign} {
+        explicit ColumnLayout(VerticalAlign vAlign = VerticalAlign::Top, HorizontalAlign hAlign = HorizontalAlign::Center):
+            hAlign_{hAlign},
+            vAlign_{vAlign} {
         }
 
         HorizontalAlign horizontalAlign() const {
@@ -32,16 +28,29 @@ namespace ui {
             }
         }
 
+        VerticalAlign verticalAlign() const {
+            return vAlign_;
+        }
+
+        virtual void setVerticalAlign(VerticalAlign value) {
+            if (vAlign_ != value) {
+                vAlign_ = value;
+            }
+        }
+
     protected:
 
         int getStartY(int actualHeight, int fullHeight) {
-            switch (hAlign_) {
-                case HorizontalAlign::Top:
+            switch (vAlign_) {
+                case VerticalAlign::Top:
                     return 0;
-                case HorizontalAlign::Middle:
+                case VerticalAlign::Middle:
                     return (fullHeight - actualHeight) / 2;
-                case HorizontalAlign::Bottom:
+                case VerticalAlign::Bottom:
                     return fullHeight - actualHeight;
+                default:
+                    UNREACHABLE;
+                    return 0;
             }
         }
 
@@ -81,7 +90,7 @@ namespace ui {
                     diff = 0;
                 }
                 Rect r{Rect::FromTopLeftWH(0, top, w, h)};
-                r = centerHorizontally(r, autoWidth);
+                r = align(r, autoWidth, hAlign_);
                 setChildRect(child, r);
                 setChildOverlay(child, false);
                 top += h;
@@ -97,7 +106,9 @@ namespace ui {
         }
 
         HorizontalAlign hAlign_;
-    }; // ui::HorizontalStackLayout
+        VerticalAlign vAlign_;
+
+    }; // ui::ColumnLayout
 
 
 
