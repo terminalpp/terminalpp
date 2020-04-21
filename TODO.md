@@ -16,8 +16,6 @@ More robust UI framework, better configuration options and slightly increased se
 
 - WidgetBorder should only require repaint of children that interfere with the border (can be calculated from their visible rects)
 
-- make sure terminal of size 0,0 cannot be created. 
-
 - add comments to layout
 - write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
 - modal widgets & keyboard focus

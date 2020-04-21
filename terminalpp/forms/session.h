@@ -35,7 +35,7 @@ namespace tpp {
         	Config const & config = Config::Instance();
             window_->setRootWidget(this);
             terminal_ = new AnsiTerminal{& palette_, width(), height()};
-            terminal_->setHeightHint(SizeHint::Percentage(75));
+            //terminal_->setHeightHint(SizeHint::Percentage(75));
             terminal_->onPTYTerminated.setHandler(&Session::terminalPTYTerminated, this);
             terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
             terminal_->onNotification.setHandler(&Session::terminalNotification, this);
@@ -45,8 +45,8 @@ namespace tpp {
             terminal_->onMouseUp.setHandler(&Session::terminalMouseUp, this);
             terminal_->onMouseWheel.setHandler(&Session::terminalMouseWheel, this);
             terminal_->onSetClipboard.setHandler(&Session::terminalSetClipboard, this);
-            //setLayout(new MaximizeLayout());
-            setLayout(new ColumnLayout(VerticalAlign::Bottom));
+            setLayout(new MaximizeLayout());
+            //setLayout(new ColumnLayout(VerticalAlign::Bottom));
             setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
             add(terminal_);
 

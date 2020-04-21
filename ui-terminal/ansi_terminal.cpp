@@ -234,6 +234,10 @@ namespace ui {
     }
 
     void AnsiTerminal::setRect(Rect const & value) {
+        // don't allow 0 width or height for the terminal
+        ASSERT(value.width() > 0 && value.height() > 0);
+        if (value.width() <= 0 || value.height() <= 0)
+            return;
         // if resized, resize the terminal buffers and the pty
         if (value.width() != width() || value.height() != height()) {
             // lock the buffer
