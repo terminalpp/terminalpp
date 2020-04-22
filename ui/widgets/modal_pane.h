@@ -20,17 +20,43 @@ namespace ui {
 
         /** Displays the given widget modally. 
          */
-        void show(Widget * widget) {
+        virtual void show(Widget * widget) {
             add(widget);
-            //widget->setRect(Rect::FromWH(width(), 10));
             setVisible(true);
         }
+
+        /** Called when the given modal widget should be dismissed. 
+         
+            The dismissed widget is detached from the modal pane and if there are no more widgets in it, the modal pane hides itself, returning the focus to the widget that held it before
+         */
+        virtual void dismiss(Widget * widget) {
+            remove(widget);
+            if (children_.empty()) {
+                setVisible(false);
+            }
+        }
+
+        using Container::setLayout;
 
     protected:
 
         void paint(Canvas & canvas) {
             WidgetBackground::paint(canvas);
             Container::paint(canvas);
+        }
+
+        Widget * getNextFocusableWidget(Widget * current) override {
+            if (enabled()) {
+                if (current == nullptr && focusable())
+                    return this;
+                ASSERT(current == this || current == nullptr || current->parent() == this);
+                if (current == this)
+                    current = nullptr;
+                // unlike container, the modal widget never goes to its parent for next focusable element
+                return getNextFocusableChild(current);
+            } else {
+                return nullptr;
+            }
         }
 
     };

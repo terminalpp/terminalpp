@@ -178,6 +178,19 @@ namespace ui {
          */
         Canvas & drawBorderRect(Border const & border, Rect const & rect);
 
+        /** Draws the specified text specified by utf8 iterators. 
+         
+            The text is drawn in a single line starting from the specified point and growing to the right. 
+         */
+        Canvas & textOut(Point where, Char::iterator_utf8 begin, Char::iterator_utf8 end);
+
+        /** Draws the specified text starting from the given point. 
+         
+            The text is drawn in a single line starting from the specified point and growing to the right. 
+         */
+        Canvas & textOut(Point where, std::string const & text) {
+            return textOut(where, Char::BeginOf(text), Char::EndOf(text));
+        }
 
         //@}
 

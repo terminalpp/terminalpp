@@ -134,6 +134,43 @@ namespace ui {
 
         //@}
 
+        /** \name Keyboard Input
+         */
+
+        //@{
+        Widget * getNextFocusableWidget(Widget * current) override {
+            if (enabled()) {
+                if (current == nullptr && focusable())
+                    return this;
+                ASSERT(current == this || current == nullptr || current->parent() == this);
+                if (current == this)
+                    current = nullptr;
+                // see if there is a next child that can be focused
+                Widget * next = getNextFocusableChild(current);
+                if (next != nullptr)
+                    return next;
+            }
+            // if not the container, nor any of its children can be the next widget, try the parent
+            return (parent_ == nullptr) ? nullptr : parent_->getNextFocusableWidget(this);
+        }
+
+        /** Returns next focusable child. 
+         */
+        Widget * getNextFocusableChild(Widget * current) {
+            // determine the next element to focus, starting from the current element which we do by setting current to nullptr if we see it and returning the child if current is nullptr
+            for (Widget * child : children_) {
+                if (current == nullptr) {
+                    Widget * result = child->getNextFocusableWidget(nullptr);
+                    if (result != nullptr)
+                        return result;
+                } else if (current == child) {
+                    current = nullptr;
+                }
+            }
+            return nullptr;
+        }
+        //@}
+
         /** Attaches the container to specified renderer. 
 
             First the container is attached and then all its children are attached as well. 
@@ -173,11 +210,11 @@ namespace ui {
                 paintChild(child, childrenCanvas);
         }
 
+        std::vector<Widget *> children_;
+
     private:
 
         friend class Layout;
-
-        std::vector<Widget *> children_;
 
         Layout * layout_;
         bool layoutScheduled_;

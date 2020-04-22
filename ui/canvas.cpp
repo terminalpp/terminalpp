@@ -76,5 +76,19 @@ namespace ui {
         return *this;
     }
 
+    Canvas & Canvas::textOut(Point where, Char::iterator_utf8 begin, Char::iterator_utf8 end) {
+        if (where.y() < visibleRect_.top() || where.y() >= visibleRect_.bottom())
+            return *this;
+        for (; begin < end; ++begin) {
+            if (where.x() >= visibleRect_.right())
+                break;
+            if (Cell * cell = at(where)) {
+                (*cell) = state_;
+                (*cell).setCodepoint((*begin).codepoint());
+            } 
+            where.setX(where.x() + state_.font().width());
+        } 
+        return *this;
+    }
 
 } // namespace ui

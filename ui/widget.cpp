@@ -37,6 +37,18 @@ namespace ui {
         }
     }
 
+    void Widget::setEnabled(bool value) {
+        UI_THREAD_CHECK;
+        if (enabled_ != value) {
+            enabled_ = value;
+            if (focused()) {
+                ASSERT(renderer_ != nullptr);
+                renderer_->setKeyboardFocus(renderer_->keyboardFocusNext());
+            }
+        }
+    }
+
+
     void Widget::attachRenderer(Renderer * renderer) {
         UI_THREAD_CHECK;
         ASSERT(this->renderer() == nullptr && renderer != nullptr);

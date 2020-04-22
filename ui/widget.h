@@ -226,6 +226,7 @@ namespace ui {
             rect_{Rect::FromTopLeftWH(x, y, width, height)},
             overlaid_{false},
             paintDelegationRequired_{false},
+            focusable_{false},
             visible_{true},
             enabled_{true} {
         }
@@ -286,14 +287,11 @@ namespace ui {
             }
         }
 
-        virtual void setEnabled(bool value = true) {
-            UI_THREAD_CHECK;
-            if (enabled_ != value) {
-                enabled_ = value;
-                // TODO yield keyboard focus if disabled? 
-            }
-        }
-
+        /** Determines whether the widget is enabled, or not. 
+         
+            If a focused widget is disabled, the widget looses focus passing it to the next focusable element in the renderer. 
+         */
+        virtual void setEnabled(bool value = true);
 
         /** \name Geometry
 
@@ -598,6 +596,30 @@ namespace ui {
          */
         //@{
 
+        /** Returns whether the widget can receive keyboard focus. 
+         */
+        bool focusable() const {
+            return focusable_;
+        }
+
+        /** Determines whether the widget can received keyboard focus. 
+         */
+        virtual void setFocusable(bool value = true) {
+            if (focusable_ != value)
+                focusable_ = value;
+        }
+
+        /** Returns the next focusable widget in the hierarchy. 
+
+            If the currently focused widget is nullptr and the widget is focusable, returns itself, otherwise delegates to its parent, or returns nullptr if no parent exists. 
+         */
+        virtual Widget * getNextFocusableWidget(Widget * current) {
+            ASSERT(current == nullptr || current == this);
+            if (current == nullptr && focusable_ && enabled_)
+                return this;
+            return (parent_ == nullptr) ? nullptr : parent_->getNextFocusableWidget(current);
+        }
+
         bool focused() const;
 
         virtual void focusIn(Event<void>::Payload & event) {
@@ -718,6 +740,10 @@ namespace ui {
          */
         Point bufferOffset_;
         //@}
+
+        /** True if the widget can receive keyboard focus. 
+         */
+        bool focusable_;
 
         /** True if the widget should be visible. Widgets that are not visible will never get painted. 
          */

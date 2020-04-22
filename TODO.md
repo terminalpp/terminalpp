@@ -18,7 +18,12 @@ More robust UI framework, better configuration options and slightly increased se
 
 - add comments to layout
 - write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
+
 - modal widgets & keyboard focus
+- keyboard focus with tabIndices
+- add comments to keyboard focus stuff
+- rendering disabled terminal
+- setting modalRoot when showing modalPane 
 
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
 

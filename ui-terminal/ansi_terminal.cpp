@@ -164,6 +164,7 @@ namespace ui {
         alternateMode_{false},
         boldIsBright_{false} {
         setFps(60);
+        setFocusable(true);
     }
 
     AnsiTerminal::~AnsiTerminal() {

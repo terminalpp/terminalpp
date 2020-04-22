@@ -82,7 +82,7 @@ namespace ui {
         }
 
         void setKeyboardFocus(Widget * widget) {
-            ASSERT(widget == nullptr || widget->renderer() == this);
+            ASSERT(widget == nullptr || (widget->renderer() == this && widget->focusable() && widget->enabled()));
             if (keyboardFocus_ != nullptr && keyboardIn_) {
                 Event<void>::Payload p{};
                 focusOut(p, keyboardFocus_);
@@ -94,6 +94,24 @@ namespace ui {
                 Event<void>::Payload p{};
                 focusIn(p, keyboardFocus_);
             }
+        }
+
+        /** Returns the next element to receive keyboard focus. 
+         
+            Setting focus to this element provides the `tab` focus behavior known from GUI frameworks. 
+         */
+        Widget * keyboardFocusNext() {
+            // if there is no modal root, there can't be any focusable widget to begin with
+            if (modalRoot_ == nullptr)
+                return nullptr;
+            // try next focusable element from current 
+            if (keyboardFocus_ != nullptr) {
+                Widget * result = keyboardFocus_->getNextFocusableWidget(keyboardFocus_);
+                if (result != nullptr)
+                    return result;
+            }
+            // if not found, or no current, start from the beginning
+            return modalRoot_->getNextFocusableWidget(nullptr);
         }
 
         /** Requests repaint of the given widget. [thread-safe]
@@ -613,7 +631,12 @@ namespace ui {
         virtual void widgetAttached(Widget * widget) {
             UI_THREAD_CHECK;
             MARK_AS_UNUSED(widget);
-            // TODO do nothing ? or make abstract?
+            // if no element has been set as keyboard focus, see if the newly added widget can receive keyboard focus. This has to be done by checking whether the current widget hierarchy would select the attached widget as next element to make sure the widget receives focus when it is attached (otherwise not the current widget, but its not yet attached child could be selected)
+            if (keyboardFocus_ == nullptr) {
+                Widget * next = keyboardFocusNext();
+                if (next == widget)
+                    setKeyboardFocus(next);
+            }
         }
 
         /** Called when a widget is detached (removed from the tree).
@@ -630,7 +653,7 @@ namespace ui {
                 mouseFocus_ = nullptr;
             }
             if (keyboardFocus_ == widget) {
-                // TODO we should actually select new keyboard focus element
+                // when element with keyboard focus is detached the focus is set to *no* element
                 Event<void>::Payload p{};
                 widget->focusOut(p);
                 keyboardFocus_ = nullptr;

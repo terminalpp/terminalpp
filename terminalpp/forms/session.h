@@ -18,8 +18,17 @@ namespace tpp {
     /** Paste confirmation dialog. 
      */
     class PasteDialog : public ui::Dialog {
+    public:
+        PasteDialog() {
+            setHeightHint(SizeHint::Percentage(25));
+        }
 
 
+    protected:
+        void paint(Canvas & canvas) override {
+            Dialog::paint(canvas);
+            canvas.textOut(Point{0,0}, "Are you sure you want to paste?");
+        }
     }; 
 
     /** The terminal session. 
@@ -50,8 +59,10 @@ namespace tpp {
             setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
             add(terminal_);
 
-            //modalPane_ = new ModalPane();
-            //add(modalPane_);
+            modalPane_ = new ModalPane();
+            modalPane_->setLayout(new ColumnLayout(VerticalAlign::Bottom));
+            add(modalPane_);
+    
 
 #if (ARCH_WINDOWS)
             pty_ = new ui::BypassPTY{terminal_, config.session.command()};
@@ -59,7 +70,7 @@ namespace tpp {
 #else
             pty_ = new ui::LocalPTY{terminal_, config.session.command()};
 #endif
-            window_->setKeyboardFocus(terminal_);
+            //window_->setKeyboardFocus(terminal_);
         }
 
         ~Session() override {
