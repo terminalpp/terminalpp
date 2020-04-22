@@ -1098,14 +1098,13 @@ namespace ui {
                         std::swap(state_, stateBackup_);
                         alternateMode_ = value;
                         setScrollHeight(state_.buffer.historyRows() + state_.buffer.height());
+                        setScrollOffset(Point{0, state_.buffer.historyRows()});
                         // if we are entering the alternate mode, reset the state to default values
                         if (value) {
                             state_.reset(palette_->defaultForeground(), palette_->defaultBackground());
-                            setScrollOffset(Point{0,0});
                             state_.lastCharacter = Point{-1,-1};
                             LOG(SEQ) << "Alternate mode on";
                         } else {
-                            setScrollOffset(Point{0, state_.buffer.historyRows()});
                             LOG(SEQ) << "Alternate mode off";
                         }
                     }
