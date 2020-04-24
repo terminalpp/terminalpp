@@ -3,6 +3,7 @@
 #include "../config.h"
 
 #include "ui/widgets/panel.h"
+#include "ui/widgets/button.h"
 #include "ui/widgets/modal_pane.h"
 #include "ui/widgets/dialog.h"
 #include "ui/layouts/maximize.h"
@@ -21,6 +22,10 @@ namespace tpp {
     public:
         PasteDialog() {
             setHeightHint(SizeHint::Percentage(25));
+            setLayout(new RowLayout{HorizontalAlign::Left});
+            add(new Button{"foo"});
+            add(new Button{"bar"});
+            add(new Button{"xoxo"});
         }
 
 
@@ -170,8 +175,10 @@ namespace tpp {
 
         void paste(Event<std::string>::Payload & e) override {
             PasteDialog * pd = new PasteDialog();
-            pd->onSuccess.setHandler([this, e](Event<void>::Payload) mutable {
-                terminal_->paste(e);
+            pd->onDismiss.setHandler([this, e, pd](Event<Widget*>::Payload) mutable {
+                modalPane_->dismiss(pd);
+                //terminal_->paste(e);
+                delete pd;
             });
             modalPane_->show(pd);
         }

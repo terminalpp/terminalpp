@@ -21,8 +21,10 @@ namespace ui {
         /** Displays the given widget modally. 
          */
         virtual void show(Widget * widget) {
+            ASSERT(renderer() != nullptr);
             add(widget);
             setVisible(true);
+            renderer()->setModalRoot(this);
         }
 
         /** Called when the given modal widget should be dismissed. 
@@ -30,9 +32,11 @@ namespace ui {
             The dismissed widget is detached from the modal pane and if there are no more widgets in it, the modal pane hides itself, returning the focus to the widget that held it before
          */
         virtual void dismiss(Widget * widget) {
+            ASSERT(renderer() != nullptr);
             remove(widget);
             if (children_.empty()) {
                 setVisible(false);
+                renderer()->setModalRoot(renderer()->rootWidget());
             }
         }
 

@@ -77,6 +77,21 @@ namespace ui {
             }
         }
 
+        void setModalRoot(Widget * widget) {
+            UI_THREAD_CHECK;
+            ASSERT(widget->renderer_ == this);
+            if (modalRoot_ != widget) {
+                modalRoot_ = widget;
+                // if we are returning back to non-modal state (modal root is the root widget itself), restore the keyboard focus
+                if (widget == rootWidget_) {
+                    setKeyboardFocus(nonModalFocusBackup_ != nullptr ? nonModalFocusBackup_ : keyboardFocusNext());
+                } else {
+                    nonModalFocusBackup_ = keyboardFocus_;
+                    setKeyboardFocus(keyboardFocusNext());
+                }
+            }
+        }
+
         Widget * keyboardFocus() const {
             return keyboardIn_ ? keyboardFocus_ : nullptr;
         }
@@ -173,6 +188,7 @@ namespace ui {
             mouseButtons_{0},
             keyboardIn_{false},
             keyboardFocus_{nullptr},
+            nonModalFocusBackup_{nullptr},
             clipboardRequestTarget_{nullptr},
             selectionRequestTarget_{nullptr},
             selectionOwner_{nullptr} {
@@ -658,6 +674,10 @@ namespace ui {
                 widget->focusOut(p);
                 keyboardFocus_ = nullptr;
             }
+            // we just loose the focus backup and will start over in the unlikely case of being removed
+            if (nonModalFocusBackup_ == widget) {
+                nonModalFocusBackup_ = nullptr;
+            }
             // make sure that if there were pending clipboard or selection requests for the widget, these are cancelled
             if (clipboardRequestTarget_ == widget)
                 clipboardRequestTarget_ = nullptr;
@@ -725,6 +745,8 @@ namespace ui {
         bool keyboardIn_;
         /** The target for keyboard events (focused widget). */
         Widget * keyboardFocus_;
+        /** Widget which had keyboard focus before another widget was shown modallym so that its focus can be restored when the modal widget will be dismissed. */
+        Widget * nonModalFocusBackup_;
 
         /** Widget which requested clipboard contents (if the focus changed since the request). */
         Widget * clipboardRequestTarget_;

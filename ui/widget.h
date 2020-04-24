@@ -24,25 +24,34 @@ namespace ui {
     public:
         enum class Kind : unsigned char {
             Percentage = 100,
+            Layout,
+            Manual,
             Auto,
-            Fixed
         };
 
         SizeHint():
-            value_{static_cast<unsigned char>(Kind::Auto)} {
+            value_{static_cast<unsigned char>(Kind::Layout)} {
         }
 
+        /** Determines the percentage of available space the widget should occupy. 
+         */
         static SizeHint Percentage(unsigned char pct) {
             ASSERT(pct < 101);
             return SizeHint{pct};
         }
 
+        /** Leaves the size completely up to the contents of the widget. 
+         
+            This must be supported by the widget, if not supported, is identical to manual size hint. 
+         */
         static SizeHint Auto() {
             return SizeHint{static_cast<unsigned char>(Kind::Auto)};
         }
 
-        static SizeHint Fixed() {
-            return SizeHint{static_cast<unsigned char>(Kind::Fixed)};
+        /** The size is determined by explicitly setting it.
+         */
+        static SizeHint Manual() {
+            return SizeHint{static_cast<unsigned char>(Kind::Manual)};
         }
 
         Kind kind() const {
@@ -53,11 +62,11 @@ namespace ui {
 
         /** Calculates the size based on actual available and auto size values. 
          */
-        int calculateSize(int currentSize, int autoSize, int availableSize) {
+        int calculateSize(int currentSize, int layoutSize, int availableSize) {
             if (value_ < static_cast<unsigned char>(Kind::Percentage))
                 return availableSize * value_ / 100;
-            else if (value_ == static_cast<unsigned char>(Kind::Auto))
-                return autoSize;
+            else if (value_ == static_cast<unsigned char>(Kind::Layout))
+                return layoutSize;
             else
                 return currentSize;
         }
@@ -305,7 +314,9 @@ namespace ui {
         virtual void setWidthHint(SizeHint value) {
             if (widthHint_ != value) {
                 widthHint_ = value;
-                if (parent_ != nullptr)
+                if (widthHint_ == SizeHint::Kind::Auto)
+                    autoSize();
+                else if (parent_ != nullptr)
                     parent_->childChanged(this);
             }
         }
@@ -313,9 +324,36 @@ namespace ui {
         virtual void setHeightHint(SizeHint value) {
             if (heightHint_ != value) {
                 heightHint_ = value;
-                if (parent_ != nullptr)
+                if (heightHint_ == SizeHint::Kind::Auto)
+                    autoSize();
+                else if (parent_ != nullptr)
                     parent_->childChanged(this);
             }
+        }
+
+        /** Recalculates the size of the element based on its contents. 
+         
+            Only sets the dimensions whose size hint is set to SizeHint::Kind::Auto. To determine the sizes, the calculateAutoSize() method is called. To implement correct autosizing behavior, the calculateAutoSize() method should be overriden in the subclasses
+         */
+        void autoSize() {
+            if (widthHint_ != SizeHint::Kind::Auto && heightHint_ != SizeHint::Kind::Auto)
+                return;
+            std::pair<int, int> size = calculateAutoSize();
+            setRect(Rect::FromTopLeftWH(
+                rect_.topLeft(), 
+                (widthHint_ == SizeHint::Kind::Auto) ? size.first : rect_.width(), 
+                (heightHint_ == SizeHint::Kind::Auto) ? size.second : rect_.height() 
+            ));
+        }
+
+        /** For autosized elements, calculates the ideal width and height of the widget based on its contents. 
+         
+            Returns the pair of width and height. The default implementation returns the current width and height of the widget, but subclasses should reimplement this method to provide correct values based on the widget's contents. 
+
+            It is the responsibility of the subclass widget to properly determine which dimension to calculate based on the widget's size hints, but to be on the safe side, the autosizing mechanism will only change dimensions whose size hints are set to SizeHint::Kind::Auto.  
+         */
+        virtual std::pair<int, int> calculateAutoSize() {
+            return std::make_pair(rect_.width(), rect_.height());
         }
 
         /** Sets the position and size of the widget.
@@ -615,9 +653,14 @@ namespace ui {
          */
         virtual Widget * getNextFocusableWidget(Widget * current) {
             ASSERT(current == nullptr || current == this);
+            // if we are the current focusable widget delegate to parent if it exists, or return null
+            if (current == this)
+                return (parent_ == nullptr) ? nullptr : parent_->getNextFocusableWidget(current);
+            // if current is null, and the widget can focused returns the widget
             if (current == nullptr && focusable_ && enabled_)
                 return this;
-            return (parent_ == nullptr) ? nullptr : parent_->getNextFocusableWidget(current);
+            // otherwise returns nullptr
+            return nullptr;
         }
 
         bool focused() const;

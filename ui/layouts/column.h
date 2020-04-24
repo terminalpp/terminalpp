@@ -68,9 +68,9 @@ namespace ui {
                 int w = calculateChildWidth(child, autoWidth, autoWidth);
                 setChildRect(child, Rect::FromTopLeftWH(0,0, w, child->height()));
                 // now that the width of the child is correct, we determine its height if fixed
-                if (child->heightHint() == SizeHint::Kind::Fixed)
+                if (child->heightHint() == SizeHint::Kind::Manual || child->heightHint() == SizeHint::Kind::Auto)
                     availableHeight -= child->height();
-                else if (child->heightHint() == SizeHint::Kind::Auto)
+                else if (child->heightHint() == SizeHint::Kind::Layout)
                     ++autoElements;
             }
             int autoHeight = availableHeight / static_cast<int>(children.size());
@@ -87,7 +87,7 @@ namespace ui {
             for (Widget * child : children) {
                 int w = child->width();
                 int h = calculateChildHeight(child, autoHeight, availableHeight);
-                if (diff > 0 && child->heightHint() == SizeHint::Kind::Auto) {
+                if (diff > 0 && child->heightHint() == SizeHint::Kind::Layout) {
                     h += diff;
                     diff = 0;
                 }
