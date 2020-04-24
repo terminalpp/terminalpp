@@ -38,7 +38,7 @@ namespace ui {
         }
 
         std::pair<int, int> calculateAutoSize() override {
-            return std::make_pair(text_.size(), 1);
+            return std::make_pair(static_cast<int>(text_.size()), 1);
         }
 
     private:

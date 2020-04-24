@@ -18,13 +18,15 @@ More robust UI framework, better configuration options and slightly increased se
 
 - add comments to layout
 - write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
-- autosizing for containers - perhaps layout should also have autosize calculation function, but when to call it and set the size to avoid updating the sizes in a loop, or just calling the relayout twice? 
+- write documentation about autosizing too
 
 - how does dialog report it is done? 
 
 - modal widgets & keyboard focus
 - keyboard focus with tabIndices
 - add comments to keyboard focus stuff
+
+- design styles, add proper labels, buttons, etc. 
 
 - rendering disabled terminal
 

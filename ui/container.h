@@ -203,11 +203,27 @@ namespace ui {
             // relayout the widgets if layout was requested
             if (layoutScheduled_) {
                 layout_->relayout(this, contentsCanvas);
+                // do a check of own size and change according to the calculated layout, this might trigger repaint in parent which is ok
+                autoSize();
                 layoutScheduled_ = false;    
             }
             Canvas childrenCanvas{contentsCanvas};
             for (Widget * child : children_)
                 paintChild(child, childrenCanvas);
+        }
+
+        /** Calculates the autosize of the container so that all its children fit in it without scrolling. 
+         */
+        std::pair<int, int> calculateAutoSize() override {
+            int w = width();
+            int h = height();
+            for (Widget * child : children_) {
+                if (w < child->rect_.right())
+                    w = child->rect_.right();
+                if (h < child->rect_.bottom())
+                    h = child->rect_.bottom();
+            }
+            return std::make_pair(w, h);
         }
 
         std::vector<Widget *> children_;

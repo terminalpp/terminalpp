@@ -21,8 +21,8 @@ namespace tpp {
     class PasteDialog : public ui::Dialog {
     public:
         PasteDialog() {
-            setHeightHint(SizeHint::Percentage(25));
-            setLayout(new RowLayout{HorizontalAlign::Left});
+            setHeightHint(SizeHint::Auto());
+            setLayout(new RowLayout{HorizontalAlign::Right});
             add(new Button{"foo"});
             add(new Button{"bar"});
             add(new Button{"xoxo"});
