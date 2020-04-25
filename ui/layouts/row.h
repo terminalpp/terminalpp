@@ -64,6 +64,8 @@ namespace ui {
             // determine the actual width that will be used and set the height of the child to the autoHeight
             int autoElements = 0;
             for (Widget * child : children) {
+                if (! child->visible())
+                    continue;
                 int h = calculateChildHeight(child, autoHeight, autoHeight);
                 setChildRect(child, Rect::FromTopLeftWH(0,0, child->width(), h));
                 // now that the height of the child is correct, we determine its width if fixed
@@ -76,7 +78,8 @@ namespace ui {
             // once we know the available width, calculate the actual width by doing a dry run
             int actualWidth = 0;
             for (Widget * child : children)
-                actualWidth += calculateChildWidth(child, autoWidth, availableWidth);
+                if (child->visible())
+                    actualWidth += calculateChildWidth(child, autoWidth, availableWidth);
             // determine the difference if the autoWidth elements won't fit the whole width precisely (and if there are elements whose size can actually be adjusted)
             int diff = (autoElements != 0 && availableWidth > actualWidth) ? availableWidth - actualWidth : 0;
             actualWidth += diff;
@@ -84,6 +87,8 @@ namespace ui {
             int left = getStartX(actualWidth, contentsCanvas.width());
             // and finally set the widget sizes appropriately, centering them horizontally, apply the diff to the first non-fixed element
             for (Widget * child : children) {
+                if (! child->visible())
+                    continue;
                 int w = calculateChildWidth(child, autoWidth, availableWidth);
                 int h = child->height();
                 if (diff > 0 && child->widthHint() == SizeHint::Kind::Layout) {

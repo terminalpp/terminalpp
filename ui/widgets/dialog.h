@@ -86,11 +86,9 @@ namespace ui {
         }
         
         void mouseClick(Event<MouseButtonEvent>::Payload & event) override {
-            /*
             Container::mouseClick(event);
             Event<Widget*>::Payload p{this};
             onDismiss(p, this);
-            */
         }
 
         std::string title_;

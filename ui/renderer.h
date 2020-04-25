@@ -327,6 +327,7 @@ namespace ui {
             ASSERT(mouseIn_);
             updateMouseFocus(coords);
             Event<MouseMoveEvent>::Payload p{MouseMoveEvent{coords, modifiers}};
+            p.propagateToParent(true);
             mouseMove(p, mouseFocus_);
         }
 
@@ -334,6 +335,7 @@ namespace ui {
             ASSERT(mouseIn_);
             updateMouseFocus(coords);
             Event<MouseWheelEvent>::Payload p{MouseWheelEvent{coords, by, modifiers}};
+            p.propagateToParent(true);
             mouseWheel(p, mouseFocus_);
         }
 
@@ -343,6 +345,7 @@ namespace ui {
             mouseButtons_ |= static_cast<size_t>(button);
             // dispatch the mouseDown event
             Event<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
+            p.propagateToParent(true);
             mouseDown(p, mouseFocus_);
         }
 
@@ -367,6 +370,7 @@ namespace ui {
             updateMouseFocus(coords);
             mouseButtons_ &= ~ static_cast<size_t>(button);
             Event<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
+            p.propagateToParent(true);
             mouseUp(p, mouseFocus_);
         }
 
@@ -387,6 +391,7 @@ namespace ui {
         virtual void rendererMouseClick(Point coords, MouseButton button, Key modifiers) {
             ASSERT(mouseIn_);
             Event<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
+            p.propagateToParent(true);
             mouseClick(p, mouseFocus_);
         }
 
@@ -397,6 +402,7 @@ namespace ui {
         virtual void rendererMouseDoubleClick(Point coords, MouseButton button, Key modifiers) {
             ASSERT(mouseIn_);
             Event<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
+            p.propagateToParent(true);
             mouseDoubleClick(p, mouseFocus_);
         }
 

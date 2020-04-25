@@ -25,8 +25,7 @@ namespace ui {
 
     using Char = helpers::Char;
 
-    // TODO rename this to PreventablePayloadBase ?
-    class CancellablePayloadBase {
+    class EventPayloadBase {
     public:
         /** Prevents the default behavior for the event. 
          */
@@ -38,16 +37,30 @@ namespace ui {
             return active_;
         }
 
+        /** Enables or disables the event propagation to the parent widget for events that support it. 
+         */
+        void propagateToParent(bool value = true) {
+            propagateToParent_ = value;
+        } 
+
+        /** Returns whether the event was accepted or not. 
+         */
+        bool shouldPropagateToParent() const {
+            return propagateToParent_;
+        }
+
     protected:
-        CancellablePayloadBase():
-            active_{true} {
+        EventPayloadBase():
+            active_{true},
+            propagateToParent_{false} {
         }
     private:
         bool active_;
+        bool propagateToParent_;
     }; 
 
     template<typename P, typename T = Widget>
-    using Event = helpers::Event<P, T, CancellablePayloadBase>;
+    using Event = helpers::Event<P, T, EventPayloadBase>;
 
 	class MouseButtonEvent {
 	public:

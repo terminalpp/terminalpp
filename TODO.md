@@ -16,9 +16,8 @@ More robust UI framework, better configuration options and slightly increased se
 
 - WidgetBorder should only require repaint of children that interfere with the border (can be calculated from their visible rects)
 
-- keyboard focus with tabIndices
-
-- revisit event propagation - mouse events should propagate to parents under certain conditions, keyboard events should handle hotkeys properly
+- revisit event propagation - keyboard events should handle hotkeys properly
+- perhaps have special hotkey propagation events that go top level up, or have hotkey processor? 
 
 - label, button, scrollbar
 
@@ -52,6 +51,7 @@ Documentation:
 - write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
 - write documentation about autosizing too
 - add comments to keyboard focus stuff
+- mouseUp, Down, WHeel, Move, Click and DoubleClick can propagate to parent, update the documentation
 
 Builds & Releases
 
@@ -76,6 +76,7 @@ Issues to be raised:
 - some basic styling for the GUI via a style object, similar to CSS?
 - tooltips, shortcuts and actions
 - PositionHint: layout / absolute - absolute positioned elements are not updated by layouts
+- keyboard focus with tabIndices (this means that the getNextFocusableWidget has to be patched to look for the focusable widgets according to their indices instead of position in the children vector)
 
 ### v0.9
 

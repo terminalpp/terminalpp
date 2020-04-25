@@ -12,6 +12,8 @@ namespace ui {
             int autoHeight = contentsCanvas.height();
             std::vector<Widget*> const & children = containerChildren(widget);
             for (Widget * child : children) {
+                if (!child->visible())
+                    continue;
                 int w = calculateChildWidth(child, autoWidth, autoWidth);
                 int h = calculateChildHeight(child, autoHeight, autoHeight);
                 Rect r{Rect::FromWH(w, h)};

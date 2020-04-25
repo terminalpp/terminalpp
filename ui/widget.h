@@ -530,6 +530,7 @@ namespace ui {
             Canvas childCanvas = contentsCanvas.clip(child->rect());
             // update the visible rect of the child according to the calculated canvas and repaint
             child->visibleRect_ = childCanvas.visibleRect();
+            child->bufferOffset_ = childCanvas.bufferOffset_;
             // TODO this is not the most effective, the requireChildToDelegatePaint() can be precomputed if needs be
             child->paintDelegationRequired_ = overlaid_ || paintDelegationRequired_ || requireChildToDelegatePaint(child);
             child->paint(childCanvas);
@@ -566,42 +567,90 @@ namespace ui {
             When mouse enters the widget, first mouseIn is called and then mouseMove as two separate events. When the mouse moves away from the widget then only mouseOut is called on the widget. 
          */
         virtual void mouseMove(Event<MouseMoveEvent>::Payload & event) {
-            if (event.active())
-                onMouseMove(event, this);
+            if (event.active()) {
+                if (onMouseMove.attached()) {
+                    event.propagateToParent(false);
+                    onMouseMove(event, this);
+                }
+                if (event.shouldPropagateToParent() && event.active() && parent_ != nullptr) {
+                    event->coords = parent_->toWidgetCoordinates(toRendererCoordinates(event->coords));
+                    parent_->mouseMove(event);
+                }
+            }
         }
 
         /** Triggered when the mouse wheel rotates while the mouse is over the widget, or captured. 
          */
         virtual void mouseWheel(Event<MouseWheelEvent>::Payload & event) {
-            if (event.active())
-                onMouseWheel(event, this);
+            if (event.active()) {
+                if (onMouseWheel.attached()) {
+                    event.propagateToParent(false);
+                    onMouseWheel(event, this);
+                }
+                if (event.shouldPropagateToParent() && event.active() && parent_ != nullptr) {
+                    event->coords = parent_->toWidgetCoordinates(toRendererCoordinates(event->coords));
+                    parent_->mouseWheel(event);
+                }
+            }
         }
 
         /** Triggered when a mouse button is pressed down. 
          */
         virtual void mouseDown(Event<MouseButtonEvent>::Payload & event) {
-            if (event.active())
-                onMouseDown(event, this);
+            if (event.active()) {
+                if (onMouseDown.attached()) {
+                    event.propagateToParent(false);
+                    onMouseDown(event, this);
+                }
+                if (event.shouldPropagateToParent() && event.active() && parent_ != nullptr) {
+                    event->coords = parent_->toWidgetCoordinates(toRendererCoordinates(event->coords));
+                    parent_->mouseDown(event);
+                }
+            }
         }
 
         /** Triggered when a mouse button is released.
          */
         virtual void mouseUp(Event<MouseButtonEvent>::Payload & event) {
-            if (event.active())
-                onMouseUp(event, this);
+            if (event.active()) {
+                if (onMouseUp.attached()) {
+                    event.propagateToParent(false);
+                    onMouseUp(event, this);
+                }
+                if (event.shouldPropagateToParent() && event.active() && parent_ != nullptr) {
+                    event->coords = parent_->toWidgetCoordinates(toRendererCoordinates(event->coords));
+                    parent_->mouseUp(event);
+                }
+            }
         }
 
         /** Triggered when mouse button is clicked on the widget. 
          */
         virtual void mouseClick(Event<MouseButtonEvent>::Payload & event) {
-            if (event.active())
-                onMouseClick(event, this);
+            if (event.active()) {
+                if (onMouseClick.attached()) {
+                    event.propagateToParent(false);
+                    onMouseClick(event, this);
+                }
+                if (event.shouldPropagateToParent() && event.active() && parent_ != nullptr) {
+                    event->coords = parent_->toWidgetCoordinates(toRendererCoordinates(event->coords));
+                    parent_->mouseClick(event);
+                }
+            }
         }
         /** Triggered when mouse button is double-clicked on the widget. 
          */
         virtual void mouseDoubleClick(Event<MouseButtonEvent>::Payload & event) {
-            if (event.active())
-                onMouseDoubleClick(event, this);
+            if (event.active()) {
+                if (onMouseDoubleClick.attached()) {
+                    event.propagateToParent(false);
+                    onMouseDoubleClick(event, this);
+                }
+                if (event.shouldPropagateToParent() && event.active() && parent_ != nullptr) {
+                    event->coords = parent_->toWidgetCoordinates(toRendererCoordinates(event->coords));
+                    parent_->mouseDoubleClick(event);
+                }
+            }
         }
 
         /** Returns the mouse target within the widget itself corresponding to the given coordinates. 
@@ -616,6 +665,8 @@ namespace ui {
         /** Takes the renderer's coordinates and converts them to widget's coordinates.
          
             It is expected that this function is only called for visible widgets with valid positions, otherwise the functions asserts in debug mode and returns the origin otherwise. 
+
+            Note that this function can only be called from visible widgets with valid coordinates, otherwise the returned values are not guaranteed to be correct. 
          */
         Point toWidgetCoordinates(Point rendererCoords) const {
             ASSERT(visible_ && renderer() != nullptr);
@@ -624,6 +675,19 @@ namespace ui {
                 return Point{0,0};
             return rendererCoords - bufferOffset_;
         }
+
+        /** Converts own coordinates to the global coordinates of the renderer. 
+
+            Note that this function can only be called from visible widgets with valid coordinates, otherwise the returned values are not guaranteed to be correct. 
+         */
+        Point toRendererCoordinates(Point own) {
+            ASSERT(visible_ && renderer() != nullptr);
+            // for robustness, return the origin if widget is in invalid state
+            if (!visible_ || renderer() == nullptr) 
+                return Point{0,0};
+            return own + bufferOffset_;
+        }
+
         //@}
 
         // ========================================================================================
@@ -797,6 +861,7 @@ namespace ui {
 
     class PublicWidget : public Widget {
     public:
+        using Widget::setVisible;
         using Widget::setWidthHint;
         using Widget::setHeightHint;
 
