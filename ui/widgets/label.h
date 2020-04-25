@@ -9,6 +9,11 @@ namespace ui {
     class Label : public PublicWidget {
     public:
 
+        Label(std::string const & text):
+            text_{text} {
+            setHeightHint(SizeHint::Auto());
+        }
+
         /** \name Label text. 
          */
         //@{
@@ -87,7 +92,11 @@ namespace ui {
     protected:
 
         void paint(Canvas & canvas) override {
+            canvas.textOut(Point{0,0}, text_);
+        }
 
+        std::pair<int, int> calculateAutoSize() override {
+            return std::make_pair(static_cast<int>(text_.size()), 1);
         }
 
     private:

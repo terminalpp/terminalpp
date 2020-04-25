@@ -6,7 +6,7 @@
 
 namespace ui {
 
-    class Panel : public Container, public WidgetBackground<Panel>, public WidgetBorder<Panel> {
+    class CustomPanel : public Container, public WidgetBackground<CustomPanel>, public WidgetBorder<CustomPanel> {
     public:
 
     protected:

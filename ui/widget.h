@@ -63,7 +63,7 @@ namespace ui {
         /** Calculates the size based on actual available and auto size values. 
          */
         int calculateSize(int currentSize, int layoutSize, int availableSize) {
-            if (value_ < static_cast<unsigned char>(Kind::Percentage))
+            if (value_ <= static_cast<unsigned char>(Kind::Percentage))
                 return availableSize * value_ / 100;
             else if (value_ == static_cast<unsigned char>(Kind::Layout))
                 return layoutSize;
@@ -557,7 +557,7 @@ namespace ui {
         /** Triggered when the mouse leaves the area of the widget. 
          */
         virtual void mouseOut(Event<void>::Payload & event) {
-            if (event.active())
+            if (event.active()) 
                 onMouseOut(event, this);
         }
 
@@ -799,7 +799,9 @@ namespace ui {
     public:
         using Widget::setWidthHint;
         using Widget::setHeightHint;
-    
+
+        using Widget::onMouseClick;
+
     protected:
         PublicWidget(int width = 0, int height = 0, int x = 0, int y = 0):
             Widget{width, height, x, y} {

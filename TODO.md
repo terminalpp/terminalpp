@@ -16,42 +16,49 @@ More robust UI framework, better configuration options and slightly increased se
 
 - WidgetBorder should only require repaint of children that interfere with the border (can be calculated from their visible rects)
 
-- add comments to layout
-- write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
-- write documentation about autosizing too
-
-- how does dialog report it is done? 
-
-- modal widgets & keyboard focus
 - keyboard focus with tabIndices
-- add comments to keyboard focus stuff
 
-- design styles, add proper labels, buttons, etc. 
+- revisit event propagation - mouse events should propagate to parents under certain conditions, keyboard events should handle hotkeys properly
 
-- rendering disabled terminal
+- label, button, scrollbar
 
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
 
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set
 
+- shapes.h is areally bad name for the classes defined therein
+
+- revisit how errors are reported and logged and how things are checked before releases
+
+Big Features
+
 - PTY++ and remote files version 2.0 - or maybe just do the old PTY but in PTY++ pty in the new architecture.
 - deal with how PTYs are deleted (and the entire session)
 
-- hide console window in windows (arbitrary make the window visible on a configuration condition)
-
 - design settings via abstract configurator classes that provide the interface
-    - do settings for terminal history, including history, or shared history for the alternate buffer if requested
+- do settings for terminal history, including history, or shared history for the alternate buffer if requested
 - change settings to reflect other changes (cursors etc)
 
-- shapes.h is areally bad name for the classes defined therein
 
-- add benchmarking
-- revisit how errors are reported and logged and how things are checked before releases
+Small things:
+
+- rendering disabled terminal
+- hide console window in windows (arbitrary make the window visible on a configuration condition)
+
+Documentation:
+
+- add comments to layout
+- write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
+- write documentation about autosizing too
+- add comments to keyboard focus stuff
+
+Builds & Releases
 
 - snapcraft build has dirty stamp, see why & fix
-- ubuntu ppa distribution
-- change from msi to appx (this would also remove the dependency on .NET 3.5 for wix)
+- ubuntu ppa
+- change from MSI to appx
+- add benchmarking
 
 Issues to be raised:
 
@@ -66,16 +73,22 @@ Issues to be raised:
 
 ### v0.8
 
+- some basic styling for the GUI via a style object, similar to CSS?
+- tooltips, shortcuts and actions
+- PositionHint: layout / absolute - absolute positioned elements are not updated by layouts
+
+### v0.9
+
 - multiple sessions (in same window)
 - when multiple sessions are supported, the RendererWindow can set the font instead of the subclasses
 
-### v0.9
+### v0.10
 
 - multiple sessions in multiple windows or tiling
 - better bug reporting support and optional checking of updates for non-store installers
 - systray support & platform notifications
 
-### v0.10
+### v0.11
 
 - proper multiplexing of the terminal sessions (wrt remote files)
 - remote files should use absolute path, or some other form of same file detection

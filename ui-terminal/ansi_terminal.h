@@ -186,7 +186,15 @@ namespace ui {
         Event<helpers::ExitCode> onPTYTerminated;
         //@}
 
+        /** Clipboard paste event. 
+         
+            Triggers the clipboard paste event and if the event propagation is not stopped, sends the selected text to the attached pty.
+         */
         void paste(Event<std::string>::Payload & e) override;
+
+        /** Sends the specified text as clipboard to the PTY. 
+         */
+        void paste(std::string const & contents);
 
         using SelectionOwner::selection;
         using SelectionOwner::endSelectionUpdate;

@@ -203,13 +203,17 @@ namespace ui {
     void AnsiTerminal::paste(Event<std::string>::Payload & e) {
         Widget::paste(e);
         if (e.active()) {
-            if (bracketedPaste_) {
-                ptySend("\033[200~", 6);
-                ptySend(e->c_str(), e->size());
-                ptySend("\033[201~", 6);
-            } else {
-                ptySend(e->c_str(), e->size());
-            }
+            paste(*e);
+        }
+    }
+
+    void AnsiTerminal::paste(std::string const & contents) {
+        if (bracketedPaste_) {
+            ptySend("\033[200~", 6);
+            ptySend(contents.c_str(), contents.size());
+            ptySend("\033[201~", 6);
+        } else {
+            ptySend(contents.c_str(), contents.size());
         }
     }
 

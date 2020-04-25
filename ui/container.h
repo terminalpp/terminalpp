@@ -9,15 +9,9 @@ namespace ui {
      
         A container is a basic widget that manages its children dynamically via a list. Child widgets can be added to, or removed from the container at runtime. The container furthermore provides support for automatic layouting of the children and makes sure that the UI events are propagated to them correctly. 
 
-        TODO the order of elements in the container vector. 
      */
     class Container : public Widget {
     public:
-
-        Container():
-            layout_{Layout::None},
-            layoutScheduled_{false} {
-        }
 
         /** Container destructor also destroys its children. 
          */
@@ -35,6 +29,12 @@ namespace ui {
 
         template<template<typename> typename X, typename T>
         friend class TraitBase;
+
+        Container(Layout * layout = Layout::None):
+            layout_{layout},
+            layoutScheduled_{false} {
+        }
+
 
         /** Adds the given widget as child. 
          
@@ -202,9 +202,11 @@ namespace ui {
             Canvas contentsCanvas{getContentsCanvas(canvas)};
             // relayout the widgets if layout was requested
             if (layoutScheduled_) {
-                layout_->relayout(this, contentsCanvas);
-                // do a check of own size and change according to the calculated layout, this might trigger repaint in parent which is ok
-                autoSize();
+                if (! children_.empty()) {
+                    layout_->relayout(this, contentsCanvas);
+                    // do a check of own size and change according to the calculated layout, this might trigger repaint in parent which is ok
+                    autoSize();
+                }
                 layoutScheduled_ = false;    
             }
             Canvas childrenCanvas{contentsCanvas};
@@ -235,7 +237,26 @@ namespace ui {
         Layout * layout_;
         bool layoutScheduled_;
 
-    };
+    }; // ui::Container
+
+
+    class PublicContainer : public Container {
+    public:
+        PublicContainer(Layout * layout = Layout::None):
+            Container{layout} {
+        }
+
+        using Container::layout;
+        using Container::setLayout;
+        using Container::add;
+        using Container::remove;
+        using Container::setWidthHint;
+        using Container::setHeightHint;
+
+        std::vector<Widget *> const & children() const {
+            return children_;
+        }
+    }; // ui::PublicContainer
 
 
 } // namespace ui

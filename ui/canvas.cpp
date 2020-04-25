@@ -83,8 +83,10 @@ namespace ui {
             if (where.x() >= visibleRect_.right())
                 break;
             if (Cell * cell = at(where)) {
-                (*cell) = state_;
-                (*cell).setCodepoint((*begin).codepoint());
+                (*cell).setCodepoint((*begin).codepoint())
+                       .setFg(state_.fg())
+                       .setDecor(state_.decor())
+                       .setFont(state_.font());
             } 
             where.setX(where.x() + state_.font().width());
         } 

@@ -4,6 +4,7 @@
 
 #include "ui/widgets/panel.h"
 #include "ui/widgets/button.h"
+#include "ui/widgets/label.h"
 #include "ui/widgets/modal_pane.h"
 #include "ui/widgets/dialog.h"
 #include "ui/layouts/maximize.h"
@@ -18,29 +19,27 @@ namespace tpp {
 
     /** Paste confirmation dialog. 
      */
-    class PasteDialog : public ui::Dialog {
+    class PasteDialog : public ui::Dialog::YesNoCancel {
     public:
-        PasteDialog() {
-            setHeightHint(SizeHint::Auto());
-            setLayout(new RowLayout{HorizontalAlign::Right});
-            add(new Button{"foo"});
-            add(new Button{"bar"});
-            add(new Button{"xoxo"});
+        PasteDialog(std::string const & contents):
+            Dialog::YesNoCancel{"Are you sure you want to paste?"},
+            contents_{new Label{contents}} {
+            setBody(contents_);
         }
 
-
-    protected:
-        void paint(Canvas & canvas) override {
-            Dialog::paint(canvas);
-            canvas.textOut(Point{0,0}, "Are you sure you want to paste?");
+        std::string const & contents() const {
+            return contents_->text();
         }
+
+    private:
+        Label * contents_;
     }; 
 
     /** The terminal session. 
      */
 
     // TODO fix container's add method
-    class Session : public ui::Panel, public ui::AutoScroller<Session> {
+    class Session : public ui::CustomPanel, public ui::AutoScroller<Session> {
     public:
 
         Session(Window * window):
@@ -174,10 +173,11 @@ namespace tpp {
         }
 
         void paste(Event<std::string>::Payload & e) override {
-            PasteDialog * pd = new PasteDialog();
-            pd->onDismiss.setHandler([this, e, pd](Event<Widget*>::Payload) mutable {
+            PasteDialog * pd = new PasteDialog(*e);
+            pd->onDismiss.setHandler([this, pd](Event<Widget*>::Payload & e) {
                 modalPane_->dismiss(pd);
-                //terminal_->paste(e);
+                if (*e == pd->btnYes())
+                    terminal_->paste(pd->contents());
                 delete pd;
             });
             modalPane_->show(pd);
