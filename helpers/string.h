@@ -1,12 +1,25 @@
 #pragma once
 
 #include <vector>
+#include <limits>
 
 #include "helpers.h"
 
 #include "char.h"
 
 namespace helpers {
+
+    /** Info about a single line of text.
+
+        Useful for breaking up large string into separate lines.
+        */
+    struct StringLine {
+        int width;
+        Char::iterator_utf8 begin;
+        Char::iterator_utf8 end;    
+    };
+
+    static constexpr int NoWordWrap = std::numeric_limits<int>::max();
 
 	/** Creates a random alphanumeric string of given length. 
 	 */
@@ -125,28 +138,32 @@ namespace helpers {
 		return result;
 	}
 
-    /** Returns the end of a line.
-	 */
-	inline Char::iterator_utf8 GetLine(Char::iterator_utf8 start, Char::iterator_utf8 end, size_t wordWrapAt = 0) {
+    /** Returns the next line from the string. 
+     */
+    inline StringLine GetLine(Char::iterator_utf8 start, Char::iterator_utf8 end, int wrapAt = NoWordWrap, bool wordWrap = true) {
 		Char::iterator_utf8 i = start;
-		while (--wordWrapAt != 0) {
-			// if this is the end of the string, return immediately
-			if (i == end)
-			    return i;
-			if (Char::IsLineEnd(*i))
-			    return i;
-			++i;
-		}
-		// here the current line is longer than the word wrap limit, we must backtrack to find the nearest word delimiter
-		Char::iterator_utf8 ii = i;
-		while (ii != start) {
-			if (Char::IsWordSeparator(*ii))
-			    return ii;
-			--ii;
-		}
-		// if no separator has been found, then return the word wrapped limit
-		return i;
-	}
+        int size = 0;
+        while (size < wrapAt) {
+            // if we are at the end of the string, or end of line, return the line info
+            if (i == end || Char::IsLineEnd(*i))
+                return StringLine{size, start, i};
+            size += Char::ColumnWidth(*i);
+            ++i;
+        }
+        // now the current line is longer than the max line
+        Char::iterator_utf8 ii = end;
+        while (i != start) {
+            if (size <= wrapAt) {
+                if (! wordWrap || Char::IsWordSeparator(*i))
+                    return StringLine{size, start, i};
+                if (ii == end)
+                  ii = i;
+            }
+            size -= Char::ColumnWidth(*i);
+            --i;
+        }
+        return StringLine{size, start, ii};
+    }
 
 	/** Splits the given string by given delimiter and trims all substrings. 
 	 */

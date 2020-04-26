@@ -5,12 +5,15 @@
 
 namespace ui {
 
+    using StringLine = helpers::StringLine;
+
     class Widget;
 
     /** 
      */
     class Canvas {
     public:
+
         /** Finalizer function for a canvas. 
          
             Finalizer function runs when the canvas is to be destroyed, i.e. after all other painting on the canvas, which allows the finalizer to override any existing content (which is useful for drawing borders or transparent overlays). 
@@ -183,6 +186,8 @@ namespace ui {
             The text is drawn in a single line starting from the specified point and growing to the right. 
          */
         Canvas & textOut(Point where, Char::iterator_utf8 begin, Char::iterator_utf8 end);
+
+        Canvas & textOut(Point where, StringLine const & line, int maxWidth, HorizontalAlign hAlign);
 
         /** Draws the specified text starting from the given point. 
          

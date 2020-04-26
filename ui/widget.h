@@ -335,15 +335,23 @@ namespace ui {
          
             Only sets the dimensions whose size hint is set to SizeHint::Kind::Auto. To determine the sizes, the calculateAutoSize() method is called. To implement correct autosizing behavior, the calculateAutoSize() method should be overriden in the subclasses
          */
-        void autoSize() {
+        void autoSize(bool forceRepaint = false) {
             if (widthHint_ != SizeHint::Kind::Auto && heightHint_ != SizeHint::Kind::Auto)
                 return;
             std::pair<int, int> size = calculateAutoSize();
-            setRect(Rect::FromTopLeftWH(
+            Rect rect = Rect::FromTopLeftWH(
                 rect_.topLeft(), 
                 (widthHint_ == SizeHint::Kind::Auto) ? size.first : rect_.width(), 
-                (heightHint_ == SizeHint::Kind::Auto) ? size.second : rect_.height() 
-            ));
+                (heightHint_ == SizeHint::Kind::Auto) ? size.second : rect_.height()
+                );
+            // if the rectangle is the same, but repaint has been requested, call repaint
+            if (rect == rect_) {
+                if (forceRepaint)
+                    repaint();
+            // otherwise update the rectangle which would call repaint too
+            } else {
+                setRect(rect);
+            }
         }
 
         /** For autosized elements, calculates the ideal width and height of the widget based on its contents. 
@@ -369,14 +377,20 @@ namespace ui {
             bool wasResized = rect_.width() != value.width() || rect_.height() != value.height();
             bool wasMoved = rect_.topLeft() != value.topLeft();
             rect_ = value;
-            // trigger the appropriate events
-            if (wasResized)
-                resized();
-            if (wasMoved)
-                moved();
-            // inform the parent that the child has been resized, which should also trigger the parent's repaint and so ultimately repaint the widget as well
-            if (parent_ != nullptr)
-                parent_->childChanged(this);
+            // perform the autosizing if required by the widget
+            // this has no effect if autosizing is not enabled, if autosizing is enabled it would trigger another resize
+            autoSize();
+            // if autosize changed the rectangle, it called setRect itself and updated the rectangle already so only emit the events and inform parent if the size has not changed
+            if (rect_ == value) {
+                // trigger the appropriate events
+                if (wasResized)
+                    resized();
+                if (wasMoved)
+                    moved();
+                // inform the parent that the child has been resized, which should also trigger the parent's repaint and so ultimately repaint the widget as well
+                if (parent_ != nullptr)
+                    parent_->childChanged(this);
+            }
         }
 
         /** Called *after* the widget has been resized. 

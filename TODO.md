@@ -19,7 +19,9 @@ More robust UI framework, better configuration options and slightly increased se
 - revisit event propagation - keyboard events should handle hotkeys properly
 - perhaps have special hotkey propagation events that go top level up, or have hotkey processor? 
 
-- label, button, scrollbar
+- when autosized widgets shrink, the layouts do not seem to respond correctly
+
+- button basics
 
 - revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
 
@@ -74,12 +76,14 @@ Issues to be raised:
 ### v0.8
 
 - some basic styling for the GUI via a style object, similar to CSS?
-- tooltips, shortcuts and actions
+- scrollview, tooltips, shortcuts and actions and some more UI elements
+- tooltip widget can be obtained by renderer and renderer knows its rectangle and can therefore issue repaints as appropriate
 - PositionHint: layout / absolute - absolute positioned elements are not updated by layouts
 - keyboard focus with tabIndices (this means that the getNextFocusableWidget has to be patched to look for the focusable widgets according to their indices instead of position in the children vector)
 
 ### v0.9
 
+- even more UI elements
 - multiple sessions (in same window)
 - when multiple sessions are supported, the RendererWindow can set the font instead of the subclasses
 

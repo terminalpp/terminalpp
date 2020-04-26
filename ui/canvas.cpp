@@ -93,4 +93,22 @@ namespace ui {
         return *this;
     }
 
+    Canvas & Canvas::textOut(Point where, StringLine const & line, int maxWidth, HorizontalAlign hAlign) {
+        switch (hAlign) {
+            case HorizontalAlign::Left:
+                break;
+            case HorizontalAlign::Center:
+                where += Point{(maxWidth - line.width) / 2, 0};
+                break;
+            case HorizontalAlign::Right:
+                where += Point{maxWidth - line.width, 0};
+                break;
+            default:
+                UNREACHABLE;
+                break;
+        }
+        return textOut(where, line.begin, line.end);
+    }
+
+
 } // namespace ui

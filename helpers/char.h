@@ -87,12 +87,23 @@ namespace helpers {
 
 			/** Returns the UTF8 character to which the iterator points. 
 			 
-			    Assumes that the iterator points to a valid UTF8 character, otherwise memory errors may occur. 
+                Note that the character does not really exist in memory and especially towards the end of the string array, some of the character bytes can be outside of the allocated area. 
+                
+                This should be ok as long as the string is valid UTF8 as the const functions of the character only ever access the valid bytes of the character.
 			 */
-			Char operator * () {
-				char const * i = pointer_cast<char const *>(i_);
-				return Char::FromUTF8(i, i + 4);
+			Char const & operator * () const {
+                return * pointer_cast<Char const *>(i_);
 			}
+
+            /** Returns the UTF8 character to which the iterator points. 
+             
+                Note that the character does not really exist in memory and especially towards the end of the string array, some of the character bytes can be outside of the allocated area. 
+                
+                This should be ok as long as the string is valid UTF8 as the const functions of the character only ever access the valid bytes of the character.
+             */
+            Char const * operator -> () const {
+                return pointer_cast<Char const *>(i_);
+            }
 
 			size_t charSize() const {
 				unsigned char x = static_cast<unsigned char>(*i_);
@@ -337,6 +348,10 @@ namespace helpers {
 			}
 			return 1;
 		}
+
+        static int ColumnWidth(Char const & c) {
+            return ColumnWidth(c.codepoint());
+        }
 
 		/** Returns true if the given character is whitespace
 		 

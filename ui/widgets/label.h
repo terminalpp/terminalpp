@@ -1,5 +1,7 @@
 #pragma once
 
+#include "helpers/string.h"
+
 #include "../widget.h"
 
 namespace ui {
@@ -10,7 +12,10 @@ namespace ui {
     public:
 
         Label(std::string const & text):
-            text_{text} {
+            text_{text},
+            wordWrap_{true},
+            hAlign_{HorizontalAlign::Left},
+            vAlign_{VerticalAlign::Middle} {
             setHeightHint(SizeHint::Auto());
         }
 
@@ -24,7 +29,7 @@ namespace ui {
         virtual void setText(std::string const & value) {
             if (text_ != value) {
                 text_ = value;
-                repaint();
+                autoSize(true);
             }
         }
         //@}
@@ -39,22 +44,7 @@ namespace ui {
         virtual void setWordWrap(bool value = true) {
             if (wordWrap_ != value) {
                 wordWrap_ = value;
-                repaint();
-            }
-        }
-        //@}
-
-        /** \name Auto size
-         */
-        //@{
-        bool autoSize() const {
-            return autoSize_;
-        }
-
-        void setAutoSize(bool value) {
-            if (autoSize_ != value) {
-                autoSize_ = value;
-                // TODO update the size 
+                autoSize(true);
             }
         }
         //@}
@@ -91,21 +81,61 @@ namespace ui {
 
     protected:
 
+        // TODO update maxWidth by font size when label has its font selected and the line width for each line as well
+        void updateTextMetrics(int maxWidth) {
+            textLines_.clear();
+            maxLineWidth_ = 0;
+            int wrapAt = wordWrap_ ? maxWidth : helpers::NoWordWrap;
+            Char::iterator_utf8 start = Char::BeginOf(text_);
+            Char::iterator_utf8 end = Char::EndOf(text_);
+            while (start != end) {
+                StringLine line = helpers::GetLine(start, end, wrapAt);
+                start = line.end;
+                if (Char::IsWhitespace(*line.end))
+                    ++start;
+                if (maxLineWidth_ < line.width)
+                    maxLineWidth_ = line.width;
+                textLines_.push_back(line);
+            }
+        }
+
         void paint(Canvas & canvas) override {
-            canvas.textOut(Point{0,0}, text_);
+            int row;
+            switch(vAlign_) {
+                case VerticalAlign::Top:
+                default:
+                    row = 0;
+                    break;
+                case VerticalAlign::Middle:
+                    row = (canvas.height() - textLines_.size()) / 2;
+                    break;
+                case VerticalAlign::Bottom:
+                    row = canvas.height() - textLines_.size();
+                    break;
+            }
+            for (helpers::StringLine const & l : textLines_) {
+                canvas.textOut(Point{0, row}, l, canvas.width(), hAlign_);
+                ++row;
+            }
         }
 
         std::pair<int, int> calculateAutoSize() override {
-            return std::make_pair(static_cast<int>(text_.size()), 1);
+            if (widthHint() != SizeHint::Auto())
+                updateTextMetrics(width());
+            else
+                updateTextMetrics(helpers::NoWordWrap);
+            return std::make_pair(maxLineWidth_, textLines_.size());
         }
 
     private:
-        
+
         std::string text_;
         bool wordWrap_;
-        bool autoSize_;
         HorizontalAlign hAlign_;
         VerticalAlign vAlign_;
+
+        std::vector<StringLine> textLines_;
+        int maxLineWidth_;
 
     }; // ui::Label
 
