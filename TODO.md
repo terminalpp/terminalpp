@@ -19,11 +19,11 @@ More robust UI framework, better configuration options and slightly increased se
 - revisit event propagation - keyboard events should handle hotkeys properly
 - perhaps have special hotkey propagation events that go top level up, or have hotkey processor? 
 
-- when autosized widgets shrink, the layouts do not seem to respond correctly
+- scrollable should implement scrollSize and scrollOffset virtual methods from Container
+
+- document all the features for painting, events, layouts and size hints
 
 - button basics
-
-- revisit & update how widget children are drawn and how/when their visible rectangles are updated and whether the Container::Add works properly
 
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set
@@ -49,9 +49,7 @@ Small things:
 
 Documentation:
 
-- add comments to layout
 - write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
-- write documentation about autosizing too
 - add comments to keyboard focus stuff
 - mouseUp, Down, WHeel, Move, Click and DoubleClick can propagate to parent, update the documentation
 

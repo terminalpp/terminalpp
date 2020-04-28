@@ -238,34 +238,31 @@ namespace ui {
         }
     }
 
-    void AnsiTerminal::setRect(Rect const & value) {
+    void AnsiTerminal::resize(int width, int height) {
         // don't allow 0 width or height for the terminal
-        ASSERT(value.width() > 0 && value.height() > 0);
-        if (value.width() <= 0 || value.height() <= 0)
-            return;
-        // if resized, resize the terminal buffers and the pty
-        if (value.width() != width() || value.height() != height()) {
-            // lock the buffer
-            bufferLock_.priorityLock();
-            bool scrollToTerm = scrollOffset().y() == state_.buffer.historyRows();
-            helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_, false};
-            // resize the state & buffers, resize the contents of the normal and active buffers
-            // inactive alternate buffer does not need resizing as it will be cleared when entered
-            state_.resize(value.width(), value.height(), true, palette_->defaultBackground());
-            stateBackup_.resize(value.width(), value.height(), alternateMode_, palette_->defaultBackground());
-            // resize the PTY
-            ptyResize(value.width(), value.height());
-            // update the scrolling information            
-            Scrollable::setRect(value);
-            setScrollWidth(value.width());
-            setScrollHeight(value.height() + state_.buffer.historyRows());
-            // scroll to the terminal if appropriate (terminal was fully visible before)
-            if (scrollToTerm)
-                setScrollOffset(Point{0, state_.buffer.historyRows()});
-        }
-        Widget::setRect(value);
-    }
+        ASSERT(width > 0 && height > 0);
 
+        // lock the buffer
+        bufferLock_.priorityLock();
+        bool scrollToTerm = scrollOffset().y() == state_.buffer.historyRows();
+        helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_, false};
+        // resize the state & buffers, resize the contents of the normal and active buffers
+        // inactive alternate buffer does not need resizing as it will be cleared when entered
+        state_.resize(width, height, true, palette_->defaultBackground());
+        stateBackup_.resize(width, height, alternateMode_, palette_->defaultBackground());
+        // resize the PTY
+        ptyResize(width, height);
+        // update the scrolling information            
+        Scrollable::resize(width, height);
+        setScrollWidth(width);
+        setScrollHeight(height + state_.buffer.historyRows());
+        // scroll to the terminal if appropriate (terminal was fully visible before)
+        if (scrollToTerm)
+            setScrollOffset(Point{0, state_.buffer.historyRows()});
+
+        Widget::resize(width, height);
+    }
+    
     void AnsiTerminal::mouseMove(Event<MouseMoveEvent>::Payload & event) {
         Widget::mouseMove(event);
         if (event.active() &&

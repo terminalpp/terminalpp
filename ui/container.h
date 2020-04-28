@@ -9,6 +9,20 @@ namespace ui {
      
         A container is a basic widget that manages its children dynamically via a list. Child widgets can be added to, or removed from the container at runtime. The container furthermore provides support for automatic layouting of the children and makes sure that the UI events are propagated to them correctly. 
 
+        ## Adding and Removing Child Widgets
+
+        To add or remove child widgets, the add() and remove() methods must be used. Apart from adding/removing the widget to the list of children they also deal with the necessary bookkeeping such as registering the children with own renderer. 
+
+        ## Painting
+
+        Container's paint method obtains the contents canvas and then paints all the children on it. The contents canvas is the canvas of the container by default, but can be updated by reimplementing the scrollSize() and scrollOffset() methods for scrollable containers. 
+
+        ## Geometry & Layouts
+
+        Each container provides a layout() which is a class responsible for resizing and moving its children when the container itself is resized. Relayouting a container (calculateLayout() method) simply calls the layout object which then updates the geometry of all of its childern. For more details see the Layout class. 
+
+        If a container is autosized, then its size is updated so that all of its children under current layout fit in it. This behavior is implemented in the calculateAutoSize() method. 
+
      */
     class Container : public Widget {
     public:
@@ -50,7 +64,9 @@ namespace ui {
             children_.push_back(widget);
             if (widget->parent() != this)
                 widget->attachTo(this);
-            // relayout the children widgets
+            // make sure the attached widget will be relayouted even if its size won't change (see Layout::resizeChild())
+            widget->pendingRelayout_ = true;
+            // relayout the container
             relayout();
         }
 
@@ -67,55 +83,6 @@ namespace ui {
                 }
             UNREACHABLE;
         }
-
-        /** \name Geometry and Layout
-         
-         */
-        //@{
-
-        /** Returns the layout used by the container. 
-         */
-        Layout * layout() const {
-            return layout_;
-        }
-
-        /** Sets the layout for the container. 
-         */
-        virtual void setLayout(Layout * value) {
-            ASSERT(value != nullptr);
-            ASSERT(value->container_ == nullptr);
-            if (layout_ != value) {
-                if (layout_ != Layout::None)
-                    delete layout_;
-                layout_ = value;
-                if (layout_ != Layout::None)
-                    layout_->container_ = this;
-                relayout();
-            }
-        }
-
-        /** Relayout the children widgets when the container has been resized. 
-         */
-        void resized() override {
-            relayout();
-            Widget::resized();
-        }
-
-        /** Change in child's rectangle triggers relayout of the container. 
-         */
-        void childChanged(Widget * child) override {
-            MARK_AS_UNUSED(child);
-            relayout();
-        }
-
-        void relayout() {
-            UI_THREAD_CHECK;
-            if (layoutScheduled_ != true) {
-                layoutScheduled_ = true;
-                repaint();
-            }
-        }
-        //@}
 
         /** \name Mouse Actions
          */
@@ -193,39 +160,78 @@ namespace ui {
             Widget::detachRenderer();
         }
 
-        /** Paints the container. 
-         
-            The default implementation simply obtains the contents canvas and then paints all visible children. 
+        /** Returns the layout used by the container. 
          */
-        void paint(Canvas & canvas) override {
-            UI_THREAD_CHECK;
-            Canvas contentsCanvas{getContentsCanvas(canvas)};
-            // relayout the widgets if layout was requested
-            if (layoutScheduled_) {
-                if (! children_.empty()) {
-                    layout_->relayout(this, contentsCanvas);
-                    // do a check of own size and change according to the calculated layout, this might trigger repaint in parent which is ok
-                    autoSize();
-                }
-                layoutScheduled_ = false;    
-            }
-            Canvas childrenCanvas{contentsCanvas};
-            for (Widget * child : children_)
-                paintChild(child, childrenCanvas);
+        Layout * layout() const {
+            return layout_;
         }
 
-        /** Calculates the autosize of the container so that all its children fit in it without scrolling. 
+        /** Sets the layout for the container. 
          */
-        std::pair<int, int> calculateAutoSize() override {
-            int w = width();
-            int h = height();
+        virtual void setLayout(Layout * value) {
+            ASSERT(value != nullptr);
+            ASSERT(value->container_ == nullptr);
+            if (layout_ != value) {
+                if (layout_ != Layout::None)
+                    delete layout_;
+                layout_ = value;
+                if (layout_ != Layout::None)
+                    layout_->container_ = this;
+                relayout();
+            }
+        }
+
+        /** Returns the contents canvas size.
+         */
+        virtual Size scrollSize() const {
+            return Size{width(), height()};
+        } 
+
+        /** Returns the scroll offset. 
+         */
+        virtual Point scrollOffset() const {
+            return Point{0,0};
+        }
+
+        void paint(Canvas & canvas) override {
+            // paint the widget itself
+            Widget::paint(canvas);
+            // get the children canvas and paint the children
+            Canvas childrenCanvas{canvas.resize(scrollSize()).offset(scrollOffset())};
             for (Widget * child : children_) {
+                Canvas childCanvas{childrenCanvas.clip(child->rect())};
+                paintChild(child, childCanvas);
+            }
+        }
+
+        /** Calculates the layout of the container. 
+         
+         */
+        void calculateLayout() override {
+            if (! children_.empty()) {
+                Size size = scrollSize();
+                layout_->relayout(this, size);
+            }
+            Widget::calculateLayout();
+        }
+
+        /** Calculates the autosize of the container. 
+         
+            An autosized container must simply be big enough to fit all of its children in its client canvas. 
+         */
+        Size calculateAutoSize() override {
+            UI_THREAD_CHECK;
+            int w = 0;
+            int h = 0;
+            for (Widget * child : children_) {
+                if (!child->visible())
+                    continue;
                 if (w < child->rect_.right())
                     w = child->rect_.right();
                 if (h < child->rect_.bottom())
                     h = child->rect_.bottom();
             }
-            return std::make_pair(w, h);
+            return Size{w, h};
         }
 
         std::vector<Widget *> children_;

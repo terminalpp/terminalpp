@@ -37,8 +37,8 @@ namespace ui {
             canvas.textOut(Point{0,0}, text_);
         }
 
-        std::pair<int, int> calculateAutoSize() override {
-            return std::make_pair(static_cast<int>(text_.size()), 1);
+        Size calculateAutoSize() override {
+            return Size{static_cast<int>(text_.size()), 1};
         }
 
     private:

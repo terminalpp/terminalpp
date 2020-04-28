@@ -11,12 +11,12 @@ namespace ui {
 
     protected:
 
-        bool delegatePaintToParent() override {
-            return WidgetBackground::delegatePaintToParent() || Container::delegatePaintToParent();
+        bool isTransparent() override {
+            return WidgetBackground::isTransparent() || Container::isTransparent();
         }
 
-        bool requireChildToDelegatePaint(Widget * child) override {
-            return WidgetBorder::requireChildToDelegatePaint(child) || Container::requireChildToDelegatePaint(child);
+        bool requireRepaintParentFor(Widget * child) override {
+            return WidgetBorder::requireRepaintParentFor(child) || Container::requireRepaintParentFor(child);
         }
 
         void paint(Canvas & canvas) override {

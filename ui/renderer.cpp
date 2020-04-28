@@ -14,22 +14,6 @@ namespace ui {
     std::mutex Renderer::M_;
     std::function<void(void)> Renderer::UserEventScheduler_;
 
-    // TODO how to deal with invalid widgets? 
-
-    void Renderer::render(Widget * widget) {
-        UI_THREAD_CHECK;
-        while (widget->shouldPaintParent())
-            widget = widget->parent();
-        // have the canvas in a block so that its finalizers are called before the renderer
-        {
-            Canvas canvas(widget); 
-            widget->paint(canvas);
-            // clear the repaint request flag
-            widget->repaintRequested_.store(false);
-        }
-        // actually render the updated part of the buffer
-        render(widget->visibleRect_);
-    }
 
     // LocalRenderer ==============================================================================
 

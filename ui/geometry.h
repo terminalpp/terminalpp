@@ -22,6 +22,38 @@ namespace ui {
     }; // ui::VerticalAlign
 
 
+    class Size {
+    public:
+
+        Size(int width, int height):
+            width_{width},
+            height_{height} {
+        }
+
+        int width() const {
+            return width_;
+        }
+
+        int height() const {
+            return height_;
+        }
+
+        Size & setWidth(int value) {
+            width_ = value;
+            return *this;
+        }
+
+        Size & setHeight(int value) {
+            height_ = value;
+            return *this;
+        }
+
+    private:
+        int width_;
+        int height_;
+    };
+
+
     class Point {
     public:
 

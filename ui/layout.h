@@ -31,7 +31,7 @@ namespace ui {
 
         /** Recalculates the dimensions and layout of the children. 
          */
-        virtual void relayout(Container * widget, Canvas const & contentsCanvas) = 0;
+        virtual void relayout(Container * widget, Size size) = 0;
 
         /** Calculates the actual overlay of the children in the given container. 
          
@@ -43,12 +43,22 @@ namespace ui {
          */
         std::vector<Widget*> const & containerChildren(Container * container);
 
-        /** Sets the rectangle of the children. 
+        /** Updates the size of given child. 
+         
+            Calls the resize() method on the child widget. If the new size is identical as the current size of the child, but there is a relayout pending relayouts the child immediately (this is what the resize would have done anyways if the size changed).
+
+            This prevents the odd behavior of adding autosized zero sized child to zero sized container, if which case the autosize on the child would not be updated as the container would set its size to already zero. However when widgets are added to containers, their layout is requested (Container::Add) and this method makes sure they will be relayouted in such case, thus propagating the autosize changes. 
          */
-        void setChildRect(Widget * child, Rect const & rect) {
-            // make sure that repaints will be ignored since parent relayout will trigger repaint eventually 
-            child->repaintRequested_.store(true);
-            child->setRect(rect);
+        void resizeChild(Widget * child, int width, int height) {
+            // TODO explain why the relayout - and relayout when added to a child
+            if (child->width() != width || child->height() != height) {
+                child->resize(width, height);
+            } else if (child->pendingRelayout_)
+                child->calculateLayout();
+        }
+
+        void moveChild(Widget * child, Point topLeft) {
+            child->move(topLeft);
         }
 
         int calculateChildWidth(Widget * child, int autoWidth, int availableWidth) {
@@ -59,31 +69,31 @@ namespace ui {
             return child->heightHint().calculateSize(child->height(), autoHeight, availableHeight);
         }
 
-        Rect align(Rect const & what, int maxWidth, HorizontalAlign hAlign) {
+        Point align(Point const & x, int width, int maxWidth, HorizontalAlign hAlign) {
             switch (hAlign) {
                 case HorizontalAlign::Left:
-                    return Rect::FromTopLeftWH(0, what.top(), what.width(), what.height());
+                    return x;
                 case HorizontalAlign::Center:
-                    return Rect::FromTopLeftWH((maxWidth - what.width()) / 2, what.top(), what.width(), what.height());
+                    return x + Point{(maxWidth - width) / 2, 0};
                 case HorizontalAlign::Right:
-                    return Rect::FromTopLeftWH(maxWidth - what.width(), what.top(), what.width(), what.height());
+                    return x + Point{maxWidth - width, 0};
                 default:
                     UNREACHABLE;
-                    return what;
+                    return x;
             }
         }
 
-        Rect align(Rect const & what, int maxHeight, VerticalAlign vAlign) {
+        Point align(Point const & x, int height, int maxHeight, VerticalAlign vAlign) {
             switch (vAlign) {
                 case VerticalAlign::Top:
-                    return Rect::FromTopLeftWH(what.left(), 0, what.width(), what.height());
+                    return x;
                 case VerticalAlign::Middle:
-                    return Rect::FromTopLeftWH(what.left(), (maxHeight - what.height()) / 2, what.width(), what.height());
+                    return x + Point{0, (maxHeight - height) / 2};
                 case VerticalAlign::Bottom:
-                    return Rect::FromTopLeftWH(what.left(), maxHeight - what.height(), what.width(), what.height());
+                    return x + Point{0, maxHeight - height};
                 default:
                     UNREACHABLE;
-                    return what;
+                    return x;
             }
         }
 
@@ -92,19 +102,20 @@ namespace ui {
             If the parent of the child is overlaid itself, then all its children are overlaid regardless of the value.  
          */
         void setChildOverlay(Widget * child, bool value) {
-            // make sure that repaints will be ignored since parent relayout will trigger repaint eventually 
-            child->repaintRequested_.store(true);
+            value = value || child->parent()->overlaid_; 
             child->overlaid_ = value;
         }
 
+        /** Requests the attached container to relayout itself. 
+         
+            If the layout has properties that alter the layout, changing these should trigger the relayout of the registered container by calling this method. 
+         */
         virtual void requestRelayout();
 
     private:
+
         /** The container controlled by the layout. */
         Container * container_;
-
     };
-
-
 
 } // namespace ui

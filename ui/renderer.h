@@ -26,12 +26,7 @@ namespace ui {
      
         Class responsible for rendering the widgets and providing the user actions such as keyboard, mouse and selection & clipboard.
 
-        TODO
-
-        - create the tab order of widgets and figure out how to work with it
-        - and how to set the modal root and stuff
-        - and the actual widget painting and resizing stuff 
-        - do buffer
+        ## User Events
 
      */
     class Renderer {
@@ -69,7 +64,7 @@ namespace ui {
             // attach the new widget & resize it to the renderer
             if (rootWidget_ != nullptr) {
                 rootWidget_->attachRenderer(this);
-                rootWidget_->setRect(Rect::FromWH(width(), height()));
+                rootWidget_->resize(width(), height());
                 rootWidget_->visibleRect_ = Rect::FromWH(width(), height());
                 rootWidget_->bufferOffset_ = Point{0,0};
                 modalRoot_ = rootWidget_;
@@ -252,17 +247,15 @@ namespace ui {
 
         //@}
 
-        /** Immediately repaints the given widget. 
-         
-            If the widget is overlaid with another widgets, the widget parent will be painted instead. When the painting is done, i.e. the buffer has been updated, the render method is called to actually render the update.  
-         */
-        void render(Widget * widget);
-
         /** Called when the selected rectangle of the backing buffer has been updated and needs rendered. 
          
             This method should actually render the contents. While only the refresh of the given rectangle is necessary at the time the method is called, the entire buffer is guaranteed to be valid in case whole screen repaint is to be issued. 
          */
         virtual void render(Rect const & rect) = 0;
+
+        void render(Widget * widget) {
+            render(widget->visibleRect_);
+        }
 
         // ========================================================================================
         
@@ -689,8 +682,6 @@ namespace ui {
                 clipboardRequestTarget_ = nullptr;
             if (selectionRequestTarget_ == widget)
                 selectionRequestTarget_ = nullptr;
-            // make sure the detached widget has no pending events attached to it
-            CancelUserEvents(widget);
         }
         //@}
 
@@ -707,8 +698,8 @@ namespace ui {
                 buffer_.resize(newWidth, newHeight);
                 // resize the UI elements
                 if (rootWidget_ != nullptr) {
-                    rootWidget_->setRect(Rect::FromWH(newWidth, newHeight));
-                    rootWidget_->visibleRect_ = Rect::FromWH(width(), height());
+                    rootWidget_->resize(newWidth, newHeight);
+                    rootWidget_->visibleRect_ = Rect::FromWH(newWidth, newHeight);
                     rootWidget_->bufferOffset_ = Point{0,0};
                     repaint(rootWidget_);
                 }

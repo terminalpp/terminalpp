@@ -338,11 +338,11 @@ namespace tpp {
             // finally, draw the border, which is done on the base cell level over the already drawn text
             int wThin = std::min(cellWidth_, cellHeight_) / 4;
             int wThick = std::min(cellWidth_, cellHeight_) / 2;
-            Color borderColor = buffer().at(0,0).border().color();
+            Color borderColor = buf.at(0,0).border().color();
             changeBg(borderColor);
             for (int row = 0, re = height(); row < re; ++row) {
                 for (int col = 0, ce = width(); col < ce; ++col) {
-                    Border b = buffer().at(col, row).border();
+                    Border b = buf.at(col, row).border();
                     if (b.color() != borderColor) {
                         borderColor = b.color();
                         changeBg(borderColor);

@@ -29,7 +29,7 @@ namespace ui {
         virtual void setText(std::string const & value) {
             if (text_ != value) {
                 text_ = value;
-                autoSize(true);
+                relayout();
             }
         }
         //@}
@@ -44,7 +44,7 @@ namespace ui {
         virtual void setWordWrap(bool value = true) {
             if (wordWrap_ != value) {
                 wordWrap_ = value;
-                autoSize(true);
+                relayout();
             }
         }
         //@}
@@ -119,12 +119,12 @@ namespace ui {
             }
         }
 
-        std::pair<int, int> calculateAutoSize() override {
+        Size calculateAutoSize() override {
             if (widthHint() != SizeHint::Auto())
                 updateTextMetrics(width());
             else
                 updateTextMetrics(helpers::NoWordWrap);
-            return std::make_pair(maxLineWidth_, textLines_.size());
+            return Size{maxLineWidth_, static_cast<int>(textLines_.size())};
         }
 
     private:

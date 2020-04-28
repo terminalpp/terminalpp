@@ -55,11 +55,11 @@ namespace ui {
             }
         }
 
-        void relayout(Container * widget, Canvas const & contentsCanvas) override {
+        void relayout(Container * widget, Size size) override {
             std::vector<Widget*> const & children = containerChildren(widget);
             ASSERT(! children.empty());
-            int autoHeight = contentsCanvas.height();
-            int availableWidth = contentsCanvas.width();
+            int autoHeight = size.height();
+            int availableWidth = size.width();
             // determine fixed sized widgets and remove them from the available width
             // determine the actual width that will be used and set the height of the child to the autoHeight
             int autoElements = 0;
@@ -67,7 +67,7 @@ namespace ui {
                 if (! child->visible())
                     continue;
                 int h = calculateChildHeight(child, autoHeight, autoHeight);
-                setChildRect(child, Rect::FromTopLeftWH(0,0, child->width(), h));
+                resizeChild(child, child->width(), h);
                 // now that the height of the child is correct, we determine its width if fixed
                 if (child->widthHint() == SizeHint::Kind::Manual || child->widthHint() == SizeHint::Kind::Auto)
                     availableWidth -= child->width();
@@ -84,7 +84,7 @@ namespace ui {
             int diff = (autoElements != 0 && availableWidth > actualWidth) ? availableWidth - actualWidth : 0;
             actualWidth += diff;
             // get the left placement
-            int left = getStartX(actualWidth, contentsCanvas.width());
+            int left = getStartX(actualWidth, size.width());
             // and finally set the widget sizes appropriately, centering them horizontally, apply the diff to the first non-fixed element
             for (Widget * child : children) {
                 if (! child->visible())
@@ -95,9 +95,8 @@ namespace ui {
                     w += diff;
                     diff = 0;
                 }
-                Rect r{Rect::FromTopLeftWH(left, 0, w, h)};
-                r = align(r, autoHeight, vAlign_);
-                setChildRect(child, r);
+                resizeChild(child, w, h);
+                moveChild(child, align(Point{left, 0}, h, autoHeight, vAlign_));
                 setChildOverlay(child, false);
                 left += w;
             }

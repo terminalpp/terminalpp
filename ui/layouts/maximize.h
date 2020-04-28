@@ -7,19 +7,20 @@ namespace ui {
 
     class MaximizeLayout : public Layout {
     protected:
-        void relayout(Container * widget, Canvas const & contentsCanvas) override {
-            int autoWidth = contentsCanvas.width();
-            int autoHeight = contentsCanvas.height();
+        void relayout(Container * widget, Size size) override {
+            int autoWidth = size.width();
+            int autoHeight = size.height();
             std::vector<Widget*> const & children = containerChildren(widget);
             for (Widget * child : children) {
                 if (!child->visible())
                     continue;
                 int w = calculateChildWidth(child, autoWidth, autoWidth);
                 int h = calculateChildHeight(child, autoHeight, autoHeight);
-                Rect r{Rect::FromWH(w, h)};
-                r = align(r, autoWidth, HorizontalAlign::Center);
-                r = align(r, autoHeight, VerticalAlign::Middle);
-                setChildRect(child, r);
+                resizeChild(child, w, h);
+                moveChild(child, 
+                    align(
+                        align(Point{0,0}, w, autoWidth, HorizontalAlign::Center),
+                        h, autoHeight, VerticalAlign::Middle));
                 setChildOverlay(child, true);
             }
             if (! children.empty())

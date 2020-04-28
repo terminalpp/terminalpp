@@ -60,8 +60,8 @@ namespace ui {
 
     protected:
 
-        bool delegatePaintToParent() override {
-            return WidgetBackground::delegatePaintToParent() || Container::delegatePaintToParent();
+        bool isTransparent() override {
+            return WidgetBackground::isTransparent() || Container::isTransparent();
         }
 
         /** Paints the dialog. 

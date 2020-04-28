@@ -25,9 +25,10 @@ namespace ui {
     protected:
         using TraitBase<WidgetBorder, T>::downcastThis;
 
+
         /** TODO Only requires the child repaint if its rectangle intersects with the border. 
          */
-        virtual bool requireChildToDelegatePaint(Widget * child) {
+        virtual bool requireRepaintParentFor(Widget * child) {
             MARK_AS_UNUSED(child);
             return ! border_.empty();
         }

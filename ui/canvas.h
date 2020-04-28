@@ -53,8 +53,13 @@ namespace ui {
          
             Returns a new canvas that is identical to the current canvas except for the size which can be specified. 
          */ 
+        // DELETE
         Canvas resize(int width, int height) const {
             return Canvas{width, height, buffer_, visibleRect_, bufferOffset_};
+        }
+
+        Canvas resize(Size newSize) const {
+            return Canvas{newSize.width(), newSize.height(), buffer_, visibleRect_, bufferOffset_};
         }
 
         /** Offsets the canvas. 

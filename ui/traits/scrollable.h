@@ -72,11 +72,9 @@ namespace ui {
             return canvas.resize(scrollWidth_, scrollHeight_).offset(scrollOffset_);
         }
 
-        void setRect(Rect const & value) {
-            if (value.width() > scrollWidth_)
-                scrollWidth_ = value.width();
-            if (value.height() > scrollHeight_)
-                scrollHeight_ = value.height();
+        void resize(int width, int height) {
+            scrollWidth_ = width;
+            scrollHeight_ = height;
         }
 
         /** Displays the scrollbars. 

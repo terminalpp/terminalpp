@@ -319,7 +319,7 @@ namespace ui {
 
         void paint(Canvas & canvas) override;
 
-        void setRect(Rect const & value) override;
+        void resize(int width, int height) override;
 
         /** The contents canvas is as long as the terminal itself and any history rows. 
          */

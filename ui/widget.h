@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mutex>
+//#include <mutex>
 #include <atomic>
 
 #include "helpers/helpers.h"
@@ -97,68 +97,52 @@ namespace ui {
 
     }; // ui::SizeHint
 
-
-    class GeometryEvent {
-    public:
-        Rect rect;
-        bool resized;
-        bool moved;
-    }; // GeometryEvent
-
     /** Base class for all UI widgets. 
      
         A widget can paint itself and can react to user interaction. 
 
+        ## Threads & Events
 
-        Setting the geometry must support the following scenarios:
+        All widget methods must be called from the main UI thread with the exception of:
 
-        - manual
+        - repaint() method for requesting the repaint of the widget's contents
 
-        The manual position is the default for widgets. It means that widget has control over its position 
+        - sendEvent() which can be used to schedule execution of arbitrary code in the main thread. 
 
-        - anchors
+        For more details on the events, see the Renderer class that is responsible for their actual scheduling and execution. 
 
-        When parent resizes, the widget can update its own size as well based on the anchors, this will be done via the anchored trait. 
+        ## Painting
 
-        => I need to notify the widget that parent has resized
+        To repaint the widget, the repaint() method can be called from any thread, which will eventually call the paint() method which is responsible for actually drawing the contents of the widget on the provided canvas. To paint widget's children, the paintChild() method must be called with the child and its canvas. 
 
-        - layout managed
+        When repaint is triggered, the widget must first determine whether it is in the position to service the repaint (i.e. call paint() on itself), or whether the repaint should propagate to its parent. The widget itself, current layout, or any of the widget's transitive parents can determine that the repaint delegation is required:
 
-        => 
+        - the #overlaid_ flag signifies that part of the widget might be obscured by other widgets, in which case the repaint method must be delegated to the parent so that the other widget will be updated as well. This property is set during the layout phase and propagates to children (i.e. an overlaid widget's children are all overlaid as well)
+        
+        - the #transparent_ flag determines whether the widget itself has transparent regions and therefore requires parent's update before it repaints itself. This is set by the widget itself and does not propagate. Whenever a widget's property that may lead to transparency is updated, the updateTransparent() method must be called. Any potentially transparent widgets must also override the isTransparent() method, which must check whether the widget is currently transparent and return the result. This property is updated whenever updateTransparent() is explicitly called.
 
+        - finally, any parent widget may determine that its children (on per child basis) must delegate their repaint events to the parent. If true, the child's #repaintParent_ flag will be set during each repaint. This flag propagates to children during each repaint. To determine whether a child should delegate its repaint to the parent, method requireRepaintParentFor() must be overriden.   
 
+        ## Geometry & Layouts
 
-        # This deals with the manual settings:
+        A widget position (rect()) and size (width(), height()) can be determined via the move() and resize() methods respectively. Width and height can further be refined by their respective size hints (SizeHint), which guide the layout calculations. 
 
-        setRect() sets the size, can actually adjust the size, i.e. widgets can override the behavior and update the size before calling the parent's implementation
+        The relayout() method schedules repaint and relayouting to be executed before it. When a widget is relayouted, it should reclaculate the correct dimensions of its contents first and then of itself (if its size hints are set to SizeHint::Auto()). 
 
-        The onRectChanged() event is then emitted, the event itself has flags for resize and reposition so that apps can tell 
+        WHen relayouting is requested, the calculateLayout() method is called immediately before the paint() method. Widget subclasses should override this method to implement layouting of their contents, but *must* call the Widget's implementation in the end as it performs the autosize calculation and clears the pending relayout flag. 
 
-        # Anchors 
+        In cases where the size hints are set to SizeHint::Auto() and the widget should therefore update its size according to the size of its contents, the relayout calls the calculateAutoSize() method which should return the ideal size of the widget and must be overriden in subclasses to provide the functionality. 
 
-        When parent gets resized, it informs all of its children and they are free to act on that knowledge. Or do nothing. When they do something, they can then resize themselves. 
-
-        # Layout
-
-        - when parent is resized, it needs to relayout the children, i.e. change their size and position according to its own layout
-
-        - when child is resized, it needs to notify the parent so that the whole thing can be relaid out 
-
-        - how to make these not cycle!!!!!
-
-
+        Layout recalculation is triggered everytime children widgets change (move() or resize()).
      */
     class Widget {
     public:
 
-        virtual ~Widget() {
-#ifndef NDEBUG
-            if (parent_ != nullptr) {
-                LOG() << "Widget must be detached from its parent before it is deleted";
-                std::terminate();
-            }
-#endif
-        }
+        /** Destroys the widget and cancells all its pending events. 
+
+            Note that destroying the widget while it (or someone else) can still raise events against it is undefined behavior and may end up with not all events cancelled. This is acceptable compromise as sending an event against the widget would mean having its valid pointer, which should not happen when the widget is being destroyed. 
+         */
+        virtual ~Widget();
 
         /** Determines if the given widget is transitive parent of the current widget or the widget itself. 
          */
@@ -180,17 +164,20 @@ namespace ui {
             return parent_;
         }
 
-
         /** Returns the rectangle occupied by the widget in its parent's contents area. 
          */
         Rect const & rect() const {
             return rect_;
         }
 
+        /** Returns the width of the widget. 
+         */
         int width() const {
             return rect_.width();
         }
 
+        /** Returns the height of the widget. 
+         */
         int height() const {
             return rect_.height();
         }
@@ -211,11 +198,19 @@ namespace ui {
             return visible_;
         }
 
+        /** Returns whether the widget is enabled. 
+         
+            Disabled widgets cannot receive keyboard focus.
+         */
         bool enabled() const {
             return enabled_;
         }
 
-        /** Triggers the repaint of the widget. [thread-safe]
+        /** Repaints the widget [thread-safe]
+         
+            Calling this method requests a repaint of the entire widget and should be called whenever the information displayed in the widget changes. 
+
+            The method can be called from any thread, but the repaint will always occur in the main UI thread. 
          */
         virtual void repaint();
 
@@ -230,23 +225,17 @@ namespace ui {
         Widget(int width = 0, int height = 0, int x = 0, int y = 0):
             pendingEvents_{0},
             renderer_{nullptr},
-            repaintRequested_{false},
+            pendingRepaint_{false},
+            pendingRelayout_{false},
+            overlaid_{false},
+            transparent_{false},
+            repaintParent_{false},
             parent_{nullptr},
             rect_{Rect::FromTopLeftWH(x, y, width, height)},
-            overlaid_{false},
-            paintDelegationRequired_{false},
             focusable_{false},
             visible_{true},
             enabled_{true} {
         }
-
-        /** Schedules an user event to be executed in the main thread. [thread-safe]
-         
-            The scheduled event will be associated with the widget and if the widget is removed from its renderer before the event gets to be executed, the event is cancelled. 
-
-            A widget can only send event if its renderer is attached. Events from unattached widgets are ignored. 
-         */ 
-        void sendEvent(std::function<void(void)> handler);
 
         /** \name Events
          */
@@ -278,145 +267,6 @@ namespace ui {
         Event<Key> onKeyUp;
 
         Event<std::string> onPaste;
-
-        //@}
-
-        /** Sets the position of the cursor within given cavas. 
-         
-            Must be called in the paint() method and only currently focused widget can set cursor. 
-         */
-        void setCursor(Canvas & canvas, Cursor const & cursor, Point position);
-
-        virtual void setVisible(bool value = true) {
-            UI_THREAD_CHECK;
-            if (visible_ != value) {
-                visible_ = value;
-                if (parent_ != nullptr)
-                    parent_->childChanged(this);
-            }
-        }
-
-        /** Determines whether the widget is enabled, or not. 
-         
-            If a focused widget is disabled, the widget looses focus passing it to the next focusable element in the renderer. 
-         */
-        virtual void setEnabled(bool value = true);
-
-        /** \name Geometry
-
-            - simple changes are ok
-            - layouting is ok, but anchors are complicated, unless anchors are done via anchored layout, which will check all children and update those that have anchors specified, which is perhaps the way to go.   
-            - YEAH !!!!
-
-         */
-        //@{
-
-        virtual void setWidthHint(SizeHint value) {
-            if (widthHint_ != value) {
-                widthHint_ = value;
-                if (widthHint_ == SizeHint::Kind::Auto)
-                    autoSize();
-                else if (parent_ != nullptr)
-                    parent_->childChanged(this);
-            }
-        }
-
-        virtual void setHeightHint(SizeHint value) {
-            if (heightHint_ != value) {
-                heightHint_ = value;
-                if (heightHint_ == SizeHint::Kind::Auto)
-                    autoSize();
-                else if (parent_ != nullptr)
-                    parent_->childChanged(this);
-            }
-        }
-
-        /** Recalculates the size of the element based on its contents. 
-         
-            Only sets the dimensions whose size hint is set to SizeHint::Kind::Auto. To determine the sizes, the calculateAutoSize() method is called. To implement correct autosizing behavior, the calculateAutoSize() method should be overriden in the subclasses
-         */
-        void autoSize(bool forceRepaint = false) {
-            if (widthHint_ != SizeHint::Kind::Auto && heightHint_ != SizeHint::Kind::Auto)
-                return;
-            std::pair<int, int> size = calculateAutoSize();
-            Rect rect = Rect::FromTopLeftWH(
-                rect_.topLeft(), 
-                (widthHint_ == SizeHint::Kind::Auto) ? size.first : rect_.width(), 
-                (heightHint_ == SizeHint::Kind::Auto) ? size.second : rect_.height()
-                );
-            // if the rectangle is the same, but repaint has been requested, call repaint
-            if (rect == rect_) {
-                if (forceRepaint)
-                    repaint();
-            // otherwise update the rectangle which would call repaint too
-            } else {
-                setRect(rect);
-            }
-        }
-
-        /** For autosized elements, calculates the ideal width and height of the widget based on its contents. 
-         
-            Returns the pair of width and height. The default implementation returns the current width and height of the widget, but subclasses should reimplement this method to provide correct values based on the widget's contents. 
-
-            It is the responsibility of the subclass widget to properly determine which dimension to calculate based on the widget's size hints, but to be on the safe side, the autosizing mechanism will only change dimensions whose size hints are set to SizeHint::Kind::Auto.  
-         */
-        virtual std::pair<int, int> calculateAutoSize() {
-            return std::make_pair(rect_.width(), rect_.height());
-        }
-
-        /** Sets the position and size of the widget.
-         
-            Subclasses can override this method to inject modifications to the requested size and position. Doing so must be done with great care otherwise the automatic layouting can easily be broken. 
-         */
-        virtual void setRect(Rect const & value) {
-            UI_THREAD_CHECK;
-            // do nothing if the new rectangle is identical to the existing geometry
-            if (rect_ == value)
-                return;
-            // update the rectangle
-            bool wasResized = rect_.width() != value.width() || rect_.height() != value.height();
-            bool wasMoved = rect_.topLeft() != value.topLeft();
-            rect_ = value;
-            // perform the autosizing if required by the widget
-            // this has no effect if autosizing is not enabled, if autosizing is enabled it would trigger another resize
-            autoSize();
-            // if autosize changed the rectangle, it called setRect itself and updated the rectangle already so only emit the events and inform parent if the size has not changed
-            if (rect_ == value) {
-                // trigger the appropriate events
-                if (wasResized)
-                    resized();
-                if (wasMoved)
-                    moved();
-                // inform the parent that the child has been resized, which should also trigger the parent's repaint and so ultimately repaint the widget as well
-                if (parent_ != nullptr)
-                    parent_->childChanged(this);
-            }
-        }
-
-        /** Called *after* the widget has been resized. 
-         
-            Triggers the resize event. 
-         */
-        virtual void resized() {
-            Event<void>::Payload p;
-            onResize(p, this);
-        }
-
-        /** Called *after* the widget has been moved.
-         
-            Triggers the move event. 
-         */
-        virtual void moved() {
-            Event<void>::Payload p;
-            onMove(p, this);
-        }
-
-        /** Changing a child widget triggers repaint of the parent. 
-         */
-        virtual void childChanged(Widget * child) {
-            MARK_AS_UNUSED(child);
-            repaint();
-        }
 
         //@}
 
@@ -466,90 +316,6 @@ namespace ui {
          */
         Renderer * renderer() const {
             return renderer_;
-        }
-
-        //@}
-
-        // ========================================================================================
-
-        /** \name Painting 
-         
-            When the widget is to be repainted, its repaint() method must be called. This method can be called from any thread and its invocation triggers a repaint event in the renderer's UI thread, which then constructs the widget's canvas and calls its paint() method. 
-
-            If a widget wishes to paint its children, it must call the paintChild() method with each appropriate child, giving it the child and the widget's contents canvas. 
-
-            The contents should be determined by calling the getContentsCanvas(), which by default returns the widget's own canvas. Scrollable widgets, or widgets with borders should however override this method and construct an appropriate canvas on which the children will be painted. 
-         
-            Important part of the paint process is to determine when to delegate the paint request on a widget to its parent (which could be transitive). The shouldPaintParent() method determines for each widget whether its repaint should instead trigger repaint of its entire parent. The layout, the widget itself and its parents may all need the paint delegation for the reasons detailed below:
-
-            The layout engine determines if the widget can be overlaid by one of its sibling widgets and if so, requests the paint method delegation so that the overlaid widget can be updated as well. This is set automatically by the layout object for all children of the widget in their overlaid_ fields. The overlaid_ value is not inherited from parent. 
-
-            The widget itself may determine its repaint should always trigger its parent repaint in certain cases, such as when the widget is transparent. To do so, the method delegatePaintToParent() must be overriden in the subclass to detect such a situation. This value is not stored anywhere and the widget asked this on each repaint (and so is not inherited).
-
-            Finally, the widget may require its children to delegate their repaints. This can be set on per child basis by overriding the requireChildToDelegatePaint() method and is useful for situations when the parent wishes to paint on the canvas *over* its children, such as when borders or scrollbars are used. 
-
-            If a widget is overlaid, or if its parent required delegation, then the widget itself and all its children transitively must also delegate. This is stored in the paintDelegationRequired_ field which is inherited by children. 
-         */
-        //@{
-
-        /** Returns true if the repainting the widget should be delegated to its parent instead. 
-         */
-        bool shouldPaintParent() {
-            UI_THREAD_CHECK;
-            return (overlaid_ || paintDelegationRequired_ || delegatePaintToParent()) && parent_ != nullptr;
-        }
-
-        /** Determines whether the widget itself has properties that require delegating its painting to the parent. 
-         
-            Such as if the widget is transparent, etc.
-         */
-        virtual bool delegatePaintToParent() {
-            return false;
-        }
-
-        /** Returns true if the widget requires its children to delegate the paint. 
-         
-            This is useful if the widget has some rendering to perform *after* its children, such as borders or painted overlays.
-         */ 
-        virtual bool requireChildToDelegatePaint(Widget * child) {
-            MARK_AS_UNUSED(child);
-            return false;
-        }
-
-        /** Returns the canvas to be used for drawing the contents of the widget. 
-         */
-        virtual Canvas getContentsCanvas(Canvas & canvas) {
-            UI_THREAD_CHECK;
-            return canvas;
-        }
-
-        /** Paints the widget on the given canvas. 
-         
-            The canvas is guaranteed to have the width and height of the widget itself. This method *must* be implemented in widget subclasses to actually draw the contents of the widget. 
-
-            The paint method should never be called directly by other widgets, which should use the paintChild() method instead. 
-         */
-        virtual void paint(Canvas & canvas) = 0;
-
-        /** Paints given child widget. 
-         
-            Takes the widget itself and the contents canvas against which all children are positioned. 
-         */
-        void paintChild(Widget * child, Canvas & contentsCanvas) {
-            ASSERT(child->parent() == this);
-            // no need to paint children that are not visible
-            if (! child->visible())
-                return;
-            // create the child's canvas
-            Canvas childCanvas = contentsCanvas.clip(child->rect());
-            // update the visible rect of the child according to the calculated canvas and repaint
-            child->visibleRect_ = childCanvas.visibleRect();
-            child->bufferOffset_ = childCanvas.bufferOffset_;
-            // TODO this is not the most effective, the requireChildToDelegatePaint() can be precomputed if needs be
-            child->paintDelegationRequired_ = overlaid_ || paintDelegationRequired_ || requireChildToDelegatePaint(child);
-            child->paint(childCanvas);
-            // once the child was painted, clear the repaint request flag
-            child->repaintRequested_.store(false);
         }
 
         //@}
@@ -808,6 +574,214 @@ namespace ui {
 
         //@}
 
+        /** Schedules an user event to be executed in the main thread. [thread-safe]
+         
+            The scheduled event will be associated with the widget and if the widget is removed from its renderer before the event gets to be executed, the event is cancelled. 
+
+            A widget can only send event if its renderer is attached. Events from unattached widgets are ignored. 
+         */ 
+        void sendEvent(std::function<void(void)> handler);
+
+        virtual void setVisible(bool value = true) {
+            UI_THREAD_CHECK;
+            if (visible_ != value) {
+                visible_ = value;
+                if (parent_ != nullptr)
+                    parent_->relayout();
+                else
+                    repaint();
+            }
+        }
+
+        /** Determines whether the widget is enabled, or not. 
+         
+            If a focused widget is disabled, the widget looses focus passing it to the next focusable element in the renderer. 
+         */
+        virtual void setEnabled(bool value = true);
+
+        virtual void setWidthHint(SizeHint value) {
+            if (widthHint_ != value) {
+                widthHint_ = value;
+                if (widthHint_ == SizeHint::Kind::Auto)
+                    relayout(); 
+            }
+        }
+
+        virtual void setHeightHint(SizeHint value) {
+            if (heightHint_ != value) {
+                heightHint_ = value;
+                if (heightHint_ == SizeHint::Kind::Auto)
+                    relayout();
+            }
+        }
+
+        /** Determines whether the widget is transparent or not. 
+         
+            By default widgets are not transparent. Override the method for subclasses that can become transparent and return the appropriate value. 
+         */
+        virtual bool isTransparent() {
+            UI_THREAD_CHECK;
+            return false;
+        }
+
+        /** Determines whether the container requires the given child to delegate its paint method to itself. 
+         
+            Default implementation does not require repaint delegation for any child. 
+
+            Override this method to provide specific behavior, such as when the parent wants to draw border which must be updated after each repaint. 
+         */
+        virtual bool requireRepaintParentFor(Widget * child) {
+            MARK_AS_UNUSED(child);
+            return false;
+        }
+
+        /** Updates the transparency information of the widget. 
+         
+            Updates the transparency of the widget to the result of isTransparent() method. If the widget is transparent, triggers its repaint immediately as transparent widgets require their parents to paint themselves first, which would be triggered by the repaint.
+         */
+        void updateTransparency() {
+            bool x = isTransparent();
+            if (transparent_ != x) {
+                transparent_ = x;
+                if (x)
+                    repaint();
+            }
+        }
+
+        /** Requests the relayout of the widget. 
+         */
+        void relayout() {
+            UI_THREAD_CHECK;
+            if (! pendingRelayout_) {
+                pendingRelayout_ = true;
+                repaint();
+            }
+        }
+
+        /** Paints given child on the specified canvas. 
+         
+            Only visible children are painted. Before repainting the child, updates its visible rectangle, buffer offset and determines whether the child should delegate its repainting to the parent (see requireRepaintParentFor() for more details). 
+
+            Clears the #pendingRepaint_ flag before repainting the child as well. 
+         */
+        void paintChild(Widget * child, Canvas & childCanvas) {
+            UI_THREAD_CHECK;
+            ASSERT(child->parent() == this);
+            ASSERT(child->width() == childCanvas.width() && child->height() == childCanvas.height());
+            // don't do anything if the child is not visible
+            if (! child->visible())
+                return;
+            // update the visible rect of the child according to the calculated canvas and repaint
+            child->visibleRect_ = childCanvas.visibleRect();
+            child->bufferOffset_ = childCanvas.bufferOffset_;
+            // update whether the child's own paint should delegate to the parent
+            child->repaintParent_ = repaintParent_ || requireRepaintParentFor(child);
+            // clear the child repaint flag as long as its relayout is not requested (if its relayout is requested, there is another pending repaint and it is not us)
+            if (! child->pendingRelayout_)
+                child->pendingRepaint_.store(false);
+            // repaint the child actually
+            child->paint(childCanvas);
+        }
+
+        /** Sets the position of the cursor within given cavas. 
+         
+            Must be called in the paint() method and only currently focused widget can set cursor. 
+         */
+        void setCursor(Canvas & canvas, Cursor const & cursor, Point position);
+
+        /** Draws the widget's contents on the canvas. 
+         
+            Must be implemented by the widget subclasses. When paint() method is called, the dimensions of the widget and all its children is guaranteed to be correct and only the painting should occur. 
+         */
+        virtual void paint(Canvas & canvas) {
+            UI_THREAD_CHECK;
+            ASSERT(canvas.width() == width() && canvas.height() == height());
+        }
+
+        /** Calculates the layout of the widget and any of its children. 
+         
+            For widget, simply determines the autosize if required. 
+
+            TODO container first relayouts its children via the attached layout and then calls the parent implementation.
+         */
+        virtual void calculateLayout() {
+            UI_THREAD_CHECK;
+            if (widthHint_ == SizeHint::Kind::Auto || heightHint_ == SizeHint::Kind::Auto) {
+                Size size(calculateAutoSize());
+                if (widthHint_ != SizeHint::Kind::Auto)
+                    size.setWidth(width());
+                if (heightHint_ != SizeHint::Kind::Auto)
+                    size.setHeight(height());
+                // resize itself
+                resize(size.width(), size.height());
+            }
+            pendingRelayout_ = false;
+        }
+
+        /** Calculates the automatic size of the widget. 
+         
+            Both width and height must be returned, but only dimensions whose size hints are set to Auto will be used. That said, correct autosizing algorithms should only return different values in those dimensions for which autosizing is enabled (an example is a label widget, which if both dimensions are autosized will have the width of its longest line and height of the number of lines, but if only height is autosized, its width will be unchanged and height will be the number of rows required to display the whole text given the width).
+         */
+        virtual Size calculateAutoSize() {
+            UI_THREAD_CHECK;
+            return Size{width(), height()};
+        }
+
+        /** Moves the widget to different location without changing its size. 
+         
+            It is not necessary to relayout the widget itself during the move as its size stays the same. Moving a widget triggers a relayout of its parent, which may also move the widget, perhaps even to its original position. However since the relayout is scheduled, a call to the move() method actually always moves the widget (as long as the coordinates are different from the existing ones). Since parent's relayout will eventually repaint the widget, a move will only be visible after it is corrected by the parent's relayout (if at all). 
+         */
+        virtual void move(Point topLeft) {
+            UI_THREAD_CHECK;
+            // don't do anything if noop
+            if (topLeft == rect_.topLeft())
+                return;
+            // move the widget
+            rect_ = Rect::FromTopLeftWH(topLeft, rect_.width(), rect_.height());
+            // if we have parent, inform parent it needs to relayout which would then trigger repaint. If the parent's relayout is already scheduled, or in progress, the move is caused by it and nothing more needs to be done
+            if (parent_ != nullptr) {
+                // parent's relayout would repaint us too, so no need to trigger more 
+                pendingRepaint_ = true;
+                parent_->relayout();
+            }
+            // trigger the onMove event
+            Event<void>::Payload p;
+            onMove(p, this);
+        }
+
+        /** Resizes the widget. 
+         
+            Note that resizing a widget does not guarantee that after the call the widget will have the requested width and height as resizing triggers relayouting immediately, which may in turn autosize the widget, in which case the size of the widget afterards will be the calculated autosize. 
+
+            For this reason any layout and autosize calculation must eventually converge, otherwise the resize and relayout might get stuck in an infinite recursion. Calling resize with new size is guaranteed to generate precisely one onResize event, however it is possible that the widget will not in fact be resized - if widget is resized, but then the autosize is calculated to its existing size, so no size change would occur, but onResize event will be triggered. 
+         */
+        virtual void resize(int width, int height) {
+            UI_THREAD_CHECK;
+            // don't do anything if the width and height are identical
+            if (rect_.width() == width && rect_.height() == height)
+                return;
+            // resize the widget
+            rect_ = Rect::FromTopLeftWH(rect_.topLeft(), width, height);
+            // the size of the widget has changed, we need to relayout, since we are already in the UI thread, relayout can happen immediately
+            pendingRelayout_ = true;
+            calculateLayout();
+            // relayouting could have triggered another resize(s) in case of autosize calculation after the layout, so firsty check if the current resize is stil valid
+            if (rect_.width() != width || rect_.height() != height)
+                return;
+            // now we need to inform the parent that it needs to relayout. If the parent is already in the middle of the layout, then this will be muted, which is ok, as the parent initiated the resize itself. Otherwise the parent's relayout will eventually repaint the current widget as well
+            if (parent_ != nullptr) {
+                // parent's relayout would repaint us too, so no need to trigger more 
+                pendingRepaint_ = true;
+                parent_->relayout();
+            // if there is no parent then we simply need to repaint since the layout has already been calculated
+            } else {
+                repaint();
+            }
+            // finally, trigger the onResize event
+            Event<void>::Payload p;
+            onResize(p, this);
+        }
+
     private:
 
         friend class Canvas;
@@ -819,14 +793,27 @@ namespace ui {
         size_t pendingEvents_;
 
         /** Mutex guarding the renderer property access. */
-        mutable std::mutex mRenderer_;
+        //mutable std::mutex mRenderer_;
 
         /** The renderer the widget is attached to. */
         Renderer* renderer_;
 
-        /** Determines if repaint of the widget has already been requested to limit multiple simultaneous repaint requests. 
+        /** Indicates that a repaint has been requested and there is no need to request it again as the painting has not happened yet. 
          */
-        std::atomic<bool> repaintRequested_;
+        std::atomic<bool> pendingRepaint_;
+
+        /** Indicates that relayout has been requested. Whenever relayout is requested, repaint is requested as well and the relayout happens just before the repaint. 
+         */
+        bool pendingRelayout_;
+
+        /** Determines whether parts of the widget can be covered by its siblings (layout-dependent). 
+         */
+        bool overlaid_;
+        /** Determines if the widget is transparent, i.e. its parent / siblings must be painted before it (widget dependent) */
+        bool transparent_;
+        /** Determines whether repaints to the widget should propagate to the parent on parent's request (parent dependent)
+         */
+        bool repaintParent_;
 
         /** Parent widget, nullptr if none. */
         Widget * parent_;
@@ -837,12 +824,6 @@ namespace ui {
         /** Size hints for the layouters. */
         SizeHint widthHint_;
         SizeHint heightHint_;
-
-        /** Determines if the widget is overlaid by its siblings. */
-        bool overlaid_;
-
-        /** If true, paint methods must be overlaid to the parent. Propagates to children. */
-        bool paintDelegationRequired_;
 
         /** \anchor ui_widget_visible_rect 
             \name Visible Rectangle properties
