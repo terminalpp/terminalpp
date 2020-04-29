@@ -236,6 +236,10 @@ namespace ui {
             // TODO the color of this should be configurable
             c.setBorderAt(state_.cursor + Point{0, state_.buffer.historyRows()}, Border{Color::Green}.setAll(Border::Kind::Thin));
         }
+        // dim the contents if the terminal is not enabled
+        // TODO The color should be configurable
+        if (! enabled())
+            canvas.fillRect(canvas.rect(), Color::Black.withAlpha(128));
     }
 
     void AnsiTerminal::resize(int width, int height) {

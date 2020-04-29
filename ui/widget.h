@@ -857,6 +857,7 @@ namespace ui {
     class PublicWidget : public Widget {
     public:
         using Widget::setVisible;
+        using Widget::setEnabled;
         using Widget::setWidthHint;
         using Widget::setHeightHint;
 

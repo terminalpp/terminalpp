@@ -90,7 +90,9 @@ namespace tpp {
         void terminalPTYTerminated(Event<ExitCode>::Payload & e) {
             window_->setIcon(Window::Icon::Notification);
             window_->setTitle(STR("Terminated, exit code " << *e));
-            Config & config = Config::Instance();
+            terminal_->setEnabled(false);
+
+            //Config & config = Config::Instance();
             //if (! config.session.waitAfterPtyTerminated())
             //    window_->requestClose();
             // TODO perform the wait for keypress here
