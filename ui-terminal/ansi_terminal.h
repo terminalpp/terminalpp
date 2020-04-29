@@ -321,9 +321,10 @@ namespace ui {
 
         void resize(int width, int height) override;
 
-        /** The contents canvas is as long as the terminal itself and any history rows. 
+        /** Use the scrollable's implementation of the scroll offset and size. 
          */
-        using Scrollable::getContentsCanvas;
+        using Scrollable::scrollOffset;
+        using Scrollable::scrollSize;
 
         //@}
 

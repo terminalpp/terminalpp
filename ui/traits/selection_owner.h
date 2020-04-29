@@ -137,14 +137,14 @@ namespace ui {
             selectionStart_ = start;
         }
 
-        void updateSelection(Point end, Point clientSize) {
+        void updateSelection(Point end, Size clientSize) {
             // don't do anything if we are not updating the selection
             if (! updatingSelection())
                 return;
             end.setX(std::max(0, end.x()));
-            end.setX(std::min(clientSize.x() - 1, end.x()));
+            end.setX(std::min(clientSize.width() - 1, end.x()));
             end.setY(std::max(0, end.y()));
-            end.setY(std::min(clientSize.y() - 1, end.y()));
+            end.setY(std::min(clientSize.height() - 1, end.y()));
             // update the selection and call for repaint
             selection_ = Selection::Create(selectionStart_, end);
             downcastThis()->repaint();

@@ -19,10 +19,6 @@ More robust UI framework, better configuration options and slightly increased se
 - revisit event propagation - keyboard events should handle hotkeys properly
 - perhaps have special hotkey propagation events that go top level up, or have hotkey processor? 
 
-- scrollable should implement scrollSize and scrollOffset virtual methods from Container
-
-- document all the features for painting, events, layouts and size hints
-
 - button basics
 
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
@@ -50,6 +46,7 @@ Small things:
 Documentation:
 
 - write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
+- document size hints 
 - add comments to keyboard focus stuff
 - mouseUp, Down, WHeel, Move, Click and DoubleClick can propagate to parent, update the documentation
 

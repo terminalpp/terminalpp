@@ -253,9 +253,7 @@ namespace ui {
         // resize the PTY
         ptyResize(width, height);
         // update the scrolling information            
-        Scrollable::resize(width, height);
-        setScrollWidth(width);
-        setScrollHeight(height + state_.buffer.historyRows());
+        setScrollSize(Size{width, height + state_.buffer.historyRows()});
         // scroll to the terminal if appropriate (terminal was fully visible before)
         if (scrollToTerm)
             setScrollOffset(Point{0, state_.buffer.historyRows()});
@@ -275,7 +273,7 @@ namespace ui {
                 LOG(SEQ) << "Mouse moved to " << event->coords;
         }
         if (updatingSelection()) 
-            updateSelection(event->coords + scrollOffset(), Point{scrollWidth(), scrollHeight()});
+            updateSelection(event->coords + scrollOffset(), scrollSize());
     }
 
     void AnsiTerminal::mouseDown(Event<MouseButtonEvent>::Payload & event) {
@@ -1099,7 +1097,7 @@ namespace ui {
                         // perform the mode change
                         std::swap(state_, stateBackup_);
                         alternateMode_ = value;
-                        setScrollHeight(state_.buffer.historyRows() + state_.buffer.height());
+                        setScrollSize(Size{width(), state_.buffer.historyRows() + height()});
                         setScrollOffset(Point{0, state_.buffer.historyRows()});
                         // if we are entering the alternate mode, reset the state to default values
                         if (value) {
@@ -1372,7 +1370,7 @@ namespace ui {
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         if (top == 0 && scrollOffset().y() == state_.buffer.historyRows()) {
             state_.buffer.deleteLines(lines, top, bottom, fill, palette_->defaultBackground());
-            setScrollHeight(height() + state_.buffer.historyRows());            
+            setScrollSize(Size{width(), height() + state_.buffer.historyRows()});            
             // if the window was scrolled to the end, keep it scrolled to the end as well
             // this means that when the scroll buffer overflows, the scroll offset won't change, but its contents would
             // for now I think this is a feature as you then know that your scroll buffer is overflowing

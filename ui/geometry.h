@@ -48,6 +48,14 @@ namespace ui {
             return *this;
         }
 
+        bool operator == (Size const & other) const {
+            return width_ == other.width_ && height_ == other.height_;
+        }
+
+        bool operator != (Size const & other) const {
+            return width_ != other.width_ || height_ != other.height_;
+        }
+
     private:
         int width_;
         int height_;

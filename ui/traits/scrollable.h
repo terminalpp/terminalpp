@@ -19,16 +19,12 @@ namespace ui {
 	class Scrollable : public TraitBase<Scrollable, T> {
 	public:
 
-        int scrollWidth() const {
-            return scrollWidth_;
-        }
-
-        int scrollHeight() const {
-            return scrollHeight_;
-        }
-
-        Point scrollOffset() const {
+        virtual Point scrollOffset() const {
             return scrollOffset_;
+        }
+
+        virtual Size scrollSize() const {
+            return scrollSize_;
         }
 
     protected:
@@ -36,8 +32,7 @@ namespace ui {
         using TraitBase<Scrollable, T>::downcastThis;
 
         Scrollable(int width, int height):
-            scrollWidth_{width},
-            scrollHeight_{height},
+            scrollSize_{width, height},
             scrollOffset_{0,0} {
         } 
 
@@ -54,27 +49,25 @@ namespace ui {
             Point offset = scrollOffset_ + by;
             Point adjusted = Point::MinCoordWise(
                 Point::MaxCoordWise(Point{0,0}, offset), 
-                Point{scrollWidth_ - downcastThis()->width(), scrollHeight_ - downcastThis()->height()}
+                Point{scrollSize_.width() - downcastThis()->width(), scrollSize_.height() - downcastThis()->height()}
             );
             setScrollOffset(adjusted);
             return adjusted == offset;
         }
 
-        virtual void setScrollWidth(int value) {
-            scrollWidth_ = value;
+        virtual void setScrollSize(Size value) {
+            if (scrollSize_ != value) {
+                // TODO should we check aor repaint anything? 
+                scrollSize_ = value;
+            }
         }
 
-        virtual void setScrollHeight(int value) {
-            scrollHeight_ = value;
-        }
-
-        Canvas getContentsCanvas(Canvas const & canvas) {
-            return canvas.resize(scrollWidth_, scrollHeight_).offset(scrollOffset_);
-        }
-
-        void resize(int width, int height) {
-            scrollWidth_ = width;
-            scrollHeight_ = height;
+        /** Shorthand for getting the canvas of the scrollable content. 
+         
+            The canvas is calculated from the widget's canvas by first resizing it to the scroll size and then offseting the visible rectangle by the scroll offset.
+         */
+        Canvas getContentsCanvas(Canvas & widgetCanvas) {
+            return widgetCanvas.resize(scrollSize_).offset(scrollOffset_);
         }
 
         /** Displays the scrollbars. 
@@ -82,12 +75,12 @@ namespace ui {
             Scrollbars are displayed only when the canvas size is smaller than the scrollWidth and height. 
          */
         void paint(Canvas & canvas) {
-            if (scrollHeight_ > canvas.height()) {
-                std::pair<int, int> slider{ScrollBarDimensions(canvas.height(), scrollHeight_, scrollOffset_.y())};
+            if (scrollSize_.height() > canvas.height()) {
+                std::pair<int, int> slider{ScrollBarDimensions(canvas.height(), scrollSize_.height(), scrollOffset_.y())};
                 paintHorizontalScrollbar(canvas, slider.first, slider.second);
             }
-            if (scrollWidth_ > canvas.width()) {
-                std::pair<int, int> slider{ScrollBarDimensions(canvas.width(), scrollWidth_, scrollOffset_.x())};
+            if (scrollSize_.width() > canvas.width()) {
+                std::pair<int, int> slider{ScrollBarDimensions(canvas.width(), scrollSize_.width(), scrollOffset_.x())};
                 paintVerticalScrollbar(canvas, slider.first, slider.second);
             }
         }
@@ -113,8 +106,7 @@ namespace ui {
         }
 
     private:
-        int scrollWidth_;
-        int scrollHeight_;
+        Size scrollSize_;
         Point scrollOffset_;
 
         static std::pair<int, int> ScrollBarDimensions(int length, int max, int offset) {
