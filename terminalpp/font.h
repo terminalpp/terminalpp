@@ -69,8 +69,8 @@ namespace tpp {
 
         FontMetrics(ui::Font const & font, int cellHeight, int cellWidth = 0):
             font_{Strip(font)},
-            cellWidth_{cellWidth},
-            cellHeight_{cellHeight},
+            cellWidth_{cellWidth * font_.width()},
+            cellHeight_{cellHeight * font_.height()},
             offsetLeft_{0},
             offsetTop_{0} {
         }

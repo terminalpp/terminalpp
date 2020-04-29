@@ -279,6 +279,7 @@ namespace tpp {
                     if (state_.font() != c.font()) {
                         if (drawRun) {
                             drawGlyphRun();
+                            initializeGlyphRun(col, row);
                             drawRun = false;
                         }
                         changeFont(c.font());
@@ -287,6 +288,7 @@ namespace tpp {
                     if (state_.fg() != c.fg()) {
                         if (drawRun) {
                             drawGlyphRun();
+                            initializeGlyphRun(col, row);
                             drawRun = false;
                         }
                         changeFg(c.fg());
@@ -295,6 +297,7 @@ namespace tpp {
                     if (state_.bg() != c.bg()) {
                         if (drawRun) {
                             drawGlyphRun();
+                            initializeGlyphRun(col, row);
                             drawRun = false;
                         }
                         changeBg(c.bg());
@@ -303,6 +306,7 @@ namespace tpp {
                     if (state_.decor() != c.decor()) {
                         if (drawRun) {
                             drawGlyphRun();
+                            initializeGlyphRun(col, row);
                             drawRun = false;
                         }
                         changeDecor(c.decor());

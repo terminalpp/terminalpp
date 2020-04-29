@@ -216,8 +216,6 @@ namespace tpp {
                 if (state_.font().strikethrough())
 					XftDrawRect(draw_, &decor_, textCol_ * cellWidth_, textRow_ * cellHeight_ + font_->strikethroughOffset(), cellWidth_ * textSize_, font_->strikethroughThickness());
             }
-            textCol_ += textSize_;
-            textSize_ = 0;
         }
 
         void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {

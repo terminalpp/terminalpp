@@ -1,5 +1,42 @@
 #pragma once
 
+#include "ui/widgets/panel.h"
+
+namespace tpp {
+
+    class AboutBox : public ui::CustomPanel {
+    public:
+        AboutBox():
+            CustomPanel{} {
+            setBorder(Border{Color::White}.setAll(Border::Kind::Thin));
+            setBackground(Color::Blue);
+            setWidthHint(SizeHint::Manual());
+            setHeightHint(SizeHint::Manual());
+            resize(65,10);
+        }
+
+    protected:
+
+        void paint(Canvas & canvas) override {
+            CustomPanel::paint(canvas);
+            canvas.setFg(Color::White);
+            canvas.setFont(ui::Font{}.setSize(2));
+            canvas.textOut(Point{0,1}, "__Terminal++gj__");
+            canvas.setFont(ui::Font{});
+
+        }
+
+        void mouseClick(Event<MouseButtonEvent>::Payload & event) {
+
+        }
+
+    }; // tpp::AboutBox
+
+} // namespace tpp
+
+
+#ifdef FOO
+
 #include "../../build_stamp.h"
 #include "helpers/stamp.h"
 
@@ -84,3 +121,6 @@ namespace tpp {
     }; // tpp::AboutBox
 
 } // namespace tpp
+
+
+#endif

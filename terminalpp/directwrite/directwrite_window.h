@@ -268,8 +268,6 @@ namespace tpp {
                     rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness());
                 }
             }
-            glyphRunCol_ += glyphRun_.glyphCount;
-			glyphRun_.glyphCount = 0;
         }
 
         /** Draws the borders of a single cell. 

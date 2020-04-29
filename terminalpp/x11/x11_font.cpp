@@ -8,22 +8,18 @@ namespace tpp {
     X11Font::X11Font(ui::Font font, int cellHeight, int cellWidth):
         Font<X11Font>{font, cellHeight, cellWidth} {
         // update the cell size accordingly
-        //cellWidth *= font.width();
-        //cellHeight *= font.height();
         // get the font pattern 
         pattern_ = FcPatternCreate();
         FcPatternAddBool(pattern_, FC_SCALABLE, FcTrue);
         FcPatternAddString(pattern_, FC_FAMILY, pointer_cast<FcChar8 const *>(font.doubleWidth() ? tpp::Config::Instance().font.doubleWidthFamily().c_str() : tpp::Config::Instance().font.family().c_str()));
         FcPatternAddInteger(pattern_, FC_WEIGHT, font.bold() ? FC_WEIGHT_BOLD : FC_WEIGHT_NORMAL);
         FcPatternAddInteger(pattern_, FC_SLANT, font.italic() ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
-        FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, cellHeight);
+        FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, cellHeight_);
         initializeFromPattern();
     } 
 
     X11Font::X11Font(X11Font const & base, char32_t codepoint):
         Font<X11Font>{base.font_, base.cellHeight_, base.cellWidth_} {
-        //cellWidth_ *= font_.width();
-        //cellHeight_ *= font_.height();
         // get the font pattern 
         pattern_ = FcPatternDuplicate(base.pattern_);
         FcPatternRemove(pattern_, FC_FAMILY, 0);
@@ -86,9 +82,9 @@ namespace tpp {
         ascent_ = xftFont_->ascent;
         // add underline and strikethrough metrics
         underlineOffset_ = ascent_ + 1;
-        underlineThickness_ = 1;
+        underlineThickness_ = font_.size();
         strikethroughOffset_ = ascent_ * 2 / 3;
-        strikethroughThickness_ = 1;
+        strikethroughThickness_ = font_.size();
     }
 
     XftFont * X11Font::MatchFont(FcPattern * pattern) {

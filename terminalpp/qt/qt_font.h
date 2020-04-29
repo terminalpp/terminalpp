@@ -23,8 +23,6 @@ namespace tpp {
         QtFont(ui::Font font, int cellHeight, int cellWidth = 0):
             Font<QtFont>{font, cellHeight, cellWidth} {
             tpp::Config const & config{tpp::Config::Instance()};
-            //widthPx_ = cellWidth * font.width();
-            //heightPx_ = cellHeight * font.height();
             qFont_.setFamily(font.doubleWidth() ? config.font.doubleWidthFamily().c_str() : config.font.family().c_str());
             if (font.bold())
                 qFont_.setBold(true);

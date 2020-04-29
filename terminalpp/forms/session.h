@@ -14,6 +14,8 @@
 #include "ui-terminal/bypass_pty.h"
 #include "ui-terminal/local_pty.h"
 
+#include "about_box.h"
+
 
 namespace tpp {
 
@@ -112,6 +114,10 @@ namespace tpp {
             // trigger paste event for ourselves so that the paste can be intercepted
             if (*e == (Key::V + Key::Ctrl + Key::Shift)) {
                 requestClipboard();
+                e.stop();
+            } else if (*e == (Key::F1 + Key::Alt)) {
+                AboutBox * ab = new AboutBox();
+                modalPane_->show(ab);
                 e.stop();
             }
         }

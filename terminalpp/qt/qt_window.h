@@ -205,8 +205,6 @@ namespace tpp {
                 if (state_.font().strikethrough())
                     painter_.fillRect(glyphRunStart_.x() * cellWidth_, glyphRunStart_.y() * cellHeight_ + font_->strikethroughOffset(), cellWidth_ * glyphRunSize_, font_->strikethroughThickness(), decorationBrush_);
             }
-            glyphRunStart_ += Point{glyphRunSize_, 0};
-            glyphRunSize_ = 0;
         }
 
         void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {

@@ -17,14 +17,14 @@ More robust UI framework, better configuration options and slightly increased se
 - revisit event propagation - keyboard events should handle hotkeys properly
 - perhaps have special hotkey propagation events that go top level up, or have hotkey processor? 
 
-- directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
+- X11 does not seem to clear extra areas when zoomed
 - qfont should keep the width if set
 
 - button basics, label fonts
 
-- geometry.h is areally bad name for some of the classes defined therein
+- add a modal widget trait that will have dismiss event or so and figure out how to use it nicely (about box and pastedialog are uses)
 
-- revisit how errors are reported and logged and how things are checked before releases
+- geometry.h is areally bad name for some of the classes defined therein
 
 Terminal++ PTY:
 
@@ -53,6 +53,7 @@ Builds & Releases
 - ubuntu ppa
 - change from MSI to appx
 - add benchmarking
+- revisit how errors are reported and logged and how things are checked before releases
 
 Issues to be raised:
 
