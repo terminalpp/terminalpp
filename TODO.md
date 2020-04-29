@@ -28,20 +28,18 @@ More robust UI framework, better configuration options and slightly increased se
 
 - revisit how errors are reported and logged and how things are checked before releases
 
-Big Features
+Terminal++ PTY:
 
 - PTY++ and remote files version 2.0 - or maybe just do the old PTY but in PTY++ pty in the new architecture.
 - deal with how PTYs are deleted (and the entire session)
 
+Settings:
+
 - design settings via abstract configurator classes that provide the interface
 - do settings for terminal history, including history, or shared history for the alternate buffer if requested
 - change settings to reflect other changes (cursors etc)
-
-
-Small things:
-
-- rendering disabled terminal
-- hide console window in windows (arbitrary make the window visible on a configuration condition)
+- color for inactive cursor in terminal
+- color for dimming disabled terminal
 
 Documentation:
 
