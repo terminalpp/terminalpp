@@ -66,7 +66,6 @@ namespace tpp {
             modalPane_ = new ModalPane();
             modalPane_->setLayout(new ColumnLayout(VerticalAlign::Bottom));
             add(modalPane_);
-    
 
 #if (ARCH_WINDOWS)
             pty_ = new ui::BypassPTY{terminal_, config.session.command()};

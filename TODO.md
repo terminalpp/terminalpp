@@ -14,17 +14,15 @@ More robust UI framework, better configuration options and slightly increased se
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- WidgetBorder should only require repaint of children that interfere with the border (can be calculated from their visible rects)
-
 - revisit event propagation - keyboard events should handle hotkeys properly
 - perhaps have special hotkey propagation events that go top level up, or have hotkey processor? 
-
-- button basics
 
 - directwrite & X11 & qFont check double size font is working (seemslike the calculation ignores the font size)
 - qfont should keep the width if set
 
-- shapes.h is areally bad name for the classes defined therein
+- button basics, label fonts
+
+- geometry.h is areally bad name for some of the classes defined therein
 
 - revisit how errors are reported and logged and how things are checked before releases
 
@@ -40,6 +38,7 @@ Settings:
 - change settings to reflect other changes (cursors etc)
 - color for inactive cursor in terminal
 - color for dimming disabled terminal
+- add configuration option to confirm setting clipboard from the terminal
 
 Documentation:
 
@@ -57,7 +56,6 @@ Builds & Releases
 
 Issues to be raised:
 
-- add configuration option to confirm setting clipboard from the terminal
 - add a way to copy from mouse capturing terminal
 - how to & when invalidate selection when there are changes in the terminal's contents
 - fillRect should also update border color
@@ -73,6 +71,9 @@ Issues to be raised:
 - tooltip widget can be obtained by renderer and renderer knows its rectangle and can therefore issue repaints as appropriate
 - PositionHint: layout / absolute - absolute positioned elements are not updated by layouts
 - keyboard focus with tabIndices (this means that the getNextFocusableWidget has to be patched to look for the focusable widgets according to their indices instead of position in the children vector)
+
+- WidgetBorder should only require repaint of children that interfere with the border (can be calculated from their visible rects)
+
 
 ### v0.9
 
