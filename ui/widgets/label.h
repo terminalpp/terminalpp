@@ -107,10 +107,10 @@ namespace ui {
                     row = 0;
                     break;
                 case VerticalAlign::Middle:
-                    row = (canvas.height() - textLines_.size()) / 2;
+                    row = (canvas.height() - static_cast<int>(textLines_.size())) / 2;
                     break;
                 case VerticalAlign::Bottom:
-                    row = canvas.height() - textLines_.size();
+                    row = canvas.height() - static_cast<int>(textLines_.size());
                     break;
             }
             for (helpers::StringLine const & l : textLines_) {

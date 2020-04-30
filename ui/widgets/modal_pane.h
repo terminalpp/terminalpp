@@ -44,7 +44,7 @@ namespace ui {
 
     protected:
 
-        void paint(Canvas & canvas) {
+        void paint(Canvas & canvas) override {
             WidgetBackground::paint(canvas);
             Container::paint(canvas);
         }

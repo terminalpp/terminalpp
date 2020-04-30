@@ -18,7 +18,7 @@ namespace tpp {
 
         ~X11Window() override;
 
-        void repaint(Widget * widget) {
+        void repaint(Widget * widget) override {
             MARK_AS_UNUSED(widget);
             // trigger a refresh
             XEvent e;

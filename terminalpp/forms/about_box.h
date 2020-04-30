@@ -23,11 +23,10 @@ namespace tpp {
             canvas.setFont(ui::Font{}.setSize(2));
             canvas.textOut(Point{0,1}, "__Terminal++gj__");
             canvas.setFont(ui::Font{});
-
         }
 
-        void mouseClick(Event<MouseButtonEvent>::Payload & event) {
-
+        void mouseClick(Event<MouseButtonEvent>::Payload & event) override {
+            MARK_AS_UNUSED(event);
         }
 
     }; // tpp::AboutBox
