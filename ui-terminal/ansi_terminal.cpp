@@ -1596,7 +1596,7 @@ namespace ui {
     }
 
     void AnsiTerminal::Buffer::drawOnCanvas(Canvas & canvas, Color defaultBackground) const {
-#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
+#ifdef SHOW_LINE_ENDINGS
         Border endOfLine{Border{Color::Red}.setAll(Border::Kind::Thin)};
 #endif
         canvas.setBg(defaultBackground);
@@ -1608,7 +1608,7 @@ namespace ui {
                 break;
             for (int col = 0, ce = history_[row].first; col < ce; ++col) {
                 canvas.setAt(Point{col, row}, history_[row].second[col]);
-#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
+#ifdef SHOW_LINE_ENDINGS
                 if (isEndOfLine(history_[row].second[col]))
                     canvas.setBorderAt(Point{col, row}, endOfLine);
 #endif
@@ -1617,7 +1617,7 @@ namespace ui {
         }
         // now draw the actual buffer
         canvas.drawBuffer(*this, Point{0, top});
-#ifndef NDEBUG // #ifdef SHOW_LINE_ENDINGS
+#ifdef  SHOW_LINE_ENDINGS
         // now add borders to the cells that are marked as end of line
         for (int row = std::max(top, visibleRect.top()), re = visibleRect.bottom(); ; ++row) {
             if (row >= re)

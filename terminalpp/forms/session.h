@@ -62,7 +62,7 @@ namespace tpp {
             terminal_->onSetClipboard.setHandler(&Session::terminalSetClipboard, this);
             setLayout(new MaximizeLayout());
             //setLayout(new ColumnLayout(VerticalAlign::Bottom));
-            setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
+            //setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
             add(terminal_);
 
             modalPane_ = new ModalPane();

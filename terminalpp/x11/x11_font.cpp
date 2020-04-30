@@ -1,4 +1,6 @@
 #if (defined ARCH_LINUX && defined RENDERER_NATIVE)
+#include <cmath>
+
 #include "x11_font.h"
 
 namespace tpp {
@@ -47,7 +49,7 @@ namespace tpp {
         }
         // if the font height is not the cellHeight, update the pixel size accordingly and get the font again
         if (static_cast<int>(xftFont_->ascent + xftFont_->descent) != cellHeight_) {
-            fontHeight = fontHeight * fontHeight / (xftFont_->ascent + xftFont_->descent);
+            fontHeight = std::floor(fontHeight * fontHeight / (xftFont_->ascent + xftFont_->descent));
             CloseFont(xftFont_);
             FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);
             FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, fontHeight);
