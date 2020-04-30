@@ -151,8 +151,6 @@ namespace tpp {
         // if cell width is not specified (0), then the font determines the cell width and no centering is required
         if (cellWidth_ == 0) {
             cellWidth_ = w;
-            offsetLeft_ = 0;
-            offsetTop_ = 0;
         // if the cell is fully specified, and the font's width is smaller than the width of the cell, the font has to be centered horizontally
         } else if (w <= cellWidth_) {
             offsetLeft_ = (cellWidth_ - w) / 2;
@@ -160,7 +158,7 @@ namespace tpp {
         } else {
             float x = static_cast<float>(cellWidth_) / w;
             sizeEm_ *= x;
-            h = static_cast<unsigned>(h * x);
+            h = static_cast<int>(h * x);
             offsetTop_ = (cellHeight_ - h) / 2;
         }
         // set remaining font properties

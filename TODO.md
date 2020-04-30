@@ -17,9 +17,6 @@ More robust UI framework, better configuration options and slightly increased se
 - revisit event propagation - keyboard events should handle hotkeys properly
 - perhaps have special hotkey propagation events that go top level up, or have hotkey processor? 
 
-- x11 creates fonts too often - seems on every repaint...
-- qfont should keep the width if set
-
 - button basics, label fonts
 
 - add a modal widget trait that will have dismiss event or so and figure out how to use it nicely (about box and pastedialog are uses)

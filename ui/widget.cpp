@@ -34,7 +34,7 @@ namespace ui {
                 // if the parent needs to be repainted, we can just wait for that repaint to happen and skin this one
                 if (w->parent_->pendingRepaint_)
                     return;
-                if (w->repaintParent_) {
+                if (w->repaintParent_ || w->overlaid_ || w->transparent_) {
                     w = w->parent_;
                 } else {
                     break;

@@ -1,9 +1,7 @@
 .vs/
 benchmarks/data/
 build/
-build-release/
-build-win/
-build-test-win/
+build-*/
 website/
 build_stamp.h
 .DS_Store

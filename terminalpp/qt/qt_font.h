@@ -37,15 +37,26 @@ namespace tpp {
                 qFont_.setPixelSize(h);
                 metrics = QFontMetrics{qFont_};
             }
-            //QRect brect{metrics.boundingRect('M')};
-            //widthPx_ = brect.width();
 // TODO older versions if QT should not be supported in the future, this is for simple builds on Ubuntu for now
 // TODO should deal with keeping the font size and centering the font too
 #if (QT_VERSION >= QT_VERSION_CHECK(5,11,0))
-            cellWidth_ = static_cast<unsigned>(metrics.horizontalAdvance('M'));
+            int w = static_cast<unsigned>(metrics.horizontalAdvance('M'));
 #else
-            cellWidth_ = metrics.width('M');
+            int w = metrics.width('M');
 #endif
+            if (cellWidth_ == 0) {
+                cellWidth_ = w;
+                offsetLeft_ = 0;
+                offsetTop_ = 0;
+            } else if (w <= cellWidth_) {
+                offsetLeft_ = (cellWidth_ - w) / 2;
+            } else {
+                float x = static_cast<float>(cellWidth_) / w;
+                h = static_cast<int>(h * x);
+                qFont_.setPixelSize(h);
+                metrics = QFontMetrics{qFont_};
+                offsetTop_ = (cellHeight_ - h) / 2;
+            }
             ascent_ = metrics.ascent();
             underlineOffset_ = ascent_ + 1;
             underlineThickness_ = 1;
