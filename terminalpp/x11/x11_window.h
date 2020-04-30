@@ -128,7 +128,7 @@ namespace tpp {
             if (widthPx_ % cellWidth_ != 0)
                 XftDrawRect(draw_, &bg_, width() * cellWidth_, 0, widthPx_ % cellWidth_, heightPx_);
             if (heightPx_ % cellHeight_ != 0)
-                XftDrawRect(draw_, &bg_, 0, height() * cellHeight_, width(), heightPx_ % cellHeight_);
+                XftDrawRect(draw_, &bg_, 0, height() * cellHeight_, widthPx_, heightPx_ % cellHeight_);
             // now bitblt the buffer
             XCopyArea(display_, buffer_, window_, gc_, 0, 0, widthPx_, heightPx_, 0, 0);
             XftDrawDestroy(draw_);

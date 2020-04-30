@@ -17,7 +17,7 @@ More robust UI framework, better configuration options and slightly increased se
 - revisit event propagation - keyboard events should handle hotkeys properly
 - perhaps have special hotkey propagation events that go top level up, or have hotkey processor? 
 
-- X11 does not seem to clear extra areas when zoomed
+- x11 creates fonts too often - seems on every repaint...
 - qfont should keep the width if set
 
 - button basics, label fonts

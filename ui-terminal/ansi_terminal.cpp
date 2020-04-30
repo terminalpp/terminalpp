@@ -159,8 +159,8 @@ namespace ui {
         mouseLastButton_{0},
         lineDrawingSet_{false},
         bracketedPaste_{false},
-        state_{width, height},
-        stateBackup_{width, height},
+        state_{width, height, 1000},
+        stateBackup_{width, height, 0},
         alternateMode_{false},
         boldIsBright_{false} {
         setFps(60);

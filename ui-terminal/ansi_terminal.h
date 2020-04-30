@@ -26,9 +26,9 @@ namespace ui {
          */
         class Buffer : public ui::Buffer {
         public:
-            Buffer(int width, int height):
+            Buffer(int width, int height, int historyRows):
                 ui::Buffer{width, height},
-                maxHistoryRows_{1000} {
+                maxHistoryRows_{historyRows} {
             }
 
             void fill(Cell const & cell) {
@@ -251,8 +251,8 @@ namespace ui {
 
         class State {
         public:
-            State(int cols, int rows):
-                buffer{cols, rows},
+            State(int cols, int rows, int maxHistoryLines):
+                buffer{cols, rows, maxHistoryLines},
                 cursor{0,0},
                 lastCharacter{0,0},
                 scrollStart{0},
