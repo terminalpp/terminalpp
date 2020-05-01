@@ -44,6 +44,9 @@ namespace ui {
         template<template<typename> typename X, typename T>
         friend class TraitBase;
 
+        template<typename T>
+        friend class Modal;
+
         Container(Layout * layout = Layout::None):
             layout_{layout},
             layoutScheduled_{false} {
@@ -221,17 +224,13 @@ namespace ui {
          */
         Size calculateAutoSize() override {
             UI_THREAD_CHECK;
-            int w = 0;
-            int h = 0;
+            Rect r{Rect::Empty()};
             for (Widget * child : children_) {
                 if (!child->visible())
                     continue;
-                if (w < child->rect_.right())
-                    w = child->rect_.right();
-                if (h < child->rect_.bottom())
-                    h = child->rect_.bottom();
+                r = r | child->rect_;
             }
-            return Size{w, h};
+            return Size{r.width(), r.height()};
         }
 
         std::vector<Widget *> children_;

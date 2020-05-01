@@ -17,9 +17,9 @@ More robust UI framework, better configuration options and slightly increased se
 - revisit event propagation - keyboard events should handle hotkeys properly
 - perhaps have special hotkey propagation events that go top level up, or have hotkey processor? 
 
-- button basics, label fonts
+- document the modal pane & modal trait
 
-- add a modal widget trait that will have dismiss event or so and figure out how to use it nicely (about box and pastedialog are uses)
+- button basics, label fonts
 
 - geometry.h is areally bad name for some of the classes defined therein
 

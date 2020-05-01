@@ -75,7 +75,8 @@ namespace ui {
                 else if (child->heightHint() == SizeHint::Kind::Layout)
                     ++autoElements;
             }
-            int autoHeight = availableHeight / static_cast<int>(children.size());
+            // nothing to do
+            int autoHeight = (autoElements == 0) ? availableHeight : (availableHeight / static_cast<int>(autoElements));
             // once we know the available height, calculate the actual height by doing a dry run
             int actualHeight = 0;
             for (Widget * child : children)

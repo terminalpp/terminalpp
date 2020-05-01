@@ -5,7 +5,6 @@
 #include "ui/widgets/panel.h"
 #include "ui/widgets/button.h"
 #include "ui/widgets/label.h"
-#include "ui/widgets/modal_pane.h"
 #include "ui/widgets/dialog.h"
 #include "ui/layouts/maximize.h"
 #include "ui/layouts/column.h"
@@ -24,7 +23,7 @@ namespace tpp {
     class PasteDialog : public ui::Dialog::YesNoCancel {
     public:
         PasteDialog(std::string const & contents):
-            Dialog::YesNoCancel{"Are you sure you want to paste?"},
+            Dialog::YesNoCancel{"Are you sure you want to paste?", true},
             contents_{new Label{contents}} {
             setBody(contents_);
         }
@@ -67,6 +66,7 @@ namespace tpp {
 
             modalPane_ = new ModalPane();
             modalPane_->setLayout(new ColumnLayout(VerticalAlign::Bottom));
+            //modalPane_->setHeightHint(SizeHint::Auto());
             add(modalPane_);
 
 #if (ARCH_WINDOWS)
@@ -117,7 +117,7 @@ namespace tpp {
                 e.stop();
             } else if (*e == (Key::F1 + Key::Alt)) {
                 AboutBox * ab = new AboutBox();
-                modalPane_->show(ab);
+                modalPane_->add(ab);
                 e.stop();
             }
         }
@@ -182,12 +182,11 @@ namespace tpp {
         void paste(Event<std::string>::Payload & e) override {
             PasteDialog * pd = new PasteDialog(*e);
             pd->onDismiss.setHandler([this, pd](Event<Widget*>::Payload & e) {
-                modalPane_->dismiss(pd);
+                //modalPane_->dismiss(pd);
                 if (*e == pd->btnYes())
                     terminal_->paste(pd->contents());
-                delete pd;
             });
-            modalPane_->show(pd);
+            modalPane_->add(pd);
         }
 
     private:

@@ -4,6 +4,8 @@
 #include "../layouts/column.h"
 #include "../layouts/maximize.h"
 
+#include "../traits/modal.h"
+
 #include "panel.h"
 #include "label.h"
 
@@ -14,12 +16,13 @@ namespace ui {
         Dialog window contains header, buttons. 
 
      */
-    class Dialog : public CustomPanel  {
+    class Dialog : public CustomPanel, public Modal<Dialog>  {
     public:
 
         class YesNoCancel;
 
-        Dialog(std::string const & title):
+        Dialog(std::string const & title, bool deleteOnDismiss = false):
+            Modal{deleteOnDismiss},
             title_{title},
             header_{new PublicContainer{new RowLayout{HorizontalAlign::Right}}},
             body_{nullptr} {
@@ -28,6 +31,17 @@ namespace ui {
             add(header_);
             setHeightHint(SizeHint::Auto());
             header_->setHeightHint(SizeHint::Auto());
+        }
+
+        std::string const & title() const {
+            return title_;
+        }
+
+        virtual void setTitle(std::string const & value) {
+            if (title_ != value) {
+                title_ = value;
+                repaint();
+            }
         }
 
         /** Returns the body of the dialog. 
@@ -51,13 +65,6 @@ namespace ui {
             }
         }
 
-        /** Triggered when the dialog is to be dismissed. 
-         
-            The payload of the event is the control responsible for the dismisal which can be used to identify the outcome. 
-         */
-        Event<Widget*> onDismiss;
-
-
     protected:
 
         bool isTransparent() override {
@@ -80,11 +87,6 @@ namespace ui {
             header_->add(widget);
         }
 
-        virtual void dismiss(Widget * cause) {
-            Event<Widget*>::Payload p{cause};
-            onDismiss(p, this);
-        }
-        
         void mouseClick(Event<MouseButtonEvent>::Payload & event) override {
             Container::mouseClick(event);
             Event<Widget*>::Payload p{this};
@@ -101,8 +103,8 @@ namespace ui {
      */
     class Dialog::YesNoCancel : public Dialog {
     public:
-        YesNoCancel(std::string const & title):
-            Dialog{title},
+        YesNoCancel(std::string const & title, bool deleteOnDismiss = false):
+            Dialog{title, deleteOnDismiss},
             btnYes_{new Button{" Yes "}},
             btnNo_{new Button{" No "}},
             btnCancel_{new Button{" X "}} {

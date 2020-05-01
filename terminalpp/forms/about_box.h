@@ -1,13 +1,15 @@
 #pragma once
 
 #include "ui/widgets/panel.h"
+#include "ui/traits/modal.h"
 
 namespace tpp {
 
-    class AboutBox : public ui::CustomPanel {
+    class AboutBox : public ui::CustomPanel, public Modal<AboutBox> {
     public:
         AboutBox():
-            CustomPanel{} {
+            CustomPanel{},
+            Modal{true} {
             setBorder(Border{Color::White}.setAll(Border::Kind::Thin));
             setBackground(Color::Blue);
             setWidthHint(SizeHint::Manual());
@@ -26,7 +28,7 @@ namespace tpp {
         }
 
         void mouseClick(Event<MouseButtonEvent>::Payload & event) override {
-            MARK_AS_UNUSED(event);
+            dismiss(this);
         }
 
     }; // tpp::AboutBox

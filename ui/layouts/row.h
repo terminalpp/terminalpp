@@ -74,7 +74,7 @@ namespace ui {
                 else if (child->widthHint() == SizeHint::Kind::Layout)
                     ++autoElements;
             }
-            int autoWidth = availableWidth / static_cast<int>(children.size());
+            int autoWidth = (autoElements == 0) ? availableWidth : (availableWidth / static_cast<int>(children.size()));
             // once we know the available width, calculate the actual width by doing a dry run
             int actualWidth = 0;
             for (Widget * child : children)

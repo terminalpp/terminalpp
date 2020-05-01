@@ -242,24 +242,32 @@ namespace ui {
 		 */
 		Rect operator & (Rect const & other) const {
 			using namespace std;
-			return Rect::FromCorners(
-				max(left(), other.left()),
-				max(top(), other.top()),
-				min(right(), other.right()),
-				min(bottom(), other.bottom())
-			);
+            if (empty() || other.empty())
+                return Rect::Empty();
+			else 
+                return Rect::FromCorners(
+                    max(left(), other.left()),
+                    max(top(), other.top()),
+                    min(right(), other.right()),
+                    min(bottom(), other.bottom())
+                );
 		}
 
 		/** Returns the union of two rectangles. 
 		 */
 		Rect operator | (Rect const & other) const {
 			using namespace std;
-			return Rect::FromCorners(
-				min(left(), other.left()),
-				min(top(), other.top()),
-				max(right(), other.right()),
-				max(bottom(), other.bottom())
-			);
+            if (empty())
+                return other;
+            else if (other.empty())
+                return *this;
+            else 
+                return Rect::FromCorners(
+                    min(left(), other.left()),
+                    min(top(), other.top()),
+                    max(right(), other.right()),
+                    max(bottom(), other.bottom())
+                );
 		}
 
         bool operator == (Rect const & other) const {

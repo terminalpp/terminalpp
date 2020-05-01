@@ -408,7 +408,11 @@ namespace ui {
             if (mouseButtons_ != 0 && mouseFocus_ != nullptr)
                 return;
             // determine the mouse target
-            Widget * newTarget = (modalRoot_ != nullptr) ? modalRoot_->getMouseTarget(coords) : nullptr;
+            Widget * newTarget = nullptr;
+            if (modalRoot_ != nullptr) {
+                coords = modalRoot_->toWidgetCoordinates(coords);
+                newTarget = modalRoot_->getMouseTarget(coords);
+            }
             // check if the target has changed and emit the appropriate events
             if (mouseFocus_ != newTarget) {
                 if (mouseFocus_ != nullptr) {
