@@ -1,6 +1,9 @@
 # Terminal++ Library
 
-Library support for the `terminal++` advanced features. Should be of immediate use to any client applications, anyone interested in hosting a `terminal++` session should instead look at the `tpp-widget` and its implementation. 
+Library support for the `terminal++` advanced features. 
+
+
+Should be of immediate use to any client applications, anyone interested in hosting a `terminal++` session should instead look at the `tpp-widget` and its implementation. 
 
 > As `terminal++` clients are planned almost exclusively for the Linux system, the Windows versions of various classes in the library are not implemented at the moment. There are no immediate plans to change this.
 

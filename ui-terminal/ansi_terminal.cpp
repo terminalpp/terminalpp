@@ -491,6 +491,7 @@ namespace ui {
         LOG(SEQ) << "codepoint " << codepoint << " " << static_cast<char>(codepoint & 0xff);
         updateCursorPosition();
         // set the cell state
+        //Cell & cell = state_.buffer.set(state_.cursor, state_.cell, codepoint);
         Cell & cell = state_.buffer.at(state_.cursor);
         cell = state_.cell;
         cell.setCodepoint(codepoint);

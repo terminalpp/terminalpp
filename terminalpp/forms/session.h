@@ -74,7 +74,7 @@ namespace tpp {
             pty_ = new BypassPTY{new PtyPP{terminal_}, config.session.command()};
 //            pty_ = new ui::LocalPTY{terminal_, helpers::Command{"cmd.exe", {}}};
 #else
-            pty_ = new ui::LocalPTY{terminal_, config.session.command()};
+            pty_ = new ui::LocalPTY{new PtyPP{terminal_}, config.session.command()};
 #endif
             //window_->setKeyboardFocus(terminal_);
         }

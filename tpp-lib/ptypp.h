@@ -9,6 +9,9 @@ namespace tpp {
     /** Terminal++ PTY. 
      
         PTY++ is itself a PTY client for a basic OS pseudoterminal connection and provides the multiplexing and additional `t++` features. 
+
+        - multiple channels can be multiplexed into single PTY
+        - each channel can transfer files
      */
     class PtyPP : public PTY::Client {
     public:
@@ -87,12 +90,31 @@ namespace tpp {
             defaultChannel_->terminated(exitCode);
         }
 
+        /** Processes the input from the main PTY. 
+         
+            This needs to be super fast. 
+         */
         virtual size_t processInput(char const * buffer, char const * bufferEnd) override {
-            size_t size = bufferEnd - buffer;
-            defaultChannel_->receive(buffer, size);
-            return size;
+            size_t processed = 0;
+            while (buffer != bufferEnd) {
+                char const * tppStart = buffer;
+                while (tppStart < bufferEnd - 2) {
+                    if (tppStart[2] == '+' && tppStart[0] == '\033' && tppStart[1] == 'P')
+                        break;
+                    ++tppStart;
+                }
+                if (tppStart == bufferEnd - 2)
+                    tppStart = bufferEnd;
+                // if there are characters before the TPP sequence, send them to default channel
+                if (tppStart != buffer) {
+                    processed += tppStart - buffer;
+                    defaultChannel_->receive(buffer, tppStart - buffer);
+                }
+                buffer = tppStart;
+                // TODO process the TPP sequence 
+            }
+            return processed;
         }
-
 
     private:
 
