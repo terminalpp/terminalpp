@@ -5,7 +5,7 @@
 
 #include "bypass_pty.h"
 
-namespace ui {
+namespace tpp {
 
     BypassPTY::BypassPTY(Client * client, helpers::Command const & command):
         IOPTY{client},

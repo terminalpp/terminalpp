@@ -160,16 +160,6 @@ namespace ui {
          */
         virtual void send(char const * buffer, size_t bufferSize) = 0;
 
-        /** Receives data from the PTY in given buffer.
-         
-            At most maxBufferSize bytes will be read. Returns the actual number of bytes written in the buffer, which can be 0. The success argument is set to true, or to false if there was an error while reading.
-         */
-        virtual size_t receive(char * buffer, size_t maxBufferSize, bool & success) = 0;
-
-        /** Waits for the exit code of the attached process and returns it. 
-         */
-        virtual helpers::ExitCode waitAndGetExitCode() = 0;
-
         /** Called by the implementation when new data is received. 
          
             If client exists, makes the client process the data, otherwise does nothing. 
@@ -199,6 +189,18 @@ namespace ui {
         }
 
     protected:
+
+        using PTY::receive;
+
+        /** Receives data from the PTY in given buffer.
+         
+            At most maxBufferSize bytes will be read. Returns the actual number of bytes written in the buffer, which can be 0. The success argument is set to true, or to false if there was an error while reading.
+         */
+        virtual size_t receive(char * buffer, size_t maxBufferSize, bool & success) = 0;
+
+        /** Waits for the exit code of the attached process and returns it. 
+         */
+        virtual helpers::ExitCode waitAndGetExitCode() = 0;
 
         void start() override {
             reader_ = std::thread{[this](){

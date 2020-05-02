@@ -8,9 +8,12 @@
 
 #include "windows.h"
 
-#include "pty.h"
+#include "ui-terminal/pty.h"
 
-namespace ui {
+namespace tpp {
+
+    using ui::PTY;
+    using ui::IOPTY;
 
     /** A big mess of thread unsafe stuff for now, but the light at the end of the tunnel is visible...
      */
