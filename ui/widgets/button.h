@@ -13,7 +13,7 @@ namespace ui {
             text_{text} {
             setHeightHint(SizeHint::Auto());
             setWidthHint(SizeHint::Auto());
-
+            setFocusable(true);
         }
 
         /** \name Button text. 

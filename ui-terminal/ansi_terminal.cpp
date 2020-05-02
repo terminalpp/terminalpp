@@ -374,6 +374,8 @@ namespace ui {
     }
 
     void AnsiTerminal::keyChar(Event<Char>::Payload & event) {
+        // don't propagate to parent as the terminal handles keyboard input itself
+        event.propagateToParent(false);
         Widget::keyChar(event);
         if (! event.active())
             return;
@@ -382,6 +384,8 @@ namespace ui {
     }
 
     void AnsiTerminal::keyDown(Event<Key>::Payload & event) {
+        // don't propagate to parent as the terminal handles keyboard input itself
+        event.propagateToParent(false);
         Widget::keyDown(event);
         if (! event.active())
             return;

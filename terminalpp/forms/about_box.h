@@ -15,6 +15,7 @@ namespace tpp {
             setWidthHint(SizeHint::Manual());
             setHeightHint(SizeHint::Manual());
             resize(65,10);
+            setFocusable(true);
         }
 
     protected:
@@ -28,6 +29,10 @@ namespace tpp {
         }
 
         void mouseClick(Event<MouseButtonEvent>::Payload & event) override {
+            dismiss(this);
+        }
+
+        void keyDown(Event<Key>::Payload & event) override {
             dismiss(this);
         }
 

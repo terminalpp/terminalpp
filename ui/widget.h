@@ -484,7 +484,7 @@ namespace ui {
             return focusable_;
         }
 
-        /** Determines whether the widget can received keyboard focus. 
+        /** Determines whether the widget can receive keyboard focus. 
          */
         virtual void setFocusable(bool value = true) {
             if (focusable_ != value)
@@ -520,18 +520,36 @@ namespace ui {
         }
 
         virtual void keyChar(Event<Char>::Payload & event) {
-            if (event.active())
-                onKeyChar(event, this);
+            if (event.active()) {
+                if (onKeyChar.attached()) {
+                    event.propagateToParent(false);
+                    onKeyChar(event, this);
+                }
+                if (event.shouldPropagateToParent() && event.active() && parent_ != nullptr)
+                    parent_->keyChar(event);
+            }
         }
 
         virtual void keyDown(Event<Key>::Payload & event) {
-            if (event.active())
-                onKeyDown(event, this);
+            if (event.active()) {
+                if (onKeyDown.attached()) {
+                    event.propagateToParent(false);
+                    onKeyDown(event, this);
+                }
+                if (event.shouldPropagateToParent() && event.active() && parent_ != nullptr)
+                    parent_->keyDown(event);
+            }
         }
 
         virtual void keyUp(Event<Key>::Payload & event) {
-            if (event.active())
-                onKeyUp(event, this);
+            if (event.active()) {
+                if (onKeyUp.attached()) {
+                    event.propagateToParent(false);
+                    onKeyUp(event, this);
+                }
+                if (event.shouldPropagateToParent() && event.active() && parent_ != nullptr)
+                    parent_->keyUp(event);
+            }
         }
         //@}
 

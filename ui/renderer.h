@@ -455,18 +455,21 @@ namespace ui {
         virtual void rendererKeyChar(Char c) {
             ASSERT(keyboardIn_);
             Event<Char>::Payload p{c};
+            p.propagateToParent(true);
             keyChar(p, keyboardFocus_);
         }
 
         virtual void rendererKeyDown(Key k) {
             ASSERT(keyboardIn_);
             Event<Key>::Payload p{k};
+            p.propagateToParent(true);
             keyDown(p, keyboardFocus_);
         }
 
         virtual void rendererKeyUp(Key k) {
             ASSERT(keyboardIn_);
             Event<Key>::Payload p{k};
+            p.propagateToParent(true);
             keyUp(p, keyboardFocus_);
         }
 

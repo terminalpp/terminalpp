@@ -32,7 +32,8 @@ namespace ui {
         ~Container() override {
             while (!children_.empty()) {
                 Widget * w = children_.front();
-                remove(w);
+                // remove is virtual but in the destructor, we don't care
+                Container::remove(w);
                 delete w;
             }
             if (layout_ != Layout::None)
@@ -51,7 +52,6 @@ namespace ui {
             layout_{layout},
             layoutScheduled_{false} {
         }
-
 
         /** Adds the given widget as child. 
          

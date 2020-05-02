@@ -14,11 +14,6 @@ More robust UI framework, better configuration options and slightly increased se
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- revisit event propagation - keyboard events should handle hotkeys properly
-- perhaps have special hotkey propagation events that go top level up, or have hotkey processor? 
-
-- document the modal pane & modal trait
-
 - button basics, label fonts
 
 - geometry.h is areally bad name for some of the classes defined therein
@@ -43,6 +38,8 @@ Documentation:
 - document size hints 
 - add comments to keyboard focus stuff
 - mouseUp, Down, WHeel, Move, Click and DoubleClick can propagate to parent, update the documentation
+- and so does the keyboard, propagation to parent disabled by default if event enabled 
+- document the modal pane & modal trait
 
 Builds & Releases
 

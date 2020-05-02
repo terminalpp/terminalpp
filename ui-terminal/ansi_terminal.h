@@ -363,6 +363,12 @@ namespace ui {
 
         void keyChar(Event<Char>::Payload & event) override;
         void keyDown(Event<Key>::Payload & event) override;
+
+        void keyUp(Event<Key>::Payload & event) override {
+            // don't propagate to parent as the terminal handles keyboard input itself
+            event.propagateToParent(false);
+            Widget::keyUp(event);
+        }
         //@}
 
         /** \name PTY Interface 

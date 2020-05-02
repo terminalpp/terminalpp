@@ -137,6 +137,14 @@ namespace ui {
         void headerButtonClicked(Event<MouseButtonEvent>::Payload & e) {
             dismiss(e.sender());
         }
+
+        void keyDown(Event<Key>::Payload & event) override {
+            if (*event == Key::Esc) {
+                dismiss(btnCancel_);
+                return;
+            }
+
+        }
     }; // ui::Dialog::YesNoCancel 
 
 } // namespace ui
