@@ -19,54 +19,84 @@ namespace tpp {
         class Proxy : public PTY {
         public:
 
+            Proxy(PTY::Client * client, PtyPP * ptypp, size_t channel):
+                PTY{client},
+                ptypp_{ptypp},
+                channel_{channel} {
+            }
+
+            size_t channel() const {
+                return channel_;
+            }
+
             void terminate() override {
-                pty_->terminate(this);
+                ptypp_->terminate(this);
             }
 
         protected:
+            friend class PtyPP;
 
             void resize(int cols, int rows) override {
-                pty_->resize(this, cols, rows);
+                ptypp_->resize(this, cols, rows);
             }
 
             void send(char const * buffer, size_t bufferSize) override {
-                pty_->send(this, buffer, bufferSize);
+                ptypp_->send(this, buffer, bufferSize);
             }
 
         private:
+            PtyPP * ptypp_;
             size_t channel_;
-            PtyPP * pty_;
-        };
+        }; // tpp::PtyPP::Proxy
+
+        PtyPP(PTY::Client * defaultClient):
+            defaultChannel_{new Proxy{defaultClient, this, 0}} {
+        }
+
+        ~PtyPP() override {
+            delete defaultChannel_;
+        }
 
     protected:
 
-        void terminate(ProxyPTY * sender) {
-
+        void terminate(Proxy * sender) {
+            if (sender->channel() == 0) {
+                pty()->terminate();
+            } else {
+                NOT_IMPLEMENTED;
+            }
         }
 
-        void resize(ProxyPTY * sender, int cols, int rows) {
-
+        void resize(Proxy * sender, int cols, int rows) {
+            if (sender->channel() == 0) {
+                ptyResize(cols, rows);
+            } else {
+                NOT_IMPLEMENTED;
+            }
         }
 
-        void send(ProxyPTY * sender, char const * buffer, size_t bufferSize) {
-
+        void send(Proxy * sender, char const * buffer, size_t bufferSize) {
+            if (sender->channel() == 0) {
+                ptySend(buffer,bufferSize);
+            } else {
+                NOT_IMPLEMENTED;
+            }
         }
 
-
-        virtual void ptyTerminated(ExitCode exitCode) override {
-
+        void ptyTerminated(ExitCode exitCode) override {
+            defaultChannel_->terminated(exitCode);
         }
-
 
         virtual size_t processInput(char const * buffer, char const * bufferEnd) override {
-
+            size_t size = bufferEnd - buffer;
+            defaultChannel_->receive(buffer, size);
+            return size;
         }
 
 
     private:
-        /** Channels to which the pseudoterminal demultiplexes the input. 
-         */
-        std::unordered_map<size_t, ProxyPTY *> channels_;
+
+        Proxy * defaultChannel_;
     };
 
 
