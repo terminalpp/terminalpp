@@ -97,11 +97,14 @@ namespace tpp {
         virtual size_t processInput(char const * buffer, char const * bufferEnd) override {
             size_t processed = 0;
             while (buffer != bufferEnd) {
-                char const * tppStart = buffer;
-                while (tppStart < bufferEnd - 2) {
-                    if (tppStart[2] == '+' && tppStart[0] == '\033' && tppStart[1] == 'P')
+                char const * tppStart = bufferEnd;
+                char const * i = buffer;
+                while (i < bufferEnd - 2) {
+                    if (i[2] == '+' && i[0] == '\033' && i[1] == 'P') {
+                        tppStart = i;
                         break;
-                    ++tppStart;
+                    }
+                    ++i;
                 }
                 if (tppStart == bufferEnd - 2)
                     tppStart = bufferEnd;
