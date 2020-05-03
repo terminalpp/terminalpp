@@ -638,20 +638,14 @@ namespace ui {
 				break;
             /* Device Control String (DCS). 
              */
-            /*case 'P':
+            case 'P':
                 if (x == bufferEnd)
                     return false;
-                if (*x == '+') {
-                    ++x;
-                    tpp::Sequence seq(tpp::Sequence::Parse(x, bufferEnd));
-                    if (!seq.complete())
-                        return false;
-                    if (!seq.valid())
-                        break;
-                    parseTppSequence(std::move(seq));
-                }
+                if (*x == '+')
+                    return parseTppSequence(buffer, bufferEnd);
+                else
+                    LOG(SEQ_UNKNOWN) << "Unknown DCS sequence";
                 break;
-            */
     		/* Character set specification - most cases are ignored, with the exception of the box drawing and reset to english (0 and B) respectively. 
              */
 			case '(':
@@ -706,6 +700,36 @@ namespace ui {
 				break;
         }
         return x - buffer;
+    }
+
+    size_t AnsiTerminal::parseTppSequence(char const * buffer, char const * bufferEnd) {
+        // we know that we have at least \033P+   
+        char const * i = buffer + 3;
+        size_t size = 0;
+        unsigned digit = 0;
+        while (i < bufferEnd) {
+            if (*i == ';') {
+                char const * msgStart = i + 1;
+                char const * msgEnd = msgStart + size;
+                // we need more data to be received to parse the whole message
+                if (msgEnd >= bufferEnd)
+                    return 0;
+                if (*msgEnd != Char::BEL) {
+                    LOG(SEQ_ERROR) << "Mismatched t++ sequence terminator";
+                    return 3; // just the header
+                }
+                // now we have the whole sequence, so we can process it
+                LOG(SEQ) << "t++ sequence of size " << (msgEnd - msgStart);
+                processTppSequence(msgStart, msgEnd);
+                return msgEnd - buffer;
+            } else if (! Char::IsHexadecimalDigit(*i, digit)) {
+                LOG(SEQ_ERROR) << "Invalid characters in t++ sequence size";
+                return 3; // just the header
+            }
+            size = (size * 16) + digit;
+            ++i;
+        }
+        return 3; // just the header
     }
 
     void AnsiTerminal::parseCSISequence(CSISequence & seq) {

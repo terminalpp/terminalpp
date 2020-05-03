@@ -15,6 +15,12 @@
 
 namespace ui {
 
+    class TppSequenceEvent {
+    public:
+        char const * start;
+        char const * end;
+    }; // ui::TppSequenceEvent
+
     class AnsiTerminal : public PublicWidget, public PTY::Client, public Scrollable<AnsiTerminal>, public SelectionOwner<AnsiTerminal> {
     public:
 
@@ -184,6 +190,12 @@ namespace ui {
             Has the exit code reported by the PTY as a payload. 
          */
         Event<helpers::ExitCode> onPTYTerminated;
+
+        /** Triggered when t++ sequence is received in the terminal input. [thread-safe]
+         
+            Note that this event may be called from non-ui thread as part of the terminal input processing. It is therefore important than any processing done in the event is done quickly. 
+         */
+        Event<TppSequenceEvent> onTppSequence;
         //@}
 
         /** Clipboard paste event. 
@@ -390,6 +402,15 @@ namespace ui {
         }
         //@}
 
+        /** Called when `t++` sequence is parsed & received by the terminal. 
+         
+            The default implementation simply calls the event handler, if registered. 
+         */
+        virtual void processTppSequence(char const * buffer, char const * bufferEnd) {
+            Event<TppSequenceEvent>::Payload p{TppSequenceEvent{buffer, bufferEnd}};
+            onTppSequence(p, this);
+        }
+
         /** \name Input Parsing
          
             Input processing can happen in non-UI thread.
@@ -413,6 +434,9 @@ namespace ui {
             CSI, OSC and few others are supported. 
          */
         size_t parseEscapeSequence(char const * buffer, char const * bufferEnd);
+
+
+        size_t parseTppSequence(char const * buffer, char const * bufferEnd);
 
         /** Processes given CSI sequence. 
          

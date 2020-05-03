@@ -20,8 +20,11 @@ More robust UI framework, better configuration options and slightly increased se
 
 Terminal++ PTY:
 
+- pty++ should parse the TPP sequences properly
+
 - PTY++ and remote files version 2.0 - or maybe just do the old PTY but in PTY++ pty in the new architecture.
 - deal with how PTYs are deleted (and the entire session)
+
 
 Settings:
 

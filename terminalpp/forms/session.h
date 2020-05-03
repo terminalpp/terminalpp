@@ -12,7 +12,6 @@
 #include "ui-terminal/ansi_terminal.h"
 #include "ui-terminal/local_pty.h"
 #include "tpp-lib/bypass_pty.h"
-#include "tpp-lib/ptypp.h"
 
 #include "about_box.h"
 
@@ -71,10 +70,10 @@ namespace tpp {
             add(modalPane_);
 
 #if (ARCH_WINDOWS)
-            pty_ = new BypassPTY{new PtyPP{terminal_}, config.session.command()};
+            pty_ = new BypassPTY{terminal_, config.session.command()};
 //            pty_ = new ui::LocalPTY{terminal_, helpers::Command{"cmd.exe", {}}};
 #else
-            pty_ = new ui::LocalPTY{new PtyPP{terminal_}, config.session.command()};
+            pty_ = new ui::LocalPTY{terminal_, config.session.command()};
 #endif
             //window_->setKeyboardFocus(terminal_);
         }

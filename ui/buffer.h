@@ -23,6 +23,12 @@ namespace ui {
             decor_{Color::Black} {
         }
 
+        Cell & operator = (Cell const & other) {
+            if (this != &other)
+                memcpy(this, &other, sizeof(Cell));
+            return *this;
+        }
+
         /** \name Codepoint
           
             The unencoded Unicode codepoint to be displayed in the cell.

@@ -92,7 +92,6 @@ namespace tpp {
 
         /** Processes the input from the main PTY. 
          
-            This needs to be super fast. 
          */
         virtual size_t processInput(char const * buffer, char const * bufferEnd) override {
             size_t processed = 0;
@@ -113,10 +112,49 @@ namespace tpp {
                     processed += tppStart - buffer;
                     defaultChannel_->receive(buffer, tppStart - buffer);
                 }
+                // parse the size of the message, which is stored as hexadecimal number of bytes followed by a semicolon
+                size_t msgSize = 0;
+                unsigned digit = 0;
+                i = tppStart + 3; 
+                while (true) {
+                    // if we got to the end of the buffer without parsing the proper size, more needs to be received
+                    if (i >= bufferEnd)
+                        return processed;
+                    // we have the size
+                    if (*i == ';') {
+                        char const * msgStart = i + 1; // past the semicolon
+                        // if the message is not entirely in the buffer, we need to read more
+                        if (msgStart + msgSize >= bufferEnd)
+                            return processed;
+                        if (msgStart[msgSize] != Char::BEL) {
+                            LOG() << "Error";
+                            break;
+                        }
+                        // actually process the tpp message
+                        processTpp(msgStart, msgStart + msgSize);
+                        // update number of processed elements
+                        processed += msgStart - tppStart + msgSize + 1;
+                        tppStart = msgStart + msgSize + 1; // past the message and its BEL terminator
+                        break;
+                    }
+                    // otherwise it has to be hexadecimal number determining the size of the message
+                    if (!Char::IsHexadecimalDigit(*i, digit)) {
+                        LOG() << "Error";
+                        break;
+                    }
+                    ++i;
+                    msgSize = (msgSize * 10) + digit;
+                }
+                // set the buffer start to what is in tppStart, which skips over the tpp message if successful, but addds the tpp message to the default channel if its format is not valid 
                 buffer = tppStart;
-                // TODO process the TPP sequence 
             }
             return processed;
+        }
+
+        /** Procesess the contents of tpp sequence. 
+         */
+        void processTpp(char const * buffer, char const * bufferEnd) {
+            LOG() << "TPP message received, size: " << (bufferEnd - buffer);
         }
 
     private:

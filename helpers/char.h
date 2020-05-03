@@ -403,6 +403,35 @@ namespace helpers {
 			}
 		}
 
+        static bool IsDecimalDigit(char x) {
+            return (x >= '0' && x <= '9');
+        }
+
+        static bool IsDecimalDigit(char x, unsigned & value) {
+            if (x >= '0' && x <= '9') {
+                value = x - '0';
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        static bool IsHexadecimalDigit(char x) {
+            return (x >= '0' && x <= '9') || (x >= 'a' && x <= 'f') || (x >= 'A' && x <= 'F');
+        }
+
+        static bool IsHexadecimalDigit(char x, unsigned & value) {
+            if (x <= '9' && x >= '0')
+                value = (x - '0');
+            else if (x <= 'f' && x >= 'a')
+                value = (x - 'a' + 10);
+            else if (x <= 'F' && x >= 'A')
+                value = (x - 'A' + 10);
+            else
+                return false;
+            return true;
+        }
+
 	private:
 
 	    Char(unsigned char first, unsigned char second = 0, unsigned char third = 0, unsigned char fourth = 0) {
