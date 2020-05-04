@@ -161,7 +161,7 @@ namespace tpp {
             if (state_.bg().a != 0) {
                 painter_.fillRect(col * cellWidth_, (row + 1 - fontHeight)  * cellHeight_, cellWidth_ * fontWidth, cellHeight_ * fontHeight, painter_.brush());   
             }
-            if ((cp != 32) && (!state_.font().blink() || BlinkVisible_)) {
+            if ((cp != 32) && (!state_.font().blink() || BlinkVisible())) {
                 painter_.drawText(col * cellWidth_, (row + 1 - state_.font().height()) * cellHeight_ + font_->ascent(), QString::fromUcs4(&cp, 1));
             }
             ++glyphRunSize_;
@@ -199,7 +199,7 @@ namespace tpp {
         void drawGlyphRun() {
             if (glyphRunSize_ == 0)
                 return;
-            if (!state_.font().blink() || BlinkVisible_) {
+            if (!state_.font().blink() || BlinkVisible()) {
                 if (state_.font().underline())
                     painter_.fillRect(glyphRunStart_.x() * cellWidth_, glyphRunStart_.y() * cellHeight_ + font_->underlineOffset(), cellWidth_ * glyphRunSize_, font_->underlineThickness(), decorationBrush_);
                 if (state_.font().strikethrough())

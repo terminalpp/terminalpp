@@ -250,7 +250,7 @@ namespace tpp {
             D2D1_POINT_2F origin = D2D1::Point2F(
                 static_cast<float>(glyphRunCol_* cellWidth_ + font_->offsetLeft()),
                 ((glyphRunRow_ + 1 - state_.font().height()) * cellHeight_ + font_->ascent()) + font_->offsetTop());
-            if (!state_.font().blink() || BlinkVisible_) {
+            if (!state_.font().blink() || BlinkVisible()) {
                 rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
                 // see if there are any attributes to be drawn 
                 if (state_.font().underline()) {

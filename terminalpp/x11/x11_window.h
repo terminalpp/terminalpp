@@ -208,7 +208,7 @@ namespace tpp {
             if (bg_.color.alpha != 0)
 			    XftDrawRect(draw_, &bg_, textCol_ * cellWidth_, (textRow_ + 1 - fontHeight) * cellHeight_, textSize_ * cellWidth_ * fontWidth, cellHeight_ * fontHeight);
             // draw the text
-            if (!state_.font().blink() || BlinkVisible_) {
+            if (!state_.font().blink() || BlinkVisible()) {
                 XftDrawGlyphSpec(draw_, &fg_, font_->xftFont(), text_, textSize_);
                 // deal with the attributes
                 if (state_.font().underline())

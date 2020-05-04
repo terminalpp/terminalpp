@@ -210,12 +210,6 @@ namespace tpp {
 
         /** Mouse buttons that are currently down so that we know when to release the mouse capture. */
         unsigned mouseButtonsDown_;
-
-
-        
-        /** The speed of the blinking text, same for all windows in the application. */
-        static unsigned BlinkSpeed_;
-
     }; // tpp::Window
 
     /** Templated child of the Window that provides support for fast rendering via CRTP. 
@@ -324,7 +318,7 @@ namespace tpp {
             // determine the cursor, its visibility and its position and draw it if necessary. The cursor is drawn when it is not blinking, when its position has changed since last time it was drawn with blink on or if it is blinking and blink is visible. This prevents the cursor for disappearing while moving
             ui::Cursor cursor = buf.cursor();
             Point cursorPos = buf.cursorPosition();
-            if (cursor.visible() && (! cursor.blink() || BlinkVisible_ || cursorPos != lastCursorPos_)) {
+            if (cursor.visible() && (! cursor.blink() || BlinkVisible() || cursorPos != lastCursorPos_)) {
                 state_.setCodepoint(cursor.codepoint())
                       .setFg(cursor.color())
                       .setBg(Color::None)
@@ -335,7 +329,7 @@ namespace tpp {
                 initializeGlyphRun(cursorPos.x(), cursorPos.y());
                 addGlyph(cursorPos.x(), cursorPos.y(), state_);
                 drawGlyphRun();
-                if (BlinkVisible_)
+                if (BlinkVisible())
                     lastCursorPos_ = cursorPos;
             }
 
@@ -375,37 +369,57 @@ namespace tpp {
         Point lastCursorPos_;
 
         static IMPLEMENTATION * GetWindowForHandle(NATIVE_HANDLE handle) {
-            std::lock_guard<std::mutex> g(MWindows_);
-            auto i = Windows_.find(handle);
-            return i == Windows_.end() ? nullptr : i->second;
+            ASSERT(GlobalState_ != nullptr);
+            std::lock_guard<std::mutex> g(GlobalState_->mWindows);
+            auto i = GlobalState_->windows.find(handle);
+            return i == GlobalState_->windows.end() ? nullptr : i->second;
         } 
 
         static void RegisterWindowHandle(IMPLEMENTATION * window, NATIVE_HANDLE handle) {
-            std::lock_guard<std::mutex> g(MWindows_);
-            ASSERT(Windows_.find(handle) == Windows_.end());
-            Windows_.insert(std::make_pair(handle, window));
+            ASSERT(GlobalState_ != nullptr);
+            std::lock_guard<std::mutex> g(GlobalState_->mWindows);
+            ASSERT(GlobalState_->windows.find(handle) == GlobalState_->windows.end());
+            GlobalState_->windows.insert(std::make_pair(handle, window));
         }
 
         /** Removes the window with given handle from the list of windows. 
          */
         static void UnregisterWindowHandle(NATIVE_HANDLE handle) {
-            std::lock_guard<std::mutex> g(MWindows_);
-            Windows_.erase(handle);
+            ASSERT(GlobalState_ != nullptr);
+            std::lock_guard<std::mutex> g(GlobalState_->mWindows);
+            GlobalState_->windows.erase(handle);
         }
+
+        static bool BlinkVisible() {
+            ASSERT(GlobalState_ != nullptr);
+            return GlobalState_->blinkVisible;
+        }
+
+        static unsigned BlinkSpeed() {
+            ASSERT(GlobalState_ != nullptr);
+            return GlobalState_->blinkSpeed;
+        }
+
+        static std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION*> const Windows() {
+            ASSERT(GlobalState_ != nullptr);
+            return GlobalState_->windows;
+        }
+
 
         /** Starts the blinker thread that runs for the duration of the application and periodically repaints all windows so that blinking text is properly displayed. 
          
             The method must be called by the Application instance startup.  
          */
         static void StartBlinkerThread() {
+            GlobalState_ = new GlobalState{};
             std::thread t([](){
-                BlinkVisible_ = true;
+                GlobalState_->blinkVisible = true;
                 while (true) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(BlinkSpeed_));
-                    BlinkVisible_ = ! BlinkVisible_;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(GlobalState_->blinkSpeed));
+                    GlobalState_->blinkVisible = ! GlobalState_->blinkVisible;
                     {
-                        std::lock_guard<std::mutex> g(MWindows_);
-                        for (auto i : Windows_)
+                        std::lock_guard<std::mutex> g(GlobalState_->mWindows);
+                        for (auto i : GlobalState_->windows)
                             i.second->repaint(nullptr);
                     }
                 }
@@ -413,21 +427,26 @@ namespace tpp {
             t.detach();
         }
 
-        /** A map which points from the native handles to the windows. */
-        static std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> Windows_;
-        /** Guard for the list of windows (ui thread and the blinker thread). */
-        static std::mutex MWindows_;
-        /** Current visibility of the blinking text. */
-        static std::atomic<bool> BlinkVisible_;
+        /** Global state for the window management and rendering. 
+         
+            Because the blinker thread is detached, the global state must be heap allocated so that the objects here are never deallocated in case the blinker thread will execute after the main function ends. 
+         */
+        struct GlobalState {
+            /** A map which points from the native handles to the windows. */
+            std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> windows;
+            /** Guard for the list of windows (ui thread and the blinker thread). */
+            std::mutex mWindows;
+            /** Current visibility of the blinking text. */
+            std::atomic<bool> blinkVisible;
+            /** The speed of the blinking text, same for all windows in the application. */
+            unsigned blinkSpeed = DEFAULT_BLINK_SPEED;
+        }; // tpp::RendererWindow::BlinkInfo
+
+        static GlobalState * GlobalState_;
 
     }; // tpp::RendererWindow
 
     template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
-    std::unordered_map<NATIVE_HANDLE, IMPLEMENTATION *> RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::Windows_;
-
-    template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
-    std::mutex RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::MWindows_;
-    template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
-    std::atomic<bool> RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::BlinkVisible_;
+    typename tpp::RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::GlobalState * tpp::RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::GlobalState_ = nullptr;
 
 } // namespace tpp

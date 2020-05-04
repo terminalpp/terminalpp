@@ -263,7 +263,7 @@ namespace tpp {
 				ASSERT(window != nullptr) << "Attempt to destroy unknown window";
 				// delete the window object
                 delete window;
-                if (Windows_.empty())
+                if (Windows().empty())
                     PostQuitMessage(EXIT_SUCCESS);
 				break;
 			}

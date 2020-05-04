@@ -563,8 +563,7 @@ namespace tpp {
             case DestroyNotify: {
                 // delete the window object and remove it from the list of active windows
                 delete window;
-                std::lock_guard<std::mutex> g(MWindows_);
-                if (Windows_.empty()) 
+                if (Windows().empty()) 
                     throw X11Application::TerminateException();
                 break;
             }

@@ -14,17 +14,20 @@ More robust UI framework, better configuration options and slightly increased se
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- when dismissing the about box by a key, the key still goes to the terminal
+
+- check that the detachment of thread in helpers::time.h is safe
+
+- FPS, repaint rate and other stats
+
 - button basics, label fonts
 
 - geometry.h is areally bad name for some of the classes defined therein
 
 Terminal++ PTY:
 
-- pty++ should parse the TPP sequences properly
-
 - PTY++ and remote files version 2.0 - or maybe just do the old PTY but in PTY++ pty in the new architecture.
 - deal with how PTYs are deleted (and the entire session)
-
 
 Settings:
 
