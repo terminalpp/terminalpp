@@ -184,6 +184,7 @@ namespace ui {
             keyboardIn_{false},
             keyboardFocus_{nullptr},
             nonModalFocusBackup_{nullptr},
+            keyDownFocus_{nullptr},
             clipboardRequestTarget_{nullptr},
             selectionRequestTarget_{nullptr},
             selectionOwner_{nullptr} {
@@ -454,13 +455,17 @@ namespace ui {
 
         virtual void rendererKeyChar(Char c) {
             ASSERT(keyboardIn_);
-            Event<Char>::Payload p{c};
-            p.propagateToParent(true);
-            keyChar(p, keyboardFocus_);
+            if (keyDownFocus_ == keyboardFocus_) {
+                Event<Char>::Payload p{c};
+                p.propagateToParent(true);
+                keyChar(p, keyboardFocus_);
+            }
+            keyDownFocus_ = nullptr;
         }
 
         virtual void rendererKeyDown(Key k) {
             ASSERT(keyboardIn_);
+            keyDownFocus_ = keyboardFocus_;
             Event<Key>::Payload p{k};
             p.propagateToParent(true);
             keyDown(p, keyboardFocus_);
@@ -751,6 +756,8 @@ namespace ui {
         Widget * keyboardFocus_;
         /** Widget which had keyboard focus before another widget was shown modallym so that its focus can be restored when the modal widget will be dismissed. */
         Widget * nonModalFocusBackup_;
+        /** Widget focused during keyDown event so that the subsequent keyChar will only dispatch if the keyboard focus is the same. */
+        Widget * keyDownFocus_;
 
         /** Widget which requested clipboard contents (if the focus changed since the request). */
         Widget * clipboardRequestTarget_;
