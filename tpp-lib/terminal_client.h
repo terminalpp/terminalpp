@@ -1,8 +1,25 @@
 #pragma once
+#if (defined ARCH_UNIX)
+#include <termios.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <thread>
+#endif
 
-#include "sequences.h"
+
+#include "helpers/helpers.h"
+#include "helpers/process.h"
+#include "helpers/log.h"
+#include "helpers/char.h"
+#include "sequence.h"
+
+
+
 
 namespace tpp {
+
+    using Char = helpers::Char;
 
     /** A client-side abstraction over an PTY. 
 
@@ -15,13 +32,19 @@ namespace tpp {
         virtual ~TerminalClient() {
         }
 
+        virtual void start() {
+
+        }
+
     protected:
 
-        /** Called when the terminal the client is attached to closes from the server side. 
+        /** Called when the input stream reaches its end. 
          
-            Does nothing by default, but subclasses may override and decide to react.
+            No further data will be received after this method is called. Contains the unprocessed buffer as argument. 
          */
-        virtual void closed() {
+        virtual void inputEof(char const * buffer, char const * bufferEnd) {
+            MARK_AS_UNUSED(buffer);
+            MARK_AS_UNUSED(bufferEnd);
         }
 
         virtual void send(char const * buffer, size_t numBytes) = 0;
@@ -46,7 +69,7 @@ namespace tpp {
 
     class StdTerminalClient : public TerminalClient {
     public:
-        StdTerminalClient(int in, int out):
+        StdTerminalClient(int in = STDIN_FILENO, int out = STDOUT_FILENO):
             in_{in},
             out_{out},
             insideTmux_{InsideTMUX()} {
@@ -57,7 +80,13 @@ namespace tpp {
             raw.c_cflag |= (CS8);
             raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
             tcsetattr(in_, TCSAFLUSH, & raw);
+        }
 
+        void start() override {
+            TerminalClient::start();
+            reader_ = std::thread{[this](){
+                readerThread();
+            }};
         }
 
         ~StdTerminalClient() override {
@@ -70,42 +99,51 @@ namespace tpp {
             return helpers::Environment::Get("TMUX") != nullptr;
         }
 
+        static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
+
     protected:
-        void send(char const * buffer, size_t numBytes) override {
-            if (insideTmux_) {
-                // we have to properly escape the buffer
-                size_t start = 0;
-                size_t end = 0;
-                while (end < numBytes) {
-                    if (buffer[end] == '\033') {
-                        if (start != end)
-                            ::write(out_, buffer + start, end - start);
-                        ::write(out_, "\033\033", 2);
-                        start = ++end;
-                    } else {
-                        ++end;
-                    }
-                }
-                if (start != end)
-                    ::write(out_, buffer+start, end - start);
-            } else {
-                ::write(out_, buffer, numBytes);
-            }
-
-        }
-
+        void send(char const * buffer, size_t numBytes) override;
+        
         void send(Sequence const & seq) override {
             if (insideTmux_)
                 ::write(out_, "\033Ptmux;", 7);
             // TODO send the sequence
-            if (insideTmux)
+            if (insideTmux_)
                 ::write(out_, "\033\\", 2);
         }
 
+        /** Blocking read from the input file. 
+         */
+        size_t receive(char * buffer, size_t bufferSize, bool & success);
+
     private:
+
+        void readerThread();
+
+        char * parseTerminalInput(char * buffer, char const * bufferEnd);
+
+        /** Finds the beginniong of a tpp sequence, or its prefix in the buffer. 
+         
+            Returns the beginning of the tpp sequence `"\033P+"`, or if the buffer terminates before the full sequence was read the beginning of possible tpp sequence start. 
+
+            If not found, returns the bufferEnd. 
+         */
+        char * findTppStartPrefix(char * buffer, char const * bufferEnd);
+
+        /** Given a start of the tpp sequence ("\033P+") or its prefix, calculates the range for the sequence's payload. 
+         
+            If the sequence is invalid, returns `(nullptr, nullptr)`. If the sequence seems valid, but the buffer does not conatin enough data, returns `(bufferEnd, bufferEnd)`. In other cases returns an std::pair where the first value is the first valid tpp sequence character and the second value is the sequence terminator. 
+         */
+        std::pair<char *, char*> findTppRange(char * tppStart, char const * bufferEnd);
+
+        void parseTppSequence(char * buffer, char const * bufferEnd) {
+
+        }
+
         int in_;
         int out_;
         bool insideTmux_;
+        termios backup_;
 
         std::thread reader_;
 

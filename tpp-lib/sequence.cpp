@@ -1,3 +1,5 @@
+#ifdef HAHA
+
 #if (defined ARCH_LINUX)
 #include <unistd.h>
 #endif
@@ -212,3 +214,5 @@ namespace tpp {
     }
 
 } // namespace tpp
+
+#endif

@@ -1,3 +1,5 @@
+#ifdef HAHA
+
 #include <iostream>
 #include <limits>
 #include <thread>
@@ -242,3 +244,5 @@ namespace tpp {
 #endif
 
 } // namespace tpp
+
+#endif

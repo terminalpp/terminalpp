@@ -1,4 +1,5 @@
 #pragma once
+#ifdef HAHA
 
 #if (defined ARCH_UNIX)
 #include <termios.h>
@@ -157,3 +158,5 @@ namespace tpp {
 #endif
 
 } // namespace tpp
+
+#endif

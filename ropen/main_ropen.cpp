@@ -6,6 +6,68 @@
 #include "helpers/helpers.h"
 #include "helpers/json_config.h"
 
+#include "tpp-lib/terminal_client.h"
+
+namespace tpp {
+
+    class RemoteFileSender : public StdTerminalClient {
+    public:
+        RemoteFileSender():
+            StdTerminalClient{} {
+        }
+    protected:
+
+
+
+        void inputEof(char const * buffer, char const * bufferEnd) override {
+            std::cout << "EOF";
+        }
+
+        size_t processInput(char const * buffer, char const * bufferEnd) override {
+            std::string str(buffer, bufferEnd - buffer);
+            std::cout << str;
+            if (str == "q")
+                std::exit(0);
+        }
+
+        void processTppSequence(Sequence seq) override {
+
+        }
+
+    };
+
+
+} // namespace tpp
+
+
+
+
+int main(int argc, char * argv[]) {
+    using namespace tpp;
+    try {
+        RemoteFileSender rf{};
+        while (true) {
+        }
+        /*
+        Config config(argc, argv);
+        StdTerminal t;
+        t.setTimeout(config.timeout());
+        tpp::RemoteOpen::Open(t, config.filename(), config);
+        std::cout << "\n";
+        */
+        return EXIT_SUCCESS;
+    } catch (std::exception const & e) {
+        std::cout << "\r\n Error: " << e.what() << "\r\n";
+    } catch (...) {
+        std::cout << "\r\n Unspecified errror.\r\n";
+    }
+    return EXIT_FAILURE;
+}
+
+
+
+#ifdef HAHA
+
 #include "tpp-lib/terminal.h"
 
 namespace tpp {
@@ -183,3 +245,6 @@ int main(int argc, char * argv[]) {
     }
     return EXIT_FAILURE;
 }
+
+
+#endif
