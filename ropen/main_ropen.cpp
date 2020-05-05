@@ -27,6 +27,7 @@ namespace tpp {
      
      */
 
+/*
     class RemoteFileSender : public StdTerminalClient {
     public:
         RemoteFileSender():
@@ -55,6 +56,8 @@ namespace tpp {
 
     };
 
+    */
+
 
 } // namespace tpp
 
@@ -64,10 +67,10 @@ namespace tpp {
 int main(int argc, char * argv[]) {
     using namespace tpp;
     try {
+        /*
         RemoteFileSender rf{};
         while (true) {
         }
-        /*
         Config config(argc, argv);
         StdTerminal t;
         t.setTimeout(config.timeout());

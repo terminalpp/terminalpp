@@ -58,6 +58,8 @@ namespace tpp {
         bool insideTmux_;
     }; // tpp::TerminalClient
 
+
+#ifdef HAHA
     /** A client-side abstraction over an PTY. 
 
         - non tppSequences
@@ -188,6 +190,8 @@ namespace tpp {
     }; // tpp::StdTerminalClient
 #endif
 
+
+#endif
 
 
 

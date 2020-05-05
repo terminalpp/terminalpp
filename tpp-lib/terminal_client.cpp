@@ -34,6 +34,8 @@ namespace tpp {
             terminal_.send("\033\\", 2);
     }
 
+#ifdef HAHA
+
     void StdTerminalClient::send(char const * buffer, size_t numBytes) {
         if (insideTmux_) {
             // we have to properly escape the buffer
@@ -188,7 +190,11 @@ namespace tpp {
 
 
 
+#endif
+
 
 #endif // ARCH_UNIX
+
+
 
 } // namespace tpp

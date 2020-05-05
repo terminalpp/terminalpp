@@ -29,7 +29,7 @@ namespace tpp {
         virtual size_t receive(char * buffer, size_t bufferSize, bool & success) = 0;
     }; // tpp::Terminal
 
-#if (defined UNIX)
+#if (defined ARCH_UNIX)
     
     class StdTerminal : public Terminal {
     public:
@@ -62,7 +62,7 @@ namespace tpp {
 
     }; // tpp::StdTerminal
 
-#endif
+#endif // ARCH_UNIX
 
 } // namespace tpp
 

@@ -6,10 +6,10 @@
     "configurations": [
 
         {
-            "name": "(Windows) Launch",
+            "name": "(win) terminalpp",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": " ${workspaceFolder}/build/terminalpp/terminalpp.exe",
+            "program": " ${workspaceFolder}/build-Visual Studio Community 2019 Release - amd64/terminalpp/terminalpp.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -17,10 +17,10 @@
             "externalConsole": false
         },
         {
-            "name": "(gdb) terminalpp",
+            "name": "(linux) terminalpp",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/terminalpp/terminalpp",
+            "program": "${workspaceFolder}/build-g++-8/terminalpp/terminalpp",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -36,10 +36,10 @@
             ]
         },
         {
-            "name": "(gdb) ropen",
+            "name": "(linux) ropen",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/ropen/ropen",
+            "program": "${workspaceFolder}/build-g++-8/ropen/ropen",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -55,10 +55,10 @@
             ]
         },
         { 
-            "name":"(lldb) Launch",
+            "name":"(macos) terminalpp",
             "type":"lldb",
             "request":"launch",
-            "program":"${workspaceFolder}/build/terminalpp/terminalpp.app/Contents/MacOS/terminalpp",
+            "program":"${workspaceFolder}/build-${buildKit}/terminalpp/terminalpp.app/Contents/MacOS/terminalpp",
             "args":[ ],
             "cwd":"${workspaceFolder}",
          }
