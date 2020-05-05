@@ -4,6 +4,36 @@ namespace tpp {
 
 #if (defined ARCH_UNIX) 
 
+    void TerminalClient::send(char const * buffer, size_t numBytes) {
+        if (insideTmux_) {
+            // we have to properly escape the buffer
+            size_t start = 0;
+            size_t end = 0;
+            while (end < numBytes) {
+                if (buffer[end] == '\033') {
+                    if (start != end)
+                        terminal_.send(buffer + start, end - start);
+                    terminal_.send("\033\033", 2);
+                    start = ++end;
+                } else {
+                    ++end;
+                }
+            }
+            if (start != end)
+                terminal_.send(buffer + start, end - start);
+        } else {
+            terminal_.send(buffer, numBytes);
+        }
+    }
+
+    void TerminalClient::send(Sequence const & seq) {
+        if (insideTmux_)
+            terminal_.send("\033Ptmux;", 7);
+        // TODO send the sequence
+        if (insideTmux_)
+            terminal_.send("\033\\", 2);
+    }
+
     void StdTerminalClient::send(char const * buffer, size_t numBytes) {
         if (insideTmux_) {
             // we have to properly escape the buffer
@@ -106,8 +136,8 @@ namespace tpp {
                 if (unprocessed > 0) {
                     tppStart -= unprocessed;
                     memmove(tppStart, buffer - processed, unprocessed);
-                    return tppStart;
                 }
+                return tppStart;
             }
         }
         return buffer;

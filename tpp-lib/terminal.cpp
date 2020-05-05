@@ -1,3 +1,34 @@
+#include "terminal.h"
+
+namespace tpp {
+
+#if (defined ARCH_UNIX)
+
+    void StdTerminal::send(char const * buffer, size_t numBytes) {
+        ::write(out_, buffer, numBytes);
+    }
+
+    size_t StdTerminal::receive(char * buffer, size_t bufferSize, bool & success) {
+        while (true) {
+            int cnt = 0;
+            cnt = ::read(in_, (void*)buffer, bufferSize);
+            if (cnt == -1) {
+                if (errno == EINTR || errno == EAGAIN)
+                    continue;
+                success = false;
+                return 0;
+            } else {
+                success = true;
+                return static_cast<size_t>(cnt);
+            }
+        }
+    }
+
+#endif // ARCH_UNIX
+
+}
+
+
 #ifdef HAHA
 
 #include <iostream>

@@ -69,6 +69,7 @@
         "stack": "cpp",
         "optional": "cpp",
         "array": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "string_view": "cpp"
     }
 }

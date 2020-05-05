@@ -12,6 +12,7 @@
 #include "helpers/process.h"
 #include "helpers/log.h"
 #include "helpers/char.h"
+#include "terminal.h"
 #include "sequence.h"
 
 
@@ -20,6 +21,42 @@
 namespace tpp {
 
     using Char = helpers::Char;
+
+    class TerminalClient {
+    public:
+
+        TerminalClient(Terminal & terminal):
+            terminal_{terminal},
+            insideTmux_{InsideTMUX()} {
+        }
+
+        /** Returns true if the terminal client seems to be attached to the tmux terminal multipler. 
+         */
+        static bool InsideTMUX() {
+            return helpers::Environment::Get("TMUX") != nullptr;
+        }
+
+
+
+    protected:
+
+        /** Sends given buffer using the attached terminal. 
+         */
+        void send(char const * buffer, size_t numBytes);
+
+        /** Sends given t++ sequence. 
+         */
+        void send(Sequence const & seq);
+
+        /** Receives input from the attached terminal. 
+         */
+        size_t receive(char * buffer, size_t bufferSize, bool & success) {
+            return terminal_.receive(buffer, bufferSize, success);
+        }
+
+        Terminal & terminal_;
+        bool insideTmux_;
+    }; // tpp::TerminalClient
 
     /** A client-side abstraction over an PTY. 
 
@@ -32,11 +69,12 @@ namespace tpp {
         virtual ~TerminalClient() {
         }
 
+
+    protected:
+
         virtual void start() {
 
         }
-
-    protected:
 
         /** Called when the input stream reaches its end. 
          

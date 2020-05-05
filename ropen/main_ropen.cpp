@@ -10,10 +10,28 @@
 
 namespace tpp {
 
+
+    /** v2 remote sender:
+
+        ->GetCapabilities 
+        <-Capabilities
+
+        ->OpenFileTransfer(path,size)
+        <-Ack(channel)
+
+        -> 
+
+        these wait, while other thread may process 
+
+        
+     
+     */
+
     class RemoteFileSender : public StdTerminalClient {
     public:
         RemoteFileSender():
             StdTerminalClient{} {
+            start();
         }
     protected:
 
@@ -25,9 +43,10 @@ namespace tpp {
 
         size_t processInput(char const * buffer, char const * bufferEnd) override {
             std::string str(buffer, bufferEnd - buffer);
-            std::cout << str;
+            std::cout << str << std::flush;
             if (str == "q")
                 std::exit(0);
+            return bufferEnd - buffer;
         }
 
         void processTppSequence(Sequence seq) override {

@@ -1,5 +1,4 @@
 #pragma once
-#ifdef HAHA
 
 #if (defined ARCH_UNIX)
 #include <termios.h>
@@ -12,9 +11,67 @@
 #include <limits>
 
 #include "helpers/helpers.h"
-#include "helpers/char.h"
 
-#include "sequence.h"
+namespace tpp {
+
+    /** Terminal interface. 
+     
+        Provides the most basic direct interface for sending and receiving data through a terminal. 
+     */
+    class Terminal {
+    public:
+        /** Sends a buffer. 
+         */
+        virtual void send(char const * buffer, size_t numBytes) = 0;
+
+        /** Receives data from the input (blocking) 
+         */
+        virtual size_t receive(char * buffer, size_t bufferSize, bool & success) = 0;
+    }; // tpp::Terminal
+
+#if (defined UNIX)
+    
+    class StdTerminal : public Terminal {
+    public:
+        StdTerminal(int in = STDIN_FILENO, int out = STDOUT_FILENO):
+            in_{in},
+            out_{out} {
+            tcgetattr(in_, & backup_);
+            termios raw = backup_;
+            raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+            raw.c_oflag &= ~(OPOST);
+            raw.c_cflag |= (CS8);
+            raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+            tcsetattr(in_, TCSAFLUSH, & raw);
+        }
+
+        ~StdTerminal() {
+            tcsetattr(in_, TCSAFLUSH, & backup_);
+        }
+
+        void send(char const * buffer, size_t numBytes) override;
+
+        /** Blocking read from the input file. 
+         */
+        size_t receive(char * buffer, size_t bufferSize, bool & success) override;
+
+    private:
+        int in_;
+        int out_;
+        termios backup_;
+
+    }; // tpp::StdTerminal
+
+#endif
+
+} // namespace tpp
+
+
+
+
+
+#ifdef HAHA
+
 
 namespace tpp {
 

@@ -149,13 +149,9 @@ add_subdirectory("ui-terminal")
 add_subdirectory("tpp-lib")
 add_subdirectory("docs")
 add_subdirectory("tests")
-if(PACKAGE_ROPEN)
-    add_subdirectory("ropen")
-elseif(PACKAGE_BYPASS)
-    add_subdirectory("tpp-bypass")
-elseif(PACKAGE_TERMINALPP)
-    add_subdirectory("terminalpp")
-endif()
+add_subdirectory("ropen")
+add_subdirectory("tpp-bypass")
+add_subdirectory("terminalpp")
 
 # Other tools
 # ===========
