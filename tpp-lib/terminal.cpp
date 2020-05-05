@@ -5,7 +5,33 @@ namespace tpp {
 #if (defined ARCH_UNIX)
 
     void StdTerminal::send(char const * buffer, size_t numBytes) {
-        ::write(out_, buffer, numBytes);
+        if (insideTmux_) {
+            // we have to properly escape the buffer
+            size_t start = 0;
+            size_t end = 0;
+            while (end < numBytes) {
+                if (buffer[end] == '\033') {
+                    if (start != end)
+                        ::write(out_, buffer + start, end - start);
+                    ::write(out_, "\033\033", 2);
+                    start = ++end;
+                } else {
+                    ++end;
+                }
+            }
+            if (start != end)
+                ::write(out_, buffer + start, end - start);
+        } else {
+            ::write(out_, buffer, numBytes);
+        }
+    }
+
+    void StdTerminal::send(Sequence const & seq) {
+        if (insideTmux_)
+            ::write(out_, "\033Ptmux;", 7);
+        Terminal::send(seq);
+        if (insideTmux_)
+            ::write(out_, "033\\", 2);
     }
 
     size_t StdTerminal::receive(char * buffer, size_t bufferSize, bool & success) {

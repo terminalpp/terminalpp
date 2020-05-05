@@ -1,12 +1,6 @@
 #pragma once
-#if (defined ARCH_UNIX)
-#include <termios.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <thread>
-#endif
 
+#include <thread>
 
 #include "helpers/helpers.h"
 #include "helpers/process.h"
@@ -20,141 +14,55 @@
 
 namespace tpp {
 
-    using Char = helpers::Char;
-
-    class TerminalClient {
-    public:
-
-        TerminalClient(Terminal & terminal):
-            terminal_{terminal},
-            insideTmux_{InsideTMUX()} {
-        }
-
-        /** Returns true if the terminal client seems to be attached to the tmux terminal multipler. 
-         */
-        static bool InsideTMUX() {
-            return helpers::Environment::Get("TMUX") != nullptr;
-        }
-
-
-
-    protected:
-
-        /** Sends given buffer using the attached terminal. 
-         */
-        void send(char const * buffer, size_t numBytes);
-
-        /** Sends given t++ sequence. 
-         */
-        void send(Sequence const & seq);
-
-        /** Receives input from the attached terminal. 
-         */
-        size_t receive(char * buffer, size_t bufferSize, bool & success) {
-            return terminal_.receive(buffer, bufferSize, success);
-        }
-
-        Terminal & terminal_;
-        bool insideTmux_;
-    }; // tpp::TerminalClient
-
-
-#ifdef HAHA
-    /** A client-side abstraction over an PTY. 
-
-        - non tppSequences
-        - tpp sequences
+    /** t++ client for terminal. 
+     
+        Supports reading and writing both tpp sequences and normal input/output to the terminal.  
      */
     class TerminalClient {
     public:
 
-        virtual ~TerminalClient() {
+        TerminalClient(Terminal & terminal):
+            terminal_{terminal} {
         }
-
 
     protected:
 
-        virtual void start() {
+        /** Starts the terminal client. 
+         */
+        virtual void start();
 
+        /** Sends given buffer using the attached terminal. 
+         */
+        void send(char const * buffer, size_t numBytes) {
+            terminal_.send(buffer, numBytes);
         }
 
-        /** Called when the input stream reaches its end. 
+        /** Sends given t++ sequence. 
+         */
+        void send(Sequence const & seq) {
+            terminal_.send(seq);
+        }
+
+        /** Called when normal input is received from the terminal. 
          
-            No further data will be received after this method is called. Contains the unprocessed buffer as argument. 
+            The implementation should process the received input and return the number of bytes processed. These will be removed from the buffer, while any unprocessed data will be prepended to data received next. 
+         */
+        virtual size_t receive(char const * buffer, char const * bufferEnd) = 0;
+
+        /** Called when a t++ sequence has been received. 
+         */
+        virtual void receive(Sequence seq) = 0;
+
+        /** Called when the terminal's input has reached end of file. 
+         
+            Contains any buffer, that has been previously received via the receive() method, but left unprocessed. The default implementation does nothing.
          */
         virtual void inputEof(char const * buffer, char const * bufferEnd) {
             MARK_AS_UNUSED(buffer);
             MARK_AS_UNUSED(bufferEnd);
         }
 
-        virtual void send(char const * buffer, size_t numBytes) = 0;
-
-        virtual void send(Sequence const & seq) {
-            
-        }
-
-
-        /** Called when normal input is received. 
-         */
-        virtual size_t processInput(char const * buffer, char const * bufferEnd) = 0;
-
-        /** Called when a t++ sequence has been received. 
-         */
-        virtual void processTppSequence(Sequence seq) = 0;
-
-
-    };
-
-#if (defined ARCH_UNIX)
-
-    class StdTerminalClient : public TerminalClient {
-    public:
-        StdTerminalClient(int in = STDIN_FILENO, int out = STDOUT_FILENO):
-            in_{in},
-            out_{out},
-            insideTmux_{InsideTMUX()} {
-            tcgetattr(in_, & backup_);
-            termios raw = backup_;
-            raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-            raw.c_oflag &= ~(OPOST);
-            raw.c_cflag |= (CS8);
-            raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-            tcsetattr(in_, TCSAFLUSH, & raw);
-        }
-
-        void start() override {
-            TerminalClient::start();
-            reader_ = std::thread{[this](){
-                readerThread();
-            }};
-        }
-
-        ~StdTerminalClient() override {
-            tcsetattr(in_, TCSAFLUSH, & backup_);
-        }
-
-        /** Returns true if the terminal client seems to be attached to the tmux terminal multipler. 
-         */
-        static bool InsideTMUX() {
-            return helpers::Environment::Get("TMUX") != nullptr;
-        }
-
         static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
-
-    protected:
-        void send(char const * buffer, size_t numBytes) override;
-        
-        void send(Sequence const & seq) override {
-            if (insideTmux_)
-                ::write(out_, "\033Ptmux;", 7);
-            // TODO send the sequence
-            if (insideTmux_)
-                ::write(out_, "\033\\", 2);
-        }
-
-        /** Blocking read from the input file. 
-         */
-        size_t receive(char * buffer, size_t bufferSize, bool & success);
 
     private:
 
@@ -176,23 +84,9 @@ namespace tpp {
          */
         std::pair<char *, char*> findTppRange(char * tppStart, char const * bufferEnd);
 
-        void parseTppSequence(char * buffer, char const * bufferEnd) {
-
-        }
-
-        int in_;
-        int out_;
-        bool insideTmux_;
-        termios backup_;
-
+        Terminal & terminal_;
         std::thread reader_;
 
-    }; // tpp::StdTerminalClient
-#endif
-
-
-#endif
-
-
+    }; // tpp::TerminalClient
 
 } // namespace tpp

@@ -1,3 +1,53 @@
+#include "helpers/char.h"
+
+#include "sequence.h"
+#include "terminal.h"
+
+
+namespace tpp {
+
+    Sequence::Sequence(char const * start, char const * end):
+        kind_{Kind::Invalid},
+        payloadStart_{start},
+        payloadEnd_{end} {
+        unsigned kind = 0;
+        while (payloadStart_ != payloadEnd_) {
+            unsigned digit;
+            if (*payloadStart_ == ';') {
+                ++payloadStart_;
+                break;
+            } else if (! helpers::Char::IsHexadecimalDigit(*payloadStart_, digit)) {
+                payloadStart_ = start;
+                return;
+            } else {
+                kind = kind * 16 + digit;
+                ++payloadStart_; 
+            }
+        }
+        if (kind >= static_cast<unsigned>(Kind::Invalid))
+            payloadStart_ = start;
+        else
+            kind_ = static_cast<Kind>(kind);
+    }
+
+    void Sequence::sendHeader(Terminal & terminal, size_t payloadSize) const {
+        std::string header{STR(std::hex << static_cast<unsigned>(kind_) << ";")};
+        payloadSize += header.size();
+        header = STR(std::hex << payloadSize << ";" << header);
+        terminal.send(header.c_str(), header.size());
+    }
+
+    void Sequence::sendTo(Terminal & terminal) const {
+        sendHeader(terminal, payloadEnd_ - payloadStart_);
+        terminal.send(payloadStart_, payloadEnd_ - payloadStart_);
+    }
+
+} // namespace tpp
+
+
+
+
+
 #ifdef HAHA
 
 #if (defined ARCH_LINUX)

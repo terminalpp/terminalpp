@@ -1,87 +1,25 @@
+#include "helpers/char.h"
+
 #include "terminal_client.h"
 
 namespace tpp {
 
-#if (defined ARCH_UNIX) 
+    using Char = helpers::Char;
 
-    void TerminalClient::send(char const * buffer, size_t numBytes) {
-        if (insideTmux_) {
-            // we have to properly escape the buffer
-            size_t start = 0;
-            size_t end = 0;
-            while (end < numBytes) {
-                if (buffer[end] == '\033') {
-                    if (start != end)
-                        terminal_.send(buffer + start, end - start);
-                    terminal_.send("\033\033", 2);
-                    start = ++end;
-                } else {
-                    ++end;
-                }
-            }
-            if (start != end)
-                terminal_.send(buffer + start, end - start);
-        } else {
-            terminal_.send(buffer, numBytes);
-        }
+    void TerminalClient::start() {
+        reader_ = std::thread{[this](){
+            readerThread();
+        }};
     }
 
-    void TerminalClient::send(Sequence const & seq) {
-        if (insideTmux_)
-            terminal_.send("\033Ptmux;", 7);
-        // TODO send the sequence
-        if (insideTmux_)
-            terminal_.send("\033\\", 2);
-    }
-
-#ifdef HAHA
-
-    void StdTerminalClient::send(char const * buffer, size_t numBytes) {
-        if (insideTmux_) {
-            // we have to properly escape the buffer
-            size_t start = 0;
-            size_t end = 0;
-            while (end < numBytes) {
-                if (buffer[end] == '\033') {
-                    if (start != end)
-                        ::write(out_, buffer + start, end - start);
-                    ::write(out_, "\033\033", 2);
-                    start = ++end;
-                } else {
-                    ++end;
-                }
-            }
-            if (start != end)
-                ::write(out_, buffer+start, end - start);
-        } else {
-            ::write(out_, buffer, numBytes);
-        }
-    }
-
-    size_t StdTerminalClient::receive(char * buffer, size_t bufferSize, bool & success) {
-        while (true) {
-            int cnt = 0;
-            cnt = ::read(in_, (void*)buffer, bufferSize);
-            if (cnt == -1) {
-                if (errno == EINTR || errno == EAGAIN)
-                    continue;
-                success = false;
-                return 0;
-            } else {
-                success = true;
-                return static_cast<size_t>(cnt);
-            }
-        }
-    }
-
-    void StdTerminalClient::readerThread() {
+    void TerminalClient::readerThread() {
         // create the buffer, and read while we can 
         size_t bufferSize = DEFAULT_BUFFER_SIZE;
         char * buffer = new char[bufferSize];
         char * writeStart = buffer;
         bool success = false;
         while (true) {
-            size_t bytesRead = receive(writeStart, bufferSize - (writeStart - buffer), success);
+            size_t bytesRead = terminal_.receive(writeStart, bufferSize - (writeStart - buffer), success);
             if (!success)
                 break;
             bytesRead += (writeStart - buffer);
@@ -98,14 +36,14 @@ namespace tpp {
         }
         // if there is any unprocessed input, try processing it (it could have been leftovers from partial tpp sequence that would make sense for the parser)
         if (writeStart != buffer)
-            writeStart -= processInput(buffer, writeStart);
+            writeStart -= receive(buffer, writeStart);
         // the terminal has been closed when the input pty eofs
         inputEof(buffer, writeStart);
         // and delete the buffer
         delete [] buffer;
     }
 
-    char * StdTerminalClient::parseTerminalInput(char * buffer, char const * bufferEnd) {
+    char * TerminalClient::parseTerminalInput(char * buffer, char const * bufferEnd) {
         while (buffer != bufferEnd) {
             char * tppStart = buffer;
             std::pair<char*, char*> tppRange;
@@ -121,11 +59,11 @@ namespace tpp {
             // process the normal input before the sequence 
             size_t processed = 0;
             if (tppStart != buffer)
-                processed = processInput(buffer, tppStart);
+                processed = receive(buffer, tppStart);
             size_t unprocessed = tppStart - buffer - processed;
             // if the sequence was valid, process it, then copy any unprocessed normal input preceding it towards its end and move buffer 
             if (tppRange.second != bufferEnd) {
-                parseTppSequence(tppRange.first, tppRange.second);
+                receive(Sequence(tppRange.first, tppRange.second));
                 ++tppRange.second;
                 if (unprocessed > 0) {
                     memmove(tppRange.second, buffer + processed, unprocessed );
@@ -145,7 +83,7 @@ namespace tpp {
         return buffer;
     }
 
-    char * StdTerminalClient::findTppStartPrefix(char * buffer, char const * bufferEnd) {
+    char * TerminalClient::findTppStartPrefix(char * buffer, char const * bufferEnd) {
         for (; buffer < bufferEnd; ++buffer) {
             if (buffer[0] == '\033') {
                 if (buffer + 1 < bufferEnd) {
@@ -160,7 +98,7 @@ namespace tpp {
         return buffer; // not found, buffer is bufferEnd
     }
 
-    std::pair<char *, char*> StdTerminalClient::findTppRange(char * tppStart, char const * bufferEnd) {
+    std::pair<char *, char*> TerminalClient::findTppRange(char * tppStart, char const * bufferEnd) {
         // if we don't see entire tpp start, don't change the tpp start
         tppStart += 3;
         if (tppStart >= bufferEnd)
@@ -187,14 +125,5 @@ namespace tpp {
             ++tppStart;
         }
     }
-
-
-
-#endif
-
-
-#endif // ARCH_UNIX
-
-
 
 } // namespace tpp

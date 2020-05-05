@@ -2,6 +2,8 @@
 
 namespace tpp {
 
+    class Terminal;
+
     /** Terminalpp Sequence base class. 
      
        - deserialize from buffer
@@ -10,39 +12,35 @@ namespace tpp {
     class Sequence {
     public:
         enum class Kind {
-            Invalid,
             Ack,
+            /** Requests the terminal to send its capabilities. 
+             */
+            GetCapabilities,
+            /** Describes the capabilities of the terminal, such as protocol version, and channels. 
+             */
             Capabilities,
             Data,
 
+            Invalid,
         };
 
-        class Invalid;
-        class Ack;
-        class Capabilities;
-        class Data;
+        /** Creates a generic sequence from given raw buffer. 
+         */
+        Sequence(char const * start, char const *end);
 
     protected:
+
+        friend class Terminal;
+
+        void sendHeader(Terminal & terminal, size_t payloadSize) const;
+
+        virtual void sendTo(Terminal & terminal) const;
+
         Kind kind_;
+        char const * payloadStart_;
+        char const * payloadEnd_;
 
     }; // tpp::Sequence
-
-    class Sequence::Invalid {
-
-    };
-
-    class Sequence::Ack {
-
-    };
-
-    class Sequence::Capabilities {
-
-    };
-
-    class Sequence::Data : public Sequence {
-    protected:
-
-    }; 
 
 } // namespace tpp
 
