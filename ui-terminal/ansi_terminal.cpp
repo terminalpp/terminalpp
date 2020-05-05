@@ -384,6 +384,9 @@ namespace ui {
     }
 
     void AnsiTerminal::keyDown(Event<Key>::Payload & event) {
+        // only scroll to prompt if the key down is not a simple modifier key
+        if (*event != Key::Shift + Key::ShiftKey && *event != Key::Alt + Key::AltKey && *event != Key::Ctrl + Key::CtrlKey && *event != Key::Win + Key::WinKey)
+            setScrollOffset(Point{0, state_.buffer.historyRows()});
         // don't propagate to parent as the terminal handles keyboard input itself
         event.propagateToParent(false);
         Widget::keyDown(event);
@@ -410,9 +413,6 @@ namespace ui {
 			}
 			ptySend(seq->c_str(), seq->size());
 		}
-        // only scroll to prompt if the key down is not a simple modifier key
-        if (*event != Key::Shift + Key::ShiftKey && *event != Key::Alt + Key::AltKey && *event != Key::Ctrl + Key::CtrlKey && *event != Key::Win + Key::WinKey)
-            setScrollOffset(Point{0, state_.buffer.historyRows()});
     }
 
     size_t AnsiTerminal::processInput(char const * buffer, char const * bufferEnd) {
