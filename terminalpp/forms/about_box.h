@@ -29,6 +29,7 @@ namespace tpp {
         }
 
         void mouseClick(Event<MouseButtonEvent>::Payload & event) override {
+            MARK_AS_UNUSED(event);
             dismiss(this);
         }
 

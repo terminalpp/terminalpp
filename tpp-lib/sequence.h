@@ -1,18 +1,22 @@
 #pragma once
 
+#include "helpers/helpers.h"
+
 namespace tpp {
 
-    class Terminal;
+    class TerminalPTY;
+
+    class SequenceError : public helpers::Exception {
+    };
 
     /** Terminalpp Sequence base class. 
-     
-       - deserialize from buffer
-       - serialize to buffer
+
+         - any extra payload is ignored so that it can be added in newer versions
      */
     class Sequence {
     public:
         enum class Kind {
-            Ack,
+            Ack = 0,
             /** Requests the terminal to send its capabilities. 
              */
             GetCapabilities,
@@ -24,23 +28,152 @@ namespace tpp {
             Invalid,
         };
 
-        /** Creates a generic sequence from given raw buffer. 
-         */
-        Sequence(char const * start, char const *end);
+        Kind kind() const {
+            return kind_;
+        }
+
+        class Ack;
+        class GetCapabilities;
+        class Capabilities;
 
     protected:
 
-        friend class Terminal;
+        friend class TerminalPTY;
 
-        void sendHeader(Terminal & terminal, size_t payloadSize) const;
+        Sequence(Kind kind):
+            kind_{kind} {
+        }
 
-        virtual void sendTo(Terminal & terminal) const;
+        Sequence(char const * & start, char const * end, Kind expectedKind = Kind::Invalid) {
+            unsigned kind = readUnsigned(start, end);
+            if (kind > static_cast<unsigned>(Kind::Invalid));
+                THROW(SequenceError()) << "Invalid sequence kind " << kind;
+            kind_ = static_cast<Kind>(kind);
+            if (expectedKind != Kind::Invalid && (kind_ != expectedKind))
+                THROW(SequenceError()) << "Expected sequence " << expectedKind << ", but found " << kind_;
+        }
+
+        void sendHeader(TerminalPTY & pty, size_t payloadSize) const;
+
+        virtual void sendTo(TerminalPTY & pty) const;
+
+        /** Reads unsigned value from the payload and moves the payload start past its end. 
+         */
+        unsigned readUnsigned(char const * & start, char const * end);
 
         Kind kind_;
-        char const * payloadStart_;
-        char const * payloadEnd_;
 
     }; // tpp::Sequence
+
+    std::ostream & operator << (std::ostream & s, Sequence::Kind kind);
+
+    /** Acknowledgement. 
+     */
+    class Sequence::Ack final : public Sequence {
+    public:
+        Ack(unsigned id = 0):
+            Sequence{Kind::Ack},
+            id_{id} {
+        }
+
+        Ack(char const * start, char const * end):
+            Sequence(start, end, Kind::Ack) {
+            id_ = readUnsigned(start, end);
+        }
+    protected:
+
+        void sendTo(TerminalPTY & pty) const override;
+
+    private:
+        unsigned id_;
+    };
+
+    /** Terminal capabilities request. 
+     */
+    class Sequence::GetCapabilities final : public Sequence {
+    public:
+        GetCapabilities():
+            Sequence{Kind::GetCapabilities} {
+        }
+
+        GetCapabilities(char const * start, char const * end):
+            Sequence{start, end, Kind::Capabilities} {
+        }
+    };
+
+    /** Terminal capabilities information.
+     */
+    class Sequence::Capabilities final : public Sequence {
+    public:
+        Capabilities(unsigned version):
+            Sequence{Kind::Capabilities},
+            version_{version} {
+        }
+
+        Capabilities(char const * start, char const * end):
+            Sequence(start, end, Kind::Capabilities) {
+            version_ = readUnsigned(start, end);
+        }
+
+    protected:
+
+        void sendTo(TerminalPTY & pty) const override;
+
+    private:
+        unsigned version_;
+    };
+
+
+
+
+    /** Requests the capabilities from the server. 
+     */
+    /*
+    class Sequence::GetCapabilities : public Sequence {
+    public:
+        GetCapabilities():
+            Sequence{Kind::GetCapabilities} {
+        }
+    protected:
+
+        static constexpr Kind Kind_ = Kind::GetCapabilities;
+
+        GetCapabilities(char const * payloadStart, char const * payloadEnd):
+            Sequence{Kind::GetCapabilities} {
+            if (payloadStart != payloadEnd)
+                THROW(SequenceError()) << "Unexpected extra paylod for " << Kind_;
+        }
+    }; 
+    */
+
+    /** Server capabilities. 
+     */
+    /*
+    class Sequence::Capabilities : public Sequence {
+    public:
+        Capabilities(unsigned version):
+            Sequence{Kind::Capabilities},
+            version_{version} {
+        }
+
+        unsigned version() const {
+            return version_;
+        }
+
+    protected:
+
+        static constexpr Kind Kind_ = Kind::Capabilities;
+
+        Capabilities(char const * payloadStart, char const * payloadEnd):
+            Sequence{Kind::Capabilities, payloadStart, payloadEnd} {
+            version_ = readUnsigned();
+        }
+
+        void sendTo(TerminalPTY & pty) const override;
+    private:
+        unsigned version_;
+    };
+    */
 
 } // namespace tpp
 

@@ -6,6 +6,7 @@ namespace tpp {
 
     using Char = helpers::Char;
 
+
     void TerminalClient::start() {
         reader_ = std::thread{[this](){
             readerThread();
@@ -19,7 +20,7 @@ namespace tpp {
         char * writeStart = buffer;
         bool success = false;
         while (true) {
-            size_t bytesRead = terminal_.receive(writeStart, bufferSize - (writeStart - buffer), success);
+            size_t bytesRead = pty_.receive(writeStart, bufferSize - (writeStart - buffer), success);
             if (!success)
                 break;
             bytesRead += (writeStart - buffer);
@@ -63,7 +64,7 @@ namespace tpp {
             size_t unprocessed = tppStart - buffer - processed;
             // if the sequence was valid, process it, then copy any unprocessed normal input preceding it towards its end and move buffer 
             if (tppRange.second != bufferEnd) {
-                receive(Sequence(tppRange.first, tppRange.second));
+                receive(tppRange.first, tppRange.second);
                 ++tppRange.second;
                 if (unprocessed > 0) {
                     memmove(tppRange.second, buffer + processed, unprocessed );
@@ -124,6 +125,8 @@ namespace tpp {
             size = (size * 16) + digit;
             ++tppStart;
         }
+        // incomplete sequence length
+        return std::pair<char *, char *>{const_cast<char*>(bufferEnd), const_cast<char*>(bufferEnd)};
     }
 
 } // namespace tpp

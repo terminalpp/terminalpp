@@ -29,8 +29,6 @@ Terminal++ PTY:
 - PTY++ and remote files version 2.0 - or maybe just do the old PTY but in PTY++ pty in the new architecture.
 - deal with how PTYs are deleted (and the entire session)
 
-- Terminal is really bad name, should be sth like PTY or so... Maybe TerminalClient::PTY
-
 Settings:
 
 - design settings via abstract configurator classes that provide the interface

@@ -6,26 +6,31 @@
 #include "helpers/process.h"
 #include "helpers/log.h"
 #include "helpers/char.h"
-#include "terminal.h"
+#include "terminal_pty.h"
 #include "sequence.h"
-
-
-
 
 namespace tpp {
 
+    class TimeoutError : public helpers::Exception {
+    }; 
+
     /** t++ client for terminal. 
      
-        Supports reading and writing both tpp sequences and normal input/output to the terminal.  
+        Supports reading and writing both tpp sequences and normal input/output to the terminal.
      */
     class TerminalClient {
     public:
 
-        TerminalClient(Terminal & terminal):
-            terminal_{terminal} {
+        TerminalClient(TerminalPTY & pty):
+            pty_{pty} {
         }
 
     protected:
+
+        /** Determines the capabilities of the attached terminal. 
+         */
+        Sequence::Capabilities getCapabilities();
+
 
         /** Starts the terminal client. 
          */
@@ -34,13 +39,13 @@ namespace tpp {
         /** Sends given buffer using the attached terminal. 
          */
         void send(char const * buffer, size_t numBytes) {
-            terminal_.send(buffer, numBytes);
+            pty_.send(buffer, numBytes);
         }
 
         /** Sends given t++ sequence. 
          */
         void send(Sequence const & seq) {
-            terminal_.send(seq);
+            pty_.send(seq);
         }
 
         /** Called when normal input is received from the terminal. 
@@ -51,7 +56,7 @@ namespace tpp {
 
         /** Called when a t++ sequence has been received. 
          */
-        virtual void receive(Sequence seq) = 0;
+        virtual void receiveSequence(char const * buffer, char const * bufferEnd) = 0;
 
         /** Called when the terminal's input has reached end of file. 
          
@@ -84,7 +89,7 @@ namespace tpp {
          */
         std::pair<char *, char*> findTppRange(char * tppStart, char const * bufferEnd);
 
-        Terminal & terminal_;
+        TerminalPTY & pty_;
         std::thread reader_;
 
     }; // tpp::TerminalClient

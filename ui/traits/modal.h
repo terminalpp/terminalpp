@@ -87,7 +87,7 @@ namespace ui {
         using TraitBase<Modal, T>::downcastThis;
 
         Modal(bool deleteOnDismiss = false):
-            deleteOnDismiss_{deleteOnDismiss_} {
+            deleteOnDismiss_{deleteOnDismiss} {
         }
 
         /** Dismisses the widget. 

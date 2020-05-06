@@ -1,45 +1,79 @@
 #include "helpers/char.h"
 
 #include "sequence.h"
-#include "terminal.h"
+#include "terminal_client.h"
 
 
 namespace tpp {
 
-    Sequence::Sequence(char const * start, char const * end):
-        kind_{Kind::Invalid},
-        payloadStart_{start},
-        payloadEnd_{end} {
-        unsigned kind = 0;
-        while (payloadStart_ != payloadEnd_) {
-            unsigned digit;
-            if (*payloadStart_ == ';') {
-                ++payloadStart_;
+    using Char = helpers::Char;
+
+    std::ostream & operator << (std::ostream & s, Sequence::Kind kind) {
+        switch (kind) {
+            case Sequence::Kind::Ack:
+                s << "Sequence::Ack";
                 break;
-            } else if (! helpers::Char::IsHexadecimalDigit(*payloadStart_, digit)) {
-                payloadStart_ = start;
-                return;
-            } else {
-                kind = kind * 16 + digit;
-                ++payloadStart_; 
-            }
+            case Sequence::Kind::GetCapabilities:
+                s << "Sequence::GetCapabilities";
+                break;
+            case Sequence::Kind::Capabilities:
+                s << "Sequence::Capabilities";
+                break;
+            case Sequence::Kind::Invalid:
+                s << "Sequence::Invalid";
+                break;
+            default:
+                s << "Unknown sequence " << static_cast<unsigned>(kind);
+                break;
         }
-        if (kind >= static_cast<unsigned>(Kind::Invalid))
-            payloadStart_ = start;
-        else
-            kind_ = static_cast<Kind>(kind);
+        return s;
     }
 
-    void Sequence::sendHeader(Terminal & terminal, size_t payloadSize) const {
+    // Sequence
+
+    void Sequence::sendHeader(TerminalPTY & pty, size_t payloadSize) const {
         std::string header{STR(std::hex << static_cast<unsigned>(kind_) << ";")};
         payloadSize += header.size();
         header = STR(std::hex << payloadSize << ";" << header);
-        terminal.send(header.c_str(), header.size());
+        pty.send(header.c_str(), header.size());
     }
 
-    void Sequence::sendTo(Terminal & terminal) const {
-        sendHeader(terminal, payloadEnd_ - payloadStart_);
-        terminal.send(payloadStart_, payloadEnd_ - payloadStart_);
+    void Sequence::sendTo(TerminalPTY & pty) const {
+        sendHeader(pty, 0);
+    }
+
+    unsigned Sequence::readUnsigned(char const * & start, char const * end) {
+        unsigned result = 0;
+        unsigned digit = 0;
+        while (start < end) {
+            if (Char::IsDecimalDigit(*start, digit)) {
+                result = result * 10 + digit;
+                ++start;
+            } else {
+                if (*start == ';') {
+                    ++start;
+                    break;
+                }
+                THROW(SequenceError()) << "Expected decimal digit, but " << *start << " found in sequence payload";
+            }
+        }
+        return result;
+    }
+
+    // Sequence::Ack
+
+    void Sequence::Ack::sendTo(TerminalPTY & pty) const {
+        std::string payload = STR(id_);
+        sendHeader(pty, payload.size());
+        pty.send(payload.c_str(), payload.size());
+    }
+
+    // Sequence::Capabilities
+
+    void Sequence::Capabilities::sendTo(TerminalPTY & pty) const {
+        std::string payload = STR(version_);
+        sendHeader(pty, payload.size());
+        pty.send(payload.c_str(), payload.size());
     }
 
 } // namespace tpp
