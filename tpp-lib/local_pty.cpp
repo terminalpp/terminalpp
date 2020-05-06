@@ -1,3 +1,16 @@
+#if (defined ARCH_UNIX)
+    #include <unistd.h>
+    #include <signal.h>
+    #include <sys/wait.h>
+    #include <sys/ioctl.h>
+    #include <errno.h>
+    #if (defined ARCH_LINUX)
+        #include <pty.h>
+    #elif (defined ARCH_MACOS)
+        #include <util.h>
+    #endif
+#endif
+
 #include "local_pty.h"
 
 namespace tpp {
@@ -25,12 +38,6 @@ namespace tpp {
         // first terminate the process and wait for it
         terminate();
 		waiter_.join();
-        // then close all handles and the PTY, which interrupts the reader thread
-		CloseHandle(pInfo_.hProcess);
-		CloseHandle(pInfo_.hThread);
-		ClosePseudoConsole(conPTY_);
-		CloseHandle(pipeIn_);
-		CloseHandle(pipeOut_);
         // and free the rest of the resources
 		delete [] reinterpret_cast<char*>(startupInfo_.lpAttributeList);
     }
@@ -108,6 +115,12 @@ namespace tpp {
                     break;
             }
             terminated_.store(true);
+            // then close all handles and the PTY, which interrupts the reader thread
+            CloseHandle(pInfo_.hProcess);
+            CloseHandle(pInfo_.hThread);
+            ClosePseudoConsole(conPTY_);
+            CloseHandle(pipeIn_);
+            CloseHandle(pipeOut_);
         }};
     }
 
@@ -143,6 +156,102 @@ namespace tpp {
 
 #elif (defined ARCH_UNIX)
 
+    LocalPTYMaster::LocalPTYMaster(helpers::Command const & command):
+        command_{command} {
+        start();
+
+    }
+
+    LocalPTYMaster::LocalPTYMaster(helpers::Command const & command, helpers::Environment const & env):
+        command_{command},
+        environment_{env} {
+        start();
+    }
+
+    LocalPTYMaster::~LocalPTYMaster() {
+        terminate();
+        waiter_.join();
+    }
+
+    void LocalPTYMaster::terminate() {
+        kill(pid_, SIGKILL);
+    }
+
+    void LocalPTYMaster::start() {
+		// fork & open the pty
+		switch (pid_ = forkpty(&pipe_, nullptr, nullptr, nullptr)) {
+			// forkpty failed
+			case -1:
+			    OSCHECK(false) << "Fork failed";
+		    // running the child process,
+			case 0: {
+				setsid();
+				if (ioctl(1, TIOCSCTTY, nullptr) < 0)
+					UNREACHABLE;
+				environment_.unsetIfUnspecified("COLUMNS");
+				environment_.unsetIfUnspecified("LINES");
+				environment_.unsetIfUnspecified("TERMCAP");
+				environment_.setIfUnspecified("TERM", "xterm-256color");
+				environment_.setIfUnspecified("COLORTERM", "truecolor");
+				environment_.apply();
+
+				signal(SIGCHLD, SIG_DFL);
+				signal(SIGHUP, SIG_DFL);
+				signal(SIGINT, SIG_DFL);
+				signal(SIGQUIT, SIG_DFL);
+				signal(SIGTERM, SIG_DFL);
+				signal(SIGALRM, SIG_DFL);
+
+				char** argv = command_.toArgv();
+				// execvp never returns
+				OSCHECK(execvp(command_.command().c_str(), argv) != -1) << "Unable to execute command " << command_;
+				UNREACHABLE;
+			}
+			// continuing the terminal program 
+			default:
+				break;
+		}
+
+        waiter_ = std::thread{[this](){
+            pid_t x = waitpid(pid_, &exitCode_, 0);
+            exitCode_ = WEXITSTATUS(exitCode_);
+            // it is ok to see errno ECHILD, happens when process has already been terminated
+            if (x < 0 && errno != ECHILD) 
+                NOT_IMPLEMENTED; // error
+            // mark as terminated
+            terminated_.store(true);
+        }};
+    }
+
+    void LocalPTYMaster::resize(int cols, int rows) {
+        struct winsize s;
+        s.ws_row = rows;
+        s.ws_col = cols;
+        s.ws_xpixel = 0;
+        s.ws_ypixel = 0;
+        if (ioctl(pipe_, TIOCSWINSZ, &s) < 0)
+            NOT_IMPLEMENTED;
+    }
+
+    void LocalPTYMaster::send(char const * buffer, size_t bufferSize) {
+		int nw = ::write(pipe_, (void*)buffer, bufferSize);
+		// TODO check errors properly 
+		ASSERT(nw >= 0 && static_cast<unsigned>(nw) == bufferSize);
+    }
+
+    size_t LocalPTYMaster::receive(char * buffer, size_t bufferSize) {
+        while (true) {
+            int cnt = 0;
+            cnt = ::read(pipe_, (void*)buffer, bufferSize);
+            if (cnt == -1) {
+                if (errno == EINTR || errno == EAGAIN)
+                    continue;
+                return 0;
+            } else {
+                return static_cast<size_t>(cnt);
+            }
+        }
+    }
 
 #endif
 
