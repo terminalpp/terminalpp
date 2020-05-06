@@ -145,9 +145,10 @@ namespace ui {
 
     char32_t AnsiTerminal::LineDrawingChars_[15] = {0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0, 0, 0x2500, 0, 0, 0x251c, 0x2524, 0x2534, 0x252c, 0x2502};
 
-    AnsiTerminal::AnsiTerminal(Palette * palette, int width, int height, int x, int y):
+    AnsiTerminal::AnsiTerminal(tpp::PTYMaster * pty, Palette * palette, int width, int height, int x, int y):
         PublicWidget{width, height, x, y}, 
         Scrollable{width, height},
+        pty_{pty},
         fps_{0},
         repaint_{false},
         palette_{palette},
@@ -165,9 +166,27 @@ namespace ui {
         boldIsBright_{false} {
         setFps(60);
         setFocusable(true);
+        reader_ = std::thread{[this](){
+            size_t unprocessed = 0;
+            size_t bufferSize = DEFAULT_BUFFER_SIZE;
+            char * buffer = new char[DEFAULT_BUFFER_SIZE];
+            while (true) {
+                size_t available = pty_->receive(buffer + unprocessed, bufferSize - unprocessed);
+                // if no more bytes were read, then the PTY has been terminated, exit the loop
+                if (available == 0 && pty_->terminated())
+                    break;
+                available += unprocessed;
+                unprocessed = available - processInput(buffer, buffer + available);
+                // TODO grow the buffer if unprocessed = bufferSize
+            }
+            ptyTerminated(pty_->exitCode());
+        }};
     }
 
     AnsiTerminal::~AnsiTerminal() {
+        pty_->terminate();
+        reader_.join();
+        delete pty_;
         setFps(0);
         // wait for the repainter thread to terminate
         if (repainter_.joinable())
@@ -209,11 +228,11 @@ namespace ui {
 
     void AnsiTerminal::paste(std::string const & contents) {
         if (bracketedPaste_) {
-            ptySend("\033[200~", 6);
-            ptySend(contents.c_str(), contents.size());
-            ptySend("\033[201~", 6);
+            pty_->send("\033[200~", 6);
+            pty_->send(contents.c_str(), contents.size());
+            pty_->send("\033[201~", 6);
         } else {
-            ptySend(contents.c_str(), contents.size());
+            pty_->send(contents.c_str(), contents.size());
         }
     }
 
@@ -255,7 +274,7 @@ namespace ui {
         state_.resize(width, height, true, palette_->defaultBackground());
         stateBackup_.resize(width, height, alternateMode_, palette_->defaultBackground());
         // resize the PTY
-        ptyResize(width, height);
+        pty_->resize(width, height);
         // update the scrolling information            
         setScrollSize(Size{width, height + state_.buffer.historyRows()});
         // scroll to the terminal if appropriate (terminal was fully visible before)
@@ -358,7 +377,7 @@ namespace ui {
 				buffer[3] = button & 0xff;
 				buffer[4] = static_cast<char>(coords.x());
 				buffer[5] = static_cast<char>(coords.y());
-				ptySend(buffer, 6);
+				pty_->send(buffer, 6);
 				break;
 			}
 			case MouseEncoding::UTF8: {
@@ -367,7 +386,7 @@ namespace ui {
 			}
 			case MouseEncoding::SGR: {
 				std::string buffer = STR("\033[<" << button << ';' << coords.x() << ';' << coords.y() << end);
-				ptySend(buffer.c_str(), buffer.size());
+				pty_->send(buffer.c_str(), buffer.size());
 				break;
 			}
 		}
@@ -380,7 +399,7 @@ namespace ui {
         if (! event.active())
             return;
         ASSERT(event->codepoint() >= 32);
-        ptySend(event->toCharPtr(), event->size());
+        pty_->send(event->toCharPtr(), event->size());
     }
 
     void AnsiTerminal::keyDown(Event<Key>::Payload & event) {
@@ -404,14 +423,14 @@ namespace ui {
 				if (event->modifiers() == 0 && cursorMode_ == CursorMode::Application) {
 					std::string sa(*seq);
 					sa[1] = 'O';
-					ptySend(sa.c_str(), sa.size());
+					pty_->send(sa.c_str(), sa.size());
 					return;
 				}
 				break;
 			default:
 				break;
 			}
-			ptySend(seq->c_str(), seq->size());
+			pty_->send(seq->c_str(), seq->size());
 		}
     }
 
@@ -929,7 +948,7 @@ namespace ui {
                         if (seq[0] != 0)
                             break;
                         LOG(SEQ) << "Device Attributes - VT102 sent";
-                        ptySend("\033[?6c", 5); // send VT-102 for now, go for VT-220? 
+                        pty_->send("\033[?6c", 5); // send VT-102 for now, go for VT-220? 
                         return;
                     }
                     /* CSI <n> d -- Line position absolute (VPA)
@@ -1034,7 +1053,7 @@ namespace ui {
                         if (seq[0] != 0)
                             break;
 					LOG(SEQ) << "Secondary Device Attributes - VT100 sent";
-					ptySend("\033[>0;0;0c", 9); // we are VT100, no version third must always be zero (ROM cartridge)
+					pty_->send("\033[>0;0;0c", 9); // we are VT100, no version third must always be zero (ROM cartridge)
 					return;
 				default:
 					break;

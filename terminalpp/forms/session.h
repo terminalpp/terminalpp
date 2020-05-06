@@ -11,6 +11,7 @@
 #include "ui/layouts/row.h"
 #include "ui-terminal/ansi_terminal.h"
 #include "ui-terminal/local_pty.h"
+#include "tpp-lib/local_pty.h"
 #include "tpp-lib/bypass_pty.h"
 
 #include "about_box.h"
@@ -48,7 +49,15 @@ namespace tpp {
             palette_{AnsiTerminal::Palette::XTerm256()} {
         	Config const & config = Config::Instance();
             window_->setRootWidget(this);
-            terminal_ = new AnsiTerminal{& palette_, width(), height()};
+#if (ARCH_WINDOWS)
+            //pty_ = new BypassPTY{config.session.command()};
+            pty_ = new LocalPTYMaster{helpers::Command{"cmd.exe", {}}};
+#else
+            pty_ = new LocalPTYMaster{config.session.command()};
+#endif
+
+
+            terminal_ = new AnsiTerminal{pty_, & palette_, width(), height()};
             //terminal_->setHeightHint(SizeHint::Percentage(75));
             terminal_->onPTYTerminated.setHandler(&Session::terminalPTYTerminated, this);
             terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
@@ -69,18 +78,9 @@ namespace tpp {
             //modalPane_->setHeightHint(SizeHint::Auto());
             add(modalPane_);
 
-#if (ARCH_WINDOWS)
-            pty_ = new BypassPTY{terminal_, config.session.command()};
-//            pty_ = new ui::LocalPTY{terminal_, helpers::Command{"cmd.exe", {}}};
-#else
-            pty_ = new ui::LocalPTY{terminal_, config.session.command()};
-#endif
             //window_->setKeyboardFocus(terminal_);
         }
 
-        ~Session() override {
-            delete pty_;
-        }
 
     protected:
 
@@ -197,7 +197,7 @@ namespace tpp {
 
         AnsiTerminal::Palette palette_;
         AnsiTerminal * terminal_;
-        PTY * pty_;
+        PTYMaster * pty_;
         ModalPane * modalPane_;
     }; 
 

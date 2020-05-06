@@ -11,9 +11,11 @@
 #include "ui/traits/scrollable.h"
 #include "ui/traits/selection_owner.h"
 
-#include "pty.h"
+#include "tpp-lib/pty.h"
 
 namespace ui {
+
+    using ExitCode = helpers::ExitCode;
 
     class TppSequenceEvent {
     public:
@@ -21,8 +23,10 @@ namespace ui {
         char const * end;
     }; // ui::TppSequenceEvent
 
-    class AnsiTerminal : public PublicWidget, public PTY::Client, public Scrollable<AnsiTerminal>, public SelectionOwner<AnsiTerminal> {
+    class AnsiTerminal : public PublicWidget, public Scrollable<AnsiTerminal>, public SelectionOwner<AnsiTerminal> {
     public:
+
+        static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
 
         class Palette;
 
@@ -119,7 +123,7 @@ namespace ui {
 
         //@}
 
-        AnsiTerminal(Palette * palette, int width = 0, int height = 0, int x = 0, int y = 0); 
+        AnsiTerminal(tpp::PTYMaster * pty, Palette * palette, int width = 0, int height = 0, int x = 0, int y = 0); 
 
         ~AnsiTerminal() override;
 
@@ -389,9 +393,9 @@ namespace ui {
 
         /** Parses the given input. Returns the number of bytes actually parsed. 
          */
-        size_t processInput(char const * buffer, char const * bufferEnd) override;
+        size_t processInput(char const * buffer, char const * bufferEnd);
 
-        void ptyTerminated(ExitCode exitCode) override {
+        void ptyTerminated(ExitCode exitCode) {
             sendEvent([this, exitCode](){
                 Event<ExitCode>::Payload p{exitCode};
                 // disable the terminal
@@ -496,6 +500,12 @@ namespace ui {
         //@}
 
         void updateCursorPosition();
+
+        /** Pseudoterminal. */
+        tpp::PTYMaster * pty_;
+
+        /** PTY reader thread. */
+        std::thread reader_;
 
         /** Maximal refresh rate for the terminal. */
         std::atomic<unsigned> fps_;
