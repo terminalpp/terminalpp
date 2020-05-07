@@ -318,6 +318,15 @@ namespace tpp {
         }
     }
 
+    void LocalPTYSlave::send(Sequence const & seq) {
+        if (insideTmux_)
+            ::write(out_, "\033Ptmux;", 7);
+        PTYSlave::send(seq);
+        if (insideTmux_)
+            ::write(out_, "\033\\", 2);
+    }
+
+
     size_t LocalPTYSlave::receive(char * buffer, size_t bufferSize) {
         while (true) {
             int cnt = 0;

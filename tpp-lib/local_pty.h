@@ -73,7 +73,11 @@ namespace tpp {
         ~LocalPTYSlave() override;
 
         std::pair<int, int> size() const override;
+
         void send(char const * buffer, size_t numBytes) override;
+
+        void send(Sequence const & seq) override;
+        
         size_t receive(char * buffer, size_t bufferSize) override;
 
         /** Returns true if the terminal seems to be attached to the tmux terminal multipler. 

@@ -5,32 +5,45 @@
 #include "helpers/process.h"
 #include "helpers/events.h"
 
+#include "sequence.h"
 
 namespace tpp {
 
-    /** Pseudoterminal master. 
-     
-        The master supports 
-     */
-    class PTYMaster {
+    class PTYBase {
     public:
-        /** Virtual destructor in the PTYMaster base class. 
-         */
-        virtual ~PTYMaster() { }
-
-        /** Terminates the pseudoterminal. 
-         */
-        virtual void terminate() = 0;
+        virtual ~PTYBase() { }
 
         /** Sends data. 
          */
         virtual void send(char const * buffer, size_t numBytes) = 0;
+
+        /** Sends a t++ sequence. 
+         */
+        virtual void send(Sequence const & seq) {
+            send("\033P+", 3);
+            seq.sendTo(*this);
+            send("\007", 1);
+        }
 
         /** Blocks until data are received and returns the size of bytes received in the provided buffer. 
          
             If the pseudoterminal has been terminated returns immediately. 
          */
         virtual size_t receive(char * buffer, size_t bufferSize) = 0;
+
+    }; 
+
+
+    /** Pseudoterminal master. 
+     
+        The master supports 
+     */
+    class PTYMaster : public PTYBase {
+    public:
+
+        /** Terminates the pseudoterminal. 
+         */
+        virtual void terminate() = 0;
 
         /** Resizes the terminal. 
          */
@@ -66,26 +79,13 @@ namespace tpp {
     /** Pseudoterminal master. 
      * 
      */
-    class PTYSlave {
+    class PTYSlave : public PTYBase {
     public:
         using ResizedEvent = helpers::Event<std::pair<int,int>, PTYSlave>;
-
-        /** Virtual destructor in the PTYSlave base class. 
-         */
-        virtual ~PTYSlave() { }
-
 
         /** Returns the size of the terminal (cols, rows). 
          */
         virtual std::pair<int, int> size() const = 0;
-
-        /** Sends given data. 
-         */
-        virtual void send(char const * buffer, size_t numBytes) = 0;
-
-        /** Receives data from the terminal. 
-         */
-        virtual size_t receive(char * buffer, size_t bufferSize) = 0;
 
         /** An event triggered when the terminal is resized. 
          */

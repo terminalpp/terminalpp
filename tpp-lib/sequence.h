@@ -4,7 +4,7 @@
 
 namespace tpp {
 
-    class TerminalPTY;
+    class PTYBase;
 
     class SequenceError : public helpers::Exception {
     };
@@ -40,6 +40,8 @@ namespace tpp {
 
         friend class TerminalPTY;
 
+        friend class PTYBase;
+
         Sequence(Kind kind):
             kind_{kind} {
         }
@@ -53,9 +55,9 @@ namespace tpp {
                 THROW(SequenceError()) << "Expected sequence " << expectedKind << ", but found " << kind_;
         }
 
-        void sendHeader(TerminalPTY & pty, size_t payloadSize) const;
+        void sendHeader(PTYBase & pty, size_t payloadSize) const;
 
-        virtual void sendTo(TerminalPTY & pty) const;
+        virtual void sendTo(PTYBase & pty) const;
 
         /** Reads unsigned value from the payload and moves the payload start past its end. 
          */
@@ -82,7 +84,7 @@ namespace tpp {
         }
     protected:
 
-        void sendTo(TerminalPTY & pty) const override;
+        void sendTo(PTYBase & pty) const override;
 
     private:
         unsigned id_;
@@ -117,7 +119,7 @@ namespace tpp {
 
     protected:
 
-        void sendTo(TerminalPTY & pty) const override;
+        void sendTo(PTYBase & pty) const override;
 
     private:
         unsigned version_;

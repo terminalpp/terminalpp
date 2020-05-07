@@ -6,7 +6,7 @@
 #include "helpers/process.h"
 #include "helpers/log.h"
 #include "helpers/char.h"
-#include "terminal_pty.h"
+#include "pty.h"
 #include "sequence.h"
 
 namespace tpp {
@@ -20,12 +20,33 @@ namespace tpp {
      */
     class TerminalClient {
     public:
+        static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
 
-        TerminalClient(TerminalPTY & pty):
+        TerminalClient(PTYSlave * pty):
             pty_{pty} {
         }
 
     protected:
+
+        /** Called when normal input is received from the terminal. 
+         
+            The implementation should process the received input and return the number of bytes processed. These will be removed from the buffer, while any unprocessed data will be prepended to data received next. 
+         */
+        virtual size_t received(char const * buffer, char const * bufferEnd) = 0;
+
+        /** Called when a t++ sequence has been received. 
+         */
+        virtual void receivedSequence(char const * buffer, char const * bufferEnd) = 0;
+
+        virtual void inputEof(char const * buffer, char const * bufferEnd) {
+            MARK_AS_UNUSED(buffer);
+            MARK_AS_UNUSED(bufferEnd);
+        }
+
+        virtual void resized(int cols, int rows) {
+            MARK_AS_UNUSED(cols);
+            MARK_AS_UNUSED(rows);
+        }
 
         /** Determines the capabilities of the attached terminal. 
          */
@@ -39,35 +60,14 @@ namespace tpp {
         /** Sends given buffer using the attached terminal. 
          */
         void send(char const * buffer, size_t numBytes) {
-            pty_.send(buffer, numBytes);
+            pty_->send(buffer, numBytes);
         }
 
         /** Sends given t++ sequence. 
          */
         void send(Sequence const & seq) {
-            pty_.send(seq);
+            pty_->send(seq);
         }
-
-        /** Called when normal input is received from the terminal. 
-         
-            The implementation should process the received input and return the number of bytes processed. These will be removed from the buffer, while any unprocessed data will be prepended to data received next. 
-         */
-        virtual size_t receive(char const * buffer, char const * bufferEnd) = 0;
-
-        /** Called when a t++ sequence has been received. 
-         */
-        virtual void receiveSequence(char const * buffer, char const * bufferEnd) = 0;
-
-        /** Called when the terminal's input has reached end of file. 
-         
-            Contains any buffer, that has been previously received via the receive() method, but left unprocessed. The default implementation does nothing.
-         */
-        virtual void inputEof(char const * buffer, char const * bufferEnd) {
-            MARK_AS_UNUSED(buffer);
-            MARK_AS_UNUSED(bufferEnd);
-        }
-
-        static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
 
     private:
 
@@ -89,7 +89,7 @@ namespace tpp {
          */
         std::pair<char *, char*> findTppRange(char * tppStart, char const * bufferEnd);
 
-        TerminalPTY & pty_;
+        PTYSlave * pty_;
         std::thread reader_;
 
     }; // tpp::TerminalClient

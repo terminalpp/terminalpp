@@ -31,14 +31,14 @@ namespace tpp {
 
     // Sequence
 
-    void Sequence::sendHeader(TerminalPTY & pty, size_t payloadSize) const {
+    void Sequence::sendHeader(PTYBase & pty, size_t payloadSize) const {
         std::string header{STR(std::hex << static_cast<unsigned>(kind_) << ";")};
         payloadSize += header.size();
         header = STR(std::hex << payloadSize << ";" << header);
         pty.send(header.c_str(), header.size());
     }
 
-    void Sequence::sendTo(TerminalPTY & pty) const {
+    void Sequence::sendTo(PTYBase & pty) const {
         sendHeader(pty, 0);
     }
 
@@ -62,7 +62,7 @@ namespace tpp {
 
     // Sequence::Ack
 
-    void Sequence::Ack::sendTo(TerminalPTY & pty) const {
+    void Sequence::Ack::sendTo(PTYBase & pty) const {
         std::string payload = STR(id_);
         sendHeader(pty, payload.size());
         pty.send(payload.c_str(), payload.size());
@@ -70,7 +70,7 @@ namespace tpp {
 
     // Sequence::Capabilities
 
-    void Sequence::Capabilities::sendTo(TerminalPTY & pty) const {
+    void Sequence::Capabilities::sendTo(PTYBase & pty) const {
         std::string payload = STR(version_);
         sendHeader(pty, payload.size());
         pty.send(payload.c_str(), payload.size());

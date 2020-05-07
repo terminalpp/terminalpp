@@ -18,10 +18,9 @@ namespace tpp {
         size_t bufferSize = DEFAULT_BUFFER_SIZE;
         char * buffer = new char[bufferSize];
         char * writeStart = buffer;
-        bool success = false;
         while (true) {
-            size_t bytesRead = pty_.receive(writeStart, bufferSize - (writeStart - buffer), success);
-            if (!success)
+            size_t bytesRead = pty_->receive(writeStart, bufferSize - (writeStart - buffer));
+            if (bytesRead == 0)
                 break;
             bytesRead += (writeStart - buffer);
             char * unprocessed = parseTerminalInput(buffer, buffer + bytesRead);
@@ -37,7 +36,7 @@ namespace tpp {
         }
         // if there is any unprocessed input, try processing it (it could have been leftovers from partial tpp sequence that would make sense for the parser)
         if (writeStart != buffer)
-            writeStart -= receive(buffer, writeStart);
+            writeStart -= received(buffer, writeStart);
         // the terminal has been closed when the input pty eofs
         inputEof(buffer, writeStart);
         // and delete the buffer
@@ -60,11 +59,11 @@ namespace tpp {
             // process the normal input before the sequence 
             size_t processed = 0;
             if (tppStart != buffer)
-                processed = receive(buffer, tppStart);
+                processed = received(buffer, tppStart);
             size_t unprocessed = tppStart - buffer - processed;
             // if the sequence was valid, process it, then copy any unprocessed normal input preceding it towards its end and move buffer 
             if (tppRange.second != bufferEnd) {
-                receive(tppRange.first, tppRange.second);
+                receivedSequence(tppRange.first, tppRange.second);
                 ++tppRange.second;
                 if (unprocessed > 0) {
                     memmove(tppRange.second, buffer + processed, unprocessed );
