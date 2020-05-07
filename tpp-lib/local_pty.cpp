@@ -255,4 +255,83 @@ namespace tpp {
 
 #endif
 
+    // LocalPTYSlave
+
+#if (defined ARCH_UNIX)
+
+    LocalPTYSlave * LocalPTYSlave::Slave_ = nullptr;
+
+    void LocalPTYSlave::SIGWINCH_handler(int signo) {
+        ASSERT(Slave_ != nullptr);
+        ResizedEvent::Payload p{Slave_->size()};
+        Slave_->onResized(p, Slave_);
+    }
+
+
+    LocalPTYSlave::LocalPTYSlave():
+        in_{STDIN_FILENO},
+        out_{STDOUT_FILENO},
+        insideTmux_{InsideTMUX()} {
+        OSCHECK(tcgetattr(in_, & backup_) == 0);
+        termios raw = backup_;
+        raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+        raw.c_oflag &= ~(OPOST);
+        raw.c_cflag |= (CS8);
+        raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+        OSCHECK(tcsetattr(in_, TCSAFLUSH, & raw) == 0);
+        Slave_ = this;
+        OSCHECK(signal(SIGWINCH, SIGWINCH_handler) != SIG_ERR);
+    }
+
+    LocalPTYSlave::~LocalPTYSlave() {
+        // we are in destructor, no need to check the error of the signal & tcsetattr
+        signal(SIGWINCH, SIG_DFL);
+        tcsetattr(in_, TCSAFLUSH, & backup_);
+        Slave_ = nullptr;
+    }
+
+    std::pair<int, int> LocalPTYSlave::size() const {
+        winsize size;
+        OSCHECK(ioctl(out_, TIOCGWINSZ, &size) != -1);
+        return std::pair<int,int>{size.ws_col, size.ws_row};
+    }
+
+    void LocalPTYSlave::send(char const * buffer, size_t numBytes) {
+        if (insideTmux_) {
+            // we have to properly escape the buffer
+            size_t start = 0;
+            size_t end = 0;
+            while (end < numBytes) {
+                if (buffer[end] == '\033') {
+                    if (start != end)
+                        ::write(out_, buffer + start, end - start);
+                    ::write(out_, "\033\033", 2);
+                    start = ++end;
+                } else {
+                    ++end;
+                }
+            }
+            if (start != end)
+                ::write(out_, buffer + start, end - start);
+        } else {
+            ::write(out_, buffer, numBytes);
+        }
+    }
+
+    size_t LocalPTYSlave::receive(char * buffer, size_t bufferSize) {
+        while (true) {
+            int cnt = 0;
+            cnt = ::read(in_, (void*)buffer, bufferSize);
+            if (cnt == -1) {
+                if (errno == EINTR || errno == EAGAIN)
+                    continue;
+                return 0;
+            } else {
+                return static_cast<size_t>(cnt);
+            }
+        }
+    }
+
+#endif
+
 } // namespace tpp

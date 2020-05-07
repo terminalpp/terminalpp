@@ -59,20 +59,39 @@ namespace tpp {
 
         std::atomic<bool> terminated_;
         helpers::ExitCode exitCode_;
-    };
 
+    }; // tpp::PTYMaster
+
+
+    /** Pseudoterminal master. 
+     * 
+     */
     class PTYSlave {
     public:
         using ResizedEvent = helpers::Event<std::pair<int,int>, PTYSlave>;
 
+        /** Virtual destructor in the PTYSlave base class. 
+         */
+        virtual ~PTYSlave() { }
+
+
+        /** Returns the size of the terminal (cols, rows). 
+         */
+        virtual std::pair<int, int> size() const = 0;
+
+        /** Sends given data. 
+         */
         virtual void send(char const * buffer, size_t numBytes) = 0;
+
+        /** Receives data from the terminal. 
+         */
         virtual size_t receive(char * buffer, size_t bufferSize) = 0;
 
+        /** An event triggered when the terminal is resized. 
+         */
         ResizedEvent onResized;
 
-    protected:
-
-    };
+    }; // tpp::PTYSlave
 
 
 

@@ -1,5 +1,11 @@
 #pragma once
 
+#if (defined ARCH_UNIX)
+#include <termios.h>
+
+#include <mutex>
+#endif
+
 #include <thread>
 
 #include "pty.h"
@@ -54,7 +60,40 @@ namespace tpp {
 		pid_t pid_;
 #endif
 
-    };
+    }; // tpp::LocalPTYMaster
+
+
+
+#if (defined ARCH_UNIX)
+
+    class LocalPTYSlave : public PTYSlave {
+    public:
+
+        LocalPTYSlave();
+        ~LocalPTYSlave() override;
+
+        std::pair<int, int> size() const override;
+        void send(char const * buffer, size_t numBytes) override;
+        size_t receive(char * buffer, size_t bufferSize) override;
+
+        /** Returns true if the terminal seems to be attached to the tmux terminal multipler. 
+         */
+        static bool InsideTMUX() {
+            return helpers::Environment::Get("TMUX") != nullptr;
+        }
+
+    private:
+
+        int in_;
+        int out_;
+        bool insideTmux_;
+        termios backup_;
+
+        static LocalPTYSlave * Slave_;
+        static void SIGWINCH_handler(int signo);
+
+    }; // tpp::LocalPTYSlave
+#endif
 
 }
 
