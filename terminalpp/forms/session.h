@@ -10,7 +10,6 @@
 #include "ui/layouts/column.h"
 #include "ui/layouts/row.h"
 #include "ui-terminal/ansi_terminal.h"
-#include "ui-terminal/local_pty.h"
 #include "tpp-lib/local_pty.h"
 #include "tpp-lib/bypass_pty.h"
 
