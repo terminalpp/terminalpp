@@ -50,8 +50,8 @@ namespace tpp {
         	Config const & config = Config::Instance();
             window_->setRootWidget(this);
 #if (ARCH_WINDOWS)
-            //pty_ = new BypassPTY{config.session.command()};
-            pty_ = new LocalPTYMaster{helpers::Command{"cmd.exe", {}}};
+            pty_ = new BypassPTYMaster{config.session.command()};
+            //pty_ = new LocalPTYMaster{helpers::Command{"cmd.exe", {}}};
 #else
             pty_ = new LocalPTYMaster{config.session.command()};
 #endif

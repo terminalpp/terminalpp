@@ -7,25 +7,19 @@
 
 namespace tpp {
 
-    BypassPTY::BypassPTY(Client * client, helpers::Command const & command):
-        IOPTY{client},
+    BypassPTYMaster::BypassPTYMaster(helpers::Command const & command):
         command_{command},
 		pipeIn_{ INVALID_HANDLE_VALUE },
 		pipeOut_{ INVALID_HANDLE_VALUE } {
         start();
     }
 
-    BypassPTY::~BypassPTY() {
+    BypassPTYMaster::~BypassPTYMaster() {
         terminate();
-        reader_.join();
         waiter_.join();
-        CloseHandle(pInfo_.hProcess);
-        CloseHandle(pInfo_.hThread);
-        CloseHandle(pipeIn_);
-        CloseHandle(pipeOut_);
     }
 
-    void BypassPTY::terminate() {
+    void BypassPTYMaster::terminate() {
         if (TerminateProcess(pInfo_.hProcess, std::numeric_limits<unsigned>::max()) != ERROR_SUCCESS) {
             // it could be that the process has already terminated
     		helpers::ExitCode ec = STILL_ACTIVE;
@@ -35,7 +29,7 @@ namespace tpp {
         }
     }
 
-    void BypassPTY::start() {
+    void BypassPTYMaster::start() {
 		//  input and output handles for the process
 		HANDLE pipePTYOut;
 		HANDLE pipePTYIn;
@@ -75,17 +69,31 @@ namespace tpp {
 		// we can close our handles to the other ends now
 		OSCHECK(CloseHandle(pipePTYOut));
 		OSCHECK(CloseHandle(pipePTYIn));
-        IOPTY::start();
+        // start the waiter thread
+        waiter_ = std::thread{[this](){
+            while (true) {
+                OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) == 0);
+                OSCHECK(GetExitCodeProcess(pInfo_.hProcess, &exitCode_) != 0);
+                if (exitCode_ != STILL_ACTIVE)
+                    break;
+            }
+            terminated_.store(true);
+            // then close all handles and the PTY, which interrupts the reader thread
+            CloseHandle(pInfo_.hProcess);
+            CloseHandle(pInfo_.hThread);
+            CloseHandle(pipeIn_);
+            CloseHandle(pipeOut_);
+        }};
     }
 
-    void BypassPTY::resize(int cols, int rows) {
+    void BypassPTYMaster::resize(int cols, int rows) {
 		DWORD bytesWritten = 0;
 		std::string s = STR("`r" << cols << ':' << rows << ';');
 		WriteFile(pipeOut_, s.c_str(), static_cast<DWORD>(s.size()), &bytesWritten, nullptr);
 		// TODO check properly how stuff was written and error in an appropriate way
     }
 
-    void BypassPTY::send(char const * buffer, size_t bufferSize) {
+    void BypassPTYMaster::send(char const * buffer, size_t bufferSize) {
 		DWORD bytesWritten = 0;
 		size_t start = 0;
 		size_t i = 0;
@@ -99,20 +107,10 @@ namespace tpp {
 		WriteFile(pipeOut_, buffer + start, static_cast<DWORD>(i - start), &bytesWritten, nullptr);
     }
 
-    size_t BypassPTY::receive(char * buffer, size_t bufferSize, bool & success) {
+    size_t BypassPTYMaster::receive(char * buffer, size_t bufferSize) {
         DWORD bytesRead = 0;
-        success = ReadFile(pipeIn_, buffer, static_cast<DWORD>(bufferSize), &bytesRead, nullptr);
+        ReadFile(pipeIn_, buffer, static_cast<DWORD>(bufferSize), &bytesRead, nullptr);
         return bytesRead;
-    }
-
-    helpers::ExitCode BypassPTY::waitAndGetExitCode() {
-        while (true) {
-            OSCHECK(WaitForSingleObject(pInfo_.hProcess, INFINITE) == 0);
-            helpers::ExitCode ec;
-            OSCHECK(GetExitCodeProcess(pInfo_.hProcess, &ec) != 0);
-            if (ec != STILL_ACTIVE)
-                return ec;
-        }
     }
 
 } // namespace ui 
