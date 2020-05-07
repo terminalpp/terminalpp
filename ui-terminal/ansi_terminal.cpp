@@ -177,6 +177,8 @@ namespace ui {
                     break;
                 available += unprocessed;
                 unprocessed = available - processInput(buffer, buffer + available);
+                // copy the unprocessed bytes at the beginning of the buffer
+                memcpy(buffer, buffer + available - unprocessed, unprocessed);
                 // TODO grow the buffer if unprocessed = bufferSize
             }
             ptyTerminated(pty_->exitCode());
