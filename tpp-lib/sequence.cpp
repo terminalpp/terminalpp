@@ -31,15 +31,48 @@ namespace tpp {
 
     // Sequence
 
-    void Sequence::sendHeader(PTYBase & pty, size_t payloadSize) const {
-        std::string header{STR(std::hex << static_cast<unsigned>(kind_) << ";")};
-        payloadSize += header.size();
-        header = STR(std::hex << payloadSize << ";" << header);
-        pty.send(header.c_str(), header.size());
+    char const * Sequence::FindSequenceStart(char const * buffer, char const * bufferEnd) {
+        while (buffer != bufferEnd) {
+            if (*buffer == '\033') {
+                if (buffer + 1 == bufferEnd)
+                    break;
+                if (buffer[1] == 'P') {
+                    if (buffer + 2 == bufferEnd || buffer[2] == '+')
+                        break;
+                    ++buffer;
+                } 
+            }
+            ++buffer;
+        }
+        return buffer;
+    }
+
+    char const * Sequence::FindSequenceEnd(char const * buffer, char const * bufferEnd) {
+        while (buffer < bufferEnd && *buffer != Char::BEL)
+            ++buffer;
+        return buffer;
+    }
+
+    Sequence::Kind Sequence::ParseKind(char const * & buffer, char const * bufferEnd) {
+        unsigned result = 0;
+        while (buffer < bufferEnd) {
+            if (*buffer == ';') {
+                ++buffer;
+                return static_cast<Kind>(result);
+            } else if (*buffer == Char::BEL) {
+                return static_cast<Kind>(result);
+            }
+            unsigned digit = 0;
+            if (! Char::IsDecimalDigit(*buffer, digit))
+                return Kind::Invalid;
+            result = (result * 10) + digit;
+        }
+        return Kind::Invalid;
     }
 
     void Sequence::sendTo(PTYBase & pty) const {
-        sendHeader(pty, 0);
+        std::string x{STR(static_cast<unsigned>(kind_))};
+        pty.send(x.c_str(), x.size());
     }
 
     unsigned Sequence::readUnsigned(char const * & start, char const * end) {
@@ -63,16 +96,16 @@ namespace tpp {
     // Sequence::Ack
 
     void Sequence::Ack::sendTo(PTYBase & pty) const {
-        std::string payload = STR(id_);
-        sendHeader(pty, payload.size());
+        Sequence::sendTo(pty);
+        std::string payload = STR(";" << id_);
         pty.send(payload.c_str(), payload.size());
     }
 
     // Sequence::Capabilities
 
     void Sequence::Capabilities::sendTo(PTYBase & pty) const {
-        std::string payload = STR(version_);
-        sendHeader(pty, payload.size());
+        Sequence::sendTo(pty);
+        std::string payload = STR(";" << version_);
         pty.send(payload.c_str(), payload.size());
     }
 

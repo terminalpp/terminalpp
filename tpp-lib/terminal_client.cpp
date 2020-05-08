@@ -6,42 +6,73 @@ namespace tpp {
 
     using Char = helpers::Char;
 
+    // TerminalClient::Async
 
-    void TerminalClient::start() {
+    TerminalClient::Async::Async(PTYSlave * pty):
+        TerminalClient{pty},
+        buffer_{new char[DEFAULT_BUFFER_SIZE]},
+        bufferSize_{DEFAULT_BUFFER_SIZE},
+        bufferUnprocessed_{0} {
         reader_ = std::thread{[this](){
-            readerThread();
+            while (true) {
+                size_t read = pty_->receive(buffer_ + bufferUnprocessed_, bufferSize_ - bufferUnprocessed_);
+                if (read == 0)
+                    break;
+                // process the input
+                bufferUnprocessed_ = processInput(buffer_, buffer_ + read + bufferUnprocessed_);
+                // TODO grow the buffer if needs be
+            }
         }};
     }
 
-    void TerminalClient::readerThread() {
-        // create the buffer, and read while we can 
-        size_t bufferSize = DEFAULT_BUFFER_SIZE;
-        char * buffer = new char[bufferSize];
-        char * writeStart = buffer;
-        while (true) {
-            size_t bytesRead = pty_->receive(writeStart, bufferSize - (writeStart - buffer));
-            if (bytesRead == 0)
-                break;
-            bytesRead += (writeStart - buffer);
-            char * unprocessed = parseTerminalInput(buffer, buffer + bytesRead);
-            // TDOO if buffer is full, grow it up to some size
-            // copy the unprocessed part of the buffer from the end of it to its beginning and set writing of new data after it
-            if (unprocessed < buffer + bytesRead) {
-                size_t unprocessedBytes = (buffer + bytesRead) - unprocessed;
-                memmove(buffer, unprocessed, unprocessedBytes);
-                writeStart = buffer + unprocessedBytes;
+    TerminalClient::Async::~Async() {
+        delete pty_;
+        pty_ = nullptr; // so that TerminalClient won't delete again
+        reader_.join();
+        delete [] buffer_;
+    }
+
+    size_t TerminalClient::Async::processInput(char * start, char const * end) {
+        char * i = start;
+        size_t unprocessed = 0;
+        while (i < end) {
+            char const * tppStart = Sequence::FindSequenceStart(start, end);
+            // process the data received before tpp sequence found
+            if (tppStart != i)
+                unprocessed = (tppStart - i) - received(start, i);
+            // determine the end of the sequence
+            char const * tppEnd = Sequence::FindSequenceEnd(tppStart, end);
+            // if there is entire sequence, parse it
+            if (tppEnd < end) {
+                char const * payloadStart = tppStart + 3;
+                tpp::Sequence::Kind kind = tpp::Sequence::ParseKind(payloadStart, end);
+                receivedSequence(kind, payloadStart, tppEnd);
+                ++tppEnd; // move past the bell character
+                // if we are at the end of the input, copy the unprocessed characters to the beginning and return
+                if (tppEnd == end) {
+                    memmove(start, tppStart - unprocessed, unprocessed);
+                    break;
+                // otherwise copy the unprocessed characters before the end of the sequence and start analysis from this new beginning. 
+                // this will reanalyze the unprocessed characters so is not exactly super effective
+                } else {
+                    i = const_cast<char*>(tppEnd - unprocessed);
+                    memmove(i, tppStart - unprocessed, unprocessed);
+                    continue;
+                }
+            // if there is not entire sequence available, then copy unprocessed data to the beginning of the buffer, then copy the beginning of the tpp sequence, if any and exit
             } else {
-                writeStart = buffer;
+                memmove(start, tppStart - unprocessed, unprocessed);
+                memmove(start + unprocessed, tppStart, end - tppStart);
+                unprocessed += end - tppStart;
+                break;
             }
         }
-        // if there is any unprocessed input, try processing it (it could have been leftovers from partial tpp sequence that would make sense for the parser)
-        if (writeStart != buffer)
-            writeStart -= received(buffer, writeStart);
-        // the terminal has been closed when the input pty eofs
-        inputEof(buffer, writeStart);
-        // and delete the buffer
-        delete [] buffer;
+        return unprocessed;
     }
+
+    // TerminalClient::Sync
+
+    #ifdef HAHA
 
     char * TerminalClient::parseTerminalInput(char * buffer, char const * bufferEnd) {
         while (buffer != bufferEnd) {
@@ -82,6 +113,7 @@ namespace tpp {
         }
         return buffer;
     }
+
 
     char * TerminalClient::findTppStartPrefix(char * buffer, char const * bufferEnd) {
         for (; buffer < bufferEnd; ++buffer) {
@@ -127,5 +159,66 @@ namespace tpp {
         // incomplete sequence length
         return std::pair<char *, char *>{const_cast<char*>(bufferEnd), const_cast<char*>(bufferEnd)};
     }
+
+
+
+
+    // OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD
+
+    void TerminalClient::start() {
+        reader_ = std::thread{[this](){
+            readerThread();
+        }};
+    }
+
+    void TerminalClient::readerThread() {
+        // create the buffer, and read while we can 
+        size_t bufferSize = DEFAULT_BUFFER_SIZE;
+        char * buffer = new char[bufferSize];
+        char * writeStart = buffer;
+        while (true) {
+            size_t bytesRead = pty_->receive(writeStart, bufferSize - (writeStart - buffer));
+            if (bytesRead == 0)
+                break;
+            bytesRead += (writeStart - buffer);
+            char * unprocessed = parseTerminalInput(buffer, buffer + bytesRead);
+            // TDOO if buffer is full, grow it up to some size
+            // copy the unprocessed part of the buffer from the end of it to its beginning and set writing of new data after it
+            if (unprocessed < buffer + bytesRead) {
+                size_t unprocessedBytes = (buffer + bytesRead) - unprocessed;
+                memmove(buffer, unprocessed, unprocessedBytes);
+                writeStart = buffer + unprocessedBytes;
+            } else {
+                writeStart = buffer;
+            }
+        }
+        // if there is any unprocessed input, try processing it (it could have been leftovers from partial tpp sequence that would make sense for the parser)
+        if (writeStart != buffer)
+            writeStart -= received(buffer, writeStart);
+        // the terminal has been closed when the input pty eofs
+        inputEof(buffer, writeStart);
+        // and delete the buffer
+        delete [] buffer;
+    }
+
+
+
+    // SyncTerminalClient
+
+    void SyncTerminalClient::receivedSequence(char const * buffer, char const * bufferEnd) {
+
+    }
+
+    Sequence::Capabilities SyncTerminalClient::getCapabilities() {
+        send(Sequence::GetCapabilities{});
+
+
+
+    }
+
+
+    #endif
+
+
 
 } // namespace tpp

@@ -32,13 +32,23 @@ namespace tpp {
             return kind_;
         }
 
+        static char const * FindSequenceStart(char const * buffer, char const * bufferEnd);
+
+        static char const * FindSequenceEnd(char const * buffer, char const * bufferEnd);
+
+        /** Parses the sequence kind from a buffer and advances the reading position. 
+         
+            The seuence kind is a decimal number followed by either `;` to signify beginning of the sequence payload, or `BEL` to signify the end of the t++ sequence. 
+
+            If the buffer does not contain enough information to determine the sequence kind, advances the reading position to the buffer end and returns Kind::Invalid. If invalid characters are found in the buffer, returns Kind::Invalid and advances the position to the invalid character.  
+         */
+        static Kind ParseKind(char const * & buffer, char const * bufferEnd);
+
         class Ack;
         class GetCapabilities;
         class Capabilities;
 
     protected:
-
-        friend class TerminalPTY;
 
         friend class PTYBase;
 
@@ -48,14 +58,12 @@ namespace tpp {
 
         Sequence(char const * & start, char const * end, Kind expectedKind = Kind::Invalid) {
             unsigned kind = readUnsigned(start, end);
-            if (kind > static_cast<unsigned>(Kind::Invalid));
+            if (kind > static_cast<unsigned>(Kind::Invalid))
                 THROW(SequenceError()) << "Invalid sequence kind " << kind;
             kind_ = static_cast<Kind>(kind);
             if (expectedKind != Kind::Invalid && (kind_ != expectedKind))
                 THROW(SequenceError()) << "Expected sequence " << expectedKind << ", but found " << kind_;
         }
-
-        void sendHeader(PTYBase & pty, size_t payloadSize) const;
 
         virtual void sendTo(PTYBase & pty) const;
 

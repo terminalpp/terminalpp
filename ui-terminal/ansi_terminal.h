@@ -11,6 +11,7 @@
 #include "ui/traits/scrollable.h"
 #include "ui/traits/selection_owner.h"
 
+#include "tpp-lib/sequence.h"
 #include "tpp-lib/pty.h"
 
 namespace ui {
@@ -19,8 +20,9 @@ namespace ui {
 
     class TppSequenceEvent {
     public:
-        char const * start;
-        char const * end;
+        tpp::Sequence::Kind kind;
+        char const * payloadStart;
+        char const * payloadEnd;
     }; // ui::TppSequenceEvent
 
     class AnsiTerminal : public PublicWidget, public Scrollable<AnsiTerminal>, public SelectionOwner<AnsiTerminal> {
@@ -410,8 +412,8 @@ namespace ui {
          
             The default implementation simply calls the event handler, if registered. 
          */
-        virtual void processTppSequence(char const * buffer, char const * bufferEnd) {
-            Event<TppSequenceEvent>::Payload p{TppSequenceEvent{buffer, bufferEnd}};
+        virtual void processTppSequence(TppSequenceEvent seq) {
+            Event<TppSequenceEvent>::Payload p{seq};
             onTppSequence(p, this);
         }
 

@@ -726,31 +726,16 @@ namespace ui {
     size_t AnsiTerminal::parseTppSequence(char const * buffer, char const * bufferEnd) {
         // we know that we have at least \033P+   
         char const * i = buffer + 3;
-        size_t size = 0;
-        unsigned digit = 0;
-        while (i < bufferEnd) {
-            if (*i == ';') {
-                char const * msgStart = i + 1;
-                char const * msgEnd = msgStart + size;
-                // we need more data to be received to parse the whole message
-                if (msgEnd >= bufferEnd)
-                    return 0;
-                if (*msgEnd != Char::BEL) {
-                    LOG(SEQ_ERROR) << "Mismatched t++ sequence terminator";
-                    return 3; // just the header
-                }
-                // now we have the whole sequence, so we can process it
-                LOG(SEQ) << "t++ sequence of size " << (msgEnd - msgStart);
-                processTppSequence(msgStart, msgEnd);
-                return msgEnd - buffer;
-            } else if (! Char::IsHexadecimalDigit(*i, digit)) {
-                LOG(SEQ_ERROR) << "Invalid characters in t++ sequence size";
-                return 3; // just the header
-            }
-            size = (size * 16) + digit;
-            ++i;
-        }
-        return 3; // just the header
+        char const * tppEnd = tpp::Sequence::FindSequenceEnd(i, bufferEnd);
+        // if not found, we need more data
+        if (tppEnd == bufferEnd)
+            return 0;
+        tpp::Sequence::Kind kind = tpp::Sequence::ParseKind(i, bufferEnd);
+        // now we have kind and beginning and end of the payload so we can process the sequence
+        LOG(SEQ) << "t++ sequence " << kind << ", payload size " << (tppEnd - i);
+        processTppSequence(TppSequenceEvent{kind, i, tppEnd});
+        // and return
+        return (tppEnd - buffer) + 1; // also process the BEL character at the end of the t++ sequence
     }
 
     void AnsiTerminal::parseCSISequence(CSISequence & seq) {
