@@ -27,8 +27,6 @@ More robust UI framework, better configuration options and slightly increased se
 Terminal++ PTY:
 
 - PTY should have special provision for sending Sequences
-- TerminalClient::Async should be TerminalClient
-- TerminalClient::Synchronized should then inherit and should override the processInput and growBuffer to provide locking
 
 Settings:
 

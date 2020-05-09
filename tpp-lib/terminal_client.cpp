@@ -8,8 +8,8 @@ namespace tpp {
 
     // TerminalClient::Async
 
-    TerminalClient::Async::Async(PTYSlave * pty):
-        TerminalClient{pty},
+    TerminalClient::TerminalClient(PTYSlave * pty):
+        pty_{pty},
         buffer_{new char[DEFAULT_BUFFER_SIZE]},
         bufferSize_{DEFAULT_BUFFER_SIZE},
         bufferUnprocessed_{0} {
@@ -19,38 +19,31 @@ namespace tpp {
                 if (read == 0)
                     break;
                 // process the input
-                bufferUnprocessed_ = processInput(buffer_, buffer_ + read + bufferUnprocessed_);
+                processInput(buffer_ + read + bufferUnprocessed_);
                 // TODO grow the buffer if needs be
             }
         }};
     }
 
-    TerminalClient::Async::~Async() {
-        delete pty_;
-        pty_ = nullptr; // so that TerminalClient won't delete again
-        reader_.join();
-        delete [] buffer_;
-    }
-
-    size_t TerminalClient::Async::processInput(char * start, char const * end) {
-        char * i = start;
+    void TerminalClient::processInput(char const * bufferEnd) {
+        char * i = buffer_;
         size_t unprocessed = 0;
-        while (i < end) {
-            char const * tppStart = Sequence::FindSequenceStart(start, end);
+        while (i < bufferEnd) {
+            char const * tppStart = Sequence::FindSequenceStart(i, bufferEnd);
             // process the data received before tpp sequence found
             if (tppStart != i)
-                unprocessed = (tppStart - i) - received(start, i);
+                unprocessed = (tppStart - i) - received(i, tppStart);
             // determine the end of the sequence
-            char const * tppEnd = Sequence::FindSequenceEnd(tppStart, end);
+            char const * tppEnd = Sequence::FindSequenceEnd(tppStart, bufferEnd);
             // if there is entire sequence, parse it
-            if (tppEnd < end) {
+            if (tppEnd < bufferEnd) {
                 char const * payloadStart = tppStart + 3;
-                tpp::Sequence::Kind kind = tpp::Sequence::ParseKind(payloadStart, end);
+                tpp::Sequence::Kind kind = tpp::Sequence::ParseKind(payloadStart, bufferEnd);
                 receivedSequence(kind, payloadStart, tppEnd);
                 ++tppEnd; // move past the bell character
                 // if we are at the end of the input, copy the unprocessed characters to the beginning and return
-                if (tppEnd == end) {
-                    memmove(start, tppStart - unprocessed, unprocessed);
+                if (tppEnd == bufferEnd) {
+                    memmove(buffer_, tppStart - unprocessed, unprocessed);
                     break;
                 // otherwise copy the unprocessed characters before the end of the sequence and start analysis from this new beginning. 
                 // this will reanalyze the unprocessed characters so is not exactly super effective
@@ -61,13 +54,13 @@ namespace tpp {
                 }
             // if there is not entire sequence available, then copy unprocessed data to the beginning of the buffer, then copy the beginning of the tpp sequence, if any and exit
             } else {
-                memmove(start, tppStart - unprocessed, unprocessed);
-                memmove(start + unprocessed, tppStart, end - tppStart);
-                unprocessed += end - tppStart;
+                memmove(buffer_, tppStart - unprocessed, unprocessed);
+                memmove(buffer_ + unprocessed, tppStart, bufferEnd - tppStart);
+                unprocessed += bufferEnd - tppStart;
                 break;
             }
         }
-        return unprocessed;
+        bufferUnprocessed_ = unprocessed;
     }
 
     // TerminalClient::Sync
