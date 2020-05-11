@@ -6,67 +6,22 @@
 #include "helpers/helpers.h"
 #include "helpers/json_config.h"
 
+#include "tpp-lib/local_pty.h"
 #include "tpp-lib/terminal_client.h"
-
-namespace tpp {
-
-
-    /** v2 remote sender:
-
-        ->GetCapabilities 
-        <-Capabilities
-
-        ->OpenFileTransfer(path,size)
-        <-Ack(channel)
-
-        -> 
-
-        these wait, while other thread may process 
-
-        
-     
-     */
-
-/*
-    class RemoteFileSender : public StdTerminalClient {
-    public:
-        RemoteFileSender():
-            StdTerminalClient{} {
-            start();
-        }
-    protected:
-
-
-
-        void inputEof(char const * buffer, char const * bufferEnd) override {
-            std::cout << "EOF";
-        }
-
-        size_t processInput(char const * buffer, char const * bufferEnd) override {
-            std::string str(buffer, bufferEnd - buffer);
-            std::cout << str << std::flush;
-            if (str == "q")
-                std::exit(0);
-            return bufferEnd - buffer;
-        }
-
-        void processTppSequence(Sequence seq) override {
-
-        }
-
-    };
-
-    */
-
-
-} // namespace tpp
-
-
 
 
 int main(int argc, char * argv[]) {
     using namespace tpp;
     try {
+        std::cout << "Opening terminal..." << std::endl;
+        TerminalClient::Sync t{new LocalPTYSlave{}};
+        std::cout << "Terminal opened, available input " << t.available() << std::endl;
+        std::cout << "Waiting for input..." << std::endl;
+        char * buffer = new char[10];
+        size_t x = t.read(buffer, 10);
+        std::cout << "Read " << x << " bytes" << std::endl;
+        std::cout << std::string(buffer, x);
+        std::cout << "terminating..." << std::endl;
         /*
         RemoteFileSender rf{};
         while (true) {

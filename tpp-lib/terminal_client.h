@@ -1,6 +1,8 @@
 #pragma once
 
 #include <thread>
+#include <algorithm>
+#include <condition_variable>
 
 #include "helpers/helpers.h"
 #include "helpers/process.h"
@@ -23,6 +25,7 @@ namespace tpp {
 
         virtual ~TerminalClient() {
             delete pty_;
+            std::cout << "Waiting for reader to close...\r\n";
             reader_.join();
             delete [] buffer_;
         }
@@ -63,9 +66,7 @@ namespace tpp {
             pty_->send(seq);
         }
 
-    private:
-
-        virtual void processInput(char const * bufferEnd);
+        virtual void processInput(char * start, char const * end);
 
         PTYSlave * pty_;
         std::thread reader_;
@@ -82,13 +83,30 @@ namespace tpp {
      */
     class TerminalClient::Sync : public TerminalClient {
     public:
+
+        Sync(PTYSlave * pty):
+            TerminalClient{pty},
+            processed_{0} {
+        }
+
         /** Returns the number of non-t++ bytes that can be read without blocking. 
          */
-        size_t available() const;
+        size_t available() const {
+            std::lock_guard<std::mutex> g{mBuffer_};
+            return bufferUnprocessed_ - processed_;
+        }
 
         /** Blocking read. 
          */
-        size_t read(char * buffer, size_t bufferSize);
+        size_t read(char * buffer, size_t bufferSize) {
+            std::unique_lock<std::mutex> g{mBuffer_};
+            while (bufferUnprocessed_ - processed_ == 0)
+                dataReady_.wait(g);
+            size_t result = std::min(bufferSize, bufferUnprocessed_ - processed_);
+            memcpy(buffer, buffer_ + processed_, result);
+            bufferUnprocessed_ += result;
+            return result;
+        }
 
         /** Returns the terminal capabilities. 
          */
@@ -98,14 +116,27 @@ namespace tpp {
 
     protected:
 
-        std::mutex mBuffer_;
-
-    private:
-    
-        void processInput(char const * bufferEnd) {
-            std::lock_guard<std::mutex> g{mBuffer_};
-            TerminalClient::processInput(bufferEnd);
+        size_t received(char const * buffer, char const * bufferEnd) override {
+            MARK_AS_UNUSED(buffer);
+            MARK_AS_UNUSED(bufferEnd);
+            dataReady_.notify_all();
+            return 0;
         }
+
+        void receivedSequence(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
+
+        }
+
+        void processInput(char * start, char const * end) override {
+            std::lock_guard<std::mutex> g{mBuffer_};
+            TerminalClient::processInput(start + processed_, end);
+            processed_ = 0;
+        }
+
+        mutable std::mutex mBuffer_;
+        mutable std::condition_variable dataReady_;
+        /** Number of bytes processed by the read() method. */
+        size_t processed_;
 
     }; // tpp::TerminalClient::Sync
 

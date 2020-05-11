@@ -19,30 +19,30 @@ namespace tpp {
                 if (read == 0)
                     break;
                 // process the input
-                processInput(buffer_ + read + bufferUnprocessed_);
+                processInput(buffer_, buffer_ + read + bufferUnprocessed_);
                 // TODO grow the buffer if needs be
             }
         }};
     }
 
-    void TerminalClient::processInput(char const * bufferEnd) {
-        char * i = buffer_;
+    void TerminalClient::processInput(char * start, char const * end) {
+        char * i = start;
         size_t unprocessed = 0;
-        while (i < bufferEnd) {
-            char const * tppStart = Sequence::FindSequenceStart(i, bufferEnd);
+        while (i < end) {
+            char const * tppStart = Sequence::FindSequenceStart(i, end);
             // process the data received before tpp sequence found
             if (tppStart != i)
                 unprocessed = (tppStart - i) - received(i, tppStart);
             // determine the end of the sequence
-            char const * tppEnd = Sequence::FindSequenceEnd(tppStart, bufferEnd);
+            char const * tppEnd = Sequence::FindSequenceEnd(tppStart, end);
             // if there is entire sequence, parse it
-            if (tppEnd < bufferEnd) {
+            if (tppEnd < end) {
                 char const * payloadStart = tppStart + 3;
-                tpp::Sequence::Kind kind = tpp::Sequence::ParseKind(payloadStart, bufferEnd);
+                tpp::Sequence::Kind kind = tpp::Sequence::ParseKind(payloadStart, end);
                 receivedSequence(kind, payloadStart, tppEnd);
                 ++tppEnd; // move past the bell character
                 // if we are at the end of the input, copy the unprocessed characters to the beginning and return
-                if (tppEnd == bufferEnd) {
+                if (tppEnd == end) {
                     memmove(buffer_, tppStart - unprocessed, unprocessed);
                     break;
                 // otherwise copy the unprocessed characters before the end of the sequence and start analysis from this new beginning. 
@@ -55,8 +55,8 @@ namespace tpp {
             // if there is not entire sequence available, then copy unprocessed data to the beginning of the buffer, then copy the beginning of the tpp sequence, if any and exit
             } else {
                 memmove(buffer_, tppStart - unprocessed, unprocessed);
-                memmove(buffer_ + unprocessed, tppStart, bufferEnd - tppStart);
-                unprocessed += bufferEnd - tppStart;
+                memmove(buffer_ + unprocessed, tppStart, end - tppStart);
+                unprocessed += end - tppStart;
                 break;
             }
         }

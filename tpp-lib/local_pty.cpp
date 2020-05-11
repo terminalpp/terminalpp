@@ -13,6 +13,8 @@
 
 #include "local_pty.h"
 
+#include <iostream>
+
 namespace tpp {
 
 #if (defined ARCH_WINDOWS)    
@@ -259,40 +261,56 @@ namespace tpp {
 
 #if (defined ARCH_UNIX)
 
-    LocalPTYSlave * LocalPTYSlave::Slave_ = nullptr;
+    pthread_t volatile  LocalPTYSlave::ReaderThread_;
+    std::atomic<bool> LocalPTYSlave::Receiving_{false};
+    LocalPTYSlave * volatile LocalPTYSlave::Slave_ = nullptr;
 
     void LocalPTYSlave::SIGWINCH_handler(int signo) {
-        ASSERT(Slave_ != nullptr);
-        ResizedEvent::Payload p{Slave_->size()};
-        Slave_->onResized(p, Slave_);
+        if (Slave_ != nullptr) {
+            ResizedEvent::Payload p{Slave_->size()};
+            Slave_->onResized(p, Slave_);
+        }
     }
 
 
     LocalPTYSlave::LocalPTYSlave():
-        in_{STDIN_FILENO},
-        out_{STDOUT_FILENO},
         insideTmux_{InsideTMUX()} {
-        OSCHECK(tcgetattr(in_, & backup_) == 0);
+        OSCHECK(tcgetattr(STDIN_FILENO, & backup_) == 0);
         termios raw = backup_;
         raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
         raw.c_oflag &= ~(OPOST);
         raw.c_cflag |= (CS8);
         raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-        OSCHECK(tcsetattr(in_, TCSAFLUSH, & raw) == 0);
+        OSCHECK(tcsetattr(STDIN_FILENO, TCSAFLUSH, & raw) == 0);
         Slave_ = this;
-        OSCHECK(signal(SIGWINCH, SIGWINCH_handler) != SIG_ERR);
+        struct sigaction sa;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_handler = SIGWINCH_handler;
+        sa.sa_flags = 0;        
+        OSCHECK(sigaction(SIGWINCH, &sa, nullptr) == 0);        
     }
 
     LocalPTYSlave::~LocalPTYSlave() {
-        // we are in destructor, no need to check the error of the signal & tcsetattr
-        signal(SIGWINCH, SIG_DFL);
-        tcsetattr(in_, TCSAFLUSH, & backup_);
+        // start the destroy process
         Slave_ = nullptr;
+        // TODO busy wait, ok now, with C++20 switch to std::atomic::wait?
+        while (Receiving_ == true) {
+            // send the signal to the reader thread
+            pthread_kill(ReaderThread_, SIGWINCH);
+            std::this_thread::yield();
+        }
+        struct sigaction sa;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_handler = SIG_DFL;
+        sa.sa_flags = 0;        
+        sigaction(SIGWINCH, &sa, nullptr);        
+        sa.sa_handler = SIG_DFL;
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, &backup_);
     }
 
     std::pair<int, int> LocalPTYSlave::size() const {
         winsize size;
-        OSCHECK(ioctl(out_, TIOCGWINSZ, &size) != -1);
+        OSCHECK(ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) != -1);
         return std::pair<int,int>{size.ws_col, size.ws_row};
     }
 
@@ -304,41 +322,49 @@ namespace tpp {
             while (end < numBytes) {
                 if (buffer[end] == '\033') {
                     if (start != end)
-                        ::write(out_, buffer + start, end - start);
-                    ::write(out_, "\033\033", 2);
+                        ::write(STDOUT_FILENO, buffer + start, end - start);
+                    ::write(STDOUT_FILENO, "\033\033", 2);
                     start = ++end;
                 } else {
                     ++end;
                 }
             }
             if (start != end)
-                ::write(out_, buffer + start, end - start);
+                ::write(STDOUT_FILENO, buffer + start, end - start);
         } else {
-            ::write(out_, buffer, numBytes);
+            ::write(STDOUT_FILENO, buffer, numBytes);
         }
     }
 
     void LocalPTYSlave::send(Sequence const & seq) {
         if (insideTmux_)
-            ::write(out_, "\033Ptmux;", 7);
+            ::write(STDOUT_FILENO, "\033Ptmux;", 7);
         PTYSlave::send(seq);
         if (insideTmux_)
-            ::write(out_, "\033\\", 2);
+            ::write(STDOUT_FILENO, "\033\\", 2);
     }
 
 
     size_t LocalPTYSlave::receive(char * buffer, size_t bufferSize) {
+            // if there is no slave, 
+        if (Slave_ == nullptr)
+            return false;
+        ReaderThread_ = pthread_self(); 
+        Receiving_.store(true);
         while (true) {
             int cnt = 0;
-            cnt = ::read(in_, (void*)buffer, bufferSize);
+            cnt = ::read(STDIN_FILENO, (void*)buffer, bufferSize);
             if (cnt == -1) {
-                if (errno == EINTR || errno == EAGAIN)
+                if ((errno == EINTR || errno == EAGAIN) && Slave_ != nullptr)
                     continue;
-                return 0;
+                break;
             } else {
+                Receiving_.store(false);
                 return static_cast<size_t>(cnt);
             }
         }
+        Receiving_.store(false);
+        return 0;
     }
 
 #endif

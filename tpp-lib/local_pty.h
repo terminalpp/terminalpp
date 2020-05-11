@@ -2,8 +2,9 @@
 
 #if (defined ARCH_UNIX)
 #include <termios.h>
-
+#include <pthread.h>
 #include <mutex>
+#include <atomic>
 #endif
 
 #include <thread>
@@ -65,7 +66,6 @@ namespace tpp {
 
 
 #if (defined ARCH_UNIX)
-
     class LocalPTYSlave : public PTYSlave {
     public:
 
@@ -88,13 +88,18 @@ namespace tpp {
 
     private:
 
-        int in_;
-        int out_;
+        static constexpr int IDLE = 0;
+        static constexpr int RECEIVING = 1;
+        static constexpr int DESTROYING = 2;
+
         bool insideTmux_;
         termios backup_;
 
-        static LocalPTYSlave * Slave_;
+        static pthread_t volatile ReaderThread_;
+        static std::atomic<bool> Receiving_;
+        static LocalPTYSlave * volatile Slave_;
         static void SIGWINCH_handler(int signo);
+        static void SIGINT_handler(int signo);
 
     }; // tpp::LocalPTYSlave
 #endif
