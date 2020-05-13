@@ -66,12 +66,12 @@ namespace tpp {
             if (! Char::IsDecimalDigit(*buffer, digit))
                 return Kind::Invalid;
             result = (result * 10) + digit;
+            ++buffer;
         }
         return Kind::Invalid;
     }
 
     void Sequence::sendTo(PTYBase & pty) const {
-        std::cerr << "HERE HERE HERE" << std::flush;
         std::string x{STR(static_cast<unsigned>(kind_))};
         pty.send(x.c_str(), x.size());
     }

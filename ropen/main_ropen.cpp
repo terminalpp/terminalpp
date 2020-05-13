@@ -26,6 +26,9 @@
 int main(int argc, char * argv[]) {
     using namespace tpp;
     try {
+		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 
+			helpers::Logger::DefaultLog(),
+		});
         TerminalClient::Sync t{new LocalPTYSlave{}};
         Sequence::Capabilities capabilities{t.getCapabilities()};
         LOG() << "t++ version " << capabilities.version() << " detected";
