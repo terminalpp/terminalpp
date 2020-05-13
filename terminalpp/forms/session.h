@@ -67,6 +67,7 @@ namespace tpp {
             terminal_->onMouseUp.setHandler(&Session::terminalMouseUp, this);
             terminal_->onMouseWheel.setHandler(&Session::terminalMouseWheel, this);
             terminal_->onSetClipboard.setHandler(&Session::terminalSetClipboard, this);
+            terminal_->onTppSequence.setHandler(&Session::terminalTppSequence, this);
             setLayout(new MaximizeLayout());
             //setLayout(new ColumnLayout(VerticalAlign::Bottom));
             //setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
@@ -176,6 +177,17 @@ namespace tpp {
 
         void terminalSetClipboard(Event<std::string>::Payload & event) {
             setClipboard(*event);
+        }
+
+        void terminalTppSequence(Event<TppSequenceEvent>::Payload & event) {
+            switch (event->kind) {
+                case tpp::Sequence::Kind::GetCapabilities:
+                    pty_->send(tpp::Sequence::Capabilities{1});
+                    break;
+                default:
+                    LOG() << "Unknown sequence";
+                    break;
+            }
         }
 
         void paste(Event<std::string>::Payload & e) override {

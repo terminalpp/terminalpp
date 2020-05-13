@@ -20,7 +20,9 @@ namespace tpp {
         /** Sends a t++ sequence. 
          */
         virtual void send(Sequence const & seq) {
+            std::cerr << "HERE HERE HERE" << std::flush;
             send("\033P+", 3);
+                    
             seq.sendTo(*this);
             send("\007", 1);
         }

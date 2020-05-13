@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include "helpers/helpers.h"
 
 namespace tpp {
@@ -30,6 +32,10 @@ namespace tpp {
 
         Kind kind() const {
             return kind_;
+        }
+
+        virtual bool match(Kind kind, char const * payload, char const * payloadEnd) {
+            return kind_ == kind;
         }
 
         static char const * FindSequenceStart(char const * buffer, char const * bufferEnd);
@@ -90,6 +96,16 @@ namespace tpp {
             Sequence(start, end, Kind::Ack) {
             id_ = readUnsigned(start, end);
         }
+
+        bool match(Kind kind, char const * payloadStart, char const * payloadEnd) override {
+            if (! Sequence::match(kind, payloadStart, payloadEnd))
+                return false;
+            unsigned id = readUnsigned(payloadStart, payloadEnd);
+            if (id_ != id)
+                return false;
+            return true;
+        }
+
     protected:
 
         void sendTo(PTYBase & pty) const override;
@@ -123,6 +139,17 @@ namespace tpp {
         Capabilities(char const * start, char const * end):
             Sequence(start, end, Kind::Capabilities) {
             version_ = readUnsigned(start, end);
+        }
+
+        bool match(Kind kind, char const * payloadStart, char const * payloadEnd) override {
+            if (! Sequence::match(kind, payloadStart, payloadEnd))
+                return false;
+            version_ = readUnsigned(payloadStart, payloadEnd);
+            return true;
+        }
+
+        unsigned version() const {
+            return version_;
         }
 
     protected:

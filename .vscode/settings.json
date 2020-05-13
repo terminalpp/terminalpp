@@ -70,6 +70,14 @@
         "optional": "cpp",
         "array": "cpp",
         "variant": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "*.tcc": "cpp",
+        "clocale": "cpp",
+        "cstdarg": "cpp",
+        "cwctype": "cpp",
+        "iterator": "cpp",
+        "memory_resource": "cpp",
+        "numeric": "cpp",
+        "random": "cpp"
     }
 }

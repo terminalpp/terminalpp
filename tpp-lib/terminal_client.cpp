@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include "helpers/char.h"
 
 #include "terminal_client.h"
@@ -64,6 +66,34 @@ namespace tpp {
     }
 
     // TerminalClient::Sync
+
+    Sequence::Capabilities TerminalClient::Sync::getCapabilities() {
+        Sequence::Capabilities result{0};
+        transmit(Sequence::GetCapabilities{}, result);
+        return result;
+    }
+
+    void TerminalClient::Sync::receivedSequence(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
+        std::lock_guard<std::mutex> g{mSequences_};
+        if (result_ != nullptr && result_->match(kind, payload, payloadEnd)) {
+            result_ = nullptr;
+            sequenceReady_.notify_one();
+        } else {
+            // raise the event
+            NOT_IMPLEMENTED;
+        }
+    }
+
+    void TerminalClient::Sync::transmit(Sequence const & send, Sequence & receive) {
+        std::unique_lock<std::mutex> g{mSequences_};
+        ASSERT(result_ == nullptr) << "Only one thread is allowed to transmit t++ sequences";
+        result_ = & receive;
+        this->send(send);
+        auto timeoutTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_);
+        while (result_ != nullptr)
+            if (sequenceReady_.wait_until(g, timeoutTime) == std::cv_status::timeout)
+                THROW(TimeoutError());
+    }
 
     #ifdef HAHA
 

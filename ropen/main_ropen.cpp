@@ -10,18 +10,7 @@
 #include "tpp-lib/terminal_client.h"
 
 
-int main(int argc, char * argv[]) {
-    using namespace tpp;
-    try {
-        std::cout << "Opening terminal..." << std::endl;
-        TerminalClient::Sync t{new LocalPTYSlave{}};
-        std::cout << "Terminal opened, available input " << t.available() << std::endl;
-        std::cout << "Waiting for input..." << std::endl;
-        char * buffer = new char[10];
-        size_t x = t.read(buffer, 10);
-        std::cout << "Read " << x << " bytes" << std::endl;
-        std::cout << std::string(buffer, x);
-        std::cout << "terminating..." << std::endl;
+
         /*
         RemoteFileSender rf{};
         while (true) {
@@ -32,7 +21,17 @@ int main(int argc, char * argv[]) {
         tpp::RemoteOpen::Open(t, config.filename(), config);
         std::cout << "\n";
         */
+
+
+int main(int argc, char * argv[]) {
+    using namespace tpp;
+    try {
+        TerminalClient::Sync t{new LocalPTYSlave{}};
+        Sequence::Capabilities capabilities{t.getCapabilities()};
+        LOG() << "t++ version " << capabilities.version() << " detected";
         return EXIT_SUCCESS;
+    } catch (TimeoutError const & e) {
+        std::cerr << "t++ terminal timeout." << std::endl;
     } catch (std::exception const & e) {
         std::cout << "\r\n Error: " << e.what() << "\r\n";
     } catch (...) {

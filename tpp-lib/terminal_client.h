@@ -86,6 +86,8 @@ namespace tpp {
 
         Sync(PTYSlave * pty):
             TerminalClient{pty},
+            timeout_{1000},
+            result_{nullptr},
             processed_{0} {
         }
 
@@ -123,9 +125,7 @@ namespace tpp {
             return 0;
         }
 
-        void receivedSequence(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
-
-        }
+        void receivedSequence(Sequence::Kind kind, char const * payload, char const * payloadEnd) override;
 
         void processInput(char * start, char const * end) override {
             std::lock_guard<std::mutex> g{mBuffer_};
@@ -133,8 +133,20 @@ namespace tpp {
             processed_ = 0;
         }
 
+        /** Transmits the sequence and waits for the response to arrive within the client's timeout. 
+         */
+        void transmit(Sequence const & send, Sequence & receive);
+
+        /** timeout for t++ sequence responses in milliseconds. 
+         */
+        size_t timeout_;
+
         mutable std::mutex mBuffer_;
         mutable std::condition_variable dataReady_;
+
+        std::mutex mSequences_;
+        std::condition_variable sequenceReady_;
+        Sequence * volatile result_;
         /** Number of bytes processed by the read() method. */
         size_t processed_;
 
