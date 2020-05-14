@@ -9,7 +9,7 @@
 
 #include "common.h"
 #include "input.h"
-#include "buffer.h"
+#include "screen_buffer.h"
 #include "canvas.h"
 
 namespace ui {

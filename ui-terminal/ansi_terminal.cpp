@@ -1667,7 +1667,7 @@ namespace ui {
 
     Point AnsiTerminal::Buffer::resize(int width, int height, bool resizeContents, Cell const & fill, Point cursor) {
         if (! resizeContents) {
-            ui::Buffer::resize(width, height);
+            ui::ScreenBuffer::resize(width, height);
             return cursor;
         }
         // create backup of the cells and new cells
@@ -1675,7 +1675,7 @@ namespace ui {
         int oldWidth = this->width();
         int oldHeight = this->height();
         rows_ = nullptr;
-        ui::Buffer::resize(width, height);
+        ui::ScreenBuffer::resize(width, height);
         // resize the history
         std::deque<std::pair<int, Cell*>> oldHistory;
         std::swap(oldHistory, history_);

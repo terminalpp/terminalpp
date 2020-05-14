@@ -252,7 +252,7 @@ namespace tpp {
         void render(Rect const & rect) override {
             MARK_AS_UNUSED(rect);
             // get constant reference so that reading does not change the unused bits in the cells we use for cursor
-            Buffer const & buf{buffer()};
+            ScreenBuffer const & buf{buffer()};
             // then actually render the entire window
             helpers::Stopwatch t;
             t.start();

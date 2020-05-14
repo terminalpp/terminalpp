@@ -13,7 +13,7 @@
 #include "helpers/log.h"
 
 #include "common.h"
-#include "buffer.h"
+#include "screen_buffer.h"
 #include "widget.h"
 
 /** \page UI Rendering 
@@ -699,7 +699,7 @@ namespace ui {
 
         /** Returns the renderer's backing buffer. 
          */
-        Buffer & buffer() {
+        ScreenBuffer & buffer() {
             UI_THREAD_CHECK;
             return buffer_;
         }
@@ -734,7 +734,7 @@ namespace ui {
 
         static std::function<void(void)> UserEventScheduler_;
 
-        Buffer buffer_;
+        ScreenBuffer buffer_;
 
         Color backgroundColor_;
 

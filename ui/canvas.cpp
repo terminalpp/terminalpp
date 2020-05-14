@@ -12,7 +12,7 @@ namespace ui {
         bufferOffset_{widget->bufferOffset_} {
     }
 
-    Canvas & Canvas::drawBuffer(Buffer const & buffer, Point topLeft) {
+    Canvas & Canvas::drawBuffer(ScreenBuffer const & buffer, Point topLeft) {
         // calculate the target rectangle in the canvas and its intersection with the visible rectangle and offset it to the backing buffer coordinates
         Rect r = (Rect::FromTopLeftWH(topLeft, buffer.width(), buffer.height()) & visibleRect_) + bufferOffset_;
         // calculate the buffer offset for the input buffer

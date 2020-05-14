@@ -36,10 +36,10 @@ namespace ui {
 
         /** 
          */
-        class Buffer : public ui::Buffer {
+        class Buffer : public ui::ScreenBuffer {
         public:
             Buffer(int width, int height, int historyRows):
-                ui::Buffer{width, height},
+                ui::ScreenBuffer{width, height},
                 maxHistoryRows_{historyRows} {
             }
 

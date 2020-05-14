@@ -76,8 +76,8 @@ namespace tpp {
         pty.send(x.c_str(), x.size());
     }
 
-    unsigned Sequence::readUnsigned(char const * & start, char const * end) {
-        unsigned result = 0;
+    size_t Sequence::ReadUnsigned(char const * & start, char const * end) {
+        size_t result = 0;
         unsigned digit = 0;
         while (start < end) {
             if (Char::IsDecimalDigit(*start, digit)) {
@@ -94,6 +94,40 @@ namespace tpp {
         return result;
     }
 
+    void Sequence::Encode(Buffer & into, char const * buffer, char const * end) {
+        char const * r = buffer;
+        while (r != end) {
+            switch (*r) {
+                case Char::NUL:
+                case Char::BEL:
+                case Char::ESC:
+                case '`':
+                    into << '`';
+                    into << Char::ToHexadecimalDigit(static_cast<unsigned char>(*r) >> 4);
+                    into << Char::ToHexadecimalDigit(static_cast<unsigned char>(*r) & 0xf);
+                    ++r;
+                    break;
+                default:
+                    into << (*r++);
+                    break;
+            }
+        }
+    }
+
+    void Sequence::Decode(Buffer & into, char const * buffer, char const * end) {
+        char const * r = buffer;
+        while (r < end) {
+            if (*r == '`') {
+                if (r + 3 > end)
+                    THROW(helpers::IOError()) << "quote must be followed by 2 hexadecimal characters";
+                into <<  static_cast<char>(Char::ParseHexadecimalDigit(r[1]) * 16 + Char::ParseHexadecimalDigit(r[2]));
+                r += 3;
+            } else {
+                into << *r++;
+            }
+        }
+    }
+    
     // Sequence::Ack
 
     void Sequence::Ack::sendTo(PTYBase & pty) const {

@@ -420,6 +420,7 @@ namespace helpers {
             return (x >= '0' && x <= '9') || (x >= 'a' && x <= 'f') || (x >= 'A' && x <= 'F');
         }
 
+
         static bool IsHexadecimalDigit(char x, unsigned & value) {
             if (x <= '9' && x >= '0')
                 value = (x - '0');
@@ -430,6 +431,25 @@ namespace helpers {
             else
                 return false;
             return true;
+        }
+
+        static unsigned ParseHexadecimalDigit(char x) {
+            if (x <= '9' && x >= '0')
+                return (x - '0');
+            else if (x <= 'f' && x >= 'a')
+                return (x - 'a' + 10);
+            else if (x <= 'F' && x >= 'A')
+                return (x - 'A' + 10);
+            else
+                THROW(IOError()) << "Hexadecimal digit expected, but " << x << " found";
+        }
+
+        static char ToHexadecimalDigit(unsigned value) {
+            ASSERT(value < 16);
+            if (value < 10)
+                return '0' + static_cast<char>(value);
+            else 
+                return 'a' - 10 + static_cast<char>(value);
         }
 
 	private:

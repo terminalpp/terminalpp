@@ -1,6 +1,6 @@
 #pragma once
 
-#include "buffer.h"
+#include "screen_buffer.h"
 #include "geometry.h"
 
 namespace ui {
@@ -166,7 +166,7 @@ namespace ui {
             return *this;
         }
 
-        Canvas & drawBuffer(Buffer const & buffer, Point topLeft);
+        Canvas & drawBuffer(ScreenBuffer const & buffer, Point topLeft);
         
         Canvas & fillRect(Rect const & rect);
 
@@ -224,7 +224,7 @@ namespace ui {
 
         friend class Widget;
 
-        Canvas(int width, int height, Buffer & buffer, Rect visibleRect, Point visibleRectOffset):
+        Canvas(int width, int height, ScreenBuffer& buffer, Rect visibleRect, Point visibleRectOffset):
             width_{width},
             height_{height},
             buffer_{buffer}, 
@@ -269,7 +269,7 @@ namespace ui {
 
         /** The backing buffer for the canvas. 
          */
-        Buffer & buffer_;
+        ScreenBuffer & buffer_;
 
         /** \anchor ui_canvas_visible_rect 
             \name Visible Rectangle Properties

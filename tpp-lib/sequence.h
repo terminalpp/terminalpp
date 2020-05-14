@@ -3,8 +3,11 @@
 #include <iostream>
 
 #include "helpers/helpers.h"
+#include "helpers/buffer.h"
 
 namespace tpp {
+
+    using Buffer = helpers::Buffer;
 
     class PTYBase;
 
@@ -53,6 +56,7 @@ namespace tpp {
         class Ack;
         class GetCapabilities;
         class Capabilities;
+        class Data;
 
     protected:
 
@@ -63,7 +67,7 @@ namespace tpp {
         }
 
         Sequence(char const * & start, char const * end, Kind expectedKind = Kind::Invalid) {
-            unsigned kind = readUnsigned(start, end);
+            size_t kind = ReadUnsigned(start, end);
             if (kind > static_cast<unsigned>(Kind::Invalid))
                 THROW(SequenceError()) << "Invalid sequence kind " << kind;
             kind_ = static_cast<Kind>(kind);
@@ -73,11 +77,19 @@ namespace tpp {
 
         virtual void sendTo(PTYBase & pty) const;
 
+        Kind kind_;
+
         /** Reads unsigned value from the payload and moves the payload start past its end. 
          */
-        unsigned readUnsigned(char const * & start, char const * end);
+        static size_t ReadUnsigned(char const * & start, char const * end);
 
-        Kind kind_;
+        /** Encodes the given buffer. 
+         */
+        void Encode(Buffer & into, char const * buffer, char const * end);
+
+        /** Decodes the given buffer. 
+         */
+        void Decode(Buffer & into, char const * buffer, char const * end);
 
     }; // tpp::Sequence
 
@@ -87,20 +99,20 @@ namespace tpp {
      */
     class Sequence::Ack final : public Sequence {
     public:
-        Ack(unsigned id = 0):
+        Ack(size_t id = 0):
             Sequence{Kind::Ack},
             id_{id} {
         }
 
         Ack(char const * start, char const * end):
             Sequence(start, end, Kind::Ack) {
-            id_ = readUnsigned(start, end);
+            id_ = ReadUnsigned(start, end);
         }
 
         bool match(Kind kind, char const * payloadStart, char const * payloadEnd) override {
             if (! Sequence::match(kind, payloadStart, payloadEnd))
                 return false;
-            unsigned id = readUnsigned(payloadStart, payloadEnd);
+            size_t id = ReadUnsigned(payloadStart, payloadEnd);
             if (id_ != id)
                 return false;
             return true;
@@ -111,7 +123,7 @@ namespace tpp {
         void sendTo(PTYBase & pty) const override;
 
     private:
-        unsigned id_;
+        size_t id_;
     };
 
     /** Terminal capabilities request. 
@@ -138,17 +150,17 @@ namespace tpp {
 
         Capabilities(char const * start, char const * end):
             Sequence(start, end, Kind::Capabilities) {
-            version_ = readUnsigned(start, end);
+            version_ = ReadUnsigned(start, end);
         }
 
         bool match(Kind kind, char const * payloadStart, char const * payloadEnd) override {
             if (! Sequence::match(kind, payloadStart, payloadEnd))
                 return false;
-            version_ = readUnsigned(payloadStart, payloadEnd);
+            version_ = ReadUnsigned(payloadStart, payloadEnd);
             return true;
         }
 
-        unsigned version() const {
+        size_t version() const {
             return version_;
         }
 
@@ -157,8 +169,48 @@ namespace tpp {
         void sendTo(PTYBase & pty) const override;
 
     private:
-        unsigned version_;
+        size_t version_;
     };
+
+    /** Generic data transfer. 
+     */
+    class Sequence::Data final : public Sequence {
+    public:
+
+        /** Returns the stream id. 
+         */
+        size_t id() const {
+            return id_;
+        }
+
+        /** Returns the packet number within the data transfer. 
+         
+            The implementation of the packet number depends on the actual transfer being completed via the Data sequence and can even be ignored. 
+         */
+        size_t packet() const {
+            return packet_;
+        }
+
+        /** Returns the size of the transferred data (payload). 
+         */
+        size_t size() const {
+            return size_;
+        }
+
+        /** The actual paylod of the data transfer. 
+         */
+        char const * payload() const {
+            return payload_;
+        }
+
+    protected:
+
+    private:
+        size_t id_;
+        size_t packet_;
+        size_t size_;
+        char const * payload_;
+    }; // Sequence::Transfer
 
 
 

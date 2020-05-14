@@ -123,7 +123,7 @@ namespace ui {
 
     private:
 
-        friend class Buffer;
+        friend class ScreenBuffer;
 
         char32_t codepoint_;
 
@@ -198,16 +198,16 @@ namespace ui {
 
         For performance reasons, the 2D array is organized on per row basis so that scrolling rows is a simple pointer swap and does not have to involve any complex memory copying, which in case of fast scrolling terminal commands can be quite expensive. 
      */
-    class Buffer {
+    class ScreenBuffer {
     public:
 
-        Buffer(int width, int height):
+        ScreenBuffer(int width, int height):
             width_{width},
             height_{height} {
             create(width, height);
         }
 
-        Buffer(Buffer && from):
+        ScreenBuffer(ScreenBuffer && from):
             width_{from.width_},
             height_{from.height_},
             rows_{from.rows_} {
@@ -216,7 +216,7 @@ namespace ui {
             from.rows_ = nullptr;
         }
 
-        Buffer & operator = (Buffer && from) {
+        ScreenBuffer & operator = (ScreenBuffer && from) {
             clear();
             width_ = from.width_;
             height_ = from.height_;
@@ -227,7 +227,7 @@ namespace ui {
             return *this;
         }
 
-        ~Buffer() {
+        ~ScreenBuffer() {
             clear();
         }
 
