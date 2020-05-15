@@ -75,12 +75,22 @@ namespace tpp {
 
     void TerminalClient::Sync::receivedSequence(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
         std::lock_guard<std::mutex> g{mSequences_};
-        if (result_ != nullptr && result_->match(kind, payload, payloadEnd)) {
+        if (result_ != nullptr && result_->kind() == kind) {
+            switch (kind) {
+                case Sequence::Kind::Capabilities:
+                    (*result_) = Sequence::Capabilities{payload, payloadEnd};
+                    break;
+                default:
+                    // raise the event
+                    NOT_IMPLEMENTED;
+                    return;
+            }
             result_ = nullptr;
             sequenceReady_.notify_one();
         } else {
             // raise the event
             NOT_IMPLEMENTED;
+            return;
         }
     }
 

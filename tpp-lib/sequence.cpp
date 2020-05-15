@@ -144,6 +144,16 @@ namespace tpp {
         pty.send(payload.c_str(), payload.size());
     }
 
+    // Sequence::Data
+
+    void Sequence::Data::sendTo(PTYBase & pty) const {
+        Sequence::sendTo(pty);
+        Buffer b;
+        b << STR(";" << id_ << ";" << packet_ << ";" << size_ << ";");
+        Encode(b, payload_, payload_ + size_);
+        pty.send(b.begin(), b.size());
+    }
+
 } // namespace tpp
 
 

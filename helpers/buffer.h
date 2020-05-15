@@ -61,6 +61,14 @@ namespace helpers {
             return *this;
         }
 
+        Buffer & operator << (std::string const & str) {
+            while (size_ + str.size() > capacity_)
+                grow();
+            memcpy(data_ + size_, str.c_str(), str.size());
+            size_ += str.size();
+            return *this;
+        }
+
         char * release() {
             char * result = data_;
             data_ = nullptr;

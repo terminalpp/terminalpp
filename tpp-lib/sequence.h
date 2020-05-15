@@ -37,10 +37,6 @@ namespace tpp {
             return kind_;
         }
 
-        virtual bool match(Kind kind, char const * payload, char const * payloadEnd) {
-            return kind_ == kind;
-        }
-
         static char const * FindSequenceStart(char const * buffer, char const * bufferEnd);
 
         static char const * FindSequenceEnd(char const * buffer, char const * bufferEnd);
@@ -85,11 +81,11 @@ namespace tpp {
 
         /** Encodes the given buffer. 
          */
-        void Encode(Buffer & into, char const * buffer, char const * end);
+        static void Encode(Buffer & into, char const * buffer, char const * end);
 
         /** Decodes the given buffer. 
          */
-        void Decode(Buffer & into, char const * buffer, char const * end);
+        static void Decode(Buffer & into, char const * buffer, char const * end);
 
     }; // tpp::Sequence
 
@@ -107,15 +103,6 @@ namespace tpp {
         Ack(char const * start, char const * end):
             Sequence(start, end, Kind::Ack) {
             id_ = ReadUnsigned(start, end);
-        }
-
-        bool match(Kind kind, char const * payloadStart, char const * payloadEnd) override {
-            if (! Sequence::match(kind, payloadStart, payloadEnd))
-                return false;
-            size_t id = ReadUnsigned(payloadStart, payloadEnd);
-            if (id_ != id)
-                return false;
-            return true;
         }
 
     protected:
@@ -153,13 +140,6 @@ namespace tpp {
             version_ = ReadUnsigned(start, end);
         }
 
-        bool match(Kind kind, char const * payloadStart, char const * payloadEnd) override {
-            if (! Sequence::match(kind, payloadStart, payloadEnd))
-                return false;
-            version_ = ReadUnsigned(payloadStart, payloadEnd);
-            return true;
-        }
-
         size_t version() const {
             return version_;
         }
@@ -176,6 +156,37 @@ namespace tpp {
      */
     class Sequence::Data final : public Sequence {
     public:
+
+        Data(size_t id, size_t packet, char const * payload, char const * payloadEnd):
+            Sequence{Kind::Data},
+            id_{id},
+            packet_{packet},
+            size_{static_cast<size_t>(payloadEnd - payload)},
+            payload_{new char[size_]} {
+            memcpy(payload_, payload, size_);
+        }
+
+        Data(size_t id, size_t packet, size_t size, std::istream & s):
+            Sequence{Kind::Data},
+            id_{id},
+            packet_{packet},
+            size_{size},
+            payload_{new char[size_]} {
+            s.read(payload_, size);
+            size_ = s.gcount();
+        }
+
+        Data(char const * start, char const * end):
+            Sequence{Kind::Data} {
+            id_ = ReadUnsigned(start, end);
+            packet_ = ReadUnsigned(start, end);
+            size_ = ReadUnsigned(start, end);
+            Buffer b;
+            Decode(b, start, end);
+            if (size_ == b.size())
+                THROW(helpers::IOError()) << "Data Sequence size reported " << size_ << ", actual " << b.size();
+            payload_ = b.release();
+        }
 
         /** Returns the stream id. 
          */
@@ -205,15 +216,14 @@ namespace tpp {
 
     protected:
 
+        void sendTo(PTYBase & pty) const override;
+
     private:
         size_t id_;
         size_t packet_;
         size_t size_;
-        char const * payload_;
-    }; // Sequence::Transfer
-
-
-
+        char * payload_;
+    }; // Sequence::Data
 
     /** Requests the capabilities from the server. 
      */
