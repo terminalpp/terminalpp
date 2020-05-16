@@ -114,6 +114,9 @@ namespace tpp {
          */
         Sequence::Capabilities getCapabilities();
 
+        size_t openFileTransfer(std::string const & host, std::string const & filename, size_t size);
+
+
 
 
     protected:
@@ -136,6 +139,8 @@ namespace tpp {
         /** Transmits the sequence and waits for the response to arrive within the client's timeout. 
          */
         void transmit(Sequence const & send, Sequence & receive);
+
+        bool responseCheck(Sequence::Kind kind, char const * payload, char const * payloadEnd);
 
         /** timeout for t++ sequence responses in milliseconds. 
          */

@@ -20,9 +20,10 @@ namespace tpp {
         /** Sends a t++ sequence. 
          */
         virtual void send(Sequence const & seq) {
-            send("\033P+", 3);
-            seq.sendTo(*this);
-            send("\007", 1);
+            std::stringstream ss;
+            ss << "\033P+" << seq << "\007";
+            std::string s{ss.str()};
+            send(s.c_str(), s.size());
         }
 
         /** Blocks until data are received and returns the size of bytes received in the provided buffer. 

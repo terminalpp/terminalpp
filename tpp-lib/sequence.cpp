@@ -6,7 +6,6 @@
 
 namespace tpp {
 
-    using Char = helpers::Char;
 
     std::ostream & operator << (std::ostream & s, Sequence::Kind kind) {
         switch (kind) {
@@ -71,9 +70,8 @@ namespace tpp {
         return Kind::Invalid;
     }
 
-    void Sequence::sendTo(PTYBase & pty) const {
-        std::string x{STR(static_cast<unsigned>(kind_))};
-        pty.send(x.c_str(), x.size());
+    void Sequence::writeTo(std::ostream & s) const {
+        s << static_cast<unsigned>(kind_);
     }
 
     size_t Sequence::ReadUnsigned(char const * & start, char const * end) {
@@ -94,7 +92,42 @@ namespace tpp {
         return result;
     }
 
-    void Sequence::Encode(Buffer & into, char const * buffer, char const * end) {
+    std::string Sequence::ReadString(char const * & start, char const * end) {
+        std::string result;
+        while (start != end) {
+            if (*start == ';') {
+                ++start;
+                break;
+            } else {
+                result += DecodeChar(start, end);
+            }
+        }
+        return result;
+    }
+
+    void Sequence::WriteString(std::ostream & s, std::string const & str) {
+        char const * r = str.c_str();
+        char const * end = r + str.size();
+        while (r != end) {
+            switch (*r) {
+                case Char::NUL:
+                case Char::BEL:
+                case Char::ESC:
+                case ';':
+                case '`':
+                    s << '`';
+                    s << Char::ToHexadecimalDigit(static_cast<unsigned char>(*r) >> 4);
+                    s << Char::ToHexadecimalDigit(static_cast<unsigned char>(*r) & 0xf);
+                    ++r;
+                    break;
+                default:
+                    s << (*r++);
+                    break;
+            }
+        }
+    }
+
+    void Sequence::Encode(std::ostream & s, char const * buffer, char const * end) {
         char const * r = buffer;
         while (r != end) {
             switch (*r) {
@@ -102,13 +135,13 @@ namespace tpp {
                 case Char::BEL:
                 case Char::ESC:
                 case '`':
-                    into << '`';
-                    into << Char::ToHexadecimalDigit(static_cast<unsigned char>(*r) >> 4);
-                    into << Char::ToHexadecimalDigit(static_cast<unsigned char>(*r) & 0xf);
+                    s << '`';
+                    s << Char::ToHexadecimalDigit(static_cast<unsigned char>(*r) >> 4);
+                    s << Char::ToHexadecimalDigit(static_cast<unsigned char>(*r) & 0xf);
                     ++r;
                     break;
                 default:
-                    into << (*r++);
+                    s << (*r++);
                     break;
             }
         }
@@ -117,42 +150,45 @@ namespace tpp {
     void Sequence::Decode(Buffer & into, char const * buffer, char const * end) {
         char const * r = buffer;
         while (r < end) {
-            if (*r == '`') {
-                if (r + 3 > end)
-                    THROW(helpers::IOError()) << "quote must be followed by 2 hexadecimal characters";
-                into <<  static_cast<char>(Char::ParseHexadecimalDigit(r[1]) * 16 + Char::ParseHexadecimalDigit(r[2]));
-                r += 3;
-            } else {
-                into << *r++;
-            }
+            into << DecodeChar(r, end);
         }
     }
     
     // Sequence::Ack
 
-    void Sequence::Ack::sendTo(PTYBase & pty) const {
-        Sequence::sendTo(pty);
-        std::string payload = STR(";" << id_);
-        pty.send(payload.c_str(), payload.size());
+    void Sequence::Ack::writeTo(std::ostream & s) const {
+        Sequence::writeTo(s);
+        s << ';' << id_ << ';';
+        WriteString(s, payload_);
     }
 
     // Sequence::Capabilities
 
-    void Sequence::Capabilities::sendTo(PTYBase & pty) const {
-        Sequence::sendTo(pty);
-        std::string payload = STR(";" << version_);
-        pty.send(payload.c_str(), payload.size());
+    void Sequence::Capabilities::writeTo(std::ostream & s) const {
+        Sequence::writeTo(s);
+        s << ';' << version_;
     }
 
     // Sequence::Data
 
-    void Sequence::Data::sendTo(PTYBase & pty) const {
-        Sequence::sendTo(pty);
-        Buffer b;
-        b << STR(";" << id_ << ";" << packet_ << ";" << size_ << ";");
-        Encode(b, payload_, payload_ + size_);
-        pty.send(b.begin(), b.size());
+    void Sequence::Data::writeTo(std::ostream & s) const {
+        Sequence::writeTo(s);
+        s << ';' << id_ << ';' << packet_ << ';' << size_ << ';';
+        Encode(s, payload_, payload_ + size_);
     }
+
+    // Sequence::OpenFileTransfer
+
+    void Sequence::OpenFileTransfer::writeTo(std::ostream & s) const {
+        Sequence::writeTo(s);
+        s << ';';
+        WriteString(s, remoteHost_);
+        s << ';';
+        WriteString(s, remotePath_);
+        s << ';' << size_;
+    }
+
+
 
 } // namespace tpp
 

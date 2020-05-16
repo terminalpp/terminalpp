@@ -184,6 +184,11 @@ namespace tpp {
                 case tpp::Sequence::Kind::GetCapabilities:
                     pty_->send(tpp::Sequence::Capabilities{1});
                     break;
+                case tpp::Sequence::Kind::OpenFileTransfer: {
+                    Sequence::OpenFileTransfer req(event->payloadStart, event->payloadEnd);
+                    pty_->send(tpp::Sequence::Ack{16, req});
+                    break;
+                }
                 default:
                     LOG() << "Unknown sequence";
                     break;

@@ -39,7 +39,7 @@
             "name": "(linux) ropen",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build-g++-8/ropen/ropen",
+            "program": "${workspaceFolder}/build-GCC for x86_64-linux-gnu 9.3.0/ropen/ropen",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

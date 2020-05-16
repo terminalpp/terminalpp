@@ -4,9 +4,11 @@
 
 #include "helpers/helpers.h"
 #include "helpers/buffer.h"
+#include "helpers/char.h"
 
 namespace tpp {
 
+    using Char = helpers::Char;
     using Buffer = helpers::Buffer;
 
     class PTYBase;
@@ -22,6 +24,7 @@ namespace tpp {
     public:
         enum class Kind {
             Ack = 0,
+            Nack,
             /** Requests the terminal to send its capabilities. 
              */
             GetCapabilities,
@@ -29,6 +32,7 @@ namespace tpp {
              */
             Capabilities,
             Data,
+            OpenFileTransfer,
 
             Invalid,
         };
@@ -50,18 +54,25 @@ namespace tpp {
         static Kind ParseKind(char const * & buffer, char const * bufferEnd);
 
         class Ack;
+        class Nack;
         class GetCapabilities;
         class Capabilities;
         class Data;
 
-    protected:
+        class OpenFileTransfer;
+/*
+        class FileTransfer;
+        class GetTransferStatus;
+        class TransferStatus;
+    */
 
-        friend class PTYBase;
+    protected:
 
         Sequence(Kind kind):
             kind_{kind} {
         }
 
+/*
         Sequence(char const * & start, char const * end, Kind expectedKind = Kind::Invalid) {
             size_t kind = ReadUnsigned(start, end);
             if (kind > static_cast<unsigned>(Kind::Invalid))
@@ -70,8 +81,9 @@ namespace tpp {
             if (expectedKind != Kind::Invalid && (kind_ != expectedKind))
                 THROW(SequenceError()) << "Expected sequence " << expectedKind << ", but found " << kind_;
         }
+        */
 
-        virtual void sendTo(PTYBase & pty) const;
+        virtual void writeTo(std::ostream & s) const;
 
         Kind kind_;
 
@@ -79,13 +91,36 @@ namespace tpp {
          */
         static size_t ReadUnsigned(char const * & start, char const * end);
 
+        static std::string ReadString(char const * & start, char const * end);
+
+        static void WriteString(std::ostream & s, std::string const & vstr);
+
         /** Encodes the given buffer. 
          */
-        static void Encode(Buffer & into, char const * buffer, char const * end);
+        static void Encode(std::ostream & s, char const * buffer, char const * end);
 
         /** Decodes the given buffer. 
          */
         static void Decode(Buffer & into, char const * buffer, char const * end);
+
+    private:
+
+        static char DecodeChar(char const * & x, char const * end) {
+            if (*x == '`') {
+                if (x + 3 > end)
+                    THROW(helpers::IOError()) << "quote must be followed by 2 hexadecimal characters";
+                char result = static_cast<char>(Char::ParseHexadecimalDigit(x[1]) * 16 + Char::ParseHexadecimalDigit(x[2]));
+                x += 3;
+                return result;
+            } else {
+                return *(x++);
+            }
+        }
+
+        friend std::ostream & operator << (std::ostream & s, Sequence const & seq) {
+            seq.writeTo(s);
+            return s;
+        }
 
     }; // tpp::Sequence
 
@@ -93,42 +128,69 @@ namespace tpp {
 
     /** Acknowledgement. 
      */
-    class Sequence::Ack final : public Sequence {
+    class Sequence::Ack : public Sequence {
     public:
-        Ack(size_t id = 0):
+        explicit Ack(size_t id):
             Sequence{Kind::Ack},
-            id_{id} {
+            id_{id},
+            payload_{} {
         }
 
-        Ack(char const * start, char const * end):
-            Sequence(start, end, Kind::Ack) {
+        Ack(size_t id, std::string const & payload):
+            Sequence{Kind::Ack},
+            id_{id},
+            payload_{payload} {
+        }
+
+        Ack(size_t id, Sequence const & req):
+            Sequence{Kind::Ack},
+            id_{id},
+            payload_{STR(req)} {
+        }
+
+        Ack(char const * & start, char const * end):
+            Sequence(Kind::Ack) {
             id_ = ReadUnsigned(start, end);
+            payload_ = ReadString(start, end);
+        }
+
+        size_t id() const {
+            return id_;
+        }
+
+        std::string const & payload() const {
+            return payload_;
         }
 
     protected:
 
-        void sendTo(PTYBase & pty) const override;
+        void writeTo(std::ostream & s) const override;
 
     private:
         size_t id_;
+        std::string payload_;
     };
+
+    class Sequence::Nack : public Sequence {
+
+    }; // Sequence::Nack
 
     /** Terminal capabilities request. 
      */
-    class Sequence::GetCapabilities final : public Sequence {
+    class Sequence::GetCapabilities : public Sequence {
     public:
         GetCapabilities():
             Sequence{Kind::GetCapabilities} {
         }
 
         GetCapabilities(char const * start, char const * end):
-            Sequence{start, end, Kind::Capabilities} {
+            Sequence{Kind::Capabilities} {
         }
     };
 
     /** Terminal capabilities information.
      */
-    class Sequence::Capabilities final : public Sequence {
+    class Sequence::Capabilities : public Sequence {
     public:
         Capabilities(unsigned version):
             Sequence{Kind::Capabilities},
@@ -136,7 +198,7 @@ namespace tpp {
         }
 
         Capabilities(char const * start, char const * end):
-            Sequence(start, end, Kind::Capabilities) {
+            Sequence(Kind::Capabilities) {
             version_ = ReadUnsigned(start, end);
         }
 
@@ -146,7 +208,7 @@ namespace tpp {
 
     protected:
 
-        void sendTo(PTYBase & pty) const override;
+        void writeTo(std::ostream & s) const override;
 
     private:
         size_t version_;
@@ -154,7 +216,7 @@ namespace tpp {
 
     /** Generic data transfer. 
      */
-    class Sequence::Data final : public Sequence {
+    class Sequence::Data : public Sequence {
     public:
 
         Data(size_t id, size_t packet, char const * payload, char const * payloadEnd):
@@ -216,7 +278,9 @@ namespace tpp {
 
     protected:
 
-        void sendTo(PTYBase & pty) const override;
+        void writeTo(std::ostream & s) const override;
+
+        //void sendTo(PTYBase & pty) const override;
 
     private:
         size_t id_;
@@ -224,6 +288,46 @@ namespace tpp {
         size_t size_;
         char * payload_;
     }; // Sequence::Data
+
+    class Sequence::OpenFileTransfer : public Sequence {
+    public:
+
+        OpenFileTransfer(std::string const & host, std::string const & filename, size_t fileSize):
+            Sequence{Kind::OpenFileTransfer},
+            remoteHost_{host},
+            remotePath_{filename},
+            size_{fileSize} {
+        }
+
+        OpenFileTransfer(char const * start, char const * end):
+            Sequence{Kind::OpenFileTransfer} {
+            remoteHost_ = ReadString(start, end);
+            remotePath_ = ReadString(start, end);
+            size_ = ReadUnsigned(start, end);
+        }
+
+        std::string const & remoteHost() const {
+            return remoteHost_;
+        }
+
+        std::string const & remotePath() const {
+            return remotePath_;
+        }
+
+        size_t size() const {
+            return size_;
+        }
+
+    protected:
+
+        void writeTo(std::ostream & s) const override;
+
+    private:
+        std::string remoteHost_;
+        std::string remotePath_;
+        size_t size_;
+
+    }; // Sequence::OpenFileTransfer
 
     /** Requests the capabilities from the server. 
      */

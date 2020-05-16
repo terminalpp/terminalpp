@@ -32,6 +32,8 @@ int main(int argc, char * argv[]) {
         TerminalClient::Sync t{new LocalPTYSlave{}};
         Sequence::Capabilities capabilities{t.getCapabilities()};
         LOG() << "t++ version " << capabilities.version() << " detected";
+        size_t channel = t.openFileTransfer("host","someFile",1024);
+        LOG() << "channel: " << channel;
         return EXIT_SUCCESS;
     } catch (TimeoutError const & e) {
         std::cerr << "t++ terminal timeout." << std::endl;

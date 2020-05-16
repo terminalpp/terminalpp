@@ -73,24 +73,21 @@ namespace tpp {
         return result;
     }
 
+    size_t TerminalClient::Sync::openFileTransfer(std::string const & host, std::string const & filename, size_t size) {
+        Sequence::OpenFileTransfer req{host, filename, size};
+        Sequence::Ack result{0, req};
+        transmit(req, result);
+        return result.id();
+    }
+
     void TerminalClient::Sync::receivedSequence(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
         std::lock_guard<std::mutex> g{mSequences_};
-        if (result_ != nullptr && result_->kind() == kind) {
-            switch (kind) {
-                case Sequence::Kind::Capabilities:
-                    (*result_) = Sequence::Capabilities{payload, payloadEnd};
-                    break;
-                default:
-                    // raise the event
-                    NOT_IMPLEMENTED;
-                    return;
-            }
+        if (responseCheck(kind, payload, payloadEnd)) {
             result_ = nullptr;
             sequenceReady_.notify_one();
         } else {
             // raise the event
             NOT_IMPLEMENTED;
-            return;
         }
     }
 
@@ -99,11 +96,37 @@ namespace tpp {
         ASSERT(result_ == nullptr) << "Only one thread is allowed to transmit t++ sequences";
         result_ = & receive;
         this->send(send);
+        LOG() << " transmitted";
         auto timeoutTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_);
         while (result_ != nullptr)
             if (sequenceReady_.wait_until(g, timeoutTime) == std::cv_status::timeout)
                 THROW(TimeoutError());
     }
+
+    bool TerminalClient::Sync::responseCheck(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
+        if (result_ != nullptr && result_->kind() == kind) {
+            switch (kind) {
+                case Sequence::Kind::Ack: {
+                    Sequence::Ack & result = * dynamic_cast<Sequence::Ack*>(result_);
+                    Sequence::Ack x{payload, payloadEnd};
+                    if (result.payload() != x.payload())
+                        return false;
+                    result = x;
+                    return true;
+                }
+                case Sequence::Kind::Capabilities: {
+                    Sequence::Capabilities * result = dynamic_cast<Sequence::Capabilities*>(result_);
+                    (*result) = Sequence::Capabilities{payload, payloadEnd};
+                    return true;
+                }
+                default:
+                    return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
 
     #ifdef HAHA
 
