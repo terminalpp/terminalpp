@@ -33,6 +33,8 @@ namespace tpp {
             Capabilities,
             Data,
             OpenFileTransfer,
+            GetTransferStatus,
+            TransferStatus,
 
             Invalid,
         };
@@ -60,6 +62,8 @@ namespace tpp {
         class Data;
 
         class OpenFileTransfer;
+        class GetTransferStatus;
+        class TransferStatus;
 /*
         class FileTransfer;
         class GetTransferStatus;
@@ -328,6 +332,74 @@ namespace tpp {
         size_t size_;
 
     }; // Sequence::OpenFileTransfer
+
+    /** Returns the status of a transferred file. 
+     */
+    class Sequence::GetTransferStatus : public Sequence {
+    public:
+
+        GetTransferStatus(size_t id):
+            Sequence{Kind::GetTransferStatus},
+            id_{id} {
+        }
+
+        GetTransferStatus(char const * & start, char const * end):
+            Sequence(Kind::GetTransferStatus) {
+            id_ = ReadUnsigned(start, end);
+        }
+
+        size_t id() const {
+            return id_;
+        }
+
+    protected:
+
+        void writeTo(std::ostream & s) const override;
+
+    private:
+        size_t id_;
+
+    }; // Sequence::GetTransferStatus
+
+    class Sequence::TransferStatus : public Sequence {
+    public:
+
+        TransferStatus(size_t id, size_t size, size_t received):
+            Sequence{Kind::TransferStatus},
+            id_{id},
+            size_{size},
+            received_{received} {
+        }
+
+        TransferStatus(char const * & start, char const * end):
+            Sequence(Kind::TransferStatus) {
+            id_ = ReadUnsigned(start, end);
+            size_ = ReadUnsigned(start, end);
+            received_ = ReadUnsigned(start, end);
+        }
+
+        size_t id() const {
+            return id_;
+        }
+
+        size_t size() const {
+            return size_;
+        }
+
+        size_t received() const {
+            return received_;
+        }
+
+    protected:
+
+        void writeTo(std::ostream & s) const override;
+
+    private:
+        size_t id_;
+        size_t size_;
+        size_t received_;
+
+    }; // Sequence::TransferStatus
 
     /** Requests the capabilities from the server. 
      */

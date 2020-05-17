@@ -188,6 +188,20 @@ namespace tpp {
         s << ';' << size_;
     }
 
+    // Sequence::GetTransferStatus
+
+    void Sequence::GetTransferStatus::writeTo(std::ostream & s) const {
+        Sequence::writeTo(s);
+        s << ';' << id_;
+    }
+
+    // Sequence::TransferStatus;
+
+    void Sequence::TransferStatus::writeTo(std::ostream & s) const {
+        Sequence::writeTo(s);
+        s << ';' << id_ << ';' << size_ << ';' << received_;
+    }
+
 
 
 } // namespace tpp
