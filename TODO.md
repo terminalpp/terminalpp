@@ -24,6 +24,8 @@ More robust UI framework, better configuration options and slightly increased se
 
 - geometry.h is areally bad name for some of the classes defined therein
 
+- update log - verbose and debug logs
+
 Terminal++ PTY:
 
 - PTY should have special provision for sending Sequences

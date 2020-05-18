@@ -29,6 +29,7 @@ namespace helpers {
 
     class Log {
 	public:
+
 	    class Message;
 
 	    /** Defines the API for log messages to be written to the log. 
@@ -139,6 +140,21 @@ namespace helpers {
 			return Message(this, file, line);
 		}
 
+		static Log & Default() {
+			static Log defaultLog("");
+			return defaultLog;
+		}
+
+		static Log & Verbose() {
+			static Log verboseLog("VERBOSE");
+			return verboseLog;
+		}
+
+		static Log & Debug() {
+			static Log debugLog("DEBUG");
+			return debugLog;
+		}
+
 	private:
 	    std::string name_;
 		Writer * writer_;
@@ -156,11 +172,12 @@ namespace helpers {
 	    class OStreamWriter : public Log::Writer {
 		public:
 
-			OStreamWriter(std::ostream & s, bool displayLocation = true, bool displayTime = true, bool displayName = true):
-			    s_(s),
-				displayLocation_(displayLocation),
-				displayTime_(displayTime),
-				displayName_(displayName) {
+			OStreamWriter(std::ostream & s, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string eol = "\n"):
+			    s_{s},
+				displayLocation_{displayLocation},
+				displayTime_{displayTime},
+				displayName_{displayName},
+                eol_{eol} {
 			}
 
 		    std::ostream & beginMessage(Log::Message const & message) override {
@@ -184,16 +201,37 @@ namespace helpers {
 				MARK_AS_UNUSED(message);
 				if (displayLocation_)
 					s_ << " (" << message.file() << ":" << message.line() << ")";
-				s_ << std::endl;
+				s_ << eol_ << std::flush;
 				// finally, unlock the mutex
 				m_.unlock();
 			}
+
+            OStreamWriter & setDisplayLocation(bool value = true) {
+                displayLocation_ = value;
+                return *this;
+            }
+
+            OStreamWriter & setDisplayTime(bool value = true) {
+                displayTime_ = value;
+                return *this;
+            }
+
+            OStreamWriter & setDisplayName(bool value = true) {
+                displayName_ = value;
+                return *this;
+            }
+
+            OStreamWriter & setEoL(std::string const & value) {
+                eol_ = value;
+                return *this;
+            }
 
 		protected:
 		    std::ostream & s_;
 			bool displayLocation_;
 			bool displayTime_;
 			bool displayName_;
+            std::string eol_;
 			std::mutex m_;
 		}; // Logger::OStreamWriter
 
@@ -203,8 +241,8 @@ namespace helpers {
 		 */
 		class FileWriter : public OStreamWriter {
 		public:
-		    FileWriter(std::string const & filename, bool displayLocation = true, bool displayTime = true, bool displayName = true):
-			    OStreamWriter(* new std::ofstream(filename, std::ofstream::app), displayLocation, displayTime, displayName) {
+		    FileWriter(std::string const & filename, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string eol = "\n"):
+			    OStreamWriter(* new std::ofstream(filename, std::ofstream::app), displayLocation, displayTime, displayName, eol) {
 				if (! s_.good())
 				    THROW(IOError()) << "Unable to open log file " << filename;
 			}
@@ -216,14 +254,9 @@ namespace helpers {
 
 		}; // Logger::FileWriter
 
-		static Log::Writer & StdOutWriter() {
+		static Logger::OStreamWriter & StdOutWriter() {
 			static OStreamWriter writer(std::cout);
 			return writer;
-		}
-
-		static Log & DefaultLog() {
-			static Log defaultLog("");
-			return defaultLog;
 		}
 
 		static void EnableAll(Log::Writer & writer, bool update = false) {
@@ -240,12 +273,16 @@ namespace helpers {
 		}
 
 		static Log & GetLog() {
-		    return DefaultLog();
+		    return Log::Default();
 		}
 
 		static Log & GetLog(Log & log) {
 			return log;
 		}
+
+        static Log & GetLog(Log & (*log)()) {
+            return log();
+        }
 
 	private:
 		friend class Log;

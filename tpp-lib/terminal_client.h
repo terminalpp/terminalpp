@@ -25,7 +25,6 @@ namespace tpp {
 
         virtual ~TerminalClient() {
             delete pty_;
-            std::cout << "Waiting for reader to close...\r\n";
             reader_.join();
             delete [] buffer_;
         }
@@ -87,6 +86,7 @@ namespace tpp {
         Sync(PTYSlave * pty):
             TerminalClient{pty},
             timeout_{1000},
+            attempts_{10},
             result_{nullptr},
             processed_{0} {
         }
@@ -110,11 +110,44 @@ namespace tpp {
             return result;
         }
 
+        using TerminalClient::send;
+
         /** Returns the terminal capabilities. 
          */
-        Sequence::Capabilities getCapabilities();
+        //@{
+        Sequence::Capabilities getCapabilities(size_t timeout, size_t attempts);
 
-        size_t openFileTransfer(std::string const & host, std::string const & filename, size_t size);
+        Sequence::Capabilities getCapabilities(size_t timeout) {
+            return getCapabilities(timeout, 1);
+        }
+
+        Sequence::Capabilities getCapabilities() {
+            return getCapabilities(timeout_, 1);
+        }
+        //@}
+
+
+        //@{
+        size_t openFileTransfer(std::string const & host, std::string const & filename, size_t size, size_t timeout, size_t attempts);
+
+        size_t openFileTransfer(std::string const & host, std::string const & filename, size_t size, size_t timeout) {
+            return openFileTransfer(host, filename, size, timeout, attempts_);
+        }
+
+        size_t openFileTransfer(std::string const & host, std::string const & filename, size_t size) {
+            return openFileTransfer(host, filename, size, timeout_, attempts_);
+        }
+        //@}
+
+        //@{
+        Sequence::TransferStatus getTransferStatus(size_t id, size_t timeout, size_t attempts);
+        Sequence::TransferStatus getTransferStatus(size_t id, size_t timeout) {
+            return getTransferStatus(id, timeout, attempts_);
+        }
+        Sequence::TransferStatus getTransferStatus(size_t id) {
+            return getTransferStatus(id, timeout_, attempts_);
+        }
+        //@}
 
 
 
@@ -122,8 +155,13 @@ namespace tpp {
     protected:
 
         size_t received(char const * buffer, char const * bufferEnd) override {
-            MARK_AS_UNUSED(buffer);
-            MARK_AS_UNUSED(bufferEnd);
+            for (char const * i = buffer; i != bufferEnd; ++i)
+                if (*i == '\003') // Ctrl + C
+#if (defined ARCH_UNIX)
+                    raise(SIGINT);
+#else
+                    exit(EXIT_FAILURE);
+#endif
             dataReady_.notify_all();
             return 0;
         }
@@ -138,13 +176,18 @@ namespace tpp {
 
         /** Transmits the sequence and waits for the response to arrive within the client's timeout. 
          */
-        void transmit(Sequence const & send, Sequence & receive);
+        
+        void transmit(Sequence const & send, Sequence & receive, size_t timeout, size_t attempts);
 
         bool responseCheck(Sequence::Kind kind, char const * payload, char const * payloadEnd);
 
         /** timeout for t++ sequence responses in milliseconds. 
          */
         size_t timeout_;
+
+        /** Number of attempts a request with a corresponding response will be attempted before error. 
+         */
+        size_t attempts_;
 
         mutable std::mutex mBuffer_;
         mutable std::condition_variable dataReady_;

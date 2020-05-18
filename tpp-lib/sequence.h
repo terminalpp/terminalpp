@@ -39,6 +39,9 @@ namespace tpp {
             Invalid,
         };
 
+        virtual ~Sequence() {
+        }
+
         Kind kind() const {
             return kind_;
         }
@@ -252,6 +255,10 @@ namespace tpp {
             if (size_ == b.size())
                 THROW(helpers::IOError()) << "Data Sequence size reported " << size_ << ", actual " << b.size();
             payload_ = b.release();
+        }
+
+        ~Data() override {
+            delete payload_;
         }
 
         /** Returns the stream id. 

@@ -2,38 +2,204 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <filesystem>
 
 #include "helpers/helpers.h"
+#include "helpers/filesystem.h"
 #include "helpers/json_config.h"
 
 #include "tpp-lib/local_pty.h"
 #include "tpp-lib/terminal_client.h"
 
+namespace tpp {
 
+    using Log = helpers::Log;
 
-        /*
-        RemoteFileSender rf{};
-        while (true) {
+    class Config : public helpers::JSONConfig::Root {
+    public:
+        CONFIG_OPTION(
+            timeout,
+            "Timeout of the connection to terminal++ (in ms)",
+            "1000",
+            unsigned
+        );
+        CONFIG_OPTION(
+            adaptiveSpeed,
+            "Adaptive speed",
+            "true",
+            bool
+        );
+        CONFIG_OPTION(
+            packetSize,
+            "Size of single packet of data",
+            "1024",
+            unsigned
+        );
+        CONFIG_OPTION(
+            packetLimit,
+            "Number of packets that can be sent without waiting for acknowledgement",
+            "32",
+            unsigned
+        );
+        CONFIG_OPTION(
+            filename, 
+            "Local file to be opened on the remote machine",
+            "\"\"",
+            std::string
+        );
+        CONFIG_OPTION(
+            verbose,
+            "Verbose output",
+            "false",
+            bool
+        );
+
+        static Config & Instance() {
+            static Config singleton{};
+            return singleton;
         }
-        Config config(argc, argv);
-        StdTerminal t;
-        t.setTimeout(config.timeout());
-        tpp::RemoteOpen::Open(t, config.filename(), config);
-        std::cout << "\n";
-        */
+
+        static Config & Setup(int argc, char * argv[]) {
+            Config & result = Instance();
+            helpers::JSONArguments args{};
+            args.addArgument("Timeout", {"--timeout", "-t"}, result.timeout);
+            args.addArgument("Packet size", {"--packet-size"}, result.packetSize);
+            args.addArgument("Verbosity", {"--verbose", "-v"}, result.verbose);
+            args.addArgument("Adaptive Speed", {"--adaptive"}, result.adaptiveSpeed);
+            args.addArgument("Filename", {"--file", "-f"}, result.filename, /* expects value */ true, /* required */ true);
+            args.setDefaultArgument("Filename");
+            args.parse(argc, argv);
+            return result;
+        }
+
+    private:
+
+        Config() {
+            initializationDone();
+        }
+
+    }; // tpp::Config
+
+    class RemoteOpen {
+    public:
+
+        static constexpr size_t MIN_PACKET_LIMIT = 8;
+
+        static void Transfer(TerminalClient::Sync & t, std::string const & filename) {
+            RemoteOpen r{t, Config::Instance()};
+            //r.openLocalFile(filename);
+            r.transfer();
+        }
+
+    private:
+
+        RemoteOpen(TerminalClient::Sync & t, Config const & config):
+            t_{t},
+            adaptiveSpeed_{config.adaptiveSpeed()},
+            packetSize_{config.packetSize()},
+            packetLimit_{config.packetLimit()},
+            initialPacketLimit_{packetLimit_} {
+            // verify the t++ capabilities of the terminal
+            Sequence::Capabilities capabilities{t_.getCapabilities()};
+            if (capabilities.version() != 1)
+                THROW(helpers::Exception()) << "Incompatible t++ version " << capabilities.version() << " (required version 1)";
+        }
+
+        void openLocalFile(std::string const & filename) {
+            try {
+                std::string remoteHost = helpers::GetHostname();
+                LOG(Log::Verbose) << "Remote host: " << remoteHost;
+                std::string remoteFile = std::filesystem::canonical(filename);
+                LOG(Log::Verbose) << "Remote file canonical path: " << remoteFile;
+                f_.open(remoteFile);
+                if (!f_.good())
+                    throw false;
+                f_.seekg(0, std::ios_base::end);
+                size_ = f_.tellg();
+                LOG(Log::Verbose) << "    size: " << size_;
+                streamId_ = t_.openFileTransfer(remoteHost, remoteFile, size_);
+                LOG(Log::Verbose) << "Assigned stream id: " << streamId_;
+            } catch (...) {
+                THROW(helpers::IOError()) << "Unable to open file " << filename;
+            }
+        }
+
+        void transfer() {
+            std::unique_ptr<char> buffer{new char[packetSize_]};
+            LOG(Log::Verbose) << "Transferring, packet limit: " << packetLimit_;
+            f_.seekg(0, std::ios_base::beg);
+            sent_ = 0;
+            size_t packets = 0;
+            while (sent_ != size_) {
+                f_.read(buffer.get(), packetSize_);
+                size_t pSize = f_.gcount();
+                // TODO this is a memory copy, can be done more effectively by having a non-ownership version of the Data message. 
+                Sequence::Data d{streamId_, sent_, buffer.get(), buffer.get() + pSize};
+                t_.send(d);
+                sent_ += pSize;
+                if (++packets == packetLimit_) {
+                    packets = 0;
+                    checkTransferStatus();
+                }
+                progressBar();
+            }
+        }
+
+        void checkTransferStatus() {
+            // TODO loop for retries, maybe handle this at the terminal client level
+            Sequence::TransferStatus ts{t_.getTransferStatus(streamId_)};
+            if (ts.received() == sent_) {
+                if (adaptiveSpeed_ && packetLimit_ < initialPacketLimit_) {
+                    packetLimit_ <<= 2;
+                    LOG(Log::Verbose) << "Packet limit increased to " << packetLimit_; 
+                }
+            } else {
+                LOG(Log::Verbose) << "Mismatch: sent " << sent_ << ", received " << ts.received();
+                sent_ = ts.received();
+                f_.clear();
+                f_.seekg(sent_);
+                if (adaptiveSpeed_ && (packetLimit_ > MIN_PACKET_LIMIT)) {
+                    packetLimit_ >>= 1;
+                    LOG(Log::Verbose) << "Packet limit decreased to " << packetLimit_; 
+                }
+            }
+        }
+
+        void progressBar() {
+        }
+
+        TerminalClient::Sync & t_;
+        std::ifstream f_;
+        size_t size_;
+        size_t sent_;
+        size_t streamId_;
+        bool adaptiveSpeed_;
+        size_t packetSize_;
+        size_t packetLimit_;
+        size_t initialPacketLimit_;
+    }; 
+
+} // namespace tpp
+
 
 
 int main(int argc, char * argv[]) {
     using namespace tpp;
     try {
-		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 
-			helpers::Logger::DefaultLog(),
+		helpers::Logger::Enable(
+            helpers::Logger::StdOutWriter().setDisplayLocation(false).setDisplayName(false).setDisplayTime(false).setEoL("\r\n"), { 
+                helpers::Log::Default(),
+                helpers::Log::Verbose(),
+                helpers::Log::Debug()
 		});
         TerminalClient::Sync t{new LocalPTYSlave{}};
+        RemoteOpen::Transfer(t, "tpp-lib/sequence.h");
+        /*
         Sequence::Capabilities capabilities{t.getCapabilities()};
         LOG() << "t++ version " << capabilities.version() << " detected";
         size_t channel = t.openFileTransfer("host","someFile",1024);
         LOG() << "channel: " << channel;
+        */
         return EXIT_SUCCESS;
     } catch (TimeoutError const & e) {
         std::cerr << "t++ terminal timeout." << std::endl;

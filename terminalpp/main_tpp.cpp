@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
 
 		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
 		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 
-			helpers::Logger::DefaultLog(),
+			helpers::Log::Default(),
 			ui::AnsiTerminal::SEQ_ERROR,
 			ui::AnsiTerminal::SEQ_UNKNOWN,
 		});

@@ -7,6 +7,7 @@
 namespace tpp {
 
     using Char = helpers::Char;
+    using Log = helpers::Log;
 
     // TerminalClient::Async
 
@@ -67,17 +68,23 @@ namespace tpp {
 
     // TerminalClient::Sync
 
-    Sequence::Capabilities TerminalClient::Sync::getCapabilities() {
+    Sequence::Capabilities TerminalClient::Sync::getCapabilities(size_t timeout, size_t attempts) {
         Sequence::Capabilities result{0};
-        transmit(Sequence::GetCapabilities{}, result);
+        transmit(Sequence::GetCapabilities{}, result, timeout, attempts);
         return result;
     }
 
-    size_t TerminalClient::Sync::openFileTransfer(std::string const & host, std::string const & filename, size_t size) {
+    size_t TerminalClient::Sync::openFileTransfer(std::string const & host, std::string const & filename, size_t size, size_t timeout, size_t attempts) {
         Sequence::OpenFileTransfer req{host, filename, size};
         Sequence::Ack result{0, req};
-        transmit(req, result);
+        transmit(req, result, timeout, attempts);
         return result.id();
+    }
+
+    Sequence::TransferStatus TerminalClient::Sync::getTransferStatus(size_t id, size_t timeout, size_t attempts) {
+        Sequence::TransferStatus result{id,0,0};
+        transmit(Sequence::GetTransferStatus{id}, result, timeout, attempts);
+        return result;
     }
 
     void TerminalClient::Sync::receivedSequence(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
@@ -91,32 +98,50 @@ namespace tpp {
         }
     }
 
-    void TerminalClient::Sync::transmit(Sequence const & send, Sequence & receive) {
+    void TerminalClient::Sync::transmit(Sequence const & send, Sequence & receive, size_t timeout, size_t attempts) {
         std::unique_lock<std::mutex> g{mSequences_};
         ASSERT(result_ == nullptr) << "Only one thread is allowed to transmit t++ sequences";
         result_ = & receive;
-        this->send(send);
-        LOG() << " transmitted";
-        auto timeoutTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_);
-        while (result_ != nullptr)
-            if (sequenceReady_.wait_until(g, timeoutTime) == std::cv_status::timeout)
-                THROW(TimeoutError());
+        while (attempts_ > 0) {
+            this->send(send);
+            auto timeoutTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
+            while (result_ != nullptr) {
+                if (timeout > 0) {
+                    if (sequenceReady_.wait_until(g, timeoutTime) == std::cv_status::timeout) {
+                        if (--attempts == 0)
+                            THROW(TimeoutError());
+                        LOG(Log::Verbose) << "Request timeout, remaining attempts: " << attempts;
+                        break;
+                    }
+                } else {
+                    sequenceReady_.wait(g);
+                }
+            }
+        }
     }
 
     bool TerminalClient::Sync::responseCheck(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
         if (result_ != nullptr && result_->kind() == kind) {
             switch (kind) {
                 case Sequence::Kind::Ack: {
-                    Sequence::Ack & result = * dynamic_cast<Sequence::Ack*>(result_);
+                    Sequence::Ack * result = dynamic_cast<Sequence::Ack*>(result_);
                     Sequence::Ack x{payload, payloadEnd};
-                    if (result.payload() != x.payload())
+                    if (result->payload() != x.payload())
                         return false;
-                    result = x;
+                    (*result) = x;
                     return true;
                 }
                 case Sequence::Kind::Capabilities: {
                     Sequence::Capabilities * result = dynamic_cast<Sequence::Capabilities*>(result_);
                     (*result) = Sequence::Capabilities{payload, payloadEnd};
+                    return true;
+                }
+                case Sequence::Kind::TransferStatus: {
+                    Sequence::TransferStatus * result = dynamic_cast<Sequence::TransferStatus*>(result_);
+                    Sequence::TransferStatus x{payload, payloadEnd};
+                    if (result->id() != x.id())
+                        return false;
+                    (*result) = x;
                     return true;
                 }
                 default:
