@@ -202,6 +202,13 @@ namespace tpp {
         s << ';' << id_ << ';' << size_ << ';' << received_;
     }
 
+    // Sequence::ViewRemoteFile
+
+    void Sequence::ViewRemoteFile::writeTo(std::ostream & s) const {
+        Sequence::writeTo(s);
+        s << ';' << id_;
+    }
+
 
 
 } // namespace tpp

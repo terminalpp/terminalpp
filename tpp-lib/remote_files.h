@@ -37,6 +37,10 @@ namespace tpp {
                 return size_;
             }
 
+            bool ready() const {
+                return size_ == received_;
+            }
+
         private:
             friend class RemoteFiles;
 
@@ -60,6 +64,12 @@ namespace tpp {
             localRoot_{"c:/delete/tpp-remote-files"} {
         }
 
+        File * get(size_t id) {
+            std::lock_guard<std::mutex> g(mFiles_);
+            auto i = files_.find(id);
+            return i == files_.end() ? nullptr : i->second;
+        }
+
         Sequence::Ack openFileTransfer(Sequence::OpenFileTransfer const & req);
 
         bool transfer(Sequence::Data const & data);
@@ -67,13 +77,6 @@ namespace tpp {
         Sequence::TransferStatus getTransferStatus(Sequence::GetTransferStatus const & req);
 
     private:
-
-        File * get(size_t id) {
-            std::lock_guard<std::mutex> g(mFiles_);
-            auto i = files_.find(id);
-            return i == files_.end() ? nullptr : i->second;
-        }
-
 
         /** Path to where the remote files are stored. 
          */

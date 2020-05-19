@@ -194,12 +194,29 @@ namespace tpp {
                 case tpp::Sequence::Kind::Data: {
                     Sequence::Data data{event->payloadStart, event->payloadEnd};
                     remoteFiles_->transfer(data);
-                    //window_->yieldToUIThread();
+                    // make sure the UI thread remains responsive
+                    window_->yieldToUIThread();
                     break;
                 }
                 case tpp::Sequence::Kind::GetTransferStatus: {
                     Sequence::GetTransferStatus req{event->payloadStart, event->payloadEnd};
                     pty_->send(remoteFiles_->getTransferStatus(req));
+                    break;
+                }
+                case tpp::Sequence::Kind::ViewRemoteFile: {
+                    Sequence::ViewRemoteFile req{event->payloadStart, event->payloadEnd};
+                    RemoteFiles::File * f = remoteFiles_->get(req.id());
+                    if (f == nullptr) {
+                        //pty_->send(Sequence::Nack{req.id(), req, "No such file"});
+                        return;
+                    }
+                    if (! f->ready()) {
+                        //pty_->send(Sequence::Nack(req.id(), req, "File not transferred"));
+                        return;
+                    }
+                    Application::Instance()->openLocalFile(f->localPath(), false);
+                    pty_->send(Sequence::Ack{req.id(), req});
+                    break;
                 }
                 default:
                     LOG() << "Unknown sequence";

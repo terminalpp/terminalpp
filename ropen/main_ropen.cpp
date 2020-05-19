@@ -89,6 +89,7 @@ namespace tpp {
             RemoteOpen r{t, Config::Instance()};
             r.openLocalFile(filename);
             r.transfer();
+            r.view();
         }
 
     private:
@@ -163,6 +164,11 @@ namespace tpp {
                     LOG(Log::Verbose) << "Packet limit decreased to " << packetLimit_; 
                 }
             }
+        }
+
+        void view() {
+            LOG(Log::Verbose) << "Opening remote file...";
+            t_.viewRemoteFile(streamId_);
         }
 
         void progressBar() {

@@ -35,6 +35,7 @@ namespace tpp {
             OpenFileTransfer,
             GetTransferStatus,
             TransferStatus,
+            ViewRemoteFile,
 
             Invalid,
         };
@@ -67,11 +68,7 @@ namespace tpp {
         class OpenFileTransfer;
         class GetTransferStatus;
         class TransferStatus;
-/*
-        class FileTransfer;
-        class GetTransferStatus;
-        class TransferStatus;
-    */
+        class ViewRemoteFile;
 
     protected:
 
@@ -407,6 +404,35 @@ namespace tpp {
         size_t received_;
 
     }; // Sequence::TransferStatus
+
+    /** Opens remote file in view mode.
+     */
+    class Sequence::ViewRemoteFile : public Sequence {
+    public:
+
+        ViewRemoteFile(size_t id):
+            Sequence{Kind::ViewRemoteFile},
+            id_{id} {
+        }
+
+        ViewRemoteFile(char const * & start, char const * end):
+            Sequence(Kind::ViewRemoteFile) {
+            id_ = ReadUnsigned(start, end);
+        }
+
+        size_t id() const {
+            return id_;
+        }
+
+    protected:
+
+        void writeTo(std::ostream & s) const override;
+
+    private:
+        size_t id_;
+
+    }; // Sequence::ViewRemoteFile
+
 
     /** Requests the capabilities from the server. 
      */

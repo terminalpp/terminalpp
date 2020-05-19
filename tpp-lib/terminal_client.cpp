@@ -87,6 +87,12 @@ namespace tpp {
         return result;
     }
 
+    void TerminalClient::Sync::viewRemoteFile(size_t id, size_t timeout, size_t attempts) {
+        Sequence::ViewRemoteFile req{id};
+        Sequence::Ack result{0, req};
+        transmit(req, result, timeout, attempts);
+    }
+
     void TerminalClient::Sync::receivedSequence(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
         std::lock_guard<std::mutex> g{mSequences_};
         if (responseCheck(kind, payload, payloadEnd)) {

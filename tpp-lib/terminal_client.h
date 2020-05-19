@@ -145,14 +145,27 @@ namespace tpp {
 
         //@{
         Sequence::TransferStatus getTransferStatus(size_t id, size_t timeout, size_t attempts);
+
         Sequence::TransferStatus getTransferStatus(size_t id, size_t timeout) {
             return getTransferStatus(id, timeout, attempts_);
         }
+
         Sequence::TransferStatus getTransferStatus(size_t id) {
             return getTransferStatus(id, timeout_, attempts_);
         }
         //@}
 
+        //@{
+        void viewRemoteFile(size_t id, size_t timeout, size_t attempts);
+
+        void viewRemoteFile(size_t id, size_t timeout) {
+            viewRemoteFile(id, timeout, attempts_);
+        }
+
+        void viewRemoteFile(size_t id) {
+            viewRemoteFile(id, timeout_, attempts_);
+        }
+        //@}
 
 
 
