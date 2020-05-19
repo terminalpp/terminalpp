@@ -105,7 +105,7 @@ namespace tpp {
         while (attempts_ > 0) {
             this->send(send);
             auto timeoutTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
-            while (result_ != nullptr) {
+            while (true) {
                 if (timeout > 0) {
                     if (sequenceReady_.wait_until(g, timeoutTime) == std::cv_status::timeout) {
                         if (--attempts == 0)
@@ -116,6 +116,8 @@ namespace tpp {
                 } else {
                     sequenceReady_.wait(g);
                 }
+                if (result_ == nullptr)
+                    return;
             }
         }
     }

@@ -636,6 +636,11 @@ namespace helpers {
         return STR("\"" << value << "\"");
 	}
 
+    template<>
+    inline std::string JSONArguments::ConvertToJSON<bool>(std::string const & value) {
+        return value;
+    }
+
 	template<>
 	inline std::string JSONArguments::ConvertToJSON<int>(std::string const & value) {
 		return value;

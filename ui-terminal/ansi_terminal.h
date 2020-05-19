@@ -29,6 +29,7 @@ namespace ui {
     public:
 
         static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
+        static constexpr size_t MAX_BUFFER_SIZE = 1024 * 1024;
 
         class Palette;
 

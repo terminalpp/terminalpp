@@ -179,7 +179,19 @@ namespace ui {
                 unprocessed = available - processInput(buffer, buffer + available);
                 // copy the unprocessed bytes at the beginning of the buffer
                 memcpy(buffer, buffer + available - unprocessed, unprocessed);
-                // TODO grow the buffer if unprocessed = bufferSize
+                // grow the buffer if unprocessed == bufferSize
+                if (unprocessed == bufferSize) {
+                    if (bufferSize < MAX_BUFFER_SIZE) {
+                        bufferSize *= 2;
+                        char * b = new char[bufferSize];
+                        memcpy(b, buffer, unprocessed);
+                        delete [] buffer;
+                        buffer = b;
+                    } else {
+                        unprocessed = 0;
+                        LOG(SEQ_ERROR) << "Buffer overflow, discarding " << bufferSize << " bytes";
+                    }
+                }
             }
             ptyTerminated(pty_->exitCode());
         }};
@@ -662,10 +674,15 @@ namespace ui {
             case 'P':
                 if (x == bufferEnd)
                     return false;
-                if (*x == '+')
-                    return parseTppSequence(buffer, bufferEnd);
-                else
+                if (*x == '+') {
+                    // free the UI threadee
+                    bufferLock_.unlock();
+                    size_t p = parseTppSequence(buffer, bufferEnd);
+                    bufferLock_.lock();
+                    return p;
+                } else {
                     LOG(SEQ_UNKNOWN) << "Unknown DCS sequence";
+                }
                 break;
     		/* Character set specification - most cases are ignored, with the exception of the box drawing and reset to english (0 and B) respectively. 
              */
@@ -728,7 +745,7 @@ namespace ui {
         char const * i = buffer + 3;
         char const * tppEnd = tpp::Sequence::FindSequenceEnd(i, bufferEnd);
         // if not found, we need more data
-        if (tppEnd == bufferEnd)
+        if (tppEnd == bufferEnd) 
             return 0;
         tpp::Sequence::Kind kind = tpp::Sequence::ParseKind(i, bufferEnd);
         // now we have kind and beginning and end of the payload so we can process the sequence

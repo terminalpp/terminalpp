@@ -252,7 +252,7 @@ namespace tpp {
             size_ = ReadUnsigned(start, end);
             Buffer b;
             Decode(b, start, end);
-            if (size_ == b.size())
+            if (size_ != b.size())
                 THROW(helpers::IOError()) << "Data Sequence size reported " << size_ << ", actual " << b.size();
             payload_ = b.release();
         }

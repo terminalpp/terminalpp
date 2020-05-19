@@ -91,6 +91,10 @@ namespace tpp {
             processed_{0} {
         }
 
+        std::pair<int, int> size() const {
+            return pty_->size();
+        }
+
         /** Returns the number of non-t++ bytes that can be read without blocking. 
          */
         size_t available() const {

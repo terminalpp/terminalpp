@@ -87,7 +87,7 @@ namespace tpp {
 
         static void Transfer(TerminalClient::Sync & t, std::string const & filename) {
             RemoteOpen r{t, Config::Instance()};
-            //r.openLocalFile(filename);
+            r.openLocalFile(filename);
             r.transfer();
         }
 
@@ -137,11 +137,11 @@ namespace tpp {
                 Sequence::Data d{streamId_, sent_, buffer.get(), buffer.get() + pSize};
                 t_.send(d);
                 sent_ += pSize;
-                if (++packets == packetLimit_) {
+                if (++packets == packetLimit_ || sent_ == size_) {
                     packets = 0;
                     checkTransferStatus();
+                    progressBar();
                 }
-                progressBar();
             }
         }
 
@@ -166,6 +166,22 @@ namespace tpp {
         }
 
         void progressBar() {
+            int barWidth = t_.size().first;
+            // TODO sometimes terminal size returns 0,0, why? 
+            barWidth = (barWidth == 0) ? 37 : (barWidth - 3);
+            int progress = (barWidth * sent_) / size_;
+            std::cout << "[" << progressBarColor();
+            for (size_t i = 0; i < barWidth; ++i)
+                std::cout << ((i <= progress) ? "#" : " ");
+            std::cout << "\033[0m]\033[0K\r" << std::flush;
+        }
+
+        char const * progressBarColor() {
+            if (packetLimit_ == initialPacketLimit_)
+                return "\033[32m";
+            if (packetLimit_ == MIN_PACKET_LIMIT)
+                return "\033[91m";
+            return "\033[22m";
         }
 
         TerminalClient::Sync & t_;
@@ -186,14 +202,16 @@ namespace tpp {
 int main(int argc, char * argv[]) {
     using namespace tpp;
     try {
+        Config::Setup(argc, argv);
 		helpers::Logger::Enable(
-            helpers::Logger::StdOutWriter().setDisplayLocation(false).setDisplayName(false).setDisplayTime(false).setEoL("\r\n"), { 
+            helpers::Logger::StdOutWriter().setDisplayLocation(false).setDisplayName(false).setDisplayTime(false).setEoL("\033[0K\r\n"), { 
                 helpers::Log::Default(),
                 helpers::Log::Verbose(),
                 helpers::Log::Debug()
 		});
         TerminalClient::Sync t{new LocalPTYSlave{}};
-        RemoteOpen::Transfer(t, "tpp-lib/sequence.h");
+        RemoteOpen::Transfer(t, Config::Instance().filename());
+        std::cout << "\r\n\033[0K";
         /*
         Sequence::Capabilities capabilities{t.getCapabilities()};
         LOG() << "t++ version " << capabilities.version() << " detected";

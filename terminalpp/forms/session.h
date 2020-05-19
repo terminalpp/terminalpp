@@ -12,6 +12,7 @@
 #include "ui-terminal/ansi_terminal.h"
 #include "tpp-lib/local_pty.h"
 #include "tpp-lib/bypass_pty.h"
+#include "tpp-lib/remote_files.h"
 
 #include "about_box.h"
 
@@ -79,6 +80,7 @@ namespace tpp {
             add(modalPane_);
 
             //window_->setKeyboardFocus(terminal_);
+            remoteFiles_ = new RemoteFiles();
         }
 
 
@@ -186,8 +188,18 @@ namespace tpp {
                     break;
                 case tpp::Sequence::Kind::OpenFileTransfer: {
                     Sequence::OpenFileTransfer req(event->payloadStart, event->payloadEnd);
-                    pty_->send(tpp::Sequence::Ack{16, req});
+                    pty_->send(remoteFiles_->openFileTransfer(req));
                     break;
+                }
+                case tpp::Sequence::Kind::Data: {
+                    Sequence::Data data{event->payloadStart, event->payloadEnd};
+                    remoteFiles_->transfer(data);
+                    //window_->yieldToUIThread();
+                    break;
+                }
+                case tpp::Sequence::Kind::GetTransferStatus: {
+                    Sequence::GetTransferStatus req{event->payloadStart, event->payloadEnd};
+                    pty_->send(remoteFiles_->getTransferStatus(req));
                 }
                 default:
                     LOG() << "Unknown sequence";
@@ -215,6 +227,9 @@ namespace tpp {
         AnsiTerminal * terminal_;
         PTYMaster * pty_;
         ModalPane * modalPane_;
+
+        RemoteFiles * remoteFiles_;
+
     }; 
 
 }

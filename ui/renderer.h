@@ -166,7 +166,25 @@ namespace ui {
             handler();
         }
 
+        /** Yields to the UI thread allowing it to process new messages. 
+         
+            Pauses the execution of current thread until all pending messages are serviced. 
+         */
+        void yieldToUIThread() {
+            std::unique_lock<std::mutex> g{mYield_};
+            SendEvent([this](){
+                std::lock_guard<std::mutex> g{mYield_};
+                cvYield_.notify_all();
+            }, &dummyWidget_);
+            cvYield_.wait(g);
+        }
+
     protected:
+
+        /** Dummy widget for renderer-wide events. 
+         */
+        class DummyWidget : public Widget {
+        }; // DummyWidget
 
         friend class Canvas;
         friend class Widget;
@@ -733,6 +751,13 @@ namespace ui {
         static std::mutex M_;
 
         static std::function<void(void)> UserEventScheduler_;
+
+        /** Dummy widget for renderer-wide events. */
+        DummyWidget dummyWidget_;
+        /** Mutex for UI thread yield coordination. */
+        std::mutex mYield_;
+        /** UI thread yield cv */
+        std::condition_variable cvYield_;
 
         ScreenBuffer buffer_;
 

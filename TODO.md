@@ -28,6 +28,12 @@ More robust UI framework, better configuration options and slightly increased se
 
 Terminal++ PTY:
 
+- the bypass is quite slow, even locally, bottlenecks should be investigated
+- store to altenrate path if can't be opened (or ask?)
+- do Sequence::Response<> that is either the response, or NACK
+- check with tmux - seems okish
+- add more properties to ropen
+
 - PTY should have special provision for sending Sequences
 
 Settings:
