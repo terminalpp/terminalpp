@@ -17,7 +17,7 @@ namespace ui {
     public:
 
         ModalPane():
-            WidgetBackground{Color::Green.withAlpha(128)} {
+            WidgetBackground{Color::Black.withAlpha(128)} {
             setVisible(false);
         }
 

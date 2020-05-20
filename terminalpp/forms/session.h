@@ -46,6 +46,7 @@ namespace tpp {
 
         Session(Window * window):
             window_{window},
+            terminateOnKeyPress_{false},
             palette_{AnsiTerminal::Palette::XTerm256()} {
         	Config const & config = Config::Instance();
             window_->setRootWidget(this);
@@ -79,12 +80,23 @@ namespace tpp {
             //modalPane_->setHeightHint(SizeHint::Auto());
             add(modalPane_);
 
+            // set the session itself as focusable so that it can accept keyboard events if no-one else does
+            setFocusable(true);
+
+
             //window_->setKeyboardFocus(terminal_);
             remoteFiles_ = new RemoteFiles();
         }
 
 
     protected:
+
+        void keyDown(Event<Key>::Payload & event) override {
+            if (terminateOnKeyPress_) 
+                window_->requestClose();
+            else 
+                Widget::keyDown(event);
+        }
 
         bool autoScrollStep(Point by) override {
             return terminal_->scrollBy(by);
@@ -93,12 +105,11 @@ namespace tpp {
         void terminalPTYTerminated(Event<ExitCode>::Payload & e) {
             window_->setIcon(Window::Icon::Notification);
             window_->setTitle(STR("Terminated, exit code " << *e));
-            terminal_->setEnabled(false);
-
-            //Config & config = Config::Instance();
-            //if (! config.session.waitAfterPtyTerminated())
-            //    window_->requestClose();
-            // TODO perform the wait for keypress here
+            Config & config = Config::Instance();
+            if (! config.session.waitAfterPtyTerminated())
+                window_->requestClose();
+            else 
+                terminateOnKeyPress_ = true;
         }        
 
         void terminalTitleChanged(Event<std::string>::Payload & e) {
@@ -238,6 +249,7 @@ namespace tpp {
         /** The window in which the session is rendered.
          */
         Window * window_;
+        bool terminateOnKeyPress_;
 
         AnsiTerminal::Palette palette_;
         AnsiTerminal * terminal_;
