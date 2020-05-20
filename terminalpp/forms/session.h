@@ -214,8 +214,9 @@ namespace tpp {
                         //pty_->send(Sequence::Nack(req.id(), req, "File not transferred"));
                         return;
                     }
-                    Application::Instance()->openLocalFile(f->localPath(), false);
+                    // send the ack first in case there are local issues with the opening
                     pty_->send(Sequence::Ack{req.id(), req});
+                    Application::Instance()->openLocalFile(f->localPath(), false);
                     break;
                 }
                 default:

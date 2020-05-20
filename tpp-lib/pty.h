@@ -94,8 +94,4 @@ namespace tpp {
 
     }; // tpp::PTYSlave
 
-
-
-
-
 } // namespace tpp

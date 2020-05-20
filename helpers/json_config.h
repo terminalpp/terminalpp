@@ -119,6 +119,7 @@ namespace helpers {
 
 		static void PopActiveGroup(Group * group) {
 			ASSERT(GetActiveGroup() == group);
+            MARK_AS_UNUSED(group);
 			ActiveGroups().pop_back();
 		}
 
@@ -307,6 +308,7 @@ namespace helpers {
 			// otherwise create a copy and make sure that the comments are copied for better readability
 			} else {
 				ASSERT(! onlySpecified);
+                MARK_AS_UNUSED(onlySpecified);
 				JSON result{*json_};
 				result.setComment(description_);
 				return result;

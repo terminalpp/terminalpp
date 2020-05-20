@@ -295,6 +295,7 @@ namespace ui {
         virtual void detachFrom(Widget * parent) {
             UI_THREAD_CHECK;
             ASSERT(parent_ == parent);
+            MARK_AS_UNUSED(parent);
             parent_ = nullptr;
             if (renderer() != nullptr)
                 detachRenderer();
@@ -714,6 +715,7 @@ namespace ui {
         virtual void paint(Canvas & canvas) {
             UI_THREAD_CHECK;
             ASSERT(canvas.width() == width() && canvas.height() == height());
+            MARK_AS_UNUSED(canvas);
         }
 
         /** Calculates the layout of the widget and any of its children. 

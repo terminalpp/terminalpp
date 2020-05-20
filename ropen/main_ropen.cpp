@@ -177,7 +177,7 @@ namespace tpp {
             barWidth = (barWidth == 0) ? 37 : (barWidth - 3);
             int progress = (barWidth * sent_) / size_;
             std::cout << "[" << progressBarColor();
-            for (size_t i = 0; i < barWidth; ++i)
+            for (int i = 0; i < barWidth; ++i)
                 std::cout << ((i <= progress) ? "#" : " ");
             std::cout << "\033[0m]\033[0K\r" << std::flush;
         }

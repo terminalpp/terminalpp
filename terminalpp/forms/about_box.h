@@ -34,6 +34,7 @@ namespace tpp {
         }
 
         void keyDown(Event<Key>::Payload & event) override {
+            MARK_AS_UNUSED(event);
             dismiss(this);
         }
 

@@ -32,6 +32,7 @@ namespace tpp {
 
         virtual HRESULT STDMETHODCALLTYPE GetTextBeforePosition(UINT32 textPosition, WCHAR const** textString, _Out_ UINT32* textLength) override {
             ASSERT(textPosition == 0);
+            MARK_AS_UNUSED(textPosition);
             *textString = nullptr;  
             *textLength = 0;
             return S_OK;

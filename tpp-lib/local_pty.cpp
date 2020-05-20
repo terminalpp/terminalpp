@@ -237,8 +237,7 @@ namespace tpp {
 
     void LocalPTYMaster::send(char const * buffer, size_t bufferSize) {
 		int nw = ::write(pipe_, (void*)buffer, bufferSize);
-		// TODO check errors properly 
-		ASSERT(nw >= 0 && static_cast<unsigned>(nw) == bufferSize);
+        OSCHECK(nw >= 0 && static_cast<unsigned>(nw) == bufferSize);
     }
 
     size_t LocalPTYMaster::receive(char * buffer, size_t bufferSize) {
@@ -266,6 +265,7 @@ namespace tpp {
     LocalPTYSlave * volatile LocalPTYSlave::Slave_ = nullptr;
 
     void LocalPTYSlave::SIGWINCH_handler(int signo) {
+        MARK_AS_UNUSED(signo);
         if (Slave_ != nullptr) {
             ResizedEvent::Payload p{Slave_->size()};
             Slave_->onResized(p, Slave_);
@@ -322,26 +322,26 @@ namespace tpp {
             while (end < numBytes) {
                 if (buffer[end] == '\033') {
                     if (start != end)
-                        ::write(STDOUT_FILENO, buffer + start, end - start);
-                    ::write(STDOUT_FILENO, "\033\033", 2);
+                         OSCHECK(::write(STDOUT_FILENO, buffer + start, end - start) == static_cast<int>(end - start));
+                    OSCHECK(::write(STDOUT_FILENO, "\033\033", 2) == 2);
                     start = ++end;
                 } else {
                     ++end;
                 }
             }
             if (start != end)
-                ::write(STDOUT_FILENO, buffer + start, end - start);
+                OSCHECK(::write(STDOUT_FILENO, buffer + start, end - start) == static_cast<int>(end - start));
         } else {
-            ::write(STDOUT_FILENO, buffer, numBytes);
+            OSCHECK(::write(STDOUT_FILENO, buffer, numBytes) == static_cast<int>(numBytes));
         }
     }
 
     void LocalPTYSlave::send(Sequence const & seq) {
         if (insideTmux_)
-            ::write(STDOUT_FILENO, "\033Ptmux;", 7);
+            OSCHECK(::write(STDOUT_FILENO, "\033Ptmux;", 7) == 7);
         PTYSlave::send(seq);
         if (insideTmux_)
-            ::write(STDOUT_FILENO, "\033\\", 2);
+            OSCHECK(::write(STDOUT_FILENO, "\033\\", 2) == 2);
     }
 
 
