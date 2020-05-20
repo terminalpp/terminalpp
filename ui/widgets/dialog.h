@@ -129,6 +129,15 @@ namespace ui {
         }
 
     protected:
+
+        void keyDown(Event<Key>::Payload & event) override {
+            if (*event == Key::Esc) {
+                dismiss(btnCancel_);
+                return;
+            }
+            Dialog::keyDown(event);
+        }
+
         Button * btnYes_;
         Button * btnNo_;
         Button * btnCancel_;
@@ -138,13 +147,6 @@ namespace ui {
             dismiss(e.sender());
         }
 
-        void keyDown(Event<Key>::Payload & event) override {
-            if (*event == Key::Esc) {
-                dismiss(btnCancel_);
-                return;
-            }
-
-        }
     }; // ui::Dialog::YesNoCancel 
 
 } // namespace ui

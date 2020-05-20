@@ -33,6 +33,16 @@ namespace tpp {
             return contents_->text();
         }
 
+    protected:
+
+        void keyDown(Event<Key>::Payload & event) override {
+            if (*event == SHORTCUT_PASTE) {
+                dismiss(btnYes_);
+                return;
+            }
+            Dialog::YesNoCancel::keyDown(event);
+        }
+
     private:
         Label * contents_;
     }; 
