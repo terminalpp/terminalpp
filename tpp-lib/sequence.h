@@ -13,9 +13,6 @@ namespace tpp {
 
     class PTYBase;
 
-    class SequenceError : public helpers::Exception {
-    };
-
     /** Terminalpp Sequence base class. 
 
          - any extra payload is ignored so that it can be added in newer versions
@@ -136,34 +133,28 @@ namespace tpp {
     public:
         explicit Ack(size_t id):
             Sequence{Kind::Ack},
-            id_{id},
-            payload_{} {
+            request_{},
+            id_{id} {
         }
 
-        Ack(size_t id, std::string const & payload):
+        Ack(Sequence const & req, size_t id):
             Sequence{Kind::Ack},
-            id_{id},
-            payload_{payload} {
-        }
-
-        Ack(size_t id, Sequence const & req):
-            Sequence{Kind::Ack},
-            id_{id},
-            payload_{STR(req)} {
+            request_{STR(req)}, 
+            id_{id} {
         }
 
         Ack(char const * & start, char const * end):
             Sequence(Kind::Ack) {
+            request_ = ReadString(start, end);
             id_ = ReadUnsigned(start, end);
-            payload_ = ReadString(start, end);
+        }
+
+        std::string const & request() const {
+            return request_;
         }
 
         size_t id() const {
             return id_;
-        }
-
-        std::string const & payload() const {
-            return payload_;
         }
 
     protected:
@@ -171,11 +162,40 @@ namespace tpp {
         void writeTo(std::ostream & s) const override;
 
     private:
+        std::string request_;
         size_t id_;
-        std::string payload_;
     };
 
+    /** Negative acknowledgement.
+     */
     class Sequence::Nack : public Sequence {
+    public:
+        Nack(Sequence const & req, std::string const & reason):
+            Sequence{Kind::Nack},
+            request_{STR(req)}, 
+            reason_{reason} {
+        }
+
+        Nack(char const * & start, char const * end):
+            Sequence(Kind::Nack) {
+            request_ = ReadString(start, end);
+            reason_ = ReadString(start, end);
+        }
+
+        std::string const & request() const {
+            return request_;
+        }
+        std::string const & reason() const {
+            return reason_;
+        }
+
+    protected:
+
+        void writeTo(std::ostream & s) const override;
+
+    private:
+        std::string request_;
+        std::string reason_;
 
     }; // Sequence::Nack
 

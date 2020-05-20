@@ -207,16 +207,14 @@ namespace tpp {
                     Sequence::ViewRemoteFile req{event->payloadStart, event->payloadEnd};
                     RemoteFiles::File * f = remoteFiles_->get(req.id());
                     if (f == nullptr) {
-                        //pty_->send(Sequence::Nack{req.id(), req, "No such file"});
-                        return;
+                        pty_->send(Sequence::Nack{req, "No such file"});
+                    } else if (! f->ready()) {
+                        pty_->send(Sequence::Nack(req, "File not transferred"));
+                    } else {
+                        // send the ack first in case there are local issues with the opening
+                        pty_->send(Sequence::Ack{req, req.id()});
+                        Application::Instance()->openLocalFile(f->localPath(), false);
                     }
-                    if (! f->ready()) {
-                        //pty_->send(Sequence::Nack(req.id(), req, "File not transferred"));
-                        return;
-                    }
-                    // send the ack first in case there are local issues with the opening
-                    pty_->send(Sequence::Ack{req.id(), req});
-                    Application::Instance()->openLocalFile(f->localPath(), false);
                     break;
                 }
                 default:

@@ -16,6 +16,9 @@ namespace tpp {
     class TimeoutError : public helpers::Exception {
     }; 
 
+    class NackError : public helpers::Exception {
+    };
+
 
     class TerminalClient {
     public:
@@ -212,6 +215,7 @@ namespace tpp {
         std::mutex mSequences_;
         std::condition_variable sequenceReady_;
         Sequence * volatile result_;
+        Sequence const * volatile request_;
         /** Number of bytes processed by the read() method. */
         size_t processed_;
 

@@ -34,7 +34,7 @@ namespace tpp {
             THROW(helpers::IOError()) << "Unable to open local file for writing: " << file->localPath();
         files_.insert(std::make_pair(id, file));
         // return the acknowledgement
-        return Sequence::Ack{id, req};
+        return Sequence::Ack{req, id};
     }
 
     bool RemoteFiles::transfer(Sequence::Data const & data) {

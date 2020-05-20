@@ -86,7 +86,7 @@ namespace tpp {
                     ++start;
                     break;
                 }
-                THROW(SequenceError()) << "Expected decimal digit, but " << *start << " found in sequence payload";
+                THROW(helpers::IOError()) << "Expected decimal digit, but " << *start << " found in sequence payload";
             }
         }
         return result;
@@ -158,8 +158,19 @@ namespace tpp {
 
     void Sequence::Ack::writeTo(std::ostream & s) const {
         Sequence::writeTo(s);
-        s << ';' << id_ << ';';
-        WriteString(s, payload_);
+        s << ';';
+        WriteString(s, request_);
+        s << ';' << id_;
+    }
+
+    // Sequence::Nack
+
+    void Sequence::Nack::writeTo(std::ostream & s) const {
+        Sequence::writeTo(s);
+        s << ';';
+        WriteString(s, request_);
+        s << ';';
+        WriteString(s, reason_);
     }
 
     // Sequence::Capabilities

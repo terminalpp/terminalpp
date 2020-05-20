@@ -76,7 +76,7 @@ namespace tpp {
 
     size_t TerminalClient::Sync::openFileTransfer(std::string const & host, std::string const & filename, size_t size, size_t timeout, size_t attempts) {
         Sequence::OpenFileTransfer req{host, filename, size};
-        Sequence::Ack result{0, req};
+        Sequence::Ack result{req, 0};
         transmit(req, result, timeout, attempts);
         return result.id();
     }
@@ -89,14 +89,15 @@ namespace tpp {
 
     void TerminalClient::Sync::viewRemoteFile(size_t id, size_t timeout, size_t attempts) {
         Sequence::ViewRemoteFile req{id};
-        Sequence::Ack result{0, req};
+        Sequence::Ack result{req, 0};
         transmit(req, result, timeout, attempts);
     }
 
     void TerminalClient::Sync::receivedSequence(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
         std::lock_guard<std::mutex> g{mSequences_};
         if (responseCheck(kind, payload, payloadEnd)) {
-            result_ = nullptr;
+            if (result_->kind() != Sequence::Kind::Nack)
+                result_ = nullptr;
             sequenceReady_.notify_one();
         } else {
             // raise the event
@@ -108,6 +109,7 @@ namespace tpp {
         std::unique_lock<std::mutex> g{mSequences_};
         ASSERT(result_ == nullptr) << "Only one thread is allowed to transmit t++ sequences";
         result_ = & receive;
+        request_ = & send;
         while (attempts_ > 0) {
             this->send(send);
             auto timeoutTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
@@ -122,21 +124,35 @@ namespace tpp {
                 } else {
                     sequenceReady_.wait(g);
                 }
-                if (result_ == nullptr)
+                if (result_ == nullptr) {
                     return;
+                } else if (result_->kind() == Sequence::Kind::Nack) {
+                    std::string reason = dynamic_cast<Sequence::Nack*>(result_)->reason();
+                    delete result_;
+                    result_ = nullptr;
+                    THROW(NackError()) << reason;
+                }
             }
         }
     }
 
     bool TerminalClient::Sync::responseCheck(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
-        if (result_ != nullptr && result_->kind() == kind) {
+        if (result_ != nullptr && result_->kind() == kind || kind == Sequence::Kind::Nack) {
             switch (kind) {
                 case Sequence::Kind::Ack: {
                     Sequence::Ack * result = dynamic_cast<Sequence::Ack*>(result_);
                     Sequence::Ack x{payload, payloadEnd};
-                    if (result->payload() != x.payload())
+                    if (result->request() != x.request())
                         return false;
                     (*result) = x;
+                    return true;
+                }
+                case Sequence::Kind::Nack: {
+                    Sequence::Nack * x = new Sequence::Nack{payload, payloadEnd};
+                    std::string request = STR(*request_);
+                    if (request != x->request())
+                        return false;
+                    result_ = x;
                     return true;
                 }
                 case Sequence::Kind::Capabilities: {

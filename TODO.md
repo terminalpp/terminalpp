@@ -24,17 +24,11 @@ More robust UI framework, better configuration options and slightly increased se
 
 - geometry.h is areally bad name for some of the classes defined therein
 
-- update log - verbose and debug logs
-
 Terminal++ PTY:
 
-- add NACK (id;req;desc)
 - store to altenrate path if can't be opened (or ask?)
 - do Sequence::Response<> that is either the response, or NACK
 - check with tmux - seems okish
-- add more properties to ropen
-
-- PTY should have special provision for sending Sequences
 
 Settings:
 
