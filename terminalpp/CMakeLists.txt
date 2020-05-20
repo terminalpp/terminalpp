@@ -12,6 +12,10 @@ cmake_minimum_required (VERSION 3.5)
 
 project(terminalpp VERSION ${TPP_VERSION})
 
+if(NOT DEFINED TPP_DESKTOP_ICON)
+    set(TPP_DESKTOP_ICON "terminalpp.png")
+endif()
+
 set(TPP_SUMMARY "Cross-platform terminal emulator.")
 set(TPP_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows, Linux and macOS.")
 

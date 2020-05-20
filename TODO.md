@@ -49,6 +49,7 @@ Documentation:
 Builds & Releases
 
 - snapcraft build has dirty stamp, see why & fix
+- because of the update to the resources when the icon gets changed
 - ubuntu ppa
 - change from MSI to appx
 - add benchmarking
