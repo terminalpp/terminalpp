@@ -137,7 +137,7 @@ namespace tpp {
     }
 
     bool TerminalClient::Sync::responseCheck(Sequence::Kind kind, char const * payload, char const * payloadEnd) {
-        if (result_ != nullptr && result_->kind() == kind || kind == Sequence::Kind::Nack) {
+        if (result_ != nullptr && (result_->kind() == kind || kind == Sequence::Kind::Nack)) {
             switch (kind) {
                 case Sequence::Kind::Ack: {
                     Sequence::Ack * result = dynamic_cast<Sequence::Ack*>(result_);

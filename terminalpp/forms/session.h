@@ -23,10 +23,14 @@ namespace tpp {
      */
     class PasteDialog : public ui::Dialog::YesNoCancel {
     public:
-        PasteDialog(std::string const & contents):
-            Dialog::YesNoCancel{"Are you sure you want to paste?", true},
-            contents_{new Label{contents}} {
-            setBody(contents_);
+
+        static PasteDialog * CreateFor(std::string const & contents) {
+            Config const & config = Config::Instance();
+            if (config.session.confirmPaste() == "never")
+                return nullptr;
+            if (config.session.confirmPaste() == "multiline" && contents.find('\n') == std::string::npos)
+                return nullptr;
+            return new PasteDialog(contents);
         }
 
         std::string const & contents() const {
@@ -34,6 +38,12 @@ namespace tpp {
         }
 
     protected:
+
+        PasteDialog(std::string const & contents):
+            Dialog::YesNoCancel{"Are you sure you want to paste?", /* deleteOnDismiss */ true},
+            contents_{new Label{contents}} {
+            setBody(contents_);
+        }
 
         void keyDown(Event<Key>::Payload & event) override {
             if (*event == SHORTCUT_PASTE) {
@@ -49,8 +59,6 @@ namespace tpp {
 
     /** The terminal session. 
      */
-
-    // TODO fix container's add method
     class Session : public ui::CustomPanel, public ui::AutoScroller<Session> {
     public:
 
@@ -245,13 +253,18 @@ namespace tpp {
         }
 
         void paste(Event<std::string>::Payload & e) override {
-            PasteDialog * pd = new PasteDialog(*e);
-            pd->onDismiss.setHandler([this, pd](Event<Widget*>::Payload & e) {
-                //modalPane_->dismiss(pd);
-                if (*e == pd->btnYes())
-                    terminal_->paste(pd->contents());
-            });
-            modalPane_->add(pd);
+            // determine whether to show the dialog, or paste immediately
+            PasteDialog * pd = PasteDialog::CreateFor(*e);
+            if (pd == nullptr) {
+                terminal_->paste(*e);
+            } else {
+                pd->onDismiss.setHandler([this, pd](Event<Widget*>::Payload & e) {
+                    //modalPane_->dismiss(pd);
+                    if (*e == pd->btnYes())
+                        terminal_->paste(pd->contents());
+                });
+                modalPane_->add(pd);
+            }
         }
 
     private:
