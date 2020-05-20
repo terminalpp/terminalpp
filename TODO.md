@@ -14,8 +14,6 @@ More robust UI framework, better configuration options and slightly increased se
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- when dismissing the about box by a key, the key still goes to the terminal
-
 - check that the detachment of thread in helpers::time.h is safe
 
 - FPS, repaint rate and other stats
