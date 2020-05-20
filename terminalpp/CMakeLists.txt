@@ -175,6 +175,7 @@ if (PACKAGE_TERMINALPP AND PACKAGE_SNAP AND RENDERER_NATIVE)
         COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/snap/source
         COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/snap/source
         COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/snap/source  --exclude-from=.gitignore
+        COMMAND git -C ${CMAKE_CURRENT_BINARY_DIR}/snap/source status
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
     set_target_properties(package-snap-copy-tpp PROPERTIES EXCLUDE_FROM_ALL TRUE)
