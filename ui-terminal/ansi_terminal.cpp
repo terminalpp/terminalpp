@@ -153,6 +153,7 @@ namespace ui {
         repaint_{false},
         palette_{palette},
         cursorMode_{CursorMode::Normal},
+        inactiveCursorColor_{Color::Green},
         keypadMode_{KeypadMode::Normal},
         mouseMode_{MouseMode::Off},
         mouseEncoding_{MouseEncoding::Default},
@@ -267,7 +268,7 @@ namespace ui {
             setCursor(c, cursor_, state_.cursor + Point{0, state_.buffer.historyRows()});
         } else {
             // TODO the color of this should be configurable
-            c.setBorderAt(state_.cursor + Point{0, state_.buffer.historyRows()}, Border{Color::Green}.setAll(Border::Kind::Thin));
+            c.setBorderAt(state_.cursor + Point{0, state_.buffer.historyRows()}, Border{inactiveCursorColor_}.setAll(Border::Kind::Thin));
         }
         // dim the contents if the terminal is not enabled
         // TODO The color should be configurable

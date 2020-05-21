@@ -31,11 +31,7 @@ Terminal++ PTY:
 Settings:
 
 - design settings via abstract configurator classes that provide the interface
-- do settings for terminal history, including history, or shared history for the alternate buffer if requested
-- change settings to reflect other changes (cursors etc)
-- color for inactive cursor in terminal
 - color for dimming disabled terminal
-- add configuration option to confirm setting clipboard from the terminal
 
 Documentation:
 
@@ -48,8 +44,6 @@ Documentation:
 
 Builds & Releases
 
-- snapcraft build has dirty stamp, see why & fix
-- because of the update to the resources when the icon gets changed
 - ubuntu ppa
 - change from MSI to appx
 - add benchmarking
@@ -60,6 +54,8 @@ Issues to be raised:
 - add a way to copy from mouse capturing terminal
 - how to & when invalidate selection when there are changes in the terminal's contents
 - fillRect should also update border color
+- history in alternate mode
+- add configuration option to confirm setting clipboard from the terminal
 
 # Roadmap
 

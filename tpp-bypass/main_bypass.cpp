@@ -20,6 +20,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include "helpers/log.h"
+
 /** The Windows ConPTY bypass via WSL
  
     The bypass creates a pseudoterminal in the WSL and relays any traffic on that terminal unchanged to the terminal connected via standard input and output, thus bypassing the Win32 ConPTY and its encoding and decoding of the escape sequences. This allows the terminal to use the terminal for linux applications in the same way it would on linux and spares it any issues the ConPTY might have. 
@@ -274,15 +276,17 @@ int main(int argc, char * argv[]) {
 		return EXIT_SUCCESS;
 	}
 	try {
+		helpers::Logger::FileWriter log("~/.bypass-errors.log");
+		helpers::Logger::Enable(log, { 
+			helpers::Log::Default(),
+		});
 		Bypass bypass(argc, argv);
 		try {
 			bypass.run();
 			return EXIT_SUCCESS;
 		} catch (std::exception const & e) {
 			std::cerr << "Bypass terminated with error: " <<  e.what() << std::endl;
-			std::time_t t{std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-			std::ofstream log{"~/.bypass-errors.log", std::ios_base::app};
-			log << std::ctime(&t) << ": " << e.what() << std::endl;
+            LOG() << e.what();
 		}
 	} catch (std::exception const & e) {
 		std::cerr << "ConPTY Bypass for t++. Usage: " << std::endl << std::endl;

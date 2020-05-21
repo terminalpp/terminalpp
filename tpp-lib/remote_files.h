@@ -60,8 +60,8 @@ namespace tpp {
             std::ofstream f_;
         }; // RemoteFiles::File
 
-        RemoteFiles():
-            localRoot_{"c:/delete/tpp-remote-files"} {
+        RemoteFiles(std::string const & localRoot):
+            localRoot_{localRoot} {
         }
 
         File * get(size_t id) {

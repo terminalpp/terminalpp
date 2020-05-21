@@ -179,6 +179,14 @@ namespace ui {
             return *this;
         }
 
+        bool operator == (Cursor const & other) const {
+            return (codepoint_ == other.codepoint_) && (visible_ == other.visible_) && (blink_ == other.blink_) && (color_ == other.color_);
+        }
+
+        bool operator != (Cursor const & other) const {
+            return (codepoint_ != other.codepoint_) || (visible_ != other.visible_) || (blink_ != other.blink_) || (color_ == other.color_);
+        }
+
     private:
         char32_t codepoint_;
         bool visible_;

@@ -22,7 +22,7 @@ namespace helpers {
         }
 
         ~Buffer() {
-            delete data_;
+            delete [] data_;
         }
 
         size_t size() const {

@@ -65,7 +65,7 @@ namespace tpp {
         Session(Window * window):
             window_{window},
             terminateOnKeyPress_{false},
-            palette_{AnsiTerminal::Palette::XTerm256()} {
+            palette_{Config::Instance().session.palette()} {
         	Config const & config = Config::Instance();
             window_->setRootWidget(this);
 #if (ARCH_WINDOWS)
@@ -77,6 +77,10 @@ namespace tpp {
 
 
             terminal_ = new AnsiTerminal{pty_, & palette_, width(), height()};
+            terminal_->setHistoryLimit(config.session.historyLimit());
+            terminal_->setCursor(config.session.cursor());
+            terminal_->setInactiveCursorColor(config.session.inactiveCursorColor());
+            terminal_->setBoldIsBright(config.session.sequences.boldIsBright());
             //terminal_->setHeightHint(SizeHint::Percentage(75));
             terminal_->onPTYTerminated.setHandler(&Session::terminalPTYTerminated, this);
             terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
@@ -103,9 +107,15 @@ namespace tpp {
 
 
             //window_->setKeyboardFocus(terminal_);
-            remoteFiles_ = new RemoteFiles();
+            remoteFiles_ = new RemoteFiles(config.session.remoteFiles.dir());
+
+            if (config.session.fullscreen())
+                window_->setFullscreen(true);
         }
 
+        ~Session() override {
+            delete remoteFiles_;
+        }
 
     protected:
 

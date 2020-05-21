@@ -93,6 +93,7 @@ namespace tpp {
 			std::string			
 		);
 
+        /*
 		CONFIG_GROUP(
 			log,
 		    "Log Properties", 
@@ -109,6 +110,7 @@ namespace tpp {
 			    unsigned
 			);
 		);
+        */
 
 		CONFIG_GROUP(
 			renderer, 
@@ -188,7 +190,7 @@ namespace tpp {
 				historyLimit,
 				"Determines the maximum number of lines the terminal will remember in the history of the buffer. If set to 0, terminal history is disabled.",
 				"10000",
-			    unsigned
+			    int
 			);
 			CONFIG_GROUP(
 				palette,
@@ -259,6 +261,12 @@ namespace tpp {
 					return result;
 				}
 			);
+			CONFIG_OPTION(
+				inactiveCursorColor,
+				"Color of the rectangle showing the cursor position when not focused.",
+				"\"#00ff00\"",
+			    ui::Color
+			);
 			CONFIG_GROUP(
 				remoteFiles,
 			    "Settings for opening remote files from the terminal locally.",
@@ -279,12 +287,14 @@ namespace tpp {
 				    bool
 				);
 			);
+            /*
 			CONFIG_OPTION(
 				log,
 				"File to which all terminal input should be logged",
 				"\"\"",
 			    std::string
 			);
+            */
 		);
 
 		static Config & Instance() {
@@ -337,7 +347,7 @@ namespace tpp {
 			args.addArgument("Rows", {"--rows", "-r"}, session.cols);
 			args.addArgument("Font Family", {"--font",}, font.family);
 			args.addArgument("Font Size", {"--font-size"}, font.size);
-			args.addArgument("Log File", {"--log-file"}, session.log);
+			//args.addArgument("Log File", {"--log-file"}, session.log);
 			args.addArrayArgument("Command", {"-e"}, session.command, true);
 			// once built, parse the command line
 			args.parse(argc, argv);

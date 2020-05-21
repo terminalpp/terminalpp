@@ -66,6 +66,12 @@ namespace ui {
                 return static_cast<int>(history_.size());
             }
 
+            void setHistoryRowsLimit(int value) {
+                maxHistoryRows_ = std::max(value, 0);
+                while (history_.size() > static_cast<size_t>(maxHistoryRows_))
+                    history_.pop_front();
+            }
+
             void deleteLines(int lines, int top, int bottom, Cell const & fill, Color defaultBg);
 
             /** Inserts given number of lines at given top row.
@@ -144,6 +150,51 @@ namespace ui {
         /** Sets the maximum frames per second for the terminal. 
          */
         virtual void setFps(unsigned value);
+
+        /** Sets the maximum number of history rows for the terminal. 
+         
+            The history rows are only used for the normal mode. 
+         */
+        virtual void setHistoryLimit(int value) {
+            if (alternateMode_)
+                stateBackup_.buffer.setHistoryRowsLimit(value);
+            else
+                state_.buffer.setHistoryRowsLimit(value);
+            repaint();
+        }
+
+        Cursor const & cursor() const {
+            return cursor_;
+        }
+
+        virtual void setCursor(Cursor const & value) {
+            if (cursor_ != value) {
+                cursor_ = value;
+                repaint();
+            }
+        }
+
+        Color inactiveCursorColor() const {
+            return inactiveCursorColor_;
+        }
+
+        virtual void setInactiveCursorColor(Color value) {
+            if (inactiveCursorColor_ != value) {
+                inactiveCursorColor_ = value;
+                repaint();
+            }
+        }
+
+        bool boldIsBright() const {
+            return boldIsBright_;
+        }
+
+        virtual void setBoldIsBright(bool value) {
+            if (boldIsBright_ != value) {
+                boldIsBright_ = value;
+                repaint();
+            }
+        }
 
         /** Repaints the terminal. 
          
@@ -345,6 +396,8 @@ namespace ui {
         using Scrollable::scrollOffset;
         using Scrollable::scrollSize;
 
+        using Widget::setCursor;
+
         //@}
 
         /** \name User Input
@@ -525,6 +578,8 @@ namespace ui {
         CursorMode cursorMode_;
         /** The cursor to be displayed. */
         Cursor cursor_;
+        /** Color of the inactive cursor rectangle. */
+        Color inactiveCursorColor_;
 
         KeypadMode keypadMode_;
 

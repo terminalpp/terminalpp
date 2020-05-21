@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
 	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 #endif
     try {
-        tpp::Config const & config = tpp::Config::Setup(argc, argv);
+        //tpp::Config const & config = tpp::Config::Setup(argc, argv);
 
 		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
 		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 
@@ -94,7 +94,8 @@ int main(int argc, char* argv[]) {
 		LOG() << "t++ started";
 
         tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", 80, 25);
-        tpp::Session * session = new tpp::Session{w};
+        // currently owned by the window, when multiple sessions are available this might change
+        new tpp::Session{w};
         w->show();
         tpp::Application::Instance()->mainLoop();
         return EXIT_SUCCESS;

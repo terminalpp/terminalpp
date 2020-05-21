@@ -277,7 +277,7 @@ namespace tpp {
         }
 
         ~Data() override {
-            delete payload_;
+            delete [] payload_;
         }
 
         /** Returns the stream id. 
