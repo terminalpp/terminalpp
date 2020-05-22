@@ -165,15 +165,35 @@ namespace helpers {
 #endif
     }
 
+    /** Splits the given filename to file name and extension. 
+     
+        If the argument is a complete path, only the filename and the extension are returned. 
+     */
+    inline std::pair<std::string, std::string> SplitFilenameExt(std::filesystem::path const & path) {
+        std::string ext = path.extension().string();
+        std::string filename = path.filename().string();
+        filename = filename.substr(0, filename.size() - ext.size());
+        return std::make_pair(filename, ext);
+    }
+
     /** Given an existing folder, creates a new path that is guaranteed not to exist in the folder. 
      
         The path is a string with given prefix followed by the specified number of alphanumeric characters. Once created, the path is checked for existence and if not found is returned.
      */
-    inline std::string UniqueNameIn(std::string const & folder, std::string const & prefix, size_t length = 16) {
+    inline std::string UniqueNameIn(std::filesystem::path const & path, std::string const & prefix, std::string suffix = "", size_t length = 16) {
+        while (true) {
+            std::string x{CreateRandomAlphanumericString(length)};
+            std::string filename = prefix + CreateRandomAlphanumericString(length) + suffix;
+            if (! std::filesystem::exists(path / filename))
+                return filename;
+        }
+    }
+    /*
+    inline std::string UniqueNameIn(std::string const & folder, std::string const & prefix, std::string suffix = "", size_t length = 16) {
         while (true) {
             std::filesystem::path p{folder};
             std::string x{CreateRandomAlphanumericString(length)};
-            p.append(prefix + x);
+            p.append(prefix + x + suffix);
             if (! std::filesystem::exists(p))
 #if (defined ARCH_WINDOWS)
                 return UTF16toUTF8(p.c_str());
@@ -182,6 +202,7 @@ namespace helpers {
 #endif
         }
     }
+    */
 
     /** Makes the given filename unique by attaching random alphanumeric string of given size separated by the given separator. 
      */
@@ -225,7 +246,7 @@ namespace helpers {
             }
         }
     }
-
+#ifdef HAHA
     /** Temporary folder with optional cleanup.
 
         Creates a temporary folder in the appropriate location for given platform. The folder may start with a selected prefix, which is not necessary but may help a human orient in the temp directories. The temporary folder and its contents are deleted when the object is destroyed, unless the `deleteWhenDestroyed` argument is set to false, in which case the folder and its files are never deleted by the object and their deletion is either up to the user, or more likely to the operating system. 
@@ -280,5 +301,5 @@ namespace helpers {
         bool deleteWhenDestroyed_;
 
     };
-
+#endif
 } // namespace helpers

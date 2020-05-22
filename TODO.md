@@ -20,11 +20,11 @@ More robust UI framework, better configuration options and slightly increased se
 
 - button basics, label fonts
 
-- geometry.h is areally bad name for some of the classes defined therein
+- helpers, should they be in helpers namespace?
+- helpers filesystem should use paths better
 
 Terminal++ PTY:
 
-- store to altenrate path if can't be opened (or ask?)
 - do Sequence::Response<> that is either the response, or NACK
 - check with tmux - seems okish
 
@@ -70,6 +70,9 @@ Issues to be raised:
 - keyboard focus with tabIndices (this means that the getNextFocusableWidget has to be patched to look for the focusable widgets according to their indices instead of position in the children vector)
 
 - WidgetBorder should only require repaint of children that interfere with the border (can be calculated from their visible rects)
+
+- geometry.h is areally bad name for some of the classes defined therein
+
 
 
 ### v0.9

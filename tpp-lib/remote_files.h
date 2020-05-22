@@ -16,8 +16,6 @@ namespace tpp {
     class RemoteFiles {
     public:
         /** Information about local copy of the remote file. 
-          
-            TODO should this really be public, or is it only internal bookkeeping.
          */
         class File {
         public:
@@ -44,12 +42,13 @@ namespace tpp {
         private:
             friend class RemoteFiles;
 
-            File(std::string const & remoteHost, std::string const & remotePath, std::string const & localPath, size_t size):
+            File(std::string const & remoteHost, std::string const & remotePath, std::string const & localPath, size_t size, size_t id):
                 remoteHost_{remoteHost},
                 remotePath_{remotePath},
                 localPath_{localPath},
                 size_{size},
-                received_{0} {
+                received_{0},
+                id_{id} {
             }
 
             std::string remoteHost_;
@@ -58,6 +57,8 @@ namespace tpp {
             size_t size_;
             size_t received_;
             std::ofstream f_;
+            /* Stream id. */
+            size_t id_;
         }; // RemoteFiles::File
 
         RemoteFiles(std::string const & localRoot):
@@ -77,6 +78,8 @@ namespace tpp {
         Sequence::TransferStatus getTransferStatus(Sequence::GetTransferStatus const & req);
 
     private:
+
+        File * getOrCreateFile(std::string const & remoteHost, std::string const & remotePath, std::filesystem::path const & localPath, size_t size);
 
         /** Path to where the remote files are stored. 
          */

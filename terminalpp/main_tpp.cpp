@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
 	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 #endif
     try {
-        //tpp::Config const & config = tpp::Config::Setup(argc, argv);
+        tpp::Config::Setup(argc, argv);
 
 		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
 		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 

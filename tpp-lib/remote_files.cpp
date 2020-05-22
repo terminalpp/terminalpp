@@ -1,6 +1,5 @@
-#include <filesystem>
-
 #include "helpers/log.h"
+#include "helpers/filesystem.h"
 
 #include "remote_files.h"
 
@@ -15,26 +14,23 @@ namespace tpp {
         std::string remoteFilename = remotePath.filename().string();
         std::filesystem::path localPath = localRoot_ / remoteHost / remoteFilename;
         // if the local path exists, look if there is existing connection id
-        if (std::filesystem::exists(localPath)) {
-
-        }
-        // if not found, create new id and file record
-        size_t id = 1;
-        for (auto i : files_) {
-            if (i.first > id)
-                break;
-            id = i.first + 1;
-        }
-        // make sure the path exists
-        std::filesystem::create_directories(localRoot_ / remoteHost);
+        File * file = getOrCreateFile(remoteHost, req.remotePath(), localPath, req.size());
         // create the file and open its stream
-        File * file = new File{remoteHost, req.remotePath(), localPath.string(), req.size()};
+        if (file->f_.good())
+            file->f_.close();
         file->f_.open(file->localPath_, std::ios::binary);
-        if (!file->f_.good())
-            THROW(helpers::IOError()) << "Unable to open local file for writing: " << file->localPath();
-        files_.insert(std::make_pair(id, file));
+        // if the file can't be opened, maybe it is locked by existing viewer, rename and try again
+        if (!file->f_.good()) {
+            std::pair<std::string, std::string> fext = helpers::SplitFilenameExt(remotePath);
+            std::string filename = helpers::UniqueNameIn(localRoot_ / remoteHost, fext.first, fext.second);
+            localPath = localRoot_ / remoteHost / filename;
+            file->localPath_ = localPath.string();
+            file->f_.open(file->localPath_, std::ios::binary);
+            if (!file->f_.good())
+                THROW(helpers::IOError()) << "Unable to open local file for writing: " << file->localPath();
+        }
         // return the acknowledgement
-        return Sequence::Ack{req, id};
+        return Sequence::Ack{req, file->id_};
     }
 
     bool RemoteFiles::transfer(Sequence::Data const & data) {
@@ -54,6 +50,29 @@ namespace tpp {
     Sequence::TransferStatus RemoteFiles::getTransferStatus(Sequence::GetTransferStatus const & req) {
         File * f = get(req.id());
         return Sequence::TransferStatus{req.id(), f->size_, f->received_};
+    }
+
+    RemoteFiles::File * RemoteFiles::getOrCreateFile(std::string const & remoteHost, std::string const & remotePath, std::filesystem::path const & localPath, size_t size) {
+        if (std::filesystem::exists(localPath)) {
+            for (auto i : files_) {
+                if (i.second->remoteHost() == remoteHost && i.second->remotePath() == remotePath) {
+                    i.second->size_ = size;
+                    i.second->received_ = 0;
+                    return i.second;
+                }
+            }
+        }
+        // if not found, create new id and file record and make sure the path exists
+        std::filesystem::create_directories(localRoot_ / remoteHost);
+        size_t id = 1;
+        for (auto i : files_) {
+            if (i.first > id)
+                break;
+            id = i.first + 1;
+        }
+        File * f = new File(remoteHost, remotePath, localPath.string(), size, id);
+        files_.insert(std::make_pair(id, f));
+        return f;
     }
 
 } // namespace tpp
