@@ -11,6 +11,7 @@
 #include <pwd.h>
 #endif
 
+#include <fstream>
 #include <filesystem>
 #include <algorithm>
 
@@ -28,6 +29,20 @@
  */
 
 namespace helpers {
+
+    /** Reads the entire file. 
+     
+        Note that the file should be modestly sized as it is returned as a single string
+     */
+    inline std::string ReadEntireFile(std::string const & filename) {
+        std::ifstream f(filename, std::ios::in | std::ios::binary | std::ios::ate);
+        OSCHECK(f.good()) << "Unable to open file " << filename;
+        size_t size = f.tellg();
+        f.seekg(0, std::ios::beg);
+        std::vector<char> result(size);
+        f.read(&result[0], size);
+        return std::string(&result[0], size);
+    }
 
     /** Returns the hostname of the current computer. 
      */

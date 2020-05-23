@@ -7,6 +7,7 @@
 #include "helpers/char.h"
 #include "helpers/time.h"
 #include "helpers/filesystem.h"
+#include "helpers/curl.h"
 
 #include "config.h"
 

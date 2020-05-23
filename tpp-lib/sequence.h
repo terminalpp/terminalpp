@@ -466,10 +466,6 @@ namespace tpp {
 
     }; // Sequence::ViewRemoteFile
 
-
-
-
-
     template<typename T>
     class Sequence::Response {
     public:

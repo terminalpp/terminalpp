@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- How to package msix: 
+
+     https://docs.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-manual-conversion 
+-->
+<Package
+	xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+    <Identity 
+        Name="terminalpp.com" 
+        Version="@PROJECT_VERSION" 
+        Publisher="zduka" 
+        ProcessorArchitecture="x64"
+    />
+    <Properties>
+        <DisplayName>Terminalpp</DisplayName>
+        <PublisherDisplayName>Zduka</PublisherDisplayName>
+        <Description>@TPP_DESCRIPTION@</Description>
+        <Logo>@${CMAKE_SOURCE_DIR}/resources/icons/icon_256x256.png@</Logo>
+    </Properties>
+    <Resources>
+        <Resource Language="en-us" />
+    </Resources>
+	<Dependencies>
+        <TargetDeviceFamily Name="Windows.Desktop" MinVersion="" MaxVersionTested="" />
+	</Dependencies>
+	<Capabilities>
+	    <rescap:Capability Name="runFullTrust"/>
+	</Capabilities>
+    <Applications>
+        <Application 
+            Id="terminalpp" 
+            Executable="terminalpp.exe" 
+            EntryPoint="Windows.FullTrustApplication"
+            >
+            <uap:VisualElements 
+                DisplayName="terminalpp" 
+                Description="@TPP_SUMMARY@"	
+                Square150x150Logo="@${CMAKE_SOURCE_DIR}/resources/icons/icon_128x128.png@"
+				Square44x44Logo="@${CMAKE_SOURCE_DIR}/resources/icons/icon_48x48.png@"
+                BackgroundColor="#000000" 
+            />
+        </Application>
+    </Applications>
+  </Package>
