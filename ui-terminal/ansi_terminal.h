@@ -167,8 +167,13 @@ namespace ui {
             return cursor_;
         }
 
-        virtual void setCursor(Cursor const & value) {
-            if (cursor_ != value) {
+        Cursor const & defaultCursor() const {
+            return defaultCursor_;
+        }
+
+        virtual void setDefaultCursor(Cursor const & value) {
+            if (defaultCursor_ != value) {
+                defaultCursor_ = value;
                 cursor_ = value;
                 repaint();
             }
@@ -578,6 +583,8 @@ namespace ui {
         CursorMode cursorMode_;
         /** The cursor to be displayed. */
         Cursor cursor_;
+        /** The default cursor set by the settings. */
+        Cursor defaultCursor_;
         /** Color of the inactive cursor rectangle. */
         Color inactiveCursorColor_;
 

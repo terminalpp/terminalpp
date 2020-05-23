@@ -1360,9 +1360,11 @@ namespace ui {
 
     void AnsiTerminal::parseOSCSequence(OSCSequence & seq) {
         switch (seq.num()) {
-            /* OSC 0 - change the terminal title.
+            /* OSC 0 - change window title and icon name
+               OSC 2 - change window title
              */
-            case 0: {
+            case 0:
+            case 2: {
     			LOG(SEQ) << "Title change to " << seq.value();
                 bufferLock_.unlock();
                 sendEvent([this, title = seq.value()](){
@@ -1370,6 +1372,14 @@ namespace ui {
                     onTitleChange(p, this);
                 });
                 bufferLock_.lock();
+                break;
+            }
+            /* OSC 1 - change icon name 
+               
+               The icon name is a shortened text that should be displayed next to the iconified window. From: https://unix.stackexchange.com/questions/265760/what-does-it-mean-to-set-a-terminals-icon-title
+             */
+            case 1: {
+                // TODO do we want to support this? Not ATM...
                 break;
             }
             /* OSC 52 - set clipboard to given value. 
@@ -1386,7 +1396,9 @@ namespace ui {
             /* OSC 112 - reset cursor color. 
              */
             case 112:
-                NOT_IMPLEMENTED;
+                LOG(SEQ) << "Cursor color reset";
+                cursor_.setColor(defaultCursor_.color());
+                break;
             default:
         		LOG(SEQ_UNKNOWN) << "Invalid OSC sequence: " << seq;
         }

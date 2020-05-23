@@ -92,7 +92,7 @@ namespace tpp {
 
             terminal_ = new AnsiTerminal{pty_, & palette_, width(), height()};
             terminal_->setHistoryLimit(config.session.historyLimit());
-            terminal_->setCursor(config.session.cursor());
+            terminal_->setDefaultCursor(config.session.cursor());
             terminal_->setInactiveCursorColor(config.session.inactiveCursorColor());
             terminal_->setBoldIsBright(config.session.sequences.boldIsBright());
             //terminal_->setHeightHint(SizeHint::Percentage(75));
