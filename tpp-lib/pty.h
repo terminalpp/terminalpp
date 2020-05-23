@@ -26,6 +26,14 @@ namespace tpp {
             send(s.c_str(), s.size());
         }
 
+        template<typename T>
+        void send(Sequence::Response<T> const & seq) {
+            if (seq.valid())
+                send(seq.result());
+            else 
+                send(seq.nack());
+        }
+
         /** Blocks until data are received and returns the size of bytes received in the provided buffer. 
          
             If the pseudoterminal has been terminated returns immediately. 

@@ -15,24 +15,6 @@ More robust UI framework, better configuration options and slightly increased se
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- check that the detachment of thread in helpers::time.h is safe
-
-- FPS, repaint rate and other stats
-
-- button basics, label fonts
-
-- helpers, should they be in helpers namespace?
-- helpers filesystem should use paths better
-
-Terminal++ PTY:
-
-- do Sequence::Response<> that is either the response, or NACK
-
-Settings:
-
-- design settings via abstract configurator classes that provide the interface
-- color for dimming disabled terminal
-
 Documentation:
 
 - write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
@@ -41,6 +23,7 @@ Documentation:
 - mouseUp, Down, WHeel, Move, Click and DoubleClick can propagate to parent, update the documentation
 - and so does the keyboard, propagation to parent disabled by default if event enabled 
 - document the modal pane & modal trait
+- helpers::time timer
 
 Builds & Releases
 
@@ -48,6 +31,13 @@ Builds & Releases
 - change from MSI to appx
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
+
+Helpers & Logging & Errors overhaul
+
+- helpers, should they be in helpers namespace?
+- helpers filesystem should use paths better
+- when a certain exception is raised, it should be logged automatically
+- perhaps have the basics all in a single file (log, exceptions, asserts)
 
 Issues to be raised:
 
@@ -63,7 +53,8 @@ Issues to be raised:
 
 ### v0.8
 
-- some basic styling for the GUI via a style object, similar to CSS?
+- some basic styling for the GUI via a style object, similar to CSS?, more powerful buttons & labels
+- color for dimming disabled terminal (via styling)
 - scrollview, tooltips, shortcuts and actions and some more UI elements
 - tooltip widget can be obtained by renderer and renderer knows its rectangle and can therefore issue repaints as appropriate
 - PositionHint: layout / absolute - absolute positioned elements are not updated by layouts
@@ -72,7 +63,6 @@ Issues to be raised:
 - WidgetBorder should only require repaint of children that interfere with the border (can be calculated from their visible rects)
 
 - geometry.h is areally bad name for some of the classes defined therein
-
 
 
 ### v0.9

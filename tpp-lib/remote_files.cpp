@@ -7,7 +7,7 @@ namespace tpp {
 
     // Remote Files
 
-    Sequence::Ack RemoteFiles::openFileTransfer(Sequence::OpenFileTransfer const & req) {
+    Sequence::Ack::Response RemoteFiles::openFileTransfer(Sequence::OpenFileTransfer const & req) {
         // find if the file has already been registered
         std::string remoteHost = req.remoteHost().empty() ? "unknown" : req.remoteHost();
         std::filesystem::path remotePath{req.remotePath()};
@@ -30,7 +30,7 @@ namespace tpp {
                 THROW(helpers::IOError()) << "Unable to open local file for writing: " << file->localPath();
         }
         // return the acknowledgement
-        return Sequence::Ack{req, file->id_};
+        return Sequence::Ack::Response{Sequence::Ack{req, file->id_}};
     }
 
     bool RemoteFiles::transfer(Sequence::Data const & data) {
@@ -47,9 +47,12 @@ namespace tpp {
         return true;
     }
 
-    Sequence::TransferStatus RemoteFiles::getTransferStatus(Sequence::GetTransferStatus const & req) {
+    Sequence::TransferStatus::Response RemoteFiles::getTransferStatus(Sequence::GetTransferStatus const & req) {
         File * f = get(req.id());
-        return Sequence::TransferStatus{req.id(), f->size_, f->received_};
+        if (f == nullptr)
+            return Sequence::TransferStatus::Response::Deny(req, "Not found");
+        else
+            return Sequence::TransferStatus::Response{Sequence::TransferStatus{req.id(), f->size_, f->received_}};
     }
 
     RemoteFiles::File * RemoteFiles::getOrCreateFile(std::string const & remoteHost, std::string const & remotePath, std::filesystem::path const & localPath, size_t size) {

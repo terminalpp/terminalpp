@@ -71,11 +71,11 @@ namespace tpp {
             return i == files_.end() ? nullptr : i->second;
         }
 
-        Sequence::Ack openFileTransfer(Sequence::OpenFileTransfer const & req);
+        Sequence::Ack::Response openFileTransfer(Sequence::OpenFileTransfer const & req);
 
         bool transfer(Sequence::Data const & data);
 
-        Sequence::TransferStatus getTransferStatus(Sequence::GetTransferStatus const & req);
+        Sequence::TransferStatus::Response getTransferStatus(Sequence::GetTransferStatus const & req);
 
     private:
 

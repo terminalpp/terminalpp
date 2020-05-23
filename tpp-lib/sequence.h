@@ -1,5 +1,6 @@
 #pragma once
 
+#include <variant>
 #include <iostream>
 
 #include "helpers/helpers.h"
@@ -67,6 +68,9 @@ namespace tpp {
         class TransferStatus;
         class ViewRemoteFile;
 
+        template<typename T>
+        class Response;
+
     protected:
 
         Sequence(Kind kind):
@@ -131,6 +135,9 @@ namespace tpp {
      */
     class Sequence::Ack : public Sequence {
     public:
+
+        using Response = Response<Ack>;
+
         explicit Ack(size_t id):
             Sequence{Kind::Ack},
             request_{},
@@ -322,6 +329,8 @@ namespace tpp {
     class Sequence::OpenFileTransfer : public Sequence {
     public:
 
+        using Response = Response<OpenFileTransfer>;
+
         OpenFileTransfer(std::string const & host, std::string const & filename, size_t fileSize):
             Sequence{Kind::OpenFileTransfer},
             remoteHost_{host},
@@ -390,6 +399,8 @@ namespace tpp {
     class Sequence::TransferStatus : public Sequence {
     public:
 
+        using Response = Response<TransferStatus>;
+
         TransferStatus(size_t id, size_t size, size_t received):
             Sequence{Kind::TransferStatus},
             id_{id},
@@ -454,5 +465,57 @@ namespace tpp {
         size_t id_;
 
     }; // Sequence::ViewRemoteFile
+
+
+
+
+
+    template<typename T>
+    class Sequence::Response {
+    public:
+
+        static Response Deny(Sequence const & req, std::string const & reason) {
+            return Response(req, reason);
+        }
+
+        static Response Accept(T const & value) {
+            return Response(value);
+        }
+
+        Response(T const & value):
+            response_{value} {
+        }
+
+        bool valid() const {
+            return std::holds_alternative<T>(response_);
+        }
+
+        T const & result() const {
+            ASSERT(valid());
+            return std::get<T>(response_);
+        }
+
+        Nack const & nack() const {
+            ASSERT(! valid());
+            return std::get<Nack>(response_);
+        }
+
+    protected:
+        void writeTo(std::ostream & s) {
+            if (valid())
+                result().writeTo(s);
+            else
+                nack().writeTo(s);
+        }
+
+    private:
+
+        Response(Sequence const & req, std::string const & reason):
+            response_{Nack{req, reason}} {
+        }
+
+        std::variant<Nack, T> response_;
+
+    };
 
 } // namespace tpp
