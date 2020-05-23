@@ -67,7 +67,8 @@ namespace ui {
             children_.push_back(widget);
             if (widget->parent() != this)
                 widget->attachTo(this);
-            // make sure the attached widget will be relayouted even if its size won't change (see Layout::resizeChild())
+            // make sure the attached widget will be relayouted even if its size won't change (see Layout::resizeChild()), also update its transparency
+            widget->updateTransparency();
             widget->pendingRelayout_ = true;
             // relayout the container
             relayout();

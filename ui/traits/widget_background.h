@@ -31,7 +31,7 @@ namespace ui {
         }
 
         virtual bool isTransparent() {
-            return background_.opaque();
+            return ! background_.opaque();
         }
 
         void paint(Canvas & canvas) {

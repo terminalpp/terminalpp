@@ -35,6 +35,14 @@ namespace ui {
                 if (w->parent_->pendingRepaint_)
                     return;
                 if (w->repaintParent_ || w->overlaid_ || w->transparent_) {
+                    // if there is pending relayout on the widget, we must relayout first before we proceed to parent repaint
+                    if (w->pendingRelayout_) {
+                        w->pendingRepaint_.store(false);
+                        w->calculateLayout();
+                        // if new repaint has been triggered, ignore the current one
+                        if (w->pendingRepaint_)
+                            return;
+                    }
                     w = w->parent_;
                 } else {
                     break;

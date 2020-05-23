@@ -19,6 +19,20 @@
 
 namespace tpp {
 
+    /** Error dialog. 
+     */
+    class ErrorDialog : public ui::Dialog::Cancel {
+    public:
+        ErrorDialog(std::string const & message):
+            Dialog::Cancel{"Error", /* deleteOnDismiss */ true},
+            contents_{new Label{message}} {
+            setBody(contents_);
+        }
+
+    private:
+        Label * contents_;
+    };
+
     /** Paste confirmation dialog. 
      */
     class PasteDialog : public ui::Dialog::YesNoCancel {
@@ -118,6 +132,14 @@ namespace tpp {
         }
 
     protected:
+
+        void showError(std::string const & error) {
+            // TODO log this as well
+            sendEvent([this, error]() {
+                ErrorDialog * e = new ErrorDialog{error};
+                modalPane_->add(e);
+            });
+        }
 
         void keyDown(Event<Key>::Payload & event) override {
             if (terminateOnKeyPress_) 
@@ -221,44 +243,48 @@ namespace tpp {
         }
 
         void terminalTppSequence(Event<TppSequenceEvent>::Payload & event) {
-            switch (event->kind) {
-                case tpp::Sequence::Kind::GetCapabilities:
-                    pty_->send(tpp::Sequence::Capabilities{1});
-                    break;
-                case tpp::Sequence::Kind::OpenFileTransfer: {
-                    Sequence::OpenFileTransfer req(event->payloadStart, event->payloadEnd);
-                    pty_->send(remoteFiles_->openFileTransfer(req));
-                    break;
-                }
-                case tpp::Sequence::Kind::Data: {
-                    Sequence::Data data{event->payloadStart, event->payloadEnd};
-                    remoteFiles_->transfer(data);
-                    // make sure the UI thread remains responsive
-                    window_->yieldToUIThread();
-                    break;
-                }
-                case tpp::Sequence::Kind::GetTransferStatus: {
-                    Sequence::GetTransferStatus req{event->payloadStart, event->payloadEnd};
-                    pty_->send(remoteFiles_->getTransferStatus(req));
-                    break;
-                }
-                case tpp::Sequence::Kind::ViewRemoteFile: {
-                    Sequence::ViewRemoteFile req{event->payloadStart, event->payloadEnd};
-                    RemoteFiles::File * f = remoteFiles_->get(req.id());
-                    if (f == nullptr) {
-                        pty_->send(Sequence::Nack{req, "No such file"});
-                    } else if (! f->ready()) {
-                        pty_->send(Sequence::Nack(req, "File not transferred"));
-                    } else {
-                        // send the ack first in case there are local issues with the opening
-                        pty_->send(Sequence::Ack{req, req.id()});
-                        Application::Instance()->openLocalFile(f->localPath(), false);
+            try {
+                switch (event->kind) {
+                    case tpp::Sequence::Kind::GetCapabilities:
+                        pty_->send(tpp::Sequence::Capabilities{1});
+                        break;
+                    case tpp::Sequence::Kind::OpenFileTransfer: {
+                        Sequence::OpenFileTransfer req(event->payloadStart, event->payloadEnd);
+                        pty_->send(remoteFiles_->openFileTransfer(req));
+                        break;
                     }
-                    break;
+                    case tpp::Sequence::Kind::Data: {
+                        Sequence::Data data{event->payloadStart, event->payloadEnd};
+                        remoteFiles_->transfer(data);
+                        // make sure the UI thread remains responsive
+                        window_->yieldToUIThread();
+                        break;
+                    }
+                    case tpp::Sequence::Kind::GetTransferStatus: {
+                        Sequence::GetTransferStatus req{event->payloadStart, event->payloadEnd};
+                        pty_->send(remoteFiles_->getTransferStatus(req));
+                        break;
+                    }
+                    case tpp::Sequence::Kind::ViewRemoteFile: {
+                        Sequence::ViewRemoteFile req{event->payloadStart, event->payloadEnd};
+                        RemoteFiles::File * f = remoteFiles_->get(req.id());
+                        if (f == nullptr) {
+                            pty_->send(Sequence::Nack{req, "No such file"});
+                        } else if (! f->ready()) {
+                            pty_->send(Sequence::Nack(req, "File not transferred"));
+                        } else {
+                            // send the ack first in case there are local issues with the opening
+                            pty_->send(Sequence::Ack{req, req.id()});
+                            Application::Instance()->openLocalFile(f->localPath(), false);
+                        }
+                        break;
+                    }
+                    default:
+                        LOG() << "Unknown sequence";
+                        break;
                 }
-                default:
-                    LOG() << "Unknown sequence";
-                    break;
+            } catch (std::exception const & e) {
+                showError(e.what());
             }
         }
 

@@ -9,6 +9,7 @@ More robust UI framework, better configuration options and slightly increased se
 - double width and double size fonts dropped from the terminal (not from the UI)
 - history gets resized when terminal gets resized
 - inactive cursor properly displayed
+- modal errors in terminal
 
 ### TODO
 
@@ -26,7 +27,6 @@ More robust UI framework, better configuration options and slightly increased se
 Terminal++ PTY:
 
 - do Sequence::Response<> that is either the response, or NACK
-- check with tmux - seems okish
 
 Settings:
 

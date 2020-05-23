@@ -40,10 +40,14 @@ namespace ui {
             if (children_.empty()) {
                 setVisible(false);
                 renderer()->setModalRoot(renderer()->rootWidget());
-            }
+            } 
         }
 
     protected:
+
+        bool isTransparent() override {
+            return WidgetBackground::isTransparent() || Container::isTransparent();
+        }
 
         void paint(Canvas & canvas) override {
             WidgetBackground::paint(canvas);

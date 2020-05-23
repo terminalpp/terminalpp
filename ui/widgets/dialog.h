@@ -19,6 +19,7 @@ namespace ui {
     class Dialog : public CustomPanel, public Modal<Dialog>  {
     public:
 
+        class Cancel;
         class YesNoCancel;
 
         Dialog(std::string const & title, bool deleteOnDismiss = false):
@@ -83,6 +84,10 @@ namespace ui {
             Container::paint(canvas);
         }
 
+        void headerButtonClicked(Event<MouseButtonEvent>::Payload & e) {
+            dismiss(e.sender());
+        }
+
         void addHeaderButton(Widget * widget) {
             header_->add(widget);
         }
@@ -99,6 +104,32 @@ namespace ui {
 
     }; // ui::Dialog
 
+
+    class Dialog::Cancel : public Dialog {
+    public:
+        Cancel(std::string const & title, bool deleteOnDismiss = false):
+            Dialog{title, deleteOnDismiss},
+            btnCancel_{new Button{" X "}} {
+            btnCancel_->onMouseClick.setHandler(&Dialog::headerButtonClicked, static_cast<Dialog*>(this));
+            addHeaderButton(btnCancel_);
+        }
+
+        Button const * btnCancel() const {
+            return btnCancel_;
+        }
+
+        void keyDown(Event<Key>::Payload & event) override {
+            if (*event == Key::Esc) {
+                dismiss(btnCancel_);
+                return;
+            }
+            Dialog::keyDown(event);
+        }
+
+        Button * btnCancel_;
+
+    }; // ui::Dialog::Cancel
+
     /** A Dialog window template which contains the Yes, No and Cancel buttons. 
      */
     class Dialog::YesNoCancel : public Dialog {
@@ -108,9 +139,9 @@ namespace ui {
             btnYes_{new Button{" Yes "}},
             btnNo_{new Button{" No "}},
             btnCancel_{new Button{" X "}} {
-            btnYes_->onMouseClick.setHandler(&YesNoCancel::headerButtonClicked, this);
-            btnNo_->onMouseClick.setHandler(&YesNoCancel::headerButtonClicked, this);
-            btnCancel_->onMouseClick.setHandler(&YesNoCancel::headerButtonClicked, this);
+            btnYes_->onMouseClick.setHandler(&Dialog::headerButtonClicked, static_cast<Dialog*>(this));
+            btnNo_->onMouseClick.setHandler(&Dialog::headerButtonClicked, static_cast<Dialog*>(this));
+            btnCancel_->onMouseClick.setHandler(&Dialog::headerButtonClicked, static_cast<Dialog*>(this));
             addHeaderButton(btnYes_);
             addHeaderButton(btnNo_);
             addHeaderButton(btnCancel_);
@@ -141,11 +172,6 @@ namespace ui {
         Button * btnYes_;
         Button * btnNo_;
         Button * btnCancel_;
-
-    private:
-        void headerButtonClicked(Event<MouseButtonEvent>::Payload & e) {
-            dismiss(e.sender());
-        }
 
     }; // ui::Dialog::YesNoCancel 
 
