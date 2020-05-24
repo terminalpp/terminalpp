@@ -168,7 +168,32 @@ if(PACKAGE_TERMINALPP AND PACKAGE_WIX AND RENDERER_NATIVE)
     )        
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/msix/appxmanifest.xml ${CMAKE_BINARY_DIR}/packages/msix/appxmanifest.xml @ONLY)
+# generate the MSIX package
+# https://www.advancedinstaller.com/msix-introduction.html
+# https://docs.microsoft.com/en-us/windows/msix/package/create-app-package-with-makeappx-tool
+if(PACKAGE_TERMINALPP AND RENDERER_NATIVE)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/msix/appxmanifest.xml ${CMAKE_BINARY_DIR}/packages/msix/appxmanifest.xml @ONLY)
+    add_custom_target(package-msix
+        COMMAND ${CMAKE_COMMAND} -E make_directory Assets
+        COMMAND ${CMAKE_COMMAND} -E make_directory VFS
+        COMMAND makepri.exe new /pr . /cf ${CMAKE_CURRENT_SOURCE_DIR}/packages/msix/priconfig.xml
+        COMMAND ${CMAKE_COMMAND} -E copy
+                $<TARGET_FILE:terminalpp>
+                VFS/terminalpp.exe
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_48x48.png
+                Assets/icons/icon_48x48.png
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_128x128.png
+                Assets/icons/icon_128x128.png
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_256x256.png
+                Assets/icons/icon_256x256.png
+        COMMAND MakeAppx.exe pack /d . /p ../${PROJECT_NAME}.msix
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/packages/msix
+        DEPENDS terminalpp
+    )
+endif()
 
 
 # Builds the snap package for linux

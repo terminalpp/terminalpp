@@ -24,7 +24,7 @@ jobs:
       run: |
         wsl.exe --list
       shell: powershell
-    # build terminalpp first so that its stamp is not tainted
+    # build terminalpp first so that its stamp is not tainted - msi
     - name: build-terminalpp
       run: |
         mkdir build
@@ -36,7 +36,8 @@ jobs:
       with:
         name: terminalpp.msi
         path: build/packages/terminalpp.msi
-    - name: build-bypass-ubuntu
+    # bypass - Ubuntu 18.04
+    - name: build-bypass-ubuntu-1804
       run: |
         wsl.exe -d Ubuntu bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh ubuntu-18-04"
     - name: artifact-tpp-bypass-ubuntu-18.04
@@ -44,6 +45,16 @@ jobs:
       with:
         name: tpp-bypass-ubuntu-18.04
         path: build-ubuntu-18-04/tpp-bypass/tpp-bypass
+    # bypass - Ubuntu 20.04
+    - name: build-bypass-ubuntu-2004
+      run: |
+        wsl.exe -d Ubuntu-20.04 bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh ubuntu-20-04"
+    - name: artifact-tpp-bypass-ubuntu-20.04
+      uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass-ubuntu-20.04
+        path: build-ubuntu-20-04/tpp-bypass/tpp-bypass
+    # bypass - Debian
     - name: build-bypass-debian
       run: |
         wsl.exe -d Debian bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh debian"
@@ -52,6 +63,7 @@ jobs:
       with:
         name: tpp-bypass-debian
         path: build-Debian/tpp-bypass/tpp-bypass
+    # bypass - openSUSE-Leap
     - name: build-bypass-suse
       run: |
         wsl.exe -d openSUSE-Leap-15-1 bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh leap-15-1"
@@ -184,10 +196,14 @@ jobs:
       with:
         name: ropen.snap
     # and finally download the executables for tpp-bypass for different WSL distributions
-    - name: get-tpp-bypass-ubuntu
+    - name: get-tpp-bypass-ubuntu-18.04
       uses: actions/download-artifact@v1
       with:
         name: tpp-bypass-ubuntu-18.04
+    - name: get-tpp-bypass-ubuntu-20.04
+      uses: actions/download-artifact@v1
+      with:
+        name: tpp-bypass-ubuntu-20.04
     - name: get-tpp-bypass-debian
       uses: actions/download-artifact@v1
       with:
@@ -271,6 +287,13 @@ jobs:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
         asset_path: ./tpp-bypass-ubuntu-18.04/tpp-bypass
         asset_name: tpp-bypass-Ubuntu-18.04
+        asset_content_type: application/octet-stream
+    - name: upload-tpp-bypass-ubuntu-20.04
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./tpp-bypass-ubuntu-20.04/tpp-bypass
+        asset_name: tpp-bypass-Ubuntu-20.04
         asset_content_type: application/octet-stream
     - name: upload-tpp-bypass-debian
       uses: actions/upload-release-asset@v1
