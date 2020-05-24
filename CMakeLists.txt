@@ -4,6 +4,11 @@
 
 cmake_minimum_required (VERSION 3.5)
 
+if(${CMAKE_VERSION} VERSION_GREATER "3.14")
+    cmake_policy(SET CMP0091 NEW)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 # The Global Project version
 # ==========================
 #
@@ -15,6 +20,11 @@ project(tpp VERSION ${TPP_VERSION})
 
 # architecture macros (ARCH_WINDOWS, ARCH_LINUX, ARCH_BSD, ARCH_MACOS, ARCH_UNIX)
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
+
+if(ARCH_WINDOWS)
+    cmake_minimum_required (VERSION 3.15)
+    message(STATUS "MSVC Runtime will be linked statically")    
+endif()
 
 # Global C++ settings
 #

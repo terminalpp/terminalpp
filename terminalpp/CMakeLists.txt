@@ -7,7 +7,6 @@
 # -DRENDERER=(QT | NATIVE)
 #
 # Selects the renderer which should be built. By default, the NATIVE renderer is used on Windows and Linux, while the QT renderer is used on MacOS where no native renderer exists. 
-
 cmake_minimum_required (VERSION 3.5)
 
 project(terminalpp VERSION ${TPP_VERSION})
@@ -168,6 +167,9 @@ if(PACKAGE_TERMINALPP AND PACKAGE_WIX AND RENDERER_NATIVE)
         DEPENDS terminalpp
     )        
 endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/packages/msix/appxmanifest.xml ${CMAKE_BINARY_DIR}/packages/msix/appxmanifest.xml @ONLY)
+
 
 # Builds the snap package for linux
 #

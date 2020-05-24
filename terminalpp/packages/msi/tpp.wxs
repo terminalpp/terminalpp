@@ -23,10 +23,6 @@
             <ComponentRef Id="PowershellShortcut"/>
         </Feature>
 
-        <Feature Id="VCRedist" Title="Visual C++ 14.2 Runtime" AllowAdvertise="no" Display="hidden" Level="1">
-            <MergeRef Id="VCRedist"/>
-        </Feature>        
-
         <!-- Create directories -->
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFiles64Folder">
@@ -76,8 +72,5 @@
             </Component>
         </DirectoryRef>
 
-        <DirectoryRef Id="TARGETDIR">
-            <Merge Id="VCRedist" SourceFile="@CMAKE_CURRENT_SOURCE_DIR@\packages\msi\vcredist\Microsoft_VC142_CRT_x64.msm" DiskId="1" Language="0"/>
-        </DirectoryRef>        
     </Product>
 </Wix>
