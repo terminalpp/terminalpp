@@ -83,12 +83,19 @@ namespace tpp {
         	Config const & config = Config::Instance();
             window_->setRootWidget(this);
 #if (ARCH_WINDOWS)
-            //pty_ = new BypassPTYMaster{config.session.command()};
-            pty_ = new LocalPTYMaster{helpers::Command{"cmd.exe", {}}};
+            if (config.session.pty() != "bypass") 
+                pty_ = new LocalPTYMaster(config.session.command());
+            else
+                pty_ = new BypassPTYMaster(config.session.command());
 #else
             pty_ = new LocalPTYMaster{config.session.command()};
 #endif
 
+            mainWindow_ = new PublicContainer{new ColumnLayout{VerticalAlign::Top}};
+            notifications_ = new ModalPane();
+            notifications_->setModal(false);
+            notifications_->setHeightHint(SizeHint::Auto());
+            mainWindow_->add(notifications_);
 
             terminal_ = new AnsiTerminal{pty_, & palette_, width(), height()};
             terminal_->setHistoryLimit(config.session.historyLimit());
@@ -109,10 +116,15 @@ namespace tpp {
             setLayout(new MaximizeLayout());
             //setLayout(new ColumnLayout(VerticalAlign::Bottom));
             //setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
-            add(terminal_);
+            //add(terminal_);
+
+
+            terminal_->setHeightHint(SizeHint::Percentage(100));
+            mainWindow_->add(terminal_);
+            add(mainWindow_);
 
             modalPane_ = new ModalPane();
-            modalPane_->setLayout(new ColumnLayout(VerticalAlign::Bottom));
+            //modalPane_->setLayout(new ColumnLayout{VerticalAlign::Bottom});
             //modalPane_->setHeightHint(SizeHint::Auto());
             add(modalPane_);
 
@@ -120,14 +132,26 @@ namespace tpp {
             setFocusable(true);
 
 
+
             //window_->setKeyboardFocus(terminal_);
             remoteFiles_ = new RemoteFiles(config.session.remoteFiles.dir());
 
             if (config.session.fullscreen())
                 window_->setFullscreen(true);
+            
+            versionChecker_ = std::thread{[this](){
+                std::string newVersion = Application::Instance()->checkLatestVersion("edge");
+                if (!newVersion.empty()) {
+                    sendEvent([this, newVersion]() {
+                        ErrorDialog * d = new ErrorDialog{STR("New version " << newVersion << " is available")};
+                        notifications_->add(d);
+                    });
+                }
+            }};
         }
 
         ~Session() override {
+            versionChecker_.join();
             delete remoteFiles_;
         }
 
@@ -308,14 +332,19 @@ namespace tpp {
         /** The window in which the session is rendered.
          */
         Window * window_;
+        ModalPane * modalPane_;
+        PublicContainer * mainWindow_;
+        ModalPane * notifications_;
+        
         bool terminateOnKeyPress_;
 
         AnsiTerminal::Palette palette_;
         AnsiTerminal * terminal_;
         PTYMaster * pty_;
-        ModalPane * modalPane_;
 
         RemoteFiles * remoteFiles_;
+
+        std::thread versionChecker_;
 
     }; 
 

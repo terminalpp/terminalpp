@@ -73,6 +73,11 @@ namespace ui {
             }
         }
 
+        Widget * modalRoot() const {
+            UI_THREAD_CHECK;
+            return modalRoot_;
+        }
+
         void setModalRoot(Widget * widget) {
             UI_THREAD_CHECK;
             ASSERT(widget->renderer_ == this);

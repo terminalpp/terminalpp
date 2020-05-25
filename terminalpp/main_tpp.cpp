@@ -85,6 +85,7 @@ int main(int argc, char* argv[]) {
 #endif
     try {
         tpp::Config::Setup(argc, argv);
+        //helpers::JSON versions{tpp::Application::Instance()->checkLatestVersion("edge")};        
 
 		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
 		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 

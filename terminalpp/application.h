@@ -2,6 +2,7 @@
 
 #include "helpers/helpers.h"
 #include "helpers/json.h"
+#include "helpers/curl.h"
 
 namespace tpp {
 
@@ -35,11 +36,20 @@ namespace tpp {
          */
         virtual void mainLoop() = 0;
 
+        /** Determines the latest versions available for specified channels. 
+         
+            Downloads the `https://terminalpp.com/versions.json` file which contains a list of latest versions available in various channels.
+         */
+        std::string checkLatestVersion(std::string const & channel);
+
     protected:
         Application() {
             ASSERT(Singleton_() == nullptr) << "Application assumed to be singleton";
             Singleton_() = this;
         }
+        
+        helpers::JSON getLatestVersion();
+        helpers::JSON getCachedLatestVersion();
 
     private:
 

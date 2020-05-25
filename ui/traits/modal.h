@@ -17,8 +17,10 @@ namespace ui {
     public:
 
         ModalPane():
-            WidgetBackground{Color::Black.withAlpha(128)} {
+            WidgetBackground{Color::Black.withAlpha(128)},
+            modal_{true} {
             setVisible(false);
+            setLayout(new ColumnLayout{VerticalAlign::Bottom});
         }
 
         using Container::setLayout;
@@ -31,7 +33,8 @@ namespace ui {
             Container::add(child);
             if (!visible()) {
                 setVisible(true);
-                renderer()->setModalRoot(this);
+                if (modal_)
+                    renderer()->setModalRoot(this);
             }
         }
 
@@ -39,8 +42,25 @@ namespace ui {
             Container::remove(child);
             if (children_.empty()) {
                 setVisible(false);
-                renderer()->setModalRoot(renderer()->rootWidget());
+                if (renderer()->modalRoot() == this)
+                    renderer()->setModalRoot(renderer()->rootWidget());
             } 
+        }
+
+        bool modal() {
+            return modal_;
+        }
+
+        virtual void setModal(bool value = true) {
+            if (modal_ != value) {
+                modal_ = value;
+                if (renderer() != nullptr) {
+                    if (modal_ && renderer()->modalRoot() != this)
+                        renderer()->setModalRoot(this);
+                    else if (!modal_ && renderer()->modalRoot() == this)
+                        renderer()->setModalRoot(renderer()->rootWidget());
+                }
+            }
         }
 
     protected:
@@ -67,6 +87,9 @@ namespace ui {
                 return nullptr;
             }
         }
+
+    private:
+        bool modal_;
 
     }; // ui::ModalPane
 

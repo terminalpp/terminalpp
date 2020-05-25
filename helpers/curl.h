@@ -14,7 +14,7 @@ namespace helpers {
 
         This could easily be remedied by switching to libcurl on Linux, on Windows, the situation is more complex (although libcurl can be used as well).
      */
-    std::string Curl(std::string const & url) {
+    inline std::string Curl(std::string const & url) {
 #if (ARCH_WINDOWS)
         return Exec(Command{"powershell.exe", { STR("(curl " << url << " -UseBasicParsing).Content")}}, "");
 #elif (ARCH_UNIX)

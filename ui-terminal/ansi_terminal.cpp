@@ -167,6 +167,9 @@ namespace ui {
         boldIsBright_{false} {
         setFps(60);
         setFocusable(true);
+        // explicitly resize the PTY when attached to the terminal
+        pty->resize(width, height);
+        // start the reader thread
         reader_ = std::thread{[this](){
             size_t unprocessed = 0;
             size_t bufferSize = DEFAULT_BUFFER_SIZE;
