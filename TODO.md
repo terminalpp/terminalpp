@@ -10,6 +10,7 @@ More robust UI framework, better configuration options and slightly increased se
 - history gets resized when terminal gets resized
 - inactive cursor properly displayed
 - modal errors in terminal
+- simpler windows installation package
 
 ### TODO
 
@@ -37,16 +38,11 @@ Documentation:
 Builds & Releases
 
 - ubuntu ppa
+- reliable MSIX package creation from cmake
+- signing 
+- MS store submission
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
-
-Change from MSI to MSIX
-
-- MakeAppx.exe pack /d . /p terminalpp.msix
-- do this in the folder where the package will be created 
-- copy terminalpp
-- copy icons and so on
-- how to sign? 
 
 Helpers & Logging & Errors overhaul
 

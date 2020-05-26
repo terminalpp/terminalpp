@@ -176,7 +176,7 @@ if(PACKAGE_TERMINALPP AND RENDERER_NATIVE)
     add_custom_target(package-msix
         COMMAND ${CMAKE_COMMAND} -E make_directory Assets
         COMMAND ${CMAKE_COMMAND} -E make_directory VFS
-        COMMAND makepri.exe new /pr . /cf ${CMAKE_CURRENT_SOURCE_DIR}/packages/msix/priconfig.xml
+        COMMAND makepri.exe new /pr . /cf ${CMAKE_CURRENT_SOURCE_DIR}/packages/msix/priconfig.xml /o
         COMMAND ${CMAKE_COMMAND} -E copy
                 $<TARGET_FILE:terminalpp>
                 VFS/terminalpp.exe
@@ -189,7 +189,7 @@ if(PACKAGE_TERMINALPP AND RENDERER_NATIVE)
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/resources/icons/icon_256x256.png
                 Assets/icons/icon_256x256.png
-        COMMAND MakeAppx.exe pack /d . /p ../${PROJECT_NAME}.msix
+        COMMAND MakeAppx.exe pack /d . /p ../${PROJECT_NAME}.msix /o
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/packages/msix
         DEPENDS terminalpp
     )
