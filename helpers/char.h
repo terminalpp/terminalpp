@@ -196,8 +196,15 @@ namespace helpers {
 			return iterator_utf8{str.c_str()};
 		}
 
+		static iterator_utf8 BeginOf(std::string_view const & str) {
+			return iterator_utf8{str.data()};
+		}
+
 		static iterator_utf8 EndOf(std::string const & str) {
 			return iterator_utf8{str.c_str() + str.size()};
+		}
+		static iterator_utf8 EndOf(std::string_view const & str) {
+			return iterator_utf8{str.data() + str.size()};
 		}
 
 		static constexpr char NUL = 0;

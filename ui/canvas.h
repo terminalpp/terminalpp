@@ -198,9 +198,14 @@ namespace ui {
          
             The text is drawn in a single line starting from the specified point and growing to the right. 
          */
-        Canvas & textOut(Point where, std::string const & text) {
+        /*Canvas & textOut(Point where, std::string const & text) {
+            return textOut(where, Char::BeginOf(text), Char::EndOf(text));
+        } */
+
+        Canvas & textOut(Point where, std::string_view const & text) {
             return textOut(where, Char::BeginOf(text), Char::EndOf(text));
         }
+
 
         //@}
 

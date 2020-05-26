@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../../build_stamp.h"
-#include "helpers/stamp.h"
+#include "stamp.h"
 
 #include "ui/widgets/panel.h"
 #include "ui/traits/modal.h"
@@ -18,30 +17,29 @@ namespace tpp {
             setWidthHint(SizeHint::Manual());
             setHeightHint(SizeHint::Manual());
             resize(65,10);
-            setFocusable(true);
+            setFocusable(true);  
         }
 
     protected:
 
         void paint(Canvas & canvas) override {
             CustomPanel::paint(canvas);
-            helpers::Stamp stamp = helpers::Stamp::Stored();
             canvas.setFg(Color::White);
             canvas.setFont(ui::Font{}.setSize(2));
             canvas.textOut(Point{20,1}, "Terminal++");
             canvas.setFont(ui::Font{});
-            if (stamp.version().empty()) {
-                canvas.textOut(Point{3,3}, STR("commit:   " << stamp.commit() << (stamp.clean() ? "" : "*")));
-                canvas.textOut(Point{13,4}, stamp.time());
+            if (stamp::version.empty()) {
+                canvas.textOut(Point{3,3}, STR("commit:   " << stamp::commit << (stamp::dirty ? "*" : "")));
+                canvas.textOut(Point{13,4}, stamp::build_time);
             } else {
-                canvas.textOut(Point{3,3}, STR("version:  " << stamp.version()));
-                canvas.textOut(Point{13,4}, STR(stamp.commit() << (stamp.clean() ? "" : "*")));
-                canvas.textOut(Point{13,5}, stamp.time());
+                canvas.textOut(Point{3,3}, STR("version:  " << stamp::version));
+                canvas.textOut(Point{13,4}, STR(stamp::commit << (stamp::dirty ? "*" : "")));
+                canvas.textOut(Point{13,5}, stamp::build_time);
             }
 #if (defined RENDERER_QT)
-            canvas.textOut(Point{3, 7}, STR("platform: " << ARCH << "(Qt) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()));
+            canvas.textOut(Point{3, 7}, STR("platform: " << ARCH << "(Qt) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build));
 #else
-            canvas.textOut(Point{3, 7}, STR("platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp.buildType()));
+            canvas.textOut(Point{3, 7}, STR("platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build));
 #endif
             canvas.setFont(canvas.font().setBlink(true));
             canvas.textOut(Point{20, 9}, "Hit a key to dismiss");

@@ -3,5 +3,5 @@ benchmarks/data/
 build/
 build-*/
 website/
-build_stamp.h
+stamp.h
 .DS_Store

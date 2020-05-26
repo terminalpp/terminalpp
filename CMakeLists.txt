@@ -18,26 +18,36 @@ set(TPP_VERSION 0.6.0)
 # The pseudoproject for the tools defined in this cmake. 
 project(tpp VERSION ${TPP_VERSION})
 
+file(GLOB_RECURSE ALL_SOURCES 
+  "helpers/*.h"
+  "ropen/*.h"
+  "ropen/*.cpp"
+  "terminalpp/*.h"
+  "terminalpp/*.cpp" 
+  "tests/*.h"
+  "tests/*.cpp" 
+  "tools/*.h"
+  "tools/*.cpp"
+  "tpp-bypass/*.h"
+  "tpp-bypass/*.cpp"
+  "tpp-lib/*.h"
+  "tpp-lib/*.cpp"
+  "ui/*.h"
+  "ui/*.cpp"
+  "ui-terminal/*.h"
+  "ui-terminal/*.cpp"
+  "*/CMakeLists.txt"
+  "CMakeLists.txt"
+)
+
 # architecture macros (ARCH_WINDOWS, ARCH_LINUX, ARCH_BSD, ARCH_MACOS, ARCH_UNIX)
-include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/cmake_arch.cmake)
+# and stamp generation macros
+include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/helpers.cmake)
 
 if(ARCH_WINDOWS)
     cmake_minimum_required (VERSION 3.15)
     message(STATUS "MSVC Runtime will be linked statically")    
 endif()
-
-# Global C++ settings
-#
-# This is a bit complex, C++20 would be best candidate, but it is not supported much and g++ does not even recognized it yet. On msvc and g++ we are therefore happy with c++17.
-#
-# On clang, the C++20 standard must be used because the __VA_OPT__ usage and the corresponding warning for empty varargs list is disabled.
-if(ARCH_MACOS)
-    set(CMAKE_CXX_STANDARD 20)
-    add_compile_options(-Wno-gnu-zero-variadic-macro-arguments)
-else()
-    set(CMAKE_CXX_STANDARD 17)
-endif()
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # by this all subprojects are addressabe from the source root
 include_directories(${CMAKE_SOURCE_DIR})
@@ -101,53 +111,6 @@ elseif(ARCH_MACOS)
     set(PACKAGE_APPBUNDLE true)
     message(STATUS "packages: macOS appbundles can be created")
 endif()
-
-# Executable stamp creation
-# =========================
-#
-# The stamp is available in the `build_stamp.h` file in the root directory, and is recreated every time any of the source files change. If a target wishes to use the stamp, it must depend on the `stamp` target defined below. 
-#
-# TODO this is ugly, should be fixed to some nicer dependency when I have time - just list all the sources the stamp creation depends on, i.e. if any of the sources change, the stamp will be recreated.
-file(GLOB_RECURSE ALL_SOURCES 
-  "helpers/*.h"
-  "ropen/*.h"
-  "ropen/*.cpp"
-  "terminalpp/*.h"
-  "terminalpp/*.cpp" 
-  "tests/*.h"
-  "tests/*.cpp" 
-  "tools/*.h"
-  "tools/*.cpp"
-  "tpp-bypass/*.h"
-  "tpp-bypass/*.cpp"
-  "tpp-lib/*.h"
-  "tpp-lib/*.cpp"
-  "ui/*.h"
-  "ui/*.cpp"
-  "ui-terminal/*.h"
-  "ui-terminal/*.cpp"
-  "*/CMakeLists.txt"
-  "CMakeLists.txt"
-)
-
-# Build the stamp generator tool - this is a simple tool that analyzes the github repository as well as other sources and determines the build properties which are then stored in the header file when the generator is run. 
-add_executable(
-    stamp-generator
-	tools/stamp.cpp
-)
-
-# A custom command to create the stamp header.
-add_custom_command(
-  OUTPUT ${CMAKE_SOURCE_DIR}/build_stamp.h
-  COMMAND stamp-generator ${CMAKE_SOURCE_DIR} build_stamp.h
-  DEPENDS tools/stamp.cpp ${ALL_SOURCES}
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-# A target to depend on - this is needed because the custom command won't work well with parallel builds.
-add_custom_target(stamp
-    DEPENDS ${ALL_SOURCES} ${CMAKE_SOURCE_DIR}/build_stamp.h
-)
 
 # Subprojects
 # ===========

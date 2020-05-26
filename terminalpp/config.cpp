@@ -1,6 +1,5 @@
 #include <fstream>
 
-#include "helpers/stamp.h"
 #include "helpers/filesystem.h"
 
 #include "application.h"
