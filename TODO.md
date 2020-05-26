@@ -38,9 +38,8 @@ Documentation:
 Builds & Releases
 
 - ubuntu ppa
-- reliable MSIX package creation from cmake
-- signing 
-- MS store submission
+- MSIX signing for sideloaded apps,  
+- MS store submission for the MSIX package
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
 
