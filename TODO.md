@@ -11,6 +11,7 @@ More robust UI framework, better configuration options and slightly increased se
 - inactive cursor properly displayed
 - modal errors in terminal
 - simpler windows installation package
+- msix installer
 
 ### TODO
 
@@ -38,10 +39,10 @@ Documentation:
 Builds & Releases
 
 - ubuntu ppa
-- MSIX signing for sideloaded apps,  
-- MS store submission for the MSIX package
+- automated MS store submission for the MSIX package
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
+- add sonarcloud.io
 
 Helpers & Logging & Errors overhaul
 
@@ -97,7 +98,6 @@ Issues to be raised:
 
 - polish and bugfixing of stuff, some beta releases and "testing"
 - remove the tpp application from snap (tpp.yaml)
-- change from msi to appx, add windows store submission if possible 
 
 # Unassigned Features
 

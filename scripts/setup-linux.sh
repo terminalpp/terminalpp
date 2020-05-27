@@ -8,4 +8,4 @@ sudo apt install cmake libx11-dev libxft-dev g++-8
 sudo apt install qt5-default
 
 # install dev dependencies
-sudo apt install imagemagick cloc doxygen graphviz
+sudo apt install imagemagick cloc doxygen graphviz dh-make devscripts

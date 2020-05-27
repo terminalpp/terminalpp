@@ -195,7 +195,6 @@ if(PACKAGE_TERMINALPP AND PACKAGE_MSIX AND RENDERER_NATIVE)
     )
 endif()
 
-
 # Builds the snap package for linux
 #
 # The classic confinement is used as terminal with the strict confinement is most likely not what we want.
@@ -219,6 +218,7 @@ if (PACKAGE_TERMINALPP AND PACKAGE_SNAP AND RENDERER_NATIVE)
     )
 endif()
 
+# make install 
 if(PACKAGE_TERMINALPP AND ARCH_UNIX)
     if(ARCH_LINUX)
         configure_file(${CMAKE_SOURCE_DIR}/resources/terminalpp.desktop ${CMAKE_CURRENT_BINARY_DIR}/terminalpp.desktop @ONLY)
@@ -231,10 +231,38 @@ if(PACKAGE_TERMINALPP AND ARCH_UNIX)
     install(TARGETS terminalpp DESTINATION bin COMPONENT terminalpp)
 endif()
 
+# builds the DEB package via cpack
 if(PACKAGE_TERMINALPP AND PACKAGE_DEB AND RENDERER_NATIVE)
     set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/postinst;${CMAKE_CURRENT_SOURCE_DIR}/packages/deb/prerm" PARENT_SCOPE)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libfontconfig1, libfreetype6, libpng16-16, libx11-6, libxau6, libxcb1, libxdmcp6, libxft2, libxrender1, x11-utils" PARENT_SCOPE)
     set(CPACK_PACKAGE_DEBIAN_SECTION "utils" PARENT_SCOPE)
+endif()
+
+# builds the debian source package
+#
+# From https://packaging.ubuntu.com/html/packaging-new-software.html
+#      https://linuxhint.com/debian-package-creation-howto/
+
+if(PACKAGE_TERMINALPP AND PACKAGE_DEB AND RENDERER_NATIVE)
+    # first create the source tgz and store it with the packages
+    add_custom_target(terminalpp-tgz
+        COMMAND rm -rf ${CMAKE_BINARY_DIR}/terminalpp-${PROJECT_VERSION}
+        COMMAND mkdir ${CMAKE_BINARY_DIR}/terminalpp-${PROJECT_VERSION}
+        COMMAND rsync -a . ${CMAKE_BINARY_DIR}/terminalpp-${PROJECT_VERSION} --exclude-from=.gitignore --exclude ".git"
+        COMMAND cp stamp.h ${CMAKE_BINARY_DIR}/terminalpp-${PROJECT_VERSION}/stamp.h
+        COMMAND tar -czvf ${CMAKE_BINARY_DIR}/packages/terminalpp-${PROJECT_VERSION}.tar.gz -C ${CMAKE_BINARY_DIR} terminalpp-${PROJECT_VERSION}
+        #COMMAND rm -rf ${CMAKE_BINARY_DIR}/terminalpp-${PROJECT_VERSION}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        DEPENDS terminalpp
+    )
+
+    # tar xf terminalpp-0.6.0.tar.gz
+    # cd terminalpp-0.6.0
+    # dh_make -e zduka@outlook.com -f ../terminalpp-0.6.0.tar.gz
+    # delete the examples
+    #
+    # 
+
 endif()
 
 if(PACKAGE_TERMINALPP AND PACKAGE_RPM AND RENDERER_NATIVE)
