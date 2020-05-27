@@ -10,6 +10,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
+    - uses: ilammy/msvc-dev-cmd@v1
     - name: build-terminalpp
       run: |
         mkdir build
@@ -21,6 +22,17 @@ jobs:
       with:
         name: terminalpp.msi
         path: build/packages/terminalpp.msi
+    - name: terminalpp-msix-sign
+      run: |
+          $pfxPassword = "${{ secrets.TERMINALPP_CERT_PASSWORD }}"
+          $pfx = [Convert]::FromBase64String("${{ secrets. TERMINALPP_CERT }}")
+          [IO.File]::WriteAllBytes("terminalpp-cert.pfx", $pfx)          
+          SignTool sign /fd SHA256 /a /f terminalpp-cert.pfx /p $pfxPassword build/packages/terminalpp.msix
+    - name: artifact-terminalpp-msix
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp.msix
+        path: build/packages/terminalpp.msix
 
   linux:
     runs-on: ubuntu-latest

@@ -77,8 +77,6 @@ add_executable(
     stamp-generator
 	helpers/stamp_generator.cpp
 )
-
-#target_link_libraries(stamp-generator ${CMAKE_THREAD_LIBS_INIT} ${LUTIL})
 if(ARCH_LINUX)
     target_link_libraries(stamp-generator stdc++fs)    
 endif()

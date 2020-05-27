@@ -5,3 +5,6 @@ build-*/
 website/
 stamp.h
 .DS_Store
+terminalpp-cert.pfx
+terminalpp-cert.pfx.base64.txt
+terminalpp-cert.zip
