@@ -256,12 +256,15 @@ if(PACKAGE_TERMINALPP AND PACKAGE_DEB AND RENDERER_NATIVE)
         DEPENDS terminalpp
     )
 
+    # TODO copy & configure the package files - namely control
     # tar xf terminalpp-0.6.0.tar.gz
     # cd terminalpp-0.6.0
     # dh_make -e zduka@outlook.com -f ../terminalpp-0.6.0.tar.gz
     # delete the examples
     #
-    # 
+    # dpkg-buildpackage -b -rfakeroot -us -uc
+    # actually -g for source package, but that fails still 
+    # then -b would make the debian binary package (i.e. I can get rid of cpack)
 
 endif()
 

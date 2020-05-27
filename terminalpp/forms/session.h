@@ -140,7 +140,11 @@ namespace tpp {
                 window_->setFullscreen(true);
             
             versionChecker_ = std::thread{[this](){
-                std::string newVersion = Application::Instance()->checkLatestVersion("edge");
+                std::string channel = Config::Instance().versionCheckChannel();
+                // don't check if empty channel
+                if (channel.empty())
+                    return;
+                std::string newVersion = Application::Instance()->checkLatestVersion(channel);
                 if (!newVersion.empty()) {
                     sendEvent([this, newVersion]() {
                         ErrorDialog * d = new ErrorDialog{STR("New version " << newVersion << " is available")};

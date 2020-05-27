@@ -92,6 +92,12 @@ namespace tpp {
 			TerminalVersion,
 			std::string			
 		);
+        CONFIG_OPTION(
+            versionCheckChannel,
+            "Release channel to be checked for new version upon start. Leave empty (default) if the check should not be performed.",
+            "\"\"",
+            std::string
+        );
 
         /*
 		CONFIG_GROUP(
