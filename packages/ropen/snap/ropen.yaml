@@ -1,8 +1,8 @@
-name: '@PROJECT_NAME@'
+name: 'ropen'
 base: core18
 version: '@PROJECT_VERSION@'
-summary: '@CPACK_PACKAGE_DESCRIPTION_SUMMARY@'
-description: '@CPACK_PACKAGE_DESCRIPTION@'
+summary: '@ROPEN_SUMMARY@'
+description: '@ROPEN_DESCRIPTION@'
 
 grade: devel # switch to stable once tested in the store 
 confinement: classic
@@ -17,7 +17,8 @@ parts:
       - "-DCMAKE_INSTALL_PREFIX=/usr"
       - "-DCMAKE_C_COMPILER=gcc-8"
       - "-DCMAKE_CXX_COMPILER=g++-8"
-      - "-DPACKAGE=ropen"
+      - "-DRENDERER=NONE"
+      - "-DINSTALL=ropen"
     build-packages:
       - g++-8
       - git

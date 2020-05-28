@@ -6,16 +6,18 @@ on:
     - master
 
 jobs:
-  windows:
+  # Builds the packages on Windows
+  #
+  windows-terminalpp:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
     - uses: ilammy/msvc-dev-cmd@v1
-    - name: build-terminalpp
+    - name: build
       run: |
         mkdir build
         cd build
-        cmake .. -DPACKAGE=terminalpp
+        cmake ..
         cmake --build . --clean-first --config Release --target packages
     - name: artifact-terminalpp-msi
       uses: actions/upload-artifact@master
@@ -34,7 +36,7 @@ jobs:
         name: terminalpp.msix
         path: build/packages/terminalpp.msix
 
-  linux:
+  linux-terminalpp-snap:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -44,62 +46,19 @@ jobs:
     - name: install-packages
       run: |
         bash scripts/setup-linux.sh
-    - name: build-terminalpp
+    - name: build
       run: |
         mkdir -p build
         cd build
-        sudo cmake .. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DSNAP_EXTRA_ARGS=--use-lxd -DPACKAGE=terminalpp
-        sudo cmake --build . --target packages
-    - name: artifact-terminalpp-deb
-      uses: actions/upload-artifact@master
-      with:
-        name: terminalpp.deb
-        path: build/packages/terminalpp.deb
-    - name: artifact-terminalpp-rpm
-      uses: actions/upload-artifact@master
-      with:
-        name: terminalpp.rpm
-        path: build/packages/terminalpp.rpm
+        sudo cmake .. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DSNAP_EXTRA_ARGS=--use-lxd -DINSTALL=terminalpp
+        sudo cmake --build . --target terminalpp-snap
     - name: artifact-terminalpp-snap
       uses: actions/upload-artifact@master
       with:
         name: terminalpp.snap
         path: build/packages/terminalpp.snap
-    - name: build-ropen
-      run: |
-        cd build
-        sudo cmake .. -DPACKAGE=ropen
-        sudo cmake --build . --target packages
-    - name: artifact-ropen-deb
-      uses: actions/upload-artifact@master
-      with:
-        name: ropen.deb
-        path: build/packages/ropen.deb
-    - name: artifact-ropen-rpm
-      uses: actions/upload-artifact@master
-      with:
-        name: ropen.rpm
-        path: build/packages/ropen.rpm
-    - name: artifact-ropen-snap
-      uses: actions/upload-artifact@master
-      with:
-        name: ropen.snap
-        path: build/packages/ropen.snap
-    - name: build-tpp-bypass
-      run: |
-        cd build
-        sudo cmake .. -DPACKAGE=tpp-bypass
-        sudo cmake --build . --target packages
-    - uses: actions/upload-artifact@master
-      with:
-        name: tpp-bypass.deb
-        path: build/packages/tpp-bypass.deb
-    - uses: actions/upload-artifact@master
-      with:
-        name: tpp-bypass.rpm
-        path: build/packages/tpp-bypass.rpm
 
-  macOS:
+  macOS-terminalpp:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
@@ -110,11 +69,118 @@ jobs:
       run: |
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE=terminalpp
+        cmake .. -DCMAKE_BUILD_TYPE=Release
         cmake --build . --target packages
-        # build/packages/terminalpp.zip
     - name: artifact-terminalpp-zip
       uses: actions/upload-artifact@master
       with:
         name: terminalpp-macos.zip
         path: build/packages/terminalpp.zip
+
+  linux-ropen-snap:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: install-snapcraft
+      run: |
+        bash scripts/github-actions-install-snapcraft.sh 
+    - name: install-packages
+      run: |
+        bash scripts/setup-linux.sh
+    - name: build
+      run: |
+        mkdir -p build
+        cd build
+        sudo cmake .. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DSNAP_EXTRA_ARGS=--use-lxd -DINSTALL=ropen
+        sudo cmake --build . --target ropen-snap
+    - name: artifact-ropen-snap
+      uses: actions/upload-artifact@master
+      with:
+        name: ropen.snap
+        path: build/packages/ropen.snap
+
+
+#   macOS:
+#     runs-on: macos-latest
+#     steps:
+#     - uses: actions/checkout@v2
+#     - name: install-packages
+#       run: |
+#         bash scripts/setup-macos.sh
+#     - name: build-terminalpp
+#       run: |
+#         mkdir -p build
+#         cd build
+#         cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE=terminalpp
+#         cmake --build . --target packages
+#         # build/packages/terminalpp.zip
+#     - name: artifact-terminalpp-zip
+#       uses: actions/upload-artifact@master
+#       with:
+#         name: terminalpp-macos.zip
+#         path: build/packages/terminalpp.zip
+#
+#  linux-terminalpp-snap:
+#    runs-on: ubuntu-latest
+#    steps:
+#    - uses: actions/checkout@v2
+#    - name: install-snapcraft
+#      run: |
+#        bash scripts/github-actions-install-snapcraft.sh 
+#    - name: install-packages
+#      run: |
+#        bash scripts/setup-linux.sh
+#    - name: build
+#      run: |
+#        mkdir -p build
+#        cd build
+#        sudo cmake .. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DSNAP_EXTRA_ARGS=--use-lxd
+#        sudo cmake --build . --target terminalpp-snap
+#     - name: artifact-terminalpp-deb
+#       uses: actions/upload-artifact@master
+#       with:
+#         name: terminalpp.deb
+#         path: build/packages/terminalpp.deb
+#     - name: artifact-terminalpp-rpm
+#       uses: actions/upload-artifact@master
+#       with:
+#         name: terminalpp.rpm
+#         path: build/packages/terminalpp.rpm
+#    - name: artifact-terminalpp-snap
+#      uses: actions/upload-artifact@master
+#      with:
+#        name: terminalpp.snap
+#        path: build/packages/terminalpp.snap
+#    - name: artifact-ropen-snap
+#      uses: actions/upload-artifact@master
+#      with:
+#        name: ropen.snap
+#        path: build/packages/ropen.snap
+#     - name: build-ropen
+#       run: |
+#         cd build
+#         sudo cmake .. -DPACKAGE=ropen
+#         sudo cmake --build . --target packages
+#     - name: artifact-ropen-deb
+#       uses: actions/upload-artifact@master
+#       with:
+#         name: ropen.deb
+#         path: build/packages/ropen.deb
+#     - name: artifact-ropen-rpm
+#       uses: actions/upload-artifact@master
+#       with:
+#         name: ropen.rpm
+#         path: build/packages/ropen.rpm
+#     - name: build-tpp-bypass
+#       run: |
+#         cd build
+#         sudo cmake .. -DPACKAGE=tpp-bypass
+#         sudo cmake --build . --target packages
+#     - uses: actions/upload-artifact@master
+#       with:
+#         name: tpp-bypass.deb
+#         path: build/packages/tpp-bypass.deb
+#     - uses: actions/upload-artifact@master
+#       with:
+#         name: tpp-bypass.rpm
+#         path: build/packages/tpp-bypass.rpm

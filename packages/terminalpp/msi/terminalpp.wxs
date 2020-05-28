@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-    <Product Name="Terminal++" Id="*" UpgradeCode="3e26832c-a36a-4b82-8432-8908666865be" Language="1033" Codepage="1252" Version="@PROJECT_VERSION@" Manufacturer="@CPACK_PACKAGE_VENDOR@">
+    <Product Name="Terminal++" Id="*" UpgradeCode="3e26832c-a36a-4b82-8432-8908666865be" Language="1033" Codepage="1252" Version="@PROJECT_VERSION@" Manufacturer="@PROJECT_VENDOR@">
         <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine"/>
         <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
         <Icon Id="ProductIcon" SourceFile="@CMAKE_SOURCE_DIR@\resources\icons\icon.ico"/>
@@ -37,7 +37,7 @@
         <DirectoryRef Id="TppProgramFiles">
             <Component Id="TppExe" Guid="*">
                 <!-- TODO the release should not be hardwired here -->
-                <File Id="TppExeFile" Source="@CMAKE_CURRENT_BINARY_DIR@\Release\terminalpp.exe" Name="terminalpp.exe" KeyPath="yes"/>
+                <File Id="TppExeFile" Source="@CMAKE_CURRENT_BINARY_DIR@/msi/terminalpp.exe" Name="terminalpp.exe" KeyPath="yes"/>
             </Component>
         </DirectoryRef>
 

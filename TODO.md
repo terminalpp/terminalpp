@@ -1,25 +1,21 @@
 ﻿The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-## Next version: v0.7
+## Next version: v0.7.1
 
-> This is the next release target and things that have already changed. When released this is copied to the CHANGELOG.md
+Restructured release process and minor fixes:
 
-More robust UI framework, better configuration options and slightly increased security.
-
-- double width and double size fonts dropped from the terminal (not from the UI)
-- history gets resized when terminal gets resized
-- inactive cursor properly displayed
-- modal errors in terminal
-- simpler windows installation package
-- msix installer
+- msix package
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-
 - make sure that AppData and other folders are accessed correctly from msix
 - Ubuntu 20.04 bypass
+- add -DINSTALL=terminalpp/ropen/... selector so that make install can be executed and snaps and others created
+- missing MSI artifact
+- the whole macOS bundle thingy
+
 
 Documentation:
 

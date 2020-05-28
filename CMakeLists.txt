@@ -9,14 +9,22 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.14")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-# The Global Project version
-# ==========================
+# The Global Project and Version
+# ==============================
 #
 # For releasing simplicity, all of the packages follow the terminalpp's version numbering. This is the only place where the version should be changed. It will get updated to the subprojects automatically. 
 set(TPP_VERSION 0.7.0)
-
 # The pseudoproject for the tools defined in this cmake. 
 project(tpp VERSION ${TPP_VERSION})
+
+set(PROJECT_VENDOR "Zduka")
+
+set(TERMINALPP_SUMMARY "Cross-platform terminal emulator.")
+set(TERMINALPP_DESCRIPTION "terminalpp is a minimalist but powerfull terminal emulator which provides the same features and user experience on both Windows, Linux and macOS.")
+
+set(ROPEN_SUMMARY "Remote files opener")
+set(ROPEN_DESCRIPTION "Allows terminal++ sessions to open remote files and view them locally by transmitting the file in the existing terminal connection.")
+
 
 file(GLOB_RECURSE ALL_SOURCES 
   "helpers/*.h"
@@ -44,6 +52,34 @@ file(GLOB_RECURSE ALL_SOURCES
 # and stamp generation macros
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/helpers.cmake)
 
+
+# Renderer
+# ========
+#
+# NATIVE, QT, or NONE. 
+
+if(NOT DEFINED RENDERER)
+    if(ARCH_MACOS)
+        set(RENDERER QT)
+    else()
+        set(RENDERER NATIVE)
+    endif()
+endif()
+
+# check correct renderer value and determine the shortcut variables
+if(RENDERER STREQUAL NATIVE)
+    set(RENDERER_NATIVE true)
+    add_definitions(-DRENDERER_NATIVE)
+elseif(RENDERER STREQUAL QT)
+    set(RENDERER_QT true)
+    add_definitions(-DRENDERER_QT)
+elseif(RENDERER STREQUAL NONE)
+    set(RENDERER_NONE true)
+else()
+    message(FATAL_ERROR "Unknown renderer ${RENDERER}")
+endif()
+message(STATUS "Renderer: ${RENDERER}")
+
 if(ARCH_WINDOWS)
     cmake_minimum_required (VERSION 3.15)
     message(STATUS "MSVC Runtime will be linked statically")    
@@ -52,70 +88,6 @@ endif()
 # by this all subprojects are addressabe from the source root
 include_directories(${CMAKE_SOURCE_DIR})
 
-# Package Generation
-# ==================
-#
-# The main project sets up the package generation global settings and searches for all the supported generators. The subprojects, if they are selected by the -DPACKAGE setting use this information to build their own supported packages. 
-#
-# If no -DPACKAGE argument was provided, terminalpp is selected by default as a package generating project. 
-if(NOT DEFINED PACKAGE)
-    set(PACKAGE terminalpp)
-endif()
-
-# The supplied PACKAGE value is checked and the shorthand value for the selected project is set.
-if(PACKAGE STREQUAL terminalpp)
-    set(PACKAGE_TERMINALPP true)
-elseif(PACKAGE STREQUAL ropen)
-    set(PACKAGE_ROPEN true)
-elseif(PACKAGE STREQUAL tpp-bypass)
-    set(PACKAGE_BYPASS true)
-else()
-    message(FATAL_ERROR "Invalid value of PACKAGE: ${PACKAGE}")
-endif()
-message(STATUS "packages: configuring for ${PACKAGE}")
-
-# Generial CPACK variables are set here (such as package name, version, maintainer, license, etc.). The rest of the CPACK values must be set in the respective subprojects within PARENT_SCOPE for the build script to work.  
-set(CPACK_PACKAGE_NAME ${PACKAGE})
-set(CPACK_PACKAGE_VERSION ${TPP_VERSION})
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
-set(CPACK_PACKAGE_VENDOR "Zduka")
-set(CPACK_PACKAGE_CONTACT "zduka <zduka@outlook.com>")
-# rpm specific
-set(CPACK_RPM_PACKAGE_RELEASE 1)
-set(CPACK_RPM_PACKAGE_LICENSE "MIT")
-
-# The supported package generators are now checked. On UNIX systems we check for deb, rpm and snap package generators, on Windows the WIX toolset is searched for. If found, the PACKAGE_xxx variable is set, where xxx is the found packaging tool (DEB, RPM, SNAP, WIX)
-if(ARCH_LINUX)
-    find_program(PACKAGE_DEB "dpkg")
-    if(PACKAGE_DEB)
-        message(STATUS "packages: dpkg found in ${PACKAGE_DEB}")
-    endif()
-    find_program(PACKAGE_RPM "rpmbuild")
-    if(PACKAGE_RPM)
-        message(STATUS "packages: rpmbuild found in ${PACKAGE_RPM}")
-    endif()
-    find_program(PACKAGE_SNAP snapcraft)
-    if(PACKAGE_SNAP)
-        message(STATUS "packages: snapcraft found in ${PACKAGE_SNAP}")
-    endif()
-elseif(ARCH_WINDOWS)
-    if($ENV{WIX})
-        set(PACKAGE_WIX $ENV{WIX})
-    else()
-        file(GLOB PACKAGE_WIX "C:/Program Files*/WiX Toolset v*/bin")
-    endif()
-    if(PACKAGE_WIX)
-        message(STATUS "packages: wix found in ${PACKAGE_WIX}")
-    endif()
-    find_program(PACKAGE_MSIX MakeAppx.exe)
-    if (PACKAGE_MSIX)
-        message(STATUS "packages: MakeAppx.exe found in ${PACKAGE_MSIX}")
-    endif()
-elseif(ARCH_MACOS)
-    set(PACKAGE_APPBUNDLE true)
-    message(STATUS "packages: macOS appbundles can be created")
-endif()
-
 # Subprojects
 # ===========
 #
@@ -123,17 +95,15 @@ endif()
 if(PACKAGE_BYPASS OR PACKAGE_TERMINALPP)
     add_subdirectory("tpp-bypass")
 endif()
-if(PACKAGE_ROPEN OR PACKAGE_TERMINALPP)
-    add_subdirectory("tpp-lib")
-    add_subdirectory("ropen")
-endif()
-if(PACKAGE_TERMINALPP)
-    add_subdirectory("ui")
-    add_subdirectory("ui-terminal")
-    add_subdirectory("docs")
-    add_subdirectory("tests")
-    add_subdirectory("terminalpp")
-endif()
+add_subdirectory("tpp-lib")
+add_subdirectory("ropen")
+add_subdirectory("ui")
+add_subdirectory("ui-terminal")
+add_subdirectory("docs")
+add_subdirectory("tests")
+add_subdirectory("terminalpp")
+
+add_subdirectory("packages")
 
 # Other tools
 # ===========
@@ -214,54 +184,54 @@ endif()
 # ==========================
 #
 # Detect if the selected package subproject produced any of the supported packages and if so update the target dependencies and cpack generators accordingly (i.e. add respective cpack generators, or if cpack is not used, add the dependency on the target that produces the package).
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages)
-add_custom_target(packages)
-set_target_properties(packages PROPERTIES EXCLUDE_FROM_ALL TRUE)
-if(ARCH_LINUX)
-    if(PACKAGE_DEB AND DEFINED CPACK_DEBIAN_PACKAGE_DEPENDS)
-        message(STATUS "packages: deb package configured for ${PACKAGE}")
-        set(CPACK_GENERATOR "${CPACK_GENERATOR}DEB;")
-        add_dependencies(packages package-build)
-    endif()
-    if(PACKAGE_RPM AND DEFINED CPACK_RPM_PACKAGE_REQUIRES)
-        message(STATUS "packages: rpm package configured for ${PACKAGE}")
-        set(CPACK_GENERATOR "${CPACK_GENERATOR}RPM;")
-        add_dependencies(packages package-build)
-    endif()
-    if(TARGET package-snap)
-        message(STATUS "packages: snap package configured for ${PACKAGE}")
-        set_target_properties(package-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(packages package-snap)
-    endif()
-elseif(ARCH_WINDOWS)
-    if(TARGET package-msi)
-        message(STATUS "packages: msi installer configured for ${PACKAGE}")
-        set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(packages package-msi)
-    endif()
-    if(TARGET package-msix)
-        message(STATUS "packages: msix installer configured for ${PACKAGE}")
-        set_target_properties(package-msix PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(packages package-msix)
-    endif()
-elseif(ARCH_MACOS)
-    if(TARGET package-appbundle)
-        message(STATUS "packages: appbundle will be created for ${PACKAGE}")
-        set_target_properties(package-appbundle PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        add_dependencies(packages package-appbundle)
-    endif()
-endif()
+#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages)
+#add_custom_target(packages)
+#set_target_properties(packages PROPERTIES EXCLUDE_FROM_ALL TRUE)
+#if(ARCH_LINUX)
+#    if(PACKAGE_DEB AND DEFINED CPACK_DEBIAN_PACKAGE_DEPENDS)
+#        message(STATUS "packages: deb package configured for ${PACKAGE}")
+#        set(CPACK_GENERATOR "${CPACK_GENERATOR}DEB;")
+#        add_dependencies(packages package-build)
+#    endif()
+#    if(PACKAGE_RPM AND DEFINED CPACK_RPM_PACKAGE_REQUIRES)
+#        message(STATUS "packages: rpm package configured for ${PACKAGE}")
+#        set(CPACK_GENERATOR "${CPACK_GENERATOR}RPM;")
+#        add_dependencies(packages package-build)
+#    endif()
+#    if(TARGET package-snap)
+#        message(STATUS "packages: snap package configured for ${PACKAGE}")
+#        set_target_properties(package-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
+#        add_dependencies(packages package-snap)
+#    endif()
+#elseif(ARCH_WINDOWS)
+#    if(TARGET package-msi)
+#        message(STATUS "packages: msi installer configured for ${PACKAGE}")
+#        set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
+#        add_dependencies(packages package-msi)
+#    endif()
+#    if(TARGET package-msix)
+#        message(STATUS "packages: msix installer configured for ${PACKAGE}")
+#        set_target_properties(package-msix PROPERTIES EXCLUDE_FROM_ALL TRUE)
+#        add_dependencies(packages package-msix)
+#    endif()
+#elseif(ARCH_MACOS)
+#    if(TARGET package-appbundle)
+#        message(STATUS "packages: appbundle will be created for ${PACKAGE}")
+#        set_target_properties(package-appbundle PROPERTIES EXCLUDE_FROM_ALL TRUE)
+#        add_dependencies(packages package-appbundle)
+#    endif()
+#endif()
 
 # there is an issue with CMake that does not allow targets depend on special targets such as package. This workaround simply creates a package-build target which explicitly builds the packages by calling cmake. But since it is a user target we can then depend on it
-add_custom_target(package-build
-    COMMAND "${CMAKE_COMMAND}" --build . --target package
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    COMMENT "Building CPack packages"
-    DEPENDS ${PACKAGE}
-    VERBATIM
-)
-set_target_properties(package-build PROPERTIES EXCLUDE_FROM_ALL TRUE)
+#add_custom_target(package-build
+#    COMMAND "${CMAKE_COMMAND}" --build . --target package
+#    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+#    COMMENT "Building CPack packages"
+#    DEPENDS ${PACKAGE}
+#    VERBATIM
+#)
+#set_target_properties(package-build PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 # Finally, include cpack and set its output directory
-set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")
-include(CPack)
+#set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")
+#include(CPack)

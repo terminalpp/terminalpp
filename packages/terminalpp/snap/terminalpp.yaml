@@ -1,8 +1,8 @@
-name: '@PROJECT_NAME@'
+name: 'terminalpp'
 base: core18
 version: '@PROJECT_VERSION@'
-summary: '@CPACK_PACKAGE_DESCRIPTION_SUMMARY@'
-description: '@CPACK_PACKAGE_DESCRIPTION@'
+summary: '@TERMINALPP_SUMMARY@'
+description: '@TERMINALPP_DESCRIPTION@'
 
 grade: devel # switch to stable once tested in the store 
 confinement: classic
@@ -17,7 +17,8 @@ parts:
       - "-DCMAKE_INSTALL_PREFIX=/usr"
       - "-DCMAKE_C_COMPILER=gcc-8"
       - "-DCMAKE_CXX_COMPILER=g++-8"
-      - "-DTPP_DESKTOP_ICON=/usr/share/icons/hicolor/256x256/apps/terminalpp.png"
+      - "-DTERMINALPP_DESKTOP_ICON=/usr/share/icons/hicolor/256x256/apps/terminalpp.png"
+      - "-DINSTALL=terminalpp"
     build-packages:
       - g++-8
       - libx11-dev
@@ -34,10 +35,6 @@ parts:
       - libxft2
       - libxrender1
       - x11-utils
-#    override-pull: |
-#      snapcraftctl pull
-#      # Point icon to the correct location
-#      sed -i -e 's|Icon=terminalpp.png|Icon=/usr/share/icons/hicolor/256x256/apps/terminalpp.png|g' resources/terminalpp.desktop      
 
 apps:
   terminalpp:

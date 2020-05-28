@@ -1,9 +1,9 @@
 [Desktop Entry]
 Name=terminalpp
 Exec=terminalpp
-Icon=@TPP_DESKTOP_ICON@
+Icon=@TERMINALPP_DESKTOP_ICON@
 Type=Application
 Terminal=false
 Categories=System;TerminalEmulator;
 GenericName=Terminal
-Comment=@TPP_SUMMARY@
+Comment=@TERMINALPP_SUMMARY@

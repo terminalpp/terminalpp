@@ -16,7 +16,7 @@
     <Properties>
         <DisplayName>Terminalpp</DisplayName>
         <PublisherDisplayName>Zduka</PublisherDisplayName>
-        <Description>@TPP_DESCRIPTION@</Description>
+        <Description>@TERMINALPP_SUMMARY@</Description>
         <Logo>Assets/icons/icon_256x256.png</Logo>
     </Properties>
     <Resources>
@@ -34,8 +34,8 @@
             Executable="VFS/terminalpp.exe" 
             EntryPoint="Windows.FullTrustApplication">
             <uap:VisualElements 
-                DisplayName="terminalpp" 
-                Description="@TPP_SUMMARY@"	
+                DisplayName="Terminal++" 
+                Description="@TERMINALPP_SUMMARY@"	
                 Square150x150Logo="Assets/icons/icon_128x128.png"
 				Square44x44Logo="Assets/icons/icon_48x48.png"
                 BackgroundColor="#000000" 
