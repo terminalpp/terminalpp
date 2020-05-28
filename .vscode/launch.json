@@ -20,7 +20,7 @@
             "name": "(linux) terminalpp",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/terminalpp/terminalpp",
+            "program": "${workspaceFolder}/build-g++-8/terminalpp/terminalpp",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

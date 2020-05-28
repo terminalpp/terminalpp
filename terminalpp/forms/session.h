@@ -33,6 +33,21 @@ namespace tpp {
         Label * contents_;
     };
 
+    /** New Version Dialog. 
+     */
+    class NewVersionDialog : public ui::Dialog::Cancel {
+    public:
+        NewVersionDialog(std::string const & message):
+            Dialog::Cancel{"New Version", /* deleteOnDismiss */ true},
+            contents_{new Label{message}} {
+            setBody(contents_);
+        }
+
+    private:
+        Label * contents_;
+    };
+
+
     /** Paste confirmation dialog. 
      */
     class PasteDialog : public ui::Dialog::YesNoCancel {
@@ -147,7 +162,7 @@ namespace tpp {
                 std::string newVersion = Application::Instance()->checkLatestVersion(channel);
                 if (!newVersion.empty()) {
                     sendEvent([this, newVersion]() {
-                        ErrorDialog * d = new ErrorDialog{STR("New version " << newVersion << " is available")};
+                        NewVersionDialog * d = new NewVersionDialog{STR("New version " << newVersion << " is available")};
                         notifications_->add(d);
                     });
                 }

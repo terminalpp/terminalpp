@@ -99,11 +99,17 @@ namespace ui {
 
         /** Sets the overlay of the widget. 
 
-            If the parent of the child is overlaid itself, then all its children are overlaid regardless of the value.  
+            If the parent of the child is overlaid itself, then all its children are overlaid regardless of the value so when overlaid changes, the child must be relayouted as well to propagate this change. 
+
+            TODO This means that we have multiple children overlays per relayout since the resize can relayout first, and then another relayout will occur if the overlay changes. This can be simplified by buffering the overlays on the widgets. 
          */
         void setChildOverlay(Widget * child, bool value) {
             value = value || child->parent()->overlaid_; 
-            child->overlaid_ = value;
+            if (child->overlaid_ != value) {
+                child->overlaid_ = value;
+                child->pendingRelayout_ = true;
+                child->calculateLayout();
+            }
         }
 
         /** Requests the attached container to relayout itself. 

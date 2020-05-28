@@ -99,7 +99,8 @@ namespace tpp {
             std::string
         );
 
-        /*
+        /** TODO the log version has been kept for backwards compatibility, currently does not work. 
+         */
 		CONFIG_GROUP(
 			log,
 		    "Log Properties", 
@@ -116,7 +117,6 @@ namespace tpp {
 			    unsigned
 			);
 		);
-        */
 
 		CONFIG_GROUP(
 			renderer, 

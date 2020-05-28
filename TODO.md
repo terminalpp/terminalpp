@@ -17,12 +17,7 @@ More robust UI framework, better configuration options and slightly increased se
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- configuration settings will determine the channel which to check for new versions
-- display the notification always? or dismiss for given version? 
-- add timeouts for notifications ? 
-- add styling to dialogs (error, warning, notice, primary, a la bootstrap)
 
-- logging to files
 - make sure that AppData and other folders are accessed correctly from msix
 - Ubuntu 20.04 bypass
 
@@ -65,6 +60,7 @@ Issues to be raised:
 
 ### v0.8
 
+- logging 
 - some basic styling for the GUI via a style object, similar to CSS?, more powerful buttons & labels
 - color for dimming disabled terminal (via styling)
 - scrollview, tooltips, shortcuts and actions and some more UI elements
@@ -73,6 +69,7 @@ Issues to be raised:
 - keyboard focus with tabIndices (this means that the getNextFocusableWidget has to be patched to look for the focusable widgets according to their indices instead of position in the children vector)
 
 - WidgetBorder should only require repaint of children that interfere with the border (can be calculated from their visible rects)
+- buffering relayouts (see Layout::setChildOverlay)
 
 - geometry.h is areally bad name for some of the classes defined therein
 

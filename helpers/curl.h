@@ -18,7 +18,7 @@ namespace helpers {
 #if (ARCH_WINDOWS)
         return Exec(Command{"powershell.exe", { STR("(curl " << url << " -UseBasicParsing).Content")}}, "");
 #elif (ARCH_UNIX)
-        return Exec(Command{"curl", {"-i", url}}, "");
+        return Exec(Command{"curl", {"-s", url}}, "");
 #endif
     }
 
