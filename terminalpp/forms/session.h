@@ -218,13 +218,15 @@ namespace tpp {
             if (window_->icon() != Window::Icon::Default)
                 window_->setIcon(Window::Icon::Default);
             // trigger paste event for ourselves so that the paste can be intercepted
-            if (*e == (Key::V + Key::Ctrl + Key::Shift)) {
+            if (*e == SHORTCUT_PASTE) {
                 requestClipboard();
                 e.stop();
-            } else if (*e == (Key::F1 + Key::Alt)) {
+            } else if (*e == SHORTCUT_ABOUT) {
                 AboutBox * ab = new AboutBox();
                 modalPane_->add(ab);
                 e.stop();
+            } else if (*e == SHORTCUT_SETTINGS) {
+                Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit */ true); 
             }
         }
 

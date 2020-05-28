@@ -46,14 +46,14 @@ jobs:
         name: tpp-bypass-ubuntu-18.04
         path: build-ubuntu-18-04/tpp-bypass/tpp-bypass
     # bypass - Ubuntu 20.04
-    - name: build-bypass-ubuntu-2004
-      run: |
-        wsl.exe -d Ubuntu-20.04 bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh ubuntu-20-04"
-    - name: artifact-tpp-bypass-ubuntu-20.04
-      uses: actions/upload-artifact@master
-      with:
-        name: tpp-bypass-ubuntu-20.04
-        path: build-ubuntu-20-04/tpp-bypass/tpp-bypass
+    #- name: build-bypass-ubuntu-2004
+    #  run: |
+    #    wsl.exe -d Ubuntu-20.04 bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh ubuntu-20-04"
+    #- name: artifact-tpp-bypass-ubuntu-20.04
+    #  uses: actions/upload-artifact@master
+    #  with:
+    #    name: tpp-bypass-ubuntu-20.04
+    #    path: build-ubuntu-20-04/tpp-bypass/tpp-bypass
     # bypass - Debian
     - name: build-bypass-debian
       run: |
@@ -200,10 +200,10 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: tpp-bypass-ubuntu-18.04
-    - name: get-tpp-bypass-ubuntu-20.04
-      uses: actions/download-artifact@v1
-      with:
-        name: tpp-bypass-ubuntu-20.04
+    #- name: get-tpp-bypass-ubuntu-20.04
+    #  uses: actions/download-artifact@v1
+    #  with:
+    #    name: tpp-bypass-ubuntu-20.04
     - name: get-tpp-bypass-debian
       uses: actions/download-artifact@v1
       with:
@@ -288,13 +288,13 @@ jobs:
         asset_path: ./tpp-bypass-ubuntu-18.04/tpp-bypass
         asset_name: tpp-bypass-Ubuntu-18.04
         asset_content_type: application/octet-stream
-    - name: upload-tpp-bypass-ubuntu-20.04
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./tpp-bypass-ubuntu-20.04/tpp-bypass
-        asset_name: tpp-bypass-Ubuntu-20.04
-        asset_content_type: application/octet-stream
+    #- name: upload-tpp-bypass-ubuntu-20.04
+    #  uses: actions/upload-release-asset@v1
+    #  with:
+    #    upload_url: ${{ steps.create-release.outputs.upload_url }}
+    #    asset_path: ./tpp-bypass-ubuntu-20.04/tpp-bypass
+    #    asset_name: tpp-bypass-Ubuntu-20.04
+    #    asset_content_type: application/octet-stream
     - name: upload-tpp-bypass-debian
       uses: actions/upload-release-asset@v1
       with:
