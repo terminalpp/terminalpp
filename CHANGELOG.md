@@ -5,6 +5,22 @@ layout: titled
 
 Lists the most important improvements for recent `terminalpp` versions.
 
+### 0.7.0
+
+This is huge core refactoring, more robust UI framework, better configuration options and slightly increased security. Most of the changes are under the hood and should not be visible to users.
+
+Notable changes:
+
+- breaking changes in the remote files protocol, the corresponding version of `ropen` must be used!
+- double width and double size fonts dropped from the terminal (not from the UI)
+- history gets resized when terminal gets resized
+- inactive cursor properly displayed
+- modal errors in terminal
+- simpler windows installation package
+- optional new version checks
+
+> Note that due to the extensive changes in the core architecture, there may be new errors compared to version 0.6.0. If you encounter any of these, please fill in a bug report and if it is a showstopper, consider temporarily downgrading to 0.6.0. 
+
 ### v0.6 - Cummulative
 
 This is a cummulative release before switching to the simpler UI framework currently in development. 

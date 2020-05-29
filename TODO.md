@@ -11,6 +11,12 @@ Restructured release process and minor fixes:
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- release packages to snap and Windows store
+- create Debian source package (terminalpp, ropen)
+- build deb package as artifact
+- upload to ppa ? 
+- update the website ? 
+
 Documentation:
 
 - write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
