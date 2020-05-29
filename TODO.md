@@ -5,17 +5,11 @@
 Restructured release process and minor fixes:
 
 - msix package
+- Ubuntu 20.04 bypass
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
-
-- make sure that AppData and other folders are accessed correctly from msix
-- Ubuntu 20.04 bypass
-- add -DINSTALL=terminalpp/ropen/... selector so that make install can be executed and snaps and others created
-- missing MSI artifact
-- the whole macOS bundle thingy
-
 
 Documentation:
 

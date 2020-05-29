@@ -5,6 +5,10 @@ on:
     branch:
     - master
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ROOT: /mnt/c/Users/peta/actions-runner/_work/terminalpp/terminalpp
+
 jobs:
   # Builds the packages on Windows
   #
@@ -98,6 +102,51 @@ jobs:
       with:
         name: ropen.snap
         path: build/packages/ropen.snap
+  
+  wsl-tpp-bypass:
+    runs-on: [self-hosted, windows]
+    steps:
+    - uses: actions/checkout@v2
+    - name: check-wsl
+      run: |
+        wsl.exe --list
+      shell: powershell
+    # Ubuntu 18.04
+    - name: build-bypass-ubuntu-18.04
+      run: |
+        wsl.exe -d Ubuntu bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh ubuntu-18-04"
+    - name: artifact-tpp-bypass-ubuntu-18.04
+      uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass-ubuntu-18.04
+        path: build-ubuntu-18-04/tpp-bypass/tpp-bypass
+    # bypass - Ubuntu 20.04
+    - name: build-bypass-ubuntu-20.04
+      run: |
+        wsl.exe -d Ubuntu-20.04 bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh ubuntu-20-04"
+    - name: artifact-tpp-bypass-ubuntu-20.04
+      uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass-ubuntu-20.04
+        path: build-ubuntu-20-04/tpp-bypass/tpp-bypass
+    # Debian
+    - name: build-bypass-debian
+      run: |
+        wsl.exe -d Debian bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh debian"
+    - name: artifact-tpp-bypass-debian
+      uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass-debian
+        path: build-Debian/tpp-bypass/tpp-bypass
+    # openSUSE-Leap
+    - name: build-bypass-suse-Leap-15-1
+      run: |
+        wsl.exe -d openSUSE-Leap-15-1 bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh leap-15-1"
+    - name: artifact-tpp-bypass-openSUSE-Leap-15-1
+      uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass-openSUSE-Leap-15-1
+        path: build-leap-15-1/tpp-bypass/tpp-bypass
 
 
 #   macOS:

@@ -12,7 +12,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/terminalpp/tpp/badge.svg?branch=master)](https://coveralls.io/github/terminalpp/terminalpp?branch=master)
 
 
-> Please note that `terminalpp` is in an  alpha stage and there may (and will) be rough edges. That said, it has been used by a few people as their daily driver with only minor issues. If you encounter a problem, please file an issue!
+> Please note that `terminalpp` is in an alpha stage and there may (and will) be rough edges. That said, it has been used by a few people as their daily driver with only minor issues. If you encounter a problem, please file an issue!
 
 This is the main development repository for the `terminalpp` and its suppport repositories. For more details about how to install `terminalpp` on your machine please visit the [homepage](https://terminalpp.com). This readme provides information on how to build the repository from source only. 
 
@@ -73,14 +73,17 @@ If QT is not found, try adding adding the following to the cmake command `-DCMAK
 
 # Building Installation Packages
 
-Use the `packages` target and `-DPACKAGE=xxx` `cmake` configuration option to determine which packages should be bold (`xxx` can be `terminalpp` (default), `ropen`, or `tpp-bypass`). 
+Use the `packages` target and `-DINSTALL=xxx` `cmake` configuration option to determine which packages should be built (`xxx` can be `terminalpp` (default), `ropen`, or `tpp-bypass`). 
 
-Depending on the availability of the packaging tools (WIX, rpmbuild, snapcraft, etc.) the respective packages will be created in the `packages` directory inside the build. 
+Depending on the availability of the packaging tools (WiX, MakeAppx.exe, rpmbuild, snapcraft, etc.) the respective packages will be created in the `packages` directory inside the build. 
 
 > For more details see the github action `packages`.
 
 ## Manual installation
 
-Once the package to be creates has been selected via `-DPACKAGE_INSTALL` (or left default), the default `install` target can be used to install the respective applications (Linux only):
+Once the package to be created has been selected via `-DINSTALL=xxx`, the default `install` target can be used to install the respective applications (Linux only):
 
     sudo cmake --build . --target install
+
+
+

@@ -9,14 +9,8 @@ if(ARCH_LINUX)
     add_executable(tpp-bypass ${SRC})
     target_link_libraries(tpp-bypass ${CMAKE_THREAD_LIBS_INIT} ${LUTIL})
 
-    if(PACKAGE_BYPASS)
+    if(INSTALL STREQUAL tpp-bypass)
         install(TARGETS tpp-bypass DESTINATION bin COMPONENT tpp-bypass)
-        # cpack settings - generic
-        set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "ConPTY Bypass." PARENT_SCOPE)
-        set(CPACK_PACKAGE_DESCRIPTION "Bypasses terminal IO to standard input and output to bypass the ConPTY on Windows when WSL is used. " PARENT_SCOPE)
-        set(CPACK_DEBIAN_PACKAGE_DEPENDS "" PARENT_SCOPE)
-        set(CPACK_RPM_PACKAGE_REQUIRES "" PARENT_SCOPE)
-        set(CPACK_PACKAGE_DEBIAN_SECTION "utils" PARENT_SCOPE)
     endif()
 
 endif()
