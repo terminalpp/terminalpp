@@ -225,8 +225,8 @@ namespace tpp {
         if (k >= '0' && k <= '9')
             return Key(k, modifiers);
         // numpad
-        if (k >= XK_0 && k <= XK_9)
-            return Key(Key::Numpad0 + k - XK_0, modifiers);
+        if (k >= XK_KP_0 && k <= XK_KP_9)
+            return Key(Key::Numpad0 + k - XK_KP_0, modifiers);
         // fn keys
         if (k >= XK_F1 && k <= XK_F12)
             return Key(Key::F1 + k - XK_F1, modifiers);
@@ -246,24 +246,34 @@ namespace tpp {
             case XK_space:
                 return Key(Key::Space, modifiers);
             case XK_Page_Up:
+            case XK_KP_Page_Up:
                 return Key(Key::PageUp, modifiers);
             case XK_Page_Down:
+            case XK_KP_Page_Down:
                 return Key(Key::PageDown, modifiers);
             case XK_End:
+            case XK_KP_End:
                 return Key(Key::End, modifiers);
             case XK_Home:
+            case XK_KP_Home:
                 return Key(Key::Home, modifiers);
             case XK_Left:
+            case XK_KP_Left:
                 return Key(Key::Left, modifiers);
             case XK_Up:
+            case XK_KP_Up:
                 return Key(Key::Up, modifiers);
             case XK_Right:
+            case XK_KP_Right:
                 return Key(Key::Right, modifiers);
             case XK_Down:
+            case XK_KP_Down:
                 return Key(Key::Down, modifiers);
             case XK_Insert:
+            case XK_KP_Insert:
                 return Key(Key::Insert, modifiers);
             case XK_Delete:
+            case XK_KP_Delete:
                 return Key(Key::Delete, modifiers);
             case XK_Menu:
                 return Key(Key::Menu, modifiers);
