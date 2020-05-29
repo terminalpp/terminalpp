@@ -468,7 +468,7 @@ namespace helpers {
 					argValue = argv[i];
 				}
 				// parse the value
-				arg->second->parse(argValue);
+				arg->second->parse(argValue == nullptr ? "" : argValue);
 				++i;
 				if (arg->second->isLastArgument()) {
 					while (i < argc) 

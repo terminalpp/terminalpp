@@ -1,15 +1,17 @@
 # Contributing to *Terminal++*
 
-Thank you for your interest in `tpp`!
+Thank you for your interest in `terminalpp`!
 
 ## Reporting Bugs
 
-Please use the issue tracker at Github for this (make sure to indicate the issue is labelled as *bug*). Make sure that the issue is reasonably minimal and reproducible, i.e. provide set of steps that recreate the bug. Make sure to specify your operating system and the precise version of `tpp` used (this can be obtained by running `tpp --version`). Also add the relevant settings of the configuration file. 
+Please use the issue tracker at Github for this (make sure to indicate the issue is labelled as *bug*). Make sure that the issue is reasonably minimal and reproducible, i.e. provide set of steps that recreate the bug. Make sure to specify your operating system and the precise version of `terminalpp` used (this can be obtained by running `terminalpp --version`). Also add the relevant settings of the configuration file. 
+
+> Alternatively, hitting `Alt+F1` in terminalpp displays the same version information.
 
 ## Requesting New Features
 
-If there is a feature you would like `tpp` to support, please use the issues on Github as well, explain the feature you want in enough detail and label the issue as *enhancement*. 
+If there is a feature you would like `terminalpp` to support, please use the issues on Github as well, explain the feature you want in enough detail and label the issue as *enhancement*. 
 
 ## Fixing Bugs & Implementing New Features
 
-For both, please use pull requests. Make sure that a corresponding issue exists and in case of enhancements that the issue was reviewed by `tpp` authors and approved. 
+For both, please use pull requests. Make sure that a corresponding issue exists and in case of enhancements that the issue was reviewed by `terminalpp` authors and approved. 

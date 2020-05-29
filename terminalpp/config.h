@@ -345,6 +345,7 @@ namespace tpp {
 			if (argc == 1)
 			    return;
 			helpers::JSONArguments args{};
+            args.addArgument("Version", {"--version"}, version, /* expectsValue */ false);
 #if (defined ARCH_WINDOWS)
 			args.addArgument("Pty", {"--pty"}, session.pty);
 #endif
@@ -354,7 +355,7 @@ namespace tpp {
 			args.addArgument("Font Family", {"--font",}, font.family);
 			args.addArgument("Font Size", {"--font-size"}, font.size);
 			//args.addArgument("Log File", {"--log-file"}, session.log);
-			args.addArrayArgument("Command", {"-e"}, session.command, true);
+			args.addArrayArgument("Command", {"-e"}, session.command, /* isLast */ true);
 			// once built, parse the command line
 			args.parse(argc, argv);
 		}

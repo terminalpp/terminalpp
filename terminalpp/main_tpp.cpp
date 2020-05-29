@@ -84,7 +84,19 @@ int main(int argc, char* argv[]) {
 	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 #endif
     try {
-        tpp::Config::Setup(argc, argv);
+        tpp::Config & config = tpp::Config::Setup(argc, argv);
+        if (config.version.specified() && config.version().empty()) {
+            std::cout << "Terminal++ version " << stamp::version << std::endl;
+            std::cout << "    commit: " << stamp::commit << (stamp::dirty ? "*" : "") << std::endl;
+            std::cout << "            " << stamp::build_time << std::endl;
+#if (defined RENDERER_QT)
+            std::cout << "    platform: " << ARCH << "(Qt) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
+#else
+            std::cout << "    platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
+#endif
+            return EXIT_SUCCESS;
+        }
+
         //helpers::JSON versions{tpp::Application::Instance()->checkLatestVersion("edge")};        
 
 		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
