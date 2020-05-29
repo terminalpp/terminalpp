@@ -30,6 +30,23 @@ namespace tpp {
 
     // Sequence
 
+    std::string Sequence::PrettyPrint(char const * start, size_t size) {
+        std::stringstream result;
+        for (char const * i = start, * e = start + size; i < e; ++i) {
+            switch (*i) {
+                case Char::ESC:
+                    result << "\\ESC";
+                    break;
+                case Char::BEL:
+                    result << "\\BEL";
+                    break;
+                default:
+                    result << *i;
+            }
+        }
+        return result.str();
+    }
+
     char const * Sequence::FindSequenceStart(char const * buffer, char const * bufferEnd) {
         while (buffer != bufferEnd) {
             if (*buffer == '\033') {

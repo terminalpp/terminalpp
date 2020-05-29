@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
 		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 
 			helpers::Log::Default(),
 			ui::AnsiTerminal::SEQ_ERROR,
-			ui::AnsiTerminal::SEQ_UNKNOWN,
+			ui::AnsiTerminal::SEQ_UNKNOWN
 		});
 		LOG() << "t++ started";
 

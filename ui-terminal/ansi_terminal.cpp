@@ -140,6 +140,7 @@ namespace ui {
     helpers::Log AnsiTerminal::SEQ_UNKNOWN("VT100_UNKNOWN_");
     helpers::Log AnsiTerminal::SEQ_ERROR("VT100_ERROR_");
     helpers::Log AnsiTerminal::SEQ_WONT_SUPPORT("VT100_WONT_SUPPORT_");
+    helpers::Log AnsiTerminal::SEQ_SENT("VT100_SENT_");
 
     std::unordered_map<Key, std::string> AnsiTerminal::KeyMap_(InitializeVT100KeyMap());
 
@@ -246,11 +247,11 @@ namespace ui {
 
     void AnsiTerminal::paste(std::string const & contents) {
         if (bracketedPaste_) {
-            pty_->send("\033[200~", 6);
-            pty_->send(contents.c_str(), contents.size());
-            pty_->send("\033[201~", 6);
+            send("\033[200~", 6);
+            send(contents.c_str(), contents.size());
+            send("\033[201~", 6);
         } else {
-            pty_->send(contents.c_str(), contents.size());
+            send(contents.c_str(), contents.size());
         }
     }
 
@@ -305,8 +306,8 @@ namespace ui {
     void AnsiTerminal::mouseMove(Event<MouseMoveEvent>::Payload & event) {
         Widget::mouseMove(event);
         if (event.active() &&
-            mouseMode_ != MouseMode::Off &&
-            (mouseMode_ != MouseMode::ButtonEvent || mouseButtonsDown_ != 0) &&
+            // the mouse movement should actually be reported
+            (mouseMode_ == MouseMode::All || (mouseMode_ == MouseMode::ButtonEvent && mouseButtonsDown_ > 0)) && 
             // only send the mouse information if the mouse is in the range of the window
             Rect::FromWH(width(), height()).contains(event->coords)) {
                 // mouse move adds 32 to the last known button press
@@ -395,7 +396,7 @@ namespace ui {
 				buffer[3] = button & 0xff;
 				buffer[4] = static_cast<char>(coords.x());
 				buffer[5] = static_cast<char>(coords.y());
-				pty_->send(buffer, 6);
+				send(buffer, 6);
 				break;
 			}
 			case MouseEncoding::UTF8: {
@@ -404,7 +405,7 @@ namespace ui {
 			}
 			case MouseEncoding::SGR: {
 				std::string buffer = STR("\033[<" << button << ';' << coords.x() << ';' << coords.y() << end);
-				pty_->send(buffer.c_str(), buffer.size());
+				send(buffer.c_str(), buffer.size());
 				break;
 			}
 		}
@@ -417,7 +418,7 @@ namespace ui {
         if (! event.active())
             return;
         ASSERT(event->codepoint() >= 32);
-        pty_->send(event->toCharPtr(), event->size());
+        send(event->toCharPtr(), event->size());
     }
 
     void AnsiTerminal::keyDown(Event<Key>::Payload & event) {
@@ -441,14 +442,14 @@ namespace ui {
 				if (event->modifiers() == 0 && cursorMode_ == CursorMode::Application) {
 					std::string sa(*seq);
 					sa[1] = 'O';
-					pty_->send(sa.c_str(), sa.size());
+					send(sa.c_str(), sa.size());
 					return;
 				}
 				break;
 			default:
 				break;
 			}
-			pty_->send(seq->c_str(), seq->size());
+			send(seq->c_str(), seq->size());
 		}
     }
 
@@ -956,7 +957,7 @@ namespace ui {
                         if (seq[0] != 0)
                             break;
                         LOG(SEQ) << "Device Attributes - VT102 sent";
-                        pty_->send("\033[?6c", 5); // send VT-102 for now, go for VT-220? 
+                        send("\033[?6c", 5); // send VT-102 for now, go for VT-220? 
                         return;
                     }
                     /* CSI <n> d -- Line position absolute (VPA)
@@ -1061,7 +1062,7 @@ namespace ui {
                         if (seq[0] != 0)
                             break;
 					LOG(SEQ) << "Secondary Device Attributes - VT100 sent";
-					pty_->send("\033[>0;0;0c", 9); // we are VT100, no version third must always be zero (ROM cartridge)
+					send("\033[>0;0;0c", 9); // we are VT100, no version third must always be zero (ROM cartridge)
 					return;
 				default:
 					break;

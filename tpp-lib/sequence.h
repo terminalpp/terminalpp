@@ -45,6 +45,8 @@ namespace tpp {
             return kind_;
         }
 
+        static std::string PrettyPrint(char const * start, size_t size);
+
         static char const * FindSequenceStart(char const * buffer, char const * bufferEnd);
 
         static char const * FindSequenceEnd(char const * buffer, char const * bufferEnd);

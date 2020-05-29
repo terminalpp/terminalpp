@@ -129,6 +129,7 @@ namespace ui {
         static helpers::Log SEQ_UNKNOWN;
         static helpers::Log SEQ_ERROR;
         static helpers::Log SEQ_WONT_SUPPORT;
+        static helpers::Log SEQ_SENT;
 
         //@}
 
@@ -423,6 +424,12 @@ namespace ui {
 
         unsigned encodeMouseButton(MouseButton btn, Key modifiers);
         void sendMouseEvent(unsigned button, Point coords, char end);
+
+
+        void send(char const * what, size_t size) {
+            LOG(SEQ_SENT) << tpp::Sequence::PrettyPrint(what, size);
+            pty_->send(what, size);
+        }
 
         /** Keyboard focus in triggers repaint as the cursor must be updated. 
          */
