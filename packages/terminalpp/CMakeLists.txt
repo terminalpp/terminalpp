@@ -1,6 +1,8 @@
 set(PROJECT_EXECUTABLE "$<TARGET_FILE:terminalpp>")
 
-# on windows, instead of cpack, the WIX toolset is used to produce the msi installer package. The package-msi target is defined here which runs WIX for terminalpp
+# Windows
+#
+# on windows, the WIX toolset is used to produce the msi installer package. The package-msi target is defined here which runs WIX for terminalpp
 if(PACKAGE_MSI AND RENDERER_NATIVE)
     # create the build directory and configure the WiX configuration in it
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msi/terminalpp.wxs ${CMAKE_CURRENT_BINARY_DIR}/msi/terminalpp.wxs @ONLY)
@@ -53,8 +55,10 @@ if(PACKAGE_MSIX AND RENDERER_NATIVE)
     add_dependencies(packages terminalpp-msix)
 endif()
 
-# Builds the snap package for linux
+# Linux
+# =====
 #
+# Builds the snap package for linux
 # The classic confinement is used as terminal with the strict confinement is most likely not what we want.
 if (PACKAGE_SNAP AND RENDERER_NATIVE AND INSTALL STREQUAL terminalpp)
     # create the build directory and configure the snap configuration in it
@@ -77,17 +81,69 @@ if (PACKAGE_SNAP AND RENDERER_NATIVE AND INSTALL STREQUAL terminalpp)
     add_dependencies(packages terminalpp-snap)
 endif()
 
+# Debian source packages
+#
+# gnupg pbuilder ubuntu-dev-tools apt-file dh-make bzr-builddeb
+if(PACKAGE_DEB)
+    # configure the debian files 
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deb/debian/control ${CMAKE_CURRENT_BINARY_DIR}/deb/configured/control @ONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deb/debian/changelog ${CMAKE_CURRENT_BINARY_DIR}/deb/configured/changelog @ONLY)
+
+    add_custom_target(terminalpp-deb-prepare
+        # first clear the output folder
+        COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
+        # copy the terminalpp sources
+        COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp --exclude-from=.gitignore --exclude ".git"
+        # copy the stamp, the debian folder to the terminalpp root and the configured files
+        COMMAND cp stamp.h ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp/stamp.h
+        COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/deb/debian ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
+        COMMAND cp -f ${CMAKE_CURRENT_BINARY_DIR}/deb/configured/* ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp/debian
+        # copy the makefile
+        COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/deb/Makefile ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        DEPENDS stamp
+    )
+    add_custom_target(terminalpp-deb-src
+        # now we are ready to build the package
+        COMMAND debuild -S -us -uc
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
+        DEPENDS terminalpp-deb-src-prepare
+    )
+
+    add_custom_target(terminalpp-deb
+        # now we are ready to build the package
+        COMMAND debuild -b -us -uc
+        # and copy the result to the packages folder
+        COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp_${PROJECT_VERSION}_amd64.deb ${CMAKE_BINARY_DIR}/packages/terminalpp.deb
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
+        DEPENDS terminalpp-deb-prepare
+    )
+    # create an archive of the source code for the terminal
+#    add_custom_target(terminalpp-source-archive
+#        COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp-${PROJECT_VERSION}
+#        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp-${PROJECT_VERSION}
+#        COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp-${PROJECT_VERSION} --exclude-from=.gitignore --exclude ".git"
+#        COMMAND cp stamp.h ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp-${PROJECT_VERSION}/stamp.h
+#        COMMAND tar -czvf ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp-${PROJECT_VERSION}.tar.gz -C ${CMAKE_CURRENT_BINARY_DIR}/deb terminalpp-${PROJECT_VERSION}        
+#        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+#        DEPENDS terminalpp
+#    )
+endif()
+
+# macOS
+# =====
+#
 # The package bundle is rather simple, we only need to zip the terminalpp.app already built by terminalpp main project. 
 if(PACKAGE_BUNDLE AND RENDERER_QT)
-    add_custom_target(terminal-bundle
+    add_custom_target(terminalpp-bundle
         COMMAND mkdir -p ${CMAKE_BINARY_DIR}/packages
         COMMAND zip -FSr ${CMAKE_BINARY_DIR}/packages/terminalpp.zip terminalpp.app
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/terminalpp
         DEPENDS terminalpp
     )
-    add_dependencies(packages terminal-bundle)
+    add_dependencies(packages terminalpp-bundle)
 endif()
-
 
 
 

@@ -11,5 +11,5 @@ Homepage: https://terminalpp.com
 Package: terminalpp
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: blablabla
- Longer blablabla.
+Description: @TERMINALPP_SUMMARY@
+ @TERMINALPP_DESCRIPTION@

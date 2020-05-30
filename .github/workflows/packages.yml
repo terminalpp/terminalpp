@@ -40,6 +40,25 @@ jobs:
         name: terminalpp.msix
         path: build/packages/terminalpp.msix
 
+  linux-terminalpp-deb:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: install-packages
+      run: |
+        bash scripts/setup-linux.sh
+    - name: build
+      run: |
+        mkdir -p build
+        cd build
+        sudo cmake .. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
+        sudo cmake --build . --target terminalpp-deb
+    - name: artifact-terminalpp-deb
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp.deb
+        path: build/packages/terminalpp.deb
+
   linux-terminalpp-snap:
     runs-on: ubuntu-latest
     steps:

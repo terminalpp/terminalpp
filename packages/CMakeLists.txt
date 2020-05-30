@@ -28,6 +28,10 @@ if(ARCH_LINUX)
         message(STATUS " - snap: snapcraft found in ${PACKAGE_SNAP}")
     endif()
     # debian source packages
+    find_program(PACKAGE_DEB debuild)
+    if(PACKAGE_DEB)
+        message(STATUS " - deb: debian packages found in ${PACKAGE_DEB}")
+    endif()
 endif()
 
 # on macOS, no extra tools are required to create the bundle

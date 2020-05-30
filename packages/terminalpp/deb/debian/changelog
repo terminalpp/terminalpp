@@ -1,4 +1,4 @@
-terminalpp (0.6.0-1) unstable; urgency=low
+terminalpp (@PROJECT_VERSION@) unstable; urgency=low
 
   * Initial release 
 

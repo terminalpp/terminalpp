@@ -6,8 +6,12 @@ Restructured release process and minor fixes:
 
 - msix package
 - Ubuntu 20.04 bypass
+- numeric keypad works in Linux
+- `--version` command line argument for terminalpp
 
 ### TODO
+
+- add --version to ropen and bypass (perhaps a simple helpers version check)
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
