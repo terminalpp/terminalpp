@@ -2,6 +2,7 @@
 #include <string>
 #include <sstream>
 #include <exception>
+#include <functional>
 
 
 #if (defined ARCH_WINDOWS)
@@ -219,24 +220,14 @@ namespace helpers {
 		HANDLE h_;
 	};
 
-
-
 #endif
 
-	/** Shorthand for determining whether value is in given inclusive interval. 
-	 */
-	template<typename T>
-	bool InRangeInclusive(T const & what, T const & fromValue, T const & toValue) {
-		return (what >= fromValue && what <= toValue);
-	}
-
-    template<typename T>
-    T ClipToRange(T const & value, T const & min, T const & max) {
-        if (value < min)
-            return min;
-        if (value > max)
-            return max;
-        return value;
+    inline bool CheckVersion(int argc, char ** argv, std::function<void()> versionPrinter) {
+        if (argc == 2 && strcmp("--version", argv[1]) == 0) {
+            versionPrinter();
+            return true;
+        }
+        return false;
     }
 
 } // namespace helpers

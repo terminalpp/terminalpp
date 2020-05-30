@@ -174,6 +174,15 @@ jobs:
         name: tpp-bypass-openSUSE-Leap-15-1
         path: build-leap-15-1/tpp-bypass/tpp-bypass
 
+# Automated release to Windows Store
+#
+# This looks like a good start:
+#
+# https://docs.microsoft.com/en-us/windows/uwp/monetize/create-an-app-submission
+# https://docs.microsoft.com/en-us/windows/uwp/monetize/csharp-code-examples-for-the-windows-store-submission-api
+#
+# on powreshell Invoke-RestMethod (curl)
+
 
 #   macOS:
 #     runs-on: macos-latest

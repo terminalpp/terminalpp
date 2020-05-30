@@ -22,6 +22,8 @@
 
 #include "helpers/log.h"
 
+#include "stamp.h"
+
 /** The Windows ConPTY bypass via WSL
  
     The bypass creates a pseudoterminal in the WSL and relays any traffic on that terminal unchanged to the terminal connected via standard input and output, thus bypassing the Win32 ConPTY and its encoding and decoding of the escape sequences. This allows the terminal to use the terminal for linux applications in the same way it would on linux and spares it any issues the ConPTY might have. 
@@ -270,7 +272,16 @@ private:
 	int pipe_;
 }; // Bypass
 
+void PrintVersion() {
+    std::cout << "ConPTY bypass for terminal++, version " << stamp::version << std::endl;
+    std::cout << "    commit:   " << stamp::commit << (stamp::dirty ? "*" : "") << std::endl;
+    std::cout << "              " << stamp::build_time << std::endl;
+    std::cout << "    platform: " << ARCH << " " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
+    exit(EXIT_SUCCESS);
+}
+
 int main(int argc, char * argv[]) {
+    helpers::CheckVersion(argc, argv, PrintVersion);
 	if (argc == 2 && strncmp(argv[1], "--version", 10) == 0) {
 		std::cout << "Terminal++ Bypass, version 1.0" << std::endl;
 		return EXIT_SUCCESS;

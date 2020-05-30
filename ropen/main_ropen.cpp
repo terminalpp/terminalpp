@@ -11,6 +11,8 @@
 #include "tpp-lib/local_pty.h"
 #include "tpp-lib/terminal_client.h"
 
+#include "stamp.h"
+
 namespace tpp {
 
     using Log = helpers::Log;
@@ -203,8 +205,16 @@ namespace tpp {
 } // namespace tpp
 
 
+void PrintVersion() {
+    std::cout << "RemoteOpen for terminal++, version " << stamp::version << std::endl;
+    std::cout << "    commit:   " << stamp::commit << (stamp::dirty ? "*" : "") << std::endl;
+    std::cout << "              " << stamp::build_time << std::endl;
+    std::cout << "    platform: " << ARCH << " " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
+    exit(EXIT_SUCCESS);
+}
 
 int main(int argc, char * argv[]) {
+    helpers::CheckVersion(argc, argv, PrintVersion);
     using namespace tpp;
     try {
         // set log writer to raw mode and enable the default log
@@ -223,7 +233,7 @@ int main(int argc, char * argv[]) {
         return EXIT_SUCCESS;
     } catch (NackError const & e) {
         std::cerr << "t++ terminal error: " << e.what() << "\033[0K\r\n";
-    } catch (TimeoutError const & e) {
+    } catch (helpers::TimeoutError const & e) {
         std::cerr << "t++ terminal timeout.\033[0K\r\n";
     } catch (std::exception const & e) {
         std::cout << "\r\n Error: " << e.what() << "\033[0K\r\n";

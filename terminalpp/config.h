@@ -345,7 +345,6 @@ namespace tpp {
 			if (argc == 1)
 			    return;
 			helpers::JSONArguments args{};
-            args.addArgument("Version", {"--version"}, version, /* expectsValue */ false);
 #if (defined ARCH_WINDOWS)
 			args.addArgument("Pty", {"--pty"}, session.pty);
 #endif

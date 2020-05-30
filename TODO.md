@@ -7,17 +7,15 @@ Restructured release process and minor fixes:
 - msix package
 - Ubuntu 20.04 bypass
 - numeric keypad works in Linux
-- `--version` command line argument for terminalpp
+- `--version` command line argument for terminalpp, ropen and bypass
 
 ### TODO
 
-- add --version to ropen and bypass (perhaps a simple helpers version check)
-
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- release packages to snap and Windows store
-- create Debian source package (terminalpp, ropen)
-- build deb package as artifact
+- source package artifact
+- release packages to snap 
+- release to Windows store
 - upload to ppa ? 
 - update the website ? 
 
@@ -33,8 +31,6 @@ Documentation:
 
 Builds & Releases
 
-- ubuntu ppa
-- automated MS store submission for the MSIX package
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
 - add sonarcloud.io

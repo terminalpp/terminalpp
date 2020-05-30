@@ -55,6 +55,17 @@ void reportError(std::string const & message) {
 #endif
 }
 
+void PrintVersion() {
+    std::cout << "Terminal++ version " << stamp::version << std::endl;
+    std::cout << "    commit:   " << stamp::commit << (stamp::dirty ? "*" : "") << std::endl;
+    std::cout << "              " << stamp::build_time << std::endl;
+#if (defined RENDERER_QT)
+    std::cout << "    platform: " << ARCH << "(Qt) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
+#else
+    std::cout << "    platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
+#endif
+    exit(EXIT_SUCCESS);
+}
 
 // https://www.codeguru.com/cpp/misc/misc/graphics/article.php/c16139/Introduction-to-DirectWrite.htm
 
@@ -75,28 +86,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MARK_AS_UNUSED(nCmdShow);
 	int argc = __argc;
 	char** argv = __argv;
+    helpers::CheckVersion(argc, argv, PrintVersion);
 	tpp::APPLICATION_CLASS::Initialize(argc, argv, hInstance);
 #elif (defined ARCH_WINDOWS && defined RENDERER_QT)
 int main(int argc, char* argv[]) {
+    helpers::CheckVersion(argc, argv, PrintVersion);
 	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 #else
 int main(int argc, char* argv[]) {
+    helpers::CheckVersion(argc, argv, PrintVersion);
 	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 #endif
     try {
-        tpp::Config & config = tpp::Config::Setup(argc, argv);
-        if (config.version.specified() && config.version().empty()) {
-            std::cout << "Terminal++ version " << stamp::version << std::endl;
-            std::cout << "    commit: " << stamp::commit << (stamp::dirty ? "*" : "") << std::endl;
-            std::cout << "            " << stamp::build_time << std::endl;
-#if (defined RENDERER_QT)
-            std::cout << "    platform: " << ARCH << "(Qt) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
-#else
-            std::cout << "    platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
-#endif
-            return EXIT_SUCCESS;
-        }
-
+        tpp::Config::Setup(argc, argv);
         //helpers::JSON versions{tpp::Application::Instance()->checkLatestVersion("edge")};        
 
 		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));

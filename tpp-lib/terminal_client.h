@@ -13,12 +13,8 @@
 
 namespace tpp {
 
-    class TimeoutError : public helpers::Exception {
-    }; 
-
     class NackError : public helpers::Exception {
     };
-
 
     class TerminalClient {
     public:

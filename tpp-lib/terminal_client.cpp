@@ -117,7 +117,7 @@ namespace tpp {
                 if (timeout > 0) {
                     if (sequenceReady_.wait_until(g, timeoutTime) == std::cv_status::timeout) {
                         if (--attempts == 0)
-                            THROW(TimeoutError());
+                            THROW(helpers::TimeoutError());
                         LOG(Log::Verbose) << "Request timeout, remaining attempts: " << attempts;
                         break;
                     }
