@@ -1,0 +1,15 @@
+Source: ropen
+Section: utils
+Priority: optional
+Maintainer: Zduka <zduka@outlook.com>
+Build-Depends: debhelper (>= 10)
+Standards-Version: 4.1.2
+Homepage: https://terminalpp.com
+#Vcs-Git: https://github.com/terminalpp/terminalpp.git
+#Vcs-Browser: https://github.com/terminalpp/terminalpp
+
+Package: ropen
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: @ROPEN_SUMMARY@
+ @ROPEN_DESCRIPTION@
