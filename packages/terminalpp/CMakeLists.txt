@@ -83,7 +83,6 @@ endif()
 
 # Debian source packages
 #
-# gnupg pbuilder ubuntu-dev-tools apt-file dh-make bzr-builddeb
 if(PACKAGE_DEB)
     # configure the debian files 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deb/debian/control ${CMAKE_CURRENT_BINARY_DIR}/deb/configured/control @ONLY)
@@ -106,10 +105,11 @@ if(PACKAGE_DEB)
     )
     add_custom_target(terminalpp-deb-src
         # now we are ready to build the package
-        COMMAND debuild -S -us -uc
+        COMMAND debuild -S -sa -us -uc
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
-        DEPENDS terminalpp-deb-src-prepare
+        DEPENDS terminalpp-deb-prepare
     )
+    add_dependencies(packages terminalpp-deb-src)
 
     add_custom_target(terminalpp-deb
         # now we are ready to build the package
@@ -119,16 +119,7 @@ if(PACKAGE_DEB)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
         DEPENDS terminalpp-deb-prepare
     )
-    # create an archive of the source code for the terminal
-#    add_custom_target(terminalpp-source-archive
-#        COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp-${PROJECT_VERSION}
-#        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp-${PROJECT_VERSION}
-#        COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp-${PROJECT_VERSION} --exclude-from=.gitignore --exclude ".git"
-#        COMMAND cp stamp.h ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp-${PROJECT_VERSION}/stamp.h
-#        COMMAND tar -czvf ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp-${PROJECT_VERSION}.tar.gz -C ${CMAKE_CURRENT_BINARY_DIR}/deb terminalpp-${PROJECT_VERSION}        
-#        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-#        DEPENDS terminalpp
-#    )
+    add_dependencies(packages terminalpp-deb)
 endif()
 
 # macOS
