@@ -28,6 +28,7 @@ if(ARCH_LINUX)
         message(STATUS " - snap: snapcraft found in ${PACKAGE_SNAP}")
     endif()
     # debian source packages
+    # https://help.launchpad.net/Packaging/PPA/BuildingASourcePackage
     find_program(PACKAGE_DEB debuild)
     if(PACKAGE_DEB)
         message(STATUS " - deb: debian packages found in ${PACKAGE_DEB}")

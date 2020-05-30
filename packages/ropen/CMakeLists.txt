@@ -46,7 +46,7 @@ if(PACKAGE_DEB)
         # now we are ready to build the package
         COMMAND debuild -S -sa -us -uc
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deb/ropen
-        DEPENDS ropen-deb-src-prepare
+        DEPENDS ropen-deb-prepare
     )
     add_dependencies(packages ropen-deb-src)
 
