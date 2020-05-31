@@ -71,14 +71,11 @@ Convenience macros `NOT_IMPLEMENTED` and `UNREACHABLE` which throw the Exception
  */
 
 #ifdef NDEBUG 
-#define THROW(...) throw __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::ExceptionInfo()
-#define CREATE_EXCEPTION(...) __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::ExceptionInfo()
-#define ASSERT(...) if (false) std::stringstream()
-
+    #define THROW(...) throw __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__)
+    #define CREATE_EXCEPTION(...) __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__)
 #else
-#define THROW(...) throw __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::ExceptionInfo(__LINE__,__FILE__)
-#define CREATE_EXCEPTION(...) __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::ExceptionInfo(__LINE__, __FILE__)
-#define ASSERT(...) if (! (__VA_ARGS__)) THROW(HELPERS_NAMESPACE_DECL::AssertionError(#__VA_ARGS__))
+    #define THROW(...) throw __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__, __LINE__,__FILE__)
+    #define CREATE_EXCEPTION(...) __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__, __LINE__, __FILE__)
 #endif
 
 #define NOT_IMPLEMENTED THROW(HELPERS_NAMESPACE_DECL::Exception()) << "Not implemented code triggered"
@@ -96,21 +93,23 @@ HELPERS_NAMESPACE_BEGIN
     public:
         /** Simple class responsible for storing the exception origin and message.
          */
-        class ExceptionInfo {
+        class Builder {
         public:
 
         #ifdef NDEBUG
-            ExceptionInfo() {
+            Builder(char const * exception):
+                exception_{exception} {
             }
         #else
-            ExceptionInfo(size_t line, char const * file):
-                line_(line),
-                file_(file) {
+            Builder(char const * exception, size_t line, char const * file):
+                exception_{exception},
+                line_{line},
+                file_{file} {
             }
         #endif
 
             template<typename T>
-            ExceptionInfo & operator << (T const & what) {
+            Builder & operator << (T const & what) {
                 what_ << what;
                 return *this;
             }
@@ -118,19 +117,26 @@ HELPERS_NAMESPACE_BEGIN
         private:
             friend class Exception;
 
+            char const * exception_;
+
         #ifndef NDEBUG
             size_t line_;
             char const * file_;
         #endif
 
             std::stringstream what_;
-        };
+        }; // Exception::Builder
 
-        Exception() {
+        Exception():
+            exception_{nullptr} {
         }
 
         char const * what() const noexcept override {
             return what_.c_str();
+        }
+
+        char const * exception() const noexcept {
+            return exception_;
         }
 
         /** Sets the message of the exception. 
@@ -153,6 +159,8 @@ HELPERS_NAMESPACE_BEGIN
 
     protected:
 
+        char const * exception_;
+
         std::string what_;
 
         #ifndef NDEBUG
@@ -163,9 +171,9 @@ HELPERS_NAMESPACE_BEGIN
 
     private:
         template<typename T>
-        friend T && operator & (T && e, ExceptionInfo const & cinfo) {
+        friend T && operator & (T && e, Builder const & binfo) {
             static_assert(std::is_base_of<Exception, T>::value, "Must be derived from ::Exception");
-            e.updateWith(cinfo);
+            e.updateWith(binfo);
             return std::move(e);
         }
 
@@ -178,12 +186,13 @@ HELPERS_NAMESPACE_BEGIN
 			return o;
 		}
 
-        void updateWith(ExceptionInfo const & cinfo) {
+        void updateWith(Builder const & binfo) {
             #ifndef NDEBUG
-                line_ = cinfo.line_;
-                file_ = cinfo.file_;
+                line_ = binfo.line_;
+                file_ = binfo.file_;
             #endif
-            what_ = what_ + cinfo.what_.str();
+            what_ = what_ + binfo.what_.str();
+            exception_ = binfo.exception_;
         }
 
     };
@@ -249,7 +258,6 @@ HELPERS_NAMESPACE_END
  
     \brief Basic support for logging stuff to cout, files and more, with small overhead. 
 
-	\section helpersLogArgs Command-line arguments support
 
  */
 
@@ -384,6 +392,11 @@ HELPERS_NAMESPACE_BEGIN
 			static Log debugLog("DEBUG");
 			return debugLog;
 		}
+
+        static Log & Exception() {
+            static Log exceptionLog("EXCEPTION");
+            return exceptionLog;
+        }
 
 	private:
 	    std::string name_;
