@@ -6,7 +6,6 @@
 
 #include "helpers/helpers.h"
 #include "helpers/process.h"
-#include "helpers/log.h"
 #include "helpers/char.h"
 #include "pty.h"
 #include "sequence.h"

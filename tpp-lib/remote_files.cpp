@@ -1,4 +1,3 @@
-#include "helpers/log.h"
 #include "helpers/filesystem.h"
 
 #include "remote_files.h"

@@ -1,6 +1,4 @@
 #if (defined ARCH_WINDOWS && defined RENDERER_NATIVE)
-#include "helpers/log.h"
-
 #include "directwrite_window.h"
 
 #include "directwrite_font.h"

@@ -20,8 +20,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include "helpers/log.h"
-
+#include "helpers/helpers.h"
 #include "stamp.h"
 
 /** The Windows ConPTY bypass via WSL

@@ -2,7 +2,6 @@
 
 #include <thread>
 
-#include "helpers/log.h"
 #include "helpers/process.h"
 #include "helpers/locks.h"
 

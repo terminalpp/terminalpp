@@ -3,8 +3,6 @@
 
 #include <QtWidgets>
 
-#include "helpers/log.h"
-
 #include "../application.h"
 
 namespace tpp {

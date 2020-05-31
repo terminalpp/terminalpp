@@ -1,6 +1,5 @@
 #if (defined ARCH_UNIX && defined RENDERER_NATIVE)
 
-#include "helpers/log.h"
 #include "helpers/filesystem.h"
 
 #include "x11_window.h"

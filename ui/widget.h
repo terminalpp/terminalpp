@@ -5,7 +5,6 @@
 
 #include "helpers/helpers.h"
 #include "helpers/events.h"
-#include "helpers/log.h"
 
 #include "common.h"
 #include "input.h"
