@@ -27,12 +27,19 @@ if(ARCH_LINUX)
     if(PACKAGE_SNAP)
         message(STATUS " - snap: snapcraft found in ${PACKAGE_SNAP}")
     endif()
-    # debian source packages
+    # debian source & binary packages
     # https://help.launchpad.net/Packaging/PPA/BuildingASourcePackage
     find_program(PACKAGE_DEB debuild)
     if(PACKAGE_DEB)
-        message(STATUS " - deb: debian packages found in ${PACKAGE_DEB}")
+        message(STATUS " - deb: debuild tool found in ${PACKAGE_DEB}")
     endif()
+    # rpm source & binary packages
+    # http://ftp.rpm.org/max-rpm/
+    find_program(PACKAGE_RPM rpmbuild)
+    if(PACKAGE_RPM)
+        message(STATUS " - rpm: rpmbuild found in ${PACKAGE_RPM}")
+    endif()
+    
 endif()
 
 # on macOS, no extra tools are required to create the bundle

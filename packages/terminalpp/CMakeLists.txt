@@ -85,8 +85,8 @@ endif()
 #
 if(PACKAGE_DEB)
     # configure the debian files 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deb/debian/control ${CMAKE_CURRENT_BINARY_DIR}/deb/configured/control @ONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deb/debian/changelog ${CMAKE_CURRENT_BINARY_DIR}/deb/configured/changelog @ONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deb/debian/control ${CMAKE_CURRENT_BINARY_DIR}/configured/deb/control @ONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deb/debian/changelog ${CMAKE_CURRENT_BINARY_DIR}/configured/deb/changelog @ONLY)
 
     add_custom_target(terminalpp-deb-prepare
         # first clear the output folder
@@ -94,11 +94,10 @@ if(PACKAGE_DEB)
         COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
         # copy the terminalpp sources
         COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp --exclude-from=.gitignore --exclude ".git"
-        # copy the stamp, the debian folder to the terminalpp root and the configured files
+        # copy the stamp, the debian folder to the terminalpp root and the configured files and the makefile
         COMMAND cp stamp.h ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp/stamp.h
         COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/deb/debian ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
-        COMMAND cp -f ${CMAKE_CURRENT_BINARY_DIR}/deb/configured/* ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp/debian
-        # copy the makefile
+        COMMAND cp -f ${CMAKE_CURRENT_BINARY_DIR}/configured/deb/* ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp/debian
         COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/deb/Makefile ${CMAKE_CURRENT_BINARY_DIR}/deb/terminalpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS stamp
@@ -120,6 +119,42 @@ if(PACKAGE_DEB)
         DEPENDS terminalpp-deb-prepare
     )
     add_dependencies(packages terminalpp-deb)
+endif()
+
+if(PACKAGE_RPM)
+    # configure the spec file
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rpm/terminalpp.spec ${CMAKE_CURRENT_BINARY_DIR}/configured/rpm/terminalpp.spec @ONLY)
+
+    add_custom_target(terminalpp-rpm-prepare
+        # first clear the output folder and prepare the required directories
+        COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/rpm
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/rpm/SOURCES
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/rpm/SPECS
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/rpm/BUILD
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/rpm/RPMS
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/rpm/SRPMS
+        # copy the source of terminalpp to terminalpp directory and add the stamp
+        COMMAND rsync -a . ${CMAKE_CURRENT_BINARY_DIR}/rpm/terminalpp --exclude-from=.gitignore --exclude ".git"
+        COMMAND cp stamp.h ${CMAKE_CURRENT_BINARY_DIR}/rpm/terminalpp/stamp.h
+        # compress the sources and delete the uncompressed ones
+        COMMAND tar -czvf ${CMAKE_CURRENT_BINARY_DIR}/rpm/SOURCES/terminalpp.tar.gz -C ${CMAKE_CURRENT_BINARY_DIR}/rpm terminalpp
+        COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/rpm/terminalpp
+        # copy the configured spec file
+        COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/configured/rpm/terminalpp.spec ${CMAKE_CURRENT_BINARY_DIR}/rpm/SPECS/terminalpp.spec
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        DEPENDS stamp
+    )
+
+    add_custom_target(terminalpp-rpm
+        COMMAND rpmbuild --define "_topdir ${CMAKE_CURRENT_BINARY_DIR}/rpm" -ba terminalpp.spec
+        COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/rpm/SRPMS/terminalpp-${PROJECT_VERSION}-1.src.rpm ${CMAKE_BINARY_DIR}/packages/terminalpp.src.rpm
+        COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/rpm/RPMS/x86_64/terminalpp-${PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BINARY_DIR}/packages/terminalpp.rpm
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/rpm/SPECS
+        DEPENDS terminalpp-rpm-prepare
+    )
+
+    add_dependencies(packages terminalpp-rpm)
+
 endif()
 
 # macOS
