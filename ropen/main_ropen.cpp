@@ -216,13 +216,13 @@ int main(int argc, char * argv[]) {
     using namespace tpp;
     try {
         // set log writer to raw mode and enable the default log
-        Logger::StdOutWriter().setDisplayLocation(false).setDisplayName(false).setDisplayTime(false).setEoL("\033[0K\r\n");
-		Logger::Enable(Logger::StdOutWriter(), { Log::Default()});
+        Log::StdOutWriter().setDisplayLocation(false).setDisplayName(false).setDisplayTime(false).setEoL("\033[0K\r\n");
+		Log::Enable(Log::StdOutWriter(), { Log::Default()});
         // initialize the configuration
         Config & config = Config::Setup(argc, argv);
         // enable verbose log if selected
         if (config.verbose())
-    		Logger::Enable(Logger::StdOutWriter(), { Log::Verbose()});
+    		Log::Enable(Log::StdOutWriter(), { Log::Verbose()});
         // create the terminal client and transfer the file
         TerminalClient::Sync t{new LocalPTYSlave{}};
         RemoteOpen::Transfer(t, Config::Instance().filename());

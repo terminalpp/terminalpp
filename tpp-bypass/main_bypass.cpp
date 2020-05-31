@@ -286,8 +286,8 @@ int main(int argc, char * argv[]) {
 		return EXIT_SUCCESS;
 	}
 	try {
-		Logger::FileWriter log("~/.bypass-errors.log");
-		Logger::Enable(log, { 
+		Log::FileWriter log("~/.bypass-errors.log");
+		Log::Enable(log, { 
 			Log::Default(),
 		});
 		Bypass bypass(argc, argv);

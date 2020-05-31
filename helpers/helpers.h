@@ -56,9 +56,9 @@ inline T pointer_cast(W * from) {
 
 /** \section Exceptions
  
-The Exception class is intended to be base class for all exceptions used in the application. It inherits from `std::exception` and provides an accessible storage for the `what()` value. Furthermore, unless `NDEBUG` macro is defined, each exception also remembers the source file and line where it was raised. 
+The Exception class is intended to be base class for all exceptions used in the application. It inherits from `std::exception` and provides an accessible storage for the `what()` value. Furthermore each exception also remembers the source file and line where it was raised. 
 
-To facilitate this, exceptions which inherit from `Exception` should not be thrown using `throw` keyword, but the provided `THROW` macro which also patches the exception with the source file and line, if appropriate:
+To facilitate this, exceptions which inherit from `Exception` should not be thrown using `throw` keyword, but the provided `THROW` macro which also patches the exception with the source file and line:
     
     THROW(Exception()) << "An error";
 
@@ -70,13 +70,8 @@ Convenience macros `NOT_IMPLEMENTED` and `UNREACHABLE` which throw the Exception
 
  */
 
-#ifdef NDEBUG 
-    #define THROW(...) throw __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__)
-    #define CREATE_EXCEPTION(...) __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__)
-#else
-    #define THROW(...) throw __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__, __LINE__,__FILE__)
-    #define CREATE_EXCEPTION(...) __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__, __LINE__, __FILE__)
-#endif
+#define THROW(...) throw Log::Exception() && __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__, __LINE__,__FILE__)
+#define CREATE_EXCEPTION(...) __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__, __LINE__, __FILE__)
 
 #define NOT_IMPLEMENTED THROW(HELPERS_NAMESPACE_DECL::Exception()) << "Not implemented code triggered"
 #define UNREACHABLE THROW(HELPERS_NAMESPACE_DECL::Exception()) << "Unreachable code triggered"
@@ -96,17 +91,11 @@ HELPERS_NAMESPACE_BEGIN
         class Builder {
         public:
 
-        #ifdef NDEBUG
-            Builder(char const * exception):
-                exception_{exception} {
-            }
-        #else
             Builder(char const * exception, size_t line, char const * file):
                 exception_{exception},
                 line_{line},
                 file_{file} {
             }
-        #endif
 
             template<typename T>
             Builder & operator << (T const & what) {
@@ -118,12 +107,8 @@ HELPERS_NAMESPACE_BEGIN
             friend class Exception;
 
             char const * exception_;
-
-        #ifndef NDEBUG
             size_t line_;
             char const * file_;
-        #endif
-
             std::stringstream what_;
         }; // Exception::Builder
 
@@ -147,7 +132,6 @@ HELPERS_NAMESPACE_BEGIN
             what_ = what;
         }
 
-        #ifndef NDEBUG
         size_t line() const {
             return line_;
         }
@@ -155,7 +139,6 @@ HELPERS_NAMESPACE_BEGIN
         char const * file() const {
             return file_;
         }
-        #endif
 
     protected:
 
@@ -163,11 +146,8 @@ HELPERS_NAMESPACE_BEGIN
 
         std::string what_;
 
-        #ifndef NDEBUG
-            size_t line_ = 0;
-            char const * file_ = nullptr;
-        #endif
-
+        size_t line_ = 0;
+        char const * file_ = nullptr;
 
     private:
         template<typename T>
@@ -178,19 +158,15 @@ HELPERS_NAMESPACE_BEGIN
         }
 
 		friend std::ostream & operator << (std::ostream & o, Exception const & e) {
-            #ifndef NDEBUG
-                if (e.file() != nullptr)
-                    o << e.file() << "[" << e.line() << "]: ";
-            #endif
+            if (e.file() != nullptr)
+                o << e.file() << "[" << e.line() << "]: ";
 		    o << e.what();
 			return o;
 		}
 
         void updateWith(Builder const & binfo) {
-            #ifndef NDEBUG
-                line_ = binfo.line_;
-                file_ = binfo.file_;
-            #endif
+            line_ = binfo.line_;
+            file_ = binfo.file_;
             what_ = what_ + binfo.what_.str();
             exception_ = binfo.exception_;
         }
@@ -261,9 +237,10 @@ HELPERS_NAMESPACE_END
 
  */
 
-#define LOG(...) if (HELPERS_NAMESPACE_DECL::Logger::GetLog(__VA_ARGS__).enabled()) HELPERS_NAMESPACE_DECL::Logger::GetLog(__VA_ARGS__).createMessage(__FILE__, __LINE__)
+#define LOG(...) if (HELPERS_NAMESPACE_DECL::Log::GetLog(__VA_ARGS__).enabled()) HELPERS_NAMESPACE_DECL::Log::GetLog(__VA_ARGS__).createMessage(__FILE__, __LINE__)
 
 HELPERS_NAMESPACE_BEGIN
+
 
     class Log {
 	public:
@@ -278,7 +255,10 @@ HELPERS_NAMESPACE_BEGIN
 			virtual void endMessage(Message const & message) = 0;
 			virtual ~Writer() {
 			}
-		};
+		}; // Log::Writer
+
+        class OStreamWriter;
+        class FileWriter;
 
 		/** Log message. 
 		 */
@@ -378,6 +358,14 @@ HELPERS_NAMESPACE_BEGIN
 			return Message(this, file, line);
 		}
 
+        template<typename T>
+        T && operator && (T && e) {
+            static_assert(std::is_base_of<HELPERS_NAMESPACE_DECL::Exception, T>::value, "Must be derived from ::Exception");
+            if (enabled())
+                createMessage(e.file(), e.line()) << e.exception() << ": " << e.what();
+            return std::move(e);
+        }
+
 		static Log & Default() {
 			static Log defaultLog("");
 			return defaultLog;
@@ -398,109 +386,7 @@ HELPERS_NAMESPACE_BEGIN
             return exceptionLog;
         }
 
-	private:
-	    std::string name_;
-		Writer * writer_;
-	};
-
-	class Logger {
-	public:
-
-		/** A simple std::ostream based log message writer. 
-		 
-		    Writes all log messages into the given stream, allows to specify what parts of the message are to be printed, such as the location in the source, timestamp and logname. 
-
-			The logger is also protected by a mutex so that only one message can be reported at one time. Note that a non-recursive mutex is used so that the application fails if a log message is being generated as part of another log message as this is considered a bad practice. 
-		 */
-	    class OStreamWriter : public Log::Writer {
-		public:
-
-			OStreamWriter(std::ostream & s, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string eol = "\n"):
-			    s_{s},
-				displayLocation_{displayLocation},
-				displayTime_{displayTime},
-				displayName_{displayName},
-                eol_{eol} {
-			}
-
-		    std::ostream & beginMessage(Log::Message const & message) override {
-				// can't use RAII here				
-				m_.lock();
-				if (displayTime_) {
-					tm t;
-#ifdef ARCH_WINDOWS
-					localtime_s(&t, &message.time());
-#else
-					localtime_r(&message.time(), &t);
-#endif
-					s_ << std::put_time(&t, "%c") << " ";
-				}
-				if (displayName_ && ! message.log().name().empty())
-				    s_ << "[" << message.log().name() << "] ";
-				return s_;
-			}
-
-			void endMessage(Log::Message const & message) override {
-				MARK_AS_UNUSED(message);
-				if (displayLocation_)
-					s_ << " (" << message.file() << ":" << message.line() << ")";
-				s_ << eol_ << std::flush;
-				// finally, unlock the mutex
-				m_.unlock();
-			}
-
-            OStreamWriter & setDisplayLocation(bool value = true) {
-                displayLocation_ = value;
-                return *this;
-            }
-
-            OStreamWriter & setDisplayTime(bool value = true) {
-                displayTime_ = value;
-                return *this;
-            }
-
-            OStreamWriter & setDisplayName(bool value = true) {
-                displayName_ = value;
-                return *this;
-            }
-
-            OStreamWriter & setEoL(std::string const & value) {
-                eol_ = value;
-                return *this;
-            }
-
-		protected:
-		    std::ostream & s_;
-			bool displayLocation_;
-			bool displayTime_;
-			bool displayName_;
-            std::string eol_;
-			std::mutex m_;
-		}; // Logger::OStreamWriter
-
-		/** Appends the messages to the given filename. 
-		 
-		    When creates, opens a stream to the provided filename and throws IOError on fialure.
-		 */
-		class FileWriter : public OStreamWriter {
-		public:
-		    FileWriter(std::string const & filename, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string eol = "\n"):
-			    OStreamWriter(* new std::ofstream(filename, std::ofstream::app), displayLocation, displayTime, displayName, eol) {
-				if (! s_.good())
-				    THROW(IOError()) << "Unable to open log file " << filename;
-			}
-
-			~FileWriter() {
-				// this is safe because the OStreamWriter destructor does not touch the stream at all
-				delete & s_;
-			}
-
-		}; // Logger::FileWriter
-
-		static Logger::OStreamWriter & StdOutWriter() {
-			static OStreamWriter writer(std::cout);
-			return writer;
-		}
+        static OStreamWriter & StdOutWriter();
 
 		static void EnableAll(Log::Writer & writer, bool update = false) {
 			std::unordered_map<std::string, Log *> & logs = RegisteredLogs();
@@ -528,13 +414,107 @@ HELPERS_NAMESPACE_BEGIN
         }
 
 	private:
-		friend class Log;
-	    
+
+	    std::string name_;
+
+		Writer * writer_;
+
 		static std::unordered_map<std::string, Log *> & RegisteredLogs() {
 			static std::unordered_map<std::string, Log *> logs;
 			return logs;
 		}
-	}; // Logger
+	};
+
+    /** A simple std::ostream based log message writer. 
+     
+        Writes all log messages into the given stream, allows to specify what parts of the message are to be printed, such as the location in the source, timestamp and logname. 
+
+        The logger is also protected by a mutex so that only one message can be reported at one time. Note that a non-recursive mutex is used so that the application fails if a log message is being generated as part of another log message as this is considered a bad practice. 
+        */
+    class Log::OStreamWriter : public Log::Writer {
+    public:
+
+        OStreamWriter(std::ostream & s, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string eol = "\n"):
+            s_{s},
+            displayLocation_{displayLocation},
+            displayTime_{displayTime},
+            displayName_{displayName},
+            eol_{eol} {
+        }
+
+        std::ostream & beginMessage(Log::Message const & message) override {
+            // can't use RAII here				
+            m_.lock();
+            if (displayTime_) {
+                tm t;
+#ifdef ARCH_WINDOWS
+                localtime_s(&t, &message.time());
+#else
+                localtime_r(&message.time(), &t);
+#endif
+                s_ << std::put_time(&t, "%c") << " ";
+            }
+            if (displayName_ && ! message.log().name().empty())
+                s_ << "[" << message.log().name() << "] ";
+            return s_;
+        }
+
+        void endMessage(Log::Message const & message) override {
+            MARK_AS_UNUSED(message);
+            if (displayLocation_)
+                s_ << " (" << message.file() << ":" << message.line() << ")";
+            s_ << eol_ << std::flush;
+            // finally, unlock the mutex
+            m_.unlock();
+        }
+
+        OStreamWriter & setDisplayLocation(bool value = true) {
+            displayLocation_ = value;
+            return *this;
+        }
+
+        OStreamWriter & setDisplayTime(bool value = true) {
+            displayTime_ = value;
+            return *this;
+        }
+
+        OStreamWriter & setDisplayName(bool value = true) {
+            displayName_ = value;
+            return *this;
+        }
+
+        OStreamWriter & setEoL(std::string const & value) {
+            eol_ = value;
+            return *this;
+        }
+
+    protected:
+        std::ostream & s_;
+        bool displayLocation_;
+        bool displayTime_;
+        bool displayName_;
+        std::string eol_;
+        std::mutex m_;
+    }; // Log::OStreamWriter
+
+    /** Appends the messages to the given filename. 
+     
+        When creates, opens a stream to the provided filename and throws IOError on fialure.
+        */
+    class Log::FileWriter : public Log::OStreamWriter {
+    public:
+        FileWriter(std::string const & filename, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string eol = "\n"):
+            OStreamWriter(* new std::ofstream(filename, std::ofstream::app), displayLocation, displayTime, displayName, eol) {
+            if (! s_.good())
+                THROW(IOError()) << "Unable to open log file " << filename;
+        }
+
+        ~FileWriter() {
+            // this is safe because the OStreamWriter destructor does not touch the stream at all
+            delete & s_;
+        }
+
+    }; // Log::FileWriter
 
 	inline Log::Message::Message(Log * log, char const * file, size_t line):
 	    log_(log),
@@ -555,19 +535,22 @@ HELPERS_NAMESPACE_BEGIN
 	inline Log::Log(std::string const & name):
 		name_(name),
 		writer_(nullptr) {
-		std::unordered_map<std::string, Log *> & logs = Logger::RegisteredLogs();
+		std::unordered_map<std::string, Log *> & logs = RegisteredLogs();
 		ASSERT(logs.find(name_) == logs.end()) << "Log " << name_ << " already exists";
 		logs.insert(std::make_pair(name_, this));
 	}
 
 	inline Log::~Log() {
-		std::unordered_map<std::string, Log *> & logs = Logger::RegisteredLogs();
+		std::unordered_map<std::string, Log *> & logs = RegisteredLogs();
 		logs.erase(logs.find(name_));
 	}
 
+    inline Log::OStreamWriter & Log::StdOutWriter() {
+        static OStreamWriter writer(std::cout);
+        return writer;
+    }
+
 HELPERS_NAMESPACE_END
-
-
 
 
 HELPERS_NAMESPACE_BEGIN

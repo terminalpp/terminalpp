@@ -100,14 +100,14 @@ int main(int argc, char* argv[]) {
         tpp::Config::Setup(argc, argv);
         //JSON versions{tpp::Application::Instance()->checkLatestVersion("edge")};        
 
-		//Logger::FileWriter log(UniqueNameIn(config.log.dir(), "log-"));
-		Logger::Enable(Logger::StdOutWriter(), { 
+		//Log::FileWriter log(UniqueNameIn(config.log.dir(), "log-"));
+		Log::Enable(Log::StdOutWriter(), { 
 			Log::Default(),
+            Log::Exception(),
 			ui::AnsiTerminal::SEQ_ERROR,
 			ui::AnsiTerminal::SEQ_UNKNOWN
 		});
-		LOG() << "t++ started";
-
+        
         tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", 80, 25);
         // currently owned by the window, when multiple sessions are available this might change
         new tpp::Session{w};
@@ -137,9 +137,9 @@ int main(int argc, char* argv[]) {
 		// check that the logs directory does not overgrow the max number of files allowed
 		EraseOldestFiles(config.log.dir(), config.log.maxFiles());
 		// create log writer & enable the selected logs
-		Logger::FileWriter log(UniqueNameIn(config.log.dir(), "log-"));
-		Logger::Enable(log, { 
-			Logger::DefaultLog(),
+		Log::FileWriter log(UniqueNameIn(config.log.dir(), "log-"));
+		Log::Enable(log, { 
+			Log::DefaultLog(),
 			ui::Terminal::SEQ_ERROR,
 			ui::Terminal::SEQ_UNKNOWN,
 		});
