@@ -10,11 +10,11 @@
 namespace tpp { 
 
 	std::string Config::GetSettingsFolder() {
-        return helpers::JoinPath(helpers::LocalSettingsFolder(), "terminalpp");
+        return JoinPath(LocalSettingsFolder(), "terminalpp");
 	}
 
 	std::string Config::GetSettingsFile() {
-		return helpers::JoinPath(GetSettingsFolder(), "settings.json");
+		return JoinPath(GetSettingsFolder(), "settings.json");
 	}
 
 	void Config::setup(int argc, char * argv[]) {
@@ -26,14 +26,14 @@ namespace tpp {
 			if (f.good()) {
 				try {
 					try {
-						helpers::JSON settings{helpers::JSON::Parse(f)};
+						JSON settings{JSON::Parse(f)};
 						verifyConfigurationVersion(settings);
 						// specify, check errors, make copy if wrong
 						specify(settings, [& saveSettings, & filename](std::exception const & e){
 							Application::Instance()->alert(STR(e.what() << " while parsing terminalpp settings at " << filename));
 							saveSettings = true;
 						});
-					} catch (helpers::JSONError & e) {
+					} catch (JSONError & e) {
 						e.setMessage(STR(e.what() << " while parsing terminalpp settings at " << filename));
 						throw;
 					}
@@ -43,10 +43,10 @@ namespace tpp {
 				}
 				// if there were any errors with the settings, create backup of the old settings as new settings will be stored. 
 				if (saveSettings) {
-					std::string backup{helpers::MakeUnique(filename)};
+					std::string backup{MakeUnique(filename)};
 					Application::Instance()->alert(STR("New settings file will be saved, backup stored in " << backup));
 					f.close();
-					helpers::Rename(filename, backup);
+					Rename(filename, backup);
 				}
 			// if there are no settings, then the settings should be saved after default values are calculated
 			} else {
@@ -57,10 +57,10 @@ namespace tpp {
 		saveSettings = fixMissingDefaultValues() || saveSettings;
 		// if the settings should be saved, save them now 
 		if (saveSettings) {
-            helpers::CreatePath(GetSettingsFolder());
+            CreatePath(GetSettingsFolder());
 			std::ofstream f(filename);
 			if (!f)
-			    THROW(helpers::IOError()) << "Unable to write to the settings file " << filename;
+			    THROW(IOError()) << "Unable to write to the settings file " << filename;
 			// get the saved JSON and store it in the settings file
 			f << save();
 		}
@@ -68,7 +68,7 @@ namespace tpp {
 		parseCommandLine(argc, argv);
 	}
 
-	void Config::verifyConfigurationVersion(helpers::JSON & userConfig) {
+	void Config::verifyConfigurationVersion(JSON & userConfig) {
 		if (userConfig.hasKey("version")) {
 			if (userConfig["version"].toString() == PROJECT_VERSION)
 			    return;
@@ -81,15 +81,15 @@ namespace tpp {
 	// default configfuration providers
 
 	std::string Config::TerminalVersion() {
-		return helpers::Quote(PROJECT_VERSION);
+		return Quote(PROJECT_VERSION);
 	}
 
 	std::string Config::DefaultLogDir() {
-		return helpers::Quote(helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"logs"));
+		return Quote(JoinPath(JoinPath(TempDir(), "terminalpp"),"logs"));
 	}
 
 	std::string Config::DefaultRemoteFilesDir() {
-		return helpers::Quote(helpers::JoinPath(helpers::JoinPath(helpers::TempDir(), "terminalpp"),"remoteFiles"));
+		return Quote(JoinPath(JoinPath(TempDir(), "terminalpp"),"remoteFiles"));
 	}
 
 	std::string Config::DefaultFontFamily() {
@@ -101,7 +101,7 @@ namespace tpp {
 		char const * fonts[] = { "Monospace", "DejaVu Sans Mono", "Nimbus Mono", "Liberation Mono", nullptr };
 		char const ** f = fonts;
 		while (*f != nullptr) {
-			std::string found{helpers::Exec(helpers::Command("fc-list", { *f }), "")};
+			std::string found{Exec(Command("fc-list", { *f }), "")};
 			if (! found.empty())
 			    return STR("\"" << *f << "\"");
 			++f;
@@ -119,7 +119,7 @@ namespace tpp {
 #if (defined ARCH_WINDOWS)
         auto & cmd = Config::Instance().session.command;
 		if (cmd.specified()) 
-		    THROW(helpers::ArgumentError()) << "Command is specified, but PTY is not, which can lead to inconsistent result. Please specify or clear both manually in the configuration file";
+		    THROW(ArgumentError()) << "Command is specified, but PTY is not, which can lead to inconsistent result. Please specify or clear both manually in the configuration file";
         std::string wslDefaultDistro{IsWSLPresent()};
 		if (! wslDefaultDistro.empty()) {
 			bool hasBypass = IsBypassPresent();
@@ -170,12 +170,12 @@ namespace tpp {
 
 #if (defined ARCH_WINDOWS)
 	std::string Config::IsWSLPresent() {
-		helpers::ExitCode ec;
-		std::vector<std::string> lines = helpers::SplitAndTrim(helpers::Exec(helpers::Command("wsl.exe", {"-l"}),"", &ec), "\n");
+		ExitCode ec;
+		std::vector<std::string> lines = SplitAndTrim(Exec(Command("wsl.exe", {"-l"}),"", &ec), "\n");
 	    if (lines.size() > 1 && lines[0] == "Windows Subsystem for Linux Distributions:") {
 			for (size_t i = 1, e = lines.size(); i != e; ++i) {
-				if (helpers::EndsWith(lines[i], "(Default)"))
-				    return helpers::Split(lines[i], " ")[0];
+				if (EndsWith(lines[i], "(Default)"))
+				    return Split(lines[i], " ")[0];
 			}
 		}
 		// nothing found, return empty string
@@ -183,21 +183,21 @@ namespace tpp {
 	}
 
 	bool Config::IsBypassPresent() {
-		helpers::ExitCode ec;
-		std::string output{helpers::Exec(helpers::Command("wsl.exe", {"--", BYPASS_PATH, "--version"}), "", &ec)};
+		ExitCode ec;
+		std::string output{Exec(Command("wsl.exe", {"--", BYPASS_PATH, "--version"}), "", &ec)};
 		return output.find("Terminal++ Bypass, version") == 0;
 	}
 
 	void Config::UpdateWSLDistributionVersion(std::string & wslDistribution) {
 		if (wslDistribution == "Ubuntu") {
-    		helpers::ExitCode ec;
-			std::vector<std::string> lines = helpers::SplitAndTrim(
-				helpers::Exec(helpers::Command("wsl.exe", {"--", "lsb_release", "-a"}), "", &ec),
+    		ExitCode ec;
+			std::vector<std::string> lines = SplitAndTrim(
+				Exec(Command("wsl.exe", {"--", "lsb_release", "-a"}), "", &ec),
 				"\n"
 			);
 			for (std::string const & line : lines) {
-				if (helpers::StartsWith(line, "Release:")) {
-					std::string ver = helpers::Trim(line.substr(9));
+				if (StartsWith(line, "Release:")) {
+					std::string ver = Trim(line.substr(9));
 					wslDistribution = wslDistribution + "-" + ver;
 					break;
 				}
@@ -208,9 +208,9 @@ namespace tpp {
 	bool Config::InstallBypass(std::string const & wslDistribution) {
 		try {
 			std::string url{STR("https://github.com/terminalpp/terminalpp/releases/latest/download/tpp-bypass-" << wslDistribution)};
-			helpers::Exec(helpers::Command("wsl.exe", {"--", "mkdir", "-p", BYPASS_FOLDER}), "");
-			helpers::Exec(helpers::Command("wsl.exe", {"--", "wget", "-O", BYPASS_PATH, url}), "");
-			helpers::Exec(helpers::Command("wsl.exe", {"--", "chmod", "+x", BYPASS_PATH}), "");
+			Exec(Command("wsl.exe", {"--", "mkdir", "-p", BYPASS_FOLDER}), "");
+			Exec(Command("wsl.exe", {"--", "wget", "-O", BYPASS_PATH, url}), "");
+			Exec(Command("wsl.exe", {"--", "chmod", "+x", BYPASS_PATH}), "");
 		} catch (...) {
 			return false;
 		}

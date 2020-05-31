@@ -407,9 +407,9 @@ namespace tpp {
                 if (strLen > 0 && (str[0] < 0 || str[0] >= 0x20) && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
                     char const * x = pointer_cast<char const*>(& str);
                     try {
-                        helpers::Char c{helpers::Char::FromUTF8(x, x + 32)};
+                        Char c{Char::FromUTF8(x, x + 32)};
                         window->rendererKeyChar(c);
-                    } catch (helpers::CharError const &) {
+                    } catch (CharError const &) {
                         // do nothing
                     }
                 }

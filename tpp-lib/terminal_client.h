@@ -13,7 +13,7 @@
 
 namespace tpp {
 
-    class NackError : public helpers::Exception {
+    class NackError : public Exception {
     };
 
     class TerminalClient {

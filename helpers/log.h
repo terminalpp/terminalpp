@@ -23,9 +23,9 @@
  */
 
 
-#define LOG(...) if (::helpers::Logger::GetLog(__VA_ARGS__).enabled()) ::helpers::Logger::GetLog(__VA_ARGS__).createMessage(__FILE__, __LINE__)
+#define LOG(...) if (HELPERS_NAMESPACE_DECL::Logger::GetLog(__VA_ARGS__).enabled()) HELPERS_NAMESPACE_DECL::Logger::GetLog(__VA_ARGS__).createMessage(__FILE__, __LINE__)
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
     class Log {
 	public:
@@ -237,7 +237,7 @@ namespace helpers {
 
 		/** Appends the messages to the given filename. 
 		 
-		    When creates, opens a stream to the provided filename and throws helpers::IOError on fialure.
+		    When creates, opens a stream to the provided filename and throws IOError on fialure.
 		 */
 		class FileWriter : public OStreamWriter {
 		public:
@@ -291,7 +291,7 @@ namespace helpers {
 			static std::unordered_map<std::string, Log *> logs;
 			return logs;
 		}
-	}; // helpers::Logger
+	}; // Logger
 
 	inline Log::Message::Message(Log * log, char const * file, size_t line):
 	    log_(log),
@@ -323,4 +323,4 @@ namespace helpers {
 	}
 
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

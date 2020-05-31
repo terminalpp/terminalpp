@@ -167,7 +167,7 @@ namespace tpp {
          */
         //@{
 
-        void keyDown(Event<Key>::Payload & e, Widget * target) override {
+        void keyDown(UIEvent<Key>::Payload & e, Widget * target) override {
             if (*e == SHORTCUT_FULLSCREEN) {
                 setFullscreen(! fullscreen_);
                 e.stop();
@@ -254,7 +254,7 @@ namespace tpp {
             // get constant reference so that reading does not change the unused bits in the cells we use for cursor
             ScreenBuffer const & buf{buffer()};
             // then actually render the entire window
-            helpers::Stopwatch t;
+            Stopwatch t;
             t.start();
             // initialize the drawing and set the state for the first cell
             initializeDraw();

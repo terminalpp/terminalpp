@@ -7,7 +7,7 @@
 
 namespace tpp {
 
-    BypassPTYMaster::BypassPTYMaster(helpers::Command const & command):
+    BypassPTYMaster::BypassPTYMaster(Command const & command):
         command_{command},
 		pipeIn_{ INVALID_HANDLE_VALUE },
 		pipeOut_{ INVALID_HANDLE_VALUE } {
@@ -22,7 +22,7 @@ namespace tpp {
     void BypassPTYMaster::terminate() {
         if (TerminateProcess(pInfo_.hProcess, std::numeric_limits<unsigned>::max()) != ERROR_SUCCESS) {
             // it could be that the process has already terminated
-    		helpers::ExitCode ec = STILL_ACTIVE;
+    		ExitCode ec = STILL_ACTIVE;
 	    	GetExitCodeProcess(pInfo_.hProcess, &ec);
 			// the process has been terminated already, it's ok, otherwise throw last error (this could in theory be error from the GetExitCodeProcess, but that's ok for now)
             OSCHECK(ec != STILL_ACTIVE);
@@ -54,7 +54,7 @@ namespace tpp {
 		sInfo.hStdOutput = pipePTYOut;
 		sInfo.hStdInput = pipePTYIn;
 		sInfo.dwFlags |= STARTF_USESTDHANDLES;
-		helpers::utf16_string cmd = helpers::UTF8toUTF16(command_.toString());
+		utf16_string cmd = UTF8toUTF16(command_.toString());
 		OSCHECK(CreateProcess(NULL,
 			&cmd[0], // the command to execute
 			NULL, // process security attributes 

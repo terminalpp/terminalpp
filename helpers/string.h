@@ -7,7 +7,7 @@
 
 #include "char.h"
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
     /** Info about a single line of text.
 
@@ -241,4 +241,4 @@ namespace helpers {
 	}
 #endif
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

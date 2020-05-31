@@ -9,9 +9,6 @@
 
 namespace tpp {
 
-    using Char = helpers::Char;
-    using Buffer = helpers::Buffer;
-
     class PTYBase;
 
     /** Terminalpp Sequence base class. 
@@ -115,7 +112,7 @@ namespace tpp {
         static char DecodeChar(char const * & x, char const * end) {
             if (*x == '`') {
                 if (x + 3 > end)
-                    THROW(helpers::IOError()) << "quote must be followed by 2 hexadecimal characters";
+                    THROW(IOError()) << "quote must be followed by 2 hexadecimal characters";
                 char result = static_cast<char>(Char::ParseHexadecimalDigit(x[1]) * 16 + Char::ParseHexadecimalDigit(x[2]));
                 x += 3;
                 return result;
@@ -281,7 +278,7 @@ namespace tpp {
             Buffer b;
             Decode(b, start, end);
             if (size_ != b.size())
-                THROW(helpers::IOError()) << "Data Sequence size reported " << size_ << ", actual " << b.size();
+                THROW(IOError()) << "Data Sequence size reported " << size_ << ", actual " << b.size();
             payload_ = b.release();
         }
 

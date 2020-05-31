@@ -243,30 +243,30 @@ namespace ui {
 
         /** Triggered when the widget's geometry changes. 
          */
-        Event<void> onResize;
-        Event<void> onMove;
+        UIEvent<void> onResize;
+        UIEvent<void> onMove;
 
-        Event<void> onShow;
-        Event<void> onHide;
-        Event<void> onEnabled;
-        Event<void> onDisabled;
+        UIEvent<void> onShow;
+        UIEvent<void> onHide;
+        UIEvent<void> onEnabled;
+        UIEvent<void> onDisabled;
 
-        Event<void> onMouseIn;
-        Event<void> onMouseOut;
-        Event<MouseMoveEvent> onMouseMove;
-        Event<MouseWheelEvent> onMouseWheel;
-        Event<MouseButtonEvent> onMouseDown;
-        Event<MouseButtonEvent> onMouseUp;
-        Event<MouseButtonEvent> onMouseClick;
-        Event<MouseButtonEvent> onMouseDoubleClick;
+        UIEvent<void> onMouseIn;
+        UIEvent<void> onMouseOut;
+        UIEvent<MouseMoveEvent> onMouseMove;
+        UIEvent<MouseWheelEvent> onMouseWheel;
+        UIEvent<MouseButtonEvent> onMouseDown;
+        UIEvent<MouseButtonEvent> onMouseUp;
+        UIEvent<MouseButtonEvent> onMouseClick;
+        UIEvent<MouseButtonEvent> onMouseDoubleClick;
 
-        Event<void> onFocusIn;
-        Event<void> onFocusOut;
-        Event<Char> onKeyChar;
-        Event<Key> onKeyDown;
-        Event<Key> onKeyUp;
+        UIEvent<void> onFocusIn;
+        UIEvent<void> onFocusOut;
+        UIEvent<Char> onKeyChar;
+        UIEvent<Key> onKeyDown;
+        UIEvent<Key> onKeyUp;
 
-        Event<std::string> onPaste;
+        UIEvent<std::string> onPaste;
 
         //@}
 
@@ -331,14 +331,14 @@ namespace ui {
 
         /** Triggered when the mouse enters the area of the widget. 
          */
-        virtual void mouseIn(Event<void>::Payload & event) {
+        virtual void mouseIn(UIEvent<void>::Payload & event) {
             if (event.active())
                 onMouseIn(event, this);
         }
 
         /** Triggered when the mouse leaves the area of the widget. 
          */
-        virtual void mouseOut(Event<void>::Payload & event) {
+        virtual void mouseOut(UIEvent<void>::Payload & event) {
             if (event.active()) 
                 onMouseOut(event, this);
         }
@@ -347,7 +347,7 @@ namespace ui {
          
             When mouse enters the widget, first mouseIn is called and then mouseMove as two separate events. When the mouse moves away from the widget then only mouseOut is called on the widget. 
          */
-        virtual void mouseMove(Event<MouseMoveEvent>::Payload & event) {
+        virtual void mouseMove(UIEvent<MouseMoveEvent>::Payload & event) {
             if (event.active()) {
                 if (onMouseMove.attached()) {
                     event.propagateToParent(false);
@@ -362,7 +362,7 @@ namespace ui {
 
         /** Triggered when the mouse wheel rotates while the mouse is over the widget, or captured. 
          */
-        virtual void mouseWheel(Event<MouseWheelEvent>::Payload & event) {
+        virtual void mouseWheel(UIEvent<MouseWheelEvent>::Payload & event) {
             if (event.active()) {
                 if (onMouseWheel.attached()) {
                     event.propagateToParent(false);
@@ -377,7 +377,7 @@ namespace ui {
 
         /** Triggered when a mouse button is pressed down. 
          */
-        virtual void mouseDown(Event<MouseButtonEvent>::Payload & event) {
+        virtual void mouseDown(UIEvent<MouseButtonEvent>::Payload & event) {
             if (event.active()) {
                 if (onMouseDown.attached()) {
                     event.propagateToParent(false);
@@ -392,7 +392,7 @@ namespace ui {
 
         /** Triggered when a mouse button is released.
          */
-        virtual void mouseUp(Event<MouseButtonEvent>::Payload & event) {
+        virtual void mouseUp(UIEvent<MouseButtonEvent>::Payload & event) {
             if (event.active()) {
                 if (onMouseUp.attached()) {
                     event.propagateToParent(false);
@@ -407,7 +407,7 @@ namespace ui {
 
         /** Triggered when mouse button is clicked on the widget. 
          */
-        virtual void mouseClick(Event<MouseButtonEvent>::Payload & event) {
+        virtual void mouseClick(UIEvent<MouseButtonEvent>::Payload & event) {
             if (event.active()) {
                 if (onMouseClick.attached()) {
                     event.propagateToParent(false);
@@ -421,7 +421,7 @@ namespace ui {
         }
         /** Triggered when mouse button is double-clicked on the widget. 
          */
-        virtual void mouseDoubleClick(Event<MouseButtonEvent>::Payload & event) {
+        virtual void mouseDoubleClick(UIEvent<MouseButtonEvent>::Payload & event) {
             if (event.active()) {
                 if (onMouseDoubleClick.attached()) {
                     event.propagateToParent(false);
@@ -510,17 +510,17 @@ namespace ui {
 
         bool focused() const;
 
-        virtual void focusIn(Event<void>::Payload & event) {
+        virtual void focusIn(UIEvent<void>::Payload & event) {
             if (event.active())
                 onFocusIn(event, this);
         }
 
-        virtual void focusOut(Event<void>::Payload & event) {
+        virtual void focusOut(UIEvent<void>::Payload & event) {
             if (event.active())
                 onFocusOut(event, this);
         }
 
-        virtual void keyChar(Event<Char>::Payload & event) {
+        virtual void keyChar(UIEvent<Char>::Payload & event) {
             if (event.active()) {
                 if (onKeyChar.attached()) {
                     event.propagateToParent(false);
@@ -531,7 +531,7 @@ namespace ui {
             }
         }
 
-        virtual void keyDown(Event<Key>::Payload & event) {
+        virtual void keyDown(UIEvent<Key>::Payload & event) {
             if (event.active()) {
                 if (onKeyDown.attached()) {
                     event.propagateToParent(false);
@@ -542,7 +542,7 @@ namespace ui {
             }
         }
 
-        virtual void keyUp(Event<Key>::Payload & event) {
+        virtual void keyUp(UIEvent<Key>::Payload & event) {
             if (event.active()) {
                 if (onKeyUp.attached()) {
                     event.propagateToParent(false);
@@ -572,7 +572,7 @@ namespace ui {
          
             When a clipboard, or selection contents have been requested, the paste event is triggered when the contents is available. By default, the onPaste() event is triggered. 
          */
-        virtual void paste(Event<std::string>::Payload & event) {
+        virtual void paste(UIEvent<std::string>::Payload & event) {
             if (event.active())
                 onPaste(event, this);
         }
@@ -765,7 +765,7 @@ namespace ui {
                 parent_->relayout();
             }
             // trigger the onMove event
-            Event<void>::Payload p;
+            UIEvent<void>::Payload p;
             onMove(p, this);
         }
 
@@ -798,7 +798,7 @@ namespace ui {
                 repaint();
             }
             // finally, trigger the onResize event
-            Event<void>::Payload p;
+            UIEvent<void>::Payload p;
             onResize(p, this);
         }
 

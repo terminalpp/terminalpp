@@ -387,15 +387,15 @@ namespace ui {
 		static Color FromHTML(std::string const & colorCode) {
 			unsigned start = colorCode[0] == '#' ? 1 : 0;
 			if (colorCode.size() - start < 6)
-			    THROW(helpers::IOError()) << "Exepected at least RRGGBB color definition but " << colorCode << " found.";
-			unsigned char r = static_cast<unsigned char>(helpers::ParseHexNumber(colorCode.c_str() + start, 2));
-			unsigned char g = static_cast<unsigned char>(helpers::ParseHexNumber(colorCode.c_str() + start + 2, 2));
-			unsigned char b = static_cast<unsigned char>(helpers::ParseHexNumber(colorCode.c_str() + start + 4, 2));
+			    THROW(IOError()) << "Exepected at least RRGGBB color definition but " << colorCode << " found.";
+			unsigned char r = static_cast<unsigned char>(ParseHexNumber(colorCode.c_str() + start, 2));
+			unsigned char g = static_cast<unsigned char>(ParseHexNumber(colorCode.c_str() + start + 2, 2));
+			unsigned char b = static_cast<unsigned char>(ParseHexNumber(colorCode.c_str() + start + 4, 2));
 			unsigned char a = 0xff;
 			if (colorCode.size() - start == 8)
-				a = static_cast<unsigned char>(helpers::ParseHexNumber(colorCode.c_str() + start + 6, 2));
+				a = static_cast<unsigned char>(ParseHexNumber(colorCode.c_str() + start + 6, 2));
 			else if (colorCode.size() - start != 6)
-			    THROW(helpers::IOError()) << "Exepected at least RRGGBBAA color definition but " << colorCode << " found.";
+			    THROW(IOError()) << "Exepected at least RRGGBBAA color definition but " << colorCode << " found.";
 			return Color(r, g, b ,a);
 		}
 
@@ -543,7 +543,7 @@ namespace ui {
         }
 
         Font & setBold(bool value = true) {
-            font_ = helpers::SetBit(font_, BOLD, value);
+            font_ = SetBit(font_, BOLD, value);
             return *this;
         }
 
@@ -552,7 +552,7 @@ namespace ui {
         }
 
         Font & setItalic(bool value = true) {
-            font_ = helpers::SetBit(font_, ITALIC, value);
+            font_ = SetBit(font_, ITALIC, value);
             return *this;
         }
 
@@ -561,7 +561,7 @@ namespace ui {
         }
 
         Font & setUnderline(bool value = true) {
-            font_ = helpers::SetBit(font_, UNDERLINE, value);
+            font_ = SetBit(font_, UNDERLINE, value);
             return *this;
         }
 
@@ -570,7 +570,7 @@ namespace ui {
         }
 
         Font & setStrikethrough(bool value = true) {
-            font_ = helpers::SetBit(font_, STRIKETHROUGH, value);
+            font_ = SetBit(font_, STRIKETHROUGH, value);
             return *this;
         }
 
@@ -579,7 +579,7 @@ namespace ui {
         }
 
         Font & setBlink(bool value = true) {
-            font_ = helpers::SetBit(font_, BLINK, value);
+            font_ = SetBit(font_, BLINK, value);
             return *this;
         }
         bool doubleWidth() const {
@@ -587,7 +587,7 @@ namespace ui {
         }
 
         Font & setDoubleWidth(bool value = true) {
-            font_ = helpers::SetBit(font_, DOUBLE_WIDTH, value);
+            font_ = SetBit(font_, DOUBLE_WIDTH, value);
             return *this;
         }
 
@@ -598,7 +598,7 @@ namespace ui {
         Font & setSize(int size) {
             size -= 1;
             ASSERT(size >= 0 && size < 8);
-            font_ = helpers::SetBits(font_, SIZE_MASK, static_cast<uint16_t>(size));
+            font_ = SetBits(font_, SIZE_MASK, static_cast<uint16_t>(size));
             return *this;
         }
 

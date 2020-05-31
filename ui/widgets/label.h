@@ -85,11 +85,11 @@ namespace ui {
         void updateTextMetrics(int maxWidth) {
             textLines_.clear();
             maxLineWidth_ = 0;
-            int wrapAt = wordWrap_ ? maxWidth : helpers::NoWordWrap;
+            int wrapAt = wordWrap_ ? maxWidth : NoWordWrap;
             Char::iterator_utf8 start = Char::BeginOf(text_);
             Char::iterator_utf8 end = Char::EndOf(text_);
             while (start != end) {
-                StringLine line = helpers::GetLine(start, end, wrapAt);
+                StringLine line = GetLine(start, end, wrapAt);
                 start = line.end;
                 if (Char::IsWhitespace(*line.end))
                     ++start;
@@ -113,7 +113,7 @@ namespace ui {
                     row = canvas.height() - static_cast<int>(textLines_.size());
                     break;
             }
-            for (helpers::StringLine const & l : textLines_) {
+            for (StringLine const & l : textLines_) {
                 canvas.textOut(Point{0, row}, l, canvas.width(), hAlign_);
                 ++row;
             }
@@ -123,7 +123,7 @@ namespace ui {
             if (widthHint() != SizeHint::Auto())
                 updateTextMetrics(width());
             else
-                updateTextMetrics(helpers::NoWordWrap);
+                updateTextMetrics(NoWordWrap);
             return Size{maxLineWidth_, static_cast<int>(textLines_.size())};
         }
 

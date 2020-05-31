@@ -19,7 +19,7 @@ namespace tpp {
 
 #if (defined ARCH_WINDOWS)    
 
-    LocalPTYMaster::LocalPTYMaster(helpers::Command const & command):
+    LocalPTYMaster::LocalPTYMaster(Command const & command):
         command_{command},
 		startupInfo_{},
    		pipeIn_{ INVALID_HANDLE_VALUE },
@@ -27,7 +27,7 @@ namespace tpp {
         start();
     }
 
-    LocalPTYMaster::LocalPTYMaster(helpers::Command const & command, helpers::Environment const & env):
+    LocalPTYMaster::LocalPTYMaster(Command const & command, Environment const & env):
 		command_(command),
 		environment_(env),
 		startupInfo_{},
@@ -93,7 +93,7 @@ namespace tpp {
 			)
 		) << "Unable to set pseudoconsole attribute";
 		// finally, create the process with given commandline
-		helpers::utf16_string cmd = helpers::UTF8toUTF16(command_.toString());
+		utf16_string cmd = UTF8toUTF16(command_.toString());
 		OSCHECK(
 			CreateProcess(
 				nullptr,
@@ -158,13 +158,13 @@ namespace tpp {
 
 #elif (defined ARCH_UNIX)
 
-    LocalPTYMaster::LocalPTYMaster(helpers::Command const & command):
+    LocalPTYMaster::LocalPTYMaster(Command const & command):
         command_{command} {
         start();
 
     }
 
-    LocalPTYMaster::LocalPTYMaster(helpers::Command const & command, helpers::Environment const & env):
+    LocalPTYMaster::LocalPTYMaster(Command const & command, Environment const & env):
         command_{command},
         environment_{env} {
         start();

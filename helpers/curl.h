@@ -1,10 +1,10 @@
 #pragma once
 #include <string>
 
-#include "helpers/helpers.h"
-#include "helpers/process.h"
+#include "helpers.h"
+#include "process.h"
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
     /** Very simple download of specified URL. 
      
@@ -22,4 +22,4 @@ namespace helpers {
 #endif
     }
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

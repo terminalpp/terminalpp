@@ -9,6 +9,8 @@
 
 #include <thread>
 
+#include "helpers/platform.h"
+
 #include "pty.h"
 
 namespace tpp {
@@ -16,8 +18,8 @@ namespace tpp {
     class LocalPTYMaster : public PTYMaster {
     public:
 
-        LocalPTYMaster(helpers::Command const & command);
-        LocalPTYMaster(helpers::Command const & command, helpers::Environment const & env);
+        LocalPTYMaster(Command const & command);
+        LocalPTYMaster(Command const & command, Environment const & env);
         ~LocalPTYMaster() override;
 
         void terminate() override;
@@ -29,8 +31,8 @@ namespace tpp {
 
         void start();
 
-        helpers::Command command_;
-        helpers::Environment environment_;
+        Command command_;
+        Environment environment_;
 
         std::thread waiter_;
 
@@ -83,7 +85,7 @@ namespace tpp {
         /** Returns true if the terminal seems to be attached to the tmux terminal multipler. 
          */
         static bool InsideTMUX() {
-            return helpers::Environment::Get("TMUX") != nullptr;
+            return Environment::Get("TMUX") != nullptr;
         }
 
     private:

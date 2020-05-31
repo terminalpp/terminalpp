@@ -100,14 +100,14 @@ namespace ui {
         void setKeyboardFocus(Widget * widget) {
             ASSERT(widget == nullptr || (widget->renderer() == this && widget->focusable() && widget->enabled()));
             if (keyboardFocus_ != nullptr && keyboardIn_) {
-                Event<void>::Payload p{};
+                UIEvent<void>::Payload p{};
                 focusOut(p, keyboardFocus_);
                 // just make sure the cursor of the old widget won't be displayed
                 buffer_.setCursor(buffer_.cursor().setVisible(false));
             }
             keyboardFocus_ = widget;
             if (keyboardFocus_ != nullptr && keyboardIn_) {
-                Event<void>::Payload p{};
+                UIEvent<void>::Payload p{};
                 focusIn(p, keyboardFocus_);
             }
         }
@@ -333,7 +333,7 @@ namespace ui {
          */
         virtual void rendererMouseOut() {
             // trigger the mouseOut event on existing mouse focus
-            Event<void>::Payload p{};
+            UIEvent<void>::Payload p{};
             mouseOut(p, mouseFocus_);
             // clear mouse state
             mouseFocus_ = nullptr;
@@ -344,7 +344,7 @@ namespace ui {
         virtual void rendererMouseMove(Point coords, Key modifiers) {
             ASSERT(mouseIn_);
             updateMouseFocus(coords);
-            Event<MouseMoveEvent>::Payload p{MouseMoveEvent{coords, modifiers}};
+            UIEvent<MouseMoveEvent>::Payload p{MouseMoveEvent{coords, modifiers}};
             p.propagateToParent(true);
             mouseMove(p, mouseFocus_);
         }
@@ -352,7 +352,7 @@ namespace ui {
         virtual void rendererMouseWheel(Point coords, int by, Key modifiers) {
             ASSERT(mouseIn_);
             updateMouseFocus(coords);
-            Event<MouseWheelEvent>::Payload p{MouseWheelEvent{coords, by, modifiers}};
+            UIEvent<MouseWheelEvent>::Payload p{MouseWheelEvent{coords, by, modifiers}};
             p.propagateToParent(true);
             mouseWheel(p, mouseFocus_);
         }
@@ -362,7 +362,7 @@ namespace ui {
             updateMouseFocus(coords);
             mouseButtons_ |= static_cast<size_t>(button);
             // dispatch the mouseDown event
-            Event<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
+            UIEvent<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
             p.propagateToParent(true);
             mouseDown(p, mouseFocus_);
         }
@@ -387,7 +387,7 @@ namespace ui {
             // this is technically not necessary as the mouse should be captured, but for added robustness the mouse focus is checked 
             updateMouseFocus(coords);
             mouseButtons_ &= ~ static_cast<size_t>(button);
-            Event<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
+            UIEvent<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
             p.propagateToParent(true);
             mouseUp(p, mouseFocus_);
         }
@@ -408,7 +408,7 @@ namespace ui {
          */
         virtual void rendererMouseClick(Point coords, MouseButton button, Key modifiers) {
             ASSERT(mouseIn_);
-            Event<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
+            UIEvent<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
             p.propagateToParent(true);
             mouseClick(p, mouseFocus_);
         }
@@ -419,7 +419,7 @@ namespace ui {
          */
         virtual void rendererMouseDoubleClick(Point coords, MouseButton button, Key modifiers) {
             ASSERT(mouseIn_);
-            Event<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
+            UIEvent<MouseButtonEvent>::Payload p{MouseButtonEvent{coords, button, modifiers}};
             p.propagateToParent(true);
             mouseDoubleClick(p, mouseFocus_);
         }
@@ -441,12 +441,12 @@ namespace ui {
             // check if the target has changed and emit the appropriate events
             if (mouseFocus_ != newTarget) {
                 if (mouseFocus_ != nullptr) {
-                    Event<void>::Payload p{};
+                    UIEvent<void>::Payload p{};
                     mouseFocus_->mouseOut(p);
                 }
                 mouseFocus_ = newTarget;
                 if (mouseFocus_ != nullptr) {
-                    Event<void>::Payload p{};
+                    UIEvent<void>::Payload p{};
                     mouseFocus_->mouseIn(p);
                 }
             }
@@ -466,13 +466,13 @@ namespace ui {
             ASSERT(! keyboardIn_);
             keyboardIn_ = true;
             // focus the widget that had element last time the renderer was focused
-            Event<void>::Payload p{};
+            UIEvent<void>::Payload p{};
             focusIn(p, keyboardFocus_);
         }
 
         virtual void rendererFocusOut() {
             ASSERT(keyboardIn_);
-            Event<void>::Payload p{};
+            UIEvent<void>::Payload p{};
             focusOut(p, keyboardFocus_);
             keyboardIn_ = false;
         }
@@ -480,7 +480,7 @@ namespace ui {
         virtual void rendererKeyChar(Char c) {
             ASSERT(keyboardIn_);
             if (keyDownFocus_ == keyboardFocus_) {
-                Event<Char>::Payload p{c};
+                UIEvent<Char>::Payload p{c};
                 p.propagateToParent(true);
                 keyChar(p, keyboardFocus_);
             }
@@ -490,14 +490,14 @@ namespace ui {
         virtual void rendererKeyDown(Key k) {
             ASSERT(keyboardIn_);
             keyDownFocus_ = keyboardFocus_;
-            Event<Key>::Payload p{k};
+            UIEvent<Key>::Payload p{k};
             p.propagateToParent(true);
             keyDown(p, keyboardFocus_);
         }
 
         virtual void rendererKeyUp(Key k) {
             ASSERT(keyboardIn_);
-            Event<Key>::Payload p{k};
+            UIEvent<Key>::Payload p{k};
             p.propagateToParent(true);
             keyUp(p, keyboardFocus_);
         }
@@ -525,13 +525,13 @@ namespace ui {
         }
 
         virtual void rendererClipboardPaste(std::string const & contents) {
-            Event<std::string>::Payload p{contents};
+            UIEvent<std::string>::Payload p{contents};
             paste(p, clipboardRequestTarget_);
             clipboardRequestTarget_ = nullptr;
         }
 
         virtual void rendererSelectionPaste(std::string const & contents) {
-            Event<std::string>::Payload p{contents};
+            UIEvent<std::string>::Payload p{contents};
             paste(p, selectionRequestTarget_);
             selectionRequestTarget_ = nullptr;
         }
@@ -586,84 +586,84 @@ namespace ui {
 
          */
         //@{
-        virtual void mouseIn(Event<void>::Payload & e, Widget * target) {
+        virtual void mouseIn(UIEvent<void>::Payload & e, Widget * target) {
             if (target != nullptr && e.active())
                 target->mouseIn(e);
         }
 
-        virtual void mouseOut(Event<void>::Payload & e, Widget * target) {
+        virtual void mouseOut(UIEvent<void>::Payload & e, Widget * target) {
             if (target != nullptr && e.active())
                 target->mouseOut(e);
         }
 
-        virtual void mouseMove(Event<MouseMoveEvent>::Payload & e, Widget * target) {
+        virtual void mouseMove(UIEvent<MouseMoveEvent>::Payload & e, Widget * target) {
             if (target != nullptr && e.active()) {
                 e->coords = target->toWidgetCoordinates(e->coords);
                 target->mouseMove(e);
             }
         }
 
-        virtual void mouseWheel(Event<MouseWheelEvent>::Payload & e, Widget * target) {
+        virtual void mouseWheel(UIEvent<MouseWheelEvent>::Payload & e, Widget * target) {
             if (target != nullptr && e.active()) {
                 e->coords = target->toWidgetCoordinates(e->coords);
                 target->mouseWheel(e);
             }
         }
 
-        virtual void mouseDown(Event<MouseButtonEvent>::Payload & e, Widget * target) {
+        virtual void mouseDown(UIEvent<MouseButtonEvent>::Payload & e, Widget * target) {
             if (target != nullptr && e.active()) {
                 e->coords = target->toWidgetCoordinates(e->coords);
                 target->mouseDown(e);
             }
         }
 
-        virtual void mouseUp(Event<MouseButtonEvent>::Payload & e, Widget * target) {
+        virtual void mouseUp(UIEvent<MouseButtonEvent>::Payload & e, Widget * target) {
             if (target != nullptr && e.active()) {
                 e->coords = target->toWidgetCoordinates(e->coords);
                 target->mouseUp(e);
             }
         }
 
-        virtual void mouseClick(Event<MouseButtonEvent>::Payload & e, Widget * target) {
+        virtual void mouseClick(UIEvent<MouseButtonEvent>::Payload & e, Widget * target) {
             if (target != nullptr && e.active()) {
                 e->coords = target->toWidgetCoordinates(e->coords);
                 target->mouseClick(e);
             }
         }
 
-        virtual void mouseDoubleClick(Event<MouseButtonEvent>::Payload & e, Widget * target) {
+        virtual void mouseDoubleClick(UIEvent<MouseButtonEvent>::Payload & e, Widget * target) {
             if (target != nullptr && e.active()) {
                 e->coords = target->toWidgetCoordinates(e->coords);
                 target->mouseDoubleClick(e);
             }
         }
 
-        virtual void focusIn(Event<void>::Payload & e, Widget * target) {
+        virtual void focusIn(UIEvent<void>::Payload & e, Widget * target) {
             if (target != nullptr && e.active())
                 target->focusIn(e);
         }
 
-        virtual void focusOut(Event<void>::Payload & e, Widget * target) {
+        virtual void focusOut(UIEvent<void>::Payload & e, Widget * target) {
             if (target != nullptr && e.active())
                 target->focusOut(e);
         }
 
-        virtual void keyChar(Event<Char>::Payload & e, Widget * target) {
+        virtual void keyChar(UIEvent<Char>::Payload & e, Widget * target) {
             if (target != nullptr && e.active())
                 target->keyChar(e);
         }
 
-        virtual void keyDown(Event<Key>::Payload & e, Widget * target) {
+        virtual void keyDown(UIEvent<Key>::Payload & e, Widget * target) {
             if (target != nullptr && e.active())
                 target->keyDown(e);
         }
 
-        virtual void keyUp(Event<Key>::Payload & e, Widget * target) {
+        virtual void keyUp(UIEvent<Key>::Payload & e, Widget * target) {
             if (target != nullptr && e.active())
                 target->keyUp(e);
         }
 
-        virtual void paste(Event<std::string>::Payload & e, Widget * target) {
+        virtual void paste(UIEvent<std::string>::Payload & e, Widget * target) {
             if (target != nullptr && e.active())
                 target->paste(e);
         }
@@ -699,13 +699,13 @@ namespace ui {
             if (modalRoot_ == widget)
                 modalRoot_ = rootWidget_;
             if (mouseFocus_ == widget) {
-                Event<void>::Payload p{};
+                UIEvent<void>::Payload p{};
                 widget->mouseOut(p);
                 mouseFocus_ = nullptr;
             }
             if (keyboardFocus_ == widget) {
                 // when element with keyboard focus is detached the focus is set to *no* element
-                Event<void>::Payload p{};
+                UIEvent<void>::Payload p{};
                 widget->focusOut(p);
                 keyboardFocus_ = nullptr;
             }
@@ -836,7 +836,7 @@ namespace ui {
             Renderer::rendererMouseDown(coords, button, modifiers);
             // if this is the first button pressed, mark the time
             if (mouseButtonsDown() == static_cast<size_t>(button)) {
-                mouseClickStart_ = helpers::SteadyClockMillis();
+                mouseClickStart_ = SteadyClockMillis();
                 mouseClickButton_ = mouseButtonsDown();
             // otherwise invalidate the click state
             } else {
@@ -858,7 +858,7 @@ namespace ui {
                 rendererMouseUpEmit(coords, button, modifiers);
                 ASSERT(mouseButtonsDown() == 0);
                 // check if the mouse press time was short enough for a click
-                size_t now = helpers::SteadyClockMillis();
+                size_t now = SteadyClockMillis();
                 if (now - mouseClickStart_ <= MouseClickMaxDuration_) {
                     // if we have click, check whether the click is part of double click
                     if (

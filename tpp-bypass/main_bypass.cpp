@@ -281,15 +281,15 @@ void PrintVersion() {
 }
 
 int main(int argc, char * argv[]) {
-    helpers::CheckVersion(argc, argv, PrintVersion);
+    CheckVersion(argc, argv, PrintVersion);
 	if (argc == 2 && strncmp(argv[1], "--version", 10) == 0) {
 		std::cout << "Terminal++ Bypass, version 1.0" << std::endl;
 		return EXIT_SUCCESS;
 	}
 	try {
-		helpers::Logger::FileWriter log("~/.bypass-errors.log");
-		helpers::Logger::Enable(log, { 
-			helpers::Log::Default(),
+		Logger::FileWriter log("~/.bypass-errors.log");
+		Logger::Enable(log, { 
+			Log::Default(),
 		});
 		Bypass bypass(argc, argv);
 		try {

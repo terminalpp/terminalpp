@@ -181,7 +181,7 @@ namespace ui {
     private:
         Point autoScrollIncrement_;
 
-        helpers::Timer autoScrollTimer_;
+        Timer autoScrollTimer_;
 
     }; // ui::AutoScroller
 

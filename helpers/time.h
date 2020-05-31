@@ -10,7 +10,7 @@
 
 #include "helpers.h"
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
 	// TODO - time pretty printer
 	inline std::string PrettyPrintMillis(size_t millis) {
@@ -216,4 +216,4 @@ namespace helpers {
 
 	}; 
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

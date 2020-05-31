@@ -5,7 +5,7 @@
 #include "helpers.h"
 #include "strings.h"
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
 
 	/** A memory efficient representation of hashes. 
@@ -120,15 +120,15 @@ namespace helpers {
 	 */
 	typedef Hash<20> HashSHA1;
 
-} // namespace helpers
+HELPERS_NAMESPACE_END
 
 namespace std {
 
-	/** Template specialization of the std::hash for the helpers::Hash class so that hashes can be used as keys in maps and so on. 
+	/** Template specialization of the std::hash for the Hash class so that hashes can be used as keys in maps and so on. 
 	 */
 	template<unsigned BYTES>
-	struct hash<helpers::Hash<BYTES>> {
-		size_t operator() (helpers::Hash<BYTES> const & h) const {
+	struct hash<HELPERS_NAMESPACE_DECL::Hash<BYTES>> {
+		size_t operator() (HELPERS_NAMESPACE_DECL::Hash<BYTES> const & h) const {
 			size_t result = 0;
 			unsigned i = 0;
 			hash<unsigned> hu{};

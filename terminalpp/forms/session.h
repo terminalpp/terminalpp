@@ -74,7 +74,7 @@ namespace tpp {
             setBody(contents_);
         }
 
-        void keyDown(Event<Key>::Payload & event) override {
+        void keyDown(UIEvent<Key>::Payload & event) override {
             if (*event == SHORTCUT_PASTE) {
                 dismiss(btnYes_);
                 return;
@@ -184,7 +184,7 @@ namespace tpp {
             });
         }
 
-        void keyDown(Event<Key>::Payload & event) override {
+        void keyDown(UIEvent<Key>::Payload & event) override {
             if (terminateOnKeyPress_) 
                 window_->requestClose();
             else 
@@ -195,7 +195,7 @@ namespace tpp {
             return terminal_->scrollBy(by);
         }
 
-        void terminalPTYTerminated(Event<ExitCode>::Payload & e) {
+        void terminalPTYTerminated(UIEvent<ExitCode>::Payload & e) {
             window_->setIcon(Window::Icon::Notification);
             window_->setTitle(STR("Terminated, exit code " << *e));
             Config & config = Config::Instance();
@@ -205,16 +205,16 @@ namespace tpp {
                 terminateOnKeyPress_ = true;
         }        
 
-        void terminalTitleChanged(Event<std::string>::Payload & e) {
+        void terminalTitleChanged(UIEvent<std::string>::Payload & e) {
             window_->setTitle(*e);
         }
 
-        void terminalNotification(Event<void>::Payload & e) {
+        void terminalNotification(UIEvent<void>::Payload & e) {
             MARK_AS_UNUSED(e);
             window_->setIcon(Window::Icon::Notification);
         }
 
-        void terminalKeyDown(Event<Key>::Payload & e) {
+        void terminalKeyDown(UIEvent<Key>::Payload & e) {
             if (window_->icon() != Window::Icon::Default)
                 window_->setIcon(Window::Icon::Default);
             // trigger paste event for ourselves so that the paste can be intercepted
@@ -230,7 +230,7 @@ namespace tpp {
             }
         }
 
-        void terminalMouseMove(Event<MouseMoveEvent>::Payload & event) {
+        void terminalMouseMove(UIEvent<MouseMoveEvent>::Payload & event) {
             if (terminal_->mouseCaptured())
                 return;
             if (terminal_->updatingSelection()) {
@@ -241,7 +241,7 @@ namespace tpp {
             }
         }
 
-        void terminalMouseDown(Event<MouseButtonEvent>::Payload & event) {
+        void terminalMouseDown(UIEvent<MouseButtonEvent>::Payload & event) {
             if (terminal_->mouseCaptured())
                 return;
             if (event->modifiers == 0) {
@@ -259,7 +259,7 @@ namespace tpp {
             event.stop();
         }
 
-        void terminalMouseUp(Event<MouseButtonEvent>::Payload & event) {
+        void terminalMouseUp(UIEvent<MouseButtonEvent>::Payload & event) {
             if (terminal_->mouseCaptured())
                 return;
             if (event->modifiers == 0) {
@@ -271,7 +271,7 @@ namespace tpp {
             event.stop();
         }
 
-        void terminalMouseWheel(Event<MouseWheelEvent>::Payload & event) {
+        void terminalMouseWheel(UIEvent<MouseWheelEvent>::Payload & event) {
             if (terminal_->mouseCaptured())
                 return;
             //if (state_.buffer.historyRows() > 0) {
@@ -283,11 +283,11 @@ namespace tpp {
             //}
         }
 
-        void terminalSetClipboard(Event<std::string>::Payload & event) {
+        void terminalSetClipboard(UIEvent<std::string>::Payload & event) {
             setClipboard(*event);
         }
 
-        void terminalTppSequence(Event<TppSequenceEvent>::Payload & event) {
+        void terminalTppSequence(UIEvent<TppSequenceEvent>::Payload & event) {
             try {
                 switch (event->kind) {
                     case tpp::Sequence::Kind::GetCapabilities:
@@ -333,13 +333,13 @@ namespace tpp {
             }
         }
 
-        void paste(Event<std::string>::Payload & e) override {
+        void paste(UIEvent<std::string>::Payload & e) override {
             // determine whether to show the dialog, or paste immediately
             PasteDialog * pd = PasteDialog::CreateFor(*e);
             if (pd == nullptr) {
                 terminal_->paste(*e);
             } else {
-                pd->onDismiss.setHandler([this, pd](Event<Widget*>::Payload & e) {
+                pd->onDismiss.setHandler([this, pd](UIEvent<Widget*>::Payload & e) {
                     //modalPane_->dismiss(pd);
                     if (*e == pd->btnYes())
                         terminal_->paste(pd->contents());

@@ -5,7 +5,7 @@
 #include <atomic>
 #include <condition_variable>
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
     class ResourceGrabber {
     public:
@@ -91,7 +91,7 @@ namespace helpers {
 
         T * value_;
 
-    }; // helpers::SmartRAIIPtr
+    }; // SmartRAIIPtr
 
 
     /** A simple lock that allows locking in normal and priority modes, guaranteeing that a priority lock request will be serviced before any waiting normal locks. 
@@ -151,4 +151,4 @@ namespace helpers {
         std::condition_variable cv_;
     }; 
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

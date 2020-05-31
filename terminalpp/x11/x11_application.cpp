@@ -27,7 +27,7 @@ namespace tpp {
         XInitThreads();
 		xDisplay_ = XOpenDisplay(nullptr);
 		if (xDisplay_ == nullptr) 
-			THROW(helpers::Exception()) << "Unable to open X display";
+			THROW(Exception()) << "Unable to open X display";
 		xScreen_ = DefaultScreen(xDisplay_);
 
 		XSetErrorHandler(X11ErrorHandler);
@@ -63,7 +63,7 @@ namespace tpp {
 			broadcastWindow_ == x11::None ||
 			motifWmHints_ == x11::None ||
 			netWmIcon_ == x11::None
-		) THROW(helpers::Exception()) << "X11 Atoms instantiation failed";
+		) THROW(Exception()) << "X11 Atoms instantiation failed";
 
         fcConfig_ = FcInitLoadConfigAndFonts();
 

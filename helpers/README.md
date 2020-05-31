@@ -17,11 +17,11 @@ The `STR` is a handy macro to concatenate strings and other values. Internally i
 
 ### Exceptions
 
-The `helpers::Exception` is intended to be base class for all exceptions used in the application. It inherits from `std::exception` and provides an accessible storage for the `what()` value. Furthermore, unless `NDEBUG` macro is defined, each exception also remembers the source file and line where it was raised. 
+The `Exception` is intended to be base class for all exceptions used in the application. It inherits from `std::exception` and provides an accessible storage for the `what()` value. Furthermore, unless `NDEBUG` macro is defined, each exception also remembers the source file and line where it was raised. 
 
-To facilitate this, exceptions which inherit from `helpers::Exception` should not be thrown using `throw` keyword, but the provided `THROW` macro which also patches the exception with the source file and line, if appropriate:
+To facilitate this, exceptions which inherit from `Exception` should not be thrown using `throw` keyword, but the provided `THROW` macro which also patches the exception with the source file and line, if appropriate:
 
-    THROW(helpers::Exception()) << "An error";
+    THROW(Exception()) << "An error";
 
 Note that the preferred way of specifying custom error messages is to use the `<<` operator after the `THROW` macro. 
 
@@ -31,13 +31,13 @@ The `OSError` class implements the platform specific operating system error usin
 
 #### `NOT_IMPLEMENTED` and `UNREACHABLE`
 
-These are convenience macros that can be inserted into respective code paths. They simply throw `helpers::Exception` with appropriate textual description. 
+These are convenience macros that can be inserted into respective code paths. They simply throw `Exception` with appropriate textual description. 
 
 > This should better be its own exceptions? 
 
 ### Assertions
 
-Instead of `c` style `assert`, the macro `ASSERT` which uses the exceptions mechanism is provided. The `ASSERT` macro takes the condition as an argument and can be followed by help message using the standard `<<` `std::ostream` operator. If it fails, the `helpers::AssertionError` exception is thrown:
+Instead of `c` style `assert`, the macro `ASSERT` which uses the exceptions mechanism is provided. The `ASSERT` macro takes the condition as an argument and can be followed by help message using the standard `<<` `std::ostream` operator. If it fails, the `AssertionError` exception is thrown:
 
     ASSERT(x == y) << "x and y are not the same, ouch - x: " << x << ", y: " << y;
 
@@ -63,9 +63,9 @@ The event handler function takes an instantiation of `EventPayload` class which 
 
 The event payload acts as a smart pointer to the payload itself (unless the payload is `void`) and contains own property `sender` and method `stopDispatch`, which terminates the dispatching of the event in case that multiple handlers are associated with the event and further dispatching is not needed.
 
-An `HANDLER` macro is provided which takes as an argument either a function, or a method and creates the appropriate `EventHandler` from it. It works by calling the function `CreateEventHandler_` which can be redefined in different contexts to create instantiate the handler properly. Notably for use outside objects, creates event handler from a function and when used inside `helpers::Object` or its children, will either create handler from a function, or from method of `this` object.
+An `HANDLER` macro is provided which takes as an argument either a function, or a method and creates the appropriate `EventHandler` from it. It works by calling the function `CreateEventHandler_` which can be redefined in different contexts to create instantiate the handler properly. Notably for use outside objects, creates event handler from a function and when used inside `Object` or its children, will either create handler from a function, or from method of `this` object.
 
-The `helpers::Object` also provides the `trigger` helper method which triggers any event whose sender is `helpers::Object` from the appropriate payload:
+The `Object` also provides the `trigger` helper method which triggers any event whose sender is `Object` from the appropriate payload:
 
 The following is an example of how events can be used:
 
@@ -75,17 +75,17 @@ The following is an example of how events can be used:
 		unsigned buttons;
 	};
 
-	typedef helpers::EventPayload<void, helpers::Object> VoidEvent;
-	typedef helpers::EventPayload<Mouse, helpers::Object> MouseEvent;
+	typedef EventPayload<void, Object> VoidEvent;
+	typedef EventPayload<Mouse, Object> MouseEvent;
 
 	void functionHandler(VoidEvent & e) {
 		std::cout << "void event triggered from " << e.sender << std::endl;
 	}
 
-    class EventTester : public helpers::Object {
+    class EventTester : public Object {
 	public:
-	    helpers::Event<VoidEvent> onChange;
-		helpers::Event<MouseEvent> onMouseChange;
+	    UIEvent<VoidEvent> onChange;
+		UIEvent<MouseEvent> onMouseChange;
 
 		void methodHandler(MouseEvent & e) {
 			std::cout << "Mouse coordinates " << e->x << ":" << e->y << std::endl;

@@ -15,9 +15,7 @@
 
 namespace tpp {
 
-    using Log = helpers::Log;
-
-    class Config : public helpers::JSONConfig::Root {
+    class Config : public JSONConfig::Root {
     public:
         CONFIG_OPTION(
             timeout,
@@ -63,7 +61,7 @@ namespace tpp {
 
         static Config & Setup(int argc, char * argv[]) {
             Config & result = Instance();
-            helpers::JSONArguments args{};
+            JSONArguments args{};
             args.addArgument("Timeout", {"--timeout", "-t"}, result.timeout);
             args.addArgument("Packet size", {"--packet-size"}, result.packetSize);
             args.addArgument("Verbosity", {"--verbose", "-v"}, result.verbose);
@@ -105,12 +103,12 @@ namespace tpp {
             // verify the t++ capabilities of the terminal
             Sequence::Capabilities capabilities{t_.getCapabilities()};
             if (capabilities.version() != 1)
-                THROW(helpers::Exception()) << "Incompatible t++ version " << capabilities.version() << " (required version 1)";
+                THROW(Exception()) << "Incompatible t++ version " << capabilities.version() << " (required version 1)";
         }
 
         void openLocalFile(std::string const & filename) {
             try {
-                std::string remoteHost = helpers::GetHostname();
+                std::string remoteHost = GetHostname();
                 LOG(Log::Verbose) << "Remote host: " << remoteHost;
                 std::string remoteFile = std::filesystem::canonical(filename);
                 LOG(Log::Verbose) << "Remote file canonical path: " << remoteFile;
@@ -123,7 +121,7 @@ namespace tpp {
                 streamId_ = t_.openFileTransfer(remoteHost, remoteFile, size_);
                 LOG(Log::Verbose) << "Assigned stream id: " << streamId_;
             } catch (...) {
-                THROW(helpers::IOError()) << "Unable to open file " << filename;
+                THROW(IOError()) << "Unable to open file " << filename;
             }
         }
 
@@ -214,17 +212,17 @@ void PrintVersion() {
 }
 
 int main(int argc, char * argv[]) {
-    helpers::CheckVersion(argc, argv, PrintVersion);
+    CheckVersion(argc, argv, PrintVersion);
     using namespace tpp;
     try {
         // set log writer to raw mode and enable the default log
-        helpers::Logger::StdOutWriter().setDisplayLocation(false).setDisplayName(false).setDisplayTime(false).setEoL("\033[0K\r\n");
-		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { helpers::Log::Default()});
+        Logger::StdOutWriter().setDisplayLocation(false).setDisplayName(false).setDisplayTime(false).setEoL("\033[0K\r\n");
+		Logger::Enable(Logger::StdOutWriter(), { Log::Default()});
         // initialize the configuration
         Config & config = Config::Setup(argc, argv);
         // enable verbose log if selected
         if (config.verbose())
-    		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { helpers::Log::Verbose()});
+    		Logger::Enable(Logger::StdOutWriter(), { Log::Verbose()});
         // create the terminal client and transfer the file
         TerminalClient::Sync t{new LocalPTYSlave{}};
         RemoteOpen::Transfer(t, Config::Instance().filename());
@@ -233,7 +231,7 @@ int main(int argc, char * argv[]) {
         return EXIT_SUCCESS;
     } catch (NackError const & e) {
         std::cerr << "t++ terminal error: " << e.what() << "\033[0K\r\n";
-    } catch (helpers::TimeoutError const & e) {
+    } catch (TimeoutError const & e) {
         std::cerr << "t++ terminal timeout.\033[0K\r\n";
     } catch (std::exception const & e) {
         std::cout << "\r\n Error: " << e.what() << "\033[0K\r\n";

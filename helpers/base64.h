@@ -2,7 +2,7 @@
 
 #include "helpers.h"
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
 	inline unsigned Base64DecodeCharacter(char what) {
 		if (what >= 'A' && what <= 'Z')
@@ -60,4 +60,4 @@ namespace helpers {
 
 
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

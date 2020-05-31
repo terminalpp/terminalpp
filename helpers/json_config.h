@@ -6,7 +6,7 @@
 
 #include "json.h"
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
 	/** Exceptiomn thrown when invalid arguments are passed to the application. 
 	 */
@@ -273,7 +273,7 @@ namespace helpers {
 		T operator () () const {
 			try {
 			    return JSONConfig::ParseValue<T>(*json_);
-			} catch (helpers::Exception & e) {
+			} catch (Exception & e) {
 				e.setMessage(STR(" in confifuration value " << name()));
 				throw e;
 			}
@@ -317,7 +317,7 @@ namespace helpers {
 
 	    std::function<std::string(void)> defaultValue_;
 
-	}; // helpers::JSONConfig::Option
+	}; // JSONConfig::Option
 
 	class JSONConfig::Root : public JSONConfig::Group {
 	public:
@@ -340,16 +340,16 @@ namespace helpers {
 		 */ 
 		JSON config_;
 
-	}; // helpers::JSONConfig::Root
+	}; // JSONConfig::Root
 
 	#define CONFIG_OPTION(NAME, DESCRIPTION, DEFAULT_VALUE, ...) \
 	    Option<__VA_ARGS__> NAME{#NAME, DESCRIPTION, DEFAULT_VALUE}
 
 	#define CONFIG_GROUP(NAME, DESCRIPTION, ...) \
-	    class NAME ## Group : public helpers::JSONConfig::Group { \
+	    class NAME ## Group : public HELPERS_NAMESPACE_DECL::JSONConfig::Group { \
 		public: \
 		    __VA_ARGS__ \
-			NAME ## Group(): helpers::JSONConfig::Group{#NAME, DESCRIPTION} { \
+			NAME ## Group(): HELPERS_NAMESPACE_DECL::JSONConfig::Group{#NAME, DESCRIPTION} { \
 			    initializationDone(); \
 			} \
 		}; \
@@ -630,7 +630,7 @@ namespace helpers {
 		// default argument
 		ArgumentBase * defaultArgument_;
 
-	}; // helpers::JSONArguments
+	}; // JSONArguments
 
 
 	template<>
@@ -658,4 +658,4 @@ namespace helpers {
 		return value;
 	}
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

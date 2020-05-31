@@ -5,8 +5,6 @@
 
 namespace ui {
 
-    using StringLine = helpers::StringLine;
-
     class Widget;
 
     /** 

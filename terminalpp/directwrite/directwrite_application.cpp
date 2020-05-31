@@ -17,12 +17,12 @@ namespace tpp {
     wchar_t const * const DirectWriteApplication::DummyWindowName_ = L"dummy";
 
     void DirectWriteApplication::alert(std::string const & message) {
-        helpers::utf16_string text{helpers::UTF8toUTF16(message)};
+        utf16_string text{UTF8toUTF16(message)};
         MessageBox(nullptr, text.c_str(), L"t++", MB_ICONEXCLAMATION | MB_TASKMODAL);
     }
 
     void DirectWriteApplication::openLocalFile(std::string const & filename, bool edit) {
-        helpers::utf16_string f{helpers::UTF8toUTF16(filename)};
+        utf16_string f{UTF8toUTF16(filename)};
         HINSTANCE result = ShellExecute(
             0, // handle to parent window, null since we want own process
             edit ? L"edit" : nullptr, // what to do with the file - this will choose the default action

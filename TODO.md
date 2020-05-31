@@ -13,7 +13,7 @@ Restructured release process and minor fixes:
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- source package artifact
+- source package artifact for deb
 - release packages to snap 
 - release to Windows store
 - upload to ppa ? 
@@ -27,7 +27,7 @@ Documentation:
 - mouseUp, Down, WHeel, Move, Click and DoubleClick can propagate to parent, update the documentation
 - and so does the keyboard, propagation to parent disabled by default if event enabled 
 - document the modal pane & modal trait
-- helpers::time timer
+- time timer
 
 Builds & Releases
 
@@ -37,7 +37,6 @@ Builds & Releases
 
 Helpers & Logging & Errors overhaul
 
-- helpers, should they be in helpers namespace?
 - helpers filesystem should use paths better
 - when a certain exception is raised, it should be logged automatically
 - perhaps have the basics all in a single file (log, exceptions, asserts)

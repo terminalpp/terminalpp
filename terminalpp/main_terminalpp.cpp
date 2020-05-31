@@ -48,7 +48,7 @@
 
 void reportError(std::string const & message) {
 #if (defined ARCH_WINDOWS)
-    helpers::utf16_string text = helpers::UTF8toUTF16(message);
+    utf16_string text = UTF8toUTF16(message);
 	MessageBox(nullptr, text.c_str(), L"Fatal Error", MB_ICONSTOP);
 #else
 	std::cout << message << std::endl;
@@ -86,24 +86,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MARK_AS_UNUSED(nCmdShow);
 	int argc = __argc;
 	char** argv = __argv;
-    helpers::CheckVersion(argc, argv, PrintVersion);
+    CheckVersion(argc, argv, PrintVersion);
 	tpp::APPLICATION_CLASS::Initialize(argc, argv, hInstance);
 #elif (defined ARCH_WINDOWS && defined RENDERER_QT)
 int main(int argc, char* argv[]) {
-    helpers::CheckVersion(argc, argv, PrintVersion);
+    CheckVersion(argc, argv, PrintVersion);
 	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 #else
 int main(int argc, char* argv[]) {
-    helpers::CheckVersion(argc, argv, PrintVersion);
+    CheckVersion(argc, argv, PrintVersion);
 	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 #endif
     try {
         tpp::Config::Setup(argc, argv);
-        //helpers::JSON versions{tpp::Application::Instance()->checkLatestVersion("edge")};        
+        //JSON versions{tpp::Application::Instance()->checkLatestVersion("edge")};        
 
-		//helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
-		helpers::Logger::Enable(helpers::Logger::StdOutWriter(), { 
-			helpers::Log::Default(),
+		//Logger::FileWriter log(UniqueNameIn(config.log.dir(), "log-"));
+		Logger::Enable(Logger::StdOutWriter(), { 
+			Log::Default(),
 			ui::AnsiTerminal::SEQ_ERROR,
 			ui::AnsiTerminal::SEQ_UNKNOWN
 		});
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
         w->show();
         tpp::Application::Instance()->mainLoop();
         return EXIT_SUCCESS;
-	} catch (helpers::Exception const& e) {
+	} catch (Exception const& e) {
 		tpp::Application::Instance()->alert(STR(e));
 		LOG() << "Error: " << e;
 	} catch (std::exception const& e) {
@@ -133,14 +133,14 @@ int main(int argc, char* argv[]) {
 	try {
 		Config const & config = Config::Setup(argc, argv);
 		// make sure the log & remote files directories exist
-		helpers::CreatePath(config.log.dir());
-		helpers::CreatePath(config.session.remoteFiles.dir());
+		CreatePath(config.log.dir());
+		CreatePath(config.session.remoteFiles.dir());
 		// check that the logs directory does not overgrow the max number of files allowed
-		helpers::EraseOldestFiles(config.log.dir(), config.log.maxFiles());
+		EraseOldestFiles(config.log.dir(), config.log.maxFiles());
 		// create log writer & enable the selected logs
-		helpers::Logger::FileWriter log(helpers::UniqueNameIn(config.log.dir(), "log-"));
-		helpers::Logger::Enable(log, { 
-			helpers::Logger::DefaultLog(),
+		Logger::FileWriter log(UniqueNameIn(config.log.dir(), "log-"));
+		Logger::Enable(log, { 
+			Logger::DefaultLog(),
 			ui::Terminal::SEQ_ERROR,
 			ui::Terminal::SEQ_UNKNOWN,
 		});
@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
 		delete session;
 
 	    return EXIT_SUCCESS;
-	} catch (helpers::Exception const& e) {
+	} catch (Exception const& e) {
 		Application::Alert(STR(e));
 		LOG() << "Error: " << e;
 	} catch (std::exception const& e) {

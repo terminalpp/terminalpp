@@ -8,7 +8,7 @@
 #include "helpers.h"
 #include "string.h"
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
     class JSONError : public Exception {
     public:
@@ -17,7 +17,7 @@ namespace helpers {
         JSONError(unsigned line, unsigned col) {
             what_ = STR("Parser error at [" << line << "," << col << "]:");
         }
-    }; // helpers::JSONError
+    }; // JSONError
 
     /* A simple class for storing, serializing and deserializing JSON values. 
      */
@@ -931,7 +931,7 @@ namespace helpers {
             std::unordered_map<std::string, JSON *> valueObject_;
         };
 
-    }; // helpers::JSON
+    }; // JSON
 
     // parser
     
@@ -1226,4 +1226,4 @@ namespace helpers {
     }
 
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

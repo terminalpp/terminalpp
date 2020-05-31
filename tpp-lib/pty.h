@@ -66,10 +66,10 @@ namespace tpp {
 
         /** If the slave has been terminated, return its exit code. 
          */
-        helpers::ExitCode exitCode() const {
+        ExitCode exitCode() const {
             if (terminated_)
                 return exitCode_;
-            THROW(helpers::IOError()) << "Cannot obtain exit code of unterminated pseudoterminal's process";
+            THROW(IOError()) << "Cannot obtain exit code of unterminated pseudoterminal's process";
         }
 
     protected:
@@ -80,7 +80,7 @@ namespace tpp {
         }
 
         std::atomic<bool> terminated_;
-        helpers::ExitCode exitCode_;
+        ExitCode exitCode_;
 
     }; // tpp::PTYMaster
 
@@ -90,7 +90,7 @@ namespace tpp {
      */
     class PTYSlave : public PTYBase {
     public:
-        using ResizedEvent = helpers::Event<std::pair<int,int>, PTYSlave>;
+        using ResizedEvent = Event<std::pair<int,int>, PTYSlave>;
 
         /** Returns the size of the terminal (cols, rows). 
          */

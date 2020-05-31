@@ -16,8 +16,6 @@
 
 namespace ui {
 
-    using ExitCode = helpers::ExitCode;
-
     class TppSequenceEvent {
     public:
         tpp::Sequence::Kind kind;
@@ -125,11 +123,11 @@ namespace ui {
          */
         //@{
 
-        static helpers::Log SEQ;
-        static helpers::Log SEQ_UNKNOWN;
-        static helpers::Log SEQ_ERROR;
-        static helpers::Log SEQ_WONT_SUPPORT;
-        static helpers::Log SEQ_SENT;
+        static Log SEQ;
+        static Log SEQ_UNKNOWN;
+        static Log SEQ_ERROR;
+        static Log SEQ_WONT_SUPPORT;
+        static Log SEQ_SENT;
 
         //@}
 
@@ -235,38 +233,38 @@ namespace ui {
         
         /** Triggered when the title of the terminal changes. 
          */
-        Event<std::string> onTitleChange;
+        UIEvent<std::string> onTitleChange;
 
         /** Triggered when the terminal receives a notification. 
          
             This means receiving the BEL character for now, but other notification forms might be possible in the future.
          */
-        Event<void> onNotification; 
+        UIEvent<void> onNotification; 
 
         /** Triggered when the attached application wishes to set the local clipboard contents. 
 
             Having this implemented as an event allows the containing application to deal with the event according to own security rules. 
          */
-        Event<std::string> onSetClipboard;
+        UIEvent<std::string> onSetClipboard;
 
         /** Triggered when the PTY attached to the temrinal terminates. 
          
             Has the exit code reported by the PTY as a payload. 
          */
-        Event<helpers::ExitCode> onPTYTerminated;
+        UIEvent<ExitCode> onPTYTerminated;
 
         /** Triggered when t++ sequence is received in the terminal input. [thread-safe]
          
             Note that this event may be called from non-ui thread as part of the terminal input processing. It is therefore important than any processing done in the event is done quickly. 
          */
-        Event<TppSequenceEvent> onTppSequence;
+        UIEvent<TppSequenceEvent> onTppSequence;
         //@}
 
         /** Clipboard paste event. 
          
             Triggers the clipboard paste event and if the event propagation is not stopped, sends the selected text to the attached pty.
          */
-        void paste(Event<std::string>::Payload & e) override;
+        void paste(UIEvent<std::string>::Payload & e) override;
 
         /** Sends the specified text as clipboard to the PTY. 
          */
@@ -411,16 +409,16 @@ namespace ui {
         //@{
         /** Reset the mouse buttons state on mouse leave. 
          */
-        void mouseOut(Event<void>::Payload & event) override {
+        void mouseOut(UIEvent<void>::Payload & event) override {
             mouseButtonsDown_ = 0;
             mouseLastButton_ = 0;
             Widget::mouseOut(event);
             
         }
-        void mouseMove(Event<MouseMoveEvent>::Payload & event) override;
-        void mouseDown(Event<MouseButtonEvent>::Payload & event) override;
-        void mouseUp(Event<MouseButtonEvent>::Payload & event) override;
-        void mouseWheel(Event<MouseWheelEvent>::Payload & event) override;
+        void mouseMove(UIEvent<MouseMoveEvent>::Payload & event) override;
+        void mouseDown(UIEvent<MouseButtonEvent>::Payload & event) override;
+        void mouseUp(UIEvent<MouseButtonEvent>::Payload & event) override;
+        void mouseWheel(UIEvent<MouseWheelEvent>::Payload & event) override;
 
         unsigned encodeMouseButton(MouseButton btn, Key modifiers);
         void sendMouseEvent(unsigned button, Point coords, char end);
@@ -433,22 +431,22 @@ namespace ui {
 
         /** Keyboard focus in triggers repaint as the cursor must be updated. 
          */
-        void focusIn(Event<void>::Payload & event) override {
+        void focusIn(UIEvent<void>::Payload & event) override {
             Widget::focusIn(event);
             repaint();
         }
 
         /** Keyboard focus out triggers repaint as the cursor must be updated. 
          */
-        void focusOut(Event<void>::Payload & event) override {
+        void focusOut(UIEvent<void>::Payload & event) override {
             Widget::focusOut(event);
             repaint();
         }
 
-        void keyChar(Event<Char>::Payload & event) override;
-        void keyDown(Event<Key>::Payload & event) override;
+        void keyChar(UIEvent<Char>::Payload & event) override;
+        void keyDown(UIEvent<Key>::Payload & event) override;
 
-        void keyUp(Event<Key>::Payload & event) override {
+        void keyUp(UIEvent<Key>::Payload & event) override {
             // don't propagate to parent as the terminal handles keyboard input itself
             event.propagateToParent(false);
             Widget::keyUp(event);
@@ -465,7 +463,7 @@ namespace ui {
 
         void ptyTerminated(ExitCode exitCode) {
             sendEvent([this, exitCode](){
-                Event<ExitCode>::Payload p{exitCode};
+                UIEvent<ExitCode>::Payload p{exitCode};
                 // disable the terminal
                 setEnabled(false);
                 // call the event
@@ -479,7 +477,7 @@ namespace ui {
             The default implementation simply calls the event handler, if registered. 
          */
         virtual void processTppSequence(TppSequenceEvent seq) {
-            Event<TppSequenceEvent>::Payload p{seq};
+            UIEvent<TppSequenceEvent>::Payload p{seq};
             onTppSequence(p, this);
         }
 
@@ -582,7 +580,7 @@ namespace ui {
         /** Repaint trigger thread. */
         std::thread repainter_;
 
-        helpers::PriorityLock bufferLock_;
+        PriorityLock bufferLock_;
 
         Palette * palette_;
 

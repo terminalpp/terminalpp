@@ -13,9 +13,10 @@
 
 #include "helpers.h"
 #include "string.h"
+#include "platform.h"
 
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
 	/** Because different operating systems support different exit code types, we define the type exit code separately.
 	 */
@@ -230,9 +231,9 @@ namespace helpers {
 	 
 	    Empty path means current directory.
 	 */
-	inline std::string Exec(Command const& command, std::string const & path, helpers::ExitCode* exitCode = nullptr) {
+	inline std::string Exec(Command const& command, std::string const & path, ExitCode* exitCode = nullptr) {
 #ifdef ARCH_WINDOWS
-		helpers::ExitCode ec = EXIT_FAILURE;
+		ExitCode ec = EXIT_FAILURE;
 		std::string output;
 		// create the pipes
 		SECURITY_ATTRIBUTES attrs;
@@ -353,7 +354,7 @@ namespace helpers {
 			result << std::string(buffer, numBytes);
 		}
 		// now get the exit code
-		helpers::ExitCode ec;
+		ExitCode ec;
 		OSCHECK(waitpid(pid, &ec, 0) == pid);
 		if (exitCode != nullptr)
 			* exitCode = WEXITSTATUS(ec);
@@ -363,4 +364,4 @@ namespace helpers {
 #endif
 	}
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

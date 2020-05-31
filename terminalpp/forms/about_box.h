@@ -46,12 +46,12 @@ namespace tpp {
             canvas.setFont(ui::Font{});
         }
 
-        void mouseClick(Event<MouseButtonEvent>::Payload & event) override {
+        void mouseClick(UIEvent<MouseButtonEvent>::Payload & event) override {
             MARK_AS_UNUSED(event);
             dismiss(this);
         }
 
-        void keyDown(Event<Key>::Payload & event) override {
+        void keyDown(UIEvent<Key>::Payload & event) override {
             MARK_AS_UNUSED(event);
             dismiss(this);
         }

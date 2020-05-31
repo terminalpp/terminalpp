@@ -14,7 +14,7 @@ namespace tpp {
 
     class BypassPTYMaster : public PTYMaster {
     public:
-        BypassPTYMaster(helpers::Command const & command);
+        BypassPTYMaster(Command const & command);
         ~BypassPTYMaster() override;
 
         void terminate() override;
@@ -26,7 +26,7 @@ namespace tpp {
 
         void start();
 
-        helpers::Command command_;
+        Command command_;
 
         std::thread waiter_;
 

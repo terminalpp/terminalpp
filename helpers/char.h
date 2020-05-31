@@ -9,7 +9,7 @@ static_assert(sizeof(wchar_t) == sizeof(char16_t), "wchar_t and char16_t must ha
 #endif
 
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
 // TODO add and use utf8_string and utf32 string and chars?
 
@@ -517,7 +517,7 @@ namespace helpers {
 
 
 		unsigned char bytes_[4];
-	}; // helpers::Char
+	}; // Char
 
 	inline bool IsDecimalDigit(char what) {
         return (what >= '0') && (what <= '9');
@@ -581,4 +581,4 @@ namespace helpers {
 			return static_cast<char>('a' + what - 10);
 	}
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

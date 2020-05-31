@@ -6,7 +6,7 @@
 #include "helpers.h"
 
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
     /** The default payload base. 
      */
@@ -86,7 +86,7 @@ namespace helpers {
 	private:
 	    std::function<void(Payload &)> handler_;
 
-	}; // Event<PAYLOAD, SENDER, PAYLOAD_BASE>
+	}; // UIEvent<PAYLOAD, SENDER, PAYLOAD_BASE>
 
     template<typename SENDER, typename PAYLOAD_BASE>
 	class Event<void, SENDER, PAYLOAD_BASE> {
@@ -155,6 +155,6 @@ namespace helpers {
 	private:
 	    std::function<void(Payload &)> handler_;
 
-	}; // Event<void, SENDER, PAYLOAD_BASE>
+	}; // UIEvent<void, SENDER, PAYLOAD_BASE>
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

@@ -107,7 +107,7 @@ namespace ui {
          
             The payload of the event is the control responsible for the dismisal which can be used to identify the outcome. 
          */
-        Event<Widget*> onDismiss;
+        UIEvent<Widget*> onDismiss;
 
     protected:
 
@@ -128,7 +128,7 @@ namespace ui {
             if (parent != nullptr)
                 parent->remove(downcastThis());
             // and call the dismiss handler so that it is the very last thing we do and can delete the widget if necessary
-            Event<Widget*>::Payload p{cause};
+            UIEvent<Widget*>::Payload p{cause};
             onDismiss(p, downcastThis());
             // delete the widget if applicable
             if (deleteOnDismiss_)

@@ -28,7 +28,7 @@
 
  */
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
     /** Reads the entire file. 
      
@@ -156,7 +156,7 @@ namespace helpers {
 			nullptr,
 			& wpath
 		) == S_OK) << "Unable to determine stetings folder location";
-		std::string path(helpers::UTF16toUTF8(wpath));
+		std::string path(HELPERS_NAMESPACE_DECL::UTF16toUTF8(wpath));
 		CoTaskMemFree(wpath);
         return path;
 #elif (defined ARCH_MACOS)
@@ -317,4 +317,5 @@ namespace helpers {
 
     };
 #endif
-} // namespace helpers
+
+HELPERS_NAMESPACE_END

@@ -35,54 +35,48 @@
 #define SHORTCUT_ZOOM_OUT (Key::Minus + Key::Ctrl)
 #define SHORTCUT_PASTE (Key::V + Key::Ctrl + Key::Shift)
 
-namespace helpers {
+template<>
+inline Command JSONConfig::ParseValue(JSON const & json) {
+    if (json.kind() != JSON::Kind::Array)
+        THROW(JSONError()) << "Element must be an array";
+    std::vector<std::string> cmd;
+    for (auto i : json) {
+        if (i.kind() != JSON::Kind::String) 
+            THROW(JSONError()) << "Element items must be strings, but " << i.kind() << " found";
+        cmd.push_back(i.toString());
+    }
+    return Command{cmd};
+}
 
-	template<>
-	inline Command JSONConfig::ParseValue(JSON const & json) {
-		if (json.kind() != JSON::Kind::Array)
-		    THROW(JSONError()) << "Element must be an array";
-		std::vector<std::string> cmd;
-		for (auto i : json) {
-			if (i.kind() != JSON::Kind::String) 
-			    THROW(JSONError()) << "Element items must be strings, but " << i.kind() << " found";
-			cmd.push_back(i.toString());
-		}
-		return Command{cmd};
-	}
+template<>
+inline ui::AnsiTerminal::Palette JSONConfig::ParseValue(JSON const & json) {
+    if (json.kind() != JSON::Kind::Array)
+        THROW(JSONError()) << "Element must be an array";
+    ui::AnsiTerminal::Palette result{ui::AnsiTerminal::Palette::XTerm256()};
+    size_t i = 0;
+    for (auto c : json) {
+        if (c.kind() != JSON::Kind::String) 
+            THROW(JSONError()) << "Element items must be HTML colors, but " << c.kind() << " found";
+        result[i] = ui::Color::FromHTML(c.toString());
+    }
+    return result;
+}
 
-	template<>
-	inline ui::AnsiTerminal::Palette JSONConfig::ParseValue(JSON const & json) {
-		if (json.kind() != JSON::Kind::Array)
-		    THROW(JSONError()) << "Element must be an array";
-		ui::AnsiTerminal::Palette result{ui::AnsiTerminal::Palette::XTerm256()};
-		size_t i = 0;
-		for (auto c : json) {
-			if (c.kind() != JSON::Kind::String) 
-			    THROW(JSONError()) << "Element items must be HTML colors, but " << c.kind() << " found";
-			result[i] = ui::Color::FromHTML(c.toString());
-		}
-		return result;
-	}
+template<>
+inline ui::Color JSONConfig::ParseValue(JSON const & json) {
+    if (json.kind() != JSON::Kind::String)
+        THROW(JSONError()) << "Element must be an array";
+    return ui::Color::FromHTML(json.toString());
+}
 
-	template<>
-	inline ui::Color JSONConfig::ParseValue(JSON const & json) {
-		if (json.kind() != JSON::Kind::String)
-		    THROW(JSONError()) << "Element must be an array";
-		return ui::Color::FromHTML(json.toString());
-	}
-
-	/** Parts of the command argument are just JSON strings so they are only surrounded by double quotes. 
-	 */
-	template<>
-	inline std::string JSONArguments::ConvertToJSON<Command>(std::string const & value) {
-		return STR("\"" << value << "\"");
-	}
-
-} // namespace helpers
+/** Parts of the command argument are just JSON strings so they are only surrounded by double quotes. 
+ */
+template<>
+inline std::string JSONArguments::ConvertToJSON<Command>(std::string const & value) {
+    return STR("\"" << value << "\"");
+}
 
 namespace tpp {	
-
-    using helpers::JSONConfig;
 
 	class Config : public JSONConfig::Root {
 	public:
@@ -166,7 +160,7 @@ namespace tpp {
 				command, 
 				"The command to be executed in the session",
 				DefaultSessionCommand,
-			    helpers::Command
+			    Command
 			);
 			CONFIG_OPTION(
 				cols,
@@ -344,7 +338,7 @@ namespace tpp {
 			// this is a shortcut if there are no arguments on the commandline. Note that this is conditional of none of the arguments being required, which is reasonable for the terminal's main application
 			if (argc == 1)
 			    return;
-			helpers::JSONArguments args{};
+			JSONArguments args{};
 #if (defined ARCH_WINDOWS)
 			args.addArgument("Pty", {"--pty"}, session.pty);
 #endif
@@ -359,7 +353,7 @@ namespace tpp {
 			args.parse(argc, argv);
 		}
 
-		void verifyConfigurationVersion(helpers::JSON & userConfig);
+		void verifyConfigurationVersion(JSON & userConfig);
 
 		/** \name Default value providers
 		 

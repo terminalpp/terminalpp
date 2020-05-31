@@ -84,7 +84,7 @@ namespace ui {
             Container::paint(canvas);
         }
 
-        void headerButtonClicked(Event<MouseButtonEvent>::Payload & e) {
+        void headerButtonClicked(UIEvent<MouseButtonEvent>::Payload & e) {
             dismiss(e.sender());
         }
 
@@ -92,9 +92,9 @@ namespace ui {
             header_->add(widget);
         }
 
-        void mouseClick(Event<MouseButtonEvent>::Payload & event) override {
+        void mouseClick(UIEvent<MouseButtonEvent>::Payload & event) override {
             Container::mouseClick(event);
-            Event<Widget*>::Payload p{this};
+            UIEvent<Widget*>::Payload p{this};
             onDismiss(p, this);
         }
 
@@ -118,7 +118,7 @@ namespace ui {
             return btnCancel_;
         }
 
-        void keyDown(Event<Key>::Payload & event) override {
+        void keyDown(UIEvent<Key>::Payload & event) override {
             if (*event == Key::Esc) {
                 dismiss(btnCancel_);
                 return;
@@ -161,7 +161,7 @@ namespace ui {
 
     protected:
 
-        void keyDown(Event<Key>::Payload & event) override {
+        void keyDown(UIEvent<Key>::Payload & event) override {
             if (*event == Key::Esc) {
                 dismiss(btnCancel_);
                 return;

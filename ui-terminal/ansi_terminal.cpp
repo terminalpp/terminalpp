@@ -136,11 +136,11 @@ namespace ui {
     // ============================================================================================
 
     // TODO remove the underscores
-    helpers::Log AnsiTerminal::SEQ("VT100_");
-    helpers::Log AnsiTerminal::SEQ_UNKNOWN("VT100_UNKNOWN_");
-    helpers::Log AnsiTerminal::SEQ_ERROR("VT100_ERROR_");
-    helpers::Log AnsiTerminal::SEQ_WONT_SUPPORT("VT100_WONT_SUPPORT_");
-    helpers::Log AnsiTerminal::SEQ_SENT("VT100_SENT_");
+    Log AnsiTerminal::SEQ("VT100_");
+    Log AnsiTerminal::SEQ_UNKNOWN("VT100_UNKNOWN_");
+    Log AnsiTerminal::SEQ_ERROR("VT100_ERROR_");
+    Log AnsiTerminal::SEQ_WONT_SUPPORT("VT100_WONT_SUPPORT_");
+    Log AnsiTerminal::SEQ_SENT("VT100_SENT_");
 
     std::unordered_map<Key, std::string> AnsiTerminal::KeyMap_(InitializeVT100KeyMap());
 
@@ -238,7 +238,7 @@ namespace ui {
         }
     }
 
-    void AnsiTerminal::paste(Event<std::string>::Payload & e) {
+    void AnsiTerminal::paste(UIEvent<std::string>::Payload & e) {
         Widget::paste(e);
         if (e.active()) {
             paste(*e);
@@ -259,7 +259,7 @@ namespace ui {
         Canvas c{getContentsCanvas(canvas)};
         // lock the buffer
         bufferLock_.priorityLock();
-        helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_, false};
+        SmartRAIIPtr<PriorityLock> g{bufferLock_, false};
         // draw the buffer and the history
         state_.buffer.drawOnCanvas(c, palette_->defaultBackground());
         // draw the scrollbars if any
@@ -287,7 +287,7 @@ namespace ui {
         // lock the buffer
         bufferLock_.priorityLock();
         bool scrollToTerm = scrollOffset().y() == state_.buffer.historyRows();
-        helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_, false};
+        SmartRAIIPtr<PriorityLock> g{bufferLock_, false};
         // resize the state & buffers, resize the contents of the normal and active buffers
         // inactive alternate buffer does not need resizing as it will be cleared when entered
         state_.resize(width, height, true, palette_->defaultBackground());
@@ -303,7 +303,7 @@ namespace ui {
         Widget::resize(width, height);
     }
     
-    void AnsiTerminal::mouseMove(Event<MouseMoveEvent>::Payload & event) {
+    void AnsiTerminal::mouseMove(UIEvent<MouseMoveEvent>::Payload & event) {
         Widget::mouseMove(event);
         if (event.active() &&
             // the mouse movement should actually be reported
@@ -318,7 +318,7 @@ namespace ui {
             updateSelection(event->coords + scrollOffset(), scrollSize());
     }
 
-    void AnsiTerminal::mouseDown(Event<MouseButtonEvent>::Payload & event) {
+    void AnsiTerminal::mouseDown(UIEvent<MouseButtonEvent>::Payload & event) {
         Widget::mouseDown(event);
         ++mouseButtonsDown_;
 		if (mouseMode_ != MouseMode::Off) {
@@ -330,7 +330,7 @@ namespace ui {
         }
     }
 
-    void AnsiTerminal::mouseUp(Event<MouseButtonEvent>::Payload & event) {
+    void AnsiTerminal::mouseUp(UIEvent<MouseButtonEvent>::Payload & event) {
         Widget::mouseUp(event);
         // a bit of defensive programming
         if (mouseButtonsDown_ > 0) {
@@ -345,7 +345,7 @@ namespace ui {
         }
     }
 
-    void AnsiTerminal::mouseWheel(Event<MouseWheelEvent>::Payload & event) {
+    void AnsiTerminal::mouseWheel(UIEvent<MouseWheelEvent>::Payload & event) {
         Widget::mouseWheel(event);
 		if (mouseMode_ != MouseMode::Off) {
     		// mouse wheel adds 64 to the value
@@ -411,7 +411,7 @@ namespace ui {
 		}
     }
 
-    void AnsiTerminal::keyChar(Event<Char>::Payload & event) {
+    void AnsiTerminal::keyChar(UIEvent<Char>::Payload & event) {
         // don't propagate to parent as the terminal handles keyboard input itself
         event.propagateToParent(false);
         Widget::keyChar(event);
@@ -421,7 +421,7 @@ namespace ui {
         send(event->toCharPtr(), event->size());
     }
 
-    void AnsiTerminal::keyDown(Event<Key>::Payload & event) {
+    void AnsiTerminal::keyDown(UIEvent<Key>::Payload & event) {
         // only scroll to prompt if the key down is not a simple modifier key
         if (*event != Key::Shift + Key::ShiftKey && *event != Key::Alt + Key::AltKey && *event != Key::Ctrl + Key::CtrlKey && *event != Key::Win + Key::WinKey)
             setScrollOffset(Point{0, state_.buffer.historyRows()});
@@ -455,7 +455,7 @@ namespace ui {
 
     size_t AnsiTerminal::processInput(char const * buffer, char const * bufferEnd) {
         // lock the buffer first
-        helpers::SmartRAIIPtr<helpers::PriorityLock> g{bufferLock_};
+        SmartRAIIPtr<PriorityLock> g{bufferLock_};
         // then process the input
         char const * x = buffer;
         while (x != bufferEnd) {
@@ -492,7 +492,7 @@ namespace ui {
                     ++x;
                     break;
                 default: {
-                    // while this is a code duplication from the helpers::Char class, since this code is a bottleneck for processing large ammounts of text, the code is copied for performance
+                    // while this is a code duplication from the Char class, since this code is a bottleneck for processing large ammounts of text, the code is copied for performance
                     char32_t cp = 0;
                     unsigned char const * ux = pointer_cast<unsigned char const *>(x);
                     if (*ux < 0x80) {
@@ -575,7 +575,7 @@ namespace ui {
     void AnsiTerminal::parseNotification() {
         bufferLock_.unlock();
         sendEvent([this](){
-            Event<void>::Payload p;
+            UIEvent<void>::Payload p;
             onNotification(p, this);
         });
         bufferLock_.lock();
@@ -1372,7 +1372,7 @@ namespace ui {
     			LOG(SEQ) << "Title change to " << seq.value();
                 bufferLock_.unlock();
                 sendEvent([this, title = seq.value()](){
-                    Event<std::string>::Payload p(title);
+                    UIEvent<std::string>::Payload p(title);
                     onTitleChange(p, this);
                 });
                 bufferLock_.lock();
@@ -1392,7 +1392,7 @@ namespace ui {
                 LOG(SEQ) << "Clipboard set to " << seq.value();
                 bufferLock_.unlock();
                 sendEvent([this, contents = seq.value()]() {
-                    Event<std::string>::Payload p{contents};
+                    UIEvent<std::string>::Payload p{contents};
                     onSetClipboard(p, this);
                 });
                 bufferLock_.lock();
@@ -1851,7 +1851,7 @@ namespace ui {
             return result;
         }
         // parse the first byte
-        if (IsParameterByte(*x) && *x != ';' && !helpers::IsDecimalDigit(*x))
+        if (IsParameterByte(*x) && *x != ';' && !IsDecimalDigit(*x))
             result.firstByte_ = *x++;
         ASSERT(result.firstByte_ != INVALID);
         // parse arguments, if any
@@ -1861,11 +1861,11 @@ namespace ui {
                 ++x;
                 result.args_.push_back(std::make_pair(DEFAULT_ARG_VALUE, false));
             // otherwise if we see digit, parse the argument given
-            } else if (helpers::IsDecimalDigit(*x)) {
+            } else if (IsDecimalDigit(*x)) {
                 int arg = 0;
                 do {
-                    arg = arg * 10 + helpers::DecCharToNumber(*x++);
-                } while (x != end && helpers::IsDecimalDigit(*x));
+                    arg = arg * 10 + DecCharToNumber(*x++);
+                } while (x != end && IsDecimalDigit(*x));
                 result.args_.push_back(std::make_pair(arg, true));
                 // if there is separator, parse it as well
                 if (x != end && *x == ';')
@@ -1907,11 +1907,11 @@ namespace ui {
             return result;
         }
         // parse the number
-        if (helpers::IsDecimalDigit(*x)) {
+        if (IsDecimalDigit(*x)) {
             int arg = 0;
             do {
-                arg = arg * 10 + helpers::DecCharToNumber(*x++);
-            } while (x != end && helpers::IsDecimalDigit(*x));
+                arg = arg * 10 + DecCharToNumber(*x++);
+            } while (x != end && IsDecimalDigit(*x));
             // if there is no semicolon, keep the INVALID in the number, but continue parsing to BEL or ST
             if (x != end && *x == ';') {
                     ++x;
@@ -1926,10 +1926,10 @@ namespace ui {
                 return result;
             }
             // BEL
-            if (*x == helpers::Char::BEL)
+            if (*x == Char::BEL)
                 break;
             // ST
-            if (*x == helpers::Char::ESC && x + 1 != end && x[1] == '\\') {
+            if (*x == Char::ESC && x + 1 != end && x[1] == '\\') {
                 ++x;
                 break;
             }

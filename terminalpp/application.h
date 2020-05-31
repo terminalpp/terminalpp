@@ -48,8 +48,8 @@ namespace tpp {
             Singleton_() = this;
         }
         
-        helpers::JSON getLatestVersion();
-        helpers::JSON getCachedLatestVersion();
+        JSON getLatestVersion();
+        JSON getCachedLatestVersion();
 
     private:
 

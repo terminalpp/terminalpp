@@ -10,7 +10,7 @@ namespace tpp {
     void DirectWriteWindow::setTitle(std::string const & value) {
         RendererWindow::setTitle(value);
         // actually change the title since we are in the UI thread now
-        helpers::utf16_string t = helpers::UTF8toUTF16(value);
+        utf16_string t = UTF8toUTF16(value);
         // ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
         SetWindowTextW(hWnd_, t.c_str());
     }
@@ -64,9 +64,9 @@ namespace tpp {
 			HANDLE clip = GetClipboardData(CF_UNICODETEXT);
 			if (clip) {
 				// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-				helpers::utf16_char* data = reinterpret_cast<helpers::utf16_char*>(GlobalLock(clip));
+				utf16_char* data = reinterpret_cast<utf16_char*>(GlobalLock(clip));
 				if (data) {
-					result = helpers::UTF16toUTF8(data);
+					result = UTF16toUTF8(data);
 					GlobalUnlock(clip);
 				}
 			}
@@ -87,7 +87,7 @@ namespace tpp {
 			EmptyClipboard();
 			// encode the string into UTF16 and get the size of the data we need
 			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-			helpers::utf16_string str = helpers::UTF8toUTF16(contents);
+			utf16_string str = UTF8toUTF16(contents);
 			// the str is null-terminated
 			size_t size = (str.size() + 1) * 2;
 			HGLOBAL clip = GlobalAlloc(0, size);
@@ -136,7 +136,7 @@ namespace tpp {
         glyphOffsets_{nullptr},
         mouseLeaveTracked_{false} {
         // create the window with given title
-        helpers::utf16_string t = helpers::UTF8toUTF16(title);
+        utf16_string t = UTF8toUTF16(title);
         hWnd_ = CreateWindowExW(
             WS_EX_LEFT, // the default
             DirectWriteApplication::Instance()->WindowClassName_, // window class
@@ -344,8 +344,8 @@ namespace tpp {
 			 */
 			case WM_SYSCHAR:
 			    switch (wParam) {
-					case helpers::Char::LF:
-					case helpers::Char::CR:
+					case Char::LF:
+					case Char::CR:
 					    return 0;
 					default:
 					    break;
@@ -353,7 +353,7 @@ namespace tpp {
 			    break;
 			case WM_CHAR:
 				if (wParam >= 0x20)
-					window->rendererKeyChar(helpers::Char::FromCodepoint(static_cast<unsigned>(wParam)));
+					window->rendererKeyChar(Char::FromCodepoint(static_cast<unsigned>(wParam)));
 				break;
 			/* Processes special key events.
 			

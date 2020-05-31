@@ -6,7 +6,7 @@ namespace tpp {
     class DirectWriteFont::TextAnalysis : public ::Microsoft::WRL::RuntimeClass<::Microsoft::WRL::RuntimeClassFlags<::Microsoft::WRL::ClassicCom | ::Microsoft::WRL::InhibitFtmBase>, IDWriteTextAnalysisSource> {
     public:
         explicit TextAnalysis(char32_t cp) {
-            // TODO refactor this & helpers::Char::toUTF16 ?
+            // TODO refactor this & Char::toUTF16 ?
             if (cp < 0x10000) {
                 c_[0] = static_cast<wchar_t>(cp);
             } else {
@@ -69,7 +69,7 @@ namespace tpp {
         UINT32 findex;
         BOOL fexists;
         std::string fnameUTF8{font.doubleWidth() ? tpp::Config::Instance().font.doubleWidthFamily() : tpp::Config::Instance().font.family()};
-        helpers::utf16_string fname{helpers::UTF8toUTF16(fnameUTF8)};
+        utf16_string fname{UTF8toUTF16(fnameUTF8)};
         app->systemFontCollection_->FindFamilyName(fname.c_str(), &findex, &fexists);
         if (! fexists) {
             app->alert(STR("Unable to load font family " << fnameUTF8 << ", trying fallback font (Consolas)"));
@@ -97,7 +97,7 @@ namespace tpp {
         UINT32 mappedLength;
         Microsoft::WRL::ComPtr<IDWriteFont> mappedFont;
         FLOAT scale;
-        helpers::utf16_string fname = helpers::UTF8toUTF16(font_.doubleWidth() ? tpp::Config::Instance().font.doubleWidthFamily() : tpp::Config::Instance().font.family());
+        utf16_string fname = UTF8toUTF16(font_.doubleWidth() ? tpp::Config::Instance().font.doubleWidthFamily() : tpp::Config::Instance().font.family());
         app->fontFallback_->MapCharacters(
             &ta, // IDWriteTextAnalysisSource
             0, // text position

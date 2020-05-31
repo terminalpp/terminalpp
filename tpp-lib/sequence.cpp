@@ -103,7 +103,7 @@ namespace tpp {
                     ++start;
                     break;
                 }
-                THROW(helpers::IOError()) << "Expected decimal digit, but " << *start << " found in sequence payload";
+                THROW(IOError()) << "Expected decimal digit, but " << *start << " found in sequence payload";
             }
         }
         return result;

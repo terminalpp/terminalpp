@@ -21,13 +21,13 @@ namespace tpp {
         file->f_.open(file->localPath_, std::ios::binary);
         // if the file can't be opened, maybe it is locked by existing viewer, rename and try again
         if (!file->f_.good()) {
-            std::pair<std::string, std::string> fext = helpers::SplitFilenameExt(remotePath);
-            std::string filename = helpers::UniqueNameIn(localRoot_ / remoteHost, fext.first, fext.second);
+            std::pair<std::string, std::string> fext = SplitFilenameExt(remotePath);
+            std::string filename = UniqueNameIn(localRoot_ / remoteHost, fext.first, fext.second);
             localPath = localRoot_ / remoteHost / filename;
             file->localPath_ = localPath.string();
             file->f_.open(file->localPath_, std::ios::binary);
             if (!file->f_.good())
-                THROW(helpers::IOError()) << "Unable to open local file for writing: " << file->localPath();
+                THROW(IOError()) << "Unable to open local file for writing: " << file->localPath();
         }
         // return the acknowledgement
         return Sequence::Ack::Response{Sequence::Ack{req, file->id_}};

@@ -110,7 +110,7 @@ namespace tpp {
     }
 
     void QtWindow::keyPressEvent(QKeyEvent* ev) {
-        static_assert(sizeof(QChar) == sizeof(helpers::utf16_char));
+        static_assert(sizeof(QChar) == sizeof(utf16_char));
         activeModifiers_ = Key{Key::Invalid, GetStateModifiers(ev->modifiers())};
         Key k{GetKey(ev->key(), activeModifiers_.modifiers(), true)};
         if (k != Key::Invalid)
@@ -121,8 +121,8 @@ namespace tpp {
         // determine if there is a printable character to be sent
         QString str{ev->text()};
         if (!str.isEmpty()) {
-            helpers::utf16_char const * data = pointer_cast<helpers::utf16_char const*>(str.data());
-            helpers::Char c{helpers::Char::FromUTF16(data, data + str.size())};
+            utf16_char const * data = pointer_cast<utf16_char const*>(str.data());
+            Char c{Char::FromUTF16(data, data + str.size())};
             // raise the keyChar event
             // the delete character (ASCII 127) is also non printable, furthermore on macOS backspace incorrectly translates to it.
             if (c.codepoint() >= 32 && c.codepoint() != 127)

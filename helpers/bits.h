@@ -1,6 +1,8 @@
 #pragma once
 
-namespace helpers {
+#include "helpers.h"
+
+HELPERS_NAMESPACE_BEGIN
 
     /** Sets or clears the given mask. 
      */
@@ -20,4 +22,4 @@ namespace helpers {
     } 
 
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

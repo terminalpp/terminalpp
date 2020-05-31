@@ -2,7 +2,7 @@
 
 #include "helpers.h"
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
     class Buffer {
     public:
@@ -93,7 +93,7 @@ namespace helpers {
         size_t size_;
         size_t capacity_;
 
-    }; // helpers::Buffer
+    }; // Buffer
 
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

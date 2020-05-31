@@ -23,10 +23,10 @@
  */
 #ifdef __clang__
 #define TEST(SUITE_NAME, TEST_NAME, ...) \
-    class Test_ ## SUITE_NAME ## _ ## TEST_NAME : public ::helpers::Test __VA_OPT__(,) __VA_ARGS__ { \
+    class Test_ ## SUITE_NAME ## _ ## TEST_NAME : public HELPERS_NAMESPACE_DECL::Test __VA_OPT__(,) __VA_ARGS__ { \
     private: \
         Test_ ## SUITE_NAME ## _ ## TEST_NAME (char const * suiteName, char const * testName): \
-            ::helpers::Test(suiteName, testName) { \
+            HELPERS_NAMESPACE_DECL::Test(suiteName, testName) { \
         } \
         void run_() override; \
         static Test_ ## SUITE_NAME ## _ ## TEST_NAME singleton_; \
@@ -35,10 +35,10 @@
     inline void Test_ ## SUITE_NAME ## _ ## TEST_NAME ::run_() 
 #else
 #define TEST(SUITE_NAME, TEST_NAME, ...) \
-    class Test_ ## SUITE_NAME ## _ ## TEST_NAME : public ::helpers::Test, ## __VA_ARGS__ { \
+    class Test_ ## SUITE_NAME ## _ ## TEST_NAME : public HELPERS_NAMESPACE_DECL::Test, ## __VA_ARGS__ { \
     private: \
         Test_ ## SUITE_NAME ## _ ## TEST_NAME (char const * suiteName, char const * testName): \
-            ::helpers::Test(suiteName, testName) { \
+            HELPERS_NAMESPACE_DECL::Test(suiteName, testName) { \
         } \
         void run_() override; \
         static Test_ ## SUITE_NAME ## _ ## TEST_NAME singleton_; \
@@ -49,9 +49,9 @@
 /** Checks that given assumption holds, and fails the test immediately if it does not.
  */
 
-#define CHECK(...) if (expectTrue(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)) {} else THROW(helpers::CheckFailure())
-#define CHECK_EQ(...) if (expectEq(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)) {} else THROW(helpers::CheckFailure())
-#define CHECK_NULL(...) if (expectNull(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)) {} else THROW(helpers::CheckFailure())
+#define CHECK(...) if (expectTrue(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)) {} else THROW(HELPERS_NAMESPACE_DECL::CheckFailure())
+#define CHECK_EQ(...) if (expectEq(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)) {} else THROW(HELPERS_NAMESPACE_DECL::CheckFailure())
+#define CHECK_NULL(...) if (expectNull(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)) {} else THROW(HELPERS_NAMESPACE_DECL::CheckFailure())
 
 /** Check that the given assumption holds, but does not fail the test immediately if the assumption fails. 
  */
@@ -61,11 +61,11 @@
 
 /** Checks that given expression throws an exception of given type, or its subtype
  */
-#define CHECK_THROWS(TYPE, ...) try { addCheck(); __VA_ARGS__;  addFailedException(__FILE__, __LINE__, # TYPE); THROW(::helpers::CheckFailure()); } catch (::helpers::CheckFailure & e) { throw e; } catch (TYPE const &) { }
+#define CHECK_THROWS(TYPE, ...) try { addCheck(); __VA_ARGS__;  addFailedException(__FILE__, __LINE__, # TYPE); THROW(HELPERS_NAMESPACE_DECL::CheckFailure()); } catch (HELPERS_NAMESPACE_DECL::CheckFailure & e) { throw e; } catch (TYPE const &) { }
 
 #define EXPECT_THROWS(TYPE, ...)  try { addCheck(); __VA_ARGS__;  addFailedException(__FILE__, __LINE__, # TYPE); } catch (TYPE const &) { }
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
     /** Exception thrown by CHECK macros to immediately end the test execution. 
      */
@@ -170,7 +170,7 @@ namespace helpers {
         TestSuite & suite_;
         Report * report_;
 
-    }; // helpers::Test
+    }; // Test
 
     /** A test suite is a collection of tests. 
      */
@@ -207,7 +207,7 @@ namespace helpers {
 
         std::unordered_map<std::string, Test *> tests_;
 
-    }; // helpers::TestSuite
+    }; // TestSuite
 
     /** Base static class for management and running of the tests. 
      */
@@ -249,7 +249,7 @@ namespace helpers {
             return * (i->second);
         }
 
-    }; // helpers::Tests
+    }; // Tests
 
     inline Test::Test(std::string const & suiteName, std::string const & testName):
         name_(testName),
@@ -293,4 +293,4 @@ namespace helpers {
 
 
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

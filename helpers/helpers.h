@@ -1,9 +1,19 @@
 #pragma once
+
+#ifdef HELPERS_NAMESPACE
+#define HELPERS_NAMESPACE_DECL :: HELPERS_NAMESPACE
+#define HELPERS_NAMESPACE_BEGIN namespace HELPERS_NAMESPACE {
+#define HELPERS_NAMESPACE_END }
+#else
+#define HELPERS_NAMESPACE_DECL
+#define HELPERS_NAMESPACE_BEGIN
+#define HELPERS_NAMESPACE_END
+#endif
+
 #include <string>
 #include <sstream>
 #include <exception>
 #include <functional>
-
 
 #if (defined ARCH_WINDOWS)
     #include <windows.h>
@@ -20,25 +30,6 @@
  */
 #define MARK_AS_UNUSED(ARG_NAME) (void)(ARG_NAME)
 
-#ifdef NDEBUG 
-#define THROW(...) throw __VA_ARGS__ & ::helpers::Exception::ExceptionInfo()
-#define CREATE_EXCEPTION(...) __VA_ARGS__ & ::helpers::Exception::ExceptionInfo()
-#define ASSERT(...) if (false) std::stringstream()
-
-#else
-#define THROW(...) throw __VA_ARGS__ & ::helpers::Exception::ExceptionInfo(__LINE__,__FILE__)
-#define CREATE_EXCEPTION(...) __VA_ARGS__ & ::helpers::Exception::ExceptionInfo(__LINE__, __FILE__)
-#define ASSERT(...) if (! (__VA_ARGS__)) THROW(::helpers::AssertionError(#__VA_ARGS__))
-#endif
-
-#define NOT_IMPLEMENTED THROW(::helpers::Exception()) << "Not implemented code triggered"
-#define UNREACHABLE THROW(::helpers::Exception()) << "Unreachable code triggered"
-
-/** Convenience macro for checking calls which return error using the platform specified way. 
-
-    Executes its arguments and if they evaluate to false, throw OSError. The message of the OS error can be provided after the OSCHECK using the `<<` notion. 
- */
-#define OSCHECK(...) if (! (__VA_ARGS__)) THROW(::helpers::OSError())
 
 template<typename T, typename W>
 inline T pointer_cast(W const * from) {
@@ -50,7 +41,43 @@ inline T pointer_cast(W * from) {
     return static_cast<T>(static_cast<void *>(from));
 }
 
-namespace helpers {
+/** \section Exceptions
+ 
+The Exception class is intended to be base class for all exceptions used in the application. It inherits from `std::exception` and provides an accessible storage for the `what()` value. Furthermore, unless `NDEBUG` macro is defined, each exception also remembers the source file and line where it was raised. 
+
+To facilitate this, exceptions which inherit from `Exception` should not be thrown using `throw` keyword, but the provided `THROW` macro which also patches the exception with the source file and line, if appropriate:
+    
+    THROW(Exception()) << "An error";
+
+Note that the preferred way of specifying custom error messages is to use the `<<` operator after the `THROW` macro. 
+
+In case an exception needs to be created, but not thrown, a non-throwing constructor macro CREATE_EXCEPTION is provided. 
+
+Convenience macros `NOT_IMPLEMENTED` and `UNREACHABLE` which throw the Exception with a short explanation are provided.
+
+ */
+
+#ifdef NDEBUG 
+#define THROW(...) throw __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::ExceptionInfo()
+#define CREATE_EXCEPTION(...) __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::ExceptionInfo()
+#define ASSERT(...) if (false) std::stringstream()
+
+#else
+#define THROW(...) throw __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::ExceptionInfo(__LINE__,__FILE__)
+#define CREATE_EXCEPTION(...) __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::ExceptionInfo(__LINE__, __FILE__)
+#define ASSERT(...) if (! (__VA_ARGS__)) THROW(HELPERS_NAMESPACE_DECL::AssertionError(#__VA_ARGS__))
+#endif
+
+#define NOT_IMPLEMENTED THROW(HELPERS_NAMESPACE_DECL::Exception()) << "Not implemented code triggered"
+#define UNREACHABLE THROW(HELPERS_NAMESPACE_DECL::Exception()) << "Unreachable code triggered"
+
+/** Convenience macro for checking calls which return error using the platform specified way. 
+
+    Executes its arguments and if they evaluate to false, throw OSError. The message of the OS error can be provided after the OSCHECK using the `<<` notion. 
+ */
+#define OSCHECK(...) if (! (__VA_ARGS__)) THROW(HELPERS_NAMESPACE_DECL::OSError())
+
+HELPERS_NAMESPACE_BEGIN
 
     class Exception : public std::exception {
     public:
@@ -124,7 +151,7 @@ namespace helpers {
     private:
         template<typename T>
         friend T && operator & (T && e, ExceptionInfo const & cinfo) {
-            static_assert(std::is_base_of<Exception, T>::value, "Must be derived from ::helpers::Exception");
+            static_assert(std::is_base_of<Exception, T>::value, "Must be derived from ::Exception");
             e.updateWith(cinfo);
             return std::move(e);
         }
@@ -147,15 +174,11 @@ namespace helpers {
         }
 
     };
+HELPERS_NAMESPACE_END
 
-	class AssertionError : public Exception {
-	public:
-		AssertionError(char const * code):
-			Exception() {
-            what_ = STR("Assertion failure: (" << code << ") "); 
-		}
-	};
-
+/** \section Common Exception Classes
+ */
+HELPERS_NAMESPACE_BEGIN
 
     class OSError : public Exception {
     public:
@@ -168,7 +191,7 @@ namespace helpers {
     	    what_ = "OS Error";
 #endif
         }
-    }; // helpers::OSError
+    }; // OSError
 
 	class IOError : public Exception {
 	};
@@ -176,51 +199,24 @@ namespace helpers {
     class TimeoutError : public Exception {
     };
 
-#ifdef ARCH_WINDOWS
-	/** 
-	 */
-	class Win32Handle {
+HELPERS_NAMESPACE_END
+
+/** \section Assertions
+ */
+HELPERS_NAMESPACE_BEGIN
+
+	class AssertionError : public Exception {
 	public:
-
-		HANDLE& operator * () {
-			return h_;
+		AssertionError(char const * code):
+			Exception() {
+            what_ = STR("Assertion failure: (" << code << ") "); 
 		}
-
-		HANDLE* operator -> () {
-			return &h_;
-		}
-
-		Win32Handle() :
-			h_(INVALID_HANDLE_VALUE) {
-		}
-
-		Win32Handle(HANDLE h) :
-			h_(h) {
-		}
-
-		~Win32Handle() {
-			close();
-		}
-
-		void close() {
-			if (h_ != INVALID_HANDLE_VALUE) {
-				CloseHandle(h_);
-				h_ = INVALID_HANDLE_VALUE;
-			}
-		}
-
-		operator HANDLE () {
-			return h_;
-		}
-
-		operator HANDLE* () {
-			return &h_;
-		}
-	private:
-		HANDLE h_;
 	};
 
-#endif
+HELPERS_NAMESPACE_END
+
+
+HELPERS_NAMESPACE_BEGIN
 
     inline bool CheckVersion(int argc, char ** argv, std::function<void()> versionPrinter) {
         if (argc == 2 && strcmp("--version", argv[1]) == 0) {
@@ -230,4 +226,4 @@ namespace helpers {
         return false;
     }
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

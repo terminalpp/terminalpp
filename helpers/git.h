@@ -4,7 +4,7 @@
 #include "process.h"
 #include "string.h"
 
-namespace helpers {
+HELPERS_NAMESPACE_BEGIN
 
 	/** A simple abstraction over a local git repository. 
 	
@@ -59,4 +59,4 @@ namespace helpers {
 
 	};
 
-} // namespace helpers
+HELPERS_NAMESPACE_END

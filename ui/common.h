@@ -12,7 +12,7 @@
 /** TODO this will be represented by a templated monstrosity that would lock based on the renderer, i.e. one thread per renderer. 
  */
 #ifndef NDEBUG
-#define UI_THREAD_CHECK if (ui::UIThreadChecker_::ThreadId() != std::this_thread::get_id()) THROW(helpers::Exception()) << "Only UI thread is allowed to execute at this point"
+#define UI_THREAD_CHECK if (ui::UIThreadChecker_::ThreadId() != std::this_thread::get_id()) THROW(Exception()) << "Only UI thread is allowed to execute at this point"
 #else
 #define UI_THREAD_CHECK
 #endif
@@ -22,8 +22,6 @@
 namespace ui {
 
     class Widget;
-
-    using Char = helpers::Char;
 
     class EventPayloadBase {
     public:
@@ -60,7 +58,7 @@ namespace ui {
     }; 
 
     template<typename P, typename T = Widget>
-    using Event = helpers::Event<P, T, EventPayloadBase>;
+    using UIEvent = ::Event<P, T, EventPayloadBase>;
 
 	class MouseButtonEvent {
 	public:
