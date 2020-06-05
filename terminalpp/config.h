@@ -93,24 +93,28 @@ namespace tpp {
             std::string
         );
 
-        /** TODO the log version has been kept for backwards compatibility, currently does not work. 
-         */
-		CONFIG_GROUP(
-			log,
-		    "Log Properties", 
-		    CONFIG_OPTION(
-				dir,
-				"Directory where to keep the log files",
-				DefaultLogDir,
-			    std::string
-			);
-		    CONFIG_OPTION(
-				maxFiles, 
-				"Maximum number of log files that tpp can keep at one time", 
-				"100",
-			    unsigned
-			);
-		);
+        CONFIG_GROUP(
+            telemetry,
+            "Telemetry Settings for bug and feature requests reporting",
+            CONFIG_OPTION(
+                dir,
+                "Directory where to store the telemetry logs",
+                DefaultTelemetryDir,
+                std::string
+            );
+            CONFIG_OPTION(
+                deleteAtExit,
+                "If true, unused telemetry logs are deleted when the application terminates",
+                "true",
+                bool
+            );
+            CONFIG_OPTION(
+                events,
+                "Names of event kinds that should be captured by the telemetry",
+                "[]",
+                std::vector<std::string>
+            );
+        );
 
 		CONFIG_GROUP(
 			renderer, 
@@ -367,7 +371,7 @@ namespace tpp {
 		 */
 	    static std::string TerminalVersion();
 
-		static std::string DefaultLogDir();
+		static std::string DefaultTelemetryDir();
 
 		static std::string DefaultRemoteFilesDir();		
 

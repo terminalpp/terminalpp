@@ -168,11 +168,7 @@ namespace tpp {
     }
 
     void X11Window::rendererSetClipboard(std::string const & contents) {
-        X11Application * app = X11Application::Instance();
-        // let the app manage the clipboard requests from other windows now
-        app->clipboard_ = contents;
-        // inform X that we own the clipboard selection
-		XSetSelectionOwner(display_, app->clipboardName_, window_, CurrentTime);
+        X11Application::Instance()->setClipboard(contents);
     }
 
     void X11Window::rendererRegisterSelection(std::string const & contents, Widget * owner) {
@@ -291,27 +287,27 @@ namespace tpp {
                 return Key(Key::NumLock, modifiers);
             case XK_Scroll_Lock:
                 return Key(Key::ScrollLock, modifiers);
-            case XK_semicolon:
+            case XK_semicolon: // ; and :
                 return Key(Key::Semicolon, modifiers);
-            case XK_equal:
+            case XK_equal: // = and +
                 return Key(Key::Equals, modifiers);
-            case XK_comma:
+            case XK_comma: // , and < 
                 return Key(Key::Comma, modifiers);
-            case XK_minus:
+            case XK_minus: // - and _
                 return Key(Key::Minus, modifiers);
-            case XK_period: // .
+            case XK_period: // . and >
                 return Key(Key::Dot, modifiers);
-            case XK_slash:
+            case XK_slash: // / and ?
                 return Key(Key::Slash, modifiers);
-            case XK_grave: // `
+            case XK_grave: // ` and ~
                 return Key(Key::Tick, modifiers);
-            case XK_bracketleft: // [
+            case XK_bracketleft: // [ and {
                 return Key(Key::SquareOpen, modifiers);
-            case XK_backslash:  
+            case XK_backslash:  // \ and |
                 return Key(Key::Backslash, modifiers);
-            case XK_bracketright: // ]
+            case XK_bracketright: // ] and }
                 return Key(Key::SquareClose, modifiers);
-            case XK_apostrophe: // '
+            case XK_apostrophe: // ' and "
                 return Key(Key::Quote, modifiers);
 			case XK_Shift_L:
 			case XK_Shift_R:
@@ -396,19 +392,31 @@ namespace tpp {
 					strLen = XLookupString(&e.xkey, str, sizeof str, &kSym, nullptr);
                 // if the keysym was recognized, it is a keyDown event first
                 Key key = GetKey(kSym, modifiers, true);
+                // we were not able to recognize the key, but there were modifiers present, try removing them and asking for the keysymbol again
+                if (key == Key::Invalid && modifiers != 0) {
+                    // clear the state
+                    e.xkey.state &= ~ (1 + 4 + 8 + 64);
+                    char strx[32];
+                    if (window->ic_ != nullptr)
+                        Xutf8LookupString(window->ic_, &e.xkey, strx, sizeof strx, &kSym, &status);
+                    else
+                        XLookupString(&e.xkey, strx, sizeof strx, &kSym, nullptr);
+                    key = GetKey(kSym, modifiers, true);
+                }
 				// if the modifiers were updated (i.e. the key is Shift, Ctrl, Alt or Win, update active modifiers
 				if (modifiers != key.modifiers())
 					window->activeModifiers_ = Key(Key::Invalid, modifiers);
 				if (key != Key::Invalid)
                     window->rendererKeyDown(key);
                 // if it is printable character and there were no modifiers other than shift pressed, we are dealing with printable character (backspace is not printable character)
-                if (strLen > 0 && (str[0] < 0 || str[0] >= 0x20) && (e.xkey.state & 0x4c) == 0 && str[0] != 0x7f) {
+                if (strLen > 0 && (str[0] < 0 || static_cast<unsigned char>(str[0]) >= 0x20) && (e.xkey.state & 0x4c) == 0 && static_cast<unsigned>(str[0]) != 0x7f) {
                     char const * x = pointer_cast<char const*>(& str);
                     try {
                         Char c{Char::FromUTF8(x, x + 32)};
                         window->rendererKeyChar(c);
                     } catch (CharError const &) {
                         // do nothing
+                        LOG() << "error";
                     }
                 }
                 break;
@@ -479,6 +487,8 @@ namespace tpp {
                 window->rendererMouseLeave();
                 break;
 			/** Called when we are notified that clipboard or selection contents is available for previously requested paste.
+             
+                 SelectionCLear and SelectionRequest are handled by the Application.
 			 */
 			case SelectionNotify:
 				if (e.xselection.property) {
@@ -502,72 +512,6 @@ namespace tpp {
 					XFree(result);
                  }
 				 break;
-			/** If we lose ownership, clear the clipboard contents with the application, or if we lose primary ownership, just clear the selection.   
-			 */
-			case SelectionClear: {
-				X11Application* app = X11Application::Instance();
-                if (e.xselectionclear.selection == app->clipboardName_) {
-    				app->clipboard_.clear();
-                } else if (app->selectionOwner_ != nullptr) {
-                    X11Window * owner = app->selectionOwner_;
-                    app->selectionOwner_ = nullptr;
-                    app->selection_.clear();
-                    // clears the selection in the renderer without triggering any X events
-                    owner->rendererClearSelection();
-                }
-				break;
-            }
-			/** Called when the clipboard contents is requested by an outside app. 
-			 */
-			case SelectionRequest: {
-				X11Application* app = X11Application::Instance();
-				XSelectionEvent response;
-				response.type = SelectionNotify;
-				response.requestor = e.xselectionrequest.requestor;
-				response.selection = e.xselectionrequest.selection;
-				response.target = e.xselectionrequest.target;
-				response.time = e.xselectionrequest.time;
-				// by default, the request is rejected
-				response.property = x11::None; 
-				// if the target is TARGETS, then all supported formats should be sent, in our case this is simple, only UTF8_STRING is supported
-				if (response.target == app->formatTargets_) {
-					XChangeProperty(
-						window->display_,
-						e.xselectionrequest.requestor,
-						e.xselectionrequest.property,
-						e.xselectionrequest.target,
-						32, // atoms are 4 bytes, so 32 bits
-						PropModeReplace,
-						reinterpret_cast<unsigned char const*>(&app->formatStringUTF8_),
-						1
-					);
-					response.property = e.xselectionrequest.property;
-				// otherwise, if UTF8_STRING, or a STRING is requested, we just send what we have 
-				} else if (response.target == app->formatString_ || response.target == app->formatStringUTF8_) {
-                    std::string clipboard = (response.selection == app->clipboardName_) ? app->clipboard_ : app->selection_;
-					XChangeProperty(
-						window->display_,
-						e.xselectionrequest.requestor,
-						e.xselectionrequest.property,
-						e.xselectionrequest.target,
-						8, // utf-8 is encoded in chars, i.e. 8 bits
-						PropModeReplace,
-						reinterpret_cast<unsigned char const *>(clipboard.c_str()),
-						clipboard.size()
-					);
-					response.property = e.xselectionrequest.property;
-				}
-				// send the event to the requestor
-				if (!XSendEvent(
-					e.xselectionrequest.display,
-					e.xselectionrequest.requestor,
-					1, // propagate
-					0, // event mask
-					reinterpret_cast<XEvent*>(&response)
-				))
-					LOG() << "Error sending selection notify";
-				break;
-			}
             case DestroyNotify: {
                 // delete the window object and remove it from the list of active windows
                 delete window;

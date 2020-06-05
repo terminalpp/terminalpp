@@ -7,6 +7,7 @@
 #include "helpers/time.h"
 #include "helpers/filesystem.h"
 #include "helpers/curl.h"
+#include "helpers/telemetry.h"
 
 #include "config.h"
 
@@ -55,15 +56,22 @@ void reportError(std::string const & message) {
 }
 
 void PrintVersion() {
-    std::cout << "Terminal++ version " << stamp::version << std::endl;
-    std::cout << "    commit:   " << stamp::commit << (stamp::dirty ? "*" : "") << std::endl;
-    std::cout << "              " << stamp::build_time << std::endl;
-#if (defined RENDERER_QT)
-    std::cout << "    platform: " << ARCH << "(Qt) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
-#else
-    std::cout << "    platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
-#endif
+    std::cout << tpp::Application::Stamp();
     exit(EXIT_SUCCESS);
+}
+
+/** Determines whether there is telemetry information to be sent and raised as a bugfix. 
+
+    For now, this can only be done in case of fatal errors. 
+ */
+void SendTelemetry(Telemetry & telemetry) {
+    if (telemetry.messages(FATAL_ERROR) > 0) {
+        if (tpp::Application::Instance()->query("Send telemetry?", "Do you want to copy the location of telemetry log to clipboard and fill in an issue?")) {
+            telemetry.setKeepAfterClosing();
+            tpp::Application::Instance()->setClipboard(telemetry.filename());
+            tpp::Application::Instance()->createNewIssue("", STR("Please check that a similar bug has not been already filed. If not, fill in the description and title of the bug, keeping the version information below. If possible, please attach the telemetry log (in file " << telemetry.filename() << "), whose file location has been copied to your clipboard. Thank you!"));
+        }
+    }
 }
 
 // https://www.codeguru.com/cpp/misc/misc/graphics/article.php/c16139/Introduction-to-DirectWrite.htm
@@ -96,10 +104,15 @@ int main(int argc, char* argv[]) {
     CheckVersion(argc, argv, PrintVersion);
 	tpp::APPLICATION_CLASS::Initialize(argc, argv);
 #endif
+    // create the telemetry manager and its handler. 
+    Telemetry telemetry(SendTelemetry);
     try {
-        tpp::Config::Setup(argc, argv);
-        //JSON versions{tpp::Application::Instance()->checkLatestVersion("edge")};        
+        tpp::Config const & config = tpp::Config::Setup(argc, argv);
+        // open the telemetry and add the registered logs
+        telemetry.open(config.telemetry.dir() + "/" + TimeInDashed());
+        telemetry.addLog(config.telemetry.events());
 
+        //throw "foobar";
 		//Log::FileWriter log(UniqueNameIn(config.log.dir(), "log-"));
 		Log::Enable(Log::StdOutWriter(), { 
 			Log::Default(),
@@ -115,14 +128,15 @@ int main(int argc, char* argv[]) {
         tpp::Application::Instance()->mainLoop();
         return EXIT_SUCCESS;
 	} catch (Exception const& e) {
+        LOG(FATAL_ERROR) << e;
 		tpp::Application::Instance()->alert(STR(e));
-		LOG() << "Error: " << e;
 	} catch (std::exception const& e) {
+        LOG(FATAL_ERROR) << e.what();
 		tpp::Application::Instance()->alert(e.what());
 		LOG() << "Error: " << e.what();
 	} catch (...) {
+        LOG(FATAL_ERROR) << "unknown exception raised";
 		tpp::Application::Instance()->alert("Unknown error");
-		LOG() << "Error: Unknown error";
 	} 
 	return EXIT_FAILURE;
     /*

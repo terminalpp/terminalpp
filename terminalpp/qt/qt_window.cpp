@@ -76,7 +76,7 @@ namespace tpp {
     }
 
     void QtWindow::rendererSetClipboard(std::string const & contents) {
-        QtApplication::Instance()->clipboard()->setText(QString{contents.c_str()}, QClipboard::Mode::Clipboard);
+        QtApplication::Instance()->setClipboard(contents);
     }
 
     void QtWindow::rendererRegisterSelection(std::string const & contents, Widget * owner) {

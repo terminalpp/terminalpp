@@ -53,13 +53,13 @@ HELPERS_NAMESPACE_BEGIN
         OSCHECK(GetComputerName(buffer, &bufSize));
         buffer[bufSize] = 0;
         return UTF16toUTF8(buffer);
-#elif (defined ARCH_MACOS)
-        char buffer[_POSIX_HOST_NAME_MAX];
-        gethostname(buffer, _POSIX_HOST_NAME_MAX);
-        return std::string(buffer);
-#else
+#elif (defined ARCH_LINUX)
         char buffer[HOST_NAME_MAX];
         gethostname(buffer, HOST_NAME_MAX);
+        return std::string(buffer);
+#else // maxOS, BSD
+        char buffer[_POSIX_HOST_NAME_MAX];
+        gethostname(buffer, _POSIX_HOST_NAME_MAX);
         return std::string(buffer);
 #endif
     }

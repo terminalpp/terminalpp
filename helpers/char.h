@@ -523,6 +523,10 @@ HELPERS_NAMESPACE_BEGIN
         return (what >= '0') && (what <= '9');
 	}
 
+    inline bool IsASCIILetter(char what) {
+        return (what >= 'a' && what <= 'z') || (what >= 'A' && what <= 'Z');
+    }
+
 	/** Determines if given character is a hexadecimal digit. 
 	 
 	    Numbers and letters `a`-`f` and `A`-`F` are recognized as hexadecimal digits. 

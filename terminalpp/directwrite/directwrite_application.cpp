@@ -21,6 +21,12 @@ namespace tpp {
         MessageBox(nullptr, text.c_str(), L"t++", MB_ICONEXCLAMATION | MB_TASKMODAL);
     }
 
+    bool DirectWriteApplication::query(std::string const & title, std::string const & message) {
+        utf16_string caption{UTF8toUTF16(title)};
+        utf16_string text{UTF8toUTF16(message)};
+        return MessageBox(nullptr, text.c_str(), caption.c_str(), MB_ICONQUESTION | MB_TASKMODAL | MB_YESNOCANCEL) == IDYES;
+    }
+
     void DirectWriteApplication::openLocalFile(std::string const & filename, bool edit) {
         utf16_string f{UTF8toUTF16(filename)};
         HINSTANCE result = ShellExecute(
@@ -42,6 +48,34 @@ namespace tpp {
         } 
         #pragma warning(pop)
     }
+
+    void DirectWriteApplication::openUrl(std::string const & url) {
+        utf16_string u{UTF8toUTF16(url)};
+        ShellExecute(0, nullptr, u.c_str(), 0, 0, SW_SHOW);            
+    }
+
+    void DirectWriteApplication::setClipboard(std::string const & contents) {
+		if (OpenClipboard(nullptr)) {
+			EmptyClipboard();
+			// encode the string into UTF16 and get the size of the data we need
+			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
+			utf16_string str = UTF8toUTF16(contents);
+			// the str is null-terminated
+			size_t size = (str.size() + 1) * 2;
+			HGLOBAL clip = GlobalAlloc(0, size);
+			if (clip) {
+				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clip));
+				if (data) {
+					memcpy(data, str.c_str(), size);
+					GlobalUnlock(clip);
+					SetClipboardData(CF_UNICODETEXT, clip);
+				}
+			}
+			CloseClipboard();
+		}
+
+    }
+
 
 	Window * DirectWriteApplication::createWindow(std::string const & title, int cols, int rows) {
 		return new DirectWriteWindow(title, cols, rows);

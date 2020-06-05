@@ -205,6 +205,20 @@ HELPERS_NAMESPACE_BEGIN
 		return result.str();
 	}
 
+    /** Encodes the string so that it can be part of an URL. 
+     */
+    inline std::string UrlEncode(std::string const & what) {
+        std::stringstream result;
+        for (char c : what) {
+            if (IsDecimalDigit(c) || IsASCIILetter(c)) {
+                result << c;
+            } else {
+                result << '%' << ToHexDigit(c >> 4) << ToHexDigit(c & 0xf);
+            }
+        }
+        return result.str();
+    }
+
 	/** Determines the length of an UTF-8 encoded string. 
 	 */
 	inline size_t Length(Char::iterator_utf8 begin, Char::iterator_utf8 end) {

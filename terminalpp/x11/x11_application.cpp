@@ -1,6 +1,7 @@
 #if (defined ARCH_UNIX && defined RENDERER_NATIVE)
 
 #include "helpers/filesystem.h"
+#include "helpers/time.h"
 
 #include "x11_window.h"
 
@@ -21,6 +22,7 @@ namespace tpp {
     X11Application::X11Application():
 		xDisplay_{nullptr},
 		xScreen_{0},
+        mainLoopRunning_{false},
 	    xIm_{nullptr}, 
         selectionOwner_{nullptr} {
         XInitThreads();
@@ -94,6 +96,10 @@ namespace tpp {
             std::cout << message << std::endl;
     }
 
+    bool X11Application::query(std::string const & title, std::string const & message) {
+        return (system(STR("xmessage -buttons Yes:0,No:1,Cancel:1 -center \"" << title << "\n" << message << "\"").c_str()) == 0);
+    }
+
     void X11Application::openLocalFile(std::string const & filename, bool edit) {
 		if (edit) {
 			if (system(STR("x-terminal-emulator -e editor \"" << filename << "\" &").c_str()) != EXIT_SUCCESS)
@@ -104,27 +110,49 @@ namespace tpp {
 		}
     }
 
+    void X11Application::openUrl(std::string const & url) {
+			if (system(STR("xdg-open \"" << url << "\" &").c_str()) != EXIT_SUCCESS)
+				alert(STR("xdg-open not found or unable to open url " << url));
+    }
+
+    void X11Application::setClipboard(std::string const & contents) {
+        // let the app manage the clipboard requests from other windows now
+        clipboard_ = contents;
+        // inform X that we own the clipboard selection
+		XSetSelectionOwner(xDisplay_, clipboardName_, broadcastWindow_, CurrentTime);
+        if (! mainLoopRunning_) {
+            XEvent e;
+            Stopwatch stw{ /* start */ true };
+            do {
+                while (!XCheckTypedWindowEvent(xDisplay_, broadcastWindow_, SelectionRequest , &e)) {
+                    // check if we have timeout w/o the clipboard request
+                    if (stw.value() >= SET_CLIPBOARD_TIMEOUT)
+                        return;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+                processXEvent(e);
+                // use the whole timeout
+                } while (true);
+                //e.type != SelectionRequest || e.xselectionrequest.selection != clipboardName_);
+        }
+    }
+
     Window * X11Application::createWindow(std::string const & title, int cols, int rows) {
 		return new X11Window{title, cols, rows};
     }
 
     void X11Application::mainLoop() {
         XEvent e;
+        mainLoopRunning_ = true;
         try {
             while (true) { 
                 XNextEvent(xDisplay_, &e);
-                if (XFilterEvent(&e, x11::None))
-                    continue;
-                if (e.type == ClientMessage && e.xclient.window == broadcastWindow_) {
-                    if (static_cast<unsigned long>(e.xclient.message_type) == X11Application::Instance()->xAppEvent_) 
-                        Renderer::ExecuteUserEvent();
-                } else {
-                    X11Window::EventHandler(e);
-                }
+                processXEvent(e);
             }
         } catch (TerminateException const &) {
             // don't do anything
         }
+        mainLoopRunning_ = false;
     }
 
     void X11Application::xSendEvent(X11Window * window, XEvent & e, long mask) {
@@ -152,6 +180,86 @@ namespace tpp {
 		//if (xIm_ != nullptr)
 		//	return;
 		//OSCHECK(false) << "Cannot open input device (XOpenIM failed)";
+    }
+
+    void X11Application::processXEvent(XEvent & e) {
+        if (XFilterEvent(&e, x11::None))
+            return;
+        switch (e.type) {
+			/** If we lose ownership, clear the clipboard contents with the application, or if we lose primary ownership, just clear the selection.   
+			 */
+            case SelectionClear: {
+                if (e.xselectionclear.selection == clipboardName_) {
+    				clipboard_.clear();
+                } else if (selectionOwner_ != nullptr) {
+                    X11Window * owner = selectionOwner_;
+                    selectionOwner_ = nullptr;
+                    selection_.clear();
+                    // clears the selection in the renderer without triggering any X events
+                    owner->rendererClearSelection();
+                }
+				break;
+            }
+			/** Called when the clipboard contents is requested by an outside app. 
+			 */
+            case SelectionRequest: {
+				XSelectionEvent response;
+				response.type = SelectionNotify;
+				response.requestor = e.xselectionrequest.requestor;
+				response.selection = e.xselectionrequest.selection;
+				response.target = e.xselectionrequest.target;
+				response.time = e.xselectionrequest.time;
+				// by default, the request is rejected
+				response.property = x11::None; 
+				// if the target is TARGETS, then all supported formats should be sent, in our case this is simple, only UTF8_STRING is supported
+				if (response.target == formatTargets_) {
+					XChangeProperty(
+						xDisplay_,
+						e.xselectionrequest.requestor,
+						e.xselectionrequest.property,
+						e.xselectionrequest.target,
+						32, // atoms are 4 bytes, so 32 bits
+						PropModeReplace,
+						reinterpret_cast<unsigned char const*>(&formatStringUTF8_),
+						1
+					);
+					response.property = e.xselectionrequest.property;
+				// otherwise, if UTF8_STRING, or a STRING is requested, we just send what we have 
+				} else if (response.target == formatString_ || response.target == formatStringUTF8_) {
+                    std::string clipboard = (response.selection == clipboardName_) ? clipboard_ : selection_;
+					XChangeProperty(
+						xDisplay_,
+						e.xselectionrequest.requestor,
+						e.xselectionrequest.property,
+						e.xselectionrequest.target,
+						8, // utf-8 is encoded in chars, i.e. 8 bits
+						PropModeReplace,
+						reinterpret_cast<unsigned char const *>(clipboard.c_str()),
+						clipboard.size()
+					);
+					response.property = e.xselectionrequest.property;
+				}
+				// send the event to the requestor
+				if (!XSendEvent(
+					e.xselectionrequest.display,
+					e.xselectionrequest.requestor,
+					1, // propagate
+					0, // event mask
+					reinterpret_cast<XEvent*>(&response)
+				))
+					LOG() << "Error sending selection notify";
+				break;
+            }
+            case ClientMessage:
+                if (e.xany.window == broadcastWindow_) {
+                    if (static_cast<unsigned long>(e.xclient.message_type) == xAppEvent_) 
+                        Renderer::ExecuteUserEvent();
+                    break;
+                }
+                // fallthrough
+            default:
+                X11Window::EventHandler(e);
+        }
     }
 
 }

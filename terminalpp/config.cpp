@@ -84,8 +84,8 @@ namespace tpp {
 		return Quote(PROJECT_VERSION);
 	}
 
-	std::string Config::DefaultLogDir() {
-		return Quote(JoinPath(JoinPath(TempDir(), "terminalpp"),"logs"));
+	std::string Config::DefaultTelemetryDir() {
+		return Quote(JoinPath(JoinPath(TempDir(), "terminalpp"),"telemetry"));
 	}
 
 	std::string Config::DefaultRemoteFilesDir() {

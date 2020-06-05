@@ -166,6 +166,19 @@ HELPERS_NAMESPACE_BEGIN
 		return json.toDouble();
 	}
 
+    template<>
+    inline std::vector<std::string> JSONConfig::ParseValue(JSON const & json) {
+        std::vector<std::string> result;
+        if (json.kind() != JSON::Kind::Array)
+		    THROW(JSONError()) << "Expected array, but " << json << " found";
+        for (auto & item : json) {
+            if (item.kind() != JSON::Kind::String)
+    		    THROW(JSONError()) << "Strings expected in the array, but  " << item << " found";
+            result.push_back(item.toString());
+        }
+        return result;
+    }
+
 	class JSONConfig::Group : public JSONConfig {
 	public:
 

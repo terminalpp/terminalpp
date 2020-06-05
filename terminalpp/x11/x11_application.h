@@ -1,6 +1,8 @@
 #pragma once
 #if (defined ARCH_UNIX && defined RENDERER_NATIVE)
 
+#include <atomic>
+
 #include "x11.h"
 #include "../application.h"
 
@@ -10,6 +12,10 @@ namespace tpp {
 
     class X11Application : public Application {
     public:
+        /** Timeout in milliseconds for the SelectionRequest after setting the clipboard if outside of main loop. 
+         */ 
+        static size_t constexpr SET_CLIPBOARD_TIMEOUT = 1000;
+
         static void Initialize(int argc, char ** argv) {
             MARK_AS_UNUSED(argc);
             MARK_AS_UNUSED(argv);
@@ -30,6 +36,8 @@ namespace tpp {
          */
         void alert(std::string const & message) override ;
 
+        bool query(std::string const & title, std::string const & message) override;
+
         /** Opens the given local file using the default viewer/editor. 
          
             Internally, `xdg-open` is used to determine the file to open. If edit is true, then default system editor will be launched inside the default x terminal. 
@@ -37,6 +45,16 @@ namespace tpp {
             TODO this is perhaps not the best option, but works fine-ish for now and linux default programs are a bit of a mess if tpp were to support it all. 
          */
         void openLocalFile(std::string const & filename, bool edit) override; 
+
+        void openUrl(std::string const & url) override;
+
+        /** Sets the clipboard contents. 
+         
+            This is not trivial if the main loop is not running because setting the clipboard actually means waiting for the clipboard manager to ask for its contents. To do so, the function detects if main loop is running, and if not cherrypicks the incomming clipboard messages for up to SET_CLIPBOARD_TIMEOUT milliseconds.
+
+            TODO for now waits the entire timeout because terminating immediately after the clipboard contents has been requested by the clipboard manager did not actually send the data properly. It's ok as setting clipboard outside of the main loop is a cornercase. 
+         */
+        void setClipboard(std::string const & contents) override;
 
         Window * createWindow(std::string const & title, int cols, int rows) override;
 
@@ -61,10 +79,13 @@ namespace tpp {
 
         void openInputMethod();
 
+        void processXEvent(XEvent & e);
+
         
 		/* X11 display. */
 	    Display* xDisplay_;
 		int xScreen_;
+        std::atomic<bool> mainLoopRunning_;
 
 		/* A window that always exists, is always hidden and we use it to send broadcast messages because X does not allow window-less messages and this feels simpler than copying the whole queue. 
 		 */

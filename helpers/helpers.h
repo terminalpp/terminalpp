@@ -251,10 +251,13 @@ HELPERS_NAMESPACE_BEGIN
 		 */
 		class Writer {
 		public:
+
+            /** If a writer is deleted, it must detach from all active logs first. 
+             */
+            virtual ~Writer();
+
 		    virtual std::ostream & beginMessage(Message const & message) = 0;
 			virtual void endMessage(Message const & message) = 0;
-			virtual ~Writer() {
-			}
 		}; // Log::Writer
 
         class OStreamWriter;
@@ -413,6 +416,14 @@ HELPERS_NAMESPACE_BEGIN
             return log();
         }
 
+        static Log & GetLog(std::string const & name) {
+            auto & logs = RegisteredLogs();
+            auto i = logs.find(name);
+            if (i == logs.end())
+                THROW(HELPERS_NAMESPACE_DECL::Exception()) << "Log " << name << " not registered";
+            return *(i->second);
+        }
+
 	private:
 
 	    std::string name_;
@@ -504,17 +515,25 @@ HELPERS_NAMESPACE_BEGIN
     class Log::FileWriter : public Log::OStreamWriter {
     public:
         FileWriter(std::string const & filename, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string eol = "\n"):
-            OStreamWriter(* new std::ofstream(filename, std::ofstream::app), displayLocation, displayTime, displayName, eol) {
+            OStreamWriter{* new std::ofstream(filename, std::ofstream::app), displayLocation, displayTime, displayName, eol} {
             if (! s_.good())
                 THROW(IOError()) << "Unable to open log file " << filename;
         }
 
-        ~FileWriter() {
+        ~FileWriter() override {
             // this is safe because the OStreamWriter destructor does not touch the stream at all
             delete & s_;
         }
 
+
     }; // Log::FileWriter
+
+    inline Log::Writer::~Writer() {
+        auto logs = Log::RegisteredLogs();
+        for (auto i : logs)
+            if (i.second->writer_ == this)
+                i.second->writer_ = nullptr;
+    }
 
 	inline Log::Message::Message(Log * log, char const * file, size_t line):
 	    log_(log),

@@ -22,7 +22,13 @@ namespace tpp {
 
         void alert(std::string const & message) override ;
 
+        bool query(std::string const & title, std::string const & message) override;
+
         void openLocalFile(std::string const & filename, bool edit) override; 
+
+        void openUrl(std::string const & url) override;
+
+        void setClipboard(std::string const & contents) override;
 
         Window * createWindow(std::string const & title, int cols, int rows) override;
 

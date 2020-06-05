@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
         f << " " << argv[i]; 
     f << "\n";
     f << " */\n";
+    f << "#pragma once\n";
     f << "#include<string_view>\n";
     std::stringstream stamp;
     stamp << "namespace stamp {\n";

@@ -12,7 +12,7 @@
 
 HELPERS_NAMESPACE_BEGIN
 
-	// TODO - time pretty printer
+	// TODO - time pretty printer (h:m:s)
 	inline std::string PrettyPrintMillis(size_t millis) {
 		return STR(millis);
 	}
@@ -29,6 +29,26 @@ HELPERS_NAMESPACE_BEGIN
         struct tm buf;
         gmtime_r(&now, &buf);
 		strftime(&result[0], result.size() + 1, "%FT%TZ", &buf);
+#endif
+		return result;
+	}
+
+    /** Returns the currebt time as YYYY-MM-DD-HH-MM-SS. 
+     
+        This is useful for situations where the timestamp should be part of path where the colons from ISO8601 are not valid on Windows. 
+     */
+	inline std::string TimeInDashed() {
+		time_t now;
+		time(&now);
+		std::string result("2011-10-08-07-07-09");
+#ifdef __STDC_SECURE_LIB__
+		struct tm buf;
+		OSCHECK(gmtime_s(&buf, &now) == 0);
+		strftime(& result[0], result.size() + 1, "%F-%H-%M-%S", &buf);
+#else
+        struct tm buf;
+        gmtime_r(&now, &buf);
+		strftime(&result[0], result.size() + 1, "%F-%H-%M-%S", &buf);
 #endif
 		return result;
 	}
@@ -54,9 +74,11 @@ HELPERS_NAMESPACE_BEGIN
 	 */
 	class Stopwatch {
 	public:
-		Stopwatch():
+		Stopwatch(bool start = false):
 		    started_(false),
 		    value_(0) {
+            if (start)
+                this->start();
 		}
 
 		~Stopwatch() {
@@ -78,13 +100,17 @@ HELPERS_NAMESPACE_BEGIN
 		}
 
 		size_t value() const {
-			return value_;
+            if (started_) {
+                auto end = std::chrono::steady_clock::now();
+                value_ = static_cast<size_t>(std::chrono::duration<long, std::milli>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start_)).count());                
+            }
+     	    return value_;
 		}
 
 	private:
 		bool started_;
 		std::chrono::steady_clock::time_point start_;
-		size_t value_;
+		size_t mutable value_;
 	};
 
 

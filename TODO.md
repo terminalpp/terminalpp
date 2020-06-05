@@ -13,6 +13,10 @@ Restructured release process and minor fixes:
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- visit webpage button to about box
+
+- telemetry logs settings from configuration
+
 - source package artifact for deb
 - release packages to snap 
 - release to Windows store

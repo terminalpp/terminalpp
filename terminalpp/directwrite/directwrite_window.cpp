@@ -81,24 +81,7 @@ namespace tpp {
     }
 
     void DirectWriteWindow::rendererSetClipboard(std::string const & contents) {
-		if (OpenClipboard(nullptr)) {
-			EmptyClipboard();
-			// encode the string into UTF16 and get the size of the data we need
-			// ok, on windows wchar_t and char16_t are the same (see helpers/char.h)
-			utf16_string str = UTF8toUTF16(contents);
-			// the str is null-terminated
-			size_t size = (str.size() + 1) * 2;
-			HGLOBAL clip = GlobalAlloc(0, size);
-			if (clip) {
-				WCHAR* data = reinterpret_cast<WCHAR*>(GlobalLock(clip));
-				if (data) {
-					memcpy(data, str.c_str(), size);
-					GlobalUnlock(clip);
-					SetClipboardData(CF_UNICODETEXT, clip);
-				}
-			}
-			CloseClipboard();
-		}
+        DirectWriteApplication::Instance()->setClipboard(contents);
     }
 
     void DirectWriteWindow::rendererRegisterSelection(std::string const & contents, Widget * owner) {

@@ -50,9 +50,23 @@ namespace tpp {
         msgBox.exec();
     }
 
+    bool QtApplication::query(std::string const & title, std::string const & message) {
+        QMessageBox msgBox{QMessageBox::Icon::Question, title.c_str(), message.c_str()};
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        return msgBox.exec() == QMessageBox::Yes;
+    }
+
     void QtApplication::openLocalFile(std::string const & filename, bool edit) {
         MARK_AS_UNUSED(edit);
         QDesktopServices::openUrl(QUrl::fromLocalFile(filename.c_str()));
+    }
+
+    void QtApplication::openUrl(std::string const & url) {
+        QDesktopServices::openUrl(QUrl::fromUserInput(url.c_str()));
+    }
+
+    void QtApplication::setClipboard(std::string const & contents) {
+        QtApplication::Instance()->clipboard()->setText(QString{contents.c_str()}, QClipboard::Mode::Clipboard);
     }
 
     void QtApplication::userEvent() {
