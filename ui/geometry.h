@@ -21,7 +21,6 @@ namespace ui {
         Bottom
     }; // ui::VerticalAlign
 
-
     class Size {
     public:
 

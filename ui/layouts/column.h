@@ -117,6 +117,4 @@ namespace ui {
 
     }; // ui::ColumnLayout
 
-
-
 } // namespace ui

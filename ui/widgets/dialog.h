@@ -5,6 +5,7 @@
 #include "../layouts/maximize.h"
 
 #include "../traits/modal.h"
+#include "../traits/styled.h"
 
 #include "panel.h"
 #include "label.h"
@@ -16,7 +17,7 @@ namespace ui {
         Dialog window contains header, buttons. 
 
      */
-    class Dialog : public CustomPanel, public Modal<Dialog>  {
+    class Dialog : public CustomPanel, public Modal<Dialog>, public Styled<Dialog>  {
     public:
 
         class Cancel;
@@ -25,7 +26,8 @@ namespace ui {
         Dialog(std::string const & title, bool deleteOnDismiss = false):
             Modal{deleteOnDismiss},
             title_{title},
-            header_{new PublicContainer{new RowLayout{HorizontalAlign::Right}}},
+            header_{new PublicContainer{new RowLayout::Reversed{HorizontalAlign::Right}}},
+            headerBackground_{Color::Red},
             body_{nullptr} {
             setBackground(Color::DarkRed);
             setLayout(new ColumnLayout{});
@@ -41,6 +43,17 @@ namespace ui {
         virtual void setTitle(std::string const & value) {
             if (title_ != value) {
                 title_ = value;
+                repaint();
+            }
+        }
+
+        Color headerBackground() const {
+            return headerBackground_;
+        }
+
+        virtual void setHeaderBackground(Color value) {
+            if (headerBackground_ != value) {
+                headerBackground_ = value;
                 repaint();
             }
         }
@@ -68,6 +81,11 @@ namespace ui {
 
     protected:
 
+        void restyle() override {
+            setBackground(styleBackground());
+            setHeaderBackground(styleHighlightBackground());
+        }
+
         bool isTransparent() override {
             return WidgetBackground::isTransparent() || Container::isTransparent();
         }
@@ -77,7 +95,7 @@ namespace ui {
         void paint(Canvas & canvas) override {
             WidgetBackground::paint(canvas);
             WidgetBorder::paint(canvas);
-            canvas.setBg(Color::Red);
+            canvas.setBg(headerBackground_);
             canvas.fillRect(header_->rect());
             canvas.textOut(Point{0,0}, title_);
 
@@ -100,6 +118,7 @@ namespace ui {
 
         std::string title_;
         PublicContainer * header_;
+        Color headerBackground_;
         Widget * body_;
 
     }; // ui::Dialog
@@ -142,9 +161,9 @@ namespace ui {
             btnYes_->onMouseClick.setHandler(&Dialog::headerButtonClicked, static_cast<Dialog*>(this));
             btnNo_->onMouseClick.setHandler(&Dialog::headerButtonClicked, static_cast<Dialog*>(this));
             btnCancel_->onMouseClick.setHandler(&Dialog::headerButtonClicked, static_cast<Dialog*>(this));
-            addHeaderButton(btnYes_);
-            addHeaderButton(btnNo_);
             addHeaderButton(btnCancel_);
+            addHeaderButton(btnNo_);
+            addHeaderButton(btnYes_);
         }
 
         Button const * btnYes() const {

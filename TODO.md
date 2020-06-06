@@ -13,7 +13,8 @@ Restructured release process and minor fixes:
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- visit webpage button to about box
+- row & row reversed layout code duplication should be fixed
+- add column reversed layout
 
 - telemetry logs settings from configuration
 
