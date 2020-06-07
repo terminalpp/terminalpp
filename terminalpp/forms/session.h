@@ -41,6 +41,7 @@ namespace tpp {
             Dialog::Cancel{"New Version", /* deleteOnDismiss */ true},
             contents_{new Label{message}} {
             setBody(contents_);
+            setSemanticStyle(SemanticStyle::Info);
         }
 
     private:
