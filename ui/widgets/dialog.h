@@ -26,7 +26,7 @@ namespace ui {
         Dialog(std::string const & title, bool deleteOnDismiss = false):
             Modal{deleteOnDismiss},
             title_{title},
-            header_{new PublicContainer{new RowLayout::Reversed{HorizontalAlign::Right}}},
+            header_{new PublicContainer{new RowLayout{HorizontalAlign::Right}}},
             headerBackground_{Color::Red},
             body_{nullptr} {
             setBackground(Color::DarkRed);
@@ -107,7 +107,7 @@ namespace ui {
         }
 
         void addHeaderButton(Widget * widget) {
-            header_->add(widget);
+            header_->addBack(widget);
         }
 
         void mouseClick(UIEvent<MouseButtonEvent>::Payload & event) override {

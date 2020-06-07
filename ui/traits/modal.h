@@ -13,29 +13,15 @@ namespace ui {
      
         A modal pane is invisible if empty, but becomes visible and acquires modal input as soon as it has children. When last child is removed, the modal pane disappears and releases the modal focus. Any widget can be child of a modal pane.
      */
-    class ModalPane : public Container, public WidgetBackground<ModalPane> {
+    class ModalPane : public PublicContainer, public WidgetBackground<ModalPane> {
     public:
 
         ModalPane():
+            PublicContainer{new ColumnLayout{VerticalAlign::Bottom}},
             WidgetBackground{Color::Black.withAlpha(128)},
             modal_{true} {
             setVisible(false);
-            setLayout(new ColumnLayout{VerticalAlign::Bottom});
-        }
-
-        using Container::setLayout;
-
-        using Widget::setWidthHint;
-        using Widget::setHeightHint;
-
-        void add(Widget * child) override {
-            ASSERT(renderer() != nullptr);
-            Container::add(child);
-            if (!visible()) {
-                setVisible(true);
-                if (modal_)
-                    renderer()->setModalRoot(this);
-            }
+            //setLayout(new ColumnLayout{VerticalAlign::Bottom});
         }
 
         void remove(Widget * child) override {
@@ -64,6 +50,16 @@ namespace ui {
         }
 
     protected:
+
+        void addChild(Widget * child) override {
+            ASSERT(renderer() != nullptr);
+            Container::addChild(child);
+            if (!visible()) {
+                setVisible(true);
+                if (modal_)
+                    renderer()->setModalRoot(this);
+            }
+        }
 
         bool isTransparent() override {
             return WidgetBackground::isTransparent() || Container::isTransparent();

@@ -53,11 +53,18 @@ namespace ui {
             layoutScheduled_{false} {
         }
 
+        /** Reverses the order of own children. 
+         */
+        void reverse() {
+            std::reverse(children_.begin(), children_.end());
+            relayout();
+        }
+
         /** Adds the given widget as child. 
          
             The widget will appear as the topmost widget in the container. If the widget already exists in the container, it will be moved to the topmost position. 
          */
-        virtual void add(Widget * widget) {
+        void add(Widget * widget) {
             for (auto i = children_.begin(), e = children_.end(); i != e; ++i)
                 if (*i == widget) {
                     children_.erase(i);
@@ -65,13 +72,20 @@ namespace ui {
                 }
             // attach the child widget
             children_.push_back(widget);
-            if (widget->parent() != this)
-                widget->attachTo(this);
-            // make sure the attached widget will be relayouted even if its size won't change (see Layout::resizeChild()), also update its transparency
-            widget->updateTransparency();
-            widget->pendingRelayout_ = true;
-            // relayout the container
-            relayout();
+            // and do the bookkeeping
+            addChild(widget);
+        }
+
+        void addBack(Widget * widget) {
+            for (auto i = children_.begin(), e = children_.end(); i != e; ++i)
+                if (*i == widget) {
+                    children_.erase(i);
+                    break;
+                }
+            // attach the child widget
+            children_.insert(children_.begin(), widget);
+            // and do the bookkeeping
+            addChild(widget);
         }
 
         /** Remove the widget from the container. 
@@ -86,6 +100,16 @@ namespace ui {
                     return;
                 }
             UNREACHABLE;
+        }
+
+        virtual void addChild(Widget * child) {
+            if (child->parent() != this)
+                child->attachTo(this);
+            // make sure the attached widget will be relayouted even if its size won't change (see Layout::resizeChild()), also update its transparency
+            child->updateTransparency();
+            child->pendingRelayout_ = true;
+            // relayout the container
+            relayout();
         }
 
         /** \name Mouse Actions
@@ -255,6 +279,7 @@ namespace ui {
         using Container::layout;
         using Container::setLayout;
         using Container::add;
+        using Container::addBack;
         using Container::remove;
         using Container::setWidthHint;
         using Container::setHeightHint;

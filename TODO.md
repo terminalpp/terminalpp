@@ -8,13 +8,12 @@ Restructured release process and minor fixes:
 - Ubuntu 20.04 bypass
 - numeric keypad works in Linux
 - `--version` command line argument for terminalpp, ropen and bypass
+- bugfixes
+- optional telemetry recording and issue template filling
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
-
-- row & row reversed layout code duplication should be fixed
-- add column reversed layout
 
 - source package artifact for deb
 - release packages to snap 
