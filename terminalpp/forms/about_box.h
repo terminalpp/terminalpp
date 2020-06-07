@@ -11,14 +11,19 @@ namespace tpp {
     public:
         AboutBox():
             Cancel{"Terminal++", /* deleteOnDismiss */ true},
+            btnNewIssue_{new Button{" new issue "}},
             btnWWW_{new Button{" www "}} {
             setWidthHint(SizeHint::Manual());
             setHeightHint(SizeHint::Manual());
             setSemanticStyle(SemanticStyle::Primary);
             resize(65,8);
+            btnNewIssue_->onMouseClick.setHandler([](UIEvent<MouseButtonEvent>::Payload &) {
+                Application::Instance()->createNewIssue("", "Please check that a similar bug has not been already filed. If not, fill in the description and titke of the bug, keeping the version information below. Thank you!");
+            });
             btnWWW_->onMouseClick.setHandler([](UIEvent<MouseButtonEvent>::Payload &){
                 Application::Instance()->openUrl("https://terminalpp.com");
             });
+            addHeaderButton(btnNewIssue_);
             addHeaderButton(btnWWW_);
         }
 
@@ -61,6 +66,7 @@ namespace tpp {
 
     private:
 
+        Button * btnNewIssue_;
         Button * btnWWW_;
 
     }; // tpp::AboutBox

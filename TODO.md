@@ -57,7 +57,6 @@ Issues to be raised:
 
 ### v0.8
 
-- logging 
 - some basic styling for the GUI via a style object, similar to CSS?, more powerful buttons & labels
 - color for dimming disabled terminal (via styling)
 - scrollview, tooltips, shortcuts and actions and some more UI elements
