@@ -10,6 +10,7 @@
 
 #undef None
 #undef RootWindow
+#undef Success
 #undef index
 
 namespace x11 {
