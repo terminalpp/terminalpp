@@ -16,8 +16,6 @@ Restructured release process and minor fixes:
 - row & row reversed layout code duplication should be fixed
 - add column reversed layout
 
-- telemetry logs settings from configuration
-
 - source package artifact for deb
 - release packages to snap 
 - release to Windows store

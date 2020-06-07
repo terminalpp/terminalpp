@@ -1,8 +1,7 @@
 #pragma once
 
-#include <filesystem>
-
 #include "helpers.h"
+#include "filesystem.h"
 
 #define TELEMETRY HELPERS_NAMESPACE_DECL::Telemetry::TelemetryLog()
 #define FATAL_ERROR HELPERS_NAMESPACE_DECL::Telemetry::FatalErrorLog()
@@ -96,14 +95,6 @@ HELPERS_NAMESPACE_BEGIN
         void addLog(std::initializer_list<std::reference_wrapper<Log>> logs) {
             ASSERT(writer_ != nullptr) << "start the telemetry first";
             Log::Enable(*writer_, logs);
-        }
-
-        void addLog(std::vector<std::string> const & logs) {
-            ASSERT(writer_ != nullptr) << "start the telemetry first";
-            for (auto i : logs) {
-                Log::Enable(*writer_, { Log::GetLog(i) });
-            }
-            //Log::Enable(*writer_, logs);
         }
 
         /** Returns the number of messages in given log that were reported to the telemetry. 

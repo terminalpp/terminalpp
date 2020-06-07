@@ -1,6 +1,10 @@
 #pragma once
+
+#include <vector>
+
 #include "helpers/process.h"
 #include "helpers/json_config.h"
+#include "helpers/telemetry.h"
 
 #include "ui-terminal/ansi_terminal.h"
 
@@ -69,6 +73,33 @@ inline ui::Color JSONConfig::ParseValue(JSON const & json) {
     return ui::Color::FromHTML(json.toString());
 }
 
+template<>
+inline std::vector<std::reference_wrapper<Log>> JSONConfig::ParseValue(JSON const & json) {
+    std::vector<std::reference_wrapper<Log>> result;
+    if (json.kind() != JSON::Kind::Array)
+        THROW(JSONError()) << "Expected array, but " << json << " found";
+    for (auto & item : json) {
+        if (item.kind() != JSON::Kind::String)
+            THROW(JSONError()) << "Strings expected in the array, but  " << item << " found";
+        std::string const & logName = item.toString();
+        if (logName == "FATAL_ERROR") 
+            result.push_back(Telemetry::FatalErrorLog());
+        else if (logName == "EXCEPTION") 
+            result.push_back(Log::Exception());
+        else if (logName == "TELEMETRY") 
+            result.push_back(Telemetry::TelemetryLog());
+        else if (logName == "SEQ_ERROR") 
+            result.push_back(ui::AnsiTerminal::SEQ_ERROR);
+        else if (logName == "SEQ_UNKNOWN") 
+            result.push_back(ui::AnsiTerminal::SEQ_UNKNOWN);
+        else if (logName == "SEQ_WONT_SUPPORT") 
+            result.push_back(ui::AnsiTerminal::SEQ_WONT_SUPPORT);
+        else
+            THROW(JSONError()) << "Invalid log name " << logName;
+    }
+    return result;
+}
+
 /** Parts of the command argument are just JSON strings so they are only surrounded by double quotes. 
  */
 template<>
@@ -112,7 +143,7 @@ namespace tpp {
                 events,
                 "Names of event kinds that should be captured by the telemetry",
                 "[]",
-                std::vector<std::string>
+                std::vector<std::reference_wrapper<Log>>
             );
         );
 

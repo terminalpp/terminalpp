@@ -110,7 +110,8 @@ int main(int argc, char* argv[]) {
         tpp::Config const & config = tpp::Config::Setup(argc, argv);
         // open the telemetry and add the registered logs
         telemetry.open(config.telemetry.dir() + "/" + TimeInDashed());
-        telemetry.addLog(config.telemetry.events());
+        for (auto & i : config.telemetry.events())
+            telemetry.addLog(i);
 
         //throw "foobar";
 		//Log::FileWriter log(UniqueNameIn(config.log.dir(), "log-"));
