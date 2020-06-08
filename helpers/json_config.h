@@ -167,7 +167,7 @@ HELPERS_NAMESPACE_BEGIN
                     return;
                 }
                 updated_ = true;
-                json_->setComment(value->comment());
+                json_->setComment(value.comment());
                 // delete previous value
                 for (auto i : elements_)
                     delete i;
@@ -183,7 +183,7 @@ HELPERS_NAMESPACE_BEGIN
             void addChildProperty(std::string const & name, JSONConfig * child) override {
                 ASSERT(name == "");
                 elements_.push_back(child);
-                child->json_ = & json_.add(child->defaultValue());
+                child->json_ = & json_->add(child->defaultValue());
             }
 
             std::string childName(JSONConfig const * child) const override {
@@ -227,8 +227,8 @@ HELPERS_NAMESPACE_BEGIN
                     value_ = JSONConfig::FromJSON<T>(value);
                     json_->setComment(value.comment());
                     updated_ = true;
-                } catch (std::exception & e) {
-                    errorHandler(e);
+                } catch (std::exception const & e) {
+                    errorHandler(CREATE_EXCEPTION(JSONError()) << "Error when parsing JSON value for " << name());
                 }
             }
 
