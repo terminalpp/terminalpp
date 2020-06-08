@@ -8,19 +8,19 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     
     steps:
     - uses: actions/checkout@v1
     - name: install-packages
       run: |
         sudo apt update
-        sudo apt install cmake libx11-dev libxft-dev g++-8 qt5-default
+        sudo apt install cmake libx11-dev libxft-dev g++ qt5-default
     - name: configure-debug
       run: |
         mkdir -p build/debug
         cd build/debug
-        cmake ../.. -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DRENDERER=QT
+        cmake ../.. -DRENDERER=QT
     - name: build-debug
       run: |
         cd build/debug
@@ -33,7 +33,7 @@ jobs:
       run: |
         mkdir -p build/release
         cd build/release
-        cmake ../.. -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DCMAKE_BUILD_TYPE=Release -DRENDERER=QT
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DRENDERER=QT
     - name: build-release
       run: |
         cd build/release

@@ -1,5 +1,5 @@
 name: 'terminalpp'
-base: core18
+base: core20
 version: '@PROJECT_VERSION@'
 summary: '@TERMINALPP_SUMMARY@'
 description: '@TERMINALPP_DESCRIPTION@'
@@ -12,15 +12,13 @@ parts:
     source: "./source"
     source-type: local
     plugin: cmake
-    configflags: 
+    cmake-parameters: 
       - "-DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@"
       - "-DCMAKE_INSTALL_PREFIX=/usr"
-      - "-DCMAKE_C_COMPILER=gcc-8"
-      - "-DCMAKE_CXX_COMPILER=g++-8"
       - "-DTERMINALPP_DESKTOP_ICON=/usr/share/icons/hicolor/256x256/apps/terminalpp.png"
       - "-DINSTALL=terminalpp"
     build-packages:
-      - g++-8
+      - g++
       - libx11-dev
       - libxft-dev
       - git

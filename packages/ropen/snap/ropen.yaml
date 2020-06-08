@@ -1,5 +1,5 @@
 name: 'ropen'
-base: core18
+base: core20
 version: '@PROJECT_VERSION@'
 summary: '@ROPEN_SUMMARY@'
 description: '@ROPEN_DESCRIPTION@'
@@ -12,15 +12,13 @@ parts:
     source: "./source"
     source-type: local
     plugin: cmake
-    configflags: 
+    cmake-parameters: 
       - "-DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@"
       - "-DCMAKE_INSTALL_PREFIX=/usr"
-      - "-DCMAKE_C_COMPILER=gcc-8"
-      - "-DCMAKE_CXX_COMPILER=g++-8"
       - "-DRENDERER=NONE"
       - "-DINSTALL=ropen"
     build-packages:
-      - g++-8
+      - g++
       - git
 
 apps:

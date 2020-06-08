@@ -1,7 +1,6 @@
 .vs/
 benchmarks/data/
-build/
-build-*/
+build*/
 website/
 stamp.h
 .DS_Store
