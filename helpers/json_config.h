@@ -3,10 +3,308 @@
 #include <stack>
 #include <string>
 #include <functional>
+#include <variant>
 
 #include "json.h"
 
 HELPERS_NAMESPACE_BEGIN
+
+    namespace x {
+
+        /** - each config knows its parent - don't deal with calculated-able default values
+         
+            - can return default JSON
+
+            - initially has no JSON, when updated its JSON is set
+
+            - empty value == default value, by which the configuration is initialized
+         
+         */
+
+        class JSONConfig {
+        public:
+
+            class Root;
+
+            class Object;
+
+            template<typename T>
+            class Array;
+
+            template<typename T>
+            class Property;
+
+            std::string name() const {
+                if (parent_ == nullptr)
+                    return nullptr;
+                else
+                    return parent_->childName(this);
+            }
+
+        protected:
+
+            JSONConfig(JSONConfig * parent, std::string const & name, std::string const & description):
+                parent_{parent},
+                json_{nullptr},
+                description_{description},
+                updated_{false} {
+                if (parent_ != nullptr)
+                    parent_->addChildProperty(name, this);
+            }
+
+            void update(JSON const & value) {
+                update(value, [](JSONError && e){
+                    throw e;
+                });
+            }
+
+            template<typename T>
+            static T FromJSON(JSON const & json);
+
+            virtual JSON defaultValue() const = 0;
+
+            virtual void update(JSON const & value, std::function<void(JSONError &&)> errorHandler) = 0;
+
+            virtual void addChildProperty(std::string const & name, JSONConfig * child) = 0;
+
+            /** Returns the fully qualified name of the given child of the configuration element. 
+             
+                The child's element name is returned as opposed to own name because the parent determines the location of the child in it (i.e. a named property, or array index). 
+             */            
+            virtual std::string childName(JSONConfig const * child) const = 0;
+
+            /** Parent configuration object. */
+            JSONConfig * parent_;
+            /* The JSON object holding the configuration. */
+            JSON * json_;
+
+            std::string description_;
+
+            bool updated_;
+
+        }; 
+
+        class JSONConfig::Object : public JSONConfig {
+        public:
+            Object(JSONConfig * parent, std::string const & name, std::string const & description):
+                JSONConfig{parent, name, description} {
+                ASSERT(parent != nullptr) << "Use JSONConfig::Root for parent-less configuration objects";
+            }
+
+        protected:
+
+            JSON defaultValue() const override {
+                return JSON::Object();
+            }
+
+            void update(JSON const & value, std::function<void(JSONError &&)> errorHandler) override {
+                ASSERT(json_ != nullptr);
+                if (value.kind() != JSON::Kind::Object) {
+                    errorHandler(CREATE_EXCEPTION(JSONError())  << "Initializing " << name() << " with " << value << ", but object expected");
+                    return;
+                }
+                updated_ = true;
+                json_->setComment(value.comment());
+                // update the values
+                for (auto i = value.begin(), e = value.end(); i != e; ++i) {
+                    auto x = properties_.find(i.name());
+                    if (x == properties_.end()) 
+                        errorHandler(CREATE_EXCEPTION(JSONError()) << "Unknown property " << i.name() << " in " << name());
+                    else
+                        x->second->update(*i);
+                }
+                // if there are any properties that were not updated yet, update them with their default values and clear the updated_ flag
+                for (auto i : properties_) {
+                    JSONConfig * child = i.second;
+                    if (! child->updated_) {
+                        child->update(*child->json_); // this is the default value, therefore errors are more serious and should be reported immediately
+                        child->updated_ = false; // clear the update flag
+                    }
+                }
+            }
+
+            void addChildProperty(std::string const & name, JSONConfig * child) override {
+                if (properties_.insert(std::make_pair(name, child)).second == false)
+                    THROW(JSONError()) << "Element " << name << " already exists in " << this->name();
+                child->json_ = & json_->add(name, child->defaultValue());
+            }
+
+            std::string childName(JSONConfig const * child) const override {
+                std::string result = (parent_ == nullptr) ? "" : (parent_->childName(this) + '.');
+                for (auto i : properties_)
+                    if (i.second == child)
+                        return result + i.first;
+                UNREACHABLE;
+            }
+
+            std::unordered_map<std::string, JSONConfig*> properties_;
+
+        }; // JSONConfig::Object
+
+        template<typename T>
+        class JSONConfig::Array : public JSONConfig {
+        public:
+            Array(JSONConfig * parent, std::string const & name, std::string const & description):
+                JSONConfig{parent, name, description},
+                defaultValue_{JSON::Array()} {
+            }
+
+            Array(JSONConfig * parent, std::string const & name, std::string const & description, JSON const & defaultValue):
+                JSONConfig{parent, name, description},
+                defaultValue_{defaultValue} {
+            }
+
+        protected:
+
+            JSON defaultValue() const override {
+                return defaultValue_;
+            }
+
+            void update(JSON const & value, std::function<void(JSONError &&)> errorHandler) override {
+                ASSERT(json_ != nullptr);
+                if (value.kind() != JSON::Kind::Array) {
+                    errorHandler(CREATE_EXCEPTION(JSONError())  << "Initializing " << name() << " with " << value << ", but array expected");
+                    return;
+                }
+                updated_ = true;
+                json_->setComment(value->comment());
+                // delete previous value
+                for (auto i : elements_)
+                    delete i;
+                elements_.clear();
+                // update the values
+                for (auto i = value.begin(), e = value.end(); i != e; ++i) {
+                    T * element = new T(this);
+                    elements_.push_back(element);
+                    element->update(*i);
+                }
+            }
+
+            void addChildProperty(std::string const & name, JSONConfig * child) override {
+                ASSERT(name == "");
+                elements_.push_back(child);
+                child->json_ = & json_.add(child->defaultValue());
+            }
+
+            std::string childName(JSONConfig const * child) const override {
+                std::string result = (parent_ == nullptr) ? "" : (parent_->childName(this) + '[');
+                for (size_t i = 0, e = elements_.size(); i != e; ++i)
+                    if (elements_[i] == child)
+                        return STR(result << i << "]");
+                UNREACHABLE;
+            }
+
+            JSON defaultValue_;
+
+            std::vector<T*> elements_;
+
+        }; // JSONConfig::Array
+
+        template<typename T>
+        class JSONConfig::Property : public JSONConfig {
+        public:
+
+            Property(JSONConfig * parent, std::string name, std::string description, JSON const & defaultValue):
+                JSONConfig{parent, name, description}, 
+                defaultValue_{defaultValue} {
+            }
+              
+            /** Typecasts the configuration property to the property value type. 
+             */
+            operator T const & () {
+                return value_;
+            }
+
+        protected:
+
+            JSON defaultValue() const override {
+                return defaultValue_;
+            }
+
+            void update(JSON const & value, std::function<void(JSONError &&)> errorHandler) override {
+                ASSERT(json_ != nullptr);
+                try {
+                    value_ = JSONConfig::FromJSON<T>(value);
+                    json_->setComment(value.comment());
+                    updated_ = true;
+                } catch (std::exception & e) {
+                    errorHandler(e);
+                }
+            }
+
+            void addChildProperty(std::string const & name, JSONConfig * child) override {
+                UNREACHABLE;
+            }
+
+            std::string childName(JSONConfig const * child) const override {
+                UNREACHABLE;
+            }
+
+            JSON defaultValue_;
+
+            T value_;
+        }; 
+
+
+        /** The root element of the JSON backed configuration. 
+         */
+        class JSONConfig::Root : public JSONConfig::Object {
+        public:
+
+            Root(JSON const & from):
+                Root{ from, "Configuration", [](JSONError && e) { throw e; } } {
+            }
+
+            Root(JSON const & from, std::string description):
+                Root{ from, description, [](JSONError && e) { throw e; } } {
+            }
+
+            Root(JSON const & from, std::string description, std::function<void(JSONError &&)> errorHandler):
+                Object{nullptr, "", description},
+                config_{JSON::Object()} {
+                json_ = & config_;
+                update(from, errorHandler);
+            }
+
+        protected:
+
+            /** The actual JSON object holding the entire configuration. 
+             */
+            JSON config_;
+
+        }; // JSONConfig::Root
+
+        template<>
+        inline std::string JSONConfig::FromJSON<std::string>(JSON const & json) {
+            NOT_IMPLEMENTED;
+        }
+
+        template<>
+        inline bool JSONConfig::FromJSON<bool>(JSON const & json) {
+            NOT_IMPLEMENTED;
+        }
+
+        template<>
+        inline int JSONConfig::FromJSON<int>(JSON const & json) {
+            NOT_IMPLEMENTED;
+        }
+
+        template<>
+        inline unsigned JSONConfig::FromJSON<unsigned>(JSON const & json) {
+            NOT_IMPLEMENTED;
+        }
+
+        template<>
+        inline size_t JSONConfig::FromJSON<size_t>(JSON const & json) {
+            NOT_IMPLEMENTED;
+        }
+
+        template<>
+        inline double JSONConfig::FromJSON<double>(JSON const & json) {
+            NOT_IMPLEMENTED;
+        }
+
+    } // X -----------------------------------------------------------------------------------
 
 	/** Exceptiomn thrown when invalid arguments are passed to the application. 
 	 */

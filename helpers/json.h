@@ -261,6 +261,22 @@ HELPERS_NAMESPACE_BEGIN
 
         static JSON Parse(std::istream & s);
 
+        /** Returns an empty JSON object with no properties. 
+         */
+        static JSON Object() {
+            return JSON{Kind::Object};
+        }
+
+        /** Returns an empty JSON array with no items. 
+         */
+        static JSON Array() {
+            return JSON{Kind::Array};
+        }
+
+        static JSON Null() {
+            return JSON{Kind::Null};
+        }
+
         enum class Kind {
             Null,
             Boolean,
@@ -667,26 +683,31 @@ HELPERS_NAMESPACE_BEGIN
             return *(i->second);
         }
 
-
-        void add(JSON const & what) {
+        JSON & add(JSON const & what) {
             if (kind_ != Kind::Array)
                 THROW(JSONError()) << "Cannot add array elemnt to element holding " << kind_;
-            valueArray_.push_back(new JSON(what));
+            JSON * result = new JSON{what};
+            valueArray_.push_back(result);
+            return * result;
         } 
 
-        void add(JSON && what) {
+        JSON & add(JSON && what) {
             if (kind_ != Kind::Array)
                 THROW(JSONError()) << "Cannot add array elemnt to element holding " << kind_;
-            valueArray_.push_back(new JSON(std::move(what)));
+            JSON * result = new JSON{std::move(what)};
+            valueArray_.push_back(result);
+            return * result;
         }
 
-        void add(std::string const & key, JSON const & value) {
+        JSON & add(std::string const & key, JSON const & value) {
             if (kind_ != Kind::Object)
                 THROW(JSONError()) << "Cannot add member elemnt to element holding " << kind_;
-            valueObject_.insert(std::make_pair(key, new JSON(value)));
+            JSON * result = new JSON{value};
+            valueObject_.insert(std::make_pair(key, result));
+            return * result;
         } 
 
-        void add(std::string const & key, JSON && value) {
+        JSON & add(std::string const & key, JSON && value) {
             if (kind_ != Kind::Object)
                 THROW(JSONError()) << "Cannot add member elemnt to element holding " << kind_;
             JSON * element = new JSON{std::move(value)};
@@ -694,6 +715,7 @@ HELPERS_NAMESPACE_BEGIN
                 delete element;
                 THROW(JSONError()) << "Value " << key << " already exists";
             }
+            return * element;
         }
 
         void erase(std::string const & key) {

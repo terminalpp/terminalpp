@@ -9,6 +9,12 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- the simple settings do not care about calculated defaults (ok)
+- add saving the JSON configuration (either all, or the updated ones only)
+- the root element is very basic
+- extra root elements should allow command line parsing, or do command line parsing in a different module altogether? 
+
+
 - source package artifact for deb
 - release ropen package to snap 
 - automatic release to Windows store
