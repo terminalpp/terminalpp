@@ -1,15 +1,7 @@
 ﻿The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-## Next version: v0.7.1
+## Next version: v0.7.2 or 0.8
 
-Restructured release process and minor fixes:
-
-- msix package
-- Ubuntu 20.04 bypass
-- numeric keypad works in Linux
-- `--version` command line argument for terminalpp, ropen and bypass
-- bugfixes
-- optional telemetry recording and issue template filling
 
 ### TODO
 

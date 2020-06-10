@@ -5,6 +5,18 @@ layout: titled
 
 Lists the most important improvements for recent `terminalpp` versions.
 
+### 0.7.1
+
+Restructured release process and minor fixes:
+
+- msix package
+- Ubuntu 20.04 bypass
+- numeric keypad works in Linux
+- `--version` command line argument for terminalpp, ropen and bypass
+- bugfixes
+- optional telemetry recording and issue template filling
+- moved to gcc 9 on Linux
+
 ### 0.7.0
 
 This is huge core refactoring, more robust UI framework, better configuration options and slightly increased security. Most of the changes are under the hood and should not be visible to users.

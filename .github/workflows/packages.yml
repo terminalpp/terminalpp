@@ -411,21 +411,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install-snapcraft
-      env:
-        snapcraft_edge: ${{ secrets.snapcraft_edge }}
       run: |
         sudo snap install snapcraft --classic
-        echo $snapcraft_edge > snapcraft-edge-login
+        echo "${{ secrets.SNAPCRAFT_EDGE }}" > snapcraft-edge-login
         snapcraft login --with snapcraft-edge-login
         rm snapcraft-edge-login
     # release terminalpp
     - name: get-terminalpp-snap
       uses: actions/download-artifact@v1
       with:
-        name: ropen.snap
+        name: terminalpp.snap
     - name: release-snap-terminalpp
       run: |
-        snapcraft push --release=edge terminalpp.snap/terminalpp.snap
+        snapcraft upload --release=edge terminalpp.snap/terminalpp.snap
     # release ropen
     - name: get-ropen-snap
       uses: actions/download-artifact@v1
@@ -433,7 +431,7 @@ jobs:
         name: ropen.snap
     - name: release-snap-ropen
       run: |
-        sudo snapcraft push --release=edge ropen.snap/ropen.snap
+        sudo snapcraft upload --release=edge ropen.snap/ropen.snap
 
 
 
