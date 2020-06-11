@@ -8,8 +8,8 @@
 > These are items I currently work on towards the next version. When they are done, they die.  
 
 - source package artifact for deb
-- release packages to snap 
-- release to Windows store
+- release ropen package to snap 
+- automatic release to Windows store
 - upload to ppa ? 
 - update the website ? 
 
