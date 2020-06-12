@@ -640,6 +640,15 @@ namespace ui {
         static Palette Colors16();
         static Palette XTerm256(); 
 
+        Palette():
+            size_{2},
+            defaultFg_{1},
+            defaultBg_{0},
+            colors_{new Color[2]} {
+            colors_[0] = Color::Black;
+            colors_[1] = Color::White;
+        }
+
         Palette(size_t size, size_t defaultFg = 15, size_t defaultBg = 0):
             size_(size),
             defaultFg_(defaultFg),
@@ -657,6 +666,9 @@ namespace ui {
         ~Palette() {
             delete [] colors_;
         }
+
+        Palette & operator = (Palette const & other);
+        Palette & operator == (Palette && other);
 
         size_t size() const {
             return size_;

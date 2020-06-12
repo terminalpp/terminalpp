@@ -68,7 +68,7 @@ namespace tpp {
         // find the required font family - first get the index then obtain the family by the index
         UINT32 findex;
         BOOL fexists;
-        std::string fnameUTF8{font.doubleWidth() ? tpp::Config::Instance().font.doubleWidthFamily() : tpp::Config::Instance().font.family()};
+        std::string fnameUTF8{font.doubleWidth() ? tpp::Config::Instance().renderer.font.doubleWidthFamily() : tpp::Config::Instance().renderer.font.family()};
         utf16_string fname{UTF8toUTF16(fnameUTF8)};
         app->systemFontCollection_->FindFamilyName(fname.c_str(), &findex, &fexists);
         if (! fexists) {
@@ -97,7 +97,7 @@ namespace tpp {
         UINT32 mappedLength;
         Microsoft::WRL::ComPtr<IDWriteFont> mappedFont;
         FLOAT scale;
-        utf16_string fname = UTF8toUTF16(font_.doubleWidth() ? tpp::Config::Instance().font.doubleWidthFamily() : tpp::Config::Instance().font.family());
+        utf16_string fname = UTF8toUTF16(font_.doubleWidth() ? tpp::Config::Instance().renderer.font.doubleWidthFamily() : tpp::Config::Instance().renderer.font.family());
         app->fontFallback_->MapCharacters(
             &ta, // IDWriteTextAnalysisSource
             0, // text position

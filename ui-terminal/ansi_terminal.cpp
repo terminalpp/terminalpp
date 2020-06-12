@@ -1569,6 +1569,31 @@ namespace ui {
         from.size_ = 0;
     }
 
+    AnsiTerminal::Palette & AnsiTerminal::Palette::operator = (AnsiTerminal::Palette const & other) {
+        if (&other != this) {
+            delete [] colors_;
+            size_ = other.size_;
+            defaultFg_ = other.defaultFg_;
+            defaultBg_ = other.defaultBg_;
+            colors_ = new Color[size_];
+    		memcpy(colors_, other.colors_, sizeof(Color) * size_);
+        }
+        return *this;
+    }
+
+    AnsiTerminal::Palette & AnsiTerminal::Palette::operator == (AnsiTerminal::Palette && other) {
+        if (&other != this) {
+            delete [] colors_;
+            size_ = other.size_;
+            defaultFg_ = other.defaultFg_;
+            defaultBg_ = other.defaultBg_;
+            colors_ = other.colors_;
+            other.colors_ = nullptr;
+            other.size_ = 0;
+        }
+        return *this;
+    }
+
     // ============================================================================================
     // AnsiTerminal::State
 

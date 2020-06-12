@@ -56,9 +56,9 @@ namespace tpp {
 
         static PasteDialog * CreateFor(std::string const & contents) {
             Config const & config = Config::Instance();
-            if (config.session.confirmPaste() == "never")
+            if (config.sequences.confirmPaste() == "never")
                 return nullptr;
-            if (config.session.confirmPaste() == "multiline" && contents.find('\n') == std::string::npos)
+            if (config.sequences.confirmPaste() == "multiline" && contents.find('\n') == std::string::npos)
                 return nullptr;
             return new PasteDialog(contents);
         }
@@ -92,17 +92,17 @@ namespace tpp {
     class Session : public ui::CustomPanel, public ui::AutoScroller<Session> {
     public:
 
-        Session(Window * window):
+        Session(Window * window, Config::sessions_entry const & session):
             window_{window},
             terminateOnKeyPress_{false},
-            palette_{Config::Instance().session.palette()} {
+            palette_{session.palette()} {
         	Config const & config = Config::Instance();
             window_->setRootWidget(this);
 #if (ARCH_WINDOWS)
-            if (config.session.pty() != "bypass") 
-                pty_ = new LocalPTYMaster(config.session.command());
+            if (session.pty() != "bypass") 
+                pty_ = new LocalPTYMaster(session.command());
             else
-                pty_ = new BypassPTYMaster(config.session.command());
+                pty_ = new BypassPTYMaster(session.command());
 #else
             pty_ = new LocalPTYMaster{config.session.command()};
 #endif
@@ -114,10 +114,10 @@ namespace tpp {
             mainWindow_->add(notifications_);
 
             terminal_ = new AnsiTerminal{pty_, & palette_, width(), height()};
-            terminal_->setHistoryLimit(config.session.historyLimit());
-            terminal_->setDefaultCursor(config.session.cursor());
-            terminal_->setInactiveCursorColor(config.session.inactiveCursorColor());
-            terminal_->setBoldIsBright(config.session.sequences.boldIsBright());
+            terminal_->setHistoryLimit(config.renderer.window.historyLimit());
+            terminal_->setDefaultCursor(session.cursor());
+            terminal_->setInactiveCursorColor(session.cursor.inactiveColor());
+            terminal_->setBoldIsBright(config.sequences.boldIsBright());
             //terminal_->setHeightHint(SizeHint::Percentage(75));
             terminal_->onPTYTerminated.setHandler(&Session::terminalPTYTerminated, this);
             terminal_->onTitleChange.setHandler(&Session::terminalTitleChanged, this);
@@ -150,13 +150,13 @@ namespace tpp {
 
 
             //window_->setKeyboardFocus(terminal_);
-            remoteFiles_ = new RemoteFiles(config.session.remoteFiles.dir());
+            remoteFiles_ = new RemoteFiles(config.remoteFiles.dir());
 
-            if (config.session.fullscreen())
+            if (config.renderer.window.fullscreen())
                 window_->setFullscreen(true);
             
             versionChecker_ = std::thread{[this](){
-                std::string channel = Config::Instance().versionCheckChannel();
+                std::string channel = Config::Instance().version.checkChannel();
                 // don't check if empty channel
                 if (channel.empty())
                     return;
@@ -199,8 +199,8 @@ namespace tpp {
         void terminalPTYTerminated(UIEvent<ExitCode>::Payload & e) {
             window_->setIcon(Window::Icon::Notification);
             window_->setTitle(STR("Terminated, exit code " << *e));
-            Config & config = Config::Instance();
-            if (! config.session.waitAfterPtyTerminated())
+            Config const & config = Config::Instance();
+            if (! config.renderer.window.waitAfterPtyTerminated())
                 window_->requestClose();
             else 
                 terminateOnKeyPress_ = true;

@@ -9,6 +9,28 @@
 
 HELPERS_NAMESPACE_BEGIN
 
+	#define CONFIG_PROPERTY(NAME, DESCRIPTION, DEFAULT_VALUE, ...) \
+	    Property<__VA_ARGS__> NAME{this, #NAME, DESCRIPTION, DEFAULT_VALUE}
+
+	#define CONFIG_OBJECT(NAME, DESCRIPTION, ...) \
+	    class NAME ## Object : public Object { \
+		public: \
+		    __VA_ARGS__ \
+			NAME ## Object(JSONConfig * parent): Object{parent, #NAME, DESCRIPTION} { \
+			} \
+		}; \
+		NAME ## Object NAME{this}
+
+    #define CONFIG_ARRAY(NAME, DESCRIPTION, DEFAULT_VALUE, ...) \
+        class NAME ## _entry : public Object { \
+        public: \
+		    __VA_ARGS__ \
+			NAME ## _entry(JSONConfig * parent): Object{parent, "", ""} { \
+            } \
+        }; \
+        Array<NAME ## _entry> NAME{this, #NAME, DESCRIPTION, DEFAULT_VALUE}
+
+
     namespace x {
 
         /** - each config knows its parent - don't deal with calculated-able default values
@@ -64,6 +86,14 @@ HELPERS_NAMESPACE_BEGIN
             virtual JSON defaultValue() const = 0;
 
             virtual void update(JSON const & value, std::function<void(JSONError &&)> errorHandler) = 0;
+
+            /** Calls update on given config. 
+             
+                Required due to friend delcarations only valid on this object, so that subclasses have no way of calling update on other items than themselves.
+             */
+            void update(JSONConfig * config, JSON const & value, std::function<void(JSONError &&)> errorHandler) {
+                config->update(value, errorHandler);
+            }
 
             virtual void addChildProperty(std::string const & name, JSONConfig * child) = 0;
 
@@ -154,6 +184,11 @@ HELPERS_NAMESPACE_BEGIN
                 defaultValue_{defaultValue} {
             }
 
+            T const & operator [] (size_t index) const {
+                ASSERT(index < elements_.size());
+                return * elements_[index];
+            }
+
         protected:
 
             JSON defaultValue() const override {
@@ -174,15 +209,17 @@ HELPERS_NAMESPACE_BEGIN
                 elements_.clear();
                 // update the values
                 for (auto i = value.begin(), e = value.end(); i != e; ++i) {
-                    T * element = new T(this);
+                    T * element = new T{this};
                     elements_.push_back(element);
-                    element->update(*i);
+                    JSONConfig::update(element, *i, errorHandler);
                 }
             }
 
             void addChildProperty(std::string const & name, JSONConfig * child) override {
                 ASSERT(name == "");
-                elements_.push_back(child);
+                T * castedChild = dynamic_cast<T*>(child);
+                ASSERT(castedChild != nullptr);
+                elements_.push_back(castedChild);
                 child->json_ = & json_->add(child->defaultValue());
             }
 
@@ -211,7 +248,7 @@ HELPERS_NAMESPACE_BEGIN
               
             /** Typecasts the configuration property to the property value type. 
              */
-            operator T const & () {
+            T const & operator () () const {
                 return value_;
             }
 
@@ -228,15 +265,18 @@ HELPERS_NAMESPACE_BEGIN
                     json_->setComment(value.comment());
                     updated_ = true;
                 } catch (std::exception const & e) {
-                    errorHandler(CREATE_EXCEPTION(JSONError()) << "Error when parsing JSON value for " << name());
+                    errorHandler(CREATE_EXCEPTION(JSONError()) << "Error when parsing JSON value for " << name() << ": " << e.what());
                 }
             }
 
             void addChildProperty(std::string const & name, JSONConfig * child) override {
+                MARK_AS_UNUSED(name);
+                MARK_AS_UNUSED(child);
                 UNREACHABLE;
             }
 
             std::string childName(JSONConfig const * child) const override {
+                MARK_AS_UNUSED(child);
                 UNREACHABLE;
             }
 
@@ -276,31 +316,37 @@ HELPERS_NAMESPACE_BEGIN
 
         template<>
         inline std::string JSONConfig::FromJSON<std::string>(JSON const & json) {
+            MARK_AS_UNUSED(json);
             NOT_IMPLEMENTED;
         }
 
         template<>
         inline bool JSONConfig::FromJSON<bool>(JSON const & json) {
+            MARK_AS_UNUSED(json);
             NOT_IMPLEMENTED;
         }
 
         template<>
         inline int JSONConfig::FromJSON<int>(JSON const & json) {
+            MARK_AS_UNUSED(json);
             NOT_IMPLEMENTED;
         }
 
         template<>
         inline unsigned JSONConfig::FromJSON<unsigned>(JSON const & json) {
+            MARK_AS_UNUSED(json);
             NOT_IMPLEMENTED;
         }
 
         template<>
         inline size_t JSONConfig::FromJSON<size_t>(JSON const & json) {
+            MARK_AS_UNUSED(json);
             NOT_IMPLEMENTED;
         }
 
         template<>
         inline double JSONConfig::FromJSON<double>(JSON const & json) {
+            MARK_AS_UNUSED(json);
             NOT_IMPLEMENTED;
         }
 

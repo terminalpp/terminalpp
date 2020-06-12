@@ -9,11 +9,12 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- the simple settings do not care about calculated defaults (ok)
+- check that linux & macOS QT build
+- add reading from JSON settings to config
+- allow setting the missing value directly from the specification (i.e. either default JSON, or missing value function)
+- add command line parsing
+- version checking, etc.
 - add saving the JSON configuration (either all, or the updated ones only)
-- the root element is very basic
-- extra root elements should allow command line parsing, or do command line parsing in a different module altogether? 
-
 
 - source package artifact for deb
 - release ropen package to snap 

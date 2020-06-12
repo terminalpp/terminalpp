@@ -107,6 +107,7 @@ int main(int argc, char* argv[]) {
     // create the telemetry manager and its handler. 
     Telemetry telemetry(SendTelemetry);
     try {
+        //tpp::Config const & config = tpp::Config::Setup(argc, argv);
         tpp::Config const & config = tpp::Config::Setup(argc, argv);
         // open the telemetry and add the registered logs
         telemetry.open(config.telemetry.dir() + "/" + TimeInDashed());
@@ -124,7 +125,7 @@ int main(int argc, char* argv[]) {
         
         tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", 80, 25);
         // currently owned by the window, when multiple sessions are available this might change
-        new tpp::Session{w};
+        new tpp::Session{w, config.sessions[0]};
         w->show();
         tpp::Application::Instance()->mainLoop();
         return EXIT_SUCCESS;

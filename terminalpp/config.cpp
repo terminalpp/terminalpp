@@ -17,6 +17,10 @@ namespace tpp {
 		return JoinPath(GetSettingsFolder(), "settings.json");
 	}
 
+
+    #ifdef FOOBAR
+
+
 	void Config::setup(int argc, char * argv[]) {
 		bool saveSettings = false;
 		std::string filename{GetSettingsFile()};
@@ -217,5 +221,7 @@ namespace tpp {
 		return IsBypassPresent();
 	}
 #endif
+
+#endif // FOOBAR
 
 } // namespace tpp
