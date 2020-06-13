@@ -99,7 +99,7 @@ HELPERS_NAMESPACE_BEGIN
 
 		Command(std::vector<std::string> const& command) {
 			auto i = command.begin(), e = command.end();
-			command_ = *i;
+    		command_ = *i;
 			while (++i != e)
 				args_.push_back(*i);
 		}

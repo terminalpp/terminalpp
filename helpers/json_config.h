@@ -76,6 +76,9 @@ HELPERS_NAMESPACE_BEGIN
                 updated_{false} {
                 if (parent_ != nullptr)
                     parent_->addChildProperty(name, this);
+                // if parent is null, then we are root and should create the root object 
+                else 
+                    json_ = new JSON{JSON::Kind::Object};
             }
 
             JSONConfig(JSONConfig * parent, std::string const & name, std::string const & description, std::function<JSON()> defaultValue):
@@ -86,13 +89,9 @@ HELPERS_NAMESPACE_BEGIN
                 updated_{false} {
                 if (parent_ != nullptr)
                     parent_->addChildProperty(name, this);
-            }
-
-
-            void update(JSON const & value) {
-                update(value, [](JSONError && e){
-                    throw e;
-                });
+                // if parent is null, then we are root and should create the root object 
+                else 
+                    json_ = new JSON{JSON::Kind::Object};
             }
 
             JSON defaultValue() const {
@@ -100,6 +99,12 @@ HELPERS_NAMESPACE_BEGIN
                     return std::get<JSON>(defaultValue_);
                 else
                     return std::get<std::function<JSON()>>(defaultValue_)();
+            }
+
+            void update(JSON const & value) {
+                update(value, [](JSONError && e){
+                    throw e;
+                });
             }
 
             template<typename T>
@@ -176,8 +181,8 @@ HELPERS_NAMESPACE_BEGIN
             void addChildProperty(std::string const & name, JSONConfig * child) override {
                 if (properties_.insert(std::make_pair(name, child)).second == false)
                     THROW(JSONError()) << "Element " << name << " already exists in " << this->name();
-                // add the nullptr placeholder to parent
-                child->json_ = & json_->add(name, JSON::Null());
+                // add the object placeholder to parent - this *will* be changed to parsed value, or to the default value before first parsed, but the object will allow nesting
+                child->json_ = & json_->add(name, JSON::Object());
             }
 
             std::string childName(JSONConfig const * child) const override {
@@ -209,13 +214,14 @@ HELPERS_NAMESPACE_BEGIN
 
             T const & operator [] (size_t index) const {
                 ASSERT(index < elements_.size());
-                return * elements_[index];
+                return * dynamic_cast<T*>(elements_[index]);
             }
 
         protected:
 
             void update(JSON const & value, std::function<void(JSONError &&)> errorHandler) override {
                 ASSERT(json_ != nullptr);
+                *json_ = JSON::Array();
                 if (value.kind() != JSON::Kind::Array) {
                     errorHandler(CREATE_EXCEPTION(JSONError())  << "Initializing " << name() << " with " << value << ", but array expected");
                     return;
@@ -229,17 +235,14 @@ HELPERS_NAMESPACE_BEGIN
                 // update the values
                 for (auto i = value.begin(), e = value.end(); i != e; ++i) {
                     T * element = new T{this};
-                    elements_.push_back(element);
                     JSONConfig::update(element, *i, errorHandler);
                 }
             }
 
             void addChildProperty(std::string const & name, JSONConfig * child) override {
                 ASSERT(name == "");
-                T * castedChild = dynamic_cast<T*>(child);
-                ASSERT(castedChild != nullptr);
-                elements_.push_back(castedChild);
-                child->json_ = & json_->add(child->defaultValue());
+                elements_.push_back(child);
+                child->json_ = & json_->add(JSON::Object());
             }
 
             std::string childName(JSONConfig const * child) const override {
@@ -250,7 +253,7 @@ HELPERS_NAMESPACE_BEGIN
                 UNREACHABLE;
             }
 
-            std::vector<T*> elements_;
+            std::vector<JSONConfig*> elements_;
 
         }; // JSONConfig::Array
 
@@ -313,48 +316,57 @@ HELPERS_NAMESPACE_BEGIN
                 Object{ nullptr, "", description } {
             }
 
+            ~Root() {
+                delete json_;
+            }
+
         protected:
 
-            /** The actual JSON object holding the entire configuration. 
-             */
-            JSON config_;
+            using JSONConfig::update;
+            using Object::update;
 
         }; // JSONConfig::Root
 
         template<>
         inline std::string JSONConfig::FromJSON<std::string>(JSON const & json) {
-            MARK_AS_UNUSED(json);
-            NOT_IMPLEMENTED;
+            if (json.kind() != JSON::Kind::String)
+                THROW(JSONError()) << "Expected string, but " << json << " found";
+            return json.toString();
         }
 
         template<>
         inline bool JSONConfig::FromJSON<bool>(JSON const & json) {
-            MARK_AS_UNUSED(json);
-            NOT_IMPLEMENTED;
+            if (json.kind() != JSON::Kind::Boolean)
+                THROW(JSONError()) << "Expected bool, but " << json << " found";
+            return json.toBool();
         }
 
         template<>
         inline int JSONConfig::FromJSON<int>(JSON const & json) {
-            MARK_AS_UNUSED(json);
-            NOT_IMPLEMENTED;
+            if (json.kind() != JSON::Kind::Integer)
+                THROW(JSONError()) << "Expected integer, but " << json << " found";
+            return json.toInt();
         }
 
         template<>
         inline unsigned JSONConfig::FromJSON<unsigned>(JSON const & json) {
-            MARK_AS_UNUSED(json);
-            NOT_IMPLEMENTED;
+            if (json.kind() != JSON::Kind::Integer)
+                THROW(JSONError()) << "Expected unsigned, but " << json << " found";
+            return json.toUnsigned();
         }
 
         template<>
         inline size_t JSONConfig::FromJSON<size_t>(JSON const & json) {
-            MARK_AS_UNUSED(json);
-            NOT_IMPLEMENTED;
+            if (json.kind() != JSON::Kind::Integer)
+                THROW(JSONError()) << "Expected unsigned, but " << json << " found";
+            return json.toUnsigned();
         }
 
         template<>
         inline double JSONConfig::FromJSON<double>(JSON const & json) {
-            MARK_AS_UNUSED(json);
-            NOT_IMPLEMENTED;
+            if (json.kind() != JSON::Kind::Double)
+                THROW(JSONError()) << "Expected double, but " << json << " found";
+            return json.toDouble();
         }
 
     } // X -----------------------------------------------------------------------------------

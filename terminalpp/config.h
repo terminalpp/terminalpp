@@ -277,7 +277,7 @@ namespace tpp {
                 CONFIG_PROPERTY(
                     waitAfterPtyTerminated,
                     "Determines the behavior of the session when the attached command terminates.",
-                    JSON{false},
+                    JSON{true},
                     bool
                 );
                 CONFIG_PROPERTY(
@@ -324,12 +324,14 @@ namespace tpp {
 				JSON{"local"},
 			    std::string
 			);
+            /*
 			CONFIG_PROPERTY(
 				command, 
 				"The command to be executed in the session",
 				JSON::Array(),
 			    Command
 			);
+            */
 			CONFIG_OBJECT(
 				palette,
 				"Definition of the palette used for the session.",
@@ -411,7 +413,7 @@ namespace tpp {
         CONFIG_ARRAY(
             sessions, 
             "List of known sessions",
-            JSON::Array(),
+            DefaultSessions,
             CONFIG_PROPERTY(
                 name,
                 "Name of the session",
@@ -535,6 +537,8 @@ namespace tpp {
 		static JSON DefaultFontFamily();
 
 		static JSON DefaultDoubleWidthFontFamily();
+
+        static JSON DefaultSessions();
 
         //@}
 

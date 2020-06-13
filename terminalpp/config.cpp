@@ -13,6 +13,21 @@ namespace tpp {
         MARK_AS_UNUSED(argc);
         MARK_AS_UNUSED(argv);
         Config & config = Instance();
+        bool saveSettings = false;
+        std::string filename = GetSettingsFile();
+        {
+            std::ifstream f{filename};
+            if (f.good()) {
+
+            } else {
+                saveSettings = true;
+				Application::Instance()->alert(STR("No settings file found, default settings will be calculated and stored in " << filename));
+                // update with empty object, which means that all default values will be calculated
+                config.update(JSON::Object());
+            }
+        }
+
+
         return config;
     }
 
@@ -58,6 +73,10 @@ namespace tpp {
 	JSON Config::DefaultDoubleWidthFontFamily() {
 		return DefaultFontFamily();
 	}
+
+    JSON Config::DefaultSessions() {
+        return JSON::Parse("[{ \"name\" : \"cmd.exe\", \"command\" : [\"cmd.exe\"]}]");
+    }
 
 
 
