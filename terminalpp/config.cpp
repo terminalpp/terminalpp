@@ -9,13 +9,56 @@
 
 namespace tpp { 
 
+    Config & Config::Setup(int argc, char * argv[]) {
+        MARK_AS_UNUSED(argc);
+        MARK_AS_UNUSED(argv);
+        Config & config = Instance();
+        return config;
+    }
+
 	std::string Config::GetSettingsFolder() {
         return JoinPath(LocalSettingsFolder(), "terminalpp");
 	}
 
 	std::string Config::GetSettingsFile() {
-		return JoinPath(GetSettingsFolder(), "settings.json");
+		return JoinPath(GetSettingsFolder(), "settings-2.json");
 	}
+
+	JSON Config::TerminalVersion() {
+		return JSON{PROJECT_VERSION};
+	}
+
+	JSON Config::DefaultTelemetryDir() {
+		return JSON{JoinPath(JoinPath(TempDir(), "terminalpp"),"telemetry")};
+	}
+
+	JSON Config::DefaultRemoteFilesDir() {
+		return JSON{JoinPath(JoinPath(TempDir(), "terminalpp"),"remoteFiles")};
+	}
+
+	JSON Config::DefaultFontFamily() {
+#if (defined ARCH_WINDOWS)
+		return JSON{"Consolas"};
+#elif (defined ARCH_MACOS)
+        return JSON{"Courier New"};
+#else
+		char const * fonts[] = { "Monospace", "DejaVu Sans Mono", "Nimbus Mono", "Liberation Mono", nullptr };
+		char const ** f = fonts;
+		while (*f != nullptr) {
+			std::string found{Exec(Command("fc-list", { *f }), "")};
+			if (! found.empty())
+			    return JSON{*f};
+			++f;
+		}
+		Application::Instance()->alert("Cannot guess valid font - please specify manually for best results");
+		return JSON{""};
+#endif
+	}
+
+	JSON Config::DefaultDoubleWidthFontFamily() {
+		return DefaultFontFamily();
+	}
+
 
 
     #ifdef FOOBAR

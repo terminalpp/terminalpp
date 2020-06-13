@@ -40,7 +40,7 @@ HELPERS_NAMESPACE_BEGIN
             - initially has no JSON, when updated its JSON is set
 
             - empty value == default value, by which the configuration is initialized
-         
+
          */
 
         class JSONConfig {
@@ -56,6 +56,9 @@ HELPERS_NAMESPACE_BEGIN
             template<typename T>
             class Property;
 
+            virtual ~JSONConfig() {
+            }
+
             std::string name() const {
                 if (parent_ == nullptr)
                     return nullptr;
@@ -65,14 +68,26 @@ HELPERS_NAMESPACE_BEGIN
 
         protected:
 
-            JSONConfig(JSONConfig * parent, std::string const & name, std::string const & description):
+            JSONConfig(JSONConfig * parent, std::string const & name, std::string const & description, JSON const & defaultValue):
                 parent_{parent},
                 json_{nullptr},
                 description_{description},
+                defaultValue_{defaultValue},
                 updated_{false} {
                 if (parent_ != nullptr)
                     parent_->addChildProperty(name, this);
             }
+
+            JSONConfig(JSONConfig * parent, std::string const & name, std::string const & description, std::function<JSON()> defaultValue):
+                parent_{parent},
+                json_{nullptr},
+                description_{description},
+                defaultValue_{defaultValue},
+                updated_{false} {
+                if (parent_ != nullptr)
+                    parent_->addChildProperty(name, this);
+            }
+
 
             void update(JSON const & value) {
                 update(value, [](JSONError && e){
@@ -80,10 +95,15 @@ HELPERS_NAMESPACE_BEGIN
                 });
             }
 
+            JSON defaultValue() const {
+                if (std::holds_alternative<JSON>(defaultValue_))
+                    return std::get<JSON>(defaultValue_);
+                else
+                    return std::get<std::function<JSON()>>(defaultValue_)();
+            }
+
             template<typename T>
             static T FromJSON(JSON const & json);
-
-            virtual JSON defaultValue() const = 0;
 
             virtual void update(JSON const & value, std::function<void(JSONError &&)> errorHandler) = 0;
 
@@ -110,6 +130,8 @@ HELPERS_NAMESPACE_BEGIN
 
             std::string description_;
 
+            std::variant<JSON, std::function<JSON()>> defaultValue_;
+
             bool updated_;
 
         }; 
@@ -117,15 +139,11 @@ HELPERS_NAMESPACE_BEGIN
         class JSONConfig::Object : public JSONConfig {
         public:
             Object(JSONConfig * parent, std::string const & name, std::string const & description):
-                JSONConfig{parent, name, description} {
-                ASSERT(parent != nullptr) << "Use JSONConfig::Root for parent-less configuration objects";
+                JSONConfig{parent, name, description, JSON::Object()} {
+                //ASSERT(parent != nullptr) << "Use JSONConfig::Root for parent-less configuration objects";
             }
 
         protected:
-
-            JSON defaultValue() const override {
-                return JSON::Object();
-            }
 
             void update(JSON const & value, std::function<void(JSONError &&)> errorHandler) override {
                 ASSERT(json_ != nullptr);
@@ -147,8 +165,10 @@ HELPERS_NAMESPACE_BEGIN
                 for (auto i : properties_) {
                     JSONConfig * child = i.second;
                     if (! child->updated_) {
-                        child->update(*child->json_); // this is the default value, therefore errors are more serious and should be reported immediately
-                        child->updated_ = false; // clear the update flag
+                        child->update(child->defaultValue()); // this is the default value, therefore errors are more serious and should be reported immediately
+                        // if the default value has not been calculated, but provided as a literal, mark the field as *not* updated (no need to store)
+                        if (std::holds_alternative<JSON>(child->defaultValue_))
+                            child->updated_ = false; // clear the update flag
                     }
                 }
             }
@@ -156,7 +176,8 @@ HELPERS_NAMESPACE_BEGIN
             void addChildProperty(std::string const & name, JSONConfig * child) override {
                 if (properties_.insert(std::make_pair(name, child)).second == false)
                     THROW(JSONError()) << "Element " << name << " already exists in " << this->name();
-                child->json_ = & json_->add(name, child->defaultValue());
+                // add the nullptr placeholder to parent
+                child->json_ = & json_->add(name, JSON::Null());
             }
 
             std::string childName(JSONConfig const * child) const override {
@@ -175,13 +196,15 @@ HELPERS_NAMESPACE_BEGIN
         class JSONConfig::Array : public JSONConfig {
         public:
             Array(JSONConfig * parent, std::string const & name, std::string const & description):
-                JSONConfig{parent, name, description},
-                defaultValue_{JSON::Array()} {
+                JSONConfig{parent, name, description, JSON::Array()} {
             }
 
             Array(JSONConfig * parent, std::string const & name, std::string const & description, JSON const & defaultValue):
-                JSONConfig{parent, name, description},
-                defaultValue_{defaultValue} {
+                JSONConfig{parent, name, description, defaultValue} {
+            }
+
+            Array(JSONConfig * parent, std::string const & name, std::string const & description, std::function<JSON()> defaultValue):
+                JSONConfig{parent, name, description, defaultValue} {
             }
 
             T const & operator [] (size_t index) const {
@@ -190,10 +213,6 @@ HELPERS_NAMESPACE_BEGIN
             }
 
         protected:
-
-            JSON defaultValue() const override {
-                return defaultValue_;
-            }
 
             void update(JSON const & value, std::function<void(JSONError &&)> errorHandler) override {
                 ASSERT(json_ != nullptr);
@@ -231,8 +250,6 @@ HELPERS_NAMESPACE_BEGIN
                 UNREACHABLE;
             }
 
-            JSON defaultValue_;
-
             std::vector<T*> elements_;
 
         }; // JSONConfig::Array
@@ -242,8 +259,11 @@ HELPERS_NAMESPACE_BEGIN
         public:
 
             Property(JSONConfig * parent, std::string name, std::string description, JSON const & defaultValue):
-                JSONConfig{parent, name, description}, 
-                defaultValue_{defaultValue} {
+                JSONConfig{parent, name, description, defaultValue} {
+            }
+
+            Property(JSONConfig * parent, std::string name, std::string description, std::function<JSON()> defaultValue):
+                JSONConfig{parent, name, description, defaultValue} {
             }
               
             /** Typecasts the configuration property to the property value type. 
@@ -253,10 +273,6 @@ HELPERS_NAMESPACE_BEGIN
             }
 
         protected:
-
-            JSON defaultValue() const override {
-                return defaultValue_;
-            }
 
             void update(JSON const & value, std::function<void(JSONError &&)> errorHandler) override {
                 ASSERT(json_ != nullptr);
@@ -280,8 +296,6 @@ HELPERS_NAMESPACE_BEGIN
                 UNREACHABLE;
             }
 
-            JSON defaultValue_;
-
             T value_;
         }; 
 
@@ -291,19 +305,12 @@ HELPERS_NAMESPACE_BEGIN
         class JSONConfig::Root : public JSONConfig::Object {
         public:
 
-            Root(JSON const & from):
-                Root{ from, "Configuration", [](JSONError && e) { throw e; } } {
+            Root():
+                Object{nullptr, "", "Configuration"} {
             }
 
-            Root(JSON const & from, std::string description):
-                Root{ from, description, [](JSONError && e) { throw e; } } {
-            }
-
-            Root(JSON const & from, std::string description, std::function<void(JSONError &&)> errorHandler):
-                Object{nullptr, "", description},
-                config_{JSON::Object()} {
-                json_ = & config_;
-                update(from, errorHandler);
+            Root(std::string description):
+                Object{ nullptr, "", description } {
             }
 
         protected:

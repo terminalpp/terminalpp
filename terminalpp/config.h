@@ -190,7 +190,7 @@ namespace tpp {
             CONFIG_PROPERTY(
                 version,
                 "Version of tpp the settings are intended for, to make sure the settings are useful and to detect version changes",
-                JSON{""},
+                TerminalVersion,
                 std::string
             );
             CONFIG_PROPERTY(
@@ -206,7 +206,7 @@ namespace tpp {
             CONFIG_PROPERTY(
                 dir,
                 "Directory where to store the telemetry logs",
-                JSON{""},
+                DefaultTelemetryDir,
                 std::string
             );
             CONFIG_PROPERTY(
@@ -237,13 +237,13 @@ namespace tpp {
                 CONFIG_PROPERTY(
                     family,
                     "Font to render default size characters",
-                    JSON{""},
+                    DefaultFontFamily,
                     std::string
                 );
                 CONFIG_PROPERTY(
                     doubleWidthFamily,
                     "Font to render double width characters",
-                    JSON{""},
+                    DefaultDoubleWidthFontFamily,
                     std::string
                 );
                 CONFIG_PROPERTY(
@@ -311,7 +311,7 @@ namespace tpp {
             CONFIG_PROPERTY(
                 dir,
                 "Directory to which the remote files should be downloaded. If empty, temporary directory will be used.",
-                JSON{""},
+                DefaultRemoteFilesDir,
                 std::string
             );
         );
@@ -500,21 +500,11 @@ namespace tpp {
 			);
         );
 
+        static Config & Setup(int argc, char* argv[]);
 
-
-        Config(JSON const & from):
-            Root{from} {
-        }
-
-        static Config const & Setup(int argc, char* argv[]) {
-            MARK_AS_UNUSED(argc);
-            MARK_AS_UNUSED(argv);
-
-            return Config{JSON::Object()};
-        }
-
-        static Config const & Instance() {
-            NOT_IMPLEMENTED;
+        static Config & Instance() {
+            static Config instance;
+            return instance;
         }
 
 		/** Returns the directory in which the configuration files should be located. 
@@ -525,6 +515,28 @@ namespace tpp {
 		 */
 	    static std::string GetSettingsFile();
 
+    private:
+		/** \name Default value providers
+		 
+		    These static methods calculate default values for the complex configuration properties. The idea is that these will be executed once the terminal is installed, they will analyze the system and calculate proper values to be stored in the configuration file. 
+		 */
+		//@{
+
+		/** Returns the version of the terminal++ binary. 
+		 
+		    This version is specified in the CMakeLists.txt and is watermarked to each binary.
+		 */
+	    static JSON TerminalVersion();
+
+		static JSON DefaultTelemetryDir();
+
+		static JSON DefaultRemoteFilesDir();		
+
+		static JSON DefaultFontFamily();
+
+		static JSON DefaultDoubleWidthFontFamily();
+
+        //@}
 
     }; // tpp::Config
 
