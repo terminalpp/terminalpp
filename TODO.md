@@ -9,10 +9,10 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- check that linux & macOS QT build
 - add reading from JSON settings to config
 - allow setting the missing value directly from the specification (i.e. either default JSON, or missing value function)
 - add command line parsing
+- move ropen to new config
 - version checking, etc.
 - add saving the JSON configuration (either all, or the updated ones only)
 

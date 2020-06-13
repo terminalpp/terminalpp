@@ -104,7 +104,7 @@ namespace tpp {
             else
                 pty_ = new BypassPTYMaster(session.command());
 #else
-            pty_ = new LocalPTYMaster{config.session.command()};
+            pty_ = new LocalPTYMaster{session.command()};
 #endif
 
             mainWindow_ = new PublicContainer{new ColumnLayout{VerticalAlign::Top}};
