@@ -78,7 +78,7 @@ namespace tpp {
 
 	void Config::VerifyConfigurationVersion(JSON & userConfig) {
         try {
-            if (userConfig["version"]["version"] == PROJECT_VERSION)
+            if (userConfig["version"]["version"].toString() == PROJECT_VERSION)
                 return;
             userConfig["version"].erase("version");
         } catch (...) {
@@ -118,8 +118,52 @@ namespace tpp {
 	}
 
     JSON Config::DefaultSessions() {
-        return JSON::Parse("[{ \"name\" : \"cmd.exe\", \"command\" : [\"cmd.exe\"]}]");
+        JSON result{JSON::Array()};
+    #if (defined ARCH_MACOS)
+        JSON shell{JSON::Object()};
+        shell.setComment("Default login shell");
+        shell.add("name", "default shell");
+        shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\", \"--login\"]")));
+        result.add(shell);        
+    #elif (defined ARCH_UNIX)
+        JSON shell{JSON::Object()};
+        shell.setComment("Default login shell");
+        shell.add("name", JSON{"default shell"});
+        shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\"]")));
+        result.add(shell);        
+    #else if (defined ARCH_WINDOWS)
+        //Win32AddCmdExe(result);
+        Win32AddPowershell(result);
+        Win32AddWSL(result);
+    #endif
+        //return JSON::Parse("[{ \"name\" : \"cmd.exe\", \"command\" : [\"powershell.exe\"]}]");
+        return result;
     }
+
+    #if (defined ARCH_WINDOWS)
+
+    void Config::Win32AddCmdExe(JSON & sessions) {
+        JSON session{JSON::Kind::Object};
+        session.setComment("cmd.exe");
+        session.add("name", JSON{"cmd.exe"});
+        session.add("command", JSON::Parse(STR("[\"cmd.exe\"]")));
+        sessions.add(session);        
+    }
+
+    void Config::Win32AddPowershell(JSON & sessions) {
+        JSON session{JSON::Kind::Object};
+        session.setComment("Powershell");
+        session.add("name", JSON{"powershell"});
+        session.add("command", JSON::Parse(STR("[\"powershell.exe\"]")));
+        session.add("palette", JSON::Parse("{\"defaultForeground\" : 15, \"defaultBackground\" : 4 }"));
+        sessions.add(session);        
+    }
+
+    void Config::Win32AddWSL(JSON & sessions) {
+
+    }
+
+    #endif
 
 
 

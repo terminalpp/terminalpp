@@ -162,14 +162,15 @@ namespace ui {
         mouseLastButton_{0},
         lineDrawingSet_{false},
         bracketedPaste_{false},
-        state_{width, height, 1000},
-        stateBackup_{width, height, 0},
+        state_{width, height, 1000, palette->defaultBackground()},
+        stateBackup_{width, height, 0, palette->defaultBackground()},
         alternateMode_{false},
         boldIsBright_{false} {
         setFps(60);
         setFocusable(true);
         // explicitly resize the PTY when attached to the terminal
         pty->resize(width, height);
+        // fill the buffer with default colors
         // start the reader thread
         reader_ = std::thread{[this](){
             size_t unprocessed = 0;
@@ -1596,6 +1597,17 @@ namespace ui {
 
     // ============================================================================================
     // AnsiTerminal::State
+
+    AnsiTerminal::State::State(int cols, int rows, int maxHistoryLines, Color defaultBg):
+        buffer{cols, rows, maxHistoryLines},
+        cursor{0,0},
+        lastCharacter{0,0},
+        scrollStart{0},
+        scrollEnd{rows},
+        inverseMode{false} {
+        cell.setBg(defaultBg);
+        buffer.fill(cell);
+    }
 
     void AnsiTerminal::State::reset(Color fg, Color bg) {
         // reset the cell state

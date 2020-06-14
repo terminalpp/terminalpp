@@ -66,6 +66,10 @@ HELPERS_NAMESPACE_BEGIN
                     return parent_->childName(this);
             }
 
+            std::string const & description() const {
+                return description_;
+            }
+
             virtual JSON toJSON(bool updatedOnly = true) const = 0;
 
         protected:

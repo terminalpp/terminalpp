@@ -324,14 +324,7 @@ namespace ui {
 
         class State {
         public:
-            State(int cols, int rows, int maxHistoryLines):
-                buffer{cols, rows, maxHistoryLines},
-                cursor{0,0},
-                lastCharacter{0,0},
-                scrollStart{0},
-                scrollEnd{rows},
-                inverseMode{false} {
-            }
+            State(int cols, int rows, int maxHistoryLines, Color defaultBg);
 
             void reset(Color fg, Color bg);
 

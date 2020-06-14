@@ -545,6 +545,15 @@ namespace tpp {
 
         //@}
 
+
+    #if (defined ARCH_WINDOWS)
+
+        static void Win32AddCmdExe(JSON & sessions);
+        static void Win32AddPowershell(JSON & sessions);
+        static void Win32AddWSL(JSON & sessions);
+
+    #endif
+
     }; // tpp::Config
 
 
