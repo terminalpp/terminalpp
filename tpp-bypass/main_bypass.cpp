@@ -21,6 +21,7 @@
 #include <unordered_map>
 
 #include "helpers/helpers.h"
+#include "helpers/filesystem.h"
 #include "stamp.h"
 
 /** The Windows ConPTY bypass via WSL
@@ -286,7 +287,7 @@ int main(int argc, char * argv[]) {
 		return EXIT_SUCCESS;
 	}
 	try {
-		Log::FileWriter log("~/.bypass-errors.log");
+		Log::FileWriter log(HomeDir() + "/.bypass-errors.log");
 		Log::Enable(log, { 
 			Log::Default(),
 		});

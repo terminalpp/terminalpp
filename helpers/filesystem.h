@@ -168,6 +168,16 @@ HELPERS_NAMESPACE_BEGIN
 #endif
     }
 
+    /** Returns the home directory for the current user. 
+     */
+    inline std::string HomeDir() {
+#if (defined ARCH_WINDOWS)
+        return STR(getenv("HOMEDRIVE") << getenv("HOMEDIR"));
+#else
+        return getenv("HOME");
+#endif
+    }
+
     /** Returns the directory where temporary files should be stored. 
      
         This usually goes to `%APP_DATA%/local/Temp` on Windows and `/tmp` on Linux and friends. 
