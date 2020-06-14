@@ -145,11 +145,35 @@ namespace tpp {
     bool Config::WSLIsBypassPresent(std::string const & distro) {
         ExitCode ec; // to silence errors
 		std::string output{Exec(Command("wsl.exe", {"--distribution", distro, "--", BYPASS_PATH, "--version"}), "", &ec)};
-		return output.find("Terminal++ Bypass, version") == 0;
+		return output.find("ConPTY bypass for terminal++, version") == 0;
     }
 
     bool Config::WSLInstallBypass(std::string const & distro) {
-        return false;
+        try {
+            std::string url = STR("https://github.com/terminalpp/terminalpp/releases/latest/download/tpp-bypass-" << distro);
+            // disambiguate the ubuntu distribution if not part of the distro name
+            if (distro == "Ubuntu") {
+                ExitCode ec;
+                std::vector<std::string> lines = SplitAndTrim(
+                    Exec(Command("wsl.exe", {"--distribution", distro, "--", "lsb_release", "-a"}), "", &ec),
+                    "\n"
+                );
+                for (std::string const & line : lines) {
+                    if (StartsWith(line, "Release:")) {
+                        std::string ver = Trim(line.substr(9));
+                        url = url + "-" + ver;
+                        break;
+                    }
+                }
+            }
+            Exec(Command("wsl.exe", {"--distribution", distro, "--", "mkdir", "-p", BYPASS_FOLDER}), "");
+            Exec(Command("wsl.exe", {"--distribution", distro, "--", "wget", "-O", BYPASS_PATH, url}), "");
+            Exec(Command("wsl.exe", {"--distribution", distro, "--", "chmod", "+x", BYPASS_PATH}), "");
+            // just double check
+            return WSLIsBypassPresent(distro);
+        } catch (...) {
+            return false;
+        }
     }
 
     // TODO is cmd.exe on *all* installations? 
