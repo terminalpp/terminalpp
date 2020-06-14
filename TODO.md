@@ -9,11 +9,9 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- add reading from JSON settings to config
+- when createing complex default values, the comments must be set as well if they are to appear in the saved output
 - add command line parsing
 - move ropen to new config
-- version checking, etc.
-- add saving the JSON configuration (either all, or the updated ones only)
 - change settings name to settings.json (GetSettingsFile)
 
 - source package artifact for deb

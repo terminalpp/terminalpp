@@ -517,19 +517,22 @@ namespace tpp {
 		 */
 	    static std::string GetSettingsFile();
 
+        /** Returns the version of the terminal++ binary. 
+		 
+		    This version is specified in the CMakeLists.txt and is watermarked to each binary.
+		 */
+	    static JSON TerminalVersion();
     private:
+
+        static void VerifyConfigurationVersion(JSON & userConfig);
+
 		/** \name Default value providers
 		 
 		    These static methods calculate default values for the complex configuration properties. The idea is that these will be executed once the terminal is installed, they will analyze the system and calculate proper values to be stored in the configuration file. 
 		 */
 		//@{
 
-		/** Returns the version of the terminal++ binary. 
-		 
-		    This version is specified in the CMakeLists.txt and is watermarked to each binary.
-		 */
-	    static JSON TerminalVersion();
-
+		
 		static JSON DefaultTelemetryDir();
 
 		static JSON DefaultRemoteFilesDir();		

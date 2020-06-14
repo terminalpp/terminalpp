@@ -18,7 +18,30 @@ namespace tpp {
         {
             std::ifstream f{filename};
             if (f.good()) {
-
+				try {
+					try {
+						JSON settings{JSON::Parse(f)};
+						VerifyConfigurationVersion(settings);
+						// specify, check errors, make copy if wrong
+						saveSettings = config.update(settings, [& saveSettings, & filename](JSONError && e){
+							Application::Instance()->alert(STR(e.what() << " while parsing terminalpp settings at " << filename));
+							saveSettings = true;
+						});
+					} catch (JSONError & e) {
+						e.setMessage(STR(e.what() << " while parsing terminalpp settings at " << filename));
+						throw;
+					}
+				} catch (std::exception const & e) {
+					Application::Instance()->alert(e.what());
+					saveSettings = true;
+				}
+				// if there were any errors with the settings, create backup of the old settings as new settings will be stored. 
+				if (saveSettings) {
+					std::string backup{MakeUnique(filename)};
+					Application::Instance()->alert(STR("New settings file will be saved, backup stored in " << backup));
+					f.close();
+					Rename(filename, backup);
+				}
             } else {
                 saveSettings = true;
 				Application::Instance()->alert(STR("No settings file found, default settings will be calculated and stored in " << filename));
@@ -26,7 +49,17 @@ namespace tpp {
                 config.update(JSON::Object());
             }
         }
-
+        // if the settings should be saved, save them now 
+        if (saveSettings) {
+            CreatePath(GetSettingsFolder());
+            std::ofstream f(filename);
+            if (!f)
+                THROW(IOError()) << "Unable to write to the settings file " << filename;
+            // get the saved JSON and store it in the settings file
+            f << config.toJSON();
+        }
+        // parse command line arguments and update the configuration accordingly
+        // TODO
 
         return config;
     }
@@ -41,6 +74,16 @@ namespace tpp {
 
 	JSON Config::TerminalVersion() {
 		return JSON{PROJECT_VERSION};
+	}
+
+	void Config::VerifyConfigurationVersion(JSON & userConfig) {
+        try {
+            if (userConfig["version"]["version"] == PROJECT_VERSION)
+                return;
+            userConfig["version"].erase("version");
+        } catch (...) {
+        }
+		Application::Instance()->alert(STR("Settings version differs from current terminal version (" << PROJECT_VERSION << "). The configuration will be updated to the new version."));
 	}
 
 	JSON Config::DefaultTelemetryDir() {
