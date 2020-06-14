@@ -1,8 +1,6 @@
 ﻿The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-## Next version: v0.7.2 or 0.8
-
-- fixed tpp-bypass not being able to open log location
+## Next version: v0.7.3 or 0.8
 
 ### TODO
 

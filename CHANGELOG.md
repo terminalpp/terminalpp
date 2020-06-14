@@ -5,6 +5,10 @@ layout: titled
 
 Lists the most important improvements for recent `terminalpp` versions.
 
+### 0.7.2
+
+Fixed Windows issue with `tpp-bypass` not starting properly due to logging error. Other architectures are unaffected. 
+
 ### 0.7.1
 
 Restructured release process and minor fixes:
