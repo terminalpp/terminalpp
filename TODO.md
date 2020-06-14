@@ -2,6 +2,7 @@
 
 ## Next version: v0.7.2 or 0.8
 
+- fixed tpp-bypass not being able to open log location
 
 ### TODO
 

@@ -287,17 +287,17 @@ int main(int argc, char * argv[]) {
 		return EXIT_SUCCESS;
 	}
 	try {
-		Log::FileWriter log(HomeDir() + "/.bypass-errors.log");
-		Log::Enable(log, { 
+#ifndef NDEBUG
+		Log::Enable(Log::StdOutWriter(), { 
 			Log::Default(),
 		});
+#endif
 		Bypass bypass(argc, argv);
 		try {
 			bypass.run();
 			return EXIT_SUCCESS;
 		} catch (std::exception const & e) {
 			std::cerr << "Bypass terminated with error: " <<  e.what() << std::endl;
-            LOG() << e.what();
 		}
 	} catch (std::exception const & e) {
 		std::cerr << "ConPTY Bypass for t++. Usage: " << std::endl << std::endl;
