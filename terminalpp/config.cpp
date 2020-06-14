@@ -142,6 +142,17 @@ namespace tpp {
 
     #if (defined ARCH_WINDOWS)
 
+    bool Config::WSLIsBypassPresent(std::string const & distro) {
+        ExitCode ec; // to silence errors
+		std::string output{Exec(Command("wsl.exe", {"--distribution", distro, "--", BYPASS_PATH, "--version"}), "", &ec)};
+		return output.find("Terminal++ Bypass, version") == 0;
+    }
+
+    bool Config::WSLInstallBypass(std::string const & distro) {
+        return false;
+    }
+
+    // TODO is cmd.exe on *all* installations? 
     void Config::Win32AddCmdExe(JSON & sessions) {
         JSON session{JSON::Kind::Object};
         session.setComment("cmd.exe");
@@ -150,9 +161,10 @@ namespace tpp {
         sessions.add(session);        
     }
 
+    // TODO is powershell on *all* installations? 
     void Config::Win32AddPowershell(JSON & sessions) {
         JSON session{JSON::Kind::Object};
-        session.setComment("Powershell");
+        session.setComment("Powershell - with the default blue background and white text");
         session.add("name", JSON{"powershell"});
         session.add("command", JSON::Parse(STR("[\"powershell.exe\"]")));
         session.add("palette", JSON::Parse("{\"defaultForeground\" : 15, \"defaultBackground\" : 4 }"));
@@ -160,7 +172,50 @@ namespace tpp {
     }
 
     void Config::Win32AddWSL(JSON & sessions) {
-
+        ExitCode ec; // to silence errors
+        std::vector<std::string> lines = SplitAndTrim(Exec(Command("wsl.exe", {"--list"}), "", &ec), "\n");
+        // check if we have found WSL
+        if (lines.size() < 1 || lines[0] != "Windows Subsystem for Linux Distributions:")
+            return;
+        // get the installed WSL distributions and determine the default ones
+        std::vector<std::string> distributions;
+        size_t defaultIndex = 0;
+        for (size_t i = 1, e = lines.size(); i != e; ++i) {
+            if (EndsWith(lines[i], "(Default)")) {
+                defaultIndex = distributions.size();
+                distributions.push_back(Split(lines[i], " ")[0]);
+            } else {
+                distributions.push_back(lines[i]);
+            }
+        }
+        // if we found no distributions, return
+        if (distributions.empty())
+            return;
+        // create session for each distribution we have found
+        for (size_t i = 0, e = distributions.size(); i < e; ++i) {
+            std::string pty = "local";
+            JSON session{JSON::Kind::Object};
+            session.setComment(STR("WSL distribution " << distributions[i]));
+            if (defaultIndex == i)
+                session.setComment(session.comment() + " (default)");
+            if (WSLIsBypassPresent(distributions[i])) {
+                pty = "bypass";
+            } else {
+                if (Application::Instance()->query("ConPTY Bypass Installation", STR("Do you want to install the ConPTY bypass, which allows for faster I/O and has full support for ANSI escape sequences into WSL distribution " << distributions[i]))) 
+                    if (WSLInstallBypass(distributions[i])) {
+                        pty = "bypass";
+                    } else {
+                        Application::Instance()->alert("Bypass installation failed, most likely due to missing binary for your WSL distribution. Terminal++ will continue with ConPTY, you can install the bypass manually later");
+                    }
+            }
+            session.add("name", JSON{distributions[i]});
+            session.add("pty", JSON{pty});
+            if (pty == "local")
+                session.add("command", JSON::Parse(STR("[\"wsl.exe\", \"--distribution\", \"" << distributions[i] << "\"]")));
+            else
+                session.add("command", JSON::Parse(STR("[\"wsl.exe\", \"--distribution\", \"" << distributions[i] << "\", \"--\", \"" << BYPASS_PATH << "\"]")));
+            sessions.add(session);
+        }
     }
 
     #endif

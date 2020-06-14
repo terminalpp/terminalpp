@@ -548,6 +548,10 @@ namespace tpp {
 
     #if (defined ARCH_WINDOWS)
 
+        static bool WSLIsBypassPresent(std::string const & distro);
+
+        static bool WSLInstallBypass(std::string const & distro);
+
         static void Win32AddCmdExe(JSON & sessions);
         static void Win32AddPowershell(JSON & sessions);
         static void Win32AddWSL(JSON & sessions);

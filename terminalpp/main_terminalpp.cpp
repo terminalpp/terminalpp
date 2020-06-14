@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
         
         tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", 80, 25);
         // currently owned by the window, when multiple sessions are available this might change
-        new tpp::Session{w, config.sessions[0]};
+        new tpp::Session{w, config.sessions[2]};
         w->show();
         tpp::Application::Instance()->mainLoop();
         return EXIT_SUCCESS;
