@@ -33,6 +33,9 @@ HELPERS_NAMESPACE_BEGIN
 
     namespace x {
 
+        class ArgumentError : public Exception {
+        };
+
         /** - each config knows its parent - don't deal with calculated-able default values
          
             - can return default JSON
@@ -47,6 +50,7 @@ HELPERS_NAMESPACE_BEGIN
         public:
 
             class Root;
+            class CmdArgsRoot;
 
             class Object;
 
@@ -73,6 +77,8 @@ HELPERS_NAMESPACE_BEGIN
             virtual JSON toJSON(bool updatedOnly = true) const = 0;
 
         protected:
+
+            friend class CmdArgRoot;
 
             JSONConfig(JSONConfig * parent, std::string const & name, std::string const & description, JSON const & defaultValue):
                 parent_{parent},
@@ -127,7 +133,7 @@ HELPERS_NAMESPACE_BEGIN
              
                 Required due to friend delcarations only valid on this object, so that subclasses have no way of calling update on other items than themselves.
              */
-            bool update(JSONConfig * config, JSON const & value, std::function<void(JSONError &&)> errorHandler) {
+            bool updateOther(JSONConfig * config, JSON const & value, std::function<void(JSONError &&)> errorHandler) {
                 return config->update(value, errorHandler);
             }
 
@@ -138,6 +144,30 @@ HELPERS_NAMESPACE_BEGIN
                 The child's element name is returned as opposed to own name because the parent determines the location of the child in it (i.e. a named property, or array index). 
              */            
             virtual std::string childName(JSONConfig const * child) const = 0;
+
+            /** \name Command line arguments support. 
+             */
+            //@{
+
+            /** Determines if the configuration explicitly requires value when used on commandline.
+             */
+            virtual bool cmdArgRequiresValue() const {
+                return true;
+            }
+
+            /** Called when the value is updated from command line argument. 
+             
+                The index argument determines now many times the value has been set already so that array values can be implemented and errors can be raised for multiple values of non-array options. 
+
+                The default implementation simply converts the string to JSON and calls the update method if this is first invocation, or throws an error if multiple invocations. 
+             */
+            virtual void cmdArgUpdate(char const * value, size_t index, std::function<void(JSONError &&)> errorHandler) {
+                if (index != 0)
+                    THROW(JSONError()) << "Value for " << name() << " already provided";
+                update(JSON::Parse(value), errorHandler);
+            }
+
+            //@}
 
             /** Parent configuration object. */
             JSONConfig * parent_;
@@ -280,7 +310,7 @@ HELPERS_NAMESPACE_BEGIN
                 // update the values
                 for (auto i = value.begin(), e = value.end(); i != e; ++i) {
                     T * element = new T{this};
-                    result = JSONConfig::update(element, *i, errorHandler) || result;
+                    result = JSONConfig::updateOther(element, *i, errorHandler) || result;
                 }
                 return result;
             }
@@ -369,11 +399,142 @@ HELPERS_NAMESPACE_BEGIN
                 Object{ nullptr, "", description } {
             }
 
-            ~Root() {
+            ~Root() override {
                 delete json_;
             }
 
         }; // JSONConfig::Root
+
+        /** Configuration root element with command line arguments parsing.
+         
+            
+         */
+        class JSONConfig::CmdArgsRoot : public JSONConfig::Root {
+        public:
+
+        protected:
+
+            CmdArgsRoot():
+                lastArgument_{nullptr},
+                defaultArgument_{nullptr} {
+            }
+
+            void addArgumentPositional(JSONConfig & config) {
+                positionalArguments_.push_back(&config);
+            }
+
+            /** Registers given configuration option as a command line argument under the specified aliases. 
+             */
+            void addArgument(JSONConfig & config, char const * name) {
+                addArgument(config, { name });
+            }
+
+            void addArgument(JSONConfig & config, std::initializer_list<char const *> aliases) {
+                for (auto i : aliases) {
+                    std::string alias{i};
+                    if (! keywordArguments_.insert(std::make_pair(alias, & config)).second)
+                        ASSERT(false) << "Alias " << alias << " already bound to " << keywordArguments_[alias]->name();
+                }
+            }
+
+            void setLastArgument(JSONConfig & config) {
+                ASSERT(lastArgument_ == nullptr) << "Last argument already set to " << lastArgument_->name();
+                lastArgument_ = &config;
+            }
+
+            void setDefaultArgument(JSONConfig & config) {
+                ASSERT(defaultArgument_ == nullptr) << "Default argument already set to " << defaultArgument_->name();
+                defaultArgument_ = &config;
+            }
+
+            /** Parses the command line arguments. 
+             */
+            void parseCommandLine(int argc, char * argv[]) {
+                std::unordered_map<JSONConfig *, size_t> occurences;
+                int i = 1;
+                parsePositionalArguments(i, argc, argv, occurences);
+                parseKeywordArguments(i, argc, argv, occurences);
+            }
+
+        private:
+
+            void updateArgument(JSONConfig * arg, char const * value, std::unordered_map<JSONConfig *, size_t> & occurences) {
+                auto i = occurences.find(arg);
+                if (i == occurences.end())
+                    i = occurences.insert(std::make_pair(arg, 0)).first;
+                arg->cmdArgUpdate(value, i->second, [](JSONError && e) {
+                    THROW(ArgumentError()) << e.what();
+                });
+                i->second += 1;
+            }
+
+            void parsePositionalArguments(int & i, int argc, char * argv[], std::unordered_map<JSONConfig *, size_t> & occurences) {
+                for (JSONConfig * arg : positionalArguments_) {
+                    if (i == argc)
+                        THROW(ArgumentError()) << "Argument " << arg->name() << " not provided";
+                    updateArgument(arg, argv[i++], occurences);
+                    if (lastArgument_ == arg) {
+                        while ( i < argc)
+                            updateArgument(arg, argv[i++], occurences);
+                    }
+                }
+            }
+
+            void parseKeywordArguments(int & i, int argc, char * argv[], std::unordered_map<JSONConfig *, size_t> & occurences) {
+                while (i < argc) {
+                    char const * argValue = nullptr;
+                    std::string argName{argv[i]};
+                    auto arg = keywordArguments_.find(argName);
+                    // if the entire argument is not recognized argument alias, split it by the '='
+                    if (arg == keywordArguments_.end()) {
+                        size_t x = argName.find('=');
+                        if (x == std::string::npos) {
+                            if (defaultArgument_ != nullptr) {
+                                updateArgument(defaultArgument_, argName.c_str(), occurences);
+                                ++i;
+                                continue;
+                            } else {
+                                THROW(ArgumentError()) << "Unknown argument name " << argName;
+                            }
+                        }
+                        argName = argName.substr(0, x);
+                        argValue = argv[i] + x + 1;
+                        arg = keywordArguments_.find(argName);
+                        if (arg == keywordArguments_.end()) {
+                            if (defaultArgument_ != nullptr) {
+                                updateArgument(defaultArgument_, argv[i], occurences);
+                                ++i;
+                                continue;
+                            } else {
+                                THROW(ArgumentError()) << "Unknown argument name " << argName;
+                            }
+                        }
+                    }
+                    if (argValue == nullptr && arg->second->cmdArgRequiresValue()) {
+                        if (++i == argc)
+                            THROW(ArgumentError()) << "Argument " << arg->second->name() << " value not provided";
+                        argValue = argv[i];
+                    }
+                    // parse the value
+                    updateArgument(arg->second, argValue == nullptr ? "" : argValue, occurences);
+                    ++i;
+                    if (lastArgument_ == arg->second) {
+                        while (i < argc) 
+                            updateArgument(arg->second, argv[i++], occurences);
+                    }
+                }
+            }
+
+            /* registered command line arguments */
+            std::unordered_map<std::string, JSONConfig *> keywordArguments_;
+
+            std::vector<JSONConfig*> positionalArguments_;
+
+            JSONConfig * lastArgument_;
+
+            JSONConfig * defaultArgument_;
+
+        }; 
 
         template<>
         inline std::string JSONConfig::FromJSON<std::string>(JSON const & json) {
@@ -416,7 +577,7 @@ HELPERS_NAMESPACE_BEGIN
                 THROW(JSONError()) << "Expected double, but " << json << " found";
             return json.toDouble();
         }
-
+        
     } // X -----------------------------------------------------------------------------------
 
 	/** Exceptiomn thrown when invalid arguments are passed to the application. 

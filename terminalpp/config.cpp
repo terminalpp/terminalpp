@@ -131,12 +131,11 @@ namespace tpp {
         shell.add("name", JSON{"default shell"});
         shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\"]")));
         result.add(shell);        
-    #else if (defined ARCH_WINDOWS)
+    #elif (defined ARCH_WINDOWS)
         //Win32AddCmdExe(result);
         Win32AddPowershell(result);
         Win32AddWSL(result);
     #endif
-        //return JSON::Parse("[{ \"name\" : \"cmd.exe\", \"command\" : [\"powershell.exe\"]}]");
         return result;
     }
 
