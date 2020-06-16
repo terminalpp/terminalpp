@@ -74,6 +74,10 @@ HELPERS_NAMESPACE_BEGIN
                 return description_;
             }
 
+            bool updated() const {
+                return updated_;
+            }
+
             virtual JSON toJSON(bool updatedOnly = true) const = 0;
 
         protected:
@@ -371,6 +375,10 @@ HELPERS_NAMESPACE_BEGIN
                 return false;
             }
 
+            void cmdArgUpdate(char const * value, size_t index, std::function<void(JSONError &&)> errorHandler) override {
+                JSONConfig::cmdArgUpdate(value, index, errorHandler);
+            }
+
             void addChildProperty(std::string const & name, JSONConfig * child) override {
                 MARK_AS_UNUSED(name);
                 MARK_AS_UNUSED(child);
@@ -384,7 +392,6 @@ HELPERS_NAMESPACE_BEGIN
 
             T value_;
         }; 
-
 
         /** The root element of the JSON backed configuration. 
          */
@@ -450,10 +457,16 @@ HELPERS_NAMESPACE_BEGIN
             /** Parses the command line arguments. 
              */
             void parseCommandLine(int argc, char * argv[]) {
-                std::unordered_map<JSONConfig *, size_t> occurences;
-                int i = 1;
-                parsePositionalArguments(i, argc, argv, occurences);
-                parseKeywordArguments(i, argc, argv, occurences);
+                try {
+                    std::unordered_map<JSONConfig *, size_t> occurences;
+                    int i = 1;
+                    parsePositionalArguments(i, argc, argv, occurences);
+                    parseKeywordArguments(i, argc, argv, occurences);
+                } catch (...) {
+                    positionalArguments_.clear();                    
+                    keywordArguments_.clear();
+                    throw;
+                }
             }
 
         private:
@@ -541,6 +554,13 @@ HELPERS_NAMESPACE_BEGIN
             if (json.kind() != JSON::Kind::String)
                 THROW(JSONError()) << "Expected string, but " << json << " found";
             return json.toString();
+        }
+
+        template<>
+        inline void JSONConfig::Property<std::string>::cmdArgUpdate(char const * value, size_t index, std::function<void(JSONError &&)> errorHandler) {
+            if (index != 0)
+                THROW(JSONError()) << "Value for " << name() << " already provided";
+            update(JSON{value}, errorHandler);
         }
 
         template<>

@@ -59,8 +59,7 @@ namespace tpp {
             f << config.toJSON();
         }
         // parse command line arguments and update the configuration accordingly
-        // TODO
-
+        config.parseCommandLine(argc, argv);
         return config;
     }
 

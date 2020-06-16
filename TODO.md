@@ -9,10 +9,9 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- when createing complex default values, the comments must be set as well if they are to appear in the saved output
+- when creating complex default values, the comments must be set as well if they are to appear in the saved output
 - add command line parsing
 - add parsing methods for specific types of config arguments
-- move ropen to new config
 - change settings name to settings.json (GetSettingsFile)
 
 - source package artifact for deb

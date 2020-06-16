@@ -15,42 +15,42 @@
 
 namespace tpp {
 
-    class Config : public JSONConfig::Root {
+    class Config : public x::JSONConfig::CmdArgsRoot {
     public:
-        CONFIG_OPTION(
+        CONFIG_PROPERTY(
             timeout,
             "Timeout of the connection to terminal++ (in ms)",
-            "1000",
+            JSON{1000},
             unsigned
         );
-        CONFIG_OPTION(
+        CONFIG_PROPERTY(
             adaptiveSpeed,
             "Adaptive speed",
-            "true",
+            JSON{true},
             bool
         );
-        CONFIG_OPTION(
+        CONFIG_PROPERTY(
             packetSize,
             "Size of single packet of data",
-            "1024",
+            JSON{1024},
             unsigned
         );
-        CONFIG_OPTION(
+        CONFIG_PROPERTY(
             packetLimit,
             "Number of packets that can be sent without waiting for acknowledgement",
-            "32",
+            JSON{32},
             unsigned
         );
-        CONFIG_OPTION(
+        CONFIG_PROPERTY(
             filename, 
             "Local file to be opened on the remote machine",
-            "\"\"",
+            JSON{""},
             std::string
         );
-        CONFIG_OPTION(
+        CONFIG_PROPERTY(
             verbose,
             "Verbose output",
-            "false",
+            JSON{false},
             bool
         );
 
@@ -60,22 +60,22 @@ namespace tpp {
         }
 
         static Config & Setup(int argc, char * argv[]) {
-            Config & result = Instance();
-            JSONArguments args{};
-            args.addArgument("Timeout", {"--timeout", "-t"}, result.timeout);
-            args.addArgument("Packet size", {"--packet-size"}, result.packetSize);
-            args.addArgument("Verbosity", {"--verbose", "-v"}, result.verbose);
-            args.addArgument("Adaptive Speed", {"--adaptive"}, result.adaptiveSpeed);
-            args.addArgument("Filename", {"--file", "-f"}, result.filename, /* expects value */ true, /* required */ true);
-            args.setDefaultArgument("Filename");
-            args.parse(argc, argv);
-            return result;
+            Config & config = Instance();
+            config.parseCommandLine(argc, argv);
+            if (! config.filename.updated())
+                THROW(ArgumentError()) << "Input file must be specified";
+            return config;
         }
 
     private:
 
         Config() {
-            initializationDone();
+            addArgument(timeout, {"--timeout", "-t"});
+            addArgument(packetSize, {"--packet-size"});
+            addArgument(verbose, {"--verbose", "-v"});
+            addArgument(adaptiveSpeed, {"--adaptive"});
+            addArgument(filename, {"--file", "-f"});
+            setDefaultArgument(filename);
         }
 
     }; // tpp::Config

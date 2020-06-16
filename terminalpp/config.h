@@ -182,7 +182,7 @@ inline std::vector<std::reference_wrapper<Log>> JSONConfig::FromJSON(JSON const 
 
 namespace tpp {	
 
-    class Config : public x::JSONConfig::Root {
+    class Config : public x::JSONConfig::CmdArgsRoot {
     public:
         CONFIG_OBJECT(
             version,
@@ -522,6 +522,33 @@ namespace tpp {
 		    This version is specified in the CMakeLists.txt and is watermarked to each binary.
 		 */
 	    static JSON TerminalVersion();
+
+    protected:
+        void parseCommandLine(int argc, char * argv[]) {
+            addArgument(renderer.fps, { "--fps"});
+            addArgument(renderer.font.family, {"--font"});
+            addArgument(renderer.font.size, {"--font-size"});
+            // TODO: get default session, create its copy, deupdate and then add to the arguments
+
+
+
+            CmdArgsRoot::parseCommandLine(argc, argv);
+        }
+            /*
+#if (defined ARCH_WINDOWS)
+			args.addArgument("Pty", {"--pty"}, session.pty);
+#endif
+			args.addArgument("FPS", {"--fps"}, renderer.fps);
+			args.addArgument("Columns", {"--cols", "-c"}, session.cols);
+			args.addArgument("Rows", {"--rows", "-r"}, session.cols);
+			args.addArgument("Font Family", {"--font",}, font.family);
+			args.addArgument("Font Size", {"--font-size"}, font.size);
+			//args.addArgument("Log File", {"--log-file"}, session.log);
+			args.addArrayArgument("Command", {"-e"}, session.command, /* isLast * / true);
+			// once built, parse the command line
+			args.parse(argc, argv);
+            */
+
     private:
 
         static void VerifyConfigurationVersion(JSON & userConfig);
