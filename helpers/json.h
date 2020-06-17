@@ -728,6 +728,12 @@ HELPERS_NAMESPACE_BEGIN
             }
         }
 
+        void erase(size_t index) {
+            if (kind_ != Kind::Array)
+                THROW(JSONError()) << "Cannot add array elemnt to element holding " << kind_;
+            valueArray_.erase(valueArray_.begin() + index);
+        }
+
         void clear() {
             switch(kind_) {
                 case Kind::Array:

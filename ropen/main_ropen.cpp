@@ -15,7 +15,7 @@
 
 namespace tpp {
 
-    class Config : public x::JSONConfig::CmdArgsRoot {
+    class Config : public JSONConfig::CmdArgsRoot {
     public:
         CONFIG_PROPERTY(
             timeout,

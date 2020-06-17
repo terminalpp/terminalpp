@@ -118,23 +118,29 @@ namespace tpp {
 
     JSON Config::DefaultSessions() {
         JSON result{JSON::Array()};
+        std::string defaultSessionName = "default_shell";
     #if (defined ARCH_MACOS)
+        defaultSessionName = "Default login shell";
         JSON shell{JSON::Object()};
         shell.setComment("Default login shell");
-        shell.add("name", "default shell");
+        shell.add("name", JSON{defaultSessionName});
         shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\", \"--login\"]")));
         result.add(shell);        
     #elif (defined ARCH_UNIX)
         JSON shell{JSON::Object()};
         shell.setComment("Default login shell");
-        shell.add("name", JSON{"default shell"});
+        shell.add("name", JSON{defaultSessionName});
         shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\"]")));
         result.add(shell);        
     #elif (defined ARCH_WINDOWS)
-        //Win32AddCmdExe(result);
-        Win32AddPowershell(result);
-        Win32AddWSL(result);
+        Win32AddCmdExe(result, defaultSessionName);
+        Win32AddPowershell(result, defaultSessionName);
+        Win32AddWSL(result, defaultSessionName);
     #endif
+        // update the default session name
+        JSON ds{defaultSessionName};
+        ds.setComment(Instance().defaultSession.description());
+        Instance().defaultSession.update(ds);
         return result;
     }
 
@@ -175,25 +181,27 @@ namespace tpp {
     }
 
     // TODO is cmd.exe on *all* installations? 
-    void Config::Win32AddCmdExe(JSON & sessions) {
+    void Config::Win32AddCmdExe(JSON & sessions, std::string & defaultSessionName) {
+        defaultSessionName = "cmd.exe";
         JSON session{JSON::Kind::Object};
         session.setComment("cmd.exe");
-        session.add("name", JSON{"cmd.exe"});
+        session.add("name", JSON{defaultSessionName});
         session.add("command", JSON::Parse(STR("[\"cmd.exe\"]")));
         sessions.add(session);        
     }
 
     // TODO is powershell on *all* installations? 
-    void Config::Win32AddPowershell(JSON & sessions) {
+    void Config::Win32AddPowershell(JSON & sessions, std::string & defaultSessionName) {
+        defaultSessionName = "powershell";
         JSON session{JSON::Kind::Object};
         session.setComment("Powershell - with the default blue background and white text");
-        session.add("name", JSON{"powershell"});
+        session.add("name", JSON{defaultSessionName});
         session.add("command", JSON::Parse(STR("[\"powershell.exe\"]")));
         session.add("palette", JSON::Parse("{\"defaultForeground\" : 15, \"defaultBackground\" : 4 }"));
         sessions.add(session);        
     }
 
-    void Config::Win32AddWSL(JSON & sessions) {
+    void Config::Win32AddWSL(JSON & sessions, std::string & defaultSessionName) {
         ExitCode ec; // to silence errors
         std::vector<std::string> lines = SplitAndTrim(Exec(Command("wsl.exe", {"--list"}), "", &ec), "\n");
         // check if we have found WSL
@@ -205,7 +213,8 @@ namespace tpp {
         for (size_t i = 1, e = lines.size(); i != e; ++i) {
             if (EndsWith(lines[i], "(Default)")) {
                 defaultIndex = distributions.size();
-                distributions.push_back(Split(lines[i], " ")[0]);
+                defaultSessionName = Split(lines[i], " ")[0];
+                distributions.push_back(defaultSessionName);
             } else {
                 distributions.push_back(lines[i]);
             }
