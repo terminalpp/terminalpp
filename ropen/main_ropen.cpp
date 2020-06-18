@@ -61,6 +61,7 @@ namespace tpp {
 
         static Config & Setup(int argc, char * argv[]) {
             Config & config = Instance();
+            //config.fillDefaultValues();
             config.parseCommandLine(argc, argv);
             if (! config.filename.updated())
                 THROW(ArgumentError()) << "Input file must be specified";

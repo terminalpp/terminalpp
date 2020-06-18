@@ -355,16 +355,23 @@ HELPERS_NAMESPACE_BEGIN
     public:
 
         Property(JSONConfig * parent, std::string name, std::string description, JSON const & defaultValue):
-            JSONConfig{parent, name, description, defaultValue} {
+            JSONConfig{parent, name, description, defaultValue},
+            initialized_{false} {
         }
 
         Property(JSONConfig * parent, std::string name, std::string description, std::function<JSON()> defaultValue):
-            JSONConfig{parent, name, description, defaultValue} {
+            JSONConfig{parent, name, description, defaultValue},
+            initialized_{false} {
         }
             
         /** Typecasts the configuration property to the property value type. 
          */
         T const & operator () () const {
+            if (!initialized_) 
+                if (std::holds_alternative<JSON>(defaultValue_))
+                    const_cast<Property<T>*>(this)->update(std::get<JSON>(defaultValue_));
+                else
+                    const_cast<Property<T>*>(this)->update(std::get<std::function<JSON()>>(defaultValue_)());
             return value_;
         }
 
@@ -380,6 +387,7 @@ HELPERS_NAMESPACE_BEGIN
                 value_ = JSONConfig::FromJSON<T>(value);
                 *json_ = value;
                 updated_ = true;
+                initialized_ = true;
             } catch (std::exception const & e) {
                 errorHandler(CREATE_EXCEPTION(JSONError()) << "Error when parsing JSON value for " << name() << ": " << e.what());
             }
@@ -390,6 +398,10 @@ HELPERS_NAMESPACE_BEGIN
 
         void cmdArgUpdate(char const * value, size_t index) override {
             JSONConfig::cmdArgUpdate(value, index);
+        }
+
+        bool cmdArgRequiresValue() const override {
+            return JSONConfig::cmdArgRequiresValue();
         }
 
         void addChildProperty(std::string const & name, JSONConfig * child) override {
@@ -404,6 +416,8 @@ HELPERS_NAMESPACE_BEGIN
         }
 
         T value_;
+
+        bool initialized_;
     }; 
 
     /** The root element of the JSON backed configuration. 
@@ -421,6 +435,16 @@ HELPERS_NAMESPACE_BEGIN
 
         ~Root() override {
             delete json_;
+        }
+
+    protected:
+
+        /** Initializes the configuration with default values. 
+         
+            Because default values support lazy initialization, they are only filled in when a configuration is read. For cases where configuration is not read 
+         */
+        void fillDefaultValues() {
+            update(JSON::Object());
         }
 
     }; // JSONConfig::Root
@@ -540,7 +564,7 @@ HELPERS_NAMESPACE_BEGIN
                     argValue = argv[i];
                 }
                 // parse the value
-                updateArgument(arg->second, argValue == nullptr ? "" : argValue, occurences);
+                updateArgument(arg->second, argValue, occurences);
                 ++i;
                 if (lastArgument_ == arg->second) {
                     while (i < argc) 
@@ -571,7 +595,7 @@ HELPERS_NAMESPACE_BEGIN
     inline void JSONConfig::Property<std::string>::cmdArgUpdate(char const * value, size_t index) {
         if (index != 0)
             THROW(JSONError()) << "Value for " << name() << " already provided";
-        update(JSON{value}, [](JSONError && e) { throw e; });
+        update(JSON{value});
     }
 
     template<>
@@ -579,6 +603,21 @@ HELPERS_NAMESPACE_BEGIN
         if (json.kind() != JSON::Kind::Boolean)
             THROW(JSONError()) << "Expected bool, but " << json << " found";
         return json.toBool();
+    }
+
+    template<>
+    inline void JSONConfig::Property<bool>::cmdArgUpdate(char const * value, size_t index) {
+        if (index != 0)
+            THROW(JSONError()) << "Value for " << name() << " already provided";
+        if (value == nullptr)
+            update(JSON{true});
+        else
+            update(JSON{value});
+    }
+
+    template<>
+    inline bool JSONConfig::Property<bool>::cmdArgRequiresValue() const {
+        return false;
     }
 
     template<>
