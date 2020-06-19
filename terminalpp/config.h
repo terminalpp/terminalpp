@@ -37,6 +37,10 @@
 #define SHORTCUT_SETTINGS (Key::F10 + Key::Alt)
 #define SHORTCUT_ZOOM_IN (Key::Equals + Key::Ctrl)
 #define SHORTCUT_ZOOM_OUT (Key::Minus + Key::Ctrl)
+// alternate zoom shortcuts like in browsers
+#define SHORTCUT_ZOOM_IN_ALT (Key::Equals + Key::Ctrl + Key::Shift)
+#define SHORTCUT_ZOOM_OUT_ALT (Key::Minus + Key::Ctrl + Key::Shift)
+
 #define SHORTCUT_PASTE (Key::V + Key::Ctrl + Key::Shift)
 
 template<>

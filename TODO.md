@@ -2,6 +2,9 @@
 
 ## Next version: v0.7.3 or 0.8
 
+- alternate zoom shortcuts (`C-S--` and `C-S-=`)
+- ropen can be interrupted gracefully
+
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  

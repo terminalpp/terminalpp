@@ -174,11 +174,11 @@ namespace tpp {
             } else if (*e == SHORTCUT_SETTINGS) {
                 Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit = */ true);
                 e.stop();
-            } else if (*e == SHORTCUT_ZOOM_IN) {
+            } else if (*e == SHORTCUT_ZOOM_IN || *e == SHORTCUT_ZOOM_IN_ALT) {
                 if (zoom_ < 10)
                     setZoom(zoom_ * 1.25);
                 e.stop();
-            } else if (*e == SHORTCUT_ZOOM_OUT) {
+            } else if (*e == SHORTCUT_ZOOM_OUT || *e == SHORTCUT_ZOOM_OUT_ALT) {
                 if (zoom() > 1)
                     setZoom(std::max(1.0, zoom() / 1.25));
                 e.stop();
