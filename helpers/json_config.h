@@ -367,11 +367,12 @@ HELPERS_NAMESPACE_BEGIN
         /** Typecasts the configuration property to the property value type. 
          */
         T const & operator () () const {
-            if (!initialized_) 
+            if (!initialized_) {
                 if (std::holds_alternative<JSON>(defaultValue_))
                     const_cast<Property<T>*>(this)->update(std::get<JSON>(defaultValue_));
                 else
                     const_cast<Property<T>*>(this)->update(std::get<std::function<JSON()>>(defaultValue_)());
+            }
             return value_;
         }
 

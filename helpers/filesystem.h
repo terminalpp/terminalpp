@@ -172,7 +172,13 @@ HELPERS_NAMESPACE_BEGIN
      */
     inline std::string HomeDir() {
 #if (defined ARCH_WINDOWS)
-        return STR(getenv("HOMEDRIVE") << getenv("HOMEDIR"));
+        char * x;
+        size_t size;
+        OSCHECK(_dupenv_s(& x, & size, "HOMEDIR") == 0);
+        std::unique_ptr<char> homeDir{x};
+        OSCHECK(_dupenv_s(& x, & size, "HOMEDRIVE") == 0);
+        std::unique_ptr<char> homeDrive{x};
+        return STR(homeDrive.get() << homeDir.get());
 #else
         return getenv("HOME");
 #endif
