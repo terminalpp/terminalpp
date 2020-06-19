@@ -101,7 +101,6 @@ namespace tpp {
         static std::atomic<bool> Receiving_;
         static LocalPTYSlave * volatile Slave_;
         static void SIGWINCH_handler(int signo);
-        static void SIGINT_handler(int signo);
 
     }; // tpp::LocalPTYSlave
 #endif

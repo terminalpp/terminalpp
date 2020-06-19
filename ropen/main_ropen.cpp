@@ -100,6 +100,12 @@ namespace tpp {
             packetSize_{config.packetSize()},
             packetLimit_{config.packetLimit()},
             initialPacketLimit_{packetLimit_} {
+            // register sigint handler so that we clear the terminal client properly
+            struct sigaction sa;
+            sigemptyset(&sa.sa_mask);
+            sa.sa_handler = SIGINT_handler;
+            sa.sa_flags = 0;        
+            OSCHECK(sigaction(SIGINT, &sa, nullptr) == 0);        
             // verify the t++ capabilities of the terminal
             Sequence::Capabilities capabilities{t_.getCapabilities()};
             if (capabilities.version() != 1)
@@ -132,6 +138,8 @@ namespace tpp {
             sent_ = 0;
             size_t packets = 0;
             while (sent_ != size_) {
+                if (Interrupted_)
+                    THROW(Exception()) << "Interrupted";
                 f_.read(buffer.get(), packetSize_);
                 size_t pSize = f_.gcount();
                 // TODO this is a memory copy, can be done more effectively by having a non-ownership version of the Data message. 
@@ -198,7 +206,16 @@ namespace tpp {
         size_t packetSize_;
         size_t packetLimit_;
         size_t initialPacketLimit_;
+
+        static volatile bool Interrupted_;
+
+        static void SIGINT_handler(int signo) {
+            Interrupted_ = true;
+        }
+            
     }; 
+
+    volatile bool RemoteOpen::Interrupted_ = false;
 
 } // namespace tpp
 
