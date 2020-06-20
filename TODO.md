@@ -38,7 +38,6 @@ Builds & Releases
 Helpers & Logging & Errors overhaul
 
 - helpers filesystem should use paths better
-- when a certain exception is raised, it should be logged automatically
 - perhaps have the basics all in a single file (log, exceptions, asserts)
 
 Issues to be raised:
