@@ -5,7 +5,7 @@
 namespace tpp {
 
     QtWindow::QtWindow(std::string const & title, int cols, int rows):
-        RendererWindow{cols, rows, *QtFont::Get(ui::Font(), tpp::Config::Instance().renderer.font.size()), 1.0},
+        RendererWindow{cols, rows},
         font_{ nullptr },
         decorationBrush_{QColor{255, 255, 255, 255}},
         borderBrush_{QColor{255, 255, 255, 255}} {

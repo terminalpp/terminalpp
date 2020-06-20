@@ -87,11 +87,11 @@ namespace tpp {
         using Renderer::requestClose;
 
     protected:
-        Window(int width, int height, FontMetrics const & font, double zoom):
+        Window(int width, int height, FontMetrics const & font):
             LocalRenderer{width, height},
             title_{"terminal++"},
             icon_{Icon::Default},
-            zoom_{zoom},
+            zoom_{1.0},
             fullscreen_{false},
             activeModifiers_{0},
             mouseButtonsDown_{0} {
@@ -99,8 +99,8 @@ namespace tpp {
             baseCellWidth_ = font.cellWidth();
             baseCellHeight_ = font.cellHeight();
             // TODO do I want round, or float instead? 
-            cellWidth_ = static_cast<int>(baseCellWidth_ * zoom);
-            cellHeight_ = static_cast<int>(baseCellHeight_ * zoom);
+            cellWidth_ = static_cast<int>(baseCellWidth_ * zoom_);
+            cellHeight_ = static_cast<int>(baseCellHeight_ * zoom_);
             widthPx_ = cellWidth_ * width;
             heightPx_ = cellHeight_ * height;
         }
@@ -231,8 +231,8 @@ namespace tpp {
         }
 
     protected:
-        RendererWindow(int width, int height, FontMetrics const & font, double zoom):
-            Window{width, height, font, zoom},
+        RendererWindow(int width, int height):
+            Window{width, height, * IMPLEMENTATION::Font::Get(ui::Font(), tpp::Config::Instance().renderer.font.size())},
             lastCursorPos_{-1,-1} {
         }
 

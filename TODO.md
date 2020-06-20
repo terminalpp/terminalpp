@@ -70,7 +70,6 @@ Issues to be raised:
 
 - even more UI elements
 - multiple sessions (in same window)
-- when multiple sessions are supported, the RendererWindow can set the font instead of the subclasses
 
 ### v0.10
 
