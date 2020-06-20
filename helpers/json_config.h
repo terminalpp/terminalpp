@@ -33,7 +33,7 @@ HELPERS_NAMESPACE_BEGIN
     class ArgumentError : public Exception {
     };
 
-    /** - each config knows its parent - don't deal with calculated-able default values
+    /** JSON Backed Configuration
      
         - can return default JSON
 
@@ -60,6 +60,10 @@ HELPERS_NAMESPACE_BEGIN
         virtual ~JSONConfig() {
         }
 
+        /** Returns the full name of the configuration option. 
+         
+            The name consists of the name of the property preceded by names of its parents separated by `.`.  
+         */
         std::string name() const {
             if (parent_ == nullptr)
                 return "";
@@ -67,16 +71,34 @@ HELPERS_NAMESPACE_BEGIN
                 return parent_->childName(this);
         }
 
+        /** Returns the description of the property. 
+         
+            For default values, the description is also stored as a comment in the backing JSON object. 
+         */
         std::string const & description() const {
             return description_;
         }
 
+        /** Determines whether the value of the property has been updated or calculated. 
+         
+            A property's value is either the default JSON value, or it can be supplied by user (via the update() method call), or it can be the default calculated value. 
+
+            If the value has been calculated, or provided by user, the updated() method returns true, false is returned otherwise. 
+         */
         bool updated() const {
             return updated_;
         }
 
-        virtual bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw e; }) = 0;
+        /** Sets the value of the property from given JSON. 
+         */
+        void set(JSON const & value) {
+            update(value);
+        }
 
+        /** Stores the value of the property (and subfields, if any) into a JSON. 
+         
+            By default only updated properties (i.e. computed defaults, or user specified values) are stored in the JSON, but if the `updatedOnly` argument is set to false, all fields will be saved. 
+         */
         virtual JSON toJSON(bool updatedOnly = true) const = 0;
 
     protected:
@@ -109,6 +131,25 @@ HELPERS_NAMESPACE_BEGIN
                 json_ = new JSON{JSON::Kind::Object};
         }
 
+        /** Converts the given JSON to a value of specified type. 
+         
+            Specializing the template for own types allows simple addition of properties of new user types. 
+         */
+        template<typename T>
+        static T FromJSON(JSON const & json);
+
+        /** Updates the value of the property with given JSON. 
+
+            Returns whether any of the child properties (if any) were updated to user specified, or calculated default values.  
+         */
+        virtual bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw e; }) = 0;
+
+        /** Returns the default value for the property. 
+         
+            This can either be a static JSON object, or dynamically computed JSON value, in which case the associated function to determine the value is called and its result returned. 
+
+            In both cases the comment of the returned JSON is set to the description of the property.
+         */
         JSON defaultValue() const {
             if (std::holds_alternative<JSON>(defaultValue_)) {
                 JSON result = std::get<JSON>(defaultValue_);
@@ -120,10 +161,6 @@ HELPERS_NAMESPACE_BEGIN
                 return result;
             }
         }
-
-        template<typename T>
-        static T FromJSON(JSON const & json);
-
 
         /** Calls update on given config. 
          
@@ -197,6 +234,8 @@ HELPERS_NAMESPACE_BEGIN
             return result;
         }
 
+    protected:
+
         bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw e; }) override {
             ASSERT(json_ != nullptr);
             if (value.kind() != JSON::Kind::Object) {
@@ -233,8 +272,6 @@ HELPERS_NAMESPACE_BEGIN
             }
             return result;
         }
-
-    protected:
 
         void addChildProperty(std::string const & name, JSONConfig * child) override {
             if (properties_.insert(std::make_pair(name, child)).second == false)
@@ -308,6 +345,8 @@ HELPERS_NAMESPACE_BEGIN
             }
         }
 
+    protected:
+
         bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw e; }) override {
             ASSERT(json_ != nullptr);
             *json_ = JSON::Array();
@@ -329,8 +368,6 @@ HELPERS_NAMESPACE_BEGIN
             }
             return result;
         }
-
-    protected:
 
         void addChildProperty(std::string const & name, JSONConfig * child) override {
             ASSERT(name == "");
@@ -382,6 +419,8 @@ HELPERS_NAMESPACE_BEGIN
             return *json_;
         }
 
+    protected:
+
         bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw e; }) override {
             ASSERT(json_ != nullptr);
             try {
@@ -394,8 +433,6 @@ HELPERS_NAMESPACE_BEGIN
             }
             return false;
         }
-
-    protected:
 
         void cmdArgUpdate(char const * value, size_t index) override {
             JSONConfig::cmdArgUpdate(value, index);

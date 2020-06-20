@@ -485,8 +485,8 @@ namespace tpp {
             CmdArgsRoot::parseCommandLine(argc, argv);
             if (cmdSession.updated()) {
                 JSON name{"command-line-override"};
-                defaultSession.update(name);
-                cmdSession.name.update(name);
+                defaultSession.set(name);
+                cmdSession.name.set(name);
             } else {
                 sessions.erase(cmdSession);
             }

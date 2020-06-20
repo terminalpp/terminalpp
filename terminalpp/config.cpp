@@ -140,7 +140,7 @@ namespace tpp {
         // update the default session name
         JSON ds{defaultSessionName};
         ds.setComment(Instance().defaultSession.description());
-        Instance().defaultSession.update(ds);
+        Instance().defaultSession.set(ds);
         return result;
     }
 
