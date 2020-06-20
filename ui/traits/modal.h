@@ -61,10 +61,6 @@ namespace ui {
             }
         }
 
-        bool isTransparent() override {
-            return WidgetBackground::isTransparent() || Container::isTransparent();
-        }
-
         void paint(Canvas & canvas) override {
             WidgetBackground::paint(canvas);
             Container::paint(canvas);

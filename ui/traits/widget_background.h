@@ -18,20 +18,15 @@ namespace ui {
         virtual void setBackground(Color const & value) {
             if (background_ != value) {
                 background_ = value;
-                updateWidgetTransparency();
+                downcastThis()->repaint();
             }
         }
 
     protected:
         using TraitBase<WidgetBackground, T>::downcastThis;
-        using TraitBase<WidgetBackground, T>::updateWidgetTransparency;
 
         WidgetBackground(Color background = Color::Black):
             background_{background} {
-        }
-
-        virtual bool isTransparent() {
-            return ! background_.opaque();
         }
 
         void paint(Canvas & canvas) {

@@ -14,54 +14,54 @@ namespace ui {
         Renderer::CancelUserEvents(this);
     }
 
+    void Widget::render() {
+        UI_THREAD_CHECK;
+        ASSERT(renderer_ != nullptr);
+        pendingRepaint_.store(false);
+        // paint the widget on the buffer
+        Canvas canvas{this};
+        paint(canvas);
+        // tell the renderer to redraw the the widget
+        renderer_->repaint(this);
+    }
 
     void Widget::repaint() {
-        // atomically flip the pending repaint flag
+        // atomically flip the pending repaint flag, if repaint is already pending, do nothing
         if (pendingRepaint_.exchange(true))
             return;
         // if the flip was successful (i.e. no pending repaint so far), inform the renderer to repaint 
         sendEvent([this](){
             UI_THREAD_CHECK;
-            // don't do anything if renderer has been lost in the meantime
+            // if the widget has been detached in the meantime, ignore the event
             if (renderer_ == nullptr)
                 return;
-            // don't do anything if the repaint has already been cleared (could be by parent's repaint)
-            if (! pendingRepaint_ && ! pendingRelayout_)
-                return;
-            // do we repaint the widget, or its parent? 
+            // propagate the paint event all the way to the root element, stopping if necessary
             Widget * w = this;
-            while (w->parent_ != nullptr) {
-                // if the parent needs to be repainted, we can just wait for that repaint to happen and skin this one
-                if (w->parent_->pendingRepaint_)
-                    return;
-                if (w->repaintParent_ || w->overlaid_ || w->transparent_) {
-                    // if there is pending relayout on the widget, we must relayout first before we proceed to parent repaint
-                    if (w->pendingRelayout_) {
-                        w->pendingRepaint_.store(false);
-                        w->calculateLayout();
-                        // if new repaint has been triggered, ignore the current one
-                        if (w->pendingRepaint_)
-                            return;
-                    }
-                    w = w->parent_;
-                } else {
-                    break;
+            Widget * sender = this;
+            Widget * target = this;
+            while (true) {
+                ASSERT(w->renderer_ != nullptr);
+                // if there is relayout scheduled on current widget, relayout
+                if (w->pendingRelayout_) {
+                    w->pendingRepaint_.store(false); // WHY repaint??? 
+                    w->calculateLayout();
                 }
-            } 
-            // render the widget
-            ASSERT(w->renderer_ != nullptr);
-            w->pendingRepaint_.store(false);
-            if (w->pendingRelayout_) {
-                w->calculateLayout();
-                // note that the relayout could have invalidated the repaint, or there could be new repaint scheduled while the relayouting was done, in which case the current repaint can be ignored
-                if (w->pendingRepaint_)
-                    return;
+                if (w != sender) {
+                    // if current widget is not the actual target and is scheduled to be repainted, we can stop this request as the target child will be eventually repainted as well
+                    if (w->pendingRepaint_)
+                        return;
+                    // translate the target
+                    target = w->propagatePaintTarget(sender, target);
+                    // if the repaint has been stopped, do nothing
+                    if (target == nullptr)
+                        return;
+                }
+                if (w->parent_ == nullptr)
+                    break;
+                sender = w;
+                w = w->parent_;
             }
-            // paint the widget on the buffer
-            Canvas canvas{w};
-            w->paint(canvas);
-            // tell the renderer to redraw the the widget
-            w->renderer_->repaint(w);
+            target->render();
         });
     }
 
@@ -120,6 +120,7 @@ namespace ui {
 //        {
 //            std::lock_guard<std::mutex> g{mRenderer_};
         renderer_ = nullptr;
+
 //        }
     }
 

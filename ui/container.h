@@ -105,8 +105,7 @@ namespace ui {
         virtual void addChild(Widget * child) {
             if (child->parent() != this)
                 child->attachTo(this);
-            // make sure the attached widget will be relayouted even if its size won't change (see Layout::resizeChild()), also update its transparency
-            child->updateTransparency();
+            // make sure the attached widget will be relayouted even if its size won't change (see Layout::resizeChild())
             child->pendingRelayout_ = true;
             // relayout the container
             relayout();

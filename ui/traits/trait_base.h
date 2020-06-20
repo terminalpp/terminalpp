@@ -16,10 +16,6 @@ namespace ui {
             return static_cast<T const *>(this);
         }
 
-        void updateWidgetTransparency() {
-            downcastThis()->updateTransparency();
-        }
-
     }; // ui::TraitBase
 
 } // namespace ui

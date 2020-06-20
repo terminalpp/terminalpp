@@ -86,10 +86,6 @@ namespace ui {
             setHeaderBackground(styleHighlightBackground());
         }
 
-        bool isTransparent() override {
-            return WidgetBackground::isTransparent() || Container::isTransparent();
-        }
-
         /** Paints the dialog. 
          */
         void paint(Canvas & canvas) override {

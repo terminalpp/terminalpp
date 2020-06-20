@@ -112,15 +112,15 @@ namespace ui {
 
         ## Painting
 
-        To repaint the widget, the repaint() method can be called from any thread, which will eventually call the paint() method which is responsible for actually drawing the contents of the widget on the provided canvas. To paint widget's children, the paintChild() method must be called with the child and its canvas. 
+        To repaint the widget, the repaint() method can be called from any thread. The call schedules the main thread to analyze the layout & repaint information and ultimately trigger the render() method, which is responsible for the actual rendering of the widget. 
+        
+        The paint target analysis starts with the widget that wishes to painted and walks back all the way to the root element. On each widget, it checks whether a relayout is needed and offers the widget the chance to change the repaint target via the propagatePaintTarget() method. 
 
-        When repaint is triggered, the widget must first determine whether it is in the position to service the repaint (i.e. call paint() on itself), or whether the repaint should propagate to its parent. The widget itself, current layout, or any of the widget's transitive parents can determine that the repaint delegation is required:
+        The method has two arguments, sender, which is guaranteed to be the immediate child of the current widget, and target which is the widget currently scheduled to be repainted and returns the new paint target. Its default behavior deals with overlaid widgets, i.e. when the sender is overlaid, the target is replaced with itself. 
+        
+        To paint widget's children, the paintChild() method must be called with the child and its canvas. 
 
         - the #overlaid_ flag signifies that part of the widget might be obscured by other widgets, in which case the repaint method must be delegated to the parent so that the other widget will be updated as well. This property is set during the layout phase and propagates to children (i.e. an overlaid widget's children are all overlaid as well)
-        
-        - the #transparent_ flag determines whether the widget itself has transparent regions and therefore requires parent's update before it repaints itself. This is set by the widget itself and does not propagate. Whenever a widget's property that may lead to transparency is updated, the updateTransparent() method must be called. Any potentially transparent widgets must also override the isTransparent() method, which must check whether the widget is currently transparent and return the result. This property is updated whenever updateTransparent() is explicitly called.
-
-        - finally, any parent widget may determine that its children (on per child basis) must delegate their repaint events to the parent. If true, the child's #repaintParent_ flag will be set during each repaint. This flag propagates to children during each repaint. To determine whether a child should delegate its repaint to the parent, method requireRepaintParentFor() must be overriden.   
 
         ## Geometry & Layouts
 
@@ -227,8 +227,6 @@ namespace ui {
             pendingRepaint_{false},
             pendingRelayout_{false},
             overlaid_{false},
-            transparent_{false},
-            repaintParent_{false},
             parent_{nullptr},
             rect_{Rect::FromTopLeftWH(x, y, width, height)},
             focusable_{false},
@@ -633,38 +631,22 @@ namespace ui {
             }
         }
 
-        /** Determines whether the widget is transparent or not. 
+        /** Allows the widget to update the paint target during the paint event propagation. 
          
-            By default widgets are not transparent. Override the method for subclasses that can become transparent and return the appropriate value. 
+            The sender is the immediate child from whose subtree the paint event originates and the target is the widget that is currently being repainted. 
+
+            The method returns the new paint target widget, which by default is the actual target, unless the sender is overlaid, in which case the new target widget is the current widget itself so that the widget's overlay can be dealt with. 
+
+            The idea of this method is to give parent widgets the opportunity to widen the paint area when necessary. 
          */
-        virtual bool isTransparent() {
-            UI_THREAD_CHECK;
-            return false;
+        virtual Widget * propagatePaintTarget(Widget * sender, Widget * target) {
+            return sender->overlaid_ ? this : target;
         }
 
-        /** Determines whether the container requires the given child to delegate its paint method to itself. 
-         
-            Default implementation does not require repaint delegation for any child. 
-
-            Override this method to provide specific behavior, such as when the parent wants to draw border which must be updated after each repaint. 
+        /** Renders the widget immediately. 
          */
-        virtual bool requireRepaintParentFor(Widget * child) {
-            MARK_AS_UNUSED(child);
-            return false;
-        }
+        virtual void render();
 
-        /** Updates the transparency information of the widget. 
-         
-            Updates the transparency of the widget to the result of isTransparent() method. If the widget is transparent, triggers its repaint immediately as transparent widgets require their parents to paint themselves first, which would be triggered by the repaint.
-         */
-        void updateTransparency() {
-            bool x = isTransparent();
-            if (transparent_ != x) {
-                transparent_ = x;
-                if (x)
-                    repaint();
-            }
-        }
 
         /** Requests the relayout of the widget. 
          */
@@ -692,8 +674,6 @@ namespace ui {
             // update the visible rect of the child according to the calculated canvas and repaint
             child->visibleRect_ = childCanvas.visibleRect();
             child->bufferOffset_ = childCanvas.bufferOffset_;
-            // update whether the child's own paint should delegate to the parent
-            child->repaintParent_ = repaintParent_ || requireRepaintParentFor(child);
             // clear the child repaint flag as long as its relayout is not requested (if its relayout is requested, there is another pending repaint and it is not us)
             if (! child->pendingRelayout_)
                 child->pendingRepaint_.store(false);
@@ -828,11 +808,6 @@ namespace ui {
         /** Determines whether parts of the widget can be covered by its siblings (layout-dependent). 
          */
         bool overlaid_;
-        /** Determines if the widget is transparent, i.e. its parent / siblings must be painted before it (widget dependent) */
-        bool transparent_;
-        /** Determines whether repaints to the widget should propagate to the parent on parent's request (parent dependent)
-         */
-        bool repaintParent_;
 
         /** Parent widget, nullptr if none. */
         Widget * parent_;
