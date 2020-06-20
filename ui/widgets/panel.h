@@ -11,6 +11,14 @@ namespace ui {
 
     protected:
 
+        Widget * propagatePaintTarget(Widget * sender, Widget * target) override {
+            return mergePaintTargets(target, {
+                Container::propagatePaintTarget(sender, target),
+                WidgetBackground::propagatePaintTarget(sender, target),
+                WidgetBorder::propagatePaintTarget(sender, target)
+            });
+        }
+
         void paint(Canvas & canvas) override {
             WidgetBackground::paint(canvas);
             WidgetBorder::paint(canvas);

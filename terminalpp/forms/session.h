@@ -131,7 +131,7 @@ namespace tpp {
             terminal_->onTppSequence.setHandler(&Session::terminalTppSequence, this);
             setLayout(new MaximizeLayout());
             //setLayout(new ColumnLayout(VerticalAlign::Bottom));
-            //setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
+            setBorder(Border{Color::Blue}.setAll(Border::Kind::Thick));
             //add(terminal_);
 
 
@@ -168,6 +168,9 @@ namespace tpp {
                     });
                 }
             }};
+
+            setName("Session");
+            terminal_->setName("Terminal");
         }
 
         ~Session() override {

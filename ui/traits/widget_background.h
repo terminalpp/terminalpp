@@ -29,7 +29,14 @@ namespace ui {
             background_{background} {
         }
 
-        void paint(Canvas & canvas) {
+        virtual Widget * propagatePaintTarget(Widget * sender, Widget * target) {
+            if (sender == downcastThis() && ! background_.opaque() && downcastThis()->parent() != nullptr)
+                return downcastThis()->parent();
+            else
+                return target;
+        }
+
+        virtual void paint(Canvas & canvas) {
             if (background_.opaque()) {
                 canvas.setBg(background_);
                 canvas.fillRect(canvas.rect());

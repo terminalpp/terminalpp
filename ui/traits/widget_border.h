@@ -25,12 +25,12 @@ namespace ui {
     protected:
         using TraitBase<WidgetBorder, T>::downcastThis;
 
-
-        /** TODO Only requires the child repaint if its rectangle intersects with the border. 
-         */
-        virtual bool requireRepaintParentFor(Widget * child) {
-            MARK_AS_UNUSED(child);
-            return ! border_.empty();
+        virtual Widget * propagatePaintTarget(Widget * sender, Widget * target) {
+            MARK_AS_UNUSED(sender);
+            if (! border_.empty())
+                return downcastThis();
+            else
+                return target;
         }
 
         void paint(Canvas & canvas) {

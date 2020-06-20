@@ -11,7 +11,9 @@ namespace ui {
             int autoWidth = size.width();
             int autoHeight = size.height();
             std::vector<Widget*> const & children = containerChildren(widget);
-            for (Widget * child : children) {
+            bool overlay = false;
+            for (auto i = children.rbegin(), e = children.rend(); i != e; ++i) {
+                Widget * child = *i;
                 if (!child->visible())
                     continue;
                 int w = calculateChildWidth(child, autoWidth, autoWidth);
@@ -21,18 +23,19 @@ namespace ui {
                     align(
                         align(Point{0,0}, w, autoWidth, HorizontalAlign::Center),
                         h, autoHeight, VerticalAlign::Middle));
-                setChildOverlay(child, true);
+                setChildOverlay(child, overlay);
+                overlay = true;
             }
-            if (! children.empty())
-                setChildOverlay(children.back(), false);
         }
 
         void recalculateOverlay(Container * widget) override {
             std::vector<Widget*> const & children = containerChildren(widget);
             bool overlay = false;
             for (auto i = children.rbegin(), e = children.rend(); i != e; ++i) {
-                setChildOverlay(*i, overlay);
-                overlay = true;
+                if ((*i)->visible()) {
+                    setChildOverlay(*i, overlay);
+                    overlay = true;
+                }
             }
         }
 

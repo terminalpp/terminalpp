@@ -116,7 +116,7 @@ namespace ui {
         
         The paint target analysis starts with the widget that wishes to painted and walks back all the way to the root element. On each widget, it checks whether a relayout is needed and offers the widget the chance to change the repaint target via the propagatePaintTarget() method. 
 
-        The method has two arguments, sender, which is guaranteed to be the immediate child of the current widget, and target which is the widget currently scheduled to be repainted and returns the new paint target. Its default behavior deals with overlaid widgets, i.e. when the sender is overlaid, the target is replaced with itself. 
+        The method has two arguments, sender, which is guaranteed to be the immediate child of the current widget or the widget itself, and target which is the widget currently scheduled to be repainted and returns the new paint target. Its default behavior deals with overlaid widgets, i.e. when the sender is overlaid, the target is replaced with itself. 
         
         To paint widget's children, the paintChild() method must be called with the child and its canvas. 
 
@@ -142,6 +142,17 @@ namespace ui {
             Note that destroying the widget while it (or someone else) can still raise events against it is undefined behavior and may end up with not all events cancelled. This is acceptable compromise as sending an event against the widget would mean having its valid pointer, which should not happen when the widget is being destroyed. 
          */
         virtual ~Widget();
+
+        std::string const & name() const {
+            return name_;
+        }
+
+        virtual void setName(std::string const & value) {
+            if (value != name_) {
+                name_ = value;
+                repaint();
+            } 
+        }
 
         /** Determines if the given widget is transitive parent of the current widget or the widget itself. 
          */
@@ -222,6 +233,7 @@ namespace ui {
         friend class TraitBase;
 
         Widget(int width = 0, int height = 0, int x = 0, int y = 0):
+            name_{"Widget"},
             pendingEvents_{0},
             renderer_{nullptr},
             pendingRepaint_{false},
@@ -633,14 +645,37 @@ namespace ui {
 
         /** Allows the widget to update the paint target during the paint event propagation. 
          
-            The sender is the immediate child from whose subtree the paint event originates and the target is the widget that is currently being repainted. 
+            The sender is the immediate child from whose subtree the paint event originates, or the current widget itself and the target is the widget that is currently being repainted. 
 
             The method returns the new paint target widget, which by default is the actual target, unless the sender is overlaid, in which case the new target widget is the current widget itself so that the widget's overlay can be dealt with. 
 
             The idea of this method is to give parent widgets the opportunity to widen the paint area when necessary. 
+
+            Note that the function must return either nullptr to cancel the paint request, or a widget that dominates the current target (the target dominates itself by definition).
          */
         virtual Widget * propagatePaintTarget(Widget * sender, Widget * target) {
             return sender->overlaid_ ? this : target;
+        }
+
+        /** Merges multiple paint targets. 
+         
+            Returns the dominating target, or nullptr if at least one of the inputs is nullptr. 
+
+            This method is useful when multiple parents of certain widgets have different heuristics as to what target should the paint be delegated to.
+         */
+        Widget * mergePaintTargets(Widget * old, std::initializer_list<Widget *> targets) {
+            Widget * result = old;
+            for (Widget * w : targets) {
+                if (w == old)
+                    continue;
+                else if (w == nullptr)
+                    return nullptr;
+                else if (result == old)
+                    result = w;
+                else if (result->isDominatedBy(w))
+                    result = w;
+            }
+            return result;
         }
 
         /** Renders the widget immediately. 
@@ -784,6 +819,10 @@ namespace ui {
     private:
 
         friend class Canvas;
+
+        /** Name of the widget. 
+         */
+        std::string name_;
 
         /** Number of pending user events registered with the current widget. [thread-safe]
          

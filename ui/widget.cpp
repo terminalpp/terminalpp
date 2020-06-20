@@ -50,12 +50,12 @@ namespace ui {
                     // if current widget is not the actual target and is scheduled to be repainted, we can stop this request as the target child will be eventually repainted as well
                     if (w->pendingRepaint_)
                         return;
-                    // translate the target
-                    target = w->propagatePaintTarget(sender, target);
-                    // if the repaint has been stopped, do nothing
-                    if (target == nullptr)
-                        return;
                 }
+                // translate the target
+                target = w->propagatePaintTarget(sender, target);
+                // if the repaint has been stopped, do nothing
+                if (target == nullptr)
+                    return;
                 if (w->parent_ == nullptr)
                     break;
                 sender = w;
