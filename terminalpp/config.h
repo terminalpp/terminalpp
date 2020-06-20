@@ -255,14 +255,6 @@ namespace tpp {
 				JSON{"local"},
 			    std::string
 			);
-            /*
-			CONFIG_PROPERTY(
-				command, 
-				"The command to be executed in the session",
-				JSON::Array(),
-			    Command
-			);
-            */
 			CONFIG_OBJECT(
 				palette,
 				"Definition of the palette used for the session.",
@@ -476,9 +468,9 @@ namespace tpp {
             addArgument(renderer.font.size, {"--font-size"});
             addArgument(renderer.window.cols, {"--cols", "-c"});
             addArgument(renderer.window.rows, {"--rows", "-r"});
+            addArgument(defaultSession, {"--session"});
             // create new empty session
             sessions_entry & cmdSession = sessions.addElement();
-            // TODO: get default session, create its copy, deupdate and then add to the arguments
             addArgument(cmdSession.pty, {"--pty"});
             addArgument(cmdSession.command, {"-e"});
             setLastArgument(cmdSession.command);

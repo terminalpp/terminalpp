@@ -5,6 +5,8 @@
 - alternate zoom shortcuts (`C-S--` and `C-S-=`)
 - ropen can be interrupted gracefully
 
+- `--session` command-line argument to easily select session
+
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
