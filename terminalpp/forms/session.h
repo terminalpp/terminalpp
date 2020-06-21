@@ -182,6 +182,7 @@ namespace tpp {
             return terminal_->scrollBy(by);
         }
 
+/*
         void terminalPTYTerminated(UIEvent<ExitCode>::Payload & e) {
             window_->setIcon(Window::Icon::Notification);
             window_->setTitle(STR("Terminated, exit code " << *e));
@@ -200,6 +201,8 @@ namespace tpp {
             MARK_AS_UNUSED(e);
             window_->setIcon(Window::Icon::Notification);
         }
+
+        */
 
         void terminalKeyDown(UIEvent<Key>::Payload & e) {
             if (window_->icon() != Window::Icon::Default)
@@ -258,6 +261,7 @@ namespace tpp {
             event.stop();
         }
 
+        /*
         void terminalMouseWheel(UIEvent<MouseWheelEvent>::Payload & event) {
             if (terminal_->mouseCaptured())
                 return;
@@ -269,7 +273,8 @@ namespace tpp {
                 event.stop();
             //}
         }
-
+        */
+        /*
         void terminalSetClipboard(UIEvent<std::string>::Payload & event) {
             setClipboard(*event);
         }
@@ -319,6 +324,7 @@ namespace tpp {
                 showError(e.what());
             }
         }
+        */
 
         void paste(UIEvent<std::string>::Payload & e) override {
             // determine whether to show the dialog, or paste immediately

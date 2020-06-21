@@ -26,18 +26,16 @@ namespace tpp {
         pager_->setActivePage(t);
         window_->setKeyboardFocus(t);
         // add terminal events (so that they are called only *after* the session is registered)
-        /*
-        si->terminal->onPTYTerminated.setHandler(&TerminalWindow::terminalPTYTerminated, this);
-        si->terminal->onTitleChange.setHandler(&TerminalWindow::terminalTitleChanged, this);
-        si->terminal->onNotification.setHandler(&TerminalWindow::terminalNotification, this);
-        si->terminal->onKeyDown.setHandler(&TerminalWindow::terminalKeyDown, this);
-        si->terminal->onMouseMove.setHandler(&TerminalWindow::terminalMouseMove, this);
-        si->terminal->onMouseDown.setHandler(&TerminalWindow::terminalMouseDown, this);
-        si->terminal->onMouseUp.setHandler(&TerminalWindow::terminalMouseUp, this);
-        si->terminal->onMouseWheel.setHandler(&TerminalWindow::terminalMouseWheel, this);
-        si->terminal->onSetClipboard.setHandler(&TerminalWindow::terminalSetClipboard, this);
-        si->terminal->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
-        */
+        t->onPTYTerminated.setHandler(&TerminalWindow::sessionPTYTerminated, this);
+        t->onTitleChange.setHandler(&TerminalWindow::sessionTitleChanged, this);
+        t->onNotification.setHandler(&TerminalWindow::sessionNotification, this);
+        t->onKeyDown.setHandler(&TerminalWindow::terminalKeyDown, this);
+        t->onMouseMove.setHandler(&TerminalWindow::terminalMouseMove, this);
+        t->onMouseDown.setHandler(&TerminalWindow::terminalMouseDown, this);
+        t->onMouseUp.setHandler(&TerminalWindow::terminalMouseUp, this);
+        t->onMouseWheel.setHandler(&TerminalWindow::terminalMouseWheel, this);
+        t->onSetClipboard.setHandler(&TerminalWindow::terminalSetClipboard, this);
+        t->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
     }
 
 } // namespace tpp

@@ -10,6 +10,8 @@
 #include "../config.h"
 #include "../window.h"
 
+#include "about_box.h"
+
 namespace tpp {
 
     /** New Version Dialog. 
@@ -31,7 +33,7 @@ namespace tpp {
      
         
      */
-    class TerminalWindow : public ui::Window {
+    class TerminalWindow : public ui::Window, public ui::AutoScroller<TerminalWindow> {
     public:
 
         TerminalWindow(tpp::Window * window):
@@ -81,17 +83,184 @@ namespace tpp {
         class SessionInfo {
         public:
             std::string name;
+            std::string title;
             PTYMaster * pty;
             AnsiTerminal * terminal;
             AnsiTerminal::Palette palette;
 
             SessionInfo(Config::sessions_entry const & session):
                 name{session.name()},
+                title{session.name()},
                 pty{nullptr},
                 terminal{nullptr},
                 palette{session.palette()} {
             }
         }; 
+
+        SessionInfo & sessionInfo(Widget * terminal) {
+            AnsiTerminal * t = dynamic_cast<AnsiTerminal*>(terminal);
+            ASSERT(t != nullptr);
+            auto i = sessions_.find(t);
+            ASSERT(i != sessions_.end());
+            return * (i->second);
+        }
+
+        SessionInfo & activeSession() {
+            return sessionInfo(pager_->activePage());
+        }
+
+        bool autoScrollStep(Point by) override {
+            SessionInfo & si = activeSession();
+            return si.terminal->scrollBy(by);
+        }
+
+
+        void sessionPTYTerminated(UIEvent<ExitCode>::Payload & event) {
+            SessionInfo & si = sessionInfo(event.sender());
+            window_->setIcon(tpp::Window::Icon::Notification);
+            si.title = STR("Terminated, exit code " << *event);
+            /*
+            Config const & config = Config::Instance();
+            if (! config.renderer.window.waitAfterPtyTerminated())
+                window_->requestClose();
+            else 
+                terminateOnKeyPress_ = true;
+            */
+        }        
+
+        void sessionTitleChanged(UIEvent<std::string>::Payload & event) {
+            SessionInfo & si = sessionInfo(event.sender());
+            si.title = *event;
+        }
+
+        void sessionNotification(UIEvent<void>::Payload & event) {
+            MARK_AS_UNUSED(event);
+            window_->setIcon(tpp::Window::Icon::Notification);
+        }
+
+        void terminalKeyDown(UIEvent<Key>::Payload & e) {
+            if (window_->icon() != tpp::Window::Icon::Default)
+                window_->setIcon(tpp::Window::Icon::Default);
+            // trigger paste event for ourselves so that the paste can be intercepted
+            if (*e == SHORTCUT_PASTE) {
+                requestClipboard();
+                e.stop();
+            } else if (*e == SHORTCUT_ABOUT) {
+                showModal(new AboutBox{});
+                e.stop();
+            } else if (*e == SHORTCUT_SETTINGS) {
+                Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit */ true); 
+            }
+        }
+
+        void terminalMouseMove(UIEvent<MouseMoveEvent>::Payload & event) {
+            SessionInfo & si = sessionInfo(event.sender());
+            if (si.terminal->mouseCaptured())
+                return;
+            if (si.terminal->updatingSelection()) {
+                if (event->coords.y() < 0 || event->coords.y() >= si.terminal->height())
+                    startAutoScroll(Point{0, event->coords.y() < 0 ? -1 : 1});
+                else
+                    stopAutoScroll();
+            }
+        }
+
+        void terminalMouseDown(UIEvent<MouseButtonEvent>::Payload & event) {
+            SessionInfo & si = sessionInfo(event.sender());
+            if (si.terminal->mouseCaptured())
+                return;
+            if (event->modifiers == 0) {
+                if (event->button == MouseButton::Left) {
+                    si.terminal->startSelectionUpdate(event->coords);
+                } else if (event->button == MouseButton::Wheel) {
+                    requestSelection(); 
+                } else if (event->button == MouseButton::Right && ! si.terminal->selection().empty()) {
+                    setClipboard(si.terminal->getSelectionContents());
+                    si.terminal->clearSelection();
+                } else {
+                    return;
+                }
+            }
+            event.stop();
+        }
+
+        void terminalMouseUp(UIEvent<MouseButtonEvent>::Payload & event) {
+            SessionInfo & si = sessionInfo(event.sender());
+            if (si.terminal->mouseCaptured())
+                return;
+            if (event->modifiers == 0) {
+                if (event->button == MouseButton::Left) 
+                    si.terminal->endSelectionUpdate();
+                else
+                    return;
+            }
+            event.stop();
+        }
+
+        void terminalMouseWheel(UIEvent<MouseWheelEvent>::Payload & event) {
+            AnsiTerminal * t = dynamic_cast<AnsiTerminal*>(event.sender());
+            if (t->mouseCaptured())
+                return;
+            //if (state_.buffer.historyRows() > 0) {
+                if (event->by > 0)
+                    t->scrollBy(Point{0, -1});
+                else 
+                    t->scrollBy(Point{0, 1});
+                event.stop();
+            //}
+        }
+
+        void terminalSetClipboard(UIEvent<std::string>::Payload & event) {
+            setClipboard(*event);
+        }
+
+        void terminalTppSequence(UIEvent<TppSequenceEvent>::Payload & event) {
+            SessionInfo & si = sessionInfo(event.sender());
+            try {
+                switch (event->kind) {
+                    case tpp::Sequence::Kind::GetCapabilities:
+                        si.pty->send(tpp::Sequence::Capabilities{1});
+                        break;
+                    case tpp::Sequence::Kind::OpenFileTransfer: {
+                        Sequence::OpenFileTransfer req(event->payloadStart, event->payloadEnd);
+                        si.pty->send(remoteFiles_->openFileTransfer(req));
+                        break;
+                    }
+                    case tpp::Sequence::Kind::Data: {
+                        Sequence::Data data{event->payloadStart, event->payloadEnd};
+                        remoteFiles_->transfer(data);
+                        // make sure the UI thread remains responsive
+                        window_->yieldToUIThread();
+                        break;
+                    }
+                    case tpp::Sequence::Kind::GetTransferStatus: {
+                        Sequence::GetTransferStatus req{event->payloadStart, event->payloadEnd};
+                        si.pty->send(remoteFiles_->getTransferStatus(req));
+                        break;
+                    }
+                    case tpp::Sequence::Kind::ViewRemoteFile: {
+                        Sequence::ViewRemoteFile req{event->payloadStart, event->payloadEnd};
+                        RemoteFiles::File * f = remoteFiles_->get(req.id());
+                        if (f == nullptr) {
+                            si.pty->send(Sequence::Nack{req, "No such file"});
+                        } else if (! f->ready()) {
+                            si.pty->send(Sequence::Nack(req, "File not transferred"));
+                        } else {
+                            // send the ack first in case there are local issues with the opening
+                            si.pty->send(Sequence::Ack{req, req.id()});
+                            Application::Instance()->openLocalFile(f->localPath(), false);
+                        }
+                        break;
+                    }
+                    default:
+                        LOG() << "Unknown sequence";
+                        break;
+                }
+            } catch (std::exception const & e) {
+                showError(e.what());
+            }
+        }
+
 
         tpp::Window * window_;
 
