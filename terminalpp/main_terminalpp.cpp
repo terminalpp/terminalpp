@@ -39,7 +39,7 @@
 #error "Unsupported platform"
 #endif
 
-#include "forms/session.h"
+#include "forms/terminal_window.h"
 
 
 #include "helpers/json.h"
@@ -125,7 +125,10 @@ int main(int argc, char* argv[]) {
         
         tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", 80, 25);
         // currently owned by the window, when multiple sessions are available this might change
-        new tpp::Session{w, config.sessionByName(config.defaultSession())};
+        tpp::TerminalWindow * tw = new tpp::TerminalWindow{w};
+        tw->newSession(config.sessionByName(config.defaultSession()));
+        //tw->newSession(config.sessions[0]);
+        //new tpp::Session{w, config.sessionByName(config.defaultSession())};
         w->show();
         tpp::Application::Instance()->mainLoop();
         return EXIT_SUCCESS;

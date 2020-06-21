@@ -6,6 +6,7 @@
 #include "ui/widgets/button.h"
 #include "ui/widgets/label.h"
 #include "ui/widgets/dialog.h"
+#include "ui/widgets/pager.h"
 #include "ui/layouts/maximize.h"
 #include "ui/layouts/column.h"
 #include "ui/layouts/row.h"
@@ -18,36 +19,6 @@
 
 
 namespace tpp {
-
-    /** Error dialog. 
-     */
-    class ErrorDialog : public ui::Dialog::Cancel {
-    public:
-        ErrorDialog(std::string const & message):
-            Dialog::Cancel{"Error", /* deleteOnDismiss */ true},
-            contents_{new Label{message}} {
-            setBody(contents_);
-        }
-
-    private:
-        Label * contents_;
-    };
-
-    /** New Version Dialog. 
-     */
-    class NewVersionDialog : public ui::Dialog::Cancel {
-    public:
-        NewVersionDialog(std::string const & message):
-            Dialog::Cancel{"New Version", /* deleteOnDismiss */ true},
-            contents_{new Label{message}} {
-            setBody(contents_);
-            setSemanticStyle(SemanticStyle::Info);
-        }
-
-    private:
-        Label * contents_;
-    };
-
 
     /** Paste confirmation dialog. 
      */
@@ -135,9 +106,21 @@ namespace tpp {
             //add(terminal_);
 
 
-            terminal_->setHeightHint(SizeHint::Percentage(100));
-            mainWindow_->add(terminal_);
+            //terminal_->setHeightHint(SizeHint::Percentage(100));
+            pager_ = new Pager{};
+            pager_->setWidthHint(SizeHint::Percentage(100));
+            pager_->setHeightHint(SizeHint::Percentage(100));
+
             add(mainWindow_);
+            mainWindow_->add(pager_);
+            pager_->setActivePage(terminal_);
+
+
+            /*
+            mainWindow_->add(pager_);
+            pager_->setActivePage(terminal_);
+            add(mainWindow_);
+            */
 
             modalPane_ = new ModalPane();
             //modalPane_->setLayout(new ColumnLayout{VerticalAlign::Bottom});
@@ -364,6 +347,7 @@ namespace tpp {
         bool terminateOnKeyPress_;
 
         AnsiTerminal::Palette palette_;
+        Pager * pager_;
         AnsiTerminal * terminal_;
         PTYMaster * pty_;
 

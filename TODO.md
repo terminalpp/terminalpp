@@ -52,9 +52,6 @@ Issues to be raised:
 
 > This section discusses plan for next versions and drafts the features planned. 
 
-- overlaid does not seem to be set properly - examine for session and others... 
-
-
 ### v0.8
 
 - some basic styling for the GUI via a style object, similar to CSS?, more powerful buttons & labels

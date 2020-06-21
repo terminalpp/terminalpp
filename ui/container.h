@@ -49,8 +49,7 @@ namespace ui {
         friend class Modal;
 
         Container(Layout * layout = Layout::None):
-            layout_{layout},
-            layoutScheduled_{false} {
+            layout_{layout} {
         }
 
         /** Reverses the order of own children. 
@@ -264,7 +263,6 @@ namespace ui {
         friend class Layout;
 
         Layout * layout_;
-        bool layoutScheduled_;
 
     }; // ui::Container
 

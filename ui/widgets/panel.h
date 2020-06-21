@@ -26,6 +26,6 @@ namespace ui {
             Container::paint(canvas);
         }
 
-    }; // ui::Panel
+    }; // ui::CustomPanel
 
 } // namespace ui

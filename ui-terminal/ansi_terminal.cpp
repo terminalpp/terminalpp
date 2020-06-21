@@ -282,9 +282,6 @@ namespace ui {
     }
 
     void AnsiTerminal::resize(int width, int height) {
-        // don't allow 0 width or height for the terminal
-        ASSERT(width > 0 && height > 0);
-
         // lock the buffer
         bufferLock_.priorityLock();
         bool scrollToTerm = scrollOffset().y() == state_.buffer.historyRows();
@@ -294,7 +291,7 @@ namespace ui {
         state_.resize(width, height, true, palette_->defaultBackground());
         stateBackup_.resize(width, height, alternateMode_, palette_->defaultBackground());
         // resize the PTY
-        pty_->resize(width, height);
+        pty_->resize(state_.buffer.width(), state_.buffer.height());
         // update the scrolling information            
         setScrollSize(Size{width, height + state_.buffer.historyRows()});
         // scroll to the terminal if appropriate (terminal was fully visible before)
@@ -1599,7 +1596,7 @@ namespace ui {
     // AnsiTerminal::State
 
     AnsiTerminal::State::State(int cols, int rows, int maxHistoryLines, Color defaultBg):
-        buffer{cols, rows, maxHistoryLines},
+        buffer{std::max(cols, 1), std::max(rows, 1), maxHistoryLines},
         cursor{0,0},
         lastCharacter{0,0},
         scrollStart{0},

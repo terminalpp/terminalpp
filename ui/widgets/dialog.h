@@ -7,8 +7,10 @@
 #include "../traits/modal.h"
 #include "../traits/styled.h"
 
+
 #include "panel.h"
 #include "label.h"
+#include "button.h"
 
 namespace ui {
 
@@ -189,5 +191,20 @@ namespace ui {
         Button * btnCancel_;
 
     }; // ui::Dialog::YesNoCancel 
+
+    /** Error dialog. 
+     */
+    class ErrorDialog : public Dialog::Cancel {
+    public:
+        ErrorDialog(std::string const & message):
+            Dialog::Cancel{"Error", /* deleteOnDismiss */ true},
+            contents_{new Label{message}} {
+            setBody(contents_);
+        }
+
+    private:
+        Label * contents_;
+    };
+
 
 } // namespace ui

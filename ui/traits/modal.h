@@ -2,6 +2,7 @@
 
 #include "../widget.h"
 #include "../container.h"
+#include "../renderer.h"
 
 #include "trait_base.h"
 #include "widget_background.h"

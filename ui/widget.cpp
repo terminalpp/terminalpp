@@ -42,7 +42,8 @@ namespace ui {
             while (true) {
                 ASSERT(w->renderer_ != nullptr);
                 // if there is relayout scheduled on current widget, relayout
-                if (w->pendingRelayout_) {
+                // but only relayout if the parent does not have pending relayout as well as that relayout will trigger this one as well
+                if (w->pendingRelayout_ && (w->parent_ == nullptr || w->parent_->pendingRelayout_ == false)) {
                     w->pendingRepaint_.store(false); // WHY repaint??? 
                     w->calculateLayout();
                 }
