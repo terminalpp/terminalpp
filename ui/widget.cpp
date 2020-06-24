@@ -66,6 +66,13 @@ namespace ui {
         });
     }
 
+
+    void Widget::focus() {
+        UI_THREAD_CHECK;
+        if (focusable_ && renderer_ != nullptr)
+            renderer_->setKeyboardFocus(this);
+    }
+
     bool Widget::focused() const {
         UI_THREAD_CHECK;
         //std::lock_guard<std::mutex> g{mRenderer_};

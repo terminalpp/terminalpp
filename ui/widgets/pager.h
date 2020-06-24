@@ -13,6 +13,18 @@ namespace ui {
 
         using Container::setWidthHint;
         using Container::setHeightHint;
+
+        void remove(Widget * widget) override {
+            if (widget == children_.back()) {
+                Container::remove(widget);
+                UIEvent<Widget*>::Payload p{activePage()};
+                onPageChange(p, this);
+            } else {
+                Container::remove(widget);
+            }
+        }
+
+        using Container::remove;
         
         /** Returns the currently active page. 
          */
@@ -29,14 +41,18 @@ namespace ui {
         void setActivePage(Widget * widget) {
             // ivalidate the rectangle of previously visible widget
             add(widget);
+            UIEvent<Widget*>::Payload p{widget};
+            onPageChange(p, this);
         }
 
+        UIEvent<Widget*> onPageChange;
+
     protected:
-        
+
         /** Stops any repaints from non-active pages. 
          */
         Widget * propagatePaintTarget(Widget * sender, Widget * target) override {
-            return (sender == activePage()) ? target : nullptr;
+            return (sender == this || sender == activePage()) ? target : nullptr;
         }
 
         /** The pager only paints the active page. 

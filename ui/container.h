@@ -147,11 +147,20 @@ namespace ui {
             return (parent_ == nullptr) ? nullptr : parent_->getNextFocusableWidget(this);
         }
 
+        /** Calls getNextFocusableWidget on given child. 
+         
+            Because friends are not inherited, this protected method can be used to control the focusable widget sequence from subclasses on their children. 
+         */
+        Widget * getNextFocusableWidget(Widget * child, Widget * current) {
+            return child->getNextFocusableWidget(current);
+        }
+
         /** Returns next focusable child. 
          */
         Widget * getNextFocusableChild(Widget * current) {
             // determine the next element to focus, starting from the current element which we do by setting current to nullptr if we see it and returning the child if current is nullptr
-            for (Widget * child : children_) {
+            for (auto i = children_.rbegin(), e = children_.rend(); i != e; ++i) {
+                Widget * child = *i;
                 if (current == nullptr) {
                     Widget * result = child->getNextFocusableWidget(nullptr);
                     if (result != nullptr)

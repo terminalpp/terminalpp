@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
         // currently owned by the window, when multiple sessions are available this might change
         tpp::TerminalWindow * tw = new tpp::TerminalWindow{w};
         tw->newSession(config.sessionByName(config.defaultSession()));
-        //tw->newSession(config.sessions[0]);
+        tw->newSession(config.sessions[0]);
         //new tpp::Session{w, config.sessionByName(config.defaultSession())};
         w->show();
         tpp::Application::Instance()->mainLoop();

@@ -388,6 +388,8 @@ namespace ui {
          */
         virtual void mouseDown(UIEvent<MouseButtonEvent>::Payload & event) {
             if (event.active()) {
+                if (focusable_ && ! focused())
+                    focus();
                 if (onMouseDown.attached()) {
                     event.propagateToParent(false);
                     onMouseDown(event, this);
@@ -516,6 +518,8 @@ namespace ui {
             // otherwise returns nullptr
             return nullptr;
         }
+
+        void focus();
 
         bool focused() const;
 

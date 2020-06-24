@@ -42,6 +42,7 @@ namespace tpp {
             pager_{new Pager{}} {
             Config const & config = Config::Instance();
 
+            pager_->onPageChange.setHandler(&TerminalWindow::activeSessionChanged, this);
 
             main_->setLayout(new ColumnLayout{VerticalAlign::Top});
             main_->add(pager_);
@@ -87,50 +88,70 @@ namespace tpp {
             PTYMaster * pty;
             AnsiTerminal * terminal;
             AnsiTerminal::Palette palette;
+            bool terminateOnKeyPress;
 
             SessionInfo(Config::sessions_entry const & session):
                 name{session.name()},
                 title{session.name()},
                 pty{nullptr},
                 terminal{nullptr},
-                palette{session.palette()} {
+                palette{session.palette()},
+                terminateOnKeyPress{false} {
+            }
+
+            ~SessionInfo() {
+                delete terminal;
             }
         }; 
 
-        SessionInfo & sessionInfo(Widget * terminal) {
+        void keyDown(UIEvent<Key>::Payload & event) override {
+            if (activeSession_->terminateOnKeyPress) 
+                closeSession(activeSession_);
+            else 
+                Widget::keyDown(event);
+        }
+
+
+        SessionInfo * sessionInfo(Widget * terminal) {
             AnsiTerminal * t = dynamic_cast<AnsiTerminal*>(terminal);
             ASSERT(t != nullptr);
             auto i = sessions_.find(t);
             ASSERT(i != sessions_.end());
-            return * (i->second);
+            return (i->second);
         }
 
-        SessionInfo & activeSession() {
-            return sessionInfo(pager_->activePage());
+        void closeSession(SessionInfo * session) {
+            sessions_.erase(session->terminal);
+            pager_->remove(session->terminal);
+            delete session;
+            if (sessions_.empty())
+                window_->requestClose();
         }
 
         bool autoScrollStep(Point by) override {
-            SessionInfo & si = activeSession();
-            return si.terminal->scrollBy(by);
+            return activeSession_->terminal->scrollBy(by);
         }
 
+        void activeSessionChanged(UIEvent<Widget*>::Payload & event) {
+            activeSession_ = *event == nullptr ? nullptr : sessionInfo(*event);
+        }
 
         void sessionPTYTerminated(UIEvent<ExitCode>::Payload & event) {
-            SessionInfo & si = sessionInfo(event.sender());
+            SessionInfo * si = sessionInfo(event.sender());
             window_->setIcon(tpp::Window::Icon::Notification);
-            si.title = STR("Terminated, exit code " << *event);
-            /*
+            si->title = STR("Terminated, exit code " << *event);
             Config const & config = Config::Instance();
-            if (! config.renderer.window.waitAfterPtyTerminated())
-                window_->requestClose();
-            else 
-                terminateOnKeyPress_ = true;
-            */
+            if (! config.renderer.window.waitAfterPtyTerminated()) {
+                closeSession(activeSession_);
+            } else {
+                window_->setKeyboardFocus(this);
+                activeSession_->terminateOnKeyPress = true;
+            }
         }        
 
         void sessionTitleChanged(UIEvent<std::string>::Payload & event) {
-            SessionInfo & si = sessionInfo(event.sender());
-            si.title = *event;
+            SessionInfo * si = sessionInfo(event.sender());
+            si->title = *event;
         }
 
         void sessionNotification(UIEvent<void>::Payload & event) {
@@ -154,11 +175,10 @@ namespace tpp {
         }
 
         void terminalMouseMove(UIEvent<MouseMoveEvent>::Payload & event) {
-            SessionInfo & si = sessionInfo(event.sender());
-            if (si.terminal->mouseCaptured())
+            if (activeSession_->terminal->mouseCaptured())
                 return;
-            if (si.terminal->updatingSelection()) {
-                if (event->coords.y() < 0 || event->coords.y() >= si.terminal->height())
+            if (activeSession_->terminal->updatingSelection()) {
+                if (event->coords.y() < 0 || event->coords.y() >= activeSession_->terminal->height())
                     startAutoScroll(Point{0, event->coords.y() < 0 ? -1 : 1});
                 else
                     stopAutoScroll();
@@ -166,17 +186,16 @@ namespace tpp {
         }
 
         void terminalMouseDown(UIEvent<MouseButtonEvent>::Payload & event) {
-            SessionInfo & si = sessionInfo(event.sender());
-            if (si.terminal->mouseCaptured())
+            if (activeSession_->terminal->mouseCaptured())
                 return;
             if (event->modifiers == 0) {
                 if (event->button == MouseButton::Left) {
-                    si.terminal->startSelectionUpdate(event->coords);
+                    activeSession_->terminal->startSelectionUpdate(event->coords);
                 } else if (event->button == MouseButton::Wheel) {
                     requestSelection(); 
-                } else if (event->button == MouseButton::Right && ! si.terminal->selection().empty()) {
-                    setClipboard(si.terminal->getSelectionContents());
-                    si.terminal->clearSelection();
+                } else if (event->button == MouseButton::Right && ! activeSession_->terminal->selection().empty()) {
+                    setClipboard(activeSession_->terminal->getSelectionContents());
+                    activeSession_->terminal->clearSelection();
                 } else {
                     return;
                 }
@@ -185,12 +204,11 @@ namespace tpp {
         }
 
         void terminalMouseUp(UIEvent<MouseButtonEvent>::Payload & event) {
-            SessionInfo & si = sessionInfo(event.sender());
-            if (si.terminal->mouseCaptured())
+            if (activeSession_->terminal->mouseCaptured())
                 return;
             if (event->modifiers == 0) {
                 if (event->button == MouseButton::Left) 
-                    si.terminal->endSelectionUpdate();
+                    activeSession_->terminal->endSelectionUpdate();
                 else
                     return;
             }
@@ -215,15 +233,15 @@ namespace tpp {
         }
 
         void terminalTppSequence(UIEvent<TppSequenceEvent>::Payload & event) {
-            SessionInfo & si = sessionInfo(event.sender());
+            SessionInfo * si = sessionInfo(event.sender());
             try {
                 switch (event->kind) {
                     case tpp::Sequence::Kind::GetCapabilities:
-                        si.pty->send(tpp::Sequence::Capabilities{1});
+                        si->pty->send(tpp::Sequence::Capabilities{1});
                         break;
                     case tpp::Sequence::Kind::OpenFileTransfer: {
                         Sequence::OpenFileTransfer req(event->payloadStart, event->payloadEnd);
-                        si.pty->send(remoteFiles_->openFileTransfer(req));
+                        si->pty->send(remoteFiles_->openFileTransfer(req));
                         break;
                     }
                     case tpp::Sequence::Kind::Data: {
@@ -235,19 +253,19 @@ namespace tpp {
                     }
                     case tpp::Sequence::Kind::GetTransferStatus: {
                         Sequence::GetTransferStatus req{event->payloadStart, event->payloadEnd};
-                        si.pty->send(remoteFiles_->getTransferStatus(req));
+                        si->pty->send(remoteFiles_->getTransferStatus(req));
                         break;
                     }
                     case tpp::Sequence::Kind::ViewRemoteFile: {
                         Sequence::ViewRemoteFile req{event->payloadStart, event->payloadEnd};
                         RemoteFiles::File * f = remoteFiles_->get(req.id());
                         if (f == nullptr) {
-                            si.pty->send(Sequence::Nack{req, "No such file"});
+                            si->pty->send(Sequence::Nack{req, "No such file"});
                         } else if (! f->ready()) {
-                            si.pty->send(Sequence::Nack(req, "File not transferred"));
+                            si->pty->send(Sequence::Nack(req, "File not transferred"));
                         } else {
                             // send the ack first in case there are local issues with the opening
-                            si.pty->send(Sequence::Ack{req, req.id()});
+                            si->pty->send(Sequence::Ack{req, req.id()});
                             Application::Instance()->openLocalFile(f->localPath(), false);
                         }
                         break;
@@ -268,6 +286,8 @@ namespace tpp {
         ui::Pager * pager_;
 
         std::unordered_map<AnsiTerminal *, SessionInfo *> sessions_; 
+
+        SessionInfo * activeSession_;
 
         RemoteFiles * remoteFiles_;
 
