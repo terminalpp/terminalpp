@@ -124,8 +124,13 @@ namespace tpp {
             sessions_.erase(session->terminal);
             pager_->remove(session->terminal);
             delete session;
+            // if this was the last session, close the window
             if (sessions_.empty())
                 window_->requestClose();
+            // otherwise focus the active session instead
+            // TODO do we want this always, or should we actually check if the remove session was focused first? 
+            else
+                window_->setKeyboardFocus(pager_->activePage());
         }
 
         bool autoScrollStep(Point by) override {
@@ -292,8 +297,6 @@ namespace tpp {
         RemoteFiles * remoteFiles_;
 
         std::thread versionChecker_;
-
-        
 
     };
 

@@ -128,7 +128,7 @@ namespace ui {
 
         The relayout() method schedules repaint and relayouting to be executed before it. When a widget is relayouted, it should reclaculate the correct dimensions of its contents first and then of itself (if its size hints are set to SizeHint::Auto()). 
 
-        WHen relayouting is requested, the calculateLayout() method is called immediately before the paint() method. Widget subclasses should override this method to implement layouting of their contents, but *must* call the Widget's implementation in the end as it performs the autosize calculation and clears the pending relayout flag. 
+        When relayouting is requested, the calculateLayout() method is called immediately before the paint() method. Widget subclasses should override this method to implement layouting of their contents, but *must* call the Widget's implementation in the end as it performs the autosize calculation and clears the pending relayout flag. 
 
         In cases where the size hints are set to SizeHint::Auto() and the widget should therefore update its size according to the size of its contents, the relayout calls the calculateAutoSize() method which should return the ideal size of the widget and must be overriden in subclasses to provide the functionality. 
 
@@ -388,7 +388,8 @@ namespace ui {
          */
         virtual void mouseDown(UIEvent<MouseButtonEvent>::Payload & event) {
             if (event.active()) {
-                if (focusable_ && ! focused())
+                // focus the widget if applicable
+                if (focusable_ && ! focused() && enabled())
                     focus();
                 if (onMouseDown.attached()) {
                     event.propagateToParent(false);
@@ -519,6 +520,8 @@ namespace ui {
             return nullptr;
         }
 
+        /** Focuses the widget. 
+         */
         void focus();
 
         bool focused() const;
