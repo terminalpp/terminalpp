@@ -7,6 +7,7 @@
 
 HELPERS_NAMESPACE_BEGIN
 
+    /*
     class ResourceGrabber {
     public:
         ResourceGrabber(std::atomic<unsigned> & counter, std::condition_variable & cv):
@@ -23,7 +24,9 @@ HELPERS_NAMESPACE_BEGIN
     private:
         std::atomic<unsigned> & counter_;
         std::condition_variable & cv_;
-    };
+    };*/
+
+    // TODO ui3 should do without smart raii ptr
 
     /** A simple RAII pointer to a class providing unlock() method which is called when the pointer goes out of scope.
      */
@@ -94,6 +97,8 @@ HELPERS_NAMESPACE_BEGIN
     }; // SmartRAIIPtr
 
 
+    // TODO ui3 should do without reentrancy of the prioritylock
+
     /** A simple lock that allows locking in normal and priority modes, guaranteeing that a priority lock request will be serviced before any waiting normal locks. 
      
         The lock is reentrant, i.e. a single thread can acquire it multiple times. 
@@ -108,7 +113,7 @@ HELPERS_NAMESPACE_BEGIN
 
         /** Grabs the lock in non-priority mode.
          */
-        void lock() {
+        PriorityLock & lock() {
             if (owner_ != std::this_thread::get_id()) {
                 std::unique_lock<std::mutex> g(m_);
                 while (priorityRequests_ > 0)
@@ -117,11 +122,12 @@ HELPERS_NAMESPACE_BEGIN
                 owner_ = std::this_thread::get_id();
             }
             ++depth_;
+            return *this;
         }
 
         /** Grabs the lock in priority mode.
          */
-        void priorityLock() {
+        PriorityLock & priorityLock() {
             ++priorityRequests_;
             if (owner_ != std::this_thread::get_id()) {
                 m_.lock();
@@ -129,6 +135,7 @@ HELPERS_NAMESPACE_BEGIN
             }
             --priorityRequests_;
             ++depth_;
+            return *this;
         }
 
         /** Releases the lock. 

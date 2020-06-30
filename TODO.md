@@ -48,6 +48,13 @@ Issues to be raised:
 - history in alternate mode
 - add configuration option to confirm setting clipboard from the terminal
 
+UI version 3
+
+- implement isDominatedBy and commonParentWidth methods in Widget
+- determine how to do scheduling of events in UI thread inside renderer (synchronize with widgets on renderer_ in visible area)
+- FPS based and non-FPS based repaint (render *must* run in UI thread)
+- locks.h - remove grabber & smartptr, make priority lock non-reentrant
+
 # Roadmap
 
 > This section discusses plan for next versions and drafts the features planned. 
