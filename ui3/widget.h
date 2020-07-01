@@ -42,13 +42,17 @@ namespace ui3 {
                 return parent_;
             }
 
-            bool isDominatedBy(Widget * widget) const {
-                NOT_IMPLEMENTED;
-            }
+            /** Returns true if the widget dominates the current one in the widget tree. 
 
-            Widget * commonParentWith(Widget * other) const {
-                NOT_IMPLEMENTED;
-            }
+                Widget is dominated by itself and by its own parents transitively. The root widget dominates *all* widgets. 
+             */
+            bool isDominatedBy(Widget const * widget) const;
+
+            /** Returns the closest common parent of itself and the widget in argument.
+
+                In graph theory, this is the Lowest Common Ancestor.  
+             */
+            Widget * commonParentWith(Widget const * other) const;
 
         protected:
 
@@ -71,9 +75,13 @@ namespace ui3 {
             }
 
         private:
+            /** Mutex protecting the renderer pointer in the visible area for the widget. 
+             */
+            std::mutex rendererGuard_;
 
             Widget * parent_;
             std::deque<Widget *> children_;
+
 
         //@}
 
@@ -198,7 +206,10 @@ namespace ui3 {
             /** Given a contents visible area of the parent, updates own visible area and that of its children. 
              */
             void updateVisibleArea(Canvas::VisibleArea const & parent) {
-                visibleArea_ = parent.clip(rect_);
+                {
+                    std::lock_guard<std::mutex> g{rendererGuard_};
+                    visibleArea_ = parent.clip(rect_);
+                }
                 Canvas::VisibleArea contentsArea = getContentsVisibleArea();
                 for (Widget * child : children_)
                     child->updateVisibleArea(contentsArea);

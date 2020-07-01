@@ -2,6 +2,7 @@
 
 #include "helpers/helpers.h"
 #include "helpers/locks.h"
+#include "helpers/time.h"
 
 #include "font.h"
 #include "color.h"
@@ -254,10 +255,28 @@ namespace ui3 {
 
         }; // ui::Renderer::Buffer
 
+    public:
+
+        virtual ~Renderer() {
+            if (renderer_.joinable()) {
+                fps_ = 0;
+                renderer_.join();
+            }
+        }
+
+
+    // ============================================================================================
+    /** \name Events & Scheduling
+     */
+    //@{
+    public:
+        /** Schedule the given event in the main UI thread.
+         */
+        virtual void schedule(std::function<void()> event) = 0;
 
 
 
-
+    //@}
     // ============================================================================================
 
     /** \name Widget Tree
@@ -272,6 +291,8 @@ namespace ui3 {
 
     private:
         virtual void widgetDetached(Widget * widget) {
+            if (renderWidget_ == widget)
+                renderWidget_ = nullptr;
             // TODO this should actually do stuff such as checking that mouse and keyboard focus remains valid, etc. 
             NOT_IMPLEMENTED;
         }
@@ -302,23 +323,20 @@ namespace ui3 {
 
     protected: 
 
-        size_t fps() const {
+        unsigned fps() const {
             return fps_; // only UI thread can change fps, no need to lock
         }
 
-        virtual void setFps(size_t value) {
+        virtual void setFps(unsigned value) {
             if (fps_ == value)
                 return;
             if (fps_ == 0) {
-                // we need to actually start the thread
-
+                fps_ = value;
+                startRenderer(); 
             } else {
-                std::lock_guard<std::mutex> g{renderGuard_};
                 fps_ = value;
             }
         }
-
-        virtual void render(Buffer const & buffer, Rect const & rect) = 0;
 
         /** Returns the visible area of the entire renderer. 
          */
@@ -329,34 +347,22 @@ namespace ui3 {
 
     private:
 
+        virtual void render(Buffer const & buffer, Rect const & rect) = 0;
+
         /** Paints the given widget. 
 
             */
-        void paint(Widget * widget) {
-            // if FPS is greater than 0, we don't repaint immediately, but only scheduled the widget repaint
-            if (fps_ > 0) {
-                std::lock_guard<std::mutex> g{renderGuard_};
-                if (renderWidget_ == nullptr) {
-                    renderWidget_ = widget;
-                } else {
-                    // find common root
-                    NOT_IMPLEMENTED;
-                }
-            // otherwise repaint immediately
-            } else {
-                paintAndRender(widget);
-            }
-        }
+        void paint(Widget * widget);
 
-        void paintAndRender(Widget * widget);
+        void paintAndRender();
+
+        void startRenderer();
 
         Buffer buffer_;
         PriorityLock bufferLock_;
-        size_t fps_;
-        Widget * renderWidget_;
-        std::thread rendererThread_;
-        std::mutex renderGuard_;
-        
+        Widget * renderWidget_{nullptr};
+        std::atomic<unsigned> fps_{60};
+        std::thread renderer_;
 
     //@}
 

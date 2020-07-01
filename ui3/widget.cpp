@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <unordered_set>
 
 #include "renderer.h"
 
@@ -9,8 +10,27 @@ namespace ui3 {
     // ============================================================================================
     // Widget Tree
 
+    bool Widget::isDominatedBy(Widget const * widget) const {
+        Widget const * x = this;
+        while (x != nullptr) {
+            if (x == widget)
+                return true;
+            x = x->parent_;
+        }
+        return false;
+    }
+
+    Widget * Widget::commonParentWith(Widget const * other) const {
+        std::unordered_set<Widget const*> parents;
+        for (Widget const * w = other; w != nullptr; w = w->parent_)
+            parents.insert(w);
+        for (Widget * w = const_cast<Widget*>(this); w != nullptr; w = w->parent_)
+            if (parents.find(w) != parents.end())
+                return w;
+        return nullptr;
+    }
+
     /** Attaching widget that is already a child has the effect of bringing it to front, attaching a widget that is already attached to a different widget is not supported.  
-     
      */
     void Widget::attach(Widget * child) {
         if (child->parent() == this) {
