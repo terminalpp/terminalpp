@@ -17,12 +17,27 @@ namespace ui3 {
      */
     class Widget {
         friend class Renderer;
+        friend class Layout;
     public:
 
         virtual ~Widget() {
             for (Widget * child : children_)
                 delete child;
+            // layout is owned, except for the singleton None layout
+            if (layout_ != Layout::None)
+                delete layout_;
         }
+        // ========================================================================================
+        /** \name Event Scheduling
+         */
+        //@{
+        protected:
+            void schedule(std::function<void()> event);
+
+        private:
+            size_t pendingEvents_{0};
+
+        //@}
 
         // ========================================================================================
 
@@ -241,7 +256,7 @@ namespace ui3 {
 
             /** The layout implementation for the widget. 
              */
-            Layout * layout_;
+            Layout * layout_ = Layout::None;
 
             SizeHint widthHint_;
             SizeHint heightHint_;

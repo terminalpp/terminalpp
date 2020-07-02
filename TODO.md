@@ -50,10 +50,9 @@ Issues to be raised:
 
 UI version 3
 
-- implement isDominatedBy and commonParentWidth methods in Widget
-- determine how to do scheduling of events in UI thread inside renderer (synchronize with widgets on renderer_ in visible area)
-- FPS based and non-FPS based repaint (render *must* run in UI thread)
 - locks.h - remove grabber & smartptr, make priority lock non-reentrant
+- ansi-renderer should go to ansi-terminal
+- add a way to unlock the buffer before the end of the render function, or actually force explicit buffer lock
 
 # Roadmap
 

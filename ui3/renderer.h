@@ -1,5 +1,7 @@
 #pragma once
 
+#include <deque>
+
 #include "helpers/helpers.h"
 #include "helpers/locks.h"
 #include "helpers/time.h"
@@ -271,10 +273,30 @@ namespace ui3 {
     //@{
     public:
         /** Schedule the given event in the main UI thread.
+         
+            This function can be called from any thread. 
          */
-        virtual void schedule(std::function<void()> event) = 0;
+        void schedule(std::function<void()> event, Widget * widget = nullptr);
 
+        void yieldToUIThread();
 
+    protected:
+
+        void processEvent();
+
+    private:
+
+        /** Notifies the main thread that an event is available. 
+         */
+        virtual void eventNotify() = 0;
+
+        void cancelWidgetEvents(Widget * widget);
+
+        std::deque<std::pair<std::function<void()>, Widget*>> events_;
+        std::mutex eventsGuard_;
+
+        std::mutex yieldGuard_;
+        std::condition_variable yieldCv_;
 
     //@}
     // ============================================================================================

@@ -4,6 +4,56 @@
 
 namespace ui3 {
 
+    // Events
+
+    void Renderer::schedule(std::function<void()> event, Widget * widget) {
+        {
+            std::lock_guard<std::mutex> g{eventsGuard_};
+            events_.push_back(std::make_pair(event, widget));
+            ++widget->pendingEvents_;
+        }
+    }
+
+    void Renderer::yieldToUIThread() {
+        std::unique_lock<std::mutex> g{yieldGuard_};
+        schedule([this](){
+            std::lock_guard<std::mutex> g{yieldGuard_};
+            yieldCv_.notify_all();
+        });
+        yieldCv_.wait(g);
+    }
+
+    void Renderer::processEvent() {
+        std::function<void()> handler;
+        {
+            std::lock_guard<std::mutex> g{eventsGuard_};
+            while (true) {
+                if (events_.empty())
+                    return;
+                auto e = events_.front();
+                events_.pop_front();
+                if (! e.first)
+                    continue;
+                if (e.second != nullptr)
+                    -- (e.second->pendingEvents_);
+                handler = e.first;
+                break;
+            }
+            handler();
+        }
+    }
+
+    void Renderer::cancelWidgetEvents(Widget * widget) {
+        std::lock_guard<std::mutex> g{eventsGuard_};
+        if (widget->pendingEvents_ == 0)
+            return;
+        for (auto & e : events_)
+            if (e.second == widget)
+                e.first = nullptr;
+    }
+
+    // Widget Tree
+
     void Renderer::detachWidget(Widget * widget) {
         {
             // detach the visible area

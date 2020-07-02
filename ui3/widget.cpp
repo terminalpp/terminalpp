@@ -8,6 +8,14 @@
 namespace ui3 {
 
     // ============================================================================================
+
+    void Widget::schedule(std::function<void()> event) {
+        std::lock_guard<std::mutex> g{rendererGuard_};
+        if (visibleArea_.renderer() != nullptr)
+            visibleArea_.renderer()->schedule(event, this);
+    }
+
+    // ============================================================================================
     // Widget Tree
 
     bool Widget::isDominatedBy(Widget const * widget) const {

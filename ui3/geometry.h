@@ -91,6 +91,10 @@ namespace ui3 {
             height_{height} {
         }
 
+        bool empty() const {
+            return width_ == 0 || height_ == 0;
+        }
+
         int width() const {
             return width_;
         }
@@ -121,6 +125,11 @@ namespace ui3 {
     class Rect {
     public:
 
+        Rect():
+            topLeft_{0,0},
+            size_{0,0} {
+        }
+
         Rect(Size const & size):
             topLeft_{0,0},
             size_{size} {
@@ -138,6 +147,10 @@ namespace ui3 {
                 std::swap(topLeft.y_, bottomRight.y_);
             topLeft_ = topLeft;
             size_ = Size{bottomRight.x() - topLeft.x(), bottomRight.y() - topLeft.y()};
+        }
+
+        bool empty() const {
+            return size_.empty();
         }
 
         Point topLeft() const {
@@ -197,7 +210,15 @@ namespace ui3 {
         /** Union of two rectangles. 
          */
         Rect operator | (Rect const & other) const {
-            NOT_IMPLEMENTED;
+            return Rect(
+                Point{
+                    std::min(topLeft_.x(), other.topLeft_.x()),
+                    std::min(topLeft_.y(), other.topLeft_.y())
+                },
+                Point{
+                    std::max(bottomRight().x(), other.bottomRight().x()),
+                    std::max(bottomRight().y(), other.bottomRight().y())
+                });
         }
 
     private:

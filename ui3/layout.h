@@ -17,13 +17,19 @@ namespace ui3 {
      */
     class Layout {
     public:
+
+        static Layout * const None;
+
+        virtual ~Layout() {
+        }
+
         /** Does the layout, can call move & resize only
          */
-        void layout(Widget * widget);
+        virtual void layout(Widget * widget) const = 0;
 
         /** Calculates the overlay of immediate children of the given widget. 
          */
-        void calculateOverlay(Widget * widget);
+        virtual void calculateOverlay(Widget * widget) const;
 
     };
 
