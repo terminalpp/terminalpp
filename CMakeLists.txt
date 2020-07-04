@@ -40,6 +40,8 @@ file(GLOB_RECURSE ALL_SOURCES
   "tools/*.cpp"
   "tpp-bypass/*.h"
   "tpp-bypass/*.cpp"
+  "tpp-server/*.h"
+  "tpp-server/*.cpp"
   "tpp-lib/*.h"
   "tpp-lib/*.cpp"
   "ui/*.h"
@@ -95,6 +97,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 #
 # All libraries and executables produced by the main buildscript are included now. Some subprojects only make sense for certain platforms, see their respective CMakeLists.txt for details.
 add_subdirectory("tpp-bypass")
+add_subdirectory("tpp-server")
 add_subdirectory("tpp-lib")
 add_subdirectory("ropen")
 add_subdirectory("ui")

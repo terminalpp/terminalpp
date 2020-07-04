@@ -18,7 +18,9 @@ namespace ui3 {
     class Layout {
     public:
 
-        static Layout * const None;
+        static Layout * None();
+
+        static Layout * Maximized(); 
 
         virtual ~Layout() {
         }

@@ -23,9 +23,8 @@ namespace ui3 {
         virtual ~Widget() {
             for (Widget * child : children_)
                 delete child;
-            // layout is owned, except for the singleton None layout
-            if (layout_ != Layout::None)
-                delete layout_;
+            // layout is owned
+            delete layout_;
         }
         // ========================================================================================
         /** \name Event Scheduling
@@ -133,67 +132,30 @@ namespace ui3 {
 
         protected:
 
-            /** Bring canvas' visible area to own scope so that it can be used by children. 
+            /** Returns the contents size. 
+
              */
-            using VisibleArea = Canvas::VisibleArea;
+            virtual Size contentsSize() const {
+                return rect_.size();
+            }
 
-            /**
-                # Example Scenarios
+            /** Returns the scroll offset of the contents. 
+             */
+            Point scrollOffset() const {
+                return scrollOffset_;
+            }
 
-                Without any autosizing the layout process with a parent and child proceeds in the following way:
-
-                - (p1) parent's relayout() is invoked, sets layouting_ to true to indicate relayout in progress
-                - (p2) parent relayouts its contents, this calls move() and resize() of the child, which would trigger relayout of the parent (but since layouting is in progress, these are no-ops, but they fire the respective events), calling resize() on the child sets its pendingRelayout_ flag
-                - (p3) parent sets pendingRelayout_ to false
-                - (p4) parent calls relayout() on any children than have pendingRelayout_ flag on (there is no autosizing so these will not re-invoke parents' relayout() method)
-                - (c1) child's relayout() is invoked, sets the layouting_ flag
-                - (c2-4) identical to **p2-4**
-                - (c5) child checks pendingRelayout_, which is  (i.e. no resizes of its children in **c4**, so the layout is valid)
-                - (c6) child checks its autosize, but no change, so layout is valid
-                - (c7) 
-                - (c6) child checks pendingRelayout_ (if there was any that means relayouting its children )
-                - (p5) parent checks its getAutosizeHint() method, which in the absence of autosizing returns current size, so no resize of parent will happen
-                - (p6) parent  
-
-
-                With widget whose child autosizes, such as a label that has its width determined by layout, but height determined by the text itself, and with the parent widget being autosized too (height to be that of its children), the following happens:
-
-                - (p1) parent's relayout is invoked, sets layouting_) to true to indicate relayout in progress
-                - (p2) parent relayouts its child widgets using its layout
-                - (pl1) the layout determines that child's height is autosized and will not update it, but updates width according to the layout, calling resize() on the child
-                - (cr1) the resize calls relayout of parent (since parent relayouts, this does nothing )
-
-
-                Without autosize, for top widget (i.e. resize triggered by user) is simple:
-
-                1) set layouting_ to true
-                2) relayout itself (resize & move children, resized children set their pendingRelayout_ flags)
-                3) set pendingRelayout_ to false
-                4) relayout children that have pending relayouts (none of these change their size, so they will not attempt to trigger relayout in parent)
-                5) since the widget itself does not do autosize, it is not resized itself, so no parent relayout happens
-                6) since there were no parent relayouts triggered in 4), we are done with relayouting
-                7) parent is not relayouting itself (i.e. we are the root), so set layouting_ to false
-                8) our size and children's layout are correct (getAutosizeHint() returns current size)
-                9) update visible areas transitively
-                10) repaint
-
-                From child's point of view, whose resize was triggered by parent relayout, the following happens:
-
-                1) set layouting_ to true
-                2-6) like previous example
-                7) parent is relayouting (our relayout was triggered from its 4), set layouting_ to false and don't do anything, the root of relayout will do the visible area update & repaint
-
-                If the child has autoresize property *and* gets resized during the layout, then the following happens:
-
-                1-3) on parent are identical as in the first case
-                then child gets relayouted, which in its stem 
-
-                - then do child that has autoresize
-                - and finally parent that has autoresize
-
-            
-            */
-            void relayout();
+            /** Updates the scroll offset of the widget. 
+             
+                When offset changes, the visible area must be recalculated and the widget repainted. 
+             */
+            virtual void setScrollOffset(Point const & value) {
+                if (value != scrollOffset_) {
+                    scrollOffset_ = value;
+                    updateVisibleArea();
+                    repaint();
+                } 
+            }
 
             /** Returns the hint about the contents size of the widget. 
              
@@ -204,31 +166,19 @@ namespace ui3 {
                 NOT_IMPLEMENTED;
             }
 
-            /** Returns the contents visible area of the widget. 
-             
-                Default implementation returns the visible area of the widget itself. However, this method can be overriden to provide specific behavior for widgets supporting scrolling, borders, etc. 
-             */
-            virtual VisibleArea getContentsVisibleArea() {
-                return visibleArea_;
-            }
-        
+            void relayout();
+
         private:
+        
+            /** Bring canvas' visible area to own scope so that it can be used by children. 
+             */
+            using VisibleArea = Canvas::VisibleArea;
 
             /** Obtains the contents visible area of the parent and then updates own and children's visible areas. 
              */
             void updateVisibleArea();
 
-            /** Given a contents visible area of the parent, updates own visible area and that of its children. 
-             */
-            void updateVisibleArea(Canvas::VisibleArea const & parent) {
-                {
-                    std::lock_guard<std::mutex> g{rendererGuard_};
-                    visibleArea_ = parent.clip(rect_);
-                }
-                Canvas::VisibleArea contentsArea = getContentsVisibleArea();
-                for (Widget * child : children_)
-                    child->updateVisibleArea(contentsArea);
-            }
+            void updateVisibleArea(VisibleArea const & parentArea);
 
             /** Visible area of the widget. 
              */
@@ -238,25 +188,29 @@ namespace ui3 {
              */
             Rect rect_;
 
+            /** The offset of the visible area in the contents rectangle. 
+             */
+            Point scrollOffset_;
+
             /** Visibility of the widget. 
              */
-            bool visible_;
+            bool visible_ = true;
 
             /** If true, the widget's relayout should be called after its parent relayout happens. Calling resize 
              */
-            bool pendingRelayout_;
+            bool pendingRelayout_ = false;
 
             /** True if the widget is currently being relayouted. 
              */
-            bool relayouting_;
+            bool relayouting_ = false;
 
             /** True if parts of the widget can be covered by other widgets that will be painted after it.
              */
-            bool overlaid_;
+            bool overlaid_ = false;
 
             /** The layout implementation for the widget. 
              */
-            Layout * layout_ = Layout::None;
+            Layout * layout_ = Layout::None();
 
             SizeHint widthHint_;
             SizeHint heightHint_;

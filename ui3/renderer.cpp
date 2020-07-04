@@ -67,6 +67,15 @@ namespace ui3 {
 
     // Layouting and painting
 
+    void Renderer::resize(Size const & value) {
+        if (buffer_.size() != value) {
+            buffer_.resize(value);
+            // resize the root widget if any
+            if (root_ != nullptr)
+                root_->resize(value);
+        }
+    }
+
     void Renderer::paint(Widget * widget) {
         if (renderWidget_ == nullptr)
             renderWidget_ = widget;
@@ -82,7 +91,6 @@ namespace ui3 {
         if (renderWidget_ == nullptr)
             return;
         // lock the buffer in priority mode and paint the widget (this also clears the pending repaint flags)
-        std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
         renderWidget_->paint();
         // render the visible area of the widget, still under the priority lock
         render(buffer_, renderWidget_->visibleArea_.bufferRect());

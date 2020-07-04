@@ -169,6 +169,22 @@ namespace ui3 {
             return topLeft_ + size_;
         }
 
+        int top() const {
+            return topLeft_.y();
+        }
+
+        int left() const {
+            return topLeft_.x();
+        }
+
+        int bottom() const {
+            return topLeft_.y() + size_.height();
+        }
+
+        int right() const {
+            return topLeft_.x() + size_.width();
+        }
+
         Size size() const {
             return size_;
         }

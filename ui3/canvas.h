@@ -53,6 +53,10 @@ namespace ui3 {
                 return VisibleArea(renderer_, offset_ + rect.topLeft(), (rect_ & rect) - rect.topLeft());
             }
 
+            VisibleArea offset(Point const & by) const {
+                NOT_IMPLEMENTED;
+            }
+
         private:
 
             VisibleArea(Renderer * renderer, Point const & offset, Rect const & rect):

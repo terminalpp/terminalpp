@@ -119,7 +119,62 @@ namespace ui3 {
             NOT_IMPLEMENTED;
         }
     }
+    /**
+        # Example Scenarios
 
+        Without any autosizing the layout process with a parent and child proceeds in the following way:
+
+        - (p1) parent's relayout() is invoked, sets layouting_ to true to indicate relayout in progress
+        - (p2) parent relayouts its contents, this calls move() and resize() of the child, which would trigger relayout of the parent (but since layouting is in progress, these are no-ops, but they fire the respective events), calling resize() on the child sets its pendingRelayout_ flag
+        - (p3) parent sets pendingRelayout_ to false
+        - (p4) parent calls relayout() on any children than have pendingRelayout_ flag on (there is no autosizing so these will not re-invoke parents' relayout() method)
+        - (c1) child's relayout() is invoked, sets the layouting_ flag
+        - (c2-4) identical to **p2-4**
+        - (c5) child checks pendingRelayout_, which is  (i.e. no resizes of its children in **c4**, so the layout is valid)
+        - (c6) child checks its autosize, but no change, so layout is valid
+        - (c7) 
+        - (c6) child checks pendingRelayout_ (if there was any that means relayouting its children )
+        - (p5) parent checks its getAutosizeHint() method, which in the absence of autosizing returns current size, so no resize of parent will happen
+        - (p6) parent  
+
+
+        With widget whose child autosizes, such as a label that has its width determined by layout, but height determined by the text itself, and with the parent widget being autosized too (height to be that of its children), the following happens:
+
+        - (p1) parent's relayout is invoked, sets layouting_) to true to indicate relayout in progress
+        - (p2) parent relayouts its child widgets using its layout
+        - (pl1) the layout determines that child's height is autosized and will not update it, but updates width according to the layout, calling resize() on the child
+        - (cr1) the resize calls relayout of parent (since parent relayouts, this does nothing )
+
+
+        Without autosize, for top widget (i.e. resize triggered by user) is simple:
+
+        1) set layouting_ to true
+        2) relayout itself (resize & move children, resized children set their pendingRelayout_ flags)
+        3) set pendingRelayout_ to false
+        4) relayout children that have pending relayouts (none of these change their size, so they will not attempt to trigger relayout in parent)
+        5) since the widget itself does not do autosize, it is not resized itself, so no parent relayout happens
+        6) since there were no parent relayouts triggered in 4), we are done with relayouting
+        7) parent is not relayouting itself (i.e. we are the root), so set layouting_ to false
+        8) our size and children's layout are correct (getAutosizeHint() returns current size)
+        9) update visible areas transitively
+        10) repaint
+
+        From child's point of view, whose resize was triggered by parent relayout, the following happens:
+
+        1) set layouting_ to true
+        2-6) like previous example
+        7) parent is relayouting (our relayout was triggered from its 4), set layouting_ to false and don't do anything, the root of relayout will do the visible area update & repaint
+
+        If the child has autoresize property *and* gets resized during the layout, then the following happens:
+
+        1-3) on parent are identical as in the first case
+        then child gets relayouted, which in its stem 
+
+        - then do child that has autoresize
+        - and finally parent that has autoresize
+
+    
+    */
     void Widget::relayout() {
         // don't do anything if already relayouting (this silences the move & resize updates from the child widgets), however set the pending relayout to true
         if (relayouting_) {
@@ -160,16 +215,25 @@ namespace ui3 {
         relayouting_ = false;
     }
 
-    /** If the widget has normal parent, its contents visible are is used. If the parent is not attached, or non-existent, no visible areas are updated. If the widget is root widget, then renderer's visible area is used. 
+    /** If the widget has normal parent, its contents visible area is used. If the parent is not attached, or non-existent, no visible areas are updated. If the widget is root widget, then renderer's visible area is used. 
      */
     void Widget::updateVisibleArea() {
-        if (isRootWidget())
-            updateVisibleArea(visibleArea_.renderer()->visibleArea());
-        else if (parent_ != nullptr && parent_->visibleArea_.attached())
-            updateVisibleArea(parent_->getContentsVisibleArea());
-        // otherwise do nothing (the widget is not attached and neither is its parent)
-        ASSERT(! visibleArea_.attached());
+        if (isRootWidget()) 
+            updateVisibleArea(renderer()->visibleArea());
+        else if (parent_ != nullptr && parent_->visibleArea_.attached()) 
+            updateVisibleArea(parent_->visibleArea_);
+        else 
+            // otherwise do nothing (the widget is not attached and neither is its parent)
+            ASSERT(! visibleArea_.attached());
     }
+
+    void Widget::updateVisibleArea(VisibleArea const & parentArea) {
+        ASSERT(parentArea.attached());
+        visibleArea_ = parentArea.clip(rect_).offset(scrollOffset_);
+        for (Widget * child : children_)
+            child->updateVisibleArea(visibleArea_);
+    }
+
 
     // ============================================================================================
     // Painting

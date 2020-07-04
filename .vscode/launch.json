@@ -6,6 +6,7 @@
     "configurations": [
 
 
+
         {
             "name": "(win) terminalpp",
             "type": "cppvsdbg",
@@ -41,6 +42,25 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build-GCC for x86_64-linux-gnu 9.3.0/ropen/ropen",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(linux) tpp-server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build-g++-8/tpp-server/tpp-server",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

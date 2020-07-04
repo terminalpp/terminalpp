@@ -7,7 +7,7 @@ namespace ui3 {
 
     namespace {
 
-        class NoLayout : public Layout {
+        class NoneLayout : public Layout {
         public:
 
             void layout(Widget * widget) const override {
@@ -15,12 +15,30 @@ namespace ui3 {
             }
 
 
-        }; // NoLayout
+        }; // NoneLayout
+
+        class MaximizedLayout : public Layout {
+        public:
+            void layout(Widget * widget) const override {
+
+            }
+
+            void calculateOverlay(Widget * widget) const override {
+
+            }
+
+        }; // MaximizedLayout
 
 
     } // anonymous namespace
 
-    Layout * const Layout::None = new NoLayout{};
+    Layout * Layout::None() {
+        return new NoneLayout{};
+    }
+
+    Layout * Layout::Maximized() {
+        return new MaximizedLayout{};
+    }
 
     void Layout::calculateOverlay(Widget * widget) const {
         Rect r;

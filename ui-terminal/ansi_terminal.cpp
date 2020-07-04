@@ -1207,7 +1207,7 @@ namespace ui {
 				case 2:
 					LOG(SEQ_WONT_SUPPORT) << "faint font";
 					break;
-				/* Italics */
+				/* Italic */
 				case 3:
 					state_.cell.setFont(state_.cell.font().setItalic());
 					LOG(SEQ) << "italics set";
@@ -1247,10 +1247,10 @@ namespace ui {
 					state_.cell.setFont(state_.cell.font().setBold(false).setItalic(false));
 					LOG(SEQ) << "normal font set";
 					break;
-				/* Italics off. */
+				/* Italic off. */
 				case 23:
 					state_.cell.setFont(state_.cell.font().setItalic(false));
-					LOG(SEQ) << "italics off";
+					LOG(SEQ) << "italic off";
 					break;
 				/* Disable underline. */
 				case 24:

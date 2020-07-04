@@ -266,6 +266,16 @@ namespace ui3 {
             }
         }
 
+    protected:
+
+        Renderer(Size const & size):
+            buffer_{size} {
+            }
+
+        Renderer(std::pair<int, int> const & size):
+            Renderer(Size{size.first, size.second}) {
+        }
+
 
     // ============================================================================================
     /** \name Events & Scheduling
@@ -342,8 +352,18 @@ namespace ui3 {
     /** \name Layouting and Painting
      */
     //@{
+    public:
+
+        Size const & size() const {
+            return buffer_.size();
+        }
 
     protected: 
+
+        /** Resizes the renderer. 
+         
+         */
+        virtual void resize(Size const & value);
 
         unsigned fps() const {
             return fps_; // only UI thread can change fps, no need to lock
@@ -366,7 +386,6 @@ namespace ui3 {
             return Canvas::VisibleArea{this, Point{0,0}, Rect{buffer_.size()}};
         }
 
-
     private:
 
         virtual void render(Buffer const & buffer, Rect const & rect) = 0;
@@ -381,7 +400,6 @@ namespace ui3 {
         void startRenderer();
 
         Buffer buffer_;
-        PriorityLock bufferLock_;
         Widget * renderWidget_{nullptr};
         std::atomic<unsigned> fps_{60};
         std::thread renderer_;
