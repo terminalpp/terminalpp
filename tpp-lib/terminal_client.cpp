@@ -13,6 +13,7 @@ namespace tpp {
         buffer_{new char[DEFAULT_BUFFER_SIZE]},
         bufferSize_{DEFAULT_BUFFER_SIZE},
         bufferUnprocessed_{0} {
+        pty_->onResized.setHandler(& TerminalClient::resized, this);
         reader_ = std::thread{[this](){
             while (true) {
                 size_t read = pty_->receive(buffer_ + bufferUnprocessed_, bufferSize_ - bufferUnprocessed_);

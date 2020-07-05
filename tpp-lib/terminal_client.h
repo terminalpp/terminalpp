@@ -27,6 +27,8 @@ namespace tpp {
             delete [] buffer_;
         }
 
+        using ResizeEvent = PTYSlave::ResizeEvent;
+
     protected:
 
         TerminalClient(PTYSlave * pty);
@@ -46,9 +48,8 @@ namespace tpp {
             MARK_AS_UNUSED(bufferEnd);
         }
 
-        virtual void resized(int cols, int rows) {
-            MARK_AS_UNUSED(cols);
-            MARK_AS_UNUSED(rows);
+        virtual void resized(ResizeEvent::Payload & e) {
+            MARK_AS_UNUSED(e);
         }
 
         /** Sends given buffer using the attached terminal. 
@@ -64,6 +65,8 @@ namespace tpp {
         }
 
         virtual void processInput(char * start, char const * end);
+
+    private:
 
         PTYSlave * pty_;
         std::thread reader_;

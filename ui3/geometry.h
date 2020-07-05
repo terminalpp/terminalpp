@@ -250,6 +250,6 @@ namespace ui3 {
             return true;
         }
 
-    }; 
+    };
 
 } // namespace ui

@@ -28,6 +28,7 @@ namespace ui3 {
         void paint(Canvas & canvas) override {
             canvas.fill(canvas.rect(), background_);
             Widget::paint(canvas);
+            // TODO draw the border
         }
 
         Color background_ = Color::Red;

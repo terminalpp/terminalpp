@@ -90,7 +90,7 @@ namespace tpp {
      */
     class PTYSlave : public PTYBase {
     public:
-        using ResizedEvent = Event<std::pair<int,int>, PTYSlave>;
+        using ResizeEvent = Event<std::pair<int,int>, PTYSlave>;
 
         /** Returns the size of the terminal (cols, rows). 
          */
@@ -98,7 +98,7 @@ namespace tpp {
 
         /** An event triggered when the terminal is resized. 
          */
-        ResizedEvent onResized;
+        ResizeEvent onResized;
 
     }; // tpp::PTYSlave
 

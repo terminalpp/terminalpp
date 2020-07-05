@@ -50,8 +50,10 @@ Issues to be raised:
 
 UI version 3
 
+- do basic layouts
 - locks.h - remove grabber & smartptr, make priority lock non-reentrant
 - ansi-renderer should go to ansi-terminal
+- Ctrl-C does not work for terminal client bare - it does in ropen so maybe add some event, etc. 
 
 # Roadmap
 

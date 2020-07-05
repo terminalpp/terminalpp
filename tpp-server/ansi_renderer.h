@@ -26,12 +26,8 @@ namespace ui3 {
 
         void render(Buffer const & buffer, Rect const & rect) override;
 
-        void resized(int cols, int rows) override {
-            MARK_AS_UNUSED(cols);
-            MARK_AS_UNUSED(rows);
-            // TODO this must be event
-            // does not fire actually
-            // Renderer::resize(Size{cols, rows});
+        void resized(ResizeEvent::Payload & e) override {
+            pushEvent(Event::Resize(e->first, e->second));
         }
 
         size_t received(char const * buffer, char const * bufferEnd) override {
@@ -63,6 +59,9 @@ namespace ui3 {
                     case Event::Kind::User:
                         processEvent();
                         break;
+                    case Event::Kind::Resize:
+                        Renderer::resize(Size{e.payload.size.first, e.payload.size.second});
+                        break;
                     default:
                         // TODO unknown event
                         break;
@@ -80,8 +79,16 @@ namespace ui3 {
 
             Kind kind;
 
+            union {
+                std::pair<int, int> size;
+            } payload;
+
             static Event User() {
                 return Event{Kind::User};
+            }
+
+            static Event Resize(int cols, int rows) {
+                return Event{Kind::Resize, std::make_pair(cols, rows)};
             }
         }; // AnsiRenderer::Event
 
