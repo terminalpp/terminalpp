@@ -1,13 +1,12 @@
 #pragma once
 
+#include "../widget.h"
+
 namespace ui3 {
 
     /** Panel implementation. 
      */
     class CustomPanel : public Widget {
-
-
-
     public:
         void repaint() {
             if (background_.opaque() || parent() == nullptr)
@@ -26,9 +25,12 @@ namespace ui3 {
             return Widget::allowRepaintRequest(immediateChild);
         }
 
-    private:
+        void paint(Canvas & canvas) override {
+            canvas.fill(canvas.rect(), background_);
+            Widget::paint(canvas);
+        }
 
-        Color background_;
+        Color background_ = Color::Red;
         Border border_;
 
     }; // ui::CustomPanel

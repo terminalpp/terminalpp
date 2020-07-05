@@ -211,6 +211,7 @@ namespace tpp {
         static volatile bool Interrupted_;
 
         static void SIGINT_handler(int signo) {
+            MARK_AS_UNUSED(signo);
             Interrupted_ = true;
         }
             

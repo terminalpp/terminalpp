@@ -220,6 +220,12 @@ HELPERS_NAMESPACE_BEGIN
 			ASSERT(c >= 0) << "ASCII out of range";
 		}
 
+        /** Creates the character from an unencoded (UTF32) 32bit codepoint. 
+         */
+        Char(char32_t codepoint) {
+            fillFromCodepoint(codepoint);
+        }
+
 		Char(Char const& from) = default;
 
 		Char & operator = (Char const & from) = default;
@@ -241,7 +247,7 @@ HELPERS_NAMESPACE_BEGIN
 		/** Creates the character from given ASCII character. 
 		 */
 		static Char FromASCII(char x) {
-			return FromCodepoint(x);
+			return Char{static_cast<char32_t>(x)};
 		}
 
 		/** Creates the character from given UTF16 character stream, advancing the stream accordingly. 
@@ -253,7 +259,7 @@ HELPERS_NAMESPACE_BEGIN
 				THROW(CharError()) << "Cannot read character, buffer overflow";
 			// range < 0xd800 and >= 0xe000 are the codepoints themselves, single byte
 			if (*x < 0xd800 || *x >= 0xe000)
-				return FromCodepoint(*x++);
+				return Char(static_cast<char32_t>(*x++));
 			if (x + 1 >= end)
 				THROW(CharError()) << "Cannot read character, buffer overflow";
 			// otherwise the stored value is a codepoint which is above 0x10000
@@ -265,7 +271,7 @@ HELPERS_NAMESPACE_BEGIN
 			if (x != end && (*x >= 0xdc00 && *x < 0xdfff)) // low end surrogate pair or low unpaired surrogate
 				cp += (*(x++) - 0xdc00);
 			// don't forget to increment the codepoint
-			return FromCodepoint(cp + 0x10000);
+			return Char{static_cast<char32_t>(cp + 0x10000)};
 		}
 
 		/** Returns the UTF8 encoded character at the given address. 
@@ -293,14 +299,6 @@ HELPERS_NAMESPACE_BEGIN
 				i += 4;
 			    return Char{u[0], u[1], u[2], u[3]};
 			}
-		}
-
-		/** Creates the character from given unicode codepoint. 
-		 */
-		static Char FromCodepoint(char32_t cp) {
-			Char result;
-			result.fillFromCodepoint(cp);
-			return result;
 		}
 
 		/** Returns the number of bytes required to encode the stored codepoint.

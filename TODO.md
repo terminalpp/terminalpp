@@ -52,7 +52,6 @@ UI version 3
 
 - locks.h - remove grabber & smartptr, make priority lock non-reentrant
 - ansi-renderer should go to ansi-terminal
-- add a way to unlock the buffer before the end of the render function, or actually force explicit buffer lock
 
 # Roadmap
 

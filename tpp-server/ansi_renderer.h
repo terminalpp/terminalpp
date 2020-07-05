@@ -27,16 +27,22 @@ namespace ui3 {
         void render(Buffer const & buffer, Rect const & rect) override;
 
         void resized(int cols, int rows) override {
+            MARK_AS_UNUSED(cols);
+            MARK_AS_UNUSED(rows);
             // TODO this must be event
             // does not fire actually
             // Renderer::resize(Size{cols, rows});
         }
 
         size_t received(char const * buffer, char const * bufferEnd) override {
+            MARK_AS_UNUSED(buffer);
+            MARK_AS_UNUSED(bufferEnd);
             return 0;
         }
 
         void receivedSequence(tpp::Sequence::Kind, char const * buffer, char const * bufferEnd) {
+            MARK_AS_UNUSED(buffer);
+            MARK_AS_UNUSED(bufferEnd);
             NOT_IMPLEMENTED;
         }
 

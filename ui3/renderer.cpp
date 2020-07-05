@@ -54,6 +54,22 @@ namespace ui3 {
 
     // Widget Tree
 
+    void Renderer::setRoot(Widget * value) {
+        if (root_ != value) {
+            if (root_ != nullptr)
+                detachTree(root_);
+            root_ = value;
+            if (value != nullptr) {
+                root_->visibleArea_.attach(this);
+                if (root_->rect().size() != size())
+                    root_->resize(size());
+                else
+                    root_->relayout();
+            }
+        }
+    }
+
+
     void Renderer::detachWidget(Widget * widget) {
         {
             // detach the visible area

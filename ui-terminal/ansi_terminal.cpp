@@ -1816,7 +1816,7 @@ namespace ui {
             // analyze the line and add it to the selection now
             std::stringstream line;
             for (; col < endCol; ) {
-                line << Char::FromCodepoint(rowCells[col].codepoint());
+                line << Char{rowCells[col].codepoint()};
                 if (isEndOfLine(rowCells[col]))
                     line << std::endl;
                 col += rowCells[col].font().width();

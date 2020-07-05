@@ -98,7 +98,7 @@ namespace ui3 {
         }
         // finally, trigger the onMove event in case parent's relayout did not change own values
         if (rect_.topLeft() == topLeft) {
-            NOT_IMPLEMENTED;
+            //NOT_IMPLEMENTED;
         }
     }
 
@@ -116,7 +116,7 @@ namespace ui3 {
         }
         // finally trigger the on resize event in case the above relayouts did not change the size themselves
         if (rect_.size() == size) {
-            NOT_IMPLEMENTED;
+            //NOT_IMPLEMENTED;
         }
     }
     /**
@@ -208,9 +208,11 @@ namespace ui3 {
             layout_->calculateOverlay(this);
             break;
         } 
-        // own layout is valid, if we are root of the relayouting subtree (i.e. parent is not relayouting) we must update the visible areas. If we are root element, we must relayout too
-        if ((parent_ != nullptr && ! parent_->relayouting_) || isRootWidget())
+        // own layout is valid, if we are root of the relayouting subtree (i.e. parent is not relayouting) we must update the visible areas and repaint. If we are root element, we must relayout too
+        if ((parent_ != nullptr && ! parent_->relayouting_) || isRootWidget()) {
             updateVisibleArea();
+            repaint();
+        }
         // relayouting is done
         relayouting_ = false;
     }

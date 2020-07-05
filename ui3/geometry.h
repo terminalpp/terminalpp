@@ -243,5 +243,13 @@ namespace ui3 {
         Size size_;
     };
 
+    class Border {
+    public:
+
+        bool empty() {
+            return true;
+        }
+
+    }; 
 
 } // namespace ui

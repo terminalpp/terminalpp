@@ -163,7 +163,8 @@ namespace ui3 {
 
              */
             virtual Size getAutosizeHint() {
-                NOT_IMPLEMENTED;
+                // TODO change this based on the hints 
+                return rect_.size();
             }
 
             void relayout();
@@ -239,7 +240,7 @@ namespace ui3 {
              */        
             void paint() {
                 pendingRepaint_.clear();
-                Canvas canvas{visibleArea_};
+                Canvas canvas{visibleArea_, contentsSize()};
                 paint(canvas);
             }
 
@@ -257,13 +258,19 @@ namespace ui3 {
              */
             virtual bool allowRepaintRequest(Widget * immediateChild);
 
-        private:
-
             /** Actual paint method. 
              
-                Override this method in subclasses to actually paint the widget's contents using the provided canvas. 
+                Override this method in subclasses to actually paint the widget's contents using the provided canvas. The default implementation simply paints the widget's children. 
              */
-            virtual void paint(Canvas & canvas) = 0;
+            virtual void paint(Canvas & canvas) {
+                MARK_AS_UNUSED(canvas);
+                for (Widget * child : children_) {
+                    if (child->visible())
+                        child->paint();
+                }
+            }
+
+        private:
 
             std::atomic_flag pendingRepaint_;
 

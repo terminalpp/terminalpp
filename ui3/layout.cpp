@@ -11,6 +11,7 @@ namespace ui3 {
         public:
 
             void layout(Widget * widget) const override {
+                MARK_AS_UNUSED(widget);
                 // actually do nothing
             }
 
@@ -20,10 +21,12 @@ namespace ui3 {
         class MaximizedLayout : public Layout {
         public:
             void layout(Widget * widget) const override {
+                MARK_AS_UNUSED(widget);
 
             }
 
             void calculateOverlay(Widget * widget) const override {
+                MARK_AS_UNUSED(widget);
 
             }
 

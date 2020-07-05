@@ -1,3 +1,4 @@
+#include "helpers/char.h"
 #include "helpers/ansi_sequences.h"
 
 #include "ansi_renderer.h"
@@ -67,7 +68,7 @@ namespace ui3 {
                     s << ansi::Blink(state.font().blink());
                 }
                 // finally output the codepoint
-                s << c.codepoint();
+                s << Char{c.codepoint()};
             }
         }
         // TODO this is a very unnecessary copy, should be fixed

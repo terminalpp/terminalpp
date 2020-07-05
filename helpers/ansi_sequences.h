@@ -52,7 +52,7 @@ namespace ansi {
     private:
         unsigned char const r, g, b;
         friend std::ostream & operator << (std::ostream & s, Fg const & x) {
-            s << CSI << "38;2;" << x.r << ';' << x.g << ';' << x.b << 'm';
+            s << CSI << "38;2;" << static_cast<unsigned>(x.r) << ';' << static_cast<unsigned>(x.g) << ';' << static_cast<unsigned>(x.b) << 'm';
             return s;
         }
     };
@@ -62,7 +62,7 @@ namespace ansi {
     private:
         unsigned char const r, g, b;
         friend std::ostream & operator << (std::ostream & s, Bg const & x) {
-            s << CSI << "48;2;" << x.r << ';' << x.g << ';' << x.b << 'm';
+            s << CSI << "48;2;" << static_cast<unsigned>(x.r) << ';' << static_cast<unsigned>(x.g) << ';' << static_cast<unsigned>(x.b) << 'm';
             return s;
         }
     };
