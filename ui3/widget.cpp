@@ -90,7 +90,7 @@ namespace ui3 {
         if (rect_.topLeft() == topLeft)
             return;
         rect_.move(topLeft);
-        // tell parent to relayout
+        // tell parent to relayout (which may change the move coordinates, or does nothing if already relayouting, i.e. triggered by relayout of parent to begin with)
         if (parent_ != nullptr) {
             parent_->relayout();
         } else {
@@ -106,17 +106,17 @@ namespace ui3 {
         // don't do anything if no-op
         if (rect_.size() == size) 
             return;
+        // update the size and relayout the widget itself, which updates its contents to the new size and if the widget is autosized and this would change, triggers new resize event.
         rect_.resize(size);
-        // tell parent to relayout and mark own layput as pending to be sure parent triggers it, if we have no parent, relayout itself (root widget or unattached)
-        if (parent_ != nullptr) {
-            pendingRelayout_ = true;
-            parent_->relayout();
-        } else {
-            relayout();
-        }
-        // finally trigger the on resize event in case the above relayouts did not change the size themselves
+        relayout();
+        // if the size was not changed by the layout, we must inform the parent of our resize
         if (rect_.size() == size) {
-            //NOT_IMPLEMENTED;
+            if (parent_ != nullptr)
+                parent_->relayout();
+            // finally trigger the on resize event in case the above relayouts did not change the size themselves
+            if (rect_.size() == size) {
+                //NOT_IMPLEMENTED;
+            }
         }
     }
     /**
@@ -178,36 +178,36 @@ namespace ui3 {
     void Widget::relayout() {
         // don't do anything if already relayouting (this silences the move & resize updates from the child widgets), however set the pending relayout to true
         if (relayouting_) {
-            pendingRelayout_ = true;
+            //pendingRelayout_ = true;
             return;
         }
         // set the relayout in progress flag and clear any pending relayouts as we are doing them now
         relayouting_ = true;
-        while (true) {
+        //while (true) {
             // relayout the children, this calculates their sizes and positions and sets their pending relayouts
             layout_->layout(this);
-            pendingRelayout_ = false;
+            //pendingRelayout_ = false;
             // now relayout any pending children, if these resize themselves while being relayouted, they will call parent's relayout which would flip the pendingRelayout_ to true
-            for (Widget * child : children_)
-                if (child->pendingRelayout_)
-                    child->relayout();
+            //for (Widget * child : children_)
+            //    if (child->pendingRelayout_)
+            //        child->relayout();
             // if any of the pending children relayouts triggered relayout in parent, the flag tells us and we need to relayout everything
-            if (pendingRelayout_)
-                continue;
+            //if (pendingRelayout_)
+            //    continue;
             // children have been adjusted, it is time to adjust ourselves and see if there has been change or not
             Size size = getAutosizeHint();
             if (size != rect_.size()) {
                 // we are done with layouting
                 relayouting_ = false;
-                pendingRelayout_ = false;
+                //pendingRelayout_ = false;
                 // resize to the provided size - this either triggers parent relayout, or own relayout, which will take precedence over this one
                 resize(size);
                 return;
             }
             // own size and layout are valid, we are done relayouting, calculate overlays
             layout_->calculateOverlay(this);
-            break;
-        } 
+        //    break;
+        //} 
         // own layout is valid, if we are root of the relayouting subtree (i.e. parent is not relayouting) we must update the visible areas and repaint. If we are root element, we must relayout too
         if ((parent_ != nullptr && ! parent_->relayouting_) || isRootWidget()) {
             updateVisibleArea();

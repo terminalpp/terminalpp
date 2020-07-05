@@ -30,17 +30,9 @@ namespace ui3 {
             pushEvent(Event::Resize(e->first, e->second));
         }
 
-        size_t received(char const * buffer, char const * bufferEnd) override {
-            MARK_AS_UNUSED(buffer);
-            MARK_AS_UNUSED(bufferEnd);
-            return 0;
-        }
-
-        void receivedSequence(tpp::Sequence::Kind, char const * buffer, char const * bufferEnd) {
-            MARK_AS_UNUSED(buffer);
-            MARK_AS_UNUSED(bufferEnd);
-            NOT_IMPLEMENTED;
-        }
+        size_t received(char const * buffer, char const * bufferEnd) override;
+        
+        void receivedSequence(tpp::Sequence::Kind, char const * buffer, char const * bufferEnd) override;
 
     private:
 

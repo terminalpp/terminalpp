@@ -20,6 +20,11 @@ namespace ui3 {
         friend class Layout;
     public:
 
+        Widget() {
+            // widget starts detached and detached widget's pending repaint must be set
+            pendingRepaint_.test_and_set();
+        }
+
         virtual ~Widget() {
             for (Widget * child : children_)
                 delete child;
@@ -199,7 +204,7 @@ namespace ui3 {
 
             /** If true, the widget's relayout should be called after its parent relayout happens. Calling resize 
              */
-            bool pendingRelayout_ = false;
+            //bool pendingRelayout_ = false;
 
             /** True if the widget is currently being relayouted. 
              */

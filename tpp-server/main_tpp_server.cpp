@@ -28,7 +28,13 @@ int main(int argc, char * argv[]) {
     using namespace tpp;
 //    try {
         AnsiRenderer renderer{new LocalPTYSlave()};
-        CustomPanel * p = new CustomPanel();
+        Panel * p = new Panel();
+        p->setBackground(Color::Blue);
+        Panel * p2 = new Panel();
+        p2->setBackground(Color::Red);
+        p2->resize(Size{10, 10});
+        p2->move(Point{2,2});
+        p->attach(p2);
         renderer.setRoot(p);
 
         renderer.mainLoop();

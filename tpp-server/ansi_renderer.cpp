@@ -76,4 +76,24 @@ namespace ui3 {
         send(x.c_str(), x.size());
     }
 
+    size_t AnsiRenderer::received(char const * buffer, char const * bufferEnd) {
+        // TODO this must be smarter detection and actually raise stuff and so on
+        for (char const * i = buffer; i != bufferEnd; ++i)
+            if (*i == '\003') // Ctrl + C
+#if (defined ARCH_UNIX)
+                raise(SIGINT);
+#else
+                exit(EXIT_FAILURE);
+#endif
+        return 0;
+    }
+
+    void AnsiRenderer::receivedSequence(tpp::Sequence::Kind, char const * buffer, char const * bufferEnd) {
+        MARK_AS_UNUSED(buffer);
+        MARK_AS_UNUSED(bufferEnd);
+        NOT_IMPLEMENTED;
+    }
+
+
+
 } // namespace ui

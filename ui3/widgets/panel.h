@@ -17,6 +17,17 @@ namespace ui3 {
 
     protected:
 
+        Color background() const {
+            return background_;
+        }
+
+        virtual void setBackground(Color value) {
+            if (background_ != value) {
+                background_ = value;
+                repaint();
+            }
+        }
+
         bool allowRepaintRequest(Widget * immediateChild) override {
             if (! border_.empty()) {
                 repaint();
@@ -31,10 +42,20 @@ namespace ui3 {
             // TODO draw the border
         }
 
-        Color background_ = Color::Red;
+        Color background_;
         Border border_;
 
     }; // ui::CustomPanel
+
+    class Panel : public CustomPanel {
+    public:
+        using Widget::attach;
+        using Widget::attachBack;
+        using Widget::detach;
+        using CustomPanel::background;
+        using CustomPanel::setBackground;
+
+    }; // ui::Panel
 
 
 } // namespace ui
