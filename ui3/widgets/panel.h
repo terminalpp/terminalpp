@@ -52,6 +52,10 @@ namespace ui3 {
         using Widget::attach;
         using Widget::attachBack;
         using Widget::detach;
+        using Widget::layout;
+        using Widget::setLayout;
+        using Widget::setWidthHint;
+        using Widget::setHeightHint;
         using CustomPanel::background;
         using CustomPanel::setBackground;
 

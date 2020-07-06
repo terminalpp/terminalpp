@@ -36,6 +36,9 @@ int main(int argc, char * argv[]) {
         p2->move(Point{2,2});
         p->attach(p2);
         renderer.setRoot(p);
+        p->setLayout(new Layout::Maximized{});
+        p2->setWidthHint(SizeHint::Percentage(50));
+        p2->setHeightHint(SizeHint::Percentage(50));
 
         renderer.mainLoop();
 

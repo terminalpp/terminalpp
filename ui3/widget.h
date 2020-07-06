@@ -127,6 +127,14 @@ namespace ui3 {
                 return rect_;
             }
 
+            SizeHint widthHint() const {
+                return widthHint_;
+            }
+
+            SizeHint heightHint() const {
+                return heightHint_;
+            }
+
             /** Moves the widget within its parent. 
              */
             virtual void move(Point const & topLeft);
@@ -136,6 +144,34 @@ namespace ui3 {
             virtual void resize(Size const & size);
 
         protected:
+
+            Layout * layout() const {
+                return layout_;
+            }
+
+            virtual void setLayout(Layout * value) {
+                if (layout_ != value) {
+                    delete layout_;
+                    layout_ = value;
+                    relayout();
+                }
+            }
+
+            virtual void setWidthHint(SizeHint const & value) {
+                if (widthHint_ != value) {
+                    widthHint_ = value;
+                    if (parent_ != nullptr)
+                        parent_->relayout();
+                }
+            }
+
+            virtual void setHeightHint(SizeHint const & value) {
+                if (heightHint_ != value) {
+                    heightHint_ = value;
+                    if (parent_ != nullptr)
+                        parent_->relayout();
+                }
+            }
 
             /** Returns the contents size. 
 
@@ -168,8 +204,20 @@ namespace ui3 {
 
              */
             virtual Size getAutosizeHint() {
-                // TODO change this based on the hints 
-                return rect_.size();
+                if (widthHint_ == SizeHint::AutoSize() || heightHint_ == SizeHint::AutoSize()) {
+                    Rect r;
+                    for (Widget * child : children_) {
+                        if (!child->visible())
+                            continue;
+                        r = r | child->rect_;
+                    }
+                    return Size{
+                        widthHint_ == SizeHint::AutoSize() ? r.width() : rect_.width(),
+                        heightHint_ == SizeHint::AutoSize() ? r.height() : rect_.height()
+                    };
+                } else {
+                    return rect_.size();
+                }
             }
 
             void relayout();
@@ -216,7 +264,7 @@ namespace ui3 {
 
             /** The layout implementation for the widget. 
              */
-            Layout * layout_ = Layout::None();
+            Layout * layout_ = new Layout::None{};
 
             SizeHint widthHint_;
             SizeHint heightHint_;

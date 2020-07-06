@@ -189,6 +189,14 @@ namespace ui3 {
             return size_;
         }
 
+        int width() const {
+            return size_.width();
+        }
+
+        int height() const {
+            return size_.height();
+        }
+
         void move(Point const & topLeft) {
             topLeft_ = topLeft;
         }
@@ -200,6 +208,26 @@ namespace ui3 {
         bool contains(Point const & p) const {
             return p >= topLeft_ && p < bottomRight();
         }
+
+        Point align(Rect const & rect, HorizontalAlign hAlign, VerticalAlign vAlign) const {
+            return Point{
+                align(rect.width(), hAlign),
+                align(rect.height(), vAlign)
+            };
+        }
+        Point align(Rect const & rect, HorizontalAlign hAlign) const {
+            return Point{
+                align(rect.width(), hAlign),
+                rect.top()
+            };
+        }
+        Point align(Rect const & rect, VerticalAlign vAlign) const {
+            return Point {
+                rect.left(),
+                align(rect.height(), vAlign)
+            };
+        }
+
 
         Rect operator + (Point const & p) const {
             return Rect{topLeft_ + p, size_};
@@ -238,6 +266,31 @@ namespace ui3 {
         }
 
     private:
+
+        int align(int childWidth, HorizontalAlign align) const {
+            switch (align) {
+                default:
+                case HorizontalAlign::Left:
+                    return left();
+                case HorizontalAlign::Center:
+                    return left() + (width() - childWidth) / 2;
+                case HorizontalAlign::Right:
+                    return right() - childWidth;
+            }
+        }
+
+        int align(int childHeight, VerticalAlign align) const {
+            switch (align) {
+                default:
+                case VerticalAlign::Top:
+                    return top();
+                case VerticalAlign::Middle:
+                    return top() + (height() - childHeight) / 2;
+                case VerticalAlign::Bottom:
+                    return bottom() - childHeight;
+            }
+        }
+
 
         Point topLeft_;
         Size size_;

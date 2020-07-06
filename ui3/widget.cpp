@@ -49,6 +49,7 @@ namespace ui3 {
             ASSERT(child->parent() == nullptr);
         }
         children_.push_front(child);
+        child->parent_ = this;
         relayout();
     }
 
@@ -63,6 +64,7 @@ namespace ui3 {
             ASSERT(child->parent() == nullptr);
         }
         children_.push_back(child);
+        child->parent_ = this;
         relayout();
     }
 
@@ -176,7 +178,7 @@ namespace ui3 {
     
     */
     void Widget::relayout() {
-        // don't do anything if already relayouting (this silences the move & resize updates from the child widgets), however set the pending relayout to true
+        // don't do anything if already relayouting (this silences the move & resize updates from the child widgets)
         if (relayouting_) {
             //pendingRelayout_ = true;
             return;
