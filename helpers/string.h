@@ -12,7 +12,8 @@ HELPERS_NAMESPACE_BEGIN
     /** Info about a single line of text.
 
         Useful for breaking up large string into separate lines.
-        */
+     */
+    // TODO replaced by canvas
     struct StringLine {
         int width;
         Char::iterator_utf8 begin;
@@ -140,6 +141,7 @@ HELPERS_NAMESPACE_BEGIN
 
     /** Returns the next line from the string. 
      */
+    // TODO Delete - replaced by canvas
     inline StringLine GetLine(Char::iterator_utf8 start, Char::iterator_utf8 end, int wrapAt = NoWordWrap, bool wordWrap = true) {
 		Char::iterator_utf8 i = start;
         int size = 0;

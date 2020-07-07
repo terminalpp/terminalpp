@@ -26,13 +26,47 @@ namespace ui3 {
             return size_;
         }
 
+        /** \name Text metrics
+         */
+        //@{
+
+        /** Information about a single line of text. 
+         */
+        struct TextLine {
+            /** Width of the line in cells for single-width font of size 1. 
+             */
+            int width; 
+            /** The actual number of codepoints in the line.
+             */
+            int chars;
+            /** First character of the line.
+             */
+            Char::iterator_utf8 begin;
+            /** End of the line (exclusive). 
+             */
+            Char::iterator_utf8 end;
+        }; // Canvas::TextLine
+
+        static constexpr int NoWordWrap = -1;
+
+        static std::vector<TextLine> GetTextMetrics(std::string const & text, int wordWrapAt = NoWordWrap);
+
+        static TextLine GetTextLine(Char::iterator_utf8 & begin, Char::iterator_utf8 const & end, int wordWrapAt = NoWordWrap);
+
+        //@}
+        /** \name Drawing
+         */
+        //@{
 
         Canvas & fill(Rect const & rect) {
             return fill(rect, bg_);
         }
         Canvas & fill(Rect const & rect, Color color);
 
+        //@}
+
     private:
+
 
         Color fg_;
         Color bg_;

@@ -99,8 +99,16 @@ namespace ui3 {
             return width_;
         }
 
+        void setWidth(int value) {
+            width_ = value;
+        }
+
         int height() const {
             return height_;
+        }
+
+        void setHeight(int value) {
+            height_ = value;
         }
 
         bool operator == (Size const & other) const {

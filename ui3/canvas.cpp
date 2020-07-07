@@ -11,6 +11,44 @@ namespace ui3 {
         size_{size} {
     }
 
+
+    std::vector<Canvas::TextLine> Canvas::GetTextMetrics(std::string const & text, int wordWrapAt) {
+        std::vector<TextLine> result;
+        Char::iterator_utf8 i = Char::BeginOf(text);
+        Char::iterator_utf8 e = Char::EndOf(text);
+        while (i != e)
+            result.push_back(GetTextLine(i, e, wordWrapAt));
+        return result;
+    }
+
+    Canvas::TextLine Canvas::GetTextLine(Char::iterator_utf8 & begin, Char::iterator_utf8 const & end, int wordWrapAt) {
+        TextLine l{0,0, begin, begin};
+        while (wordWrapAt == NoWordWrap || l.width < wordWrapAt) {
+            if (begin == end || Char::IsLineEnd(*begin)) {
+                l.end = begin;
+                return l;
+            }
+            l.width += Char::ColumnWidth(*begin);
+            ++l.chars;
+            ++l.end;
+        }
+        // word wrap is enabled and the line is longer, i.e. backtrack to first word separator
+        l.end = begin;
+        while (l.end != l.begin) {
+            --l.chars;
+            l.width -= Char::ColumnWidth(*l.end);
+            if (Char::IsWordSeparator(*l.end)) {
+                begin = l.end;
+                ++begin; // move *after* the word separator on the next line
+                return l;
+            }
+            --l.end;
+        }
+        // there are no words in the line, just break at the word wrap limit mid-word
+        return l;
+    }
+
+
     Canvas & Canvas::fill(Rect const & rect, Color color) {
         Rect r = (rect & visibleArea_.rect()) + visibleArea_.offset();
         if (color.opaque()) {
