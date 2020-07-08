@@ -107,9 +107,9 @@ namespace ui3 {
         /** Calculates one dimension of the widget given the size hint, current size, autosize and available size. 
          */
         int calculateDimension(SizeHint hint, int currentSize, int autoSize, int availableSize) const {
-            if (hint == SizeHint::Manual()) {
+            if (hint == SizeHint::Manual() || hint == SizeHint::AutoSize()) {
                 return currentSize;
-            } else if (hint == SizeHint::AutoSize() || hint == SizeHint::AutoLayout()) {
+            } else if (hint == SizeHint::AutoLayout()) {
                 return autoSize;
             } else {
                 return availableSize * hint.percentage() / 100;

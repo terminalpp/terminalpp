@@ -108,18 +108,20 @@ namespace ui3 {
         // don't do anything if no-op
         if (rect_.size() == size) 
             return;
-        // update the size and relayout the widget itself, which updates its contents to the new size and if the widget is autosized and this would change, triggers new resize event.
+        // update the size and relayout the widget itself, which updates its contents to the new size and if the widget is autosized and this would change, triggers new resize event. To limit extra repaints, if there is a parent that will be relayouted afterwards, the its relayouting flag is artificially set up when relayouting itself so that the own relayout won't trigger visible area update and repaint as these would be done after the parent finishes
         rect_.resize(size);
-        relayout();
-        // if the size was not changed by the layout, we must inform the parent of our resize
-        if (rect_.size() == size) {
-            if (parent_ != nullptr)
-                parent_->relayout();
-            // finally trigger the on resize event in case the above relayouts did not change the size themselves
-            if (rect_.size() == size) {
-                //NOT_IMPLEMENTED;
-            }
+        if (parent_ == nullptr || parent_->relayouting_) {
+            relayout();
+        } else {
+            parent_->relayouting_ = true;
+            relayout();
+            parent_->relayouting_ = false;
+            if (rect_.size() != size)
+                return;
+            parent_->relayout();
         }
+        // finally trigger the on resize event in case the above relayouts did not change the size themselves
+        //NOT_IMPLEMENTED;
     }
     /**
         # Example Scenarios
@@ -244,8 +246,9 @@ namespace ui3 {
 
     void Widget::repaint() {
         // if there is already pending repaint, don't do anything
-        if (pendingRepaint_.test_and_set())
+        if (pendingRepaint_ == true)
             return;
+        pendingRepaint_ = true;
         // propagate the paint event through parents so that they can decide to actually repaint themselves instead, if the repaint is allowed, instruct the renderer to repaint
         if (parent_ == nullptr || parent_->allowRepaintRequest(this)) {
             ASSERT(renderer() != nullptr);
@@ -255,7 +258,7 @@ namespace ui3 {
 
     bool Widget::allowRepaintRequest(Widget * immediateChild) {
         // if there is already a repaint requested on the parent, the child's repaint can be ignored as it will be repainted when the parent does
-        if (pendingRepaint_.test_and_set()) {
+        if (pendingRepaint_ == true) {
             return false;
         }
         // if the child from which the request comes is overlaid, then block the request and repaint itself instead

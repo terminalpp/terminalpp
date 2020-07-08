@@ -7,7 +7,10 @@ namespace ui3 {
 
     class Label : public Widget {
     public:
-        
+
+        using Widget::setWidthHint;
+        using Widget::setHeightHint;
+
         std::string const & text() const {
             return text_;
         }
@@ -26,6 +29,17 @@ namespace ui3 {
         virtual void setColor(Color value) {
             if (color_ != value) {
                 color_ = value;
+                repaint();
+            }
+        }
+
+        Color background() const {
+            return background_;
+        }
+
+        virtual void setBackground(Color value) {
+            if (background_ != value) {
+                background_ = value;
                 repaint();
             }
         }
@@ -91,15 +105,47 @@ namespace ui3 {
             }            
             if (heightHint() == SizeHint::AutoSize()) 
                 result.setHeight(format_.size());
+            return result;
         }
 
         void paint(Canvas & canvas) override {
-            // center & print each line here
+            Point x{0,0};
+            canvas.setFg(color_);
+            canvas.setBg(background_);
+            canvas.setFont(font_);
+            canvas.fill(canvas.rect());
+            // adjust the text output vertically
+            switch (vAlign_) {
+                case VerticalAlign::Top:
+                    break; // keep the 0
+                case VerticalAlign::Middle:
+                    x.setY((canvas.size().height() - format_.size() * font_.height()) / 2);
+                    break;
+                case VerticalAlign::Bottom:
+                    x.setY(canvas.size().height() - format_.size() * font_.height());
+                    break;
+            }
+            // adjust and print each line
+            for (Canvas::TextLine const & line : format_) {
+                switch(hAlign_) {
+                    case HorizontalAlign::Left:
+                        break; // keep the 0
+                    case HorizontalAlign::Center:
+                        x.setX((canvas.size().width() - line.width) / 2);
+                        break;
+                    case HorizontalAlign::Right:
+                        x.setX(canvas.size().width() - line.width);
+                        break;
+                }
+                canvas.textOut(x, line.begin, line.end);
+                x.setY(x.y() + font_.height());
+            }
         }
 
 
         std::string text_;
         Color color_;
+        Color background_;
         Font font_;
         HorizontalAlign hAlign_;
         VerticalAlign vAlign_;

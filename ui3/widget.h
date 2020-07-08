@@ -21,8 +21,6 @@ namespace ui3 {
     public:
 
         Widget() {
-            // widget starts detached and detached widget's pending repaint must be set
-            pendingRepaint_.test_and_set();
         }
 
         virtual ~Widget() {
@@ -292,7 +290,7 @@ namespace ui3 {
                 To explicitly repaint the widget, the repaint() method should be called instead, which optimizes the number of repaints and tells the renderer to repaint the widget.                 
              */        
             void paint() {
-                pendingRepaint_.clear();
+                pendingRepaint_ = false;
                 Canvas canvas{visibleArea_, contentsSize()};
                 paint(canvas);
             }
@@ -325,7 +323,9 @@ namespace ui3 {
 
         private:
 
-            std::atomic_flag pendingRepaint_;
+            /** Since widget's start detached, their paint is blocked by setting pending repaint to true. When attached, and repainted via its parent, the flag will be cleared. 
+             */
+            bool pendingRepaint_ = true;
 
         //@}
 

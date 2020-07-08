@@ -24,13 +24,17 @@ namespace ui3 {
     Canvas::TextLine Canvas::GetTextLine(Char::iterator_utf8 & begin, Char::iterator_utf8 const & end, int wordWrapAt) {
         TextLine l{0,0, begin, begin};
         while (wordWrapAt == NoWordWrap || l.width < wordWrapAt) {
-            if (begin == end || Char::IsLineEnd(*begin)) {
+            if (begin == end) {
+                l.end = begin;
+                return l;
+            } else if (Char::IsLineEnd(*begin)) {
+                ++begin;
                 l.end = begin;
                 return l;
             }
             l.width += Char::ColumnWidth(*begin);
             ++l.chars;
-            ++l.end;
+            ++begin;
         }
         // word wrap is enabled and the line is longer, i.e. backtrack to first word separator
         l.end = begin;
@@ -72,6 +76,22 @@ namespace ui3 {
             }
         }
         return *this;
+    }
+
+    Canvas & Canvas::textOut(Point x, Char::iterator_utf8 begin, Char::iterator_utf8 end) {
+        Rect vr = visibleArea_.rect() + visibleArea_.offset();
+        x = x + visibleArea_.offset();
+        for (; begin != end; ++begin) {
+            if (vr.contains(x)) {
+                Cell & c = buffer_.at(x);
+                c.fg() = fg_;
+                c.decor() = decor_;
+                c.bg() = bg_.blendOver(c.bg());
+                c.font() = font_;
+                c.codepoint() = begin->codepoint();
+            }
+            x.setX(x.x() + Char::ColumnWidth(*begin) * font_.width());
+        }
     }
 
 

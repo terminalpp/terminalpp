@@ -13,6 +13,7 @@
 #include "ansi_renderer.h"
 
 #include "ui3/widgets/panel.h"
+#include "ui3/widgets/label.h"
 
 void PrintVersion() {
     std::cout << "Terminal++ Server, version " << stamp::version << std::endl;
@@ -30,15 +31,20 @@ int main(int argc, char * argv[]) {
         AnsiRenderer renderer{new LocalPTYSlave()};
         Panel * p = new Panel();
         p->setBackground(Color::Blue);
-        Panel * p2 = new Panel();
+        Label * p2 = new Label();
+        p2->setText("Hello world!");
         p2->setBackground(Color::Red);
-        p2->resize(Size{10, 10});
-        p2->move(Point{2,2});
+        //p2->resize(Size{10, 10});
+        //p2->move(Point{2,2});
         p->attach(p2);
         renderer.setRoot(p);
         p->setLayout(new Layout::Maximized{});
+        p2->setWidthHint(SizeHint::AutoSize());
+        p2->setHeightHint(SizeHint::AutoSize());
+        p2->setText("Hello all folks and other people\nwho have come here!");
+        /*
         p2->setWidthHint(SizeHint::Percentage(50));
-        p2->setHeightHint(SizeHint::Percentage(50));
+        p2->setHeightHint(SizeHint::Percentage(50)); */
 
         renderer.mainLoop();
 

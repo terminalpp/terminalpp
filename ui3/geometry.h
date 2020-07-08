@@ -35,8 +35,16 @@ namespace ui3 {
             return x_;
         }
 
+        void setX(int value) {
+            x_ = value;
+        }
+
         int y() const {
             return y_;
+        }
+
+        void setY(int value) {
+            y_ = value;
         }
 
         Point operator + (Point const & other) const {

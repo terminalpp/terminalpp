@@ -37,7 +37,8 @@ namespace ui3 {
         }
 
         void paint(Canvas & canvas) override {
-            canvas.fill(canvas.rect(), background_);
+            canvas.setBg(background_);
+            canvas.fill(canvas.rect());
             Widget::paint(canvas);
             // TODO draw the border
         }

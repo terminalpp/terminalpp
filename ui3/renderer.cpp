@@ -62,7 +62,7 @@ namespace ui3 {
             if (value != nullptr) {
                 root_->visibleArea_.attach(this);
                 // once attached, we can clear the repaint flag
-                root_->pendingRepaint_.clear();
+                root_->pendingRepaint_ = false;
                 // and either resize, or just relayout, which triggers repaint and propagates the visible area update to all children
                 if (root_->rect().size() != size())
                     root_->resize(size());
@@ -75,7 +75,7 @@ namespace ui3 {
 
     void Renderer::detachWidget(Widget * widget) {
         // block repainting of detached widgets - will be repainted again after being reattached
-        widget->pendingRepaint_.test_and_set();
+        widget->pendingRepaint_ = true;
         {
             // detach the visible area
             std::lock_guard<std::mutex> g{widget->rendererGuard_};

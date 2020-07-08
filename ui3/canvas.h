@@ -54,6 +54,37 @@ namespace ui3 {
         static TextLine GetTextLine(Char::iterator_utf8 & begin, Char::iterator_utf8 const & end, int wordWrapAt = NoWordWrap);
 
         //@}
+
+        /** \name State
+         */
+        //@{
+
+        Color fg() const {
+            return fg_;
+        }
+
+        void setFg(Color value) {
+            fg_ = value;
+        }
+
+        Color bg() const {
+            return bg_;
+        }
+
+        void setBg(Color value) {
+            bg_ = value;
+        }
+
+        Font font() const {
+            return font_;
+        }
+
+        void setFont(Font value) {
+            font_ = value;
+        }
+
+        //@}
+
         /** \name Drawing
          */
         //@{
@@ -63,6 +94,12 @@ namespace ui3 {
         }
         Canvas & fill(Rect const & rect, Color color);
 
+        Canvas & textOut(Point x, std::string const & str) {
+            return textOut(x, Char::BeginOf(str), Char::EndOf(str));
+        }
+
+        Canvas & textOut(Point x, Char::iterator_utf8 begin, Char::iterator_utf8 end);
+
         //@}
 
     private:
@@ -70,6 +107,8 @@ namespace ui3 {
 
         Color fg_;
         Color bg_;
+        Color decor_;
+        Font font_;
 
     protected:
 

@@ -50,9 +50,11 @@ Issues to be raised:
 
 UI version 3
 
-- do basic layouts
+- do vertical and horizontal layouts, see more autosize and use with more widgets
 - locks.h - remove grabber & smartptr, make priority lock non-reentrant
 - ansi-renderer should go to ansi-terminal
+
+- make the use of getters & setters, or setting via attributes more systemic (i.e. cells alows ()=, others have setters)
 
 # Roadmap
 

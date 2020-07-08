@@ -22,7 +22,12 @@ namespace ui3 {
     }
 
     void Layout::resize(Widget * widget, Size const & size) const {
-        widget->resize(size);
+        if (widget->rect().size() == size) {
+            if (widget->widthHint() == SizeHint::AutoSize() || widget->heightHint() == SizeHint::AutoSize())
+                widget->relayout();
+        } else {
+            widget->resize(size);
+        }
     }
 
     void Layout::move(Widget * widget, Point const & topLeft) const {
