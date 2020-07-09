@@ -334,7 +334,7 @@ namespace tpp {
 			    break;
 			case WM_CHAR:
 				if (wParam >= 0x20)
-					window->rendererKeyChar(Char::FromCodepoint(static_cast<unsigned>(wParam)));
+					window->rendererKeyChar(Char{static_cast<char32_t>(wParam)});
 				break;
 			/* Processes special key events.
 			

@@ -267,7 +267,7 @@ namespace tpp {
     void LocalPTYSlave::SIGWINCH_handler(int signo) {
         MARK_AS_UNUSED(signo);
         if (Slave_ != nullptr) {
-            ResizedEvent::Payload p{Slave_->size()};
+            ResizeEvent::Payload p{Slave_->size()};
             Slave_->onResized(p, Slave_);
         }
     }

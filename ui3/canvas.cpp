@@ -92,6 +92,7 @@ namespace ui3 {
             }
             x.setX(x.x() + Char::ColumnWidth(*begin) * font_.width());
         }
+        return *this;
     }
 
 
