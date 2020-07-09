@@ -85,7 +85,7 @@ namespace ui3 {
         virtual void setWordWrap(bool value) {
             if (wordWrap_ != value) {
                 wordWrap_ = value;
-                repaint();
+                relayout();
             }
         }
 

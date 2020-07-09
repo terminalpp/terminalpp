@@ -50,7 +50,6 @@ Issues to be raised:
 
 UI version 3
 
-- do vertical and horizontal layouts, see more autosize and use with more widgets
 - locks.h - remove grabber & smartptr, make priority lock non-reentrant
 - ansi-renderer should go to ansi-terminal
 

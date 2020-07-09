@@ -28,8 +28,8 @@ namespace ui3 {
                 l.end = begin;
                 return l;
             } else if (Char::IsLineEnd(*begin)) {
-                ++begin;
                 l.end = begin;
+                ++begin;
                 return l;
             }
             l.width += Char::ColumnWidth(*begin);

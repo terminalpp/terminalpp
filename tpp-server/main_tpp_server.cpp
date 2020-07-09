@@ -34,14 +34,22 @@ int main(int argc, char * argv[]) {
         Label * p2 = new Label();
         p2->setText("Hello world!");
         p2->setBackground(Color::Red);
+        Label * p3 = new Label();
+        p3->setText("Hello world!");
+        p3->setBackground(Color::Green);
         //p2->resize(Size{10, 10});
         //p2->move(Point{2,2});
         p->attach(p2);
+        p->attach(p3);
         renderer.setRoot(p);
-        p->setLayout(new Layout::Maximized{});
+        p->setLayout(new Layout::Row{HorizontalAlign::Center, VerticalAlign::Middle});
         p2->setWidthHint(SizeHint::AutoSize());
         p2->setHeightHint(SizeHint::AutoSize());
         p2->setText("Hello all folks and other people\nwho have come here!");
+        p3->setHeightHint(SizeHint::AutoSize());
+        p3->setHAlign(HorizontalAlign::Center);
+        p3->setText("Lorem ipsum and some stuff and some here and here and also here and one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen twenty\n1 2 3 4 5 6 7 8 9 0");
+        p3->setWordWrap(true);
         /*
         p2->setWidthHint(SizeHint::Percentage(50));
         p2->setHeightHint(SizeHint::Percentage(50)); */

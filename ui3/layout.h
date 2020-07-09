@@ -78,6 +78,8 @@ namespace ui3 {
 
         class None;
         class Maximized;
+        class Row;
+        class Column;
 
         virtual ~Layout() {
         }
@@ -103,6 +105,8 @@ namespace ui3 {
         }
 
         void move(Widget * widget, Point const & topLeft) const;
+
+        void setOverlaid(Widget * widget, bool value) const;
 
         /** Calculates one dimension of the widget given the size hint, current size, autosize and available size. 
          */
@@ -133,11 +137,45 @@ namespace ui3 {
     public:
         void layout(Widget * widget) const override;
 
-        void calculateOverlay(Widget * widget) const override {
-            MARK_AS_UNUSED(widget);
-        }
+        void calculateOverlay(Widget * widget) const override;
 
     }; // Layout::Maximized
+
+    class Layout::Row : public Layout {
+    public:
+
+        Row(HorizontalAlign hAlign, VerticalAlign vAlign):
+            hAlign_{hAlign},
+            vAlign_{vAlign} {
+        }
+
+        void layout(Widget * widget) const override;
+
+        void calculateOverlay(Widget * widget) const override;
+
+    private:
+        HorizontalAlign hAlign_;
+        VerticalAlign vAlign_;
+    }; // Layout::Row
+
+    /** Arranges the widgets in a single column. 
+     
+     */
+    class Layout::Column : public Layout {
+    public:
+        Column(HorizontalAlign hAlign, VerticalAlign vAlign):
+            hAlign_{hAlign},
+            vAlign_{vAlign} {
+        }
+
+        void layout(Widget * widget) const override;
+
+        void calculateOverlay(Widget * widget) const override;
+
+    private:
+        HorizontalAlign hAlign_;
+        VerticalAlign vAlign_;
+    }; // Layout::Column
 
 
 

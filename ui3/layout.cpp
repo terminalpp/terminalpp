@@ -34,6 +34,12 @@ namespace ui3 {
         widget->move(topLeft);
     }
 
+    void Layout::setOverlaid(Widget * widget, bool value) const {
+        widget->overlaid_ = value;
+    }
+
+    // Maximized
+
     void Layout::Maximized::layout(Widget * widget) const {
         Rect rect{contentsSize(widget)};
         for (Widget * child : children(widget)) {
@@ -50,6 +56,140 @@ namespace ui3 {
         }
     }
 
+    void Layout::Maximized::calculateOverlay(Widget * widget) const {
+        bool overlaid = false;        
+        for (Widget * child : children(widget)) {
+            setOverlaid(child, overlaid);
+            overlaid = true;
+        }
+    }
+
+    // Row
+
+    void Layout::Row::layout(Widget * widget) const {
+        Rect rect{contentsSize(widget)};
+        // iterate over the children, determine how many autosized widgets there are and what is the auto width budget
+        int availWidth = rect.width();
+        int autoWidgets = 0;
+        for (Widget * child : children(widget)) {
+            if (! child->visible())
+                continue;
+            // if autolayouted, increase number of widgets and continue
+            if (child->widthHint() == SizeHint::AutoLayout()) {
+                ++autoWidgets;
+                continue;
+            }
+            // otherwise update the size already
+            // calculate the desired width and height of the child
+            int w = calculateDimension(child->widthHint(), child->rect().width(), 0, rect.width());
+            int h = calculateDimension(child->heightHint(), child->rect().height(), rect.height(), rect.height());
+            // resize the child, which triggers its relayout and potentially updates the size too
+            resize(child, w, h);
+            // update the available height
+            availWidth -= child->rect().width();
+        }
+        // iterate over the layout-sized children and resize them, get the total width. The last children fills the rest of space
+        int totalWidth = rect.width() - availWidth;
+        if (autoWidgets > 0) {
+            int autoWidth = availWidth / autoWidgets;
+            for (Widget * child : children(widget)) {
+                // ignore invisible and non-layout sized widgets
+                if (!child->visible() || child->widthHint() != SizeHint::AutoLayout())
+                    continue;
+                int h = calculateDimension(child->heightHint(), child->rect().height(), rect.height(), rect.height());
+                resize(child, autoWidgets > 1 ? autoWidth : availWidth, h);
+                availWidth -= autoWidth;
+                --autoWidgets;
+                totalWidth += child->rect().width();
+            }
+        }
+        // finally the widgets are to be moved - based on the horizontal align, determine where to start putting them
+        int left = 0;
+        switch (hAlign_) {
+            case HorizontalAlign::Left:
+                break;
+            case HorizontalAlign::Center:
+                left = (rect.width() - totalWidth) / 2;
+                break;
+            case HorizontalAlign::Right:
+                left = rect.width() - totalWidth;
+                break;
+        }
+        // then align each widget horizontally
+        for (Widget * child : children(widget)) {
+            move(child, rect.align(Rect{Point{left, 0}, child->rect().size()}, vAlign_));
+            left += child->rect().width();
+        }
+    }
+
+    void Layout::Row::calculateOverlay(Widget * widget) const {
+        for (Widget * child : children(widget))
+            setOverlaid(child, false);
+    }
+
+
+    // Column
+
+    void Layout::Column::layout(Widget * widget) const {
+        Rect rect{contentsSize(widget)};
+        // iterate over the children, determine how many autosized widgets there are and what is the auto height budget
+        int availHeight = rect.height();
+        int autoWidgets = 0;
+        for (Widget * child : children(widget)) {
+            if (! child->visible())
+                continue;
+            // if autolayouted, increase number of widgets and continue
+            if (child->heightHint() == SizeHint::AutoLayout()) {
+                ++autoWidgets;
+                continue;
+            }
+            // otherwise update the size already
+            // calculate the desired width and height of the child
+            int w = calculateDimension(child->widthHint(), child->rect().width(), rect.width(), rect.width());
+            int h = calculateDimension(child->heightHint(), child->rect().height(), 0, rect.height());
+            // resize the child, which triggers its relayout and potentially updates the size too
+            resize(child, w, h);
+            // update the available height
+            availHeight -= child->rect().height();
+        }
+        // iterate over the layout-sized children and resize them, get the total height. The last children fills the rest of space
+        int totalHeight = rect.height() - availHeight;
+        if (autoWidgets > 0) {
+            int autoHeight = availHeight / autoWidgets;
+            for (Widget * child : children(widget)) {
+                // ignore invisible and non-layout sized widgets
+                if (!child->visible() || child->heightHint() != SizeHint::AutoLayout())
+                    continue;
+                int w = calculateDimension(child->widthHint(), child->rect().width(), rect.width(), rect.width());
+                resize(child, w, autoWidgets > 1 ? autoHeight : availHeight);
+                availHeight -= autoHeight;
+                --autoWidgets;
+                totalHeight += child->rect().height();
+            }
+        }
+        // finally the widgets are to be moved - based on the vertical align, determine where to start putting them
+        int top = 0;
+        switch (vAlign_) {
+            case VerticalAlign::Top:
+                break;
+            case VerticalAlign::Middle:
+                top = (rect.height() - totalHeight) / 2;
+                break;
+            case VerticalAlign::Bottom:
+                top = rect.height() - totalHeight;
+                break;
+        }
+        // then align each widget horizontally
+        for (Widget * child : children(widget)) {
+            move(child, rect.align(Rect{Point{0, top}, child->rect().size()}, hAlign_));
+            top += child->rect().height();
+        }
+    }
+
+    void Layout::Column::calculateOverlay(Widget * widget) const {
+        for (Widget * child : children(widget))
+            setOverlaid(child, false);
+    }
 
 
 
