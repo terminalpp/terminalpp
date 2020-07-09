@@ -59,8 +59,8 @@ namespace ui3 {
             for (int y = r.top(), ye = r.bottom(); y < ye; ++y) {
                 for (int x = r.left(), xe = r.right(); x < xe; ++x) {
                     Cell & c = buffer_.at(x,y);
-                    c.bg() = color;
-                    c.codepoint() = ' ';
+                    c.setBg(color);
+                    c.setCodepoint(' ');
                     // TODO border
                 }
             }
@@ -68,9 +68,9 @@ namespace ui3 {
             for (int y = r.top(), ye = r.bottom(); y < ye; ++y) {
                 for (int x = r.left(), xe = r.right(); x < xe; ++x) {
                     Cell & c = buffer_.at(x,y);
-                    c.fg() = color.blendOver(c.fg());
-                    c.bg() = color.blendOver(c.bg());
-                    c.decor() = color.blendOver(c.decor());
+                    c.setFg(color.blendOver(c.fg()));
+                    c.setBg(color.blendOver(c.bg()));
+                    c.setDecor(color.blendOver(c.decor()));
                     // TODO border
                 }
             }
@@ -84,11 +84,11 @@ namespace ui3 {
         for (; begin != end; ++begin) {
             if (vr.contains(x)) {
                 Cell & c = buffer_.at(x);
-                c.fg() = fg_;
-                c.decor() = decor_;
-                c.bg() = bg_.blendOver(c.bg());
-                c.font() = font_;
-                c.codepoint() = begin->codepoint();
+                c.setFg(fg_);
+                c.setDecor(decor_);
+                c.setBg(bg_.blendOver(c.bg()));
+                c.setFont(font_);
+                c.setCodepoint(begin->codepoint());
             }
             x.setX(x.x() + Char::ColumnWidth(*begin) * font_.width());
         }

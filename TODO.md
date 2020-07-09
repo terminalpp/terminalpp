@@ -52,8 +52,8 @@ UI version 3
 
 - locks.h - remove grabber & smartptr, make priority lock non-reentrant
 - ansi-renderer should go to ansi-terminal
-
-- make the use of getters & setters, or setting via attributes more systemic (i.e. cells alows ()=, others have setters)
+- add mouse/keyboard support
+- add selection support to renderer
 
 # Roadmap
 

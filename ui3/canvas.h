@@ -213,27 +213,6 @@ namespace ui3 {
     class Canvas::Cell {
         friend class Canvas::Buffer;
     public:
-        class CodepointSetter {
-            friend class Cell;
-        public:
-            CodepointSetter(CodepointSetter &&) = default;
-            CodepointSetter(CodepointSetter const &) = delete;
-
-            CodepointSetter & operator = (char32_t value) {
-                codepoint_ = (codepoint_ & 0xffe00000) + (value & 0x1fffff);
-                return *this;
-            }
-
-            operator char32_t () {
-                return codepoint_ & 0x1fffff;
-            }
-
-        private:
-            CodepointSetter(char32_t & codepoint):
-                codepoint_{codepoint} {
-            }
-            char32_t & codepoint_;
-        };  // Cell::CodepointSetter
 
         /** Default constructor.
          */
@@ -252,44 +231,45 @@ namespace ui3 {
             return codepoint_ & 0x1fffff;
         }
 
-        CodepointSetter codepoint() {
-            return CodepointSetter{codepoint_};
+        void setCodepoint(char32_t value) {
+            codepoint_ = (codepoint_ & 0xffe00000) + (value & 0x1fffff);
         }
         //@}
 
         /** \name Foreground (text) color. 
          */
         //@{
-        Color const & fg() const {
+        Color fg() const {
             return fg_;
         }
 
-        Color & fg() {
-            return fg_;
+        void setFg(Color value) {
+            fg_ = value;
         }
         //@}
 
         /** \name Background (fill) color. 
          */
         //@{
-        Color const & bg() const {
+        Color bg() const {
             return bg_;
         }
 
-        Color & bg() {
-            return bg_;
+        void setBg(Color value) {
+            bg_ = value;
         }
+
         //@}
 
         /** \name Decoration (underline, strikethrough) color. 
          */
         //@{
-        Color const & decor() const {
+        Color decor() const {
             return decor_;
         }
 
-        Color & decor() {
-            return decor_;
+        void setDecor(Color value) {
+            decor_ = value;
         }
         //@}
 
@@ -297,13 +277,14 @@ namespace ui3 {
          */
         //@{
 
-        Font const & font() const {
+        Font font() const {
             return font_;
         }
 
-        Font & font() {
-            return font_;
+        void setFont(Font value) {
+            font_ = value;
         }
+
         //@}
     private:
 
