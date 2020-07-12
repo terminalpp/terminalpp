@@ -131,4 +131,149 @@ namespace ui3 {
         });
     }
 
+    // Keyboard Input
+
+    void Renderer::keyDown(Key k) {
+        keyDownFocus_ = keyboardFocus_;
+        if (onKeyDown.attached()) {
+            KeyEvent::Payload p{k};
+            onKeyDown(p, this);
+            if (!p.active())
+                return;
+        }
+        if (keyboardFocus_ != nullptr) {
+            ui3::KeyEvent::Payload p{k};
+            keyboardFocus_->keyDown(p);
+        }
+    }
+
+    void Renderer::keyUp(Key k) {
+        if (onKeyUp.attached()) {
+            KeyEvent::Payload p{k};
+            onKeyUp(p, this);
+            if (!p.active())
+                return;
+        }
+        if (keyboardFocus_ != nullptr) {
+            ui3::KeyEvent::Payload p{k};
+            keyboardFocus_->keyUp(p);
+        }
+    }
+
+    void Renderer::keyChar(Char c) {
+        if (onKeyChar.attached()) {
+            KeyCharEvent::Payload p{c};
+            onKeyChar(p, this);
+            if (!p.active()) {
+                keyboardFocus_ = nullptr;
+                return;
+            }
+        }
+        if (keyboardFocus_ == keyDownFocus_ && keyboardFocus_ != nullptr) {
+            keyDownFocus_ = nullptr;
+            ui3::KeyCharEvent::Payload p{c};
+            keyboardFocus_->keyChar(p);
+        }
+    }
+
+    // Mouse Input
+
+    void Renderer::mouseMove(Point coords) {
+        updateMouseFocus(coords);
+        if (onMouseMove.attached()) {
+            MouseMoveEvent::Payload p{coords, modifiers_};
+            onMouseMove(p, this);
+            if (!p.active())
+                return;
+        }
+        if (mouseFocus_ != nullptr) {
+            ui3::MouseMoveEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), modifiers_};
+            mouseFocus_->mouseMove(p);
+        }
+    }
+
+    void Renderer::mouseWheel(Point coords, int by) {
+        updateMouseFocus(coords);
+        if (onMouseWheel.attached()) {
+            MouseWheelEvent::Payload p{coords, by, modifiers_};
+            onMouseWheel(p, this);
+            if (!p.active())
+                return;
+        }
+        if (mouseFocus_ != nullptr) {
+            ui3::MouseWheelEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), by, modifiers_};
+            mouseFocus_->mouseWheel(p);
+        }
+    }
+
+    void Renderer::mouseDown(Point coords, MouseButton button) {
+        updateMouseFocus(coords);
+        mouseButtons_ |= static_cast<unsigned>(button);
+        if (onMouseDown.attached()) {
+            MouseButtonEvent::Payload p{coords, button, modifiers_};
+            onMouseDown(p, this);
+            if (!p.active())
+                return;
+        }
+        if (mouseFocus_ != nullptr) {
+            ui3::MouseButtonEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), button, modifiers_};
+            mouseFocus_->mouseDown(p);
+        }
+    }
+
+    void Renderer::mouseUp(Point coords, MouseButton button) {
+
+    }
+
+    void Renderer::mouseClick(Point coords, MouseButton button) {
+        if (onMouseClick.attached()) {
+            MouseButtonEvent::Payload p{coords, button, modifiers_};
+            onMouseClick(p, this);
+            if (!p.active())
+                return;
+        }
+        if (mouseFocus_ != nullptr) {
+            ui3::MouseButtonEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), button, modifiers_};
+            mouseFocus_->mouseClick(p);
+        }
+    }
+
+    void Renderer::mouseDoubleClick(Point coords, MouseButton button) {
+        if (onMouseDoubleClick.attached()) {
+            MouseButtonEvent::Payload p{coords, button, modifiers_};
+            onMouseDoubleClick(p, this);
+            if (!p.active())
+                return;
+        }
+        if (mouseFocus_ != nullptr) {
+            ui3::MouseButtonEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), button, modifiers_};
+            mouseFocus_->mouseDoubleClick(p);
+        }
+    }
+
+    void Renderer::updateMouseFocus(Point coords) {
+        // if mouse is captured to a valid mouseFocus widget, do nothing
+        if (mouseButtons_ != 0 && mouseFocus_ != nullptr)
+            return;
+        // determine the mouse target
+        Widget * newTarget = nullptr;
+        if (modalRoot_ != nullptr)
+            newTarget = modalRoot_->getMouseTarget(modalRoot_->toWidgetCoordinates(coords));
+        // check if the target has changed and emit the appropriate events
+        if (mouseFocus_ != newTarget) {
+            if (mouseFocus_ != nullptr) {
+                VoidEvent::Payload p{};
+                mouseFocus_->mouseOut(p);
+            }
+            mouseFocus_ = newTarget;
+            if (mouseFocus_ != nullptr) {
+                VoidEvent::Payload p{};
+                mouseFocus_->mouseIn(p);
+            }
+        }
+
+    }
+
+
+
 } // namespace ui3

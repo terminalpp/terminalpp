@@ -76,7 +76,14 @@ namespace ui3 {
         send(x.c_str(), x.size());
     }
 
+    /** Non-tpp input sequences can be either mouse, or keyboard input. 
+     */
     size_t AnsiRenderer::received(char const * buffer, char const * bufferEnd) {
+        for (char const * i = buffer; i != bufferEnd; ++i) {
+            
+
+        }
+
         // TODO this must be smarter detection and actually raise stuff and so on
         for (char const * i = buffer; i != bufferEnd; ++i)
             if (*i == '\003') // Ctrl + C

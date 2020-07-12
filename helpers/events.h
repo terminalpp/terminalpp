@@ -5,7 +5,6 @@
 
 #include "helpers.h"
 
-
 HELPERS_NAMESPACE_BEGIN
 
     /** The default payload base. 
@@ -29,6 +28,12 @@ HELPERS_NAMESPACE_BEGIN
                 payload_{payload},
                 sender_{nullptr} {
             } 
+
+            template<typename... ARGS>
+            Payload(ARGS... args):
+                payload_{PAYLOAD{args...}},
+                sender_{nullptr} {
+            }
 
 		    SENDER * sender() const {
 				return sender_;
@@ -86,7 +91,7 @@ HELPERS_NAMESPACE_BEGIN
 	private:
 	    std::function<void(Payload &)> handler_;
 
-	}; // UIEvent<PAYLOAD, SENDER, PAYLOAD_BASE>
+	}; // Event<PAYLOAD, SENDER, PAYLOAD_BASE>
 
     template<typename SENDER, typename PAYLOAD_BASE>
 	class Event<void, SENDER, PAYLOAD_BASE> {
@@ -155,6 +160,6 @@ HELPERS_NAMESPACE_BEGIN
 	private:
 	    std::function<void(Payload &)> handler_;
 
-	}; // UIEvent<void, SENDER, PAYLOAD_BASE>
+	}; // Event<void, SENDER, PAYLOAD_BASE>
 
 HELPERS_NAMESPACE_END

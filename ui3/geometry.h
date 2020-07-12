@@ -47,6 +47,18 @@ namespace ui3 {
             y_ = value;
         }
 
+        Point & operator += (Point const & other) {
+            x_ += other.x_;
+            y_ += other.y_;
+            return *this;
+        }
+
+        Point & operator -= (Point const & other) {
+            x_ -= other.x_;
+            y_ -= other.y_;
+            return *this;
+        }
+
         Point operator + (Point const & other) const {
             return Point{x_ + other.x_, y_ + other.y_};
         }

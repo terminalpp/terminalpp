@@ -53,7 +53,14 @@ UI version 3
 - locks.h - remove grabber & smartptr, make priority lock non-reentrant
 - ansi-renderer should go to ansi-terminal
 - add mouse/keyboard support
+- renderer-widget coordinates, check that they are valid
+- add FSM to helpers
+- add VT decoders for mouse and keyboard to the ansi renderer
+- key up not detected on standard terminal, determine how tpp would do it
+- mouse up event, detect click and double click
+- keyboard should update modifiers
 - add selection support to renderer
+- ansi-terminal should use the ansi-keys, which should move to tpp-lib - perhaps even the whole terminal should move there
 
 # Roadmap
 

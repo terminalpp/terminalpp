@@ -7,6 +7,8 @@
 #include "helpers/time.h"
 
 #include "canvas.h"
+#include "inputs.h"
+#include "events.h"
 
 namespace ui3 {
 
@@ -17,6 +19,7 @@ namespace ui3 {
 
     // ============================================================================================
 
+
     /** Base class for all UI renderer implementations. 
      
         
@@ -25,6 +28,13 @@ namespace ui3 {
         friend class Canvas;
         friend class Widget;
     public:
+
+        using KeyEvent = Event<Key, Renderer>;
+        using KeyCharEvent = Event<Char, Renderer>;
+
+        using MouseButtonEvent = Event<MouseButtonEventPayload, Renderer>;
+        using MouseWheelEvent = Event<MouseWheelEventPayload, Renderer>;
+        using MouseMoveEvent = Event<MouseMoveEventPayload, Renderer>;
 
         using Buffer = Canvas::Buffer;
         using Cell = Canvas::Cell;
@@ -40,7 +50,7 @@ namespace ui3 {
 
         Renderer(Size const & size):
             buffer_{size} {
-            }
+        }
 
         Renderer(std::pair<int, int> const & size):
             Renderer(Size{size.first, size.second}) {
@@ -115,6 +125,9 @@ namespace ui3 {
 
         Widget * root_ = nullptr;
 
+        /** Root widget for modal interaction. Root element by default, but can be changed to another widget to limit the range of widgets that can receive mouse or keyboard events to a certain subtree. */ 
+        Widget * modalRoot_ = nullptr;
+
     //@}
 
     // ============================================================================================
@@ -176,6 +189,86 @@ namespace ui3 {
 
     //@}
 
+    // ============================================================================================
+    /** \name Keyboard Input.
+     
+        - update internal state
+        - call own event (does not block by default) - can deal with global shortcuts
+        - call target's implementation, if not blocked
+
+        - target updates own internal state (and decides whether to block or not)
+        - calls own event (does not block by default) 
+        - if not blocked, calls on parent
+        
+     */
+    //@{
+    public:
+
+        KeyEvent onKeyDown;
+        KeyEvent onKeyUp;
+        KeyCharEvent onKeyChar;
+
+        /** Returns the widget that currently holds the keyboard focus. 
+
+            nullptr when no widget is focused.  
+         */
+        Widget * keyboardFocus() const {
+            return keyboardFocus_;
+        }
+
+    protected:
+
+        virtual void keyDown(Key k);
+
+        virtual void keyUp(Key k);
+
+        virtual void keyChar(Char c);
+
+    private:
+
+        /** Widget that holds keyboard focus. */
+        Widget * keyboardFocus_ = nullptr;
+        Widget * keyDownFocus_ = nullptr;
+        /** Current state of the modifier keys */
+        Key modifiers_;
+
+    //@}
+
+    // ============================================================================================
+    /** \name Mouse Input.
+     */
+    //@{
+    public:
+        MouseMoveEvent onMouseMove;
+        MouseWheelEvent onMouseWheel;
+        MouseButtonEvent onMouseDown;
+        MouseButtonEvent onMouseUp;
+        MouseButtonEvent onMouseClick;
+        MouseButtonEvent onMouseDoubleClick;
+
+    protected:
+
+        virtual void mouseMove(Point coords);
+
+        virtual void mouseWheel(Point coords, int by);
+
+        virtual void mouseDown(Point coords, MouseButton button);
+
+        virtual void mouseUp(Point coords, MouseButton button);
+
+        virtual void mouseClick(Point coords, MouseButton button);
+
+        virtual void mouseDoubleClick(Point coords, MouseButton button);
+
+    private:
+
+        void updateMouseFocus(Point coords);
+
+        Widget * mouseFocus_ = nullptr;
+        /** Mouse buttons that are currently down. */
+        unsigned mouseButtons_ = 0;
+
+    //@}
 
     }; // ui::Renderer
 

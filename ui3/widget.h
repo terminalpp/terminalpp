@@ -5,6 +5,7 @@
 
 #include "helpers/helpers.h"
 
+#include "events.h"
 #include "canvas.h"
 #include "layout.h"
 
@@ -70,6 +71,33 @@ namespace ui3 {
                 In graph theory, this is the Lowest Common Ancestor.  
              */
             Widget * commonParentWith(Widget const * other) const;
+
+            /** Given renderer (window) coordinates, returns those coordinates relative to the widget. 
+             
+                Can only be called for widgets which are attached to a renderer, translates the coordinates irrespectively of whether they belong to the target widget, or not. 
+             */
+            Point toWidgetCoordinates(Point rendererCoords) const {
+                ASSERT(visibleArea_.attached());
+                return rendererCoords - visibleArea_.offset();
+            }
+
+            /** Given widget coordinates, returns those coordinates relative to the renderer's area (the window). 
+             
+                Can only be called for widgets which are attached to a renderer, translates the coordinates irrespectively of whether they are visible in the window, or not. 
+             */
+            Point toRendererCoordinates(Point widgetCoords) const {
+                ASSERT(visibleArea_.attached());
+                return widgetCoords + visibleArea_.offset();
+            }
+
+            /** Returns the widget that is directly under the given coordinates, or itself. 
+             */
+            Widget * getMouseTarget(Point coords) {
+                for (Widget * child : children_) 
+                    if (child->rect_.contains(coords))
+                        return child->getMouseTarget(child->toWidgetCoordinates(toRendererCoordinates(coords)));
+                return this;
+            }
 
         protected:
 
@@ -275,10 +303,10 @@ namespace ui3 {
          */
         //@{
         
-        /** Repaints the widget. 
-         */
         public: 
 
+            /** Repaints the widget. 
+             */
             virtual void repaint();
 
         protected:
@@ -332,10 +360,116 @@ namespace ui3 {
         // ========================================================================================
         /** \name Mouse Input
          */
+        //@{
+        public:
+            VoidEvent onMouseIn;
+            VoidEvent onMouseOut;
+            MouseMoveEvent onMouseMove;
+            MouseWheelEvent onMouseWheel;
+            MouseButtonEvent onMouseDown;
+            MouseButtonEvent onMouseUp;
+            MouseButtonEvent onMouseClick;
+            MouseButtonEvent onMouseDoubleClick;
+
+        protected:
+
+            virtual void mouseIn(VoidEvent::Payload & e) {
+                onMouseIn(e, this);
+            }
+
+            virtual void mouseOut(VoidEvent::Payload & e) {
+                onMouseOut(e, this);
+            }
+
+            virtual void mouseMove(MouseMoveEvent::Payload & e) {
+                onMouseMove(e, this);
+                if (e.active() && parent_ != nullptr) {
+                    e->coords = parent_->toWidgetCoordinates(toRendererCoordinates(e->coords));
+                    parent_->mouseMove(e);
+                }
+            }
+
+            virtual void mouseWheel(MouseWheelEvent::Payload & e) {
+                onMouseWheel(e, this);
+                if (e.active() && parent_ != nullptr) {
+                    e->coords = parent_->toWidgetCoordinates(toRendererCoordinates(e->coords));
+                    parent_->mouseWheel(e);
+                }
+            }
+
+            virtual void mouseDown(MouseButtonEvent::Payload & e) {
+                onMouseDown(e, this);
+                if (e.active() && parent_ != nullptr) {
+                    e->coords = parent_->toWidgetCoordinates(toRendererCoordinates(e->coords));
+                    parent_->mouseDown(e);
+                }
+            }
+
+            virtual void mouseUp(MouseButtonEvent::Payload & e) {
+                onMouseUp(e, this);
+                if (e.active() && parent_ != nullptr) {
+                    e->coords = parent_->toWidgetCoordinates(toRendererCoordinates(e->coords));
+                    parent_->mouseUp(e);
+                }
+            }
+
+            virtual void mouseClick(MouseButtonEvent::Payload & e) {
+                onMouseClick(e, this);
+                if (e.active() && parent_ != nullptr) {
+                    e->coords = parent_->toWidgetCoordinates(toRendererCoordinates(e->coords));
+                    parent_->mouseClick(e);
+                }
+            }
+
+            virtual void mouseDoubleClick(MouseButtonEvent::Payload & e) {
+                onMouseDoubleClick(e, this);
+                if (e.active() && parent_ != nullptr) {
+                    e->coords = parent_->toWidgetCoordinates(toRendererCoordinates(e->coords));
+                    parent_->mouseDoubleClick(e);
+                }
+            }
+
+        //}
 
         // ========================================================================================
         /** \name Keyboard Input
          */
+        //@{
+        public:
+            VoidEvent onFocusIn;
+            VoidEvent onFocusOut;
+            KeyEvent onKeyDown;
+            KeyEvent onKeyUp;
+            KeyCharEvent onKeyChar;
+        protected:
+
+            virtual void focusIn(VoidEvent::Payload & e) {
+                onFocusIn(e, this);
+            }
+
+            virtual void focusOut(VoidEvent::Payload & e) {
+                onFocusOut(e, this);
+            }
+
+            virtual void keyDown(KeyEvent::Payload & e) {
+                onKeyDown(e, this);
+                if (e.active() && parent_ != nullptr)
+                    parent_->keyDown(e);
+            }
+
+            virtual void keyUp(KeyEvent::Payload & e) {
+                onKeyUp(e, this);
+                if (e.active() && parent_ != nullptr)
+                    parent_->keyUp(e);
+            }
+
+            virtual void keyChar(KeyCharEvent::Payload & e) {
+                onKeyChar(e, this);
+                if (e.active() && parent_ != nullptr)
+                    parent_->keyChar(e);
+            }
+
+        //@}
 
         // ========================================================================================
         /** \name Selection & Clipboard
