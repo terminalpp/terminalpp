@@ -5,6 +5,19 @@
 
 namespace ui3 {
 
+    namespace {
+
+        MatchingFSM<Key, char> InitializeVTKeys() {
+            MatchingFSM<Key, char> keys;
+#define KEY(K, ...) { std::string x = STR(__VA_ARGS__); keys.addMatch(x.c_str(), x.c_str() + x.size(), K); }
+#include "ansi_keys.inc.h"
+            return keys;
+        }
+
+    }
+
+    MatchingFSM<Key, char> AnsiRenderer::vtKeys_{InitializeVTKeys()};
+
     AnsiRenderer::AnsiRenderer(tpp::PTYSlave * pty):
         Renderer{pty->size()},
         tpp::TerminalClient{pty} {
@@ -79,6 +92,9 @@ namespace ui3 {
     /** Non-tpp input sequences can be either mouse, or keyboard input. 
      */
     size_t AnsiRenderer::received(char const * buffer, char const * bufferEnd) {
+        // determine if we have proper UTF8 ready, if not wait for more bytes
+        // if yes, see if it can be parsed as key sequence, and if so emit key down
+        // and then keyChar id the utf8 is printable actually
         for (char const * i = buffer; i != bufferEnd; ++i) {
             
 

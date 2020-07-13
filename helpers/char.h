@@ -39,6 +39,8 @@ HELPERS_NAMESPACE_BEGIN
 	    class iterator_utf8 {
 		public:
 
+            typedef Char value_type;
+
 			iterator_utf8():
 			    i_{} {
 			}

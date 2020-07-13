@@ -12,12 +12,12 @@
 
 #define VT_KEY(K) KEY(K, static_cast<char>(K.code() + 32)); \
                   KEY(K + Key::Shift, static_cast<char>(K.code())); \
-                  KEY(K + Key::Ctrl, static_cast<char<(K.code() + 1 - 'A')); \
-                  KEY(K + Key::Ctrl + Key::Shift, static_cast<char<(K.code() + 1 - 'A')); \
+                  KEY(K + Key::Ctrl, static_cast<char>(K.code() + 1 - 'A')); \
+                  KEY(K + Key::Ctrl + Key::Shift, static_cast<char>(K.code() + 1 - 'A')); \
                   KEY(K + Key::Alt, '\033' << static_cast<char>(K.code() + 32)); \
                   KEY(K + Key::Alt + Key::Shift, '\033' << static_cast<char>(K.code())); \
-                  KEY(K + Key::Alt + Key::Ctrl, '\033' << static_cast<char<(K.code() + 1 - 'A')); \
-                  KEY(K + Key::Alt + Key::Ctrl + '\033' << Key::Shift, static_cast<char<(K.code() + 1 - 'A'));
+                  KEY(K + Key::Alt + Key::Ctrl, '\033' << static_cast<char>(K.code() + 1 - 'A')); \
+                  KEY(K + Key::Alt + Key::Ctrl + Key::Shift, '\033' << static_cast<char>(K.code() + 1 - 'A'));
 
 #define VT_NUM(K) KEY(K, static_cast<char>(K.code())); \
                   KEY(K, '\033' << static_cast<char>(K.code()));

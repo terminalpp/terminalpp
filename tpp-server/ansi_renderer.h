@@ -1,6 +1,7 @@
 #pragma once
 
 #include "helpers/ansi_sequences.h"
+#include "helpers/fsm.h"
 
 #include "tpp-lib/terminal_client.h"
 
@@ -35,6 +36,8 @@ namespace ui3 {
         void receivedSequence(tpp::Sequence::Kind, char const * buffer, char const * bufferEnd) override;
 
     private:
+
+        static MatchingFSM<Key, char> vtKeys_;
 
     /** \name UI Event Loop
      */
