@@ -360,6 +360,11 @@ HELPERS_NAMESPACE_BEGIN
             return ColumnWidth(c.codepoint());
         }
 
+        // TODO check for non-printable non-ASCII utf characters too
+        static bool IsPrintable(char32_t c) {
+            return c >= ' ' && c != 127;
+        }
+
 		/** Returns true if the given character is whitespace
 		 
 		    TODO only works on ASCII characters for now, extra UTF whitespace characters should be added.

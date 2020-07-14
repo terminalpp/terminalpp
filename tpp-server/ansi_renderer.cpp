@@ -7,20 +7,20 @@ namespace ui3 {
 
     namespace {
 
-        MatchingFSM<Key, char> InitializeVTKeys() {
-            MatchingFSM<Key, char> keys;
-#define KEY(K, ...) { std::string x = STR(__VA_ARGS__); keys.addMatch(x.c_str(), x.c_str() + x.size(), K); }
+        void InitializeVTKeys(MatchingFSM<Key, char> & keys) {
+#define KEY(K, ...) { std::string x = STR(__VA_ARGS__); keys.addMatch(x.c_str(), x.c_str() + x.size(), K, /* override */ true); }
 #include "ansi_keys.inc.h"
-            return keys;
         }
 
     }
 
-    MatchingFSM<Key, char> AnsiRenderer::vtKeys_{InitializeVTKeys()};
+    MatchingFSM<Key, char> AnsiRenderer::VtKeys_;
 
     AnsiRenderer::AnsiRenderer(tpp::PTYSlave * pty):
         Renderer{pty->size()},
         tpp::TerminalClient{pty} {
+        if (VtKeys_.empty())
+            InitializeVTKeys(VtKeys_);
     }
 
     AnsiRenderer::~AnsiRenderer() {
@@ -92,16 +92,27 @@ namespace ui3 {
     /** Non-tpp input sequences can be either mouse, or keyboard input. 
      */
     size_t AnsiRenderer::received(char const * buffer, char const * bufferEnd) {
-        // determine if we have proper UTF8 ready, if not wait for more bytes
-        // if yes, see if it can be parsed as key sequence, and if so emit key down
-        // and then keyChar id the utf8 is printable actually
-        for (char const * i = buffer; i != bufferEnd; ++i) {
-            
-
+        char const * processed = buffer;
+        while (processed != bufferEnd) {
+            char const * i = processed;
+            Key k;
+            // first see if we can match the beginning of a buffer to known key, in which case keyDown is to be emitted
+            if (VtKeys_.match(i, bufferEnd, k))
+                keyDown(k);
+            // if there is not enough for a valid utf8 character, break
+            Char::iterator_utf8 it{processed};
+            if (processed + it.charSize() > bufferEnd)
+                break;
+            Char c{*it};
+            if (Char::IsPrintable(c.codepoint()))
+                keyChar(c);
+            processed += it.charSize();
+            if (processed < i)
+                processed = i;    
         }
+        return processed - buffer;
 
-        // TODO this must be smarter detection and actually raise stuff and so on
-        for (char const * i = buffer; i != bufferEnd; ++i)
+/*        for (char const * i = buffer; i != bufferEnd; ++i)
             if (*i == '\003') // Ctrl + C
 #if (defined ARCH_UNIX)
                 raise(SIGINT);
@@ -109,6 +120,7 @@ namespace ui3 {
                 exit(EXIT_FAILURE);
 #endif
         return 0;
+    */
     }
 
     void AnsiRenderer::receivedSequence(tpp::Sequence::Kind, char const * buffer, char const * bufferEnd) {

@@ -37,7 +37,7 @@ namespace ui3 {
 
     private:
 
-        static MatchingFSM<Key, char> vtKeys_;
+        static MatchingFSM<Key, char> VtKeys_;
 
     /** \name UI Event Loop
      */
