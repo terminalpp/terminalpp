@@ -8,10 +8,11 @@ namespace ui3 {
     namespace {
 
         void InitializeVTKeys(MatchingFSM<Key, char> & keys) {
-#define KEY(K, ...) { std::string x = STR(__VA_ARGS__); keys.addMatch(x.c_str(), x.c_str() + x.size(), K, /* override */ true); }
+#define KEY(K, ...) { std::string x = STR(__VA_ARGS__); keys.addMatch(x.c_str(), K, /* override */ true); }
 #include "ansi_keys.inc.h"
+            // this is a hack, correctly matching invalid key does match the SGR mouse encoding
+            keys.addMatch("\033[<", Key::Invalid); 
         }
-
     }
 
     MatchingFSM<Key, char> AnsiRenderer::VtKeys_;
@@ -21,10 +22,13 @@ namespace ui3 {
         tpp::TerminalClient{pty} {
         if (VtKeys_.empty())
             InitializeVTKeys(VtKeys_);
+        // enable SGR mouse reporting and report all movements
+        send("\033[?1003;1006h", 13);
     }
 
     AnsiRenderer::~AnsiRenderer() {
-        
+        // disable mouse reporting & reset mouse encoding to default
+        send("\033[?1003;1006l", 13);
     }
 
     void AnsiRenderer::render(Buffer const & buffer, Rect const & rect) {
@@ -97,8 +101,22 @@ namespace ui3 {
             char const * i = processed;
             Key k;
             // first see if we can match the beginning of a buffer to known key, in which case keyDown is to be emitted
-            if (VtKeys_.match(i, bufferEnd, k))
-                keyDown(k);
+            if (VtKeys_.match(i, bufferEnd, k)) {
+                if (k != Key::Invalid) {
+                    keyDown(k);
+                } else {
+                    CSISequence seq = CSISequence::Parse(processed, bufferEnd);
+                    // if the sequence is not valid, processed has been advanced, but the seq should be ignored
+                    if (!seq.valid())
+                        continue;
+                    // if the sequence is not complete, wait for more data
+                    if (!seq.complete())
+                        break;
+                    // parse the sequence and then continue as the processed counter has already been advanced
+                    parseSequence(seq);
+                    continue;
+                }
+            }
             // if there is not enough for a valid utf8 character, break
             Char::iterator_utf8 it{processed};
             if (processed + it.charSize() > bufferEnd)
@@ -122,6 +140,73 @@ namespace ui3 {
         return 0;
     */
     }
+
+    void AnsiRenderer::parseSequence(CSISequence const & seq) {
+        switch (seq.firstByte()) {
+            case '<': // SGR mouse 
+                parseSGRMouse(seq);
+                break;
+            default:
+                // TODO log invalid sequence
+                break;
+        }
+    }
+
+    void AnsiRenderer::parseSGRMouse(CSISequence const & seq) {
+        if (seq.numArgs() != 3) {
+            // TODO log the error format
+            return;
+        }
+        // determine the mouse button
+        MouseButton button = MouseButton::Left;
+        if (seq[0] & 1)
+            button = MouseButton::Right;
+        else if (seq[0] & 2)
+            button = MouseButton::Wheel;
+        // update the modifiers
+        // TODO
+        Key modifiers;   
+        // and the coordinates, update them to 0-indexed values
+        Point coords{seq[1] - 1, seq[2] - 1} ;
+        // now determine the type of event
+        if (seq[0] & 64) { // mouse wheel
+            switch (button) {
+                case MouseButton::Left:
+                    mouseWheel(coords, 1);
+                    break;
+                case MouseButton::Right:
+                    mouseWheel(coords, 2);
+                    break;
+                default:
+                    break; // invalid encoding
+            }
+        } else if (seq[0] & 32) {
+            mouseMove(coords);
+        } else if (seq.finalByte() == 'M') {
+            mouseDown(coords, button);
+        } else if (seq.finalByte() == 'm') {
+            mouseUp(coords, button);
+        }
+    }
+
+    /** The encoding is: \033[< button ; x ; y END
+                        
+        Where the button means 0 = left, 1 = right, 2 = wheel. 4 == shift, 8 = alt , 16 = ctrl
+        64 = mouse wheel
+        32 = mouse move
+
+        END = M = mouse Down, Wheel
+        m = mouse up
+
+     */
+    /*bool AnsiRenderer::parseSGRMouse(char const * & buffer, char const * bufferEnd) {
+        char const * i = buffer;
+        unsigned button;
+        if (! parseUnsigned(i, bufferEnd))
+            return false;
+        if (! parseUnsigned(i, bufferENd))
+            )
+    } */
 
     void AnsiRenderer::receivedSequence(tpp::Sequence::Kind, char const * buffer, char const * bufferEnd) {
         MARK_AS_UNUSED(buffer);

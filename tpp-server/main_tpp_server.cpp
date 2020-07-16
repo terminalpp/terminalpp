@@ -54,6 +54,13 @@ int main(int argc, char * argv[]) {
         p2->setWidthHint(SizeHint::Percentage(50));
         p2->setHeightHint(SizeHint::Percentage(50)); */
 
+        renderer.onKeyDown.setHandler([&](Renderer::KeyEvent::Payload & e) {
+            p3->setText(STR(*e));
+        });
+        renderer.onMouseMove.setHandler([&](Renderer::MouseMoveEvent::Payload &e) {
+            p2->setText(STR("move: " << e->coords.x() << "; " << e->coords.y()));
+        });
+
         renderer.mainLoop();
 
         return EXIT_SUCCESS;

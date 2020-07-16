@@ -7,6 +7,8 @@
 
 #include "ui3/renderer.h"
 
+#include "csi_sequence.h"
+
 
 namespace ui3 {
 
@@ -32,8 +34,14 @@ namespace ui3 {
         }
 
         size_t received(char const * buffer, char const * bufferEnd) override;
+
+        bool parseSGRMouse(char const * & buffer, char const * bufferEnd);
         
         void receivedSequence(tpp::Sequence::Kind, char const * buffer, char const * bufferEnd) override;
+
+        void parseSequence(CSISequence const & seq);
+        
+        void parseSGRMouse(CSISequence const & seq);
 
     private:
 

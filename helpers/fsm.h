@@ -18,6 +18,10 @@ HELPERS_NAMESPACE_BEGIN
             start_.addMatch(begin, end, result, overwrite);
         }
 
+        void addMatch(IT const * begin, T const & result, bool overwrite = false) {
+            start_.addMatch(begin, result, overwrite);
+        }
+
         bool match(IT const * & begin, IT const * end, T & result) const {
             return start_.match(begin, end, result, begin, false);
         }
@@ -57,6 +61,19 @@ HELPERS_NAMESPACE_BEGIN
                     if (i == next_.end())
                         i = next_.insert(std::make_pair(*begin, new Node{})).first;
                     i->second->addMatch(begin + 1, end, result, overwrite);
+                }
+            }
+
+            void addMatch(IT const * begin, T const & result, bool overwrite) {
+                if (*begin == 0) {
+                    ASSERT(! final_ || overwrite) << "Ambiguous match";
+                    final_ = true;
+                    result_ = result;
+                } else {
+                    auto i = next_.find(*begin);
+                    if (i == next_.end())
+                        i = next_.insert(std::make_pair(*begin, new Node{})).first;
+                    i->second->addMatch(begin + 1, result, overwrite);
                 }
             }
 
