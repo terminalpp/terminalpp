@@ -239,7 +239,7 @@ namespace ui3 {
         /** \name Foreground (text) color. 
          */
         //@{
-        Color fg() const {
+        Color const & fg() const {
             return fg_;
         }
 
@@ -251,7 +251,7 @@ namespace ui3 {
         /** \name Background (fill) color. 
          */
         //@{
-        Color bg() const {
+        Color const & bg() const {
             return bg_;
         }
 
@@ -264,7 +264,7 @@ namespace ui3 {
         /** \name Decoration (underline, strikethrough) color. 
          */
         //@{
-        Color decor() const {
+        Color const & decor() const {
             return decor_;
         }
 
@@ -277,7 +277,7 @@ namespace ui3 {
          */
         //@{
 
-        Font font() const {
+        Font const & font() const {
             return font_;
         }
 

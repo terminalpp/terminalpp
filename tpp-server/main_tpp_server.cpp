@@ -32,10 +32,10 @@ int main(int argc, char * argv[]) {
         Panel * p = new Panel();
         p->setBackground(Color::Blue);
         Label * p2 = new Label();
-        p2->setText("Hello world!");
+        p2->setText("Hello world! P2");
         p2->setBackground(Color::Red);
         Label * p3 = new Label();
-        p3->setText("Hello world!");
+        p3->setText("Hello world! P3");
         p3->setBackground(Color::Green);
         //p2->resize(Size{10, 10});
         //p2->move(Point{2,2});

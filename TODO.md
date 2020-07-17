@@ -62,7 +62,6 @@ UI version 3
 - ansi-terminal should use the ansi-keys, which should move to tpp-lib - perhaps even the whole terminal should move there
 - CSI sequence moved to own file, should be removed from terminal
 
-- rendering issues when changing layouts
 - resizing does not work in xterm
 
 

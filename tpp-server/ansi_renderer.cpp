@@ -57,11 +57,11 @@ namespace ui3 {
             for (int xe = rect.right(); x < xe; ++x) {
                 Cell const & c = buffer.at(x, y);
                 if (c.fg() != state.fg()) {
-                    state.fg() = c.fg();
+                    state.setFg(c.fg());
                     s << ansi::Fg(state.fg().r, state.fg().g, state.fg().b);
                 }
                 if (c.bg() != state.bg()) {
-                    state.bg() = c.bg();
+                    state.setBg(c.bg());
                     s << ansi::Bg(state.bg().r, state.bg().g, state.bg().b);
                 }
                 if (c.font().bold() != state.font().bold()) {
