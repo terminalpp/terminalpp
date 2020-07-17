@@ -86,6 +86,12 @@ namespace ui3 {
             return Key{raw_ | (modifier.modifiers().raw_)};
         }
 
+        Key & operator += (Key const & modifier) {
+            ASSERT(modifier.code() == 0) << "Only modifiers can be added to a key";
+            raw_ |= modifier.modifiers().raw_;
+            return *this;
+        }
+
     private:
 
         Key(unsigned raw):

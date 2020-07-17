@@ -152,6 +152,16 @@ namespace ui3 {
         }
     }
 
+    /** The encoding is: \033[< button ; x ; y END
+                        
+        Where the button means 0 = left, 1 = right, 2 = wheel. 4 == shift, 8 = alt , 16 = ctrl
+        64 = mouse wheel
+        32 = mouse move
+
+        END = M = mouse Down, Wheel
+        m = mouse up
+
+     */
     void AnsiRenderer::parseSGRMouse(CSISequence const & seq) {
         if (seq.numArgs() != 3) {
             // TODO log the error format
@@ -163,9 +173,17 @@ namespace ui3 {
             button = MouseButton::Right;
         else if (seq[0] & 2)
             button = MouseButton::Wheel;
-        // update the modifiers
-        // TODO
-        Key modifiers;   
+        // update the modifiers based on the button value, but don't emit the key up or down events as they would be mis timed to mouse move as opposed to the actual key press
+        Key m;
+        if (seq[0] & 4)
+            m += Key::Shift;
+        if (seq[0] & 8)
+            m += Key::Alt;
+        if (seq[0] & 16)
+            m += Key::Ctrl;
+        if (modifiers() & Key::Win)
+            m += Key::Win;
+        setModifiers(m);
         // and the coordinates, update them to 0-indexed values
         Point coords{seq[1] - 1, seq[2] - 1} ;
         // now determine the type of event
@@ -189,31 +207,10 @@ namespace ui3 {
         }
     }
 
-    /** The encoding is: \033[< button ; x ; y END
-                        
-        Where the button means 0 = left, 1 = right, 2 = wheel. 4 == shift, 8 = alt , 16 = ctrl
-        64 = mouse wheel
-        32 = mouse move
-
-        END = M = mouse Down, Wheel
-        m = mouse up
-
-     */
-    /*bool AnsiRenderer::parseSGRMouse(char const * & buffer, char const * bufferEnd) {
-        char const * i = buffer;
-        unsigned button;
-        if (! parseUnsigned(i, bufferEnd))
-            return false;
-        if (! parseUnsigned(i, bufferENd))
-            )
-    } */
-
     void AnsiRenderer::receivedSequence(tpp::Sequence::Kind, char const * buffer, char const * bufferEnd) {
         MARK_AS_UNUSED(buffer);
         MARK_AS_UNUSED(bufferEnd);
         NOT_IMPLEMENTED;
     }
-
-
 
 } // namespace ui

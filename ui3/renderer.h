@@ -218,11 +218,33 @@ namespace ui3 {
 
     protected:
 
+        /** Registers the key down event. 
+         
+            If key pressed is a modifier key, its modifier must be set on the key as well. 
+         */
         virtual void keyDown(Key k);
 
+        /** Registers key up event. 
+         
+            If we have a modifier key, then its modifier key must be already cleared. 
+         */
         virtual void keyUp(Key k);
 
         virtual void keyChar(Char c);
+
+        /** Returns the cutrrently active modifiers. 
+         */
+        Key modifiers() const {
+            return modifiers_;
+        }
+
+        /** Updates the modifiers value without triggering the key down or up events. 
+         
+            This method only exists because renderers may have issues with getting the modifier states correctly (i.e. via classic terminal) when keys are pressed (i.e. on mouse move), in which case the modifiers should be updated, but the key events should not be emited because the key pressed happened at a different time
+         */
+        void setModifiers(Key value) {
+            modifiers_ = value;
+        }
 
     private:
 

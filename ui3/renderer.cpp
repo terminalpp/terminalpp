@@ -135,6 +135,7 @@ namespace ui3 {
 
     void Renderer::keyDown(Key k) {
         keyDownFocus_ = keyboardFocus_;
+        modifiers_ = k.modifiers();
         if (onKeyDown.attached()) {
             KeyEvent::Payload p{k};
             onKeyDown(p, this);
@@ -148,6 +149,7 @@ namespace ui3 {
     }
 
     void Renderer::keyUp(Key k) {
+        modifiers_ = k.modifiers();
         if (onKeyUp.attached()) {
             KeyEvent::Payload p{k};
             onKeyUp(p, this);

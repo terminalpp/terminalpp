@@ -55,9 +55,7 @@ UI version 3
 - add mouse/keyboard support
 - renderer-widget coordinates, check that they are valid
 - key up not detected on standard terminal, determine how tpp would do it
-- similarly update modifiers and emit keyDown & up for them appropriately
 - mouse up event, detect click and double click
-- keyboard should update modifiers
 - add selection support to renderer
 - ansi-terminal should use the ansi-keys, which should move to tpp-lib - perhaps even the whole terminal should move there
 - CSI sequence moved to own file, should be removed from terminal
