@@ -160,6 +160,50 @@ namespace ui3 {
         std::condition_variable eventQueueReady_;
     //@}
 
+    /** \name Inputs. 
+     */
+    //@{
+
+    protected:
+
+        void setClipboard(std::string const & contents) override {
+            send("\033]52;", 8);
+            // TODO encode? 
+            send(contents.c_str(), contents.size());
+            send("\007", 1);
+        }
+
+        void setSelection(std::string const & contents, Widget * owner) override {
+            if (owner == selectionOwner()) {
+                selection_ = contents;
+            } else { 
+
+            }
+
+        }
+        void requestClipboard(Widget * sender) override {
+            Renderer::requestClipboard(sender);
+
+        }
+
+        void requestSelection(Widget * sender) override {
+            if (selection_.empty())
+                return;
+            Renderer::requestSelection(sender);
+            pasteSelection(selection_);
+        }
+
+        void clearSelection(Widget * sender) override {
+            selection_.clear();
+            Renderer::clearSelection(sender);
+        }
+
+    private:
+        /** Selection (when owned). as selection cannot be transferred through the terminal.*/
+        std::string selection_;
+
+    //@}
+
     }; // ui::AnsiRenderer
 
 } // namespace ui3

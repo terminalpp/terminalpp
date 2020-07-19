@@ -273,6 +273,38 @@ namespace ui3 {
             return true;    
     }
 
+    // Selection
 
+    void Widget::clearSelection() {
+        Renderer * r = renderer();
+        if (r != nullptr && r->selectionOwner_ == this) {
+            r->clearSelection(this);
+        }
+    }
+
+    void Widget::setClipboard(std::string const & contents) {
+        Renderer * r = renderer();
+        if (r != nullptr)
+            r->setClipboard(contents);
+
+    }
+
+    void Widget::setSelection(std::string const & contents) {
+        Renderer * r = renderer();
+        if (r != nullptr)
+            r->setSelection(contents, this);
+    }
+
+    void Widget::requestClipboardPaste() {
+        Renderer * r = renderer();
+        if (r != nullptr)
+            r->requestClipboard(this);
+    }
+
+    void Widget::requestSelectionPaste() {
+        Renderer * r = renderer();
+        if (r != nullptr)
+            r->requestSelection(this);
+    }
 
 } // namespace ui3

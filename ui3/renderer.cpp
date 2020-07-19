@@ -276,6 +276,42 @@ namespace ui3 {
 
     }
 
+    // Selection & Clipboard
+
+    void Renderer::pasteClipboard(std::string const & contents) {
+        if (clipboardRequestTarget_ != nullptr) {
+            PasteEvent::Payload p{contents, clipboardRequestTarget_};
+            clipboardRequestTarget_ = nullptr;
+            onPaste(p, this);
+            if (! p.active())
+                return;
+            StringEvent::Payload pe{contents};
+            p->target->paste(pe);
+        }
+    }
+
+    void Renderer::pasteSelection(std::string const & contents) {
+        if (selectionRequestTarget_ != nullptr) {
+            PasteEvent::Payload p{contents, selectionRequestTarget_};
+            selectionRequestTarget_ = nullptr;
+            onPaste(p, this);
+            if (! p.active())
+                return;
+            StringEvent::Payload pe{contents};
+            p->target->paste(pe);
+        }
+    }
+
+    void Renderer::clearSelection(Widget * sender) {
+        if (selectionOwner_ != nullptr) {
+            Widget * owner = selectionOwner_;
+            selectionOwner_ = nullptr;
+            // inform the sender if the request is coming from elsewhere
+            if (owner != sender)
+                owner->clearSelection();
+        }
+    }
+
 
 
 } // namespace ui3

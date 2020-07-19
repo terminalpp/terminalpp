@@ -52,7 +52,6 @@ UI version 3
 
 - locks.h - remove grabber & smartptr, make priority lock non-reentrant
 - ansi-renderer should go to ansi-terminal
-- add mouse/keyboard support
 - renderer-widget coordinates, check that they are valid
 - key up not detected on standard terminal, determine how tpp would do it
 - mouse up event, detect click and double click
@@ -61,6 +60,8 @@ UI version 3
 - CSI sequence moved to own file, should be removed from terminal
 
 - resizing does not work in xterm
+
+- ansi renderer: check that clipboard is set correctly, determine now selection can be set and how clipboard can be requested
 
 
 

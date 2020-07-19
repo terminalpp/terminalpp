@@ -36,6 +36,8 @@ namespace ui3 {
         using MouseWheelEvent = Event<MouseWheelEventPayload, Renderer>;
         using MouseMoveEvent = Event<MouseMoveEventPayload, Renderer>;
 
+        using PasteEvent = Event<RendererPasteEventPayload, Renderer>;
+
         using Buffer = Canvas::Buffer;
         using Cell = Canvas::Cell;
 
@@ -291,6 +293,59 @@ namespace ui3 {
         unsigned mouseButtons_ = 0;
 
     //@}
+
+    // ============================================================================================
+    /** \name Selection & Clipboard support.
+     
+       Within single application, the renderer must support 
+     */
+    //@{
+    public:
+
+        PasteEvent onPaste;
+    protected:
+
+        Widget * selectionOwner() const {
+            return selectionOwner_;
+        }
+
+        /** Sets the clipboard contents. 
+         */ 
+        virtual void setClipboard(std::string const & contents) = 0;
+
+        /** Sets the selection contents and registers the owner. 
+         */
+        virtual void setSelection(std::string const & contents, Widget * owner) = 0;
+
+        virtual void requestClipboard(Widget * sender) {
+            clipboardRequestTarget_ = sender;
+        }
+
+        virtual void requestSelection(Widget * sender) {
+            selectionRequestTarget_ = sender;
+        }
+
+        virtual void pasteClipboard(std::string const & contents);
+
+        virtual void pasteSelection(std::string const & contents);
+
+        /** Clears the selection owned by a widget associated with the renderer. 
+         
+            The method should either be called by the selection owning widget if it its selection has been clared (in which case the sender should be the requesting widget), or by the renderer itself, in which case the sender is nullptr. 
+
+            When sender is nullptr, the current selection owner is notified by calling its Widget::clearSelection() method. 
+         */
+        virtual void clearSelection(Widget * sender);
+
+    private:
+        /** The widget owning the selection, nullptr if none. 
+         */
+        Widget * selectionOwner_ = nullptr;
+        Widget * clipboardRequestTarget_ = nullptr;
+        Widget * selectionRequestTarget_ = nullptr;
+
+    //@}
+
 
     }; // ui::Renderer
 

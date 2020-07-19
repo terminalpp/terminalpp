@@ -60,4 +60,12 @@ namespace ui3 {
     using MouseWheelEvent = Event<MouseWheelEventPayload>;
     using MouseMoveEvent = Event<MouseMoveEventPayload>;
 
+    using StringEvent = Event<std::string>;
+
+    class RendererPasteEventPayload {
+    public:
+        std::string contents;
+        Widget * target;
+    };
+
 } // namespace ui
