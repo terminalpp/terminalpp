@@ -61,10 +61,6 @@ UI version 3
 
 - resizing does not work in xterm
 
-- ansi renderer: check that clipboard is set correctly, determine now selection can be set and how clipboard can be requested
-
-
-
 # Roadmap
 
 > This section discusses plan for next versions and drafts the features planned. 

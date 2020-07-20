@@ -161,13 +161,15 @@ namespace ui3 {
     //@}
 
     /** \name Inputs. 
+     
+        Add t++ sequences for selection & clipboard.
      */
     //@{
 
     protected:
 
         void setClipboard(std::string const & contents) override {
-            send("\033]52;", 8);
+            send("\033]52;", 5);
             // TODO encode? 
             send(contents.c_str(), contents.size());
             send("\007", 1);
@@ -177,13 +179,13 @@ namespace ui3 {
             if (owner == selectionOwner()) {
                 selection_ = contents;
             } else { 
-
+                clearSelection(nullptr);
+                selection_ = contents;
             }
-
         }
+
         void requestClipboard(Widget * sender) override {
             Renderer::requestClipboard(sender);
-
         }
 
         void requestSelection(Widget * sender) override {
