@@ -275,6 +275,7 @@ namespace ui3 {
 
     // Selection
 
+    /*
     void Widget::clearSelection() {
         Renderer * r = renderer();
         if (r != nullptr && r->selectionOwner_ == this) {
@@ -293,7 +294,7 @@ namespace ui3 {
         Renderer * r = renderer();
         if (r != nullptr)
             r->setSelection(contents, this);
-    }
+    } */
 
     void Widget::requestClipboardPaste() {
         Renderer * r = renderer();

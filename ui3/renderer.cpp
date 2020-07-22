@@ -1,5 +1,7 @@
 #include "widget.h"
 
+#include "mixins/selection_owner.h"
+
 #include "renderer.h"
 
 namespace ui3 {
@@ -308,7 +310,7 @@ namespace ui3 {
             selectionOwner_ = nullptr;
             // inform the sender if the request is coming from elsewhere
             if (owner != sender)
-                owner->clearSelection();
+                dynamic_cast<SelectionOwner>(owner)->clearSelection();
         }
     }
 

@@ -492,10 +492,10 @@ namespace ui3 {
 
                 This function must be overriden in subclasses that support selection ownership and when called, must reset the selection cache (if any) and clear the visual indication of the selection ownership. Finally the base implementation must be called which informs the renderer about the selection clear if necessary. 
              */
-            virtual void clearSelection();
+            //virtual void clearSelection();
 
-            void setClipboard(std::string const & contents);
-            void setSelection(std::string const & contents);
+            //void setClipboard(std::string const & contents);
+            //void setSelection(std::string const & contents);
 
             void requestClipboardPaste();
             void requestSelectionPaste();

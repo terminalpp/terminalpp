@@ -27,6 +27,7 @@ namespace ui3 {
     class Renderer {
         friend class Canvas;
         friend class Widget;
+        friend class SelectionOwner;
     public:
 
         using KeyEvent = Event<Key, Renderer>;
