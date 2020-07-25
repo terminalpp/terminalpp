@@ -42,12 +42,7 @@ namespace ui {
         using Buffer = Canvas::Buffer;
         using Cell = Canvas::Cell;
 
-        virtual ~Renderer() {
-            if (fpsThread_.joinable()) {
-                fps_ = 0;
-                fpsThread_.join();
-            }
-        }
+        virtual ~Renderer();
 
     protected:
 
@@ -58,7 +53,6 @@ namespace ui {
         Renderer(std::pair<int, int> const & size):
             Renderer(Size{size.first, size.second}) {
         }
-
 
     // ============================================================================================
     /** \name Events & Scheduling
@@ -78,6 +72,12 @@ namespace ui {
             This function can be called from any thread. Schedules an event in the UI thread and pauses the current thread until the UI thread has processed the event. 
          */ 
         void yieldToUIThread();
+
+    protected:
+
+        /** Cancels all user events registered by the widget. 
+         */
+        virtual void cancelWidgetEvents(Widget * widget) = 0;
 
     private:
 
@@ -104,19 +104,18 @@ namespace ui {
         virtual void setRoot(Widget * value);
 
     private:
-        virtual void widgetDetached(Widget * widget) {
-            if (renderWidget_ == widget)
-                renderWidget_ = nullptr;
-            // TODO this should actually do stuff such as checking that mouse and keyboard focus remains valid, etc. 
-            NOT_IMPLEMENTED;
-        }
+        /** Triggered by the widgets when they are detached from the renderer. 
+         
+            When this method is called, the widget is guaranteed to be a part of valid tree (i.e. all its parents and children, but possibly not siblings are still attached). The bookkeeping should trigger any outstanding events on the widget and make sure that any references the renderer had to the detaching widget are voided.
+         */
+        virtual void widgetDetached(Widget * widget);
 
         /** Detaches the subtree of given widget from the renderer. 
          */
         void detachTree(Widget * root) {
             detachWidget(root);
             // now that the whole tree has been detached, fix keyboard & mouse issues, etc. 
-            NOT_IMPLEMENTED;
+            // TODO
         }
 
         /** Detaches the given widget by invalidating its visible area, including its entire subtree, when detached, calls the widgetDetached() method.

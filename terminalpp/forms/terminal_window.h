@@ -42,6 +42,9 @@ namespace tpp {
             window_{window} /*
             main_{new PublicContainer{}},
             pager_{new Pager{}} */ {
+
+            window_->onClose.setHandler(&TerminalWindow::windowCloseRequest, this);
+
             Config const & config = Config::Instance();
                 /*
 
@@ -87,29 +90,76 @@ namespace tpp {
 
 
     private:
-        /*
         class SessionInfo {
         public:
             std::string name;
             std::string title;
+            /*
             PTYMaster * pty;
             AnsiTerminal * terminal;
             AnsiTerminal::Palette palette;
+            */
             bool terminateOnKeyPress;
 
             SessionInfo(Config::sessions_entry const & session):
                 name{session.name()},
                 title{session.name()},
-                pty{nullptr},
-                terminal{nullptr},
-                palette{session.palette()},
+                //palette{session.palette()},
                 terminateOnKeyPress{false} {
             }
 
             ~SessionInfo() {
-                delete terminal;
+                //delete terminal;
             }
         }; 
+
+        /** The window has been requested to close. 
+         */
+        void windowCloseRequest(tpp::Window::CloseEvent::Payload & p) {
+            // TODO Determine what to do here. 
+        }
+
+        SessionInfo * sessionInfo(Widget * terminal) {
+            return nullptr;
+            /*
+            AnsiTerminal * t = dynamic_cast<AnsiTerminal*>(terminal);
+            ASSERT(t != nullptr);
+            auto i = sessions_.find(t);
+            ASSERT(i != sessions_.end());
+            return (i->second);
+            */
+        }
+
+        void closeSession(SessionInfo * session) {
+            /*
+            sessions_.erase(session->terminal);
+            pager_->remove(session->terminal);
+            delete session;
+            // if this was the last session, close the window
+            if (sessions_.empty())
+                window_->close();
+            // otherwise focus the active session instead
+            // TODO do we want this always, or should we actually check if the remove session was focused first? 
+            else
+                window_->setKeyboardFocus(pager_->activePage());
+                */
+        }
+
+        /*
+        void sessionTitleChanged(Event<std::string>::Payload & event) {
+            SessionInfo * si = sessionInfo(event.sender());
+            si->title = *event;
+        }
+
+        void sessionNotification(Event<void>::Payload & event) {
+            MARK_AS_UNUSED(event);
+            window_->setIcon(tpp::Window::Icon::Notification);
+        }
+        */
+
+
+
+        /*
 
         void keyDown(UIEvent<Key>::Payload & event) override {
             if (activeSession_->terminateOnKeyPress) 
@@ -119,26 +169,6 @@ namespace tpp {
         }
 
 
-        SessionInfo * sessionInfo(Widget * terminal) {
-            AnsiTerminal * t = dynamic_cast<AnsiTerminal*>(terminal);
-            ASSERT(t != nullptr);
-            auto i = sessions_.find(t);
-            ASSERT(i != sessions_.end());
-            return (i->second);
-        }
-
-        void closeSession(SessionInfo * session) {
-            sessions_.erase(session->terminal);
-            pager_->remove(session->terminal);
-            delete session;
-            // if this was the last session, close the window
-            if (sessions_.empty())
-                window_->requestClose();
-            // otherwise focus the active session instead
-            // TODO do we want this always, or should we actually check if the remove session was focused first? 
-            else
-                window_->setKeyboardFocus(pager_->activePage());
-        }
 
         bool autoScrollStep(Point by) override {
             return activeSession_->terminal->scrollBy(by);
@@ -159,17 +189,10 @@ namespace tpp {
                 window_->setKeyboardFocus(this);
                 activeSession_->terminateOnKeyPress = true;
             }
-        }        
+        }       
+        */ 
 
-        void sessionTitleChanged(UIEvent<std::string>::Payload & event) {
-            SessionInfo * si = sessionInfo(event.sender());
-            si->title = *event;
-        }
-
-        void sessionNotification(UIEvent<void>::Payload & event) {
-            MARK_AS_UNUSED(event);
-            window_->setIcon(tpp::Window::Icon::Notification);
-        }
+        /*
 
         void terminalKeyDown(UIEvent<Key>::Payload & e) {
             if (window_->icon() != tpp::Window::Icon::Default)

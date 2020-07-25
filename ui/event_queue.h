@@ -37,8 +37,6 @@ namespace ui {
             }
         }
 
-    private:
-
         void cancelWidgetEvents(Widget * widget) {
             std::lock_guard<std::mutex> g{eventsGuard_};
             if (widget->pendingEvents_ == 0)

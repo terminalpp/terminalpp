@@ -243,8 +243,7 @@ namespace tpp {
              */
 			case WM_CLOSE: {
 				ASSERT(window != nullptr) << "Unknown window";
-                // TODO determine how to deal with closing the window !!!!!
-                //window->requestClose();
+                window->requestClose();
                 return 0;
 			}
 			/** Destroys the window, if it is the last window, quits the app. */

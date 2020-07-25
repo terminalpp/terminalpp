@@ -86,6 +86,50 @@ namespace tpp {
             return Color::Black;
         }
 
+    /** \name Window Closing. 
+
+        To request a window to close, the requestClose() method should be called, which triggers the onClose event. Unless deactivated in the handler, the close() method will be called immediately after the event is serviced. The close() method then actually closes the window. 
+
+        This gives the window the ability to implement conditional closings such as close of a window with multiple terminals can be rejected. 
+
+        The close() method of the window should never be called by the widgets. Rather the state should be updated in such way that the onClose handler will not deactivate the event and then requestClose() should be called. 
+
+        TODO maybe this should move to renderer proper? See if this will be needed for ansi renderer as well. 
+     */
+    //@{
+    public:
+        using CloseEvent = ui::Event<void, Window>;
+
+        /** Requests the window to be closed,.
+            
+            Generates the `onClose` event and unless the event is deactivated, calls the close() method afterwards. Can be called either programatically, or when user requests the closure of the window. 
+         */
+        void requestClose() {
+            CloseEvent::Payload p{};
+            onClose(p, this);
+            if (p.active())
+                close();
+        }
+
+        /** Triggered when closure of the widow is requested. 
+         */
+        CloseEvent onClose;
+
+    protected:
+
+        /** Closes the window immediately. 
+         
+            Subclasses must override the method and call parent implementation after which they must destroy the actual window which should lead to the destruction of the object (such as deleting the object in the main event loop or the UI). 
+         */
+        virtual void close() {
+            // delete the root if attached
+            Widget * rootWidget = root();
+            setRoot(nullptr);
+            delete rootWidget;
+        };
+
+        //@}
+
     protected:
         Window(int width, int height, FontMetrics const & font):
             Renderer{Size{width, height}},

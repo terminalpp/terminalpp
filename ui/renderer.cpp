@@ -6,6 +6,14 @@
 
 namespace ui {
 
+    Renderer::~Renderer() {
+        if (fpsThread_.joinable()) {
+            fps_ = 0;
+            fpsThread_.join();
+        }
+        ASSERT(root_ == nullptr) << "Deleting renderer with attached widgets is an error.";
+    }
+
     // Events
 
     /*
@@ -78,18 +86,41 @@ namespace ui {
         }
     }
 
+    void Renderer::widgetDetached(Widget * widget) {
+        if (renderWidget_ == widget)
+            renderWidget_ = nullptr;
+        // check mouse and keyboard focus and emit proper events if disabled
+        if (widget == mouseFocus_) {
+            Event<void>::Payload p{};
+            widget->mouseOut(p);
+            mouseFocus_ = nullptr;
+        }
+        if (keyboardFocus_ == widget) {
+            Event<void>::Payload p{};
+            widget->focusOut(p);
+            keyboardFocus_ = nullptr;
+        }
+        // if there are pending clipboard or selection requests to the widget, stop them
+        if (clipboardRequestTarget_ == widget)
+            clipboardRequestTarget_ = nullptr;
+        if (selectionRequestTarget_ == widget)
+            selectionRequestTarget_ = nullptr;
+        // cancel all user events pending on the widget
+        cancelWidgetEvents(widget);
+    }
+
 
     void Renderer::detachWidget(Widget * widget) {
         // block repainting of detached widgets - will be repainted again after being reattached
         widget->pendingRepaint_ = true;
-        {
-            // detach the visible area
-            std::lock_guard<std::mutex> g{widget->rendererGuard_};
-            widget->visibleArea_.detach();
-        }
+        // do the bookkeeping for widget detachment before we actually touch the widget
+        widgetDetached(widget);
+        // detach the children 
         for (Widget * child : widget->children_)
             detachWidget(child);
-        widgetDetached(widget);
+        // and finally detach the visible area 
+        std::lock_guard<std::mutex> g{widget->rendererGuard_};
+        widget->visibleArea_.detach();
     }
 
     // Layouting and painting
@@ -199,7 +230,7 @@ namespace ui {
     }
 
     void Renderer::mouseOut() {
-        
+
     }
 
     void Renderer::mouseMove(Point coords) {

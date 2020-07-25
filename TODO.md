@@ -50,11 +50,10 @@ Issues to be raised:
 
 UI version 3
 
+- mouse enter & leave - they can't do anhything real functionality
+- focus in and focus out
 - cursor visibility determined by its position too
 - border rendering (& border in canvas cell)
-- mouse enter & leave? 
-- focus in and focus out
-- CRTP renderer that manages its own queue of events (i.e. one queue of events per renderer class, not renderer instance)
 - fix errors
 - ansi terminal palette in config.h
 - mouse click & double click in renderer?

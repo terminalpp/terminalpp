@@ -112,7 +112,7 @@ HELPERS_NAMESPACE_BEGIN
 			}
 
 		private:
-		    friend class Event;
+		    friend class HELPERS_NAMESPACE_DECL::Event;
 
 			Payload(SENDER * sender):
 				sender_(sender) {

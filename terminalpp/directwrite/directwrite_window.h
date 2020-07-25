@@ -51,9 +51,18 @@ namespace tpp {
             RendererWindow::resize(newSize);
         }
 
+        void schedule(std::function<void()> event, Widget * widget) override;
+
+        void close() override {
+            RendererWindow::close();
+            DestroyWindow(hWnd_);
+        }
+
     protected:
 
-        void schedule(std::function<void()> event, Widget * widget) override;
+        void cancelWidgetEvents(Widget * widget) override {
+            EventQueue::cancelWidgetEvents(widget);
+        }
 
         void windowResized(int width, int height) override{
             ASSERT(rt_ != nullptr);
@@ -73,16 +82,14 @@ namespace tpp {
 
         /** Enable mouse tracking so that the mouseOut event is properly reported. 
          */
-        /*
-        void rendererMouseIn() override {
+        void mouseIn() override {
             TRACKMOUSEEVENT tm;
             tm.cbSize = sizeof(tm);
             tm.dwFlags = TME_LEAVE;
             tm.hwndTrack = hWnd_;
             TrackMouseEvent(&tm);                    
-            RendererWindow::rendererMouseIn();
+            RendererWindow::mouseIn();
         }
-        */
 
         /** Registers mouse button down.
           
