@@ -51,7 +51,11 @@ Issues to be raised:
 UI version 3
 
 - mouse enter & leave - they can't do anhything real functionality
-- focus in and focus out
+- focus in and focus out - how to implement defocus of widget when keyboardOut?
+    - I guess keyboardIn or any keyboard event sets keyboardIn flag, keyboard out clears it
+- the above is done, document!
+
+
 - cursor visibility determined by its position too
 - border rendering (& border in canvas cell)
 - fix errors

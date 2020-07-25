@@ -30,6 +30,8 @@ namespace ui {
         friend class SelectionOwner;
     public:
 
+        using VoidEvent = Event<void, Renderer>;
+
         using KeyEvent = Event<Key, Renderer>;
         using KeyCharEvent = Event<Char, Renderer>;
 
@@ -231,6 +233,9 @@ namespace ui {
     //@{
     public:
 
+        VoidEvent onFocusIn;
+        VoidEvent onFocusOut;
+
         KeyEvent onKeyDown;
         KeyEvent onKeyUp;
         KeyCharEvent onKeyChar;
@@ -240,7 +245,7 @@ namespace ui {
             nullptr when no widget is focused.  
          */
         Widget * keyboardFocus() const {
-            return keyboardFocus_;
+            return focusIn_ ? keyboardFocus_ : nullptr;
         }
 
     protected:
@@ -279,6 +284,8 @@ namespace ui {
 
     private:
 
+        bool focusIn_ = false;
+
         /** Widget that holds keyboard focus. */
         Widget * keyboardFocus_ = nullptr;
         Widget * keyDownFocus_ = nullptr;
@@ -292,6 +299,8 @@ namespace ui {
      */
     //@{
     public:
+        VoidEvent onMouseIn;
+        VoidEvent onMouseOut;
         MouseMoveEvent onMouseMove;
         MouseWheelEvent onMouseWheel;
         MouseButtonEvent onMouseDown;
@@ -320,6 +329,8 @@ namespace ui {
     private:
 
         void updateMouseFocus(Point coords);
+
+        bool mouseIn_ = false;
 
         Widget * mouseFocus_ = nullptr;
         /** Mouse buttons that are currently down. */
