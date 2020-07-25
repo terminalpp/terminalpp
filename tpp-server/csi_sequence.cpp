@@ -3,7 +3,7 @@
 #include "csi_sequence.h"
 
 
-namespace ui3 {
+namespace ui {
 
     CSISequence CSISequence::Parse(char const * & start, char const * end) {
         CSISequence result;
@@ -62,4 +62,4 @@ namespace ui3 {
     }
 
 
-} // namespace ui3
+} // namespace ui

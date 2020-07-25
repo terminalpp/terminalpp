@@ -114,13 +114,11 @@ int main(int argc, char* argv[]) {
         for (auto & i : config.telemetry.events())
             telemetry.addLog(i);
 
-        //throw "foobar";
-		//Log::FileWriter log(UniqueNameIn(config.log.dir(), "log-"));
 		Log::Enable(Log::StdOutWriter(), { 
 			Log::Default(),
             Log::Exception(),
-			ui::AnsiTerminal::SEQ_ERROR,
-			ui::AnsiTerminal::SEQ_UNKNOWN
+			//ui::AnsiTerminal::SEQ_ERROR,
+			//ui::AnsiTerminal::SEQ_UNKNOWN
 		});
         
         tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", 80, 25);

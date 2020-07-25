@@ -5,12 +5,12 @@
 
 #include "tpp-lib/terminal_client.h"
 
-#include "ui3/renderer.h"
+#include "ui/renderer.h"
 
 #include "csi_sequence.h"
 
 
-namespace ui3 {
+namespace ui {
 
     /** Renders the UI inside an ANSI escape sequences terminal. 
      */
@@ -208,4 +208,4 @@ namespace ui3 {
 
     }; // ui::AnsiRenderer
 
-} // namespace ui3
+} // namespace ui

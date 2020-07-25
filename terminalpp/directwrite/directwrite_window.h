@@ -13,7 +13,7 @@ namespace tpp {
 
     using namespace ui;
 
-    class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND> {
+    class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND>, public EventQueue<DirectWriteWindow> {
     public:
 
         /** Bring the font to the class' namespace so that the RendererWindow can find it. 
@@ -28,9 +28,9 @@ namespace tpp {
          
             The WM_PAINT message is sent with the appropriate widget. 
          */
-        void repaint(Widget * widget) override {
+        /*void repaint(Widget * widget) override {
             PostMessage(hWnd_, WM_PAINT, 0, reinterpret_cast<LPARAM>(widget));
-        }
+        } */
 
         void setTitle(std::string const & value) override;
 
@@ -45,13 +45,15 @@ namespace tpp {
                 ShowWindow(hWnd_, SW_HIDE);
         }
 
-        void resize(int newWidth, int newHeight) override {
-            if (newWidth != width())
-                updateDirectWriteStructures(newWidth);
-            RendererWindow::resize(newWidth, newHeight);
+        void resize(Size const & newSize) override {
+            if (newSize.width() != size().width())
+                updateDirectWriteStructures(newSize.width());
+            RendererWindow::resize(newSize);
         }
 
     protected:
+
+        void schedule(std::function<void()> event, Widget * widget) override;
 
         void windowResized(int width, int height) override{
             ASSERT(rt_ != nullptr);
@@ -63,14 +65,15 @@ namespace tpp {
 
         /** Destroys the renderer's window. 
          */
-        void rendererClose() override {
+        /*void rendererClose() override {
             RendererWindow::rendererClose();
             DestroyWindow(hWnd_);
-        }
+        } */
 
 
         /** Enable mouse tracking so that the mouseOut event is properly reported. 
          */
+        /*
         void rendererMouseIn() override {
             TRACKMOUSEEVENT tm;
             tm.cbSize = sizeof(tm);
@@ -79,13 +82,14 @@ namespace tpp {
             TrackMouseEvent(&tm);                    
             RendererWindow::rendererMouseIn();
         }
+        */
 
         /** Registers mouse button down.
           
             Starts mouse capture if no mouse button has been pressed previously, which allows the terminal window to track mouse movement outside of the window if at least one mouse button is pressed. 
          */ 
-        void rendererMouseDown(Point coords, MouseButton button, Key modifiers) override {
-            RendererWindow::rendererMouseDown(coords, button, modifiers);
+        void mouseDown(Point coords, MouseButton button) override {
+            RendererWindow::mouseDown(coords, button);
             if (mouseButtonsDown_ == 1)
                 SetCapture(hWnd_);
         }
@@ -94,8 +98,8 @@ namespace tpp {
           
             If there are no more pressed buttons left, releases the mouse capture previously obtained. 
          */
-        void rendererMouseUp(Point coords, MouseButton button, Key modifiers) override {
-            RendererWindow::rendererMouseUp(coords, button, modifiers);
+        void mouseUp(Point coords, MouseButton button) override {
+            RendererWindow::mouseUp(coords, button);
             if (mouseButtonsDown_ == 0)
                 ReleaseCapture();
         }
@@ -104,7 +108,7 @@ namespace tpp {
          
             Since we need to track mouse leave, checks whether the mouse leave event is currently tracked and if not, enables the tracking, which is disabled when the mouseOut event is emited. 
          */
-        void rendererMouseMove(Point coords, Key modifiers) override {
+        void mouseMove(Point coords) override {
             // enable tracking if not enabled
             if (! mouseLeaveTracked_) {
                 TRACKMOUSEEVENT tm;
@@ -114,18 +118,18 @@ namespace tpp {
                 mouseLeaveTracked_ = TrackMouseEvent(&tm);
                 ASSERT(mouseLeaveTracked_);
             }
-            RendererWindow::rendererMouseMove(coords, modifiers);
+            RendererWindow::mouseMove(coords);
         }
 
         void requestClipboard(Widget * sender) override;
 
         void requestSelection(Widget * sender) override;
 
-        void rendererSetClipboard(std::string const & contents) override;
+        void setClipboard(std::string const & contents) override;
 
-        void rendererRegisterSelection(std::string const & contents, Widget * owner) override;
+        void setSelection(std::string const & contents, Widget * owner) override;
 
-        void rendererClearSelection() override;
+        void clearSelection(Widget * sender) override;
 
     private:
 
@@ -151,7 +155,7 @@ namespace tpp {
             changeBackgroundColor(backgroundColor());
             if (widthPx_ % cellWidth_ != 0) {
                 D2D1_RECT_F rect = D2D1::RectF(
-                    static_cast<FLOAT>(width() * cellWidth_),
+                    static_cast<FLOAT>(size().width() * cellWidth_),
                     static_cast<FLOAT>(0),
                     static_cast<FLOAT>(widthPx_),
                     static_cast<FLOAT>(heightPx_)
@@ -161,7 +165,7 @@ namespace tpp {
             if (heightPx_ % cellHeight_ != 0) {
                 D2D1_RECT_F rect = D2D1::RectF(
                     static_cast<FLOAT>(0),
-                    static_cast<FLOAT>(height() * cellHeight_),
+                    static_cast<FLOAT>(size().height() * cellHeight_),
                     static_cast<FLOAT>(widthPx_),
                     static_cast<FLOAT>(heightPx_)
                 );
@@ -273,6 +277,7 @@ namespace tpp {
         /** Draws the borders of a single cell. 
          */
         void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
+            /*
             float fLeft = static_cast<float>(col * cellWidth_);
             float fTop = static_cast<float>(row * cellHeight_);
             float widthTop = static_cast<float>(border.top() == Border::Kind::None ? 0 : (border.top() == Border::Kind::Thick ? widthThick : widthThin));
@@ -301,6 +306,7 @@ namespace tpp {
                 rect.left = rect.right - widthRight;
                 rt_->FillRectangle(rect, bg_.Get());
             }
+            */
         }
 
         //@}

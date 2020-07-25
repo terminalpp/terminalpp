@@ -3,7 +3,7 @@
 #include <vector>
 #include <ostream>
 
-namespace ui3 {
+namespace ui {
 
     class CSISequence {
     public:
@@ -112,7 +112,7 @@ namespace ui3 {
             return s;
         }
 
-    }; // ui3::CISSequence
+    }; // ui::CISSequence
 
 
-} // namespace ui3
+} // namespace ui

@@ -2,7 +2,7 @@
 
 #include "helpers/helpers.h"
 
-namespace ui3 {
+namespace ui {
 
     // Mouse
 
@@ -40,8 +40,6 @@ namespace ui3 {
         friend struct std::hash<Key>;
     public:
 
-        static constexpr unsigned InvalidCode = 0;
-
         static Key const Invalid;
 
 #define KEY(NAME, CODE) static Key const NAME;
@@ -52,12 +50,14 @@ namespace ui3 {
         static Key const Alt;
         static Key const Win;
 
+        static Key FromCode(unsigned code);
+
         Key():
             raw_{InvalidCode} {
         }
 
-        unsigned code() const {
-            return raw_ & 0xffff;
+        Key code() const {
+            return Key{raw_ & 0xffff};
         }
 
         Key modifiers() const {
@@ -93,6 +93,7 @@ namespace ui3 {
         }
 
     private:
+        static constexpr unsigned InvalidCode = 0;
 
         Key(unsigned raw):
             raw_{raw} {
@@ -107,7 +108,7 @@ namespace ui3 {
                 s << "A-";
             if (k & Key::Win)
                 s << "W-";
-            switch (k.code()) {
+            switch (k.raw_ & 0xffff) {
             case Key::InvalidCode:
                 s << "Invalid";
                 break;

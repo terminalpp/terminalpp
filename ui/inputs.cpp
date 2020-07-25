@@ -1,6 +1,6 @@
 #include "inputs.h"
 
-namespace ui3 {
+namespace ui {
 
     Key const Key::Invalid{0};
 
@@ -12,5 +12,13 @@ namespace ui3 {
     Key const Key::Alt{0x00040000};
     Key const Key::Win{0x00080000};
 
+    Key Key::FromCode(unsigned code) {
+        switch (code) {
+#define KEY(NAME, CODE) case CODE: return Key{CODE};
+#include "keys.inc.h"
+        default:
+            return Key::Invalid;
+        }
+    }
 
 } // namespace ui

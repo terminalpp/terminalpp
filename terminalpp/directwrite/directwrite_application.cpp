@@ -135,10 +135,6 @@ namespace tpp {
             hInstance_, // module handle
             this // lParam for WM_CREATE message
         );
-        // initialize the renderer's user with an WM_USER message broadcast
-        Renderer::Initialize([](){
-            PostMessage(DirectWriteApplication::Instance()->dummy_, WM_USER, 0, 0);
-        });
     }
 
     void DirectWriteApplication::registerWindowClass() {
@@ -176,7 +172,7 @@ namespace tpp {
 	LRESULT CALLBACK DirectWriteApplication::UserEventHandler_(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         switch (msg) {
             case WM_USER:
-                Renderer::ExecuteUserEvent();
+                DirectWriteWindow::ProcessEvent();
                 break;
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);

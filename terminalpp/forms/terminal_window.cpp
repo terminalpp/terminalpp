@@ -1,8 +1,10 @@
 #include "terminal_window.h"
 
+
 namespace tpp {
 
     void TerminalWindow::newSession(Config::sessions_entry const & session) {
+        /*
         Config const & config = Config::Instance();
         std::unique_ptr<SessionInfo> si{new SessionInfo{session}};
         // create the pty
@@ -36,6 +38,8 @@ namespace tpp {
         t->onMouseWheel.setHandler(&TerminalWindow::terminalMouseWheel, this);
         t->onSetClipboard.setHandler(&TerminalWindow::terminalSetClipboard, this);
         t->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
+        */
     }
 
 } // namespace tpp
+

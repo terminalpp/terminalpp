@@ -3,7 +3,7 @@
 #include "helpers/helpers.h"
 #include "helpers/string.h"
 
-namespace ui3 {
+namespace ui {
 
     class Color {
     public:

@@ -3,7 +3,7 @@
 
 #include "ansi_renderer.h"
 
-namespace ui3 {
+namespace ui {
 
     namespace {
 

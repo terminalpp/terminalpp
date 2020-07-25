@@ -1,302 +1,468 @@
 #pragma once
 
-#include "screen_buffer.h"
+#include "font.h"
+#include "color.h"
 #include "geometry.h"
 
 namespace ui {
 
     class Widget;
+    class Renderer;
 
-    /** 
-     */
     class Canvas {
+        friend class Widget;
+        friend class Renderer;
     public:
 
-        /** Finalizer function for a canvas. 
-         
-            Finalizer function runs when the canvas is to be destroyed, i.e. after all other painting on the canvas, which allows the finalizer to override any existing content (which is useful for drawing borders or transparent overlays). 
-         */
-        using Finalizer = std::function<void(Canvas&)>;
+        class Cursor;
+        class Cell;
+        class Buffer;
 
-        /** Creates a canvas that encompasses the entire buffer. 
-         
-            Only the main UI thread can create a canvas. 
-         */
-        Canvas(Widget * widget);
-
-        ~Canvas() {
-            if (finalizer_)
-                finalizer_(*this);
-        }
-
-        /** Returns the width of the canvas. 
-         */
-        int width() const {
-            return width_;
-        }
-
-        /** Returns the height of the canvas. 
-         */
-        int height() const {
-            return height_;
-        }
-
-        /** Returns the rectangle of the canvas. 
-         */
         Rect rect() const {
-            return Rect::FromWH(width_, height_);
+            return Rect{size()};
         }
 
-        /** Resizes the canvas. 
-         
-            Returns a new canvas that is identical to the current canvas except for the size which can be specified. 
-         */ 
-        // DELETE
-        Canvas resize(int width, int height) const {
-            return Canvas{width, height, buffer_, visibleRect_, bufferOffset_};
+        Size size() const {
+            return size_;
         }
 
-        Canvas resize(Size newSize) const {
-            return Canvas{newSize.width(), newSize.height(), buffer_, visibleRect_, bufferOffset_};
-        }
-
-        /** Offsets the canvas. 
-         
-            Creates a canvas identical to the current canvas except for the position of the visible rectangle, which will be offset by the given coordinates. This corresponds to the canvas being scrolled as different part of it will actually be visible.
+        /** \name Text metrics
          */
         //@{
-        Canvas offset(Point by) const {
-            return Canvas{width_, height_, buffer_, (visibleRect_ + by) & rect(), bufferOffset_ - by};
-        }
 
-        Canvas offset(int left, int top) const {
-            return offset(Point{left, top});
-        }
+        /** Information about a single line of text. 
+         */
+        struct TextLine {
+            /** Width of the line in cells for single-width font of size 1. 
+             */
+            int width; 
+            /** The actual number of codepoints in the line.
+             */
+            int chars;
+            /** First character of the line.
+             */
+            Char::iterator_utf8 begin;
+            /** End of the line (exclusive). 
+             */
+            Char::iterator_utf8 end;
+        }; // Canvas::TextLine
+
+        static constexpr int NoWordWrap = -1;
+
+        static std::vector<TextLine> GetTextMetrics(std::string const & text, int wordWrapAt = NoWordWrap);
+
+        static TextLine GetTextLine(Char::iterator_utf8 & begin, Char::iterator_utf8 const & end, int wordWrapAt = NoWordWrap);
+
         //@}
 
-        /** Clips the canvas. 
-         
-            The returned canvas will correspond to the specified rectangle of the current canvas. Note that the rectangle does not have to be fully contained within the current canvas. 
-
-         */
-        Canvas clip(Rect const & rect) const {
-            return Canvas{
-                rect.width(),
-                rect.height(),
-                buffer_,
-                (rect & visibleRect_) - rect.topLeft(),
-                bufferOffset_ + rect.topLeft()
-            };
-        }
-
-        /** Returns the visible rectangle of the canvas, i.e. the part of the canvas that is backed by an underlying buffer. 
-         
-            Drawing outside the visible rect is permitted, but has no effect. 
-         */
-        Rect visibleRect() const {
-            return visibleRect_;
-        }
-
-        // ========================================================================================
-
-        /** \name Painting structures
+        /** \name State
          */
         //@{
 
         Color fg() const {
-            return state_.fg();
+            return fg_;
         }
 
-        Canvas & setFg(Color value) {
-            ASSERT(value.a == 255);
-            state_.setFg(value);
-            return *this;
+        void setFg(Color value) {
+            fg_ = value;
         }
 
         Color bg() const {
-            return state_.bg();
+            return bg_;
         }
 
-        Canvas & setBg(Color value) {
-            ASSERT(value.a == 255);
-            state_.setBg(value);
-            return *this;
-        }
-
-        Color decor() const {
-            return state_.decor();
-        }
-
-        Canvas & setDecor(Color value) {
-            ASSERT(value.a == 255);
-            state_.setDecor(value);
-            return *this;
+        void setBg(Color value) {
+            bg_ = value;
         }
 
         Font font() const {
-            return state_.font();
+            return font_;
         }
 
-        Canvas & setFont(Font value) {
-            state_.setFont(value);
-            return *this;
+        void setFont(Font value) {
+            font_ = value;
         }
 
         //@}
 
-        // ========================================================================================
-
-        /** \name Painting functions
+        /** \name Drawing
          */
         //@{
 
-        Canvas & setAt(Point coords, Cell const & cell) {
-            Cell * c = at(coords);
-            if (c != nullptr)
-                *c = cell;
-            return *this;
+        Canvas & fill(Rect const & rect) {
+            return fill(rect, bg_);
+        }
+        Canvas & fill(Rect const & rect, Color color);
+
+        Canvas & textOut(Point x, std::string const & str) {
+            return textOut(x, Char::BeginOf(str), Char::EndOf(str));
         }
 
-        Canvas & setBorderAt(Point coords, Border const & border) {
-            Cell * c = at(coords);
-            if (c != nullptr)
-                c->setBorder(border);
-            return *this;
-        }
-
-        Canvas & drawBuffer(ScreenBuffer const & buffer, Point topLeft);
-        
-        Canvas & fillRect(Rect const & rect);
-
-        /** Fills the given rectangle with specified background color, leaving everything else intact. 
-         */
-        Canvas & fillRect(Rect const & rect, Color background);
-
-        /** Draws the specified border line. 
-         
-            The line must be either horizontal, or vertical. The border of all cells along the line will be updated with the provided one. The update allows drawBorderLine to be used to draw even corners of border rectangles. 
-         */
-        Canvas & drawBorderLine(Border const & border, Point from, Point to);
-
-        /** Applies the border to given rectangle edges.
-         
-            Sets the border 
-         */
-        Canvas & drawBorderRect(Border const & border, Rect const & rect);
-
-        /** Draws the specified text specified by utf8 iterators. 
-         
-            The text is drawn in a single line starting from the specified point and growing to the right. 
-         */
-        Canvas & textOut(Point where, Char::iterator_utf8 begin, Char::iterator_utf8 end);
-
-        Canvas & textOut(Point where, StringLine const & line, int maxWidth, HorizontalAlign hAlign);
-
-        /** Draws the specified text starting from the given point. 
-         
-            The text is drawn in a single line starting from the specified point and growing to the right. 
-         */
-        /*Canvas & textOut(Point where, std::string const & text) {
-            return textOut(where, Char::BeginOf(text), Char::EndOf(text));
-        } */
-
-        Canvas & textOut(Point where, std::string_view const & text) {
-            return textOut(where, Char::BeginOf(text), Char::EndOf(text));
-        }
-
+        Canvas & textOut(Point x, Char::iterator_utf8 begin, Char::iterator_utf8 end);
 
         //@}
 
-        /** Adds new finalizer to the canvas. 
+    private:
+
+
+        Color fg_;
+        Color bg_;
+        Color decor_;
+        Font font_;
+
+    protected:
+
+        /** Visible area of the canvas. 
          
-            If the canvas already has a finalizer, the new finalizer will first call itself and then call the old one, ensuring that first registered finalizer will run last. 
-         */
-        void addFinalizer(Finalizer value) {
-            if (! finalizer_) {
-                finalizer_ = value;
-            } else {
-                Finalizer old = finalizer_;
-                finalizer_ = [old, value](Canvas & canvas){
-                    value(canvas);
-                    old(canvas);
-                };
+            Each widget remembers its visible area, which consists of the pointer to its renderer, the offset of the widget's top-left corner in the renderer's absolute coordinates and the area of the widget that translates to a portion of the renderer's buffer. 
+        */
+        class VisibleArea {
+            friend class Renderer;
+        public:
+
+            VisibleArea():
+                renderer_{nullptr} {
             }
+
+            VisibleArea(VisibleArea const & ) = default;
+
+            Renderer * renderer() const {
+                return renderer_;
+            }
+
+            /** The offset of the canvas' coordinates from the buffer ones, 
+             
+                Corresponds to the buffer coordinates of canvas' [0,0].
+             */
+            Point offset() const {
+                return offset_;
+            }
+
+            /** The rectangle within the canvas that is backed by the buffer, in the canvas' coordinates. 
+             */
+            Rect const & rect() const {
+                return rect_;
+            }
+
+            /** The visible are in buffer coordinates. 
+             */
+            Rect bufferRect() const {
+                return rect_ + offset_;
+            }
+
+            bool attached() const {
+                return renderer_ != nullptr;
+            }
+
+            void attach(Renderer * renderer) {
+                renderer_ = renderer;
+                rect_ = Rect{};
+                offset_ = Point{};
+            }
+
+            /** Detaches the visible area from the renderer, thus invalidating it. 
+             */
+            void detach() {
+                renderer_ = nullptr;
+            }
+
+            VisibleArea clip(Rect const & rect) const {
+                return VisibleArea{renderer_, offset_ + rect.topLeft(), (rect_ & rect) - rect.topLeft()};
+            }
+
+            VisibleArea offset(Point const & by) const {
+                return VisibleArea{renderer_, offset_ - by, rect_};
+            }
+
+        private:
+
+            VisibleArea(Renderer * renderer, Point const & offset, Rect const & rect):
+                renderer_{renderer}, 
+                offset_{offset},
+                rect_{rect} {
+            }
+
+            Renderer * renderer_;
+            Point offset_;
+            Rect rect_;
+        }; // ui::Canvas::VisibleArea
+
+        /** Creates canvas for given widget. 
+         */
+        Canvas(VisibleArea const & visibleArea, Size const & size);
+
+    private:
+
+
+        VisibleArea visibleArea_;
+        Buffer & buffer_;
+        Size size_;
+
+    }; // ui::Canvas
+
+    class Canvas::Cursor {
+    public:
+
+        char32_t const & codepoint() const {
+            return codepoint_;
+        }
+
+        bool const & visible() const {
+            return visible_;
+        }
+
+        bool const & blink() const {
+            return blink_;
+        }
+
+        Color const & color() const {
+            return color_;
+        }
+
+        Cursor & setCodepoint(char32_t value) {
+            codepoint_ = value;
+            return *this;
+        }
+
+        Cursor & setVisible(bool value = true) {
+            visible_ = value;
+            return *this;
+        }
+
+        Cursor & setBlink(bool value = true) {
+            blink_ = value;
+            return *this;
+        }
+
+        Cursor & setColor(Color value) {
+            color_ = value;
+            return *this;
+        }
+
+    private:
+        char32_t codepoint_;
+        bool visible_;
+        bool blink_;
+        Color color_;
+    }; // ui::Canvas::Cursor
+
+    class Canvas::Cell {
+        friend class Canvas::Buffer;
+    public:
+
+        /** Default constructor.
+         */
+        Cell():
+            codepoint_{' '},
+            fg_{Color::White},
+            bg_{Color::Black},
+            decor_{Color::White},
+            font_{} {
+        }
+
+        /** \name Codepoint of the cell. 
+         */
+        //@{
+        char32_t codepoint() const {
+            return codepoint_ & 0x1fffff;
+        }
+
+        void setCodepoint(char32_t value) {
+            codepoint_ = (codepoint_ & 0xffe00000) + (value & 0x1fffff);
+        }
+        //@}
+
+        /** \name Foreground (text) color. 
+         */
+        //@{
+        Color const & fg() const {
+            return fg_;
+        }
+
+        void setFg(Color value) {
+            fg_ = value;
+        }
+        //@}
+
+        /** \name Background (fill) color. 
+         */
+        //@{
+        Color const & bg() const {
+            return bg_;
+        }
+
+        void setBg(Color value) {
+            bg_ = value;
+        }
+
+        //@}
+
+        /** \name Decoration (underline, strikethrough) color. 
+         */
+        //@{
+        Color const & decor() const {
+            return decor_;
+        }
+
+        void setDecor(Color value) {
+            decor_ = value;
+        }
+        //@}
+
+        /** \name Font. 
+         */
+        //@{
+
+        Font const & font() const {
+            return font_;
+        }
+
+        void setFont(Font value) {
+            font_ = value;
+        }
+
+        //@}
+    private:
+
+        char32_t codepoint_;
+        Color fg_;
+        Color bg_;
+        Color decor_;
+        Font font_;
+    }; // ui::Canvas::Cell
+
+
+    class Canvas::Buffer {
+    public:
+
+        Buffer(Size const & size):
+            size_{size} {
+            create(size);
+        }
+
+        Buffer(Buffer && from):
+            size_{from.size_},
+            rows_{from.rows_} {
+            from.size_ = Size{0,0};
+            from.rows_ = nullptr;
+        }
+
+        Buffer & operator = (Buffer && from) {
+            clear();
+            size_ = from.size_;
+            rows_ = from.rows_;
+            from.size_ = Size{0,0};
+            from.rows_ = nullptr;
+            return *this;
+        }          
+
+        virtual ~Buffer() {
+            clear();
+        }  
+
+        Size const & size() const {
+            return size_;
+        }
+
+        /** Determines whether given point lies within the buffer's area. 
+         */
+        bool contains(Point const & x) const {
+            return Rect{size_}.contains(x);
+        }
+
+        void resize(Size const & value) {
+            if (size_ == value)
+                return;
+            clear();
+            create(value);
+        }
+
+        Cell const & at(int x, int y) const {
+            return at(Point{x, y});
+        }
+
+        Cell const & at(Point p) const {
+            return cellAt(p);
+        }
+
+        Cell & at(int x, int y) {
+            return at(Point{x, y});
+        }
+
+        Cell & at(Point p) {
+            Cell & result = cellAt(p);
+            // clear the unused bits because of non-const access
+            SetUnusedBits(result, 0);
+            return result;
+        }
+
+        /** Returns the cursor properties. 
+         */
+        Cursor cursor() const {
+            return cursor_;
+        }
+
+        Point cursorPosition() const {
+            if (contains(cursorPosition_) && (GetUnusedBits(at(cursorPosition_)) & CURSOR_POSITION) == 0)
+                return Point{-1,-1};
+            else 
+                return cursorPosition_;
         }
 
     protected:
 
-        friend class Widget;
-
-        Canvas(int width, int height, ScreenBuffer& buffer, Rect visibleRect, Point visibleRectOffset):
-            width_{width},
-            height_{height},
-            buffer_{buffer}, 
-            visibleRect_{visibleRect},
-            bufferOffset_{visibleRectOffset} {
-            // TODO check the validity of the visible rectangle and update accordingly
+        Cell const & cellAt(Point const & p) const {
+            ASSERT(Rect{size_}.contains(p));
+            return rows_[p.y()][p.x()];
         }
 
-        /** Returns the cell at given coordinates.
-         
-            If the coordinates are outside of the visible rectangle, nullptr is returned. 
+        Cell & cellAt(Point const & p) {
+            ASSERT(Rect{size_}.contains(p));
+            return rows_[p.y()][p.x()];
+        }
+
+        /** Returns the value of the unused bits in the given cell's codepoint so that the buffer can store extra information for each cell. 
          */
-        //@{
-        Cell const * at(Point p) const {
-            return const_cast<Canvas*>(this)->at(p);
+        static char32_t GetUnusedBits(Cell const & cell) {
+            return cell.codepoint_ & 0xffe00000;
         }
 
-        Cell * at(Point p) {
-            if (! visibleRect_.contains(p))
-                return nullptr;
-            return & buffer_.at(p + bufferOffset_);
-        }
-        //@}
-
-        /** Updates border of given cell if the cell is in the visible area. 
-         
-            Does not change the unused bits. 
+        /** Sets the unused bytes value for the given cell to store extra information by the buffer. 
          */
-        void updateBorder(Point p, Border const & border) {
-            if (visibleRect_.contains(p)) {
-                // get the cell ourselves bypassing the buffer's unused bits clear
-                p += bufferOffset_;
-                Cell & c = buffer_.rows_[p.y()][p.x()];
-                c.setBorder(c.border().updateWith(border));
-            }
+        static void SetUnusedBits(Cell & cell, char32_t value) {
+            cell.codepoint_ = (cell.codepoint_ & 0x1fffff) + (value & 0xffe00000);
         }
+
+        /** Unused bits flag that confirms that the cell has a visible cursor in it. 
+         */
+        static char32_t constexpr CURSOR_POSITION = 0x200000;
 
     private:
 
-        int width_;
-        int height_;
+        void create(Size const & size) {
+            rows_ = new Cell*[size.height()];
+            for (int i = 0; i < size.height(); ++i)
+                rows_[i] = new Cell[size.width()];
+            size_ = size;
+        }
 
-        /** The backing buffer for the canvas. 
-         */
-        ScreenBuffer & buffer_;
+        void clear() {
+            // rows can be nullptr if they have been backed up by a swap when resizing
+            if (rows_ != nullptr) {
+                for (int i = 0; i < size_.height(); ++i)
+                    delete [] rows_[i];
+                delete [] rows_;
+            }
+            size_ = Size{0,0};
+        }
 
-        /** \anchor ui_canvas_visible_rect 
-            \name Visible Rectangle Properties
+        Size size_;
+        Cell ** rows_;
 
-            The coordinates of the top-left corner (origin) of the canvas in the buffer's coordinates and the visible rectangle, i.e. the rectangle of the canvas that is visible. The canvas is not allowed to change any cells outside of the visible rectangle. 
+        Cursor cursor_;
+        Point cursorPosition_;
 
-            Note that the visible rectangle is in the canvas' own coordinates. 
-         */
-        /** The visible rectangle of the canvas in the canvas coordinates. 
-         */
-        Rect visibleRect_;
+    }; // ui::Renderer::Buffer
 
-        /** The coordinates of canvas origin in the backing buffer's coordinates. 
-         
-            I.e. value that needs to be added to a point in canvas coordinates to convert it to renderer's buffer coordinates.  
-         */
-        Point bufferOffset_;
-
-        /** The drawing state (foreground, background, font, character etc.)
-         */
-        Cell state_;
-
-        Finalizer finalizer_;
-
-    };
 
 } // namespace ui

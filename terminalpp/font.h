@@ -5,6 +5,7 @@
 #include "helpers/helpers.h"
 #include "helpers/char.h"
 
+#include "ui/font.h"
 #include "ui/geometry.h"
 
 namespace tpp {

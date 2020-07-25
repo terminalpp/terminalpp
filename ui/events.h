@@ -6,7 +6,7 @@
 #include "inputs.h"
 #include "geometry.h"
 
-namespace ui3 {
+namespace ui {
 
     class Widget;
 

@@ -3,7 +3,7 @@
 #include "helpers/helpers.h"
 #include "helpers/bits.h"
 
-namespace ui3 {
+namespace ui {
 
     /** Font properties. 
      

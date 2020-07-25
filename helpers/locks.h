@@ -26,7 +26,7 @@ HELPERS_NAMESPACE_BEGIN
         std::condition_variable & cv_;
     };*/
 
-    // TODO ui3 should do without smart raii ptr
+    // TODO ui should do without smart raii ptr
 
     /** A simple RAII pointer to a class providing unlock() method which is called when the pointer goes out of scope.
      */
@@ -97,7 +97,7 @@ HELPERS_NAMESPACE_BEGIN
     }; // SmartRAIIPtr
 
 
-    // TODO ui3 should do without reentrancy of the prioritylock
+    // TODO ui should do without reentrancy of the prioritylock
 
     /** A simple lock that allows locking in normal and priority modes, guaranteeing that a priority lock request will be serviced before any waiting normal locks. 
      

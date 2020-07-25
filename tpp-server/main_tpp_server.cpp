@@ -12,8 +12,8 @@
 
 #include "ansi_renderer.h"
 
-#include "ui3/widgets/panel.h"
-#include "ui3/widgets/label.h"
+#include "ui/widgets/panel.h"
+#include "ui/widgets/label.h"
 
 void PrintVersion() {
     std::cout << "Terminal++ Server, version " << stamp::version << std::endl;
@@ -25,7 +25,7 @@ void PrintVersion() {
 
 int main(int argc, char * argv[]) {
     CheckVersion(argc, argv, PrintVersion);
-    using namespace ui3;
+    using namespace ui;
     using namespace tpp;
 //    try {
         AnsiRenderer renderer{new LocalPTYSlave()};

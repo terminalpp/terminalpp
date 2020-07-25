@@ -55,6 +55,11 @@ namespace tpp {
         }
     }
 
+    void DirectWriteWindow::schedule(std::function<void()> event, Widget * widget) {
+        EventQueue::schedule(event, widget);
+        PostMessage(DirectWriteApplication::Instance()->dummy_, WM_USER, 0, 0);
+    }
+
     void DirectWriteWindow::requestClipboard(Widget * sender) {
         RendererWindow::requestClipboard(sender);
 		std::string result;
@@ -70,40 +75,38 @@ namespace tpp {
 			}
 			CloseClipboard();
 		}
-        rendererClipboardPaste(result);
+        pasteClipboard(result);
     }
 
     void DirectWriteWindow::requestSelection(Widget * sender) {
         RendererWindow::requestSelection(sender);
         DirectWriteApplication * app = DirectWriteApplication::Instance();
         if (app->selectionOwner_ != nullptr)
-            rendererSelectionPaste(app->selection_);
+            pasteSelection(app->selection_);
     }
 
-    void DirectWriteWindow::rendererSetClipboard(std::string const & contents) {
+    void DirectWriteWindow::setClipboard(std::string const & contents) {
         DirectWriteApplication::Instance()->setClipboard(contents);
     }
 
-    void DirectWriteWindow::rendererRegisterSelection(std::string const & contents, Widget * owner) {
+    void DirectWriteWindow::setSelection(std::string const & contents, Widget * owner) {
         DirectWriteApplication * app = DirectWriteApplication::Instance();
         // first we clear the selection if it belongs to different window
         if (app->selectionOwner_ != nullptr && app->selectionOwner_ != this)
-            app->selectionOwner_->rendererClearSelection();
+            app->selectionOwner_->clearSelection(nullptr);
         // set the contents and the selection owner to ourselves
         app->selectionOwner_ = this;
         app->selection_ = contents;
-        // call the parent implementation which will deal with the intra-renderer selection management
-        RendererWindow::rendererRegisterSelection(contents, owner);
     }
 
-    void DirectWriteWindow::rendererClearSelection() {
+    void DirectWriteWindow::clearSelection(Widget * sender) {
         // on windows, this is rather simple, first deal with the application global selection, then call the parent implementation
         DirectWriteApplication * app = DirectWriteApplication::Instance();
         if (app->selectionOwner_ == this) {
             app->selectionOwner_ = nullptr;
             app->selection_.clear();
         }
-        RendererWindow::rendererClearSelection();
+        RendererWindow::clearSelection(sender);
     }
 
     DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows):
@@ -134,12 +137,12 @@ namespace tpp {
             this // lParam for WM_CREATE message
         );
         // initialize the rendering structures
-        D2D1_SIZE_U size = D2D1::SizeU(widthPx_, heightPx_);
+        D2D1_SIZE_U dxsize = D2D1::SizeU(widthPx_, heightPx_);
         OSCHECK(SUCCEEDED(DirectWriteApplication::Instance()->d2dFactory_->CreateHwndRenderTarget(
             D2D1::RenderTargetProperties(),
             D2D1::HwndRenderTargetProperties(
                 hWnd_,
-                size
+                dxsize
             ),
             &rt_
         )));
@@ -163,7 +166,7 @@ namespace tpp {
         ZeroMemory(&glyphRun_, sizeof(DWRITE_GLYPH_RUN));
 
         // create the glyph run buffer and size it appropriately
-        updateDirectWriteStructures(width());
+        updateDirectWriteStructures(size().width());
 
         // register the window
         RegisterWindowHandle(this, hWnd_);  
@@ -193,15 +196,19 @@ namespace tpp {
 		// we don't distinguish between left and right win keys
 		if (vk == VK_RWIN)
 			vk = VK_LWIN;
-		if (! Key::IsValidCode(vk))
-			return Key(Key::Invalid);
+        Key result = Key::FromCode(vk);
+        if (result == Key::Invalid)
+            return result;
 		// MSB == pressed, LSB state since last time
-		unsigned shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? Key::Shift : 0;
-		unsigned ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) ? Key::Ctrl : 0;
-		unsigned alt = (GetAsyncKeyState(VK_MENU) & 0x8000) ? Key::Alt : 0;
-		unsigned win = (GetAsyncKeyState(VK_LWIN) & 0x8000) || (GetAsyncKeyState(VK_RWIN) & 0x8000) ? Key::Win : 0;
-
-		return Key(vk, shift | ctrl | alt | win);
+        if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
+            result = result + Key::Shift;
+        if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
+            result = result + Key::Ctrl;
+        if (GetAsyncKeyState(VK_MENU) & 0x8000)
+            result = result + Key::Alt;
+        if ((GetAsyncKeyState(VK_LWIN) & 0x8000) || (GetAsyncKeyState(VK_RWIN) & 0x8000))
+            result = result + Key::Win;
+        return result;
 	}
 
 	LRESULT CALLBACK DirectWriteWindow::EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -236,7 +243,8 @@ namespace tpp {
              */
 			case WM_CLOSE: {
 				ASSERT(window != nullptr) << "Unknown window";
-                window->requestClose();
+                // TODO determine how to deal with closing the window !!!!!
+                //window->requestClose();
                 return 0;
 			}
 			/** Destroys the window, if it is the last window, quits the app. */
@@ -252,13 +260,13 @@ namespace tpp {
 			 */
 			case WM_SETFOCUS:
 				if (window != nullptr)
-    				window->rendererFocusIn();
+    				window->focusIn();
 				break;
 			/** Window loses keyboard focus. 
 			 */
 			case WM_KILLFOCUS:
 				if (window != nullptr)
-    				window->rendererFocusOut();
+    				window->focusOut();
 				break;
 			/* Called when the window is resized interactively by the user. Makes sure that the window size snaps to discrete terminal sizes. */
 			case WM_SIZING: {
@@ -305,12 +313,7 @@ namespace tpp {
              */
 			case WM_PAINT: {
 				ASSERT(window != nullptr) << "Attempt to paint unknown window";
-                Widget * widget = reinterpret_cast<Widget*>(lParam);
-                if (widget == nullptr)
-                    widget = window->rootWidget(); 
-                if (widget != nullptr)
-                    window->render(widget);
-				//window->render(Rect::FromWH(window->width(), window->height()));
+                window->repaint();
 				break;
 			}
 			/* No need to use WM_UNICHAR since WM_CHAR is already unicode aware */
@@ -334,7 +337,7 @@ namespace tpp {
 			    break;
 			case WM_CHAR:
 				if (wParam >= 0x20)
-					window->rendererKeyChar(Char{static_cast<char32_t>(wParam)});
+					window->keyChar(Char{static_cast<char32_t>(wParam)});
 				break;
 			/* Processes special key events.
 			
@@ -344,7 +347,7 @@ namespace tpp {
 			case WM_KEYDOWN: {
 				Key k = GetKey(static_cast<unsigned>(wParam));
 				if (k != Key::Invalid)
-					window->rendererKeyDown(k);
+					window->keyDown(k);
 				// returning w/o calling the default window proc means that the OS will not interfere by interpreting own shortcuts
 				// NOTE add other interfering shortcuts as necessary
 				if (k == Key::F10 || k.code() == Key::AltKey)
@@ -356,7 +359,7 @@ namespace tpp {
 			case WM_SYSKEYUP:
 			case WM_KEYUP: {
 				Key k = GetKey(static_cast<unsigned>(wParam));
-				window->rendererKeyUp(k);
+				window->keyUp(k);
 				break;
 			}
 			/* Mouse events which simply obtain the mouse coordinates, convert the buttons and wheel values to vterm standards and then calls the DirectWriteTerminalWindow's events, which perform the pixels to cols & rows translation and then call the terminal itself.
@@ -364,39 +367,39 @@ namespace tpp {
 #define MOUSE_X static_cast<unsigned>(lParam & 0xffff)
 #define MOUSE_Y static_cast<unsigned>((lParam >> 16) & 0xffff)
 			case WM_LBUTTONDOWN:
-				window->rendererMouseDown(Point{MOUSE_X, MOUSE_Y}, MouseButton::Left, window->activeModifiers_);
+				window->mouseDown(window->pixelsToCoords(Point{MOUSE_X, MOUSE_Y}), MouseButton::Left);
 				break;
 			case WM_LBUTTONUP:
-				window->rendererMouseUp(Point{MOUSE_X, MOUSE_Y}, MouseButton::Left, window->activeModifiers_);
+				window->mouseUp(window->pixelsToCoords(Point{MOUSE_X, MOUSE_Y}), MouseButton::Left);
 				break;
 			case WM_RBUTTONDOWN:
-				window->rendererMouseDown(Point{MOUSE_X, MOUSE_Y}, MouseButton::Right, window->activeModifiers_);
+				window->mouseDown(window->pixelsToCoords(Point{MOUSE_X, MOUSE_Y}), MouseButton::Right);
 				break;
 			case WM_RBUTTONUP:
-				window->rendererMouseUp(Point{MOUSE_X, MOUSE_Y}, MouseButton::Right, window->activeModifiers_);
+				window->mouseUp(window->pixelsToCoords(Point{MOUSE_X, MOUSE_Y}), MouseButton::Right);
 				break;
 			case WM_MBUTTONDOWN:
-				window->rendererMouseDown(Point{MOUSE_X, MOUSE_Y}, MouseButton::Wheel, window->activeModifiers_);
+				window->mouseDown(window->pixelsToCoords(Point{MOUSE_X, MOUSE_Y}), MouseButton::Wheel);
 				break;
 			case WM_MBUTTONUP:
-				window->rendererMouseUp(Point{MOUSE_X, MOUSE_Y}, MouseButton::Wheel, window->activeModifiers_);
+				window->mouseUp(window->pixelsToCoords(Point{MOUSE_X, MOUSE_Y}), MouseButton::Wheel);
 				break;
 			/* Mouse wheel contains the position relative to screen top/left, so we must first translate it to window coordinates. 
 			 */
 			case WM_MOUSEWHEEL: {
 				POINT pos{ MOUSE_X, MOUSE_Y };
 				ScreenToClient(hWnd, &pos);
-				window->rendererMouseWheel(Point{pos.x, pos.y}, GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA, window->activeModifiers_);
+				window->mouseWheel(window->pixelsToCoords(Point{pos.x, pos.y}), GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 				break;
 			}
 			case WM_MOUSEMOVE:
-				window->rendererMouseMove(Point{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)}, window->activeModifiers_);
+				window->mouseMove(window->pixelsToCoords(Point{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)}));
 				break;
 			/* Triggered when mouse leaves the window.
  			 */
 			case WM_MOUSELEAVE:
 				window->mouseLeaveTracked_ = false;
-				window->rendererMouseLeave();
+				window->mouseOut();
 				break;
 
         }

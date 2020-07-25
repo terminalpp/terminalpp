@@ -1,113 +1,98 @@
-#include "canvas.h"
-#include "widget.h"
 #include "renderer.h"
+#include "widget.h"
+
+#include "canvas.h"
 
 namespace ui {
 
-    Canvas::Canvas(Widget * widget):
-        width_{widget->rect_.width()},
-        height_{widget->rect_.height()},
-        buffer_{widget->renderer()->buffer()},
-        visibleRect_{widget->visibleRect_},
-        bufferOffset_{widget->bufferOffset_} {
+    Canvas::Canvas(VisibleArea const & visibleArea, Size const & size):
+        visibleArea_{visibleArea},
+        buffer_{visibleArea.renderer()->buffer_}, 
+        size_{size} {
     }
 
-    Canvas & Canvas::drawBuffer(ScreenBuffer const & buffer, Point topLeft) {
-        // calculate the target rectangle in the canvas and its intersection with the visible rectangle and offset it to the backing buffer coordinates
-        Rect r = (Rect::FromTopLeftWH(topLeft, buffer.width(), buffer.height()) & visibleRect_) + bufferOffset_;
-        // calculate the buffer offset for the input buffer
-        Point bufferOffset = topLeft + bufferOffset_;
-        for (int row = r.top(), re = r.bottom(); row < re; ++row) {
-            for (int col = r.left(), ce = r.right(); col < ce; ++col) {
-                buffer_.at(col, row) = buffer.at(col - bufferOffset.x(), row - bufferOffset.y());
+
+    std::vector<Canvas::TextLine> Canvas::GetTextMetrics(std::string const & text, int wordWrapAt) {
+        std::vector<TextLine> result;
+        Char::iterator_utf8 i = Char::BeginOf(text);
+        Char::iterator_utf8 e = Char::EndOf(text);
+        while (i != e)
+            result.push_back(GetTextLine(i, e, wordWrapAt));
+        return result;
+    }
+
+    Canvas::TextLine Canvas::GetTextLine(Char::iterator_utf8 & begin, Char::iterator_utf8 const & end, int wordWrapAt) {
+        TextLine l{0,0, begin, begin};
+        while (wordWrapAt == NoWordWrap || l.width < wordWrapAt) {
+            if (begin == end) {
+                l.end = begin;
+                return l;
+            } else if (Char::IsLineEnd(*begin)) {
+                l.end = begin;
+                ++begin;
+                return l;
             }
+            l.width += Char::ColumnWidth(*begin);
+            ++l.chars;
+            ++begin;
         }
-        return *this;
-    }
-
-    Canvas & Canvas::fillRect(Rect const & rect) {
-        Rect r = (rect & visibleRect_) + bufferOffset_;
-        for (int row = r.top(), re = r.bottom(); row < re; ++row) {
-            for (int col = r.left(), ce = r.right(); col < ce; ++col) {
-                buffer_.at(col, row) = state_;
+        // word wrap is enabled and the line is longer, i.e. backtrack to first word separator
+        l.end = begin;
+        while (l.end != l.begin) {
+            --l.chars;
+            l.width -= Char::ColumnWidth(*l.end);
+            if (Char::IsWordSeparator(*l.end)) {
+                begin = l.end;
+                ++begin; // move *after* the word separator on the next line
+                return l;
             }
+            --l.end;
         }
-        return *this;
+        // there are no words in the line, just break at the word wrap limit mid-word
+        return l;
     }
 
-    Canvas & Canvas::fillRect(Rect const & rect, Color background) {
-        Rect r = (rect & visibleRect_) + bufferOffset_;
-        for (int row = r.top(), re = r.bottom(); row < re; ++row) {
-            for (int col = r.left(), ce = r.right(); col < ce; ++col) {
-                Cell & c = buffer_.at(col, row);
-                c.setFg(background.blendOver(c.fg()))
-                 .setBg(background.blendOver(c.bg()))
-                 .setDecor(background.blendOver(c.decor()))
-                 .setBorder(c.border().setColor(background.blendOver(c.border().color())));
-            }
-        }
-        return *this;
-    }
 
-    Canvas & Canvas::drawBorderLine(Border const & border, Point from, Point to) {
-        if (border.empty())
-            return *this;
-        if (from.x() == to.x()) {
-            int inc = (from.y() < to.y()) ? 1 : -1;
-            for (; from != to; from.setY(from.y() + inc)) {
-                updateBorder(from, border);
-            }
-        } else if (from.y() == to.y()) {
-            int inc = (from.x() < to.x()) ? 1 : -1;
-            for (; from != to; from.setX(from.x() + inc)) {
-                updateBorder(from, border);
+    Canvas & Canvas::fill(Rect const & rect, Color color) {
+        Rect r = (rect & visibleArea_.rect()) + visibleArea_.offset();
+        if (color.opaque()) {
+            for (int y = r.top(), ye = r.bottom(); y < ye; ++y) {
+                for (int x = r.left(), xe = r.right(); x < xe; ++x) {
+                    Cell & c = buffer_.at(x,y);
+                    c.setBg(color);
+                    c.setCodepoint(' ');
+                    // TODO border
+                }
             }
         } else {
-            ASSERT(false) << "Only straight lines are supported";
+            for (int y = r.top(), ye = r.bottom(); y < ye; ++y) {
+                for (int x = r.left(), xe = r.right(); x < xe; ++x) {
+                    Cell & c = buffer_.at(x,y);
+                    c.setFg(color.blendOver(c.fg()));
+                    c.setBg(color.blendOver(c.bg()));
+                    c.setDecor(color.blendOver(c.decor()));
+                    // TODO border
+                }
+            }
         }
         return *this;
     }
 
-    Canvas & Canvas::drawBorderRect(Border const & border, Rect const & rect) {
-        drawBorderLine(Border{border.color()}.setTop(border.top()), rect.topLeft(), rect.topRight());
-        drawBorderLine(Border{border.color()}.setBottom(border.bottom()), rect.bottomLeft() - Point{0,1}, rect.bottomRight() - Point{0,1});
-        drawBorderLine(Border{border.color()}.setLeft(border.left()), rect.topLeft(), rect.bottomLeft());
-        drawBorderLine(Border{border.color()}.setRight(border.right()), rect.topRight() - Point{1,0}, rect.bottomRight() - Point{1,0});
-        return *this;
-    }
-
-    Canvas & Canvas::textOut(Point where, Char::iterator_utf8 begin, Char::iterator_utf8 end) {
-        if (where.y() < visibleRect_.top() || where.y() >= visibleRect_.bottom())
-            return *this;
-        for (; begin < end; ++begin) {
-            if (where.x() >= visibleRect_.right())
-                break;
-            if (Cell * cell = at(where)) {
-                (*cell).setCodepoint((*begin).codepoint())
-                       .setFg(state_.fg())
-                       .setDecor(state_.decor())
-                       .setFont(state_.font());
-            } 
-            where.setX(where.x() + state_.font().width());
-        } 
-        return *this;
-    }
-
-    Canvas & Canvas::textOut(Point where, StringLine const & line, int maxWidth, HorizontalAlign hAlign) {
-        switch (hAlign) {
-            case HorizontalAlign::Left:
-                break;
-            case HorizontalAlign::Center:
-                where += Point{(maxWidth - line.width) / 2, 0};
-                break;
-            case HorizontalAlign::Right:
-                where += Point{maxWidth - line.width, 0};
-                break;
-            default:
-                UNREACHABLE;
-                break;
+    Canvas & Canvas::textOut(Point x, Char::iterator_utf8 begin, Char::iterator_utf8 end) {
+        Rect vr = visibleArea_.rect() + visibleArea_.offset();
+        x = x + visibleArea_.offset();
+        for (; begin != end; ++begin) {
+            if (vr.contains(x)) {
+                Cell & c = buffer_.at(x);
+                c.setFg(fg_);
+                c.setDecor(decor_);
+                c.setBg(bg_.blendOver(c.bg()));
+                c.setFont(font_);
+                c.setCodepoint(begin->codepoint());
+            }
+            x.setX(x.x() + Char::ColumnWidth(*begin) * font_.width());
         }
-        return textOut(where, line.begin, line.end);
+        return *this;
     }
 
 

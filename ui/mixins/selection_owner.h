@@ -3,7 +3,7 @@
 #include "../widget.h"
 #include "../renderer.h"
 
-namespace ui3 {
+namespace ui {
 
 
     /** Determines selection coordinates on a widget. 
@@ -81,6 +81,7 @@ namespace ui3 {
          
      */
     class SelectionOwner : public virtual Widget {
+        friend class Renderer;
     public:
 
         Selection const & selection() const {
@@ -195,4 +196,4 @@ namespace ui3 {
 
 
 
-} // namespace ui3
+} // namespace ui

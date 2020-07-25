@@ -1,21 +1,22 @@
 #pragma once
 
 #include "ui/widgets/window.h"
-#include "ui/widgets/pager.h"
-#include "ui-terminal/ansi_terminal.h"
-#include "tpp-lib/local_pty.h"
-#include "tpp-lib/bypass_pty.h"
-#include "tpp-lib/remote_files.h"
+//#include "ui/widgets/pager.h"
+//#include "ui-terminal/ansi_terminal.h"
+//#include "tpp-lib/local_pty.h"
+//#include "tpp-lib/bypass_pty.h"
+//#include "tpp-lib/remote_files.h"
 
 #include "../config.h"
 #include "../window.h"
 
-#include "about_box.h"
+//#include "about_box.h"
 
 namespace tpp {
 
     /** New Version Dialog. 
      */
+    #ifdef HAHA
     class NewVersionDialog : public ui::Dialog::Cancel {
     public:
         NewVersionDialog(std::string const & message):
@@ -28,29 +29,33 @@ namespace tpp {
     private:
         Label * contents_;
     };
+    #endif
 
     /** The terminal window. 
      
         
      */
-    class TerminalWindow : public ui::Window, public ui::AutoScroller<TerminalWindow> {
+    class TerminalWindow : public ui::Window /*, public ui::AutoScroller<TerminalWindow> */ {
     public:
 
         TerminalWindow(tpp::Window * window):
-            window_{window},
+            window_{window} /*
             main_{new PublicContainer{}},
-            pager_{new Pager{}} {
+            pager_{new Pager{}} */ {
             Config const & config = Config::Instance();
+                /*
 
             pager_->onPageChange.setHandler(&TerminalWindow::activeSessionChanged, this);
 
             main_->setLayout(new ColumnLayout{VerticalAlign::Top});
             main_->add(pager_);
             setContents(main_);
-            window_->setRootWidget(this);
     
             remoteFiles_ = new RemoteFiles(config.remoteFiles.dir());
 
+
+            */
+            window_->setRoot(this);
             if (config.renderer.window.fullscreen())
                 window_->setFullscreen(true);
             
@@ -61,26 +66,28 @@ namespace tpp {
                     return;
                 std::string newVersion = Application::Instance()->checkLatestVersion(channel);
                 if (!newVersion.empty()) {
-                    sendEvent([this, newVersion]() {
+                    schedule([this, newVersion]() {
+                        /*
                         NewVersionDialog * d = new NewVersionDialog{STR("New version " << newVersion << " is available")};
                         showModal(d);
+                        */
                     });
                 }
             }};
 
-            setName("TerminalWindow");
+            //setName("TerminalWindow");
         }
 
         ~TerminalWindow() override {
             versionChecker_.join();
-            delete remoteFiles_;
+            //delete remoteFiles_;
         }
 
         void newSession(Config::sessions_entry const & session);
 
 
     private:
-
+        /*
         class SessionInfo {
         public:
             std::string name;
@@ -175,7 +182,7 @@ namespace tpp {
                 showModal(new AboutBox{});
                 e.stop();
             } else if (*e == SHORTCUT_SETTINGS) {
-                Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit */ true); 
+                Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit * / true); 
             }
         }
 
@@ -284,9 +291,12 @@ namespace tpp {
             }
         }
 
+        */
+
 
         tpp::Window * window_;
 
+/*
         ui::PublicContainer * main_;
         ui::Pager * pager_;
 
@@ -296,7 +306,10 @@ namespace tpp {
 
         RemoteFiles * remoteFiles_;
 
+    */
+
         std::thread versionChecker_;
+
 
     };
 

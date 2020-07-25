@@ -96,18 +96,18 @@ include_directories(${CMAKE_SOURCE_DIR})
 # ===========
 #
 # All libraries and executables produced by the main buildscript are included now. Some subprojects only make sense for certain platforms, see their respective CMakeLists.txt for details.
-add_subdirectory("tpp-bypass")
-add_subdirectory("tpp-server")
-add_subdirectory("tpp-lib")
-add_subdirectory("ropen")
+#add_subdirectory("tpp-bypass")
+#add_subdirectory("tpp-server")
+#add_subdirectory("tpp-lib")
+#add_subdirectory("ropen")
 add_subdirectory("ui")
-add_subdirectory("ui3")
-add_subdirectory("ui-terminal")
+#add_subdirectory("ui")
+#add_subdirectory("ui-terminal")
 add_subdirectory("docs")
-add_subdirectory("tests")
+#add_subdirectory("tests")
 add_subdirectory("terminalpp")
-add_subdirectory("tools")
-add_subdirectory("packages")
+#add_subdirectory("tools")
+#add_subdirectory("packages")
 
 
 

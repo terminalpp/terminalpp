@@ -1,6 +1,6 @@
 #include "color.h"
 
-namespace ui3 {
+namespace ui {
 
     Color const Color::None(0, 0, 0, 0);
     Color const Color::Black(0, 0, 0); 

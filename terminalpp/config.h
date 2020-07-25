@@ -6,7 +6,9 @@
 #include "helpers/json_config.h"
 #include "helpers/telemetry.h"
 
-#include "ui-terminal/ansi_terminal.h"
+#include "ui/color.h"
+#include "ui/canvas.h"
+//#include "ui-terminal/ansi_terminal.h"
 
 /** \page tppconfig Configuration
  
@@ -63,6 +65,7 @@ inline void JSONConfig::Property<Command>::cmdArgUpdate(char const * value, size
     update(x, [](JSONError &&e) { throw e;});
 }
 
+/*
 template<>
 inline ui::AnsiTerminal::Palette JSONConfig::FromJSON(JSON const & json) {
     if (json.kind() != JSON::Kind::Array)
@@ -76,6 +79,7 @@ inline ui::AnsiTerminal::Palette JSONConfig::FromJSON(JSON const & json) {
     }
     return result;
 }
+*/
 
 template<>
 inline ui::Color JSONConfig::FromJSON(JSON const & json) {
@@ -99,12 +103,14 @@ inline std::vector<std::reference_wrapper<Log>> JSONConfig::FromJSON(JSON const 
             result.push_back(Log::Exception());
         else if (logName == "TELEMETRY") 
             result.push_back(Telemetry::TelemetryLog());
+            /*
         else if (logName == "SEQ_ERROR") 
             result.push_back(ui::AnsiTerminal::SEQ_ERROR);
         else if (logName == "SEQ_UNKNOWN") 
             result.push_back(ui::AnsiTerminal::SEQ_UNKNOWN);
         else if (logName == "SEQ_WONT_SUPPORT") 
             result.push_back(ui::AnsiTerminal::SEQ_WONT_SUPPORT);
+            */
         else
             THROW(JSONError()) << "Invalid log name " << logName;
     }
@@ -258,12 +264,14 @@ namespace tpp {
 			CONFIG_OBJECT(
 				palette,
 				"Definition of the palette used for the session.",
+                /*
 				CONFIG_PROPERTY(
 					colors, 
 					"Overrides the predefined palette. Up to 256 colors can be specified in HTML format. These colors will override the default xterm palette used.",
 					JSON::Array(),
 				    ui::AnsiTerminal::Palette
 				);
+                */
 				CONFIG_PROPERTY(
 				    defaultForeground,
 					"Specifies the index of the default foreground color in the palette.",
@@ -278,12 +286,14 @@ namespace tpp {
 				);
 				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
 				 */
+                /*
 				ui::AnsiTerminal::Palette operator () () const {
 					ui::AnsiTerminal::Palette result{colors()};
 					result.setDefaultForegroundIndex(defaultForeground());
 					result.setDefaultBackgroundIndex(defaultBackground());
 					return result;
 				}
+                */
 			);
 			CONFIG_OBJECT(
 				cursor,
@@ -314,8 +324,8 @@ namespace tpp {
                 );
 				/** Value getter for cursor properies aggregated in a ui::Cursor object.
 				 */
-        		ui::Cursor operator () () const {
-					ui::Cursor result{};
+        		ui::Canvas::Cursor operator () () const {
+					ui::Canvas::Cursor result{};
 					result.setVisible(true);
 					result.setCodepoint(codepoint());
 					result.setColor(color());
@@ -358,12 +368,14 @@ namespace tpp {
 			CONFIG_OBJECT(
 				palette,
 				"Definition of the palette used for the session.",
+                /*
 				CONFIG_PROPERTY(
 					colors, 
 					"Overrides the predefined palette. Up to 256 colors can be specified in HTML format. These colors will override the default xterm palette used.",
 					JSON::Array(),
 				    ui::AnsiTerminal::Palette
 				);
+                */
 				CONFIG_PROPERTY(
 				    defaultForeground,
 					"Specifies the index of the default foreground color in the palette.",
@@ -378,12 +390,14 @@ namespace tpp {
 				);
 				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
 				 */
+                /*
 				ui::AnsiTerminal::Palette operator () () const {
 					ui::AnsiTerminal::Palette result{colors()};
 					result.setDefaultForegroundIndex(defaultForeground());
 					result.setDefaultBackgroundIndex(defaultBackground());
 					return result;
 				}
+                */
 			);
 			CONFIG_OBJECT(
 				cursor,
@@ -414,8 +428,8 @@ namespace tpp {
                 );
 				/** Value getter for cursor properies aggregated in a ui::Cursor object.
 				 */
-				ui::Cursor operator () () const {
-					ui::Cursor result{};
+				ui::Canvas::Cursor operator () () const {
+					ui::Canvas::Cursor result{};
 					result.setVisible(true);
 					result.setCodepoint(codepoint());
 					result.setColor(color());

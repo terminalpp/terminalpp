@@ -9,6 +9,7 @@
 #include "ui/canvas.h"
 
 #include "ui/renderer.h"
+#include "ui/event_queue.h"
 
 #include "config.h"
 
@@ -19,13 +20,8 @@ namespace tpp {
 
     using namespace ui;
 
-    /** Base class for displaying an UI window content. 
-     
-        Builds upon the local renderer and adds the basic properties required for GUI windows, such as width and height in pixels, etc.  
-     */
-    class Window: public LocalRenderer {
+    class Window : public Renderer {
     public:
-
         /** Determines the icon of the renderer's window where appropriate. 
          
             Instead of specifying the actual icon, which is left to the actual renderers being used, the icon specifies the meaning of the icon.
@@ -82,19 +78,22 @@ namespace tpp {
 
         virtual void show(bool value = true) = 0;
 
-        /** Requests the renderer window to be closed. 
+        /** Determines the background color of the window. 
+         
+            TODO this should take the default background color from the terminal that is visible, or something like that. 
          */
-        using Renderer::requestClose;
+        Color backgroundColor() const {
+            return Color::Black;
+        }
 
     protected:
         Window(int width, int height, FontMetrics const & font):
-            LocalRenderer{width, height},
+            Renderer{Size{width, height}},
             title_{"terminal++"},
             icon_{Icon::Default},
             zoom_{1.0},
-            fullscreen_{false},
-            activeModifiers_{0},
-            mouseButtonsDown_{0} {
+            fullscreen_{false}
+            /*mouseButtonsDown_{0} */ {
             // calculate the width and height in pixels and the cell dimensions from the font at given zoom level
             baseCellWidth_ = font.cellWidth();
             baseCellHeight_ = font.cellHeight();
@@ -110,7 +109,7 @@ namespace tpp {
                 widthPx_ = width;
                 heightPx_ = height;
                 // tell the renderer to resize 
-                resize(width / cellWidth_, height / cellHeight_);
+                resize(Size{width / cellWidth_, height / cellHeight_});
             }
         }
 
@@ -126,6 +125,66 @@ namespace tpp {
               --py;
             return Point{px, py};
         }
+
+        /** \name Mouse Input
+         
+            The coordinates reported to the renderer are in pixels and must be converted to terminal columns and rows before they are passed further. 
+
+            TODO do I need these?
+         */
+        //@{
+        void mouseDown(Point coords, MouseButton button) override {
+            ++mouseButtonsDown_;
+            Renderer::mouseDown(coords, button);
+        }
+
+        void mouseUp(Point coords, MouseButton button) override {
+            if (mouseButtonsDown_ > 0) 
+                --mouseButtonsDown_;
+            Renderer::mouseUp(coords, button);
+        }
+
+        //@}
+
+        /** Title of the window. 
+         */
+        std::string title_;
+        Icon icon_;
+
+        int widthPx_;
+        int heightPx_;
+
+        int baseCellWidth_;
+        int baseCellHeight_;
+
+        int cellWidth_;
+        int cellHeight_;
+
+        double zoom_;
+
+        bool fullscreen_;
+
+        /** Mouse buttons that are currently down so that we know when to release the mouse capture. */
+        unsigned mouseButtonsDown_ = 0;
+
+    }; // tpp::Window
+
+
+    #ifdef HAHA
+
+    /** Base class for displaying an UI window content. 
+     
+        Builds upon the local renderer and adds the basic properties required for GUI windows, such as width and height in pixels, etc.  
+     */
+    class Window: public LocalRenderer {
+    public:
+
+
+
+        /** Requests the renderer window to be closed. 
+         */
+        using Renderer::requestClose;
+
 
         /** \name Renderer API
          
@@ -212,6 +271,10 @@ namespace tpp {
         unsigned mouseButtonsDown_;
     }; // tpp::Window
 
+
+
+    #endif
+
     /** Templated child of the Window that provides support for fast rendering via CRTP. 
      */
     template<typename IMPLEMENTATION, typename NATIVE_HANDLE>
@@ -226,7 +289,7 @@ namespace tpp {
                 cellWidth_ = f->cellWidth();
                 cellHeight_ = f->cellHeight();
                 // tell the renderer to resize
-                resize(widthPx_ / cellWidth_, heightPx_ / cellHeight_);
+                resize(Size{widthPx_ / cellWidth_, heightPx_ / cellHeight_});
             }
         }
 
@@ -235,135 +298,6 @@ namespace tpp {
             Window{width, height, * IMPLEMENTATION::Font::Get(ui::Font(), tpp::Config::Instance().renderer.font.size())},
             lastCursorPos_{-1,-1} {
         }
-
-        #define initializeDraw(...) static_cast<IMPLEMENTATION*>(this)->initializeDraw(__VA_ARGS__)
-        #define initializeGlyphRun(...) static_cast<IMPLEMENTATION*>(this)->initializeGlyphRun(__VA_ARGS__)
-        #define addGlyph(...) static_cast<IMPLEMENTATION*>(this)->addGlyph(__VA_ARGS__)
-        #define changeFont(...) static_cast<IMPLEMENTATION*>(this)->changeFont(__VA_ARGS__)
-        #define changeFg(...) static_cast<IMPLEMENTATION*>(this)->changeForegroundColor(__VA_ARGS__)
-        #define changeBg(...) static_cast<IMPLEMENTATION*>(this)->changeBackgroundColor(__VA_ARGS__)
-        #define changeDecor(...) static_cast<IMPLEMENTATION*>(this)->changeDecorationColor(__VA_ARGS__)
-        #define drawGlyphRun(...) static_cast<IMPLEMENTATION*>(this)->drawGlyphRun(__VA_ARGS__)
-        #define drawBorder(...) static_cast<IMPLEMENTATION*>(this)->drawBorder(__VA_ARGS__)
-        #define finalizeDraw(...) static_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
-
-        using Renderer::render;
-
-        void render(Rect const & rect) override {
-            MARK_AS_UNUSED(rect);
-            // get constant reference so that reading does not change the unused bits in the cells we use for cursor
-            ScreenBuffer const & buf{buffer()};
-            // then actually render the entire window
-            Stopwatch t;
-            t.start();
-            // initialize the drawing and set the state for the first cell
-            initializeDraw();
-            state_ = buf.at(0,0);
-            changeFont(state_.font());
-            changeFg(state_.fg());
-            changeBg(state_.bg());
-            changeDecor(state_.decor());
-            // loop over the buffer and draw the cells
-            for (int row = 0, re = height(); row < re; ++row) {
-                initializeGlyphRun(0, row);
-                for (int col = 0, ce = width(); col < ce; ) {
-                    Cell const & c = buf.at(col, row);
-                    // detect if there were changes in the font & colors and update the state & draw the glyph run if present. The code looks a bit ugly as we have to first draw the glyph run and only then change the state.
-                    bool drawRun = true;
-                    if (state_.font() != c.font()) {
-                        if (drawRun) {
-                            drawGlyphRun();
-                            initializeGlyphRun(col, row);
-                            drawRun = false;
-                        }
-                        changeFont(c.font());
-                        state_.setFont(c.font());
-                    }
-                    if (state_.fg() != c.fg()) {
-                        if (drawRun) {
-                            drawGlyphRun();
-                            initializeGlyphRun(col, row);
-                            drawRun = false;
-                        }
-                        changeFg(c.fg());
-                        state_.setFg(c.fg());
-                    }
-                    if (state_.bg() != c.bg()) {
-                        if (drawRun) {
-                            drawGlyphRun();
-                            initializeGlyphRun(col, row);
-                            drawRun = false;
-                        }
-                        changeBg(c.bg());
-                        state_.setBg(c.bg());
-                    }
-                    if (state_.decor() != c.decor()) {
-                        if (drawRun) {
-                            drawGlyphRun();
-                            initializeGlyphRun(col, row);
-                            drawRun = false;
-                        }
-                        changeDecor(c.decor());
-                        state_.setDecor(c.decor());
-                    }
-                    // we don't care about the border at this stage
-                    // draw the cell
-                    addGlyph(col, row, c);
-                    // move to the next column (skip invisible cols if double width or larger font)
-                    col += c.font().width();
-                }
-                drawGlyphRun();
-            }
-            
-            // determine the cursor, its visibility and its position and draw it if necessary. The cursor is drawn when it is not blinking, when its position has changed since last time it was drawn with blink on or if it is blinking and blink is visible. This prevents the cursor for disappearing while moving
-            ui::Cursor cursor = buf.cursor();
-            Point cursorPos = buf.cursorPosition();
-            if (cursor.visible() && (! cursor.blink() || BlinkVisible() || cursorPos != lastCursorPos_)) {
-                state_.setCodepoint(cursor.codepoint())
-                      .setFg(cursor.color())
-                      .setBg(Color::None)
-                      .setFont(buf.at(cursorPos).font());
-                changeFont(state_.font());
-                changeFg(state_.fg());
-                changeBg(state_.bg());
-                initializeGlyphRun(cursorPos.x(), cursorPos.y());
-                addGlyph(cursorPos.x(), cursorPos.y(), state_);
-                drawGlyphRun();
-                if (BlinkVisible())
-                    lastCursorPos_ = cursorPos;
-            }
-
-            // finally, draw the border, which is done on the base cell level over the already drawn text
-            int wThin = std::min(cellWidth_, cellHeight_) / 4;
-            int wThick = std::min(cellWidth_, cellHeight_) / 2;
-            Color borderColor = buf.at(0,0).border().color();
-            changeBg(borderColor);
-            for (int row = 0, re = height(); row < re; ++row) {
-                for (int col = 0, ce = width(); col < ce; ++col) {
-                    Border b = buf.at(col, row).border();
-                    if (b.color() != borderColor) {
-                        borderColor = b.color();
-                        changeBg(borderColor);
-                    }
-                    if (! b.empty())
-                        drawBorder(col, row, b, wThin, wThick);
-                }
-            }
-
-            finalizeDraw();
-        }
-
-        #undef initializeDraw
-        #undef initializeGlyphRun
-        #undef addGlyph
-        #undef changeFont
-        #undef changeFg
-        #undef changeBg
-        #undef changeDecor
-        #undef changeBorderColor
-        #undef drawGlyphRun
-        #undef drawBorder
-        #undef finalizeDraw
 
         Cell state_;
         Point lastCursorPos_;
@@ -420,7 +354,7 @@ namespace tpp {
                     {
                         std::lock_guard<std::mutex> g(GlobalState_->mWindows);
                         for (auto i : GlobalState_->windows)
-                            i.second->repaint(nullptr);
+                            i.second->repaint();
                     }
                 }
             });
@@ -443,6 +377,139 @@ namespace tpp {
         }; // tpp::RendererWindow::BlinkInfo
 
         static GlobalState * GlobalState_;
+
+    private:
+
+        #define initializeDraw(...) static_cast<IMPLEMENTATION*>(this)->initializeDraw(__VA_ARGS__)
+        #define initializeGlyphRun(...) static_cast<IMPLEMENTATION*>(this)->initializeGlyphRun(__VA_ARGS__)
+        #define addGlyph(...) static_cast<IMPLEMENTATION*>(this)->addGlyph(__VA_ARGS__)
+        #define changeFont(...) static_cast<IMPLEMENTATION*>(this)->changeFont(__VA_ARGS__)
+        #define changeFg(...) static_cast<IMPLEMENTATION*>(this)->changeForegroundColor(__VA_ARGS__)
+        #define changeBg(...) static_cast<IMPLEMENTATION*>(this)->changeBackgroundColor(__VA_ARGS__)
+        #define changeDecor(...) static_cast<IMPLEMENTATION*>(this)->changeDecorationColor(__VA_ARGS__)
+        #define drawGlyphRun(...) static_cast<IMPLEMENTATION*>(this)->drawGlyphRun(__VA_ARGS__)
+        #define drawBorder(...) static_cast<IMPLEMENTATION*>(this)->drawBorder(__VA_ARGS__)
+        #define finalizeDraw(...) static_cast<IMPLEMENTATION*>(this)->finalizeDraw(__VA_ARGS__)
+
+        using Renderer::render;
+
+        void render(Rect const & rect) override {
+            MARK_AS_UNUSED(rect);
+            // then actually render the entire window
+            Stopwatch t;
+            t.start();
+            // shorthand to the buffer
+            Buffer const & buffer = this->buffer();
+            // initialize the drawing and set the state for the first cell
+            initializeDraw();
+            state_ = buffer.at(0,0);
+            changeFont(state_.font());
+            changeFg(state_.fg());
+            changeBg(state_.bg());
+            changeDecor(state_.decor());
+            // loop over the buffer and draw the cells
+            for (int row = 0, re = size().height(); row < re; ++row) {
+                initializeGlyphRun(0, row);
+                for (int col = 0, ce = size().width(); col < ce; ) {
+                    Cell const & c = buffer.at(col, row);
+                    // detect if there were changes in the font & colors and update the state & draw the glyph run if present. The code looks a bit ugly as we have to first draw the glyph run and only then change the state.
+                    bool drawRun = true;
+                    if (state_.font() != c.font()) {
+                        if (drawRun) {
+                            drawGlyphRun();
+                            initializeGlyphRun(col, row);
+                            drawRun = false;
+                        }
+                        changeFont(c.font());
+                        state_.setFont(c.font());
+                    }
+                    if (state_.fg() != c.fg()) {
+                        if (drawRun) {
+                            drawGlyphRun();
+                            initializeGlyphRun(col, row);
+                            drawRun = false;
+                        }
+                        changeFg(c.fg());
+                        state_.setFg(c.fg());
+                    }
+                    if (state_.bg() != c.bg()) {
+                        if (drawRun) {
+                            drawGlyphRun();
+                            initializeGlyphRun(col, row);
+                            drawRun = false;
+                        }
+                        changeBg(c.bg());
+                        state_.setBg(c.bg());
+                    }
+                    if (state_.decor() != c.decor()) {
+                        if (drawRun) {
+                            drawGlyphRun();
+                            initializeGlyphRun(col, row);
+                            drawRun = false;
+                        }
+                        changeDecor(c.decor());
+                        state_.setDecor(c.decor());
+                    }
+                    // we don't care about the border at this stage
+                    // draw the cell
+                    addGlyph(col, row, c);
+                    // move to the next column (skip invisible cols if double width or larger font)
+                    col += c.font().width();
+                }
+                drawGlyphRun();
+            }
+            
+            // determine the cursor, its visibility and its position and draw it if necessary. The cursor is drawn when it is not blinking, when its position has changed since last time it was drawn with blink on or if it is blinking and blink is visible. This prevents the cursor for disappearing while moving
+            Point cursorPos = buffer.cursorPosition();
+            Canvas::Cursor cursor = buffer.cursor();
+            if (buffer.contains(cursorPos) && cursor.visible() && (! cursor.blink() || BlinkVisible() || cursorPos != lastCursorPos_)) {
+                state_.setCodepoint(cursor.codepoint());
+                state_.setFg(cursor.color());
+                state_.setBg(Color::None);
+                state_.setFont(buffer.at(cursorPos).font());
+                changeFont(state_.font());
+                changeFg(state_.fg());
+                changeBg(state_.bg());
+                initializeGlyphRun(cursorPos.x(), cursorPos.y());
+                addGlyph(cursorPos.x(), cursorPos.y(), state_);
+                drawGlyphRun();
+                if (BlinkVisible())
+                    lastCursorPos_ = cursorPos;
+            }
+
+            // finally, draw the border, which is done on the base cell level over the already drawn text
+            /*
+            int wThin = std::min(cellWidth_, cellHeight_) / 4;
+            int wThick = std::min(cellWidth_, cellHeight_) / 2;
+            Color borderColor = buffer.at(0,0).border().color();
+            changeBg(borderColor);
+            for (int row = 0, re = size().height(); row < re; ++row) {
+                for (int col = 0, ce = size().width(); col < ce; ++col) {
+                    Border b = buffer.at(col, row).border();
+                    if (b.color() != borderColor) {
+                        borderColor = b.color();
+                        changeBg(borderColor);
+                    }
+                    if (! b.empty())
+                        drawBorder(col, row, b, wThin, wThick);
+                }
+            }
+            */
+
+            finalizeDraw();
+        }
+
+        #undef initializeDraw
+        #undef initializeGlyphRun
+        #undef addGlyph
+        #undef changeFont
+        #undef changeFg
+        #undef changeBg
+        #undef changeDecor
+        #undef changeBorderColor
+        #undef drawGlyphRun
+        #undef drawBorder
+        #undef finalizeDraw
 
     }; // tpp::RendererWindow
 
