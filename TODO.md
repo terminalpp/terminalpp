@@ -50,11 +50,7 @@ Issues to be raised:
 
 UI version 3
 
-- mouse enter & leave - they can't do anhything real functionality
-- focus in and focus out - how to implement defocus of widget when keyboardOut?
-    - I guess keyboardIn or any keyboard event sets keyboardIn flag, keyboard out clears it
-- the above is done, document!
-
+- should the widget contain in itself the background & border properties and theiur painting as first & last thing when paint(Canvas) is called? This would add extra stuff to each widget, but technically, but I think it is ok as it deals nicely with things like the paintBackground and paintBorder and others...
 
 - cursor visibility determined by its position too
 - border rendering (& border in canvas cell)
@@ -72,6 +68,9 @@ UI version 3
 - add selection support to renderer
 - ansi-terminal should use the ansi-keys, which should move to tpp-lib - perhaps even the whole terminal should move there
 - CSI sequence moved to own file, should be removed from terminal
+
+- document keyboard, mouse and selection & clipboard inputs in renderer & widgets
+
 
 - resizing does not work in xterm
 

@@ -168,6 +168,11 @@ namespace ui {
             vAlign_{vAlign} {
         }
 
+        Column(VerticalAlign vAlign):
+            hAlign_{HorizontalAlign::Center},
+            vAlign_{vAlign} {
+        }
+
         void layout(Widget * widget) const override;
 
         void calculateOverlay(Widget * widget) const override;

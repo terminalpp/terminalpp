@@ -1,7 +1,8 @@
 #pragma once
 
 #include "ui/widgets/window.h"
-//#include "ui/widgets/pager.h"
+#include "ui/widgets/pager.h"
+#include "ui/widgets/panel.h"
 //#include "ui-terminal/ansi_terminal.h"
 //#include "tpp-lib/local_pty.h"
 //#include "tpp-lib/bypass_pty.h"
@@ -39,20 +40,24 @@ namespace tpp {
     public:
 
         TerminalWindow(tpp::Window * window):
-            window_{window} /*
-            main_{new PublicContainer{}},
-            pager_{new Pager{}} */ {
+            window_{window}, 
+            main_{new Panel{}},
+            pager_{new Pager{}} {
 
             window_->onClose.setHandler(&TerminalWindow::windowCloseRequest, this);
+
+            main_->setLayout(new Layout::Column{VerticalAlign::Top});
+            main_->setBackground(Color::Red);
+            main_->attach(pager_);
+            setContents(main_);
+
+
 
             Config const & config = Config::Instance();
                 /*
 
             pager_->onPageChange.setHandler(&TerminalWindow::activeSessionChanged, this);
 
-            main_->setLayout(new ColumnLayout{VerticalAlign::Top});
-            main_->add(pager_);
-            setContents(main_);
     
             remoteFiles_ = new RemoteFiles(config.remoteFiles.dir());
 
@@ -319,9 +324,9 @@ namespace tpp {
 
         tpp::Window * window_;
 
-/*
-        ui::PublicContainer * main_;
+        ui::Panel * main_;
         ui::Pager * pager_;
+/*
 
         std::unordered_map<AnsiTerminal *, SessionInfo *> sessions_; 
 

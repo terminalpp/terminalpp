@@ -6,7 +6,7 @@ namespace ui {
 
     /** Basic root widget. 
      */
-    class Window : public Widget {
+    class Window : public virtual Widget {
     public:
 
         Widget const * contents() const {

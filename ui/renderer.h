@@ -220,7 +220,10 @@ namespace ui {
 
     // ============================================================================================
     /** \name Keyboard Input.
-     
+
+        When a keyboard action is delivered to the renderer using the framework used, these actions must be translated by the subclasses to the methods below and called appropriately. 
+
+        The renderer delegates keyboard events to the widget currently focused in the widget tree, if such widget exists. 
         - update internal state
         - call own event (does not block by default) - can deal with global shortcuts
         - call target's implementation, if not blocked
@@ -258,8 +261,16 @@ namespace ui {
 
     protected:
 
+        /** The renderer's window has been focused. 
+         
+            This method must be called before any other keyboard input takes place. 
+         */
         virtual void focusIn();
 
+        /** The renderer's window has lost focus. 
+         
+            No keyboard input can be directed to the renderer after this method call unless focusIn() is not called first. 
+         */
         virtual void focusOut();
 
         /** Registers the key down event. 
@@ -326,8 +337,16 @@ namespace ui {
 
     protected:
 
+        /** Mouse enters the renderer's area.
+
+            Before any other mouse event happens, the mouseIn() method must be caled.
+         */
         virtual void mouseIn();
 
+        /** Mouse leaves the renderer's area.
+         
+            No further mouse events can happen after a call to mouseOut() unless mouseIn() is called first. 
+         */
         virtual void mouseOut();
 
         virtual void mouseMove(Point coords);

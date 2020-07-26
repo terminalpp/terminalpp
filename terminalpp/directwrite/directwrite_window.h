@@ -116,6 +116,9 @@ namespace tpp {
             Since we need to track mouse leave, checks whether the mouse leave event is currently tracked and if not, enables the tracking, which is disabled when the mouseOut event is emited. 
          */
         void mouseMove(Point coords) override {
+            // emit mouse in first if necessary (there is no WM_MOUSEENTER)
+            if (!rendererMouseCaptured())
+                mouseIn();
             // enable tracking if not enabled
             if (! mouseLeaveTracked_) {
                 TRACKMOUSEEVENT tm;

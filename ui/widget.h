@@ -121,6 +121,10 @@ namespace ui {
                 return (parent_ == nullptr) && visibleArea_.attached();
             }
 
+            std::deque<Widget *> const & children() const {
+                return children_;
+            }
+
         private:
             /** Mutex protecting the renderer pointer in the visible area for the widget. 
              */
@@ -159,8 +163,24 @@ namespace ui {
                 return widthHint_;
             }
 
+            virtual void setWidthHint(SizeHint const & value) {
+                if (widthHint_ != value) {
+                    widthHint_ = value;
+                    if (parent_ != nullptr)
+                        parent_->relayout();
+                }
+            }
+
             SizeHint heightHint() const {
                 return heightHint_;
+            }
+
+            virtual void setHeightHint(SizeHint const & value) {
+                if (heightHint_ != value) {
+                    heightHint_ = value;
+                    if (parent_ != nullptr)
+                        parent_->relayout();
+                }
             }
 
             /** Moves the widget within its parent. 
@@ -182,22 +202,6 @@ namespace ui {
                     delete layout_;
                     layout_ = value;
                     relayout();
-                }
-            }
-
-            virtual void setWidthHint(SizeHint const & value) {
-                if (widthHint_ != value) {
-                    widthHint_ = value;
-                    if (parent_ != nullptr)
-                        parent_->relayout();
-                }
-            }
-
-            virtual void setHeightHint(SizeHint const & value) {
-                if (heightHint_ != value) {
-                    heightHint_ = value;
-                    if (parent_ != nullptr)
-                        parent_->relayout();
                 }
             }
 
@@ -308,10 +312,23 @@ namespace ui {
         public: 
 
             /** Repaints the widget. 
+             
+                Triggers the repaint of the widget. 
+
+                Widget subclasses can override this method to delegate the repaint event to other widgets up the tree, such as in cases of transparent background widgets. 
              */
             virtual void repaint();
 
         protected:
+
+            /** Paints given child. 
+             
+                This method is necessary because subclasses can't simply call paint() on the children because of C++ protection rules. 
+             */
+            void paintChild(Widget * child) {
+                ASSERT(child->parent_ == this);
+                child->paint();
+            }
 
             /** Immediately paints the widget. 
              
