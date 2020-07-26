@@ -32,6 +32,20 @@ namespace ui {
             // layout is owned
             delete layout_;
         }
+
+        // TODO determine where enabled goes and what precisely it is
+
+        bool enabled() const {
+            return enabled_;
+        }
+
+        // TODO setEnabled
+
+    private:
+
+        bool enabled_ = true;
+
+
         // ========================================================================================
         /** \name Event Scheduling
          */
@@ -486,12 +500,26 @@ namespace ui {
          */
         //@{
         public:
+
+            /** Determines whether the widget supports obtaining keyboard focus, or not. 
+             */
+            bool focusable() const {
+                return focusable_;
+            }
+
+            /** Returns true if the widget currently has keyboard focus. 
+             */
+            bool focused() const;
+
             VoidEvent onFocusIn;
             VoidEvent onFocusOut;
             KeyEvent onKeyDown;
             KeyEvent onKeyUp;
             KeyCharEvent onKeyChar;
+
         protected:
+
+            virtual void setFocusable(bool value = true);
 
             virtual void focusIn(VoidEvent::Payload & e) {
                 onFocusIn(e, this);
@@ -519,6 +547,10 @@ namespace ui {
                     parent_->keyChar(e);
             }
 
+        private:
+
+            bool focusable_ = true; // TODO should this be false? 
+
         //@}
 
         // ========================================================================================
@@ -535,17 +567,6 @@ namespace ui {
             virtual void paste(StringEvent::Payload & e) {
                 onPaste(e, this);
             }
-
-            /** Clears the selection. 
-             
-                The method can be called either by the widget itself when it wishes to give up the selection ownership it has, or by the renderer if the selection ownership of the widget has been invalidated from outside. 
-
-                This function must be overriden in subclasses that support selection ownership and when called, must reset the selection cache (if any) and clear the visual indication of the selection ownership. Finally the base implementation must be called which informs the renderer about the selection clear if necessary. 
-             */
-            //virtual void clearSelection();
-
-            //void setClipboard(std::string const & contents);
-            //void setSelection(std::string const & contents);
 
             void requestClipboardPaste();
             void requestSelectionPaste();

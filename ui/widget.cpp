@@ -281,28 +281,21 @@ namespace ui {
             return true;    
     }
 
-    // Selection
+    // Keyboard
 
-    /*
-    void Widget::clearSelection() {
-        Renderer * r = renderer();
-        if (r != nullptr && r->selectionOwner_ == this) {
-            r->clearSelection(this);
+    bool Widget::focused() const {
+        return renderer() != nullptr && renderer()->keyboardFocus() == this;
+    }
+
+    void Widget::setFocusable(bool value) {
+        if (focusable_ != value) {
+            focusable_ = value;
+            if (! focusable_ && focused())
+                renderer()->setKeyboardFocus(renderer()->nextKeyboardFocus());
         }
     }
 
-    void Widget::setClipboard(std::string const & contents) {
-        Renderer * r = renderer();
-        if (r != nullptr)
-            r->setClipboard(contents);
-
-    }
-
-    void Widget::setSelection(std::string const & contents) {
-        Renderer * r = renderer();
-        if (r != nullptr)
-            r->setSelection(contents, this);
-    } */
+    // Selection
 
     void Widget::requestClipboardPaste() {
         Renderer * r = renderer();

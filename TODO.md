@@ -50,7 +50,12 @@ Issues to be raised:
 
 UI version 3
 
-- should the widget contain in itself the background & border properties and theiur painting as first & last thing when paint(Canvas) is called? This would add extra stuff to each widget, but technically, but I think it is ok as it deals nicely with things like the paintBackground and paintBorder and others...
+- deal with the focus issue (focusable, tab stops, tab indices, etc)
+- also is focusable equivalent to tabStop? and if so, replace with tabStop
+- determine what enable is, implement setEnabled and move it to proper section in widget
+- nextKeyboard focus not implemented
+
+- modal pane (test) and Dismissable as a mixin that is what modal used to be. 
 
 - cursor visibility determined by its position too
 - border rendering (& border in canvas cell)

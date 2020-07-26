@@ -409,6 +409,15 @@ namespace ui {
                 return cursorPosition_;
         }
 
+        /** Sets the cursor and position. 
+         */
+        void setCursor(Cursor const & value, Point position) {
+            cursor_ = value;
+            cursorPosition_ = position;
+            if (contains(cursorPosition_))
+                SetUnusedBits(at(cursorPosition_), CURSOR_POSITION);
+        }
+
     protected:
 
         Cell const & cellAt(Point const & p) const {

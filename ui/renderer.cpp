@@ -45,6 +45,21 @@ namespace ui {
         }
     }
 
+    void Renderer::setModalRoot(Widget * widget) {
+        ASSERT(widget->renderer() == this);
+        if (modalRoot_ == widget)
+            return;
+        modalRoot_ = widget;
+        // if we are returning back to non-modal state (modal root is the root widget itself), restore the keyboard focus
+        if (widget == root_) {
+            setKeyboardFocus(nonModalFocus_ != nullptr ? nonModalFocus_ : nextKeyboardFocus());
+        } else {
+            nonModalFocus_ = keyboardFocus_;
+            setKeyboardFocus(nextKeyboardFocus());
+        }
+
+    }
+
     void Renderer::widgetDetached(Widget * widget) {
         if (renderWidget_ == widget)
             renderWidget_ = nullptr;
@@ -129,6 +144,25 @@ namespace ui {
 
     // Keyboard Input
 
+    void Renderer::setKeyboardFocus(Widget * widget) {
+        ASSERT(widget == nullptr || ((widget->renderer() == this) && widget->focusable() && widget->enabled()));
+        if (widget == keyboardFocus_)
+            return;
+        // if the focus is active and different widget was focused, trigger the focusOut - if renderer is not focused, focusOut has been triggered at renderer defocus
+        if (keyboardFocus_ != nullptr && focusIn_) {
+            // first clear the cursor set by the old element
+            buffer_.setCursor(buffer_.cursor().setVisible(false), Point{-1,-1});
+            Event<void>::Payload p{};
+            keyboardFocus_->focusOut(p);
+        }
+        // update the keyboard focus and if renderer is focused, trigger the focus in event - otherwise it will be triggered when the renderer is focused. 
+        keyboardFocus_ = widget;
+        if (keyboardFocus_ != nullptr && focusIn_) {
+            Event<void>::Payload p{};
+            keyboardFocus_->focusIn(p);
+        }
+    }
+
     void Renderer::focusIn() {
         ASSERT(!focusIn_);
         focusIn_ = true;
@@ -198,6 +232,11 @@ namespace ui {
             ui::KeyCharEvent::Payload p{c};
             keyboardFocus_->keyChar(p);
         }
+    }
+
+    Widget * Renderer::nextKeyboardFocus() {
+        // TODO TODO TODO TODO 
+        return nullptr;
     }
 
     // Mouse Input

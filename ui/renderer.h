@@ -105,6 +105,12 @@ namespace ui {
 
         virtual void setRoot(Widget * value);
 
+        Widget * modalRoot() const {
+            return modalRoot_;
+        }
+
+        virtual void setModalRoot(Widget * widget); 
+
     private:
         /** Triggered by the widgets when they are detached from the renderer. 
          
@@ -128,6 +134,9 @@ namespace ui {
 
         /** Root widget for modal interaction. Root element by default, but can be changed to another widget to limit the range of widgets that can receive mouse or keyboard events to a certain subtree. */ 
         Widget * modalRoot_ = nullptr;
+
+        /** Backup for the non-modal keyboard focus element so that when modal root is returned, proper widget will be focused. */
+        Widget * nonModalFocus_ = nullptr;
 
     //@}
 
@@ -251,6 +260,8 @@ namespace ui {
             return focusIn_ ? keyboardFocus_ : nullptr;
         }
 
+        virtual void setKeyboardFocus(Widget * widget); 
+
         /** Returns true if the renderer itself is focused from the UI point of view.
          
             This method returns true if the renderer is actually focused from the point of view of the UI framework used to renderer the widgets. Since the widgets do not correspond to the underlying primitives of the actual renderer, they cannot really grab proper focus, but instead the renderer delegates its own focus messages to them. 
@@ -300,6 +311,10 @@ namespace ui {
         void setModifiers(Key value) {
             modifiers_ = value;
         }
+
+        /** Returns the default next widget that should receive keyboard focus. 
+         */
+        Widget * nextKeyboardFocus();
 
     private:
 
