@@ -248,6 +248,14 @@ namespace ui {
             return focusIn_ ? keyboardFocus_ : nullptr;
         }
 
+        /** Returns true if the renderer itself is focused from the UI point of view.
+         
+            This method returns true if the renderer is actually focused from the point of view of the UI framework used to renderer the widgets. Since the widgets do not correspond to the underlying primitives of the actual renderer, they cannot really grab proper focus, but instead the renderer delegates its own focus messages to them. 
+         */
+        bool rendererFocused() const {
+            return focusIn_;
+        }
+
     protected:
 
         virtual void focusIn();
@@ -307,6 +315,14 @@ namespace ui {
         MouseButtonEvent onMouseUp;
         MouseButtonEvent onMouseClick;
         MouseButtonEvent onMouseDoubleClick;
+
+        /** Returns true if the mouse is captured by the renderer from the UI's point of view. 
+         
+            Similarly to the keyboard focus, the renderer acts as a single blackbox widget for the frameworkl it renders itself on and this method returns whether from the UI's point of view the renderer captures the mouse.
+         */
+        bool rendererMouseCaptured() const {
+            return mouseIn_;
+        }
 
     protected:
 

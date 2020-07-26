@@ -130,8 +130,7 @@ namespace ui {
     // Keyboard Input
 
     void Renderer::focusIn() {
-        if (focusIn_)
-            return;
+        ASSERT(!focusIn_);
         focusIn_ = true;
         VoidEvent::Payload p{};
         onFocusIn(p, this);
@@ -143,8 +142,7 @@ namespace ui {
     }
 
     void Renderer::focusOut() {
-        if (! focusIn_)
-            return;
+        ASSERT(focusIn_);
         focusIn_ = false;
         VoidEvent::Payload p{};
         if (keyboardFocus_ != nullptr) {
@@ -155,8 +153,7 @@ namespace ui {
     }
 
     void Renderer::keyDown(Key k) {
-        if (!focusIn_)
-            focusIn();
+        ASSERT(focusIn_);
         keyDownFocus_ = keyboardFocus_;
         modifiers_ = k.modifiers();
         if (onKeyDown.attached()) {
@@ -172,8 +169,7 @@ namespace ui {
     }
 
     void Renderer::keyUp(Key k) {
-        if (!focusIn_)
-            focusIn();
+        ASSERT(focusIn_);
         modifiers_ = k.modifiers();
         if (onKeyUp.attached()) {
             KeyEvent::Payload p{k};
@@ -188,8 +184,7 @@ namespace ui {
     }
 
     void Renderer::keyChar(Char c) {
-        if (!focusIn_)
-            focusIn();
+        ASSERT(focusIn_);
         if (onKeyChar.attached()) {
             KeyCharEvent::Payload p{c};
             onKeyChar(p, this);
@@ -208,12 +203,7 @@ namespace ui {
     // Mouse Input
 
     void Renderer::mouseIn() {
-        if (mouseIn_) {
-            if (mouseFocus_ != nullptr) {
-                ui::VoidEvent::Payload p{};
-                mouseFocus_->mouseOut(p);
-            }
-        }
+        ASSERT(! mouseIn_);
         mouseIn_ = true;
         mouseButtons_ = 0;
         mouseFocus_ = nullptr;
@@ -223,8 +213,7 @@ namespace ui {
     }
 
     void Renderer::mouseOut() {
-        if (! mouseIn_)
-            return;
+        ASSERT(mouseIn_);
         if (mouseFocus_ != nullptr) {
             ui::VoidEvent::Payload p{};
             mouseFocus_->mouseOut(p);
@@ -235,8 +224,7 @@ namespace ui {
     }
 
     void Renderer::mouseMove(Point coords) {
-        if (!mouseIn_)
-            mouseIn();
+        ASSERT(mouseIn_);
         updateMouseFocus(coords);
         if (onMouseMove.attached()) {
             MouseMoveEvent::Payload p{coords, modifiers_};
@@ -251,8 +239,7 @@ namespace ui {
     }
 
     void Renderer::mouseWheel(Point coords, int by) {
-        if (!mouseIn_)
-            mouseIn();
+        ASSERT(mouseIn_);
         updateMouseFocus(coords);
         if (onMouseWheel.attached()) {
             MouseWheelEvent::Payload p{coords, by, modifiers_};
@@ -267,8 +254,7 @@ namespace ui {
     }
 
     void Renderer::mouseDown(Point coords, MouseButton button) {
-        if (!mouseIn_)
-            mouseIn();
+        ASSERT(mouseIn_);
         updateMouseFocus(coords);
         mouseButtons_ |= static_cast<unsigned>(button);
         if (onMouseDown.attached()) {
@@ -284,14 +270,14 @@ namespace ui {
     }
 
     void Renderer::mouseUp(Point coords, MouseButton button) {
-        if (!mouseIn_)
-            mouseIn();
+        ASSERT(mouseIn_);
         // TODO TODO TODO 
         // click & double click
 
     }
 
     void Renderer::mouseClick(Point coords, MouseButton button) {
+        ASSERT(mouseIn_);
         if (onMouseClick.attached()) {
             MouseButtonEvent::Payload p{coords, button, modifiers_};
             onMouseClick(p, this);
@@ -305,6 +291,7 @@ namespace ui {
     }
 
     void Renderer::mouseDoubleClick(Point coords, MouseButton button) {
+        ASSERT(mouseIn_);
         if (onMouseDoubleClick.attached()) {
             MouseButtonEvent::Payload p{coords, button, modifiers_};
             onMouseDoubleClick(p, this);

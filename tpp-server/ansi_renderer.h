@@ -168,6 +168,65 @@ namespace ui {
 
     protected:
 
+        // keyboard
+
+        void keyDown(Key k) override {
+            if (! rendererFocused())
+                focusIn();
+            Renderer::keyDown(k);
+        }
+
+        void keyUp(Key k) override {
+            if (! rendererFocused())
+                focusIn();
+            Renderer::keyUp(k);
+        }
+
+        void keyChar(Char c) override {
+            if (! rendererFocused())
+                focusIn();
+            Renderer::keyChar(c);
+        }
+
+        // mouse
+
+        void mouseIn() override {
+            if (rendererMouseCaptured())
+                mouseOut();
+            Renderer::mouseIn();
+        }
+
+        void mouseOut() override {
+            if (rendererMouseCaptured())
+                Renderer::mouseOut();
+        }
+
+        void mouseMove(Point coords) override {
+            if (! rendererMouseCaptured())
+                mouseIn();
+            Renderer::mouseMove(coords);
+        }
+
+        void mouseWheel(Point coords, int by) override {
+            if (! rendererMouseCaptured())
+                mouseIn();
+            Renderer::mouseWheel(coords, by);
+        }
+
+        void mouseDown(Point coords, MouseButton button) override {
+            if (! rendererMouseCaptured())
+                mouseIn();
+            Renderer::mouseDown(coords, button);
+        }
+
+        void mouseUp(Point coords, MouseButton button) override {
+            if (! rendererMouseCaptured())
+                mouseIn();
+            Renderer::mouseUp(coords, button);
+        }
+
+        // clipboard & selection
+
         void setClipboard(std::string const & contents) override {
             send("\033]52;", 5);
             // TODO encode? 
