@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../styled_widget.h"
+#include "../widget.h"
 #include "../layout.h"
 
 namespace ui {
 
-    class Pager : public StyledWidget {
+    class Pager : public Widget {
     public:
 
         Pager() {
@@ -57,13 +57,9 @@ namespace ui {
     protected:
 
         void paint(Canvas & canvas) override {
-            // paint the background first
-            paintBackground(canvas);
-            // and paint the active page, if any
+            // paint the active page, if any
             if (! children().empty())
                 paintChild(children().back());
-            // finally paint the border
-            paintBorder(canvas);
         }
 
     }; // ui::Pager

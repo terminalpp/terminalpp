@@ -305,7 +305,7 @@ namespace ui {
 
         // ========================================================================================
 
-        /** \name Painting 
+        /** \name Painting & Style
          */
         //@{
         
@@ -318,6 +318,28 @@ namespace ui {
                 Widget subclasses can override this method to delegate the repaint event to other widgets up the tree, such as in cases of transparent background widgets. 
              */
             virtual void repaint();
+
+            Color const & background() const {
+                return background_;
+            }
+
+            virtual void setBackground(Color value) {
+                if (background_ != value) {
+                    background_ = value;
+                    repaint();
+                }
+            }
+
+            Border const & border() const {
+                return border_;
+            }
+
+            virtual void setBorder(Border const & value) {
+                if (border_ != value) {
+                    border_ = value;
+                    repaint();
+                }
+            }
 
         protected:
 
@@ -339,7 +361,13 @@ namespace ui {
             void paint() {
                 pendingRepaint_ = false;
                 Canvas canvas{visibleArea_, contentsSize()};
+                // paint the background first
+                canvas.setBg(background_);
+                canvas.fill(canvas.rect());
+                // now paint whatever the widget contents is
                 paint(canvas);
+                // TODO paint the border now that the widget has been painted
+                // TODO 
             }
 
             /** Returns the attached renderer. 
@@ -373,6 +401,9 @@ namespace ui {
             /** Since widget's start detached, their paint is blocked by setting pending repaint to true. When attached, and repainted via its parent, the flag will be cleared. 
              */
             bool pendingRepaint_ = true;
+
+            Color background_;
+            Border border_;
 
         //@}
 

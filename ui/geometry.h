@@ -331,6 +331,14 @@ namespace ui {
             return true;
         }
 
+        bool operator == (Border const & other) const {
+            return true;
+        }
+
+        bool operator != (Border const & other) const {
+            return false;
+        }
+
     };
 
 } // namespace ui

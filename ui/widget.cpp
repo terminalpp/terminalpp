@@ -245,14 +245,20 @@ namespace ui {
     // Painting
 
     void Widget::repaint() {
-        // if there is already pending repaint, don't do anything
-        if (pendingRepaint_ == true)
-            return;
-        pendingRepaint_ = true;
-        // propagate the paint event through parents so that they can decide to actually repaint themselves instead, if the repaint is allowed, instruct the renderer to repaint
-        if (parent_ == nullptr || parent_->allowRepaintRequest(this)) {
-            ASSERT(renderer() != nullptr);
-            renderer()->paint(this);
+        if (parent_ == nullptr || background_.opaque()) {
+            // if there is already pending repaint, don't do anything
+            if (pendingRepaint_ == true)
+                return;
+            pendingRepaint_ = true;
+            // propagate the paint event through parents so that they can decide to actually repaint themselves instead, if the repaint is allowed, instruct the renderer to repaint
+            if (parent_ == nullptr || parent_->allowRepaintRequest(this)) {
+                ASSERT(renderer() != nullptr);
+                renderer()->paint(this);
+            }
+        } else {
+            // delegate to parent if background is transparent
+            // we already checked that parent is not null
+            parent_->repaint();
         }
     }
 
@@ -262,7 +268,9 @@ namespace ui {
             return false;
         }
         // if the child from which the request comes is overlaid, then block the request and repaint itself instead
-        if (immediateChild->overlaid_) {
+        // the same if there is border on this widget
+        // TODO the border only needs top be repainted if the widget touches it
+        if (immediateChild->overlaid_ || ! border_.empty()) {
             repaint();
             return false;
         }
