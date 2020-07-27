@@ -281,17 +281,42 @@ namespace ui {
             return true;    
     }
 
+    // Generic Input
+
+    void Widget::setEnabled(bool value) {
+        if (enabled_ != value) {
+            enabled_ = value;
+            if (enabled_ == false && focused())
+                defocus();
+            repaint();
+        }
+    }
+
     // Keyboard
 
     bool Widget::focused() const {
         return renderer() != nullptr && renderer()->keyboardFocus() == this;
     }
 
+    void Widget::focus() {
+        if (focused() || renderer() == nullptr)
+            return;
+        renderer()->setKeyboardFocus(this);
+    }
+
+    void Widget::defocus() {
+        if (! focused())
+            return;
+        renderer()->setKeyboardFocus(renderer()->nextKeyboardFocus());
+        if (focused())
+            renderer()->setKeyboardFocus(nullptr);
+    }
+
     void Widget::setFocusable(bool value) {
         if (focusable_ != value) {
             focusable_ = value;
             if (! focusable_ && focused())
-                renderer()->setKeyboardFocus(renderer()->nextKeyboardFocus());
+                defocus();
         }
     }
 
