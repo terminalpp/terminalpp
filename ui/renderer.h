@@ -386,6 +386,15 @@ namespace ui {
         /** Mouse buttons that are currently down. */
         unsigned mouseButtons_ = 0;
 
+        unsigned mouseClickButton_ = 0;
+        unsigned lastMouseClickButton_ = 0;
+        size_t mouseClickStart_ = 0;
+        size_t lastMouseClickEnd_ = 0;
+        Widget * lastMouseClickTarget_ = nullptr;
+
+        size_t mouseClickMaxDuration_ = 200;
+        size_t mouseDoubleClickMaxDistance_ = 200;
+
     //@}
 
     // ============================================================================================

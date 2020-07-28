@@ -59,7 +59,6 @@ UI version 3
 - border rendering (& border in canvas cell)
 - fix errors
 - ansi terminal palette in config.h
-- mouse click & double click in renderer?
 
 - for painting Windows can paint any time they want, X11's render will send the expose message (check that repaints are only possible in expose handlers) and for Qt I need to see what needs to be done
 
