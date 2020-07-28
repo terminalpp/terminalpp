@@ -48,7 +48,7 @@ namespace ui {
         } else {
             ASSERT(child->parent() == nullptr);
         }
-        children_.push_front(child);
+        children_.push_back(child);
         child->parent_ = this;
         relayout();
     }
@@ -63,7 +63,7 @@ namespace ui {
         } else {
             ASSERT(child->parent() == nullptr);
         }
-        children_.push_back(child);
+        children_.push_front(child);
         child->parent_ = this;
         relayout();
     }

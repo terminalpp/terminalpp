@@ -8,6 +8,12 @@ namespace ui {
     class Label : public Widget {
     public:
 
+        Label() = default;
+
+        Label(std::string const & text):
+            text_{text} {
+        }
+
         using Widget::setWidthHint;
         using Widget::setHeightHint;
 

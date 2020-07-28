@@ -144,7 +144,7 @@ namespace ui {
     class Layout::Row : public Layout {
     public:
 
-        Row(HorizontalAlign hAlign, VerticalAlign vAlign):
+        Row(HorizontalAlign hAlign, VerticalAlign vAlign = VerticalAlign::Top):
             hAlign_{hAlign},
             vAlign_{vAlign} {
         }
@@ -163,12 +163,12 @@ namespace ui {
      */
     class Layout::Column : public Layout {
     public:
-        Column(HorizontalAlign hAlign, VerticalAlign vAlign):
+        Column(HorizontalAlign hAlign, VerticalAlign vAlign = VerticalAlign::Top):
             hAlign_{hAlign},
             vAlign_{vAlign} {
         }
 
-        Column(VerticalAlign vAlign):
+        Column(VerticalAlign vAlign = VerticalAlign::Top):
             hAlign_{HorizontalAlign::Center},
             vAlign_{vAlign} {
         }

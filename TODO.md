@@ -54,7 +54,6 @@ UI version 3
 - also is focusable equivalent to tabStop? and if so, replace with tabStop
 - nextKeyboard focus not implemented
 
-- modal pane (test) and Dismissable as a mixin that is what modal used to be. 
 
 - cursor visibility determined by its position too
 - border rendering (& border in canvas cell)

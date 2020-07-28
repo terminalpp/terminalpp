@@ -3,6 +3,8 @@
 #include "ui/widgets/window.h"
 #include "ui/widgets/pager.h"
 #include "ui/widgets/panel.h"
+#include "ui/widgets/label.h"
+#include "ui/widgets/dialog.h"
 //#include "ui-terminal/ansi_terminal.h"
 //#include "tpp-lib/local_pty.h"
 //#include "tpp-lib/bypass_pty.h"
@@ -11,26 +13,23 @@
 #include "../config.h"
 #include "../window.h"
 
-//#include "about_box.h"
+#include "about_box.h"
 
 namespace tpp {
 
     /** New Version Dialog. 
      */
-    #ifdef HAHA
     class NewVersionDialog : public ui::Dialog::Cancel {
     public:
         NewVersionDialog(std::string const & message):
-            Dialog::Cancel{"New Version", /* deleteOnDismiss */ true},
-            contents_{new Label{message}} {
+            ui::Dialog::Cancel{"New Version"},
+            contents_{new ui::Label{message}} {
             setBody(contents_);
-            setSemanticStyle(SemanticStyle::Info);
         }
 
     private:
         Label * contents_;
     };
-    #endif
 
     /** The terminal window. 
      
@@ -48,10 +47,8 @@ namespace tpp {
 
             main_->setLayout(new Layout::Column{VerticalAlign::Top});
             main_->setBackground(Color::Red);
-            main_->attach(pager_);
+            //main_->attach(pager_);
             setContents(main_);
-
-
 
             Config const & config = Config::Instance();
                 /*
@@ -68,6 +65,10 @@ namespace tpp {
                 window_->setFullscreen(true);
             
             versionChecker_ = std::thread{[this](){
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                schedule([this]() {
+                    showModal(new AboutBox{});
+                });
                 std::string channel = Config::Instance().version.checkChannel();
                 // don't check if empty channel
                 if (channel.empty())
@@ -75,10 +76,8 @@ namespace tpp {
                 std::string newVersion = Application::Instance()->checkLatestVersion(channel);
                 if (!newVersion.empty()) {
                     schedule([this, newVersion]() {
-                        /*
                         NewVersionDialog * d = new NewVersionDialog{STR("New version " << newVersion << " is available")};
                         showModal(d);
-                        */
                     });
                 }
             }};
@@ -197,22 +196,22 @@ namespace tpp {
         }       
         */ 
 
-        /*
-
-        void terminalKeyDown(UIEvent<Key>::Payload & e) {
+        void terminalKeyDown(Renderer::KeyEvent::Payload & e) {
             if (window_->icon() != tpp::Window::Icon::Default)
                 window_->setIcon(tpp::Window::Icon::Default);
             // trigger paste event for ourselves so that the paste can be intercepted
             if (*e == SHORTCUT_PASTE) {
-                requestClipboard();
+                //requestClipboard();
                 e.stop();
             } else if (*e == SHORTCUT_ABOUT) {
                 showModal(new AboutBox{});
                 e.stop();
             } else if (*e == SHORTCUT_SETTINGS) {
-                Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit * / true); 
+                Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit */ true); 
             }
         }
+
+        /*
 
         void terminalMouseMove(UIEvent<MouseMoveEvent>::Payload & event) {
             if (activeSession_->terminal->mouseCaptured())

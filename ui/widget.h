@@ -21,6 +21,7 @@ namespace ui {
         friend class Layout;
         template<typename T>
         friend class EventQueue;
+        friend class Dismissable;
     public:
 
         Widget() {
@@ -104,13 +105,14 @@ namespace ui {
 
     protected:
 
-        /** Adds given widget as a child so that it will be painted first. 
+        /** Adds given widget as a child so that it will be in front (painted after all its siblings).
+         * 
          */
-        void attach(Widget * child);
+        virtual void attach(Widget * child);
 
-        /** Adds given widget as so that it will be painted last. 
+        /** Adds given widget as so that it will be in the back (painted before all its siblings so that they can paint over it).
          */
-        void attachBack(Widget * child);
+        virtual void attachBack(Widget * child);
 
         /** Removes given widget from the child widgets. 
          */
@@ -203,6 +205,14 @@ namespace ui {
                 delete layout_;
                 layout_ = value;
                 relayout();
+            }
+        }
+
+        virtual void setVisible(bool value = true) {
+            if (visible_ != value) {
+                visible_ = value;
+                if (parent_ != nullptr)
+                    parent_->relayout();
             }
         }
 

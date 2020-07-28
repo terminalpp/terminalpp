@@ -42,6 +42,8 @@ namespace ui {
                 else
                     root_->relayout();
             }
+            // also make sure that the modal root is the new root
+            modalRoot_ = root_;
         }
     }
 

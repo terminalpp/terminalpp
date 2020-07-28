@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../widget.h"
+#include "modal_pane.h"
 
 namespace ui {
 
@@ -20,8 +21,9 @@ namespace ui {
     protected:
        
         Window():
-            contents_{nullptr} {
+            modalPane_{new ModalPane{}} {
             setLayout(new Layout::Maximized{});
+            attach(modalPane_);
         }
 
         /** Sets the contents of the window. 
@@ -42,8 +44,7 @@ namespace ui {
         /** Shows the given widget modally. 
          */
         void showModal(Widget * w) {
-            NOT_IMPLEMENTED;
-            //modalPane_->add(w);
+            modalPane_->attach(w);
         }
 
         /** Shows an error box. 
@@ -61,7 +62,8 @@ namespace ui {
 
     private:
 
-        Widget * contents_;
+        ModalPane * modalPane_;
+        Widget * contents_ = nullptr;
 
     }; // ui::Window
 

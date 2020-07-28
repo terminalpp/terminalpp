@@ -7,8 +7,14 @@ namespace ui {
 
     /** Basic 
      */
-    class Panel : public Widget {
+    class Panel : public virtual Widget {
     public:
+
+        Panel() = default;
+
+        Panel(Layout * layout) {
+            setLayout(layout);
+        }
 
         using Widget::setLayout;
         using Widget::attach;

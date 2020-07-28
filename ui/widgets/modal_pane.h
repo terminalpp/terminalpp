@@ -13,27 +13,28 @@ namespace ui {
     class ModalPane : public Panel {
     public:
 
-        ModalPane() {
+        ModalPane(): 
+            Panel{new Layout::Column{VerticalAlign::Bottom}} {
             setVisible(false);
-            setBackground(Color::Black.withAlpha(128));
+            setBackground(Color::Blue.withAlpha(128));
         }
 
         void attach(Widget * widget) override {
             Panel::attach(widget);
-            setModalRoot(true);
+            setAsModalRoot();
         }
 
         void attachBack(Widget * widget) override {
             Panel::attachBack(widget);
             if (children().size() == 1)
-                setModalRoot(true);
+                setAsModalRoot();
         }
 
         void detach(Widget * widget) override {
             Panel::detach(widget);
             if (children().empty() && renderer() != nullptr) {
-                ASSERT(renderer().modalRoot() == this);
-                renderer()->setModalRoot(renderer()->rootWidget());
+                ASSERT(renderer()->modalRoot() == this);
+                renderer()->setModalRoot(renderer()->root());
                 setVisible(false);
             }
         }
@@ -41,8 +42,8 @@ namespace ui {
     protected:
 
         void setAsModalRoot() {
-            if (renderer() != nullptr && renderer().modalRoot() != this) {
-                ASSERT(renderer().modalRoot() == renderer().root()) << "Multiple active modal widgets are not allowed";
+            if (renderer() != nullptr && renderer()->modalRoot() != this) {
+                ASSERT(renderer()->modalRoot() == renderer()->root()) << "Multiple active modal widgets are not allowed";
                 setVisible(true);
                 renderer()->setModalRoot(this);
             }
