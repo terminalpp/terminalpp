@@ -19,7 +19,6 @@ namespace ui {
     class Widget {
         friend class Renderer;
         friend class Layout;
-        template<typename T>
         friend class EventQueue;
         friend class Dismissable;
     public:

@@ -131,8 +131,8 @@ namespace tpp {
         //@}
 
     protected:
-        Window(int width, int height, FontMetrics const & font):
-            Renderer{Size{width, height}},
+        Window(int width, int height, FontMetrics const & font, EventQueue * eq):
+            Renderer{Size{width, height}, eq},
             title_{"terminal++"},
             icon_{Icon::Default},
             zoom_{1.0},
@@ -338,8 +338,13 @@ namespace tpp {
         }
 
     protected:
+
+        /** Creates new renderer window. 
+         
+            Initializes the font metrics and event queue tied to the implementation type (DirectWrite, X11, etc.).
+         */
         RendererWindow(int width, int height):
-            Window{width, height, * IMPLEMENTATION::Font::Get(ui::Font(), tpp::Config::Instance().renderer.font.size())},
+            Window{width, height, * IMPLEMENTATION::Font::Get(ui::Font(), tpp::Config::Instance().renderer.font.size()), new TypedEventQueue<IMPLEMENTATION>{}},
             lastCursorPos_{-1,-1} {
         }
 

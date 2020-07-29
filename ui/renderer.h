@@ -14,6 +14,20 @@ namespace ui {
 
     class Widget;
 
+    class EventQueue {
+    public:
+        virtual ~EventQueue() {}
+        virtual void schedule(std::function<void()> event, Widget * widget) = 0;
+        virtual bool processEvent() = 0;
+        virtual void cancelEvents(Widget * forWidget) = 0;
+
+    protected:
+        
+        static size_t & PendingEvents(Widget * w);
+
+    }; // EventQueue
+
+
     // ============================================================================================
 
 
@@ -22,7 +36,6 @@ namespace ui {
 
     /** Base class for all UI renderer implementations. 
      
-        
      */ 
     class Renderer {
         friend class Canvas;
@@ -48,26 +61,44 @@ namespace ui {
 
     protected:
 
-        Renderer(Size const & size):
-            buffer_{size} {
-        }
+        Renderer(Size const & size, EventQueue * eq);
 
-        Renderer(std::pair<int, int> const & size):
-            Renderer(Size{size.first, size.second}) {
+        Renderer(std::pair<int, int> const & size, EventQueue * eq):
+            Renderer(Size{size.first, size.second}, eq) {
         }
 
     // ============================================================================================
     /** \name Events & Scheduling
-     
-        Actually what I am going to do is have the scheduler as a CRTP class not related to the renderer per se, and it will be added in the final rendererer, so that the renderer will merely delegate the virtual methods to the CRTP class. This should give me decent code reuse and reasonably non-complicated code. 
-     */
+
+        Renderer provides an interface for the widgets to schedule functions to be executed in the main thread. This functionality is decoupled from the renderer and is provided by the EventQueue implementations, such as the TypedEventQueue<T> which shares the event queue across all instances of the same type. 
+
+        Only a valid widget from the renderer's tree can schedule an event, to support widget-less events, each renderer creates own dummy widget which is used in place of the real widget when scheduling an event. When a widget is detached, all its pending events are removed from the queue. 
+
+      */
     //@{
     public:
+
+
+
         /** Schedule the given event in the main UI thread.
          
-            This function can be called from any thread. 
+            The event is bound to the specified widget that should be part of the widget tree attached to the renderer. If the widget is detached before the event is processed, the event is cancelled. 
+
+            This function can be called from any thread as long as it does not clash with the destructor of the renderer. 
          */
-        virtual void schedule(std::function<void()> event, Widget * widget = nullptr) = 0;
+        virtual void schedule(std::function<void()> event, Widget * widget) {
+            eq_->schedule(event, widget);
+        }
+
+        /** Schedules the given event in the main UI thread. 
+         
+            The event is attached to no user widget and will only be cancelled if the renderer itself gets deleted before the event is processed. 
+
+            This function can be called from any thread as long as it does not clash with the destructor of the renderer. 
+         */
+        void schedule(std::function<void()> event) {
+            schedule(event, eventDummy_);
+        }
 
         /** Yields to the UI thread. 
          
@@ -77,18 +108,24 @@ namespace ui {
 
     protected:
 
-        /** Cancels all user events registered by the widget. 
+        /** Processes user event if one exists. If multiple events are available, processes only one. 
+         
+            Returns true if event was processed, or false if the queue was empty. 
          */
-        virtual void cancelWidgetEvents(Widget * widget) = 0;
+        bool processEvent() {
+            return eq_->processEvent();
+        }
 
     private:
 
-        /** Notifies the main thread that an event is available. 
-         */
-        //virtual void eventNotify() = 0;
-
         std::mutex yieldGuard_;
         std::condition_variable yieldCv_;
+
+        /** The queue for the events. */
+        EventQueue * eq_;
+
+        /** A dummy widget the renderer can use to schedule renderer-specific events, such as repaints. */
+        Widget * eventDummy_;
 
     //@}
     // ============================================================================================
@@ -153,7 +190,7 @@ namespace ui {
 
         /** Triggers repaint of the entire buffer. 
 
-            Can be called from any thread. 
+            Can be called from any thread as long as no overlap with destructor is possible. 
          */
         void repaint() {
             schedule([this](){
@@ -448,7 +485,6 @@ namespace ui {
         Widget * selectionRequestTarget_ = nullptr;
 
     //@}
-
 
     }; // ui::Renderer
 

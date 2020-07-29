@@ -72,7 +72,7 @@ UI version 3
 - CSI sequence moved to own file, should be removed from terminal
 
 - document keyboard, mouse and selection & clipboard inputs in renderer & widgets
-
+- document event queue and typed event queue
 
 - resizing does not work in xterm
 

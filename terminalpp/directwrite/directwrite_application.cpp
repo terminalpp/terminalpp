@@ -172,7 +172,7 @@ namespace tpp {
 	LRESULT CALLBACK DirectWriteApplication::UserEventHandler_(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         switch (msg) {
             case WM_USER:
-                DirectWriteWindow::ProcessEvent();
+                ui::TypedEventQueue<DirectWriteWindow>::ProcessEvent();
                 break;
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);

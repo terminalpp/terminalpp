@@ -13,7 +13,7 @@ namespace tpp {
 
     using namespace ui;
 
-    class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND>, public EventQueue<DirectWriteWindow> {
+    class DirectWriteWindow : public RendererWindow<DirectWriteWindow, HWND> {
     public:
 
         /** Bring the font to the class' namespace so that the RendererWindow can find it. 
@@ -51,18 +51,19 @@ namespace tpp {
             RendererWindow::resize(newSize);
         }
 
-        void schedule(std::function<void()> event, Widget * widget) override;
-
         void close() override {
             RendererWindow::close();
             DestroyWindow(hWnd_);
         }
 
-    protected:
-
-        void cancelWidgetEvents(Widget * widget) override {
-            EventQueue::cancelWidgetEvents(widget);
+        /** Schedules the event and notifies the main thread that an event is ready. 
+         */
+        void schedule(std::function<void()> event, Widget * widget) override {
+            RendererWindow::schedule(event, widget);
+            PostMessage(DirectWriteApplication::Instance()->dummy_, WM_USER, 0, 0);
         }
+
+    protected:
 
         void windowResized(int width, int height) override{
             ASSERT(rt_ != nullptr);

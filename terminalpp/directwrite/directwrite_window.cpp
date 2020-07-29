@@ -55,11 +55,6 @@ namespace tpp {
         }
     }
 
-    void DirectWriteWindow::schedule(std::function<void()> event, Widget * widget) {
-        EventQueue::schedule(event, widget);
-        PostMessage(DirectWriteApplication::Instance()->dummy_, WM_USER, 0, 0);
-    }
-
     void DirectWriteWindow::requestClipboard(Widget * sender) {
         RendererWindow::requestClipboard(sender);
 		std::string result;
