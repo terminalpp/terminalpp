@@ -58,11 +58,6 @@ namespace tpp {
             dismiss(this);
         }
 
-        void keyDown(KeyEvent::Payload & event) override {
-            MARK_AS_UNUSED(event);
-            dismiss(this);
-        }
-
     private:
 
         Button * btnNewIssue_;

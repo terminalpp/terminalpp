@@ -68,6 +68,12 @@ namespace ui {
             return Key{raw_ & 0xffff};
         }
 
+        /** Returns true if the key consists only of modifier keys. 
+         */
+        bool isModifier() const {
+            return raw_ != 0 && code() == 0;
+        }
+
 		bool operator == (Key const & other) const {
 			return raw_ == other.raw_;
 		}

@@ -33,10 +33,7 @@ namespace ui {
     protected:
 
         void paint(Canvas & canvas) override {
-            if (focused())
-                canvas.fill(canvas.rect(), Color::Cyan);
-            else 
-                canvas.textOut(Point{0,0}, text_);
+            canvas.textOut(Point{0,0}, text_);
         }
 
         Size getAutosizeHint() override {

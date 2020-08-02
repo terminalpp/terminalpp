@@ -52,12 +52,13 @@ UI version 3
 
 - document keyboard focus handling - i.e. only document order and getting next & previous elements
 - things like tab focus and so on should be implemented differently, perhaps by a form widget or some such
+- focus selection via cyan border or some such? 
+
 
 
 
 - cursor visibility determined by its position too
 - border rendering (& border in canvas cell)
-- fix errors
 - ansi terminal palette in config.h
 
 - for painting Windows can paint any time they want, X11's render will send the expose message (check that repaints are only possible in expose handlers) and for Qt I need to see what needs to be done

@@ -68,6 +68,17 @@ namespace ui {
             //onDismiss(p, this);
         }
 
+        /** The dialog window suppports tab focus. 
+         */
+        void keyDown(KeyEvent::Payload & e) override {
+            if (*e == Key::Tab)
+                renderer()->setKeyboardFocus(renderer()->nextKeyboardFocus());
+            else if (*e == Key::Tab + Key::Shift)
+                renderer()->setKeyboardFocus(renderer()->prevKeyboardFocus());
+            else
+                Widget::keyDown(e);
+        }
+
     private:
 
         std::string title_;
