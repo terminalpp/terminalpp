@@ -5,6 +5,8 @@
 
 namespace ui {
 
+    /**
+     */
     class Pager : public Widget {
     public:
 
@@ -15,7 +17,10 @@ namespace ui {
         /** Adds new page to the pager and makes the page active, triggering the onPageChange event. 
          */
         void addPage(Widget * page) {
-            attach(page);            
+            if (! children().empty())
+                children().back()->setVisible(false);
+            attach(page);
+            page->setVisible(true);
             Event<Widget*>::Payload p{page};
             onPageChange(p, this);
         }
@@ -48,7 +53,7 @@ namespace ui {
         void setActivePage(Widget * page) {
             ASSERT(page->parent() == this);
             // re-attaching puts the page in the visible page position
-            if (page != activePage()) 
+            if (page != activePage())
                 addPage(page);
         }
 
@@ -56,6 +61,8 @@ namespace ui {
 
     protected:
 
+        /** Only draws the active page as all other are supposed to be invisible. 
+         */
         void paint(Canvas & canvas) override {
             // paint the active page, if any
             if (! children().empty())

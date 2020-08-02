@@ -162,7 +162,7 @@ namespace ui {
 
     void Renderer::setKeyboardFocus(Widget * widget) {
         ASSERT(widget == nullptr || ((widget->renderer() == this) && widget->focusable() && widget->enabled()));
-        if (widget == keyboardFocus_)
+        if (widget == keyboardFocus_ || ! widget->isDominatedBy(modalRoot_))
             return;
         // if the focus is active and different widget was focused, trigger the focusOut - if renderer is not focused, focusOut has been triggered at renderer defocus
         if (keyboardFocus_ != nullptr && focusIn_) {
@@ -177,6 +177,48 @@ namespace ui {
             Event<void>::Payload p{};
             keyboardFocus_->focusIn(p);
         }
+    }
+
+    /**
+     */
+    Widget * Renderer::nextKeyboardFocus() {
+        // if some widget is already focused, start there
+        if (keyboardFocus_ != nullptr) {
+            Widget * result = keyboardFocus_->nextWidget(Widget::IsAvailable);
+            while (result != nullptr) {
+                if (result->focusable() && result->isDominatedBy(modalRoot_))
+                    return result;
+                result = result->nextWidget(Widget::IsAvailable);
+            }
+        }
+        // if we get here, it means that either nothing is focused, or there is nothing that can be focused after currently focused widget. Either way, we start from the beginning
+        Widget * result = modalRoot_->nextWidget(Widget::IsAvailable, nullptr, false);
+        while (result != nullptr) {
+            if (result->focusable() && result->isDominatedBy(modalRoot_))
+                return result;
+            result = result->nextWidget(Widget::IsAvailable);
+        }
+        return nullptr;
+    }
+
+    Widget * Renderer::prevKeyboardFocus() {
+        // if some widget is already focused, start there
+        if (keyboardFocus_ != nullptr) {
+            Widget * result = keyboardFocus_->prevWidget(Widget::IsAvailable);
+            while (result != nullptr) {
+                if (result->focusable() && result->isDominatedBy(modalRoot_))
+                    return result;
+                result = result->prevWidget(Widget::IsAvailable);
+            }
+        }
+        // if we get here, it means that either nothing is focused, or there is nothing that can be focused before currently focused widget. Either way, we start from the beginning (end)
+        Widget * result = modalRoot_->prevWidget(Widget::IsAvailable, nullptr, false);
+        while (result != nullptr) {
+            if (result->focusable() && result->isDominatedBy(modalRoot_))
+                return result;
+            result = result->prevWidget(Widget::IsAvailable);
+        }
+        return nullptr;
     }
 
     void Renderer::focusIn() {
@@ -248,11 +290,6 @@ namespace ui {
             ui::KeyCharEvent::Payload p{c};
             keyboardFocus_->keyChar(p);
         }
-    }
-
-    Widget * Renderer::nextKeyboardFocus() {
-        // TODO TODO TODO TODO 
-        return nullptr;
     }
 
     // Mouse Input

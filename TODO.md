@@ -50,9 +50,9 @@ Issues to be raised:
 
 UI version 3
 
-- deal with the focus issue (focusable, tab stops, tab indices, etc)
-- also is focusable equivalent to tabStop? and if so, replace with tabStop
-- nextKeyboard focus not implemented
+- document keyboard focus handling - i.e. only document order and getting next & previous elements
+- things like tab focus and so on should be implemented differently, perhaps by a form widget or some such
+
 
 
 - cursor visibility determined by its position too

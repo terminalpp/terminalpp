@@ -299,6 +299,10 @@ namespace ui {
 
         virtual void setKeyboardFocus(Widget * widget); 
 
+        Widget * nextKeyboardFocus();
+
+        Widget * prevKeyboardFocus();
+
         /** Returns true if the renderer itself is focused from the UI point of view.
          
             This method returns true if the renderer is actually focused from the point of view of the UI framework used to renderer the widgets. Since the widgets do not correspond to the underlying primitives of the actual renderer, they cannot really grab proper focus, but instead the renderer delegates its own focus messages to them. 
@@ -348,10 +352,6 @@ namespace ui {
         void setModifiers(Key value) {
             modifiers_ = value;
         }
-
-        /** Returns the default next widget that should receive keyboard focus. 
-         */
-        Widget * nextKeyboardFocus();
 
     private:
 

@@ -81,6 +81,56 @@ namespace ui {
         relayout();
     }
 
+    Widget * Widget::nextWidget(std::function<bool(Widget*)> cond, Widget * last, bool checkParent) {
+        // if last element is nullptr and we are focusable return itself
+        if (last == nullptr && (! cond || cond(this)))
+            return this;
+        // if not us, try children, if last was widget set last to nullptr, otherwise set last to nullptr when the last widget is found in the children so that next widget will be examined
+        if (! cond || cond(this)) {
+            if (last == this)
+                last = nullptr;
+            for (Widget * w : children_) {
+                if (last == nullptr) {
+                    // check the child, not recursing to parent if not found, since if not found we can check the next sibling here
+                    Widget * result = w->nextWidget(cond, nullptr, false);
+                    if (result != nullptr)
+                        return result;
+                } else if (last == w) {
+                    last = nullptr;
+                }
+            }
+        }
+        // not found in children, try siblings in parent starting after itself
+        if (checkParent && parent_ != nullptr)
+            return parent_->nextWidget(cond, this, true);
+        else
+            return nullptr;
+    }
+
+    Widget * Widget::prevWidget(std::function<bool(Widget*)> cond, Widget * last, bool checkParent) {
+        // reverse iterate the children to see if last is one of them in which case return the one before it
+        for (size_t i = children_.size() - 1, e = children_.size(); i < e; --i) {
+            Widget * w = children_[i];
+            if (last == nullptr) {
+                Widget * result = w->prevWidget(cond, nullptr, false);
+                if (result != nullptr)
+                    return result;
+            } else if (last == w) {
+                last = nullptr;
+            }
+        }
+        // if last != this, return itself if focusable
+        if (last != this && (! cond || cond(this)))
+            return this;
+        // otherwise recurse to parent, if possible
+        if (checkParent && parent_ != nullptr)
+            return parent_->prevWidget(cond, this, true);
+        else
+            return nullptr;
+
+    }
+
+
     // ============================================================================================
     // Layouting
 
@@ -307,9 +357,12 @@ namespace ui {
     void Widget::defocus() {
         if (! focused())
             return;
-        renderer()->setKeyboardFocus(renderer()->nextKeyboardFocus());
-        if (focused())
-            renderer()->setKeyboardFocus(nullptr);
+        Widget * w = renderer()->nextKeyboardFocus();
+        ASSERT(w != nullptr) << "At least current widget shoulc be returned again";
+        if (w == this)
+            renderer()->setKeyboardFocus(nullptr); // if we are last focusable widget, clear the focus
+        else
+            renderer()->setKeyboardFocus(w);
     }
 
     void Widget::setFocusable(bool value) {

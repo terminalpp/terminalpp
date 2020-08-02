@@ -15,6 +15,10 @@ namespace ui {
 
     /** Base class for all ui widgets. 
      
+        
+     
+     
+     
      */
     class Widget {
         friend class Renderer;
@@ -102,6 +106,14 @@ namespace ui {
             return this;
         }
 
+        Widget * nextWidget(std::function<bool(Widget*)> cond = nullptr) {
+            return nextWidget(cond, this, true);
+        }
+
+        Widget * prevWidget(std::function<bool(Widget*)> cond = nullptr) {
+            return prevWidget(cond, this, true);
+        }
+        
     protected:
 
         /** Adds given widget as a child so that it will be in front (painted after all its siblings).
@@ -127,6 +139,10 @@ namespace ui {
             return children_;
         }
 
+        Widget * nextWidget(std::function<bool(Widget*)> cond, Widget * last, bool checkParent);
+
+        Widget * prevWidget(std::function<bool(Widget*)> cond, Widget * last, bool checkParent);
+
     private:
         /** Mutex protecting the renderer pointer in the visible area for the widget. 
          */
@@ -134,7 +150,6 @@ namespace ui {
 
         Widget * parent_ = nullptr;
         std::deque<Widget *> children_;
-
 
     //@}
 
@@ -153,6 +168,14 @@ namespace ui {
         */
         bool visible() const {
             return visible_;
+        }
+
+        virtual void setVisible(bool value = true) {
+            if (visible_ != value) {
+                visible_ = value;
+                if (parent_ != nullptr)
+                    parent_->relayout();
+            }
         }
 
         /** Returns the rectangle the widget occupies in its parent's contents area. 
@@ -204,14 +227,6 @@ namespace ui {
                 delete layout_;
                 layout_ = value;
                 relayout();
-            }
-        }
-
-        virtual void setVisible(bool value = true) {
-            if (visible_ != value) {
-                visible_ = value;
-                if (parent_ != nullptr)
-                    parent_->relayout();
             }
         }
 
@@ -514,6 +529,7 @@ namespace ui {
 
     // ========================================================================================
     /** \name Keyboard Input
+     
      */
     //@{
     public:
@@ -548,10 +564,14 @@ namespace ui {
 
         virtual void setFocusable(bool value = true);
 
+        /** The widget has received keyboard focus. 
+         */
         virtual void focusIn(VoidEvent::Payload & e) {
             onFocusIn(e, this);
         }
 
+        /** The widget has lost keyboard focus. 
+         */
         virtual void focusOut(VoidEvent::Payload & e) {
             onFocusOut(e, this);
         }
@@ -576,7 +596,7 @@ namespace ui {
 
     private:
 
-        bool focusable_ = true; // TODO should this be false? 
+        bool focusable_ = false; 
 
     //@}
 
@@ -597,6 +617,26 @@ namespace ui {
 
         void requestClipboardPaste();
         void requestSelectionPaste();
+
+    //@}
+
+    // ========================================================================================
+    /** \name Helper functions
+     */
+
+    //@{
+
+    public:
+        /** Returns true if the widget is available to the user.
+          
+            I.e. if the widget is visible (so that it can be observed) and enabled (so that it can be interacted with).     
+
+            This is a static function that can be conveniently used as an argument to nextWidget() and prevWidget() methods. 
+         */
+        static bool IsAvailable(Widget * w) {
+            return w->enabled() && w->enabled();
+        }
+
 
     //@}
 
