@@ -568,12 +568,14 @@ namespace ui {
          */
         virtual void focusIn(VoidEvent::Payload & e) {
             onFocusIn(e, this);
+            repaint();
         }
 
         /** The widget has lost keyboard focus. 
          */
         virtual void focusOut(VoidEvent::Payload & e) {
             onFocusOut(e, this);
+            repaint();
         }
 
         virtual void keyDown(KeyEvent::Payload & e) {
