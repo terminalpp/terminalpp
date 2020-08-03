@@ -61,7 +61,7 @@ namespace ui {
                     Cell & c = buffer_.at(x,y);
                     c.setBg(color);
                     c.setCodepoint(' ');
-                    // TODO border
+                    c.setBorder(c.border().clear());
                 }
             }
         } else {
@@ -71,7 +71,7 @@ namespace ui {
                     c.setFg(color.blendOver(c.fg()));
                     c.setBg(color.blendOver(c.bg()));
                     c.setDecor(color.blendOver(c.decor()));
-                    // TODO border
+                    c.setBorder(c.border().clear());
                 }
             }
         }
@@ -94,6 +94,44 @@ namespace ui {
         }
         return *this;
     }
+
+    Canvas & Canvas::border(Border const & border, Point from, Point to) {
+        if (border.empty())
+            return *this;
+        Rect vr = visibleArea_.rect() + visibleArea_.offset();
+        from += visibleArea_.offset();
+        to += visibleArea_.offset();
+        if (from.x() == to.x()) {
+            int inc = (from.y() < to.y()) ? 1 : -1;
+            for (; from != to; from.setY(from.y() + inc)) {
+                if (vr.contains(from)) {
+                    Cell & c = buffer_.at(from);
+                    c.setBorder(c.border() + border);
+                }
+            }
+        } else if (from.y() == to.y()) {
+            int inc = (from.x() < to.x()) ? 1 : -1;
+            for (; from != to; from.setX(from.x() + inc)) {
+                if (vr.contains(from)) {
+                    Cell & c = buffer_.at(from);
+                    c.setBorder(c.border() + border);
+                }
+            }
+        } else {
+            ASSERT(false) << "Only straight lines are supported";
+        }
+        return *this;
+    }
+
+    Canvas & Canvas::border(Border const & border, Rect const & rect) {
+        this->border(Border::Empty(border.color()).setTop(border.top()), rect.topLeft(), rect.topRight());
+        this->border(Border::Empty(border.color()).setBottom(border.bottom()), rect.bottomLeft() - Point{0,1}, rect.bottomRight() - Point{0,1});
+        this->border(Border::Empty(border.color()).setLeft(border.left()), rect.topLeft(), rect.bottomLeft());
+        this->border(Border::Empty(border.color()).setRight(border.right()), rect.topRight() - Point{1,0}, rect.bottomRight() - Point{1,0});
+        return *this;
+
+    }
+
 
 
 } // namespace ui

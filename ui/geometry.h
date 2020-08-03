@@ -324,21 +324,4 @@ namespace ui {
         Size size_;
     };
 
-    class Border {
-    public:
-
-        bool empty() {
-            return true;
-        }
-
-        bool operator == (Border const & other) const {
-            return true;
-        }
-
-        bool operator != (Border const & other) const {
-            return false;
-        }
-
-    };
-
 } // namespace ui

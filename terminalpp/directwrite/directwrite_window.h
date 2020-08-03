@@ -288,7 +288,6 @@ namespace tpp {
         /** Draws the borders of a single cell. 
          */
         void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
-            /*
             float fLeft = static_cast<float>(col * cellWidth_);
             float fTop = static_cast<float>(row * cellHeight_);
             float widthTop = static_cast<float>(border.top() == Border::Kind::None ? 0 : (border.top() == Border::Kind::Thick ? widthThick : widthThin));
@@ -317,7 +316,6 @@ namespace tpp {
                 rect.left = rect.right - widthRight;
                 rt_->FillRectangle(rect, bg_.Get());
             }
-            */
         }
 
         //@}

@@ -527,7 +527,6 @@ namespace tpp {
             }
 
             // finally, draw the border, which is done on the base cell level over the already drawn text
-            /*
             int wThin = std::min(cellWidth_, cellHeight_) / 4;
             int wThick = std::min(cellWidth_, cellHeight_) / 2;
             Color borderColor = buffer.at(0,0).border().color();
@@ -543,7 +542,6 @@ namespace tpp {
                         drawBorder(col, row, b, wThin, wThick);
                 }
             }
-            */
 
             finalizeDraw();
         }

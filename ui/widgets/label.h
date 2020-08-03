@@ -110,7 +110,7 @@ namespace ui {
                         result.setWidth(format_[i].width);
             }            
             if (heightHint() == SizeHint::AutoSize()) 
-                result.setHeight(format_.size());
+                result.setHeight(static_cast<int>(format_.size()));
             return result;
         }
 
@@ -125,10 +125,10 @@ namespace ui {
                 case VerticalAlign::Top:
                     break; // keep the 0
                 case VerticalAlign::Middle:
-                    x.setY((canvas.size().height() - format_.size() * font_.height()) / 2);
+                    x.setY(static_cast<int>((canvas.size().height() - format_.size() * font_.height()) / 2));
                     break;
                 case VerticalAlign::Bottom:
-                    x.setY(canvas.size().height() - format_.size() * font_.height());
+                    x.setY(static_cast<int>(canvas.size().height() - format_.size() * font_.height()));
                     break;
             }
             // adjust and print each line

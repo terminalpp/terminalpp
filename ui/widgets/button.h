@@ -34,6 +34,8 @@ namespace ui {
 
         void paint(Canvas & canvas) override {
             canvas.textOut(Point{0,0}, text_);
+            if (focused())
+                canvas.border(Border::All(Color::Cyan, Border::Kind::Thin), canvas.rect());
         }
 
         Size getAutosizeHint() override {

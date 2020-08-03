@@ -224,8 +224,10 @@ namespace ui {
     void Renderer::focusIn() {
         ASSERT(!focusIn_);
         focusIn_ = true;
-        VoidEvent::Payload p{};
-        onFocusIn(p, this);
+        {
+            VoidEvent::Payload p{};
+            onFocusIn(p, this);
+        }
         // if we have focused widget, refocus it
         if (keyboardFocus_ != nullptr) {
             ui::VoidEvent::Payload p{};
@@ -236,12 +238,14 @@ namespace ui {
     void Renderer::focusOut() {
         ASSERT(focusIn_);
         focusIn_ = false;
-        VoidEvent::Payload p{};
         if (keyboardFocus_ != nullptr) {
             ui::VoidEvent::Payload p{};
             keyboardFocus_->focusOut(p);
         }
-        onFocusOut(p, this);
+        {
+            VoidEvent::Payload p{};
+            onFocusOut(p, this);
+        }
     }
 
     void Renderer::keyDown(Key k) {

@@ -2,6 +2,7 @@
 
 #include "font.h"
 #include "color.h"
+#include "border.h"
 #include "geometry.h"
 
 namespace ui {
@@ -99,6 +100,11 @@ namespace ui {
         }
 
         Canvas & textOut(Point x, Char::iterator_utf8 begin, Char::iterator_utf8 end);
+
+
+
+        Canvas & border(Border const & border, Point from, Point to);
+        Canvas & border(Border const & border, Rect const & rect);
 
         //@}
 
@@ -257,7 +263,8 @@ namespace ui {
             fg_{Color::White},
             bg_{Color::Black},
             decor_{Color::White},
-            font_{} {
+            font_{},
+            border_{} {
         }
 
         /** \name Codepoint of the cell. 
@@ -320,7 +327,18 @@ namespace ui {
         void setFont(Font value) {
             font_ = value;
         }
+        //@}
 
+        /** \name Border. 
+         */
+        //@{
+        Border border() const {
+            return border_;
+        }
+
+        void setBorder(Border const & value) {
+            border_ = value;
+        }
         //@}
     private:
 
@@ -329,6 +347,7 @@ namespace ui {
         Color bg_;
         Color decor_;
         Font font_;
+        Border border_;
     }; // ui::Canvas::Cell
 
 
