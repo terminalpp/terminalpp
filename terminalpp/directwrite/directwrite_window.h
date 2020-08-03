@@ -147,21 +147,21 @@ namespace tpp {
 
         void finalizeDraw() {
             changeBackgroundColor(backgroundColor());
-            if (widthPx_ % cellWidth_ != 0) {
+            if (sizePx_.width() % cellSize_.width() != 0) {
                 D2D1_RECT_F rect = D2D1::RectF(
-                    static_cast<FLOAT>(size().width() * cellWidth_),
+                    static_cast<FLOAT>(size().width() * cellSize_.width()),
                     static_cast<FLOAT>(0),
-                    static_cast<FLOAT>(widthPx_),
-                    static_cast<FLOAT>(heightPx_)
+                    static_cast<FLOAT>(sizePx_.width()),
+                    static_cast<FLOAT>(sizePx_.height())
                 );
     			rt_->FillRectangle(rect, bg_.Get());
             }
-            if (heightPx_ % cellHeight_ != 0) {
+            if (sizePx_.height() % cellSize_.height() != 0) {
                 D2D1_RECT_F rect = D2D1::RectF(
                     static_cast<FLOAT>(0),
-                    static_cast<FLOAT>(size().height() * cellHeight_),
-                    static_cast<FLOAT>(widthPx_),
-                    static_cast<FLOAT>(heightPx_)
+                    static_cast<FLOAT>(size().height() * cellSize_.height()),
+                    static_cast<FLOAT>(sizePx_.width()),
+                    static_cast<FLOAT>(sizePx_.height())
                 );
     			rt_->FillRectangle(rect, bg_.Get());
             }
@@ -187,7 +187,7 @@ namespace tpp {
                 font_ = font_->fallbackFor(cp);
                 glyphRun_.fontFace = font_->fontFace();
                 glyphRun_.fontEmSize = font_->sizeEm();
-                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidth_ * font_->font().width());
+                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellSize_.width() * font_->font().width());
                 font_->fontFace()->GetGlyphIndices(&cp, 1, glyphIndices_);
                 glyphRun_.glyphCount = 1;
                 drawGlyphRun();
@@ -197,7 +197,7 @@ namespace tpp {
                 glyphRun_.fontFace = font_->fontFace();
                 glyphRun_.fontEmSize = font_->sizeEm();
             } else {
-                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellWidth_ * font_->font().width());
+                const_cast<float *>(glyphRun_.glyphAdvances)[glyphRun_.glyphCount] = static_cast<float>(cellSize_.width() * font_->font().width());
                 ++glyphRun_.glyphCount;
             }
         }
@@ -205,7 +205,7 @@ namespace tpp {
         /** Updates the current font.
          */
         void changeFont(ui::Font font) {
-			font_ = DirectWriteFont::Get(font, cellHeight_, cellWidth_);
+			font_ = DirectWriteFont::Get(font, cellSize_.height(), cellSize_.width());
 			glyphRun_.fontFace = font_->fontFace();
 			glyphRun_.fontEmSize = font_->sizeEm();
         }
@@ -237,17 +237,17 @@ namespace tpp {
                 return;
             // get the glyph run rectange
 			D2D1_RECT_F rect = D2D1::RectF(
-				static_cast<FLOAT>(glyphRunCol_ * cellWidth_),
-				static_cast<FLOAT>((glyphRunRow_ + 1 - state_.font().height()) * cellHeight_),
-				static_cast<FLOAT>((glyphRunCol_ + glyphRun_.glyphCount * state_.font().width()) * cellWidth_),
-				static_cast<FLOAT>((glyphRunRow_ + 1) * cellHeight_)
+				static_cast<FLOAT>(glyphRunCol_ * cellSize_.width()),
+				static_cast<FLOAT>((glyphRunRow_ + 1 - state_.font().height()) * cellSize_.height()),
+				static_cast<FLOAT>((glyphRunCol_ + glyphRun_.glyphCount * state_.font().width()) * cellSize_.width()),
+				static_cast<FLOAT>((glyphRunRow_ + 1) * cellSize_.height())
 			);
             // fill it with the background
 			rt_->FillRectangle(rect, bg_.Get());
             // determine the originl and draw the glyph run
             D2D1_POINT_2F origin = D2D1::Point2F(
-                static_cast<float>(glyphRunCol_* cellWidth_ + font_->offsetLeft()),
-                ((glyphRunRow_ + 1 - state_.font().height()) * cellHeight_ + font_->ascent()) + font_->offsetTop());
+                static_cast<float>(glyphRunCol_* cellSize_.width() + font_->offsetLeft()),
+                ((glyphRunRow_ + 1 - state_.font().height()) * cellSize_.height() + font_->ascent()) + font_->offsetTop());
             if (!state_.font().blink() || BlinkVisible()) {
                 rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
                 // see if there are any attributes to be drawn 
@@ -255,14 +255,14 @@ namespace tpp {
                     D2D1_POINT_2F start = origin;
                     start.y -= font_->underlineOffset();
                     D2D1_POINT_2F end = start;
-                    end.x += glyphRun_.glyphCount * cellWidth_;
+                    end.x += glyphRun_.glyphCount * cellSize_.width();
                     rt_->DrawLine(start, end, decor_.Get(), font_->underlineThickness());
                 }
                 if (state_.font().strikethrough()) {
                     D2D1_POINT_2F start = origin;
                     start.y -= font_->strikethroughOffset();
                     D2D1_POINT_2F end = start;
-                    end.x += glyphRun_.glyphCount * cellWidth_;
+                    end.x += glyphRun_.glyphCount * cellSize_.width();
                     rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness());
                 }
             }
@@ -271,19 +271,19 @@ namespace tpp {
         /** Draws the borders of a single cell. 
          */
         void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
-            float fLeft = static_cast<float>(col * cellWidth_);
-            float fTop = static_cast<float>(row * cellHeight_);
+            float fLeft = static_cast<float>(col * cellSize_.width());
+            float fTop = static_cast<float>(row * cellSize_.height());
             float widthTop = static_cast<float>(border.top() == Border::Kind::None ? 0 : (border.top() == Border::Kind::Thick ? widthThick : widthThin));
             float widthLeft = static_cast<float>(border.left() == Border::Kind::None ? 0 : (border.left() == Border::Kind::Thick ? widthThick : widthThin));
             float widthBottom = static_cast<float>(border.bottom() == Border::Kind::None ? 0 : (border.bottom() == Border::Kind::Thick ? widthThick : widthThin));
             float widthRight = static_cast<float>(border.right() == Border::Kind::None ? 0 : (border.right() == Border::Kind::Thick ? widthThick : widthThin));
 
             // start with top bar
-            D2D1_RECT_F rect = D2D1::RectF(fLeft, fTop, fLeft + cellWidth_, fTop + widthTop);
+            D2D1_RECT_F rect = D2D1::RectF(fLeft, fTop, fLeft + cellSize_.width(), fTop + widthTop);
             if (widthTop != 0)
                 rt_->FillRectangle(rect, bg_.Get());
             // update the rectangle for bottom bar
-            rect.bottom = fTop + cellHeight_;
+            rect.bottom = fTop + cellSize_.height();
             rect.top = rect.bottom - widthBottom;
             if (widthBottom != 0)
                 rt_->FillRectangle(rect, bg_.Get());
@@ -295,7 +295,7 @@ namespace tpp {
                 rt_->FillRectangle(rect, bg_.Get());
             }
             if (widthRight != 0) {
-                rect.right = fLeft + cellWidth_;
+                rect.right = fLeft + cellSize_.width();
                 rect.left = rect.right - widthRight;
                 rt_->FillRectangle(rect, bg_.Get());
             }

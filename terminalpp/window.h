@@ -50,12 +50,8 @@ namespace tpp {
                 icon_ = value;
         }
 
-        int widthPx() const {
-            return widthPx_;
-        }
-
-        int heightPx() const {
-            return heightPx_;
+        Size sizePx() const {
+            return sizePx_;
         }
 
         double zoom() const {
@@ -139,29 +135,25 @@ namespace tpp {
             fullscreen_{false}
             /*mouseButtonsDown_{0} */ {
             // calculate the width and height in pixels and the cell dimensions from the font at given zoom level
-            baseCellWidth_ = font.cellWidth();
-            baseCellHeight_ = font.cellHeight();
+            baseCellSize_ = Size{font.cellWidth(), font.cellHeight()};
             // TODO do I want round, or float instead? 
-            cellWidth_ = static_cast<int>(baseCellWidth_ * zoom_);
-            cellHeight_ = static_cast<int>(baseCellHeight_ * zoom_);
-            widthPx_ = cellWidth_ * width;
-            heightPx_ = cellHeight_ * height;
+            cellSize_ = Size{static_cast<int>(baseCellSize_.width() * zoom_),static_cast<int>(baseCellSize_.height() * zoom_)};
+            sizePx_ = Size{cellSize_.width() * width, cellSize_.height() * height};
         }
 
         virtual void windowResized(int width, int height) {
-            if (width != widthPx_ || height != heightPx_) {
-                widthPx_ = width;
-                heightPx_ = height;
+            if (width != sizePx_.width() || height != sizePx_.height()) {
+                sizePx_ = Size{width, height};
                 // tell the renderer to resize 
-                resize(Size{width / cellWidth_, height / cellHeight_});
+                resize(Size{width / cellSize_.width(), height / cellSize_.height()});
             }
         }
 
         /** Converts the x & y coordinates in pixels to cell coordinates. 
          */
         Point pixelsToCoords(Point xy) {
-            int px = xy.x() / cellWidth_;
-            int py = xy.y() / cellHeight_;
+            int px = xy.x() / cellSize_.width();
+            int py = xy.y() / cellSize_.height();
             // there is no -0, so coordinates smaller than 0 are immediately at least -1
             if (xy.x() < 0)
               --px;
@@ -195,14 +187,11 @@ namespace tpp {
         std::string title_;
         Icon icon_;
 
-        int widthPx_;
-        int heightPx_;
+        Size sizePx_;
 
-        int baseCellWidth_;
-        int baseCellHeight_;
+        Size baseCellSize_;
 
-        int cellWidth_;
-        int cellHeight_;
+        Size cellSize_;
 
         double zoom_;
 
@@ -223,11 +212,10 @@ namespace tpp {
             if (value != zoom_) {
                 Window::setZoom(value);
                 // get the font dimensions 
-                typename IMPLEMENTATION::Font * f = IMPLEMENTATION::Font::Get(ui::Font(), static_cast<int>(baseCellHeight_ * zoom_));
-                cellWidth_ = f->cellWidth();
-                cellHeight_ = f->cellHeight();
+                typename IMPLEMENTATION::Font * f = IMPLEMENTATION::Font::Get(ui::Font(), static_cast<int>(baseCellSize_.height() * zoom_));
+                cellSize_ = Size{f->cellWidth(), f->cellHeight()};
                 // tell the renderer to resize
-                resize(Size{widthPx_ / cellWidth_, heightPx_ / cellHeight_});
+                resize(Size{sizePx_.width() / cellSize_.width(), sizePx_.height() / cellSize_.height()});
             }
         }
 
@@ -421,8 +409,8 @@ namespace tpp {
             }
 
             // finally, draw the border, which is done on the base cell level over the already drawn text
-            int wThin = std::min(cellWidth_, cellHeight_) / 4;
-            int wThick = std::min(cellWidth_, cellHeight_) / 2;
+            int wThin = std::min(cellSize_.width(), cellSize_.height()) / 4;
+            int wThick = std::min(cellSize_.width(), cellSize_.height()) / 2;
             Color borderColor = buffer.at(0,0).border().color();
             changeBg(borderColor);
             for (int row = 0, re = size().height(); row < re; ++row) {

@@ -124,15 +124,15 @@ namespace tpp {
             WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, // x position
             CW_USEDEFAULT, // y position
-            widthPx(),
-            heightPx(),
+            sizePx().width(),
+            sizePx().height(),
             nullptr, // handle to parent
             nullptr, // handle to menu 
             DirectWriteApplication::Instance()->hInstance_, // module handle
             this // lParam for WM_CREATE message
         );
         // initialize the rendering structures
-        D2D1_SIZE_U dxsize = D2D1::SizeU(widthPx_, heightPx_);
+        D2D1_SIZE_U dxsize = D2D1::SizeU(sizePx().width(), sizePx().height());
         OSCHECK(SUCCEEDED(DirectWriteApplication::Instance()->d2dFactory_->CreateHwndRenderTarget(
             D2D1::RenderTargetProperties(),
             D2D1::HwndRenderTargetProperties(
@@ -269,20 +269,20 @@ namespace tpp {
                     case WMSZ_BOTTOM:
                     case WMSZ_BOTTOMRIGHT:
                     case WMSZ_BOTTOMLEFT:
-                        winRect->bottom -= (winRect->bottom - winRect->top - window->frameHeight_) % window->cellHeight_;
+                        winRect->bottom -= (winRect->bottom - winRect->top - window->frameHeight_) % window->cellSize_.height();
                         break;
                     default:
-                        winRect->top += (winRect->bottom - winRect->top - window->frameHeight_) % window->cellHeight_;
+                        winRect->top += (winRect->bottom - winRect->top - window->frameHeight_) % window->cellSize_.height();
                         break;
 				}
 				switch (wParam) {
                     case WMSZ_RIGHT:
                     case WMSZ_TOPRIGHT:
                     case WMSZ_BOTTOMRIGHT:
-                        winRect->right -= (winRect->right - winRect->left - window->frameWidth_) % window->cellWidth_;
+                        winRect->right -= (winRect->right - winRect->left - window->frameWidth_) % window->cellSize_.width();
                         break;
                     default:
-                        winRect->left += (winRect->right - winRect->left - window->frameWidth_) % window->cellWidth_;
+                        winRect->left += (winRect->right - winRect->left - window->frameWidth_) % window->cellSize_.width();
                         break;
 				}
 				break;
