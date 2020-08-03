@@ -44,6 +44,7 @@ namespace tpp {
             pager_{new Pager{}} {
 
             window_->onClose.setHandler(&TerminalWindow::windowCloseRequest, this);
+            window_->onKeyDown.setHandler(&TerminalWindow::windowKeyDown, this);
 
             main_->setLayout(new Layout::Column{VerticalAlign::Top});
             main_->setBackground(Color::Red);
@@ -119,8 +120,27 @@ namespace tpp {
 
         /** The window has been requested to close. 
          */
-        void windowCloseRequest(tpp::Window::CloseEvent::Payload & p) {
+        void windowCloseRequest(tpp::Window::CloseEvent::Payload & e) {
             // TODO Determine what to do here. 
+        }
+
+        /** Global hotkeys handling. 
+         */
+        void windowKeyDown(tpp::Window::KeyEvent::Payload & e) {
+            if (*e == SHORTCUT_FULLSCREEN) {
+                window_->setFullscreen(! window_->fullscreen());
+            } else if (*e == SHORTCUT_SETTINGS) {
+                Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit = */ true);
+            } else if (*e == SHORTCUT_ZOOM_IN || *e == SHORTCUT_ZOOM_IN_ALT) {
+                if (window_->zoom() < 10)
+                    window_->setZoom(window_->zoom() * 1.25);
+            } else if (*e == SHORTCUT_ZOOM_OUT || *e == SHORTCUT_ZOOM_OUT_ALT) {
+                if (window_->zoom() > 1)
+                    window_->setZoom(std::max(1.0, window_->zoom() / 1.25));
+            } else {
+                return;
+            }
+            e.stop();
         }
 
         SessionInfo * sessionInfo(Widget * terminal) {
@@ -325,6 +345,8 @@ namespace tpp {
 
         ui::Panel * main_;
         ui::Pager * pager_;
+
+
 /*
 
         std::unordered_map<AnsiTerminal *, SessionInfo *> sessions_; 

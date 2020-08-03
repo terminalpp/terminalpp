@@ -24,14 +24,6 @@ namespace tpp {
             UnregisterWindowHandle(hWnd_);
         }
 
-        /** Repaint request for given widget. 
-         
-            The WM_PAINT message is sent with the appropriate widget. 
-         */
-        /*void repaint(Widget * widget) override {
-            PostMessage(hWnd_, WM_PAINT, 0, reinterpret_cast<LPARAM>(widget));
-        } */
-
         void setTitle(std::string const & value) override;
 
         void setIcon(Window::Icon icon) override;
@@ -71,15 +63,6 @@ namespace tpp {
             rt_->Resize(size);
             RendererWindow::windowResized(width, height);
         }
-
-
-        /** Destroys the renderer's window. 
-         */
-        /*void rendererClose() override {
-            RendererWindow::rendererClose();
-            DestroyWindow(hWnd_);
-        } */
-
 
         /** Enable mouse tracking so that the mouseOut event is properly reported. 
          */

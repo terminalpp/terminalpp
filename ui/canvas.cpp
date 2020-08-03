@@ -52,7 +52,6 @@ namespace ui {
         return l;
     }
 
-
     Canvas & Canvas::fill(Rect const & rect, Color color) {
         Rect r = (rect & visibleArea_.rect()) + visibleArea_.offset();
         if (color.opaque()) {

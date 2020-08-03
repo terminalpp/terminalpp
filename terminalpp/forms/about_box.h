@@ -32,9 +32,9 @@ namespace tpp {
         void paint(Canvas & canvas) override {
             Cancel::paint(canvas);
             canvas.setFg(Color::White);
-            //canvas.setFont(ui::Font{}.setSize(2));
-            //canvas.textOut(Point{20,1}, "Terminal++");
-            //canvas.setFont(ui::Font{});
+            canvas.setFont(ui::Font{}.setSize(2));
+            canvas.textOut(Point{20,1}, "Terminal++");
+            canvas.setFont(ui::Font{});
             if (stamp::version.empty()) {
                 canvas.textOut(Point{3,2}, STR("commit:   " << stamp::commit << (stamp::dirty ? "*" : "")));
                 //canvas.textOut(Point{13,3}, stamp::build_time);
@@ -48,9 +48,9 @@ namespace tpp {
 #else
             canvas.textOut(Point{3, 6}, STR("platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build));
 #endif
-            //canvas.setFont(canvas.font().setBlink(true));
-            //canvas.textOut(Point{20, 7}, "Hit a key to dismiss");
-            //canvas.setFont(ui::Font{});
+            canvas.setFont(canvas.font().setBlink(true));
+            canvas.textOut(Point{20, 8}, "Hit esc to dismiss");
+            canvas.setFont(ui::Font{});
         }
 
         void mouseClick(MouseButtonEvent::Payload & event) override {

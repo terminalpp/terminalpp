@@ -58,7 +58,6 @@ UI version 3
 
 
 - cursor visibility determined by its position too
-- border rendering (& border in canvas cell)
 - ansi terminal palette in config.h
 
 - for painting Windows can paint any time they want, X11's render will send the expose message (check that repaints are only possible in expose handlers) and for Qt I need to see what needs to be done
