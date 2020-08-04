@@ -56,8 +56,12 @@ namespace ui {
             raw_{InvalidCode} {
         }
 
-        Key code() const {
+        Key key() const {
             return Key{raw_ & 0xffff};
+        }
+
+        unsigned code() const {
+            return raw_ & 0xffff;
         }
 
         Key modifiers() const {
@@ -97,6 +101,18 @@ namespace ui {
             raw_ |= modifier.modifiers().raw_;
             return *this;
         }
+
+        Key operator - (Key const & modifier) const {
+            ASSERT(modifier.code() == 0) << "Only modifiers can be removed from a key";
+            return Key{raw_ & ~(modifier.modifiers().raw_)};
+        }
+
+        Key & operator -= (Key const & modifier) {
+            ASSERT(modifier.code() == 0) << "Only modifiers can be removed from a key";
+            raw_ &= ~modifier.modifiers().raw_;
+            return *this;
+        }
+
 
     private:
         static constexpr unsigned InvalidCode = 0;

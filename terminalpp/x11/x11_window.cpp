@@ -26,7 +26,7 @@ namespace tpp {
 		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
         x11::Window parent = XRootWindow(display_, screen_);
 
-		window_ = XCreateSimpleWindow(display_, parent, 0, 0, widthPx_, heightPx_, 1, white, black);
+		window_ = XCreateSimpleWindow(display_, parent, 0, 0, sizePx_.width(), sizePx_.height(), 1, white, black);
 
 		// from http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
 
@@ -60,7 +60,7 @@ namespace tpp {
 				XNClientWindow, window_, XNFocusWindow, window_, nullptr);
 		}
 
-        updateXftStructures(width());
+        updateXftStructures(size().width());
 
 		// register the window
         RegisterWindowHandle(this, window_);
@@ -155,6 +155,21 @@ namespace tpp {
             NOT_IMPLEMENTED;        
     }
 
+    void X11Window::schedule(std::function<void()> event, Widget * widget) {
+        RendererWindow::schedule(event, widget);
+        XEvent e;
+        memset(&e, 0, sizeof(XEvent));
+        e.type = ClientMessage;
+        e.xclient.send_event = true;
+        e.xclient.display = display_;
+        e.xclient.message_type = X11Application::Instance()->xAppEvent_;
+        e.xclient.format = 32;
+        //e.xclient.data.l[0] = wmUserEventMessage_;
+        // send the message that informs the renderer to process the queue
+        X11Application::Instance()->xSendEvent(nullptr, e, NoEventMask);
+    }
+
+
     void X11Window::requestClipboard(Widget * sender) {
         RendererWindow::requestClipboard(sender);
         X11Application * app = X11Application::Instance();
@@ -167,11 +182,11 @@ namespace tpp {
 		XConvertSelection(display_, app->primaryName_, app->formatStringUTF8_, app->primaryName_, window_, CurrentTime);
     }
 
-    void X11Window::rendererSetClipboard(std::string const & contents) {
+    void X11Window::setClipboard(std::string const & contents) {
         X11Application::Instance()->setClipboard(contents);
     }
 
-    void X11Window::rendererRegisterSelection(std::string const & contents, Widget * owner) {
+    void X11Window::setSelection(std::string const & contents, Widget * owner) {
         X11Application * app = X11Application::Instance();
         X11Window * oldOwner = app->selectionOwner_;
         // set the contents in the application
@@ -179,14 +194,12 @@ namespace tpp {
 		app->selectionOwner_ = this;
         // if there was a different owner before, clear its selection (no X11 event will be emited because selectionOwner is someone else already)
         if (oldOwner != nullptr && oldOwner != this)
-            oldOwner->rendererClearSelection();
+            oldOwner->clearSelection(nullptr);
         // inform X that we own the clipboard selection
         XSetSelectionOwner(display_, app->primaryName_, window_, CurrentTime);
-        // deal with the selection in own window
-        RendererWindow::rendererRegisterSelection(contents, owner);
     }
 
-    void X11Window::rendererClearSelection() {
+    void X11Window::clearSelection(Widget * sender) {
         X11Application * app = X11Application::Instance();
         if (app->selectionOwner_ == this) {
             app->selectionOwner_ = nullptr;
@@ -195,11 +208,11 @@ namespace tpp {
             XSetSelectionOwner(display_, app->primaryName_, x11::None, CurrentTime);
         }
         // deal with the selection clear in itself
-        RendererWindow::rendererClearSelection();
+        RendererWindow::clearSelection(sender);
     }
 
-    unsigned X11Window::GetStateModifiers(int state) {
-		unsigned modifiers = 0;
+    Key X11Window::GetStateModifiers(int state) {
+        Key modifiers = Key::Invalid;
 		if (state & 1)
 			modifiers += Key::Shift;
 		if (state & 4)
@@ -211,134 +224,134 @@ namespace tpp {
 		return modifiers;
     }
 
-    Key X11Window::GetKey(KeySym k, unsigned modifiers, bool pressed) {
+    Key X11Window::GetKey(KeySym k, Key modifiers, bool pressed) {
         if (k >= 'a' && k <= 'z') 
-            return Key(k - 32, modifiers);
+            return Key::FromCode(k - 32) + modifiers;
         if (k >= 'A' && k <= 'Z')
-            return Key(k, modifiers);
+            return Key::FromCode(k) + modifiers;
         if (k >= '0' && k <= '9')
-            return Key(k, modifiers);
+            return Key::FromCode(k) + modifiers;
         // numpad
         if (k >= XK_KP_0 && k <= XK_KP_9)
-            return Key(Key::Numpad0 + k - XK_KP_0, modifiers);
+            return Key::FromCode(Key::Numpad0.code() + k - XK_KP_0) + modifiers;
         // fn keys
         if (k >= XK_F1 && k <= XK_F12)
-            return Key(Key::F1 + k - XK_F1, modifiers);
+            return Key::FromCode(Key::F1.code() + k - XK_F1) + modifiers;
         // others
         switch (k) {
             case XK_BackSpace:
-                return Key(Key::Backspace, modifiers);
+                return Key::Backspace + modifiers;
             case XK_Tab:
-                return Key(Key::Tab, modifiers);
+                return Key::Tab + modifiers;
             case XK_Return:
             case XK_KP_Enter:            
-                return Key(Key::Enter, modifiers);
+                return Key::Enter + modifiers;
             case XK_Caps_Lock:
-                return Key(Key::CapsLock, modifiers);
+                return Key::CapsLock + modifiers;
             case XK_Escape:
-                return Key(Key::Esc, modifiers);
+                return Key::Esc + modifiers;
             case XK_space:
-                return Key(Key::Space, modifiers);
+                return Key::Space + modifiers;
             case XK_Page_Up:
             case XK_KP_Page_Up:
-                return Key(Key::PageUp, modifiers);
+                return Key::PageUp + modifiers;
             case XK_Page_Down:
             case XK_KP_Page_Down:
-                return Key(Key::PageDown, modifiers);
+                return Key::PageDown + modifiers;
             case XK_End:
             case XK_KP_End:
-                return Key(Key::End, modifiers);
+                return Key::End + modifiers;
             case XK_Home:
             case XK_KP_Home:
-                return Key(Key::Home, modifiers);
+                return Key::Home + modifiers;
             case XK_Left:
             case XK_KP_Left:
-                return Key(Key::Left, modifiers);
+                return Key::Left + modifiers;
             case XK_Up:
             case XK_KP_Up:
-                return Key(Key::Up, modifiers);
+                return Key::Up + modifiers;
             case XK_Right:
             case XK_KP_Right:
-                return Key(Key::Right, modifiers);
+                return Key::Right + modifiers;
             case XK_Down:
             case XK_KP_Down:
-                return Key(Key::Down, modifiers);
+                return Key::Down + modifiers;
             case XK_Insert:
             case XK_KP_Insert:
-                return Key(Key::Insert, modifiers);
+                return Key::Insert + modifiers;
             case XK_Delete:
             case XK_KP_Delete:
-                return Key(Key::Delete, modifiers);
+                return Key::Delete + modifiers;
             case XK_Menu:
-                return Key(Key::Menu, modifiers);
+                return Key::Menu + modifiers;
             case XK_KP_Multiply:
-                return Key(Key::NumpadMul, modifiers);
+                return Key::NumpadMul + modifiers;
             case XK_KP_Add:
-                return Key(Key::NumpadAdd, modifiers);
+                return Key::NumpadAdd + modifiers;
             case XK_KP_Separator:
-                return Key(Key::NumpadComma, modifiers);
+                return Key::NumpadComma + modifiers;
             case XK_KP_Subtract:
-                return Key(Key::NumpadSub, modifiers);
+                return Key::NumpadSub + modifiers;
             case XK_KP_Decimal:
-                return Key(Key::NumpadDot, modifiers);
+                return Key::NumpadDot + modifiers;
             case XK_KP_Divide:
-                return Key(Key::NumpadDiv, modifiers);
+                return Key::NumpadDiv + modifiers;
             case XK_Num_Lock:
-                return Key(Key::NumLock, modifiers);
+                return Key::NumLock + modifiers;
             case XK_Scroll_Lock:
-                return Key(Key::ScrollLock, modifiers);
+                return Key::ScrollLock + modifiers;
             case XK_semicolon: // ; and :
-                return Key(Key::Semicolon, modifiers);
+                return Key::Semicolon + modifiers;
             case XK_equal: // = and +
-                return Key(Key::Equals, modifiers);
+                return Key::Equals + modifiers;
             case XK_comma: // , and < 
-                return Key(Key::Comma, modifiers);
+                return Key::Comma + modifiers;
             case XK_minus: // - and _
-                return Key(Key::Minus, modifiers);
+                return Key::Minus + modifiers;
             case XK_period: // . and >
-                return Key(Key::Dot, modifiers);
+                return Key::Dot + modifiers;
             case XK_slash: // / and ?
-                return Key(Key::Slash, modifiers);
+                return Key::Slash + modifiers;
             case XK_grave: // ` and ~
-                return Key(Key::Tick, modifiers);
+                return Key::Tick + modifiers;
             case XK_bracketleft: // [ and {
-                return Key(Key::SquareOpen, modifiers);
+                return Key::SquareOpen + modifiers;
             case XK_backslash:  // \ and |
-                return Key(Key::Backslash, modifiers);
+                return Key::Backslash + modifiers;
             case XK_bracketright: // ] and }
-                return Key(Key::SquareClose, modifiers);
+                return Key::SquareClose + modifiers;
             case XK_apostrophe: // ' and "
-                return Key(Key::Quote, modifiers);
+                return Key::Quote + modifiers;
 			case XK_Shift_L:
 			case XK_Shift_R:
 				if (pressed)
-					modifiers |= Key::Shift;
+					modifiers += Key::Shift;
 				else
-					modifiers &= ~Key::Shift;
-				return Key(Key::ShiftKey, modifiers);
+					modifiers -= Key::Shift;
+				return Key::ShiftKey + modifiers;
 			case XK_Control_L:
 			case XK_Control_R:
 				if (pressed)
-					modifiers |= Key::Ctrl;
+					modifiers += Key::Ctrl;
 				else
-					modifiers &= ~Key::Ctrl;
-				return Key(Key::CtrlKey, modifiers);
+					modifiers -= Key::Ctrl;
+				return Key::CtrlKey + modifiers;
 			case XK_Alt_L:
 			case XK_Alt_R:
 				if (pressed)
-					modifiers |= Key::Alt;
+					modifiers += Key::Alt;
 				else
-					modifiers &= ~Key::Alt;
-				return Key(Key::AltKey, modifiers);
+					modifiers -= Key::Alt;
+				return Key::AltKey + modifiers;
 			case XK_Meta_L:
 			case XK_Meta_R:
 				if (pressed)
-					modifiers |= Key::Win;
+					modifiers += Key::Win;
 				else
-					modifiers &= ~Key::Win;
-				return Key(Key::WinKey, modifiers);
+					modifiers -= Key::Win;
+				return Key::WinKey + modifiers;
 			default:
-                return Key(Key::Invalid, 0);
+                return Key::Invalid;
         }
     }
 
@@ -351,7 +364,7 @@ namespace tpp {
                 if (e.xexpose.count != 0)
                     break;
                 // TODO actually get the widget to be rendered 
-                window->render(window->rootWidget());
+                window->expose();
                 break;
 			/** Handles when the window gets focus. 
 			 */
@@ -359,7 +372,7 @@ namespace tpp {
 				if (e.xfocus.mode == NotifyGrab || e.xfocus.mode == NotifyUngrab)
 					break;
 				ASSERT(window != nullptr);
-				window->rendererFocusIn();
+				window->focusIn();
 				break;
 			/** Handles when the window loses focus. 
 			 */
@@ -367,20 +380,20 @@ namespace tpp {
 				if (e.xfocus.mode == NotifyGrab || e.xfocus.mode == NotifyUngrab)
 					break;
 				ASSERT(window != nullptr);
-				window->rendererFocusOut();
+				window->focusOut();
 				break;
             /* Handles window resize, which should change the terminal size accordingly. 
              */  
             case ConfigureNotify: {
-                if (window->widthPx_ != e.xconfigure.width || window->heightPx_ != e.xconfigure.height)
+                if (window->sizePx_.width() != e.xconfigure.width || window->sizePx_.height() != e.xconfigure.height)
                     window->windowResized(e.xconfigure.width, e.xconfigure.height);
                 break;
             }
             /* Unlike Win32 we have to determine whether we are dealing with sendChar, or keyDown. 
              */
             case KeyPress: {
-				unsigned modifiers = GetStateModifiers(e.xkey.state);
-				window->activeModifiers_ = Key(Key::Invalid, modifiers);
+                Key modifiers = GetStateModifiers(e.xkey.state);
+				window->setModifiers(modifiers);
                 // see if the key corresponds to a printable characters for which keyChar should be generated
 				KeySym kSym;
                 char str[32];
@@ -393,7 +406,7 @@ namespace tpp {
                 // if the keysym was recognized, it is a keyDown event first
                 Key key = GetKey(kSym, modifiers, true);
                 // we were not able to recognize the key, but there were modifiers present, try removing them and asking for the keysymbol again
-                if (key == Key::Invalid && modifiers != 0) {
+                if (key == Key::Invalid && modifiers != Key::Invalid) {
                     // clear the state
                     e.xkey.state &= ~ (1 + 4 + 8 + 64);
                     char strx[32];
@@ -405,15 +418,15 @@ namespace tpp {
                 }
 				// if the modifiers were updated (i.e. the key is Shift, Ctrl, Alt or Win, update active modifiers
 				if (modifiers != key.modifiers())
-					window->activeModifiers_ = Key(Key::Invalid, modifiers);
+                    window->setModifiers(modifiers);
 				if (key != Key::Invalid)
-                    window->rendererKeyDown(key);
+                    window->keyDown(key);
                 // if it is printable character and there were no modifiers other than shift pressed, we are dealing with printable character (backspace is not printable character)
                 if (strLen > 0 && (str[0] < 0 || static_cast<unsigned char>(str[0]) >= 0x20) && (e.xkey.state & 0x4c) == 0 && static_cast<unsigned>(str[0]) != 0x7f) {
                     char const * x = pointer_cast<char const*>(& str);
                     try {
                         Char c{Char::FromUTF8(x, x + 32)};
-                        window->rendererKeyChar(c);
+                        window->keyChar(c);
                     } catch (CharError const &) {
                         // do nothing
                         LOG() << "error";
@@ -424,58 +437,61 @@ namespace tpp {
 			/* The modifiers of the key correspond to the state *after* it was released. I.e. released ctrl-key will not have ctrl-modifier enabled.
 			 */
             case KeyRelease: {
-				unsigned modifiers = GetStateModifiers(e.xkey.state);
-				window->activeModifiers_ = Key(Key::Invalid, modifiers);
+				Key modifiers = GetStateModifiers(e.xkey.state);
+				window->setModifiers(modifiers);
 				KeySym kSym = XLookupKeysym(& e.xkey, 0);
                 Key key = GetKey(kSym, modifiers, false);
 				// if the modifiers were updated (i.e. the key is Shift, Ctrl, Alt or Win, updated active modifiers
 				if (modifiers != key.modifiers())
-					window->activeModifiers_ = Key(Key::Invalid, modifiers);
+					window->setModifiers(modifiers);
 				if (key != Key::Invalid)
-                    window->rendererKeyUp(key);
+                    window->keyUp(key);
                 break;
             }
             case ButtonPress: 
-				window->activeModifiers_ = Key(Key::Invalid, GetStateModifiers(e.xbutton.state));
+                // TODO is it really necessary to update the modifiers here?
+				window->setModifiers(GetStateModifiers(e.xbutton.state));
 				switch (e.xbutton.button) {
                     case 1:
-                        window->rendererMouseDown(Point{e.xbutton.x, e.xbutton.y}, MouseButton::Left, window->activeModifiers_);
+                        window->mouseDown(window->pixelsToCoords(Point{e.xbutton.x, e.xbutton.y}), MouseButton::Left);
                         break;
                     case 2:
-                        window->rendererMouseDown(Point{e.xbutton.x, e.xbutton.y}, MouseButton::Wheel, window->activeModifiers_);
+                        window->mouseDown(window->pixelsToCoords(Point{e.xbutton.x, e.xbutton.y}), MouseButton::Wheel);
                         break;
                     case 3:
-                        window->rendererMouseDown(Point{e.xbutton.x, e.xbutton.y}, MouseButton::Right, window->activeModifiers_);
+                        window->mouseDown(window->pixelsToCoords(Point{e.xbutton.x, e.xbutton.y}), MouseButton::Right);
                         break;
                     case 4:
-                        window->rendererMouseWheel(Point{e.xbutton.x, e.xbutton.y}, 1, window->activeModifiers_);
+                        window->mouseWheel(window->pixelsToCoords(Point{e.xbutton.x, e.xbutton.y}), 1);
                         break;
                     case 5:
-                        window->rendererMouseWheel(Point{e.xbutton.x, e.xbutton.y}, -1, window->activeModifiers_);
+                        window->mouseWheel(window->pixelsToCoords(Point{e.xbutton.x, e.xbutton.y}), -1);
                         break;
                     default:
                         break;
                 }
                 break;
             case ButtonRelease: 
-				window->activeModifiers_ = Key(Key::Invalid, GetStateModifiers(e.xbutton.state));
+                // TODO is it really necessary to update the modifiers here?
+				window->setModifiers(GetStateModifiers(e.xbutton.state));
 				switch (e.xbutton.button) {
                     case 1:
-                        window->rendererMouseUp(Point{e.xbutton.x, e.xbutton.y}, MouseButton::Left, window->activeModifiers_);
+                        window->mouseUp(window->pixelsToCoords(Point{e.xbutton.x, e.xbutton.y}), MouseButton::Left);
                         break;
                     case 2:
-                        window->rendererMouseUp(Point{e.xbutton.x, e.xbutton.y}, MouseButton::Wheel, window->activeModifiers_);
+                        window->mouseUp(window->pixelsToCoords(Point{e.xbutton.x, e.xbutton.y}), MouseButton::Wheel);
                         break;
                     case 3:
-                        window->rendererMouseUp(Point{e.xbutton.x, e.xbutton.y}, MouseButton::Right, window->activeModifiers_);
+                        window->mouseUp(window->pixelsToCoords(Point{e.xbutton.x, e.xbutton.y}), MouseButton::Right);
                         break;
                     default:
                         break;
                 }
                 break;
             case MotionNotify:
-				window->activeModifiers_ = Key(Key::Invalid, GetStateModifiers(e.xbutton.state));
-				window->rendererMouseMove(Point{e.xmotion.x, e.xmotion.y}, window->activeModifiers_);
+                // TODO is it really necessary to update the modifiers here?
+				window->setModifiers(GetStateModifiers(e.xbutton.state));
+				window->mouseMove(window->pixelsToCoords(Point{e.xmotion.x, e.xmotion.y}));
                 break;
             /* Mouse enters the window. 
              */
@@ -484,7 +500,7 @@ namespace tpp {
             /* Mouse leaves the window. 
              */
             case LeaveNotify:
-                window->rendererMouseLeave();
+                window->mouseOut();
                 break;
 			/** Called when we are notified that clipboard or selection contents is available for previously requested paste.
              
@@ -505,9 +521,9 @@ namespace tpp {
 						NOT_IMPLEMENTED;
                     } else {
                         if (e.xselection.selection == app->clipboardName_)
-						    window->rendererClipboardPaste(std::string(result, resSize));
+						    window->pasteClipboard(std::string(result, resSize));
                         else if (e.xselection.selection == app->primaryName_)
-						    window->rendererSelectionPaste(std::string(result, resSize));
+						    window->pasteSelection(std::string(result, resSize));
                     }
 					XFree(result);
                  }

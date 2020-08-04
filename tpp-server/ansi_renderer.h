@@ -23,11 +23,12 @@ namespace ui {
 
     protected:
 
-        void eventNotify() override {
+        void schedule(std::function<void()> event, Widget * widget) override {
+            Renderer::schedule(event, widget);
             pushEvent(Event::User());
         }
 
-        void render(Buffer const & buffer, Rect const & rect) override;
+        void render(Rect const & rect) override;
 
         void resized(ResizeEvent::Payload & e) override {
             pushEvent(Event::Resize(e->first, e->second));

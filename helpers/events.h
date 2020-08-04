@@ -39,6 +39,10 @@ HELPERS_NAMESPACE_BEGIN
 				return sender_;
 			}
 
+            void updateSender(SENDER * value) {
+                sender_ = value;
+            }
+
 			/** Dereferencing event payload returns the payload object itself.
 			 */
 			PAYLOAD & operator * () {
@@ -50,7 +54,6 @@ HELPERS_NAMESPACE_BEGIN
 			}
 
 		private:
-		    friend class HELPERS_NAMESPACE_DECL::Event;
 
 			PAYLOAD payload_;
 			SENDER * sender_;
@@ -83,7 +86,7 @@ HELPERS_NAMESPACE_BEGIN
 		}
 
         void operator() (Payload & payload, SENDER * sender) {
-            payload.sender_ = sender;
+            payload.updateSender(sender);
             if (handler_) 
                 handler_(payload);
         }
@@ -111,8 +114,11 @@ HELPERS_NAMESPACE_BEGIN
 				return sender_;
 			}
 
+            void updateSender(SENDER * value) {
+                sender_ = value;
+            }
+
 		private:
-		    friend class HELPERS_NAMESPACE_DECL::Event;
 
 			Payload(SENDER * sender):
 				sender_(sender) {
@@ -152,7 +158,7 @@ HELPERS_NAMESPACE_BEGIN
 		}
 
         void operator() (Payload & payload, SENDER * sender) {
-            payload.sender_ = sender;
+            payload.updateSender(sender);
             if (handler_) 
                 handler_(payload);
         }

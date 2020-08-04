@@ -1,6 +1,8 @@
 #include "helpers/char.h"
 #include "helpers/ansi_sequences.h"
 
+#include "ui/event_queue.h"
+
 #include "ansi_renderer.h"
 
 namespace ui {
@@ -18,7 +20,7 @@ namespace ui {
     MatchingFSM<Key, char> AnsiRenderer::VtKeys_;
 
     AnsiRenderer::AnsiRenderer(tpp::PTYSlave * pty):
-        Renderer{pty->size()},
+        Renderer{pty->size(), new TypedEventQueue<AnsiRenderer>{}},
         tpp::TerminalClient{pty} {
         if (VtKeys_.empty())
             InitializeVTKeys(VtKeys_);
@@ -31,8 +33,10 @@ namespace ui {
         send("\033[?1003;1006l", 13);
     }
 
-    void AnsiRenderer::render(Buffer const & buffer, Rect const & rect) {
+    void AnsiRenderer::render(Rect const & rect) {
         std::stringstream s;
+        // shorthand to the buffer
+        Buffer const & buffer = this->buffer();
         // initialize the state
         Cell state = buffer.at(rect.topLeft());
         s << ansi::SGRReset() 

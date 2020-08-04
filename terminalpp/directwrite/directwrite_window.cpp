@@ -344,7 +344,7 @@ namespace tpp {
 					window->keyDown(k);
 				// returning w/o calling the default window proc means that the OS will not interfere by interpreting own shortcuts
 				// NOTE add other interfering shortcuts as necessary
-				if (k == Key::F10 || k.code() == Key::AltKey)
+				if (k == Key::F10 || k.key() == Key::AltKey)
 				    return 0;
 				break;
 			}

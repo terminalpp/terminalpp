@@ -68,21 +68,6 @@ namespace tpp {
 
         fcConfig_ = FcInitLoadConfigAndFonts();
 
-        Renderer::Initialize([this](){
-            XEvent e;
-            memset(&e, 0, sizeof(XEvent));
-            e.type = ClientMessage;
-            e.xclient.send_event = true;
-            e.xclient.display = xDisplay_;
-            e.xclient.window = broadcastWindow_;
-            e.xclient.message_type = xAppEvent_;
-            e.xclient.format = 32;
-            //e.xclient.data.l[0] = wmUserEventMessage_;
-            // send the message that informs the renderer to process the queue
-            XSendEvent(xDisplay_, broadcastWindow_, false, NoEventMask, &e);
-    		XFlush(xDisplay_);
-        });
-
 		X11Window::StartBlinkerThread();
     }
 
@@ -156,10 +141,12 @@ namespace tpp {
     }
 
     void X11Application::xSendEvent(X11Window * window, XEvent & e, long mask) {
-		if (window != nullptr)
+		if (window != nullptr) {
             XSendEvent(xDisplay_, window->window_, false, mask, &e);
-		else 
+        } else {
+            e.xany.window = broadcastWindow_;
 			XSendEvent(xDisplay_, broadcastWindow_, false, mask, &e);
+        }
 		XFlush(xDisplay_);
     }
 
@@ -196,7 +183,7 @@ namespace tpp {
                     selectionOwner_ = nullptr;
                     selection_.clear();
                     // clears the selection in the renderer without triggering any X events
-                    owner->rendererClearSelection();
+                    owner->clearSelection(nullptr);
                 }
 				break;
             }
@@ -253,7 +240,7 @@ namespace tpp {
             case ClientMessage:
                 if (e.xany.window == broadcastWindow_) {
                     if (static_cast<unsigned long>(e.xclient.message_type) == xAppEvent_) 
-                        Renderer::ExecuteUserEvent();
+                        ui::TypedEventQueue<X11Window>::ProcessEvent();
                     break;
                 }
                 // fallthrough

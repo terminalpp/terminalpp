@@ -116,7 +116,7 @@ namespace ui {
 			s << "A-";
 		if (k & Key::Win)
 			s << "W-";
-		switch (k.code()) {
+		switch (k.key()) {
 		case Key::Invalid:
 			s << "Invalid";
 			break;

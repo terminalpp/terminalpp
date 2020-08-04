@@ -18,8 +18,31 @@ namespace tpp {
 
         ~X11Window() override;
 
-        void repaint(Widget * widget) override {
-            MARK_AS_UNUSED(widget);
+        void setTitle(std::string const & value) override;
+
+        void setIcon(Window::Icon icon) override;
+
+        void setFullscreen(bool value = true) override;
+
+        void show(bool value = true) override;
+
+        void resize(Size const & newSize) override {
+            if (newSize.width() != size().width())
+                updateXftStructures(newSize.width());
+            RendererWindow::resize(newSize);
+        }
+
+        void close() override {
+            RendererWindow::close();
+            XDestroyWindow(display_, window_);
+        }
+
+        void schedule(std::function<void()> event, Widget * widget) override;
+
+    protected:
+
+        void render(Rect const & rect) override {
+            MARK_AS_UNUSED(rect);
             // trigger a refresh
             XEvent e;
             memset(&e, 0, sizeof(XEvent));
@@ -29,21 +52,9 @@ namespace tpp {
             X11Application::Instance()->xSendEvent(this, e, ExposureMask);
         }
 
-        void setTitle(std::string const & value) override;
-
-        void setIcon(Window::Icon icon) override;
-
-        void setFullscreen(bool value = true) override;
-
-        void show(bool value = true) override;
-
-        void resize(int newWidth, int newHeight) override {
-            if (newWidth != width())
-                updateXftStructures(newWidth);
-            RendererWindow::resize(newWidth, newHeight);
+        void expose() {
+            RendererWindow::render(Rect{size()});
         }
-
-    protected:
 
         void windowResized(int width, int height) override {
 			if (buffer_ != 0) {
@@ -53,22 +64,13 @@ namespace tpp {
             RendererWindow::windowResized(width, height);
         }
 
-
-        /** Destroys the renderer's window. 
-         */
-        void rendererClose() override {
-            RendererWindow::rendererClose();
-            XDestroyWindow(display_, window_);
-        }
-
-
         /** Handles FocusIn message sent to the window. 
          
             On certain x servers (such as vcxsrv) a newly created window get FocusOut message before having been focused first, which causes asserts in renderer to fail. The X11Window therefore keep a check whether the window has really been focused and only propagates the rendererFocusIn if the state is consistent. 
          */
-        void rendererFocusIn() override {
+        void focusIn() override {
             if (!focusCheck_) {
-                RendererWindow::rendererFocusIn();
+                RendererWindow::focusIn();
                 focusCheck_ = true;
             }
         }
@@ -77,9 +79,9 @@ namespace tpp {
 
             On certain x servers (such as vcxsrv) a newly created window get FocusOut message before having been focused first, which causes asserts in renderer to fail. The X11Window therefore keep a check whether the window has really been focused and only propagates the rendererFocusIn if the state is consistent. 
          */
-        void rendererFocusOut() override {
+        void focusOut() override {
             if (focusCheck_) {
-                RendererWindow::rendererFocusOut();
+                RendererWindow::focusOut();
                 focusCheck_ = false;
             }
         }
@@ -88,11 +90,11 @@ namespace tpp {
 
         void requestSelection(Widget * sender) override;
 
-        void rendererSetClipboard(std::string const & contents) override;
+        void setClipboard(std::string const & contents) override;
 
-        void rendererRegisterSelection(std::string const & contents, Widget * owner) override;
+        void setSelection(std::string const & contents, Widget * owner) override;
 
-        void rendererClearSelection() override;
+        void clearSelection(Widget * sender) override;
 
     private:
         friend class X11Application;
@@ -117,7 +119,7 @@ namespace tpp {
         void initializeDraw() {
             ASSERT(draw_ == nullptr);
             if (buffer_ == 0) {
-                buffer_ = XCreatePixmap(display_, window_, widthPx_, heightPx_, DefaultDepth(display_, screen_));
+                buffer_ = XCreatePixmap(display_, window_, sizePx_.width(), sizePx_.height(), DefaultDepth(display_, screen_));
                 ASSERT(buffer_ != 0);
             }
             draw_ = XftDrawCreate(display_, buffer_, visual_, colorMap_);
@@ -125,12 +127,12 @@ namespace tpp {
 
         void finalizeDraw() {
             changeBackgroundColor(backgroundColor());
-            if (widthPx_ % cellWidth_ != 0)
-                XftDrawRect(draw_, &bg_, width() * cellWidth_, 0, widthPx_ % cellWidth_, heightPx_);
-            if (heightPx_ % cellHeight_ != 0)
-                XftDrawRect(draw_, &bg_, 0, height() * cellHeight_, widthPx_, heightPx_ % cellHeight_);
+            if (sizePx_.width() % cellSize_.width() != 0)
+                XftDrawRect(draw_, &bg_, size().width() * cellSize_.width(), 0, sizePx_.width() % cellSize_.width(), sizePx_.height());
+            if (sizePx_.height() % cellSize_.height() != 0)
+                XftDrawRect(draw_, &bg_, 0, size().height() * cellSize_.height(), sizePx_.width(), sizePx_.height() % cellSize_.height());
             // now bitblt the buffer
-            XCopyArea(display_, buffer_, window_, gc_, 0, 0, widthPx_, heightPx_, 0, 0);
+            XCopyArea(display_, buffer_, window_, gc_, 0, 0, sizePx_.width(), sizePx_.height(), 0, 0);
             XftDrawDestroy(draw_);
             draw_ = nullptr;
             XFlush(display_);
@@ -152,18 +154,18 @@ namespace tpp {
                 X11Font * oldFont = font_;
                 font_ = font_->fallbackFor(cell.codepoint());
                 text_[0].glyph = XftCharIndex(display_, font_->xftFont(), cell.codepoint());
-                text_[0].x = textCol_ * cellWidth_ + font_->offsetLeft();
-                text_[0].y = (textRow_ + 1 - font_->font().height()) * cellHeight_ + font_->ascent() + font_->offsetTop();
+                text_[0].x = textCol_ * cellSize_.width() + font_->offsetLeft();
+                text_[0].y = (textRow_ + 1 - font_->font().height()) * cellSize_.height() + font_->ascent() + font_->offsetTop();
                 ++textSize_;
                 drawGlyphRun();
                 initializeGlyphRun(col + font_->font().width(), row);
                 font_ = oldFont;
             } else {
                 if (textSize_ == 0) {
-                    text_[0].x = textCol_ * cellWidth_ + font_->offsetLeft();
-                    text_[0].y = (textRow_ + 1 - state_.font().height()) * cellHeight_ + font_->ascent() + font_->offsetTop();
+                    text_[0].x = textCol_ * cellSize_.width() + font_->offsetLeft();
+                    text_[0].y = (textRow_ + 1 - state_.font().height()) * cellSize_.height() + font_->ascent() + font_->offsetTop();
                 } else {
-                    text_[textSize_].x = text_[textSize_ - 1].x + cellWidth_ * state_.font().width();
+                    text_[textSize_].x = text_[textSize_ - 1].x + cellSize_.width() * state_.font().width();
                     text_[textSize_].y = text_[textSize_ - 1].y;
                 }
                 text_[textSize_].glyph = glyph;
@@ -174,7 +176,7 @@ namespace tpp {
         /** Updates the current font.
          */
         void changeFont(ui::Font font) {
-			font_ = X11Font::Get(font, cellHeight_, cellWidth_);
+			font_ = X11Font::Get(font, cellSize_.height(), cellSize_.width());
         }
 
         /** Updates the foreground color.
@@ -206,34 +208,34 @@ namespace tpp {
             int fontHeight = state_.font().height();
             // fill the background unless it is fully transparent
             if (bg_.color.alpha != 0)
-			    XftDrawRect(draw_, &bg_, textCol_ * cellWidth_, (textRow_ + 1 - fontHeight) * cellHeight_, textSize_ * cellWidth_ * fontWidth, cellHeight_ * fontHeight);
+			    XftDrawRect(draw_, &bg_, textCol_ * cellSize_.width(), (textRow_ + 1 - fontHeight) * cellSize_.height(), textSize_ * cellSize_.width() * fontWidth, cellSize_.height() * fontHeight);
             // draw the text
             if (!state_.font().blink() || BlinkVisible()) {
                 XftDrawGlyphSpec(draw_, &fg_, font_->xftFont(), text_, textSize_);
                 // deal with the attributes
                 if (state_.font().underline())
-					XftDrawRect(draw_, &decor_, textCol_ * cellWidth_, textRow_ * cellHeight_ + font_->underlineOffset(), cellWidth_ * textSize_, font_->underlineThickness());
+					XftDrawRect(draw_, &decor_, textCol_ * cellSize_.width(), textRow_ * cellSize_.height() + font_->underlineOffset(), cellSize_.width() * textSize_, font_->underlineThickness());
                 if (state_.font().strikethrough())
-					XftDrawRect(draw_, &decor_, textCol_ * cellWidth_, textRow_ * cellHeight_ + font_->strikethroughOffset(), cellWidth_ * textSize_, font_->strikethroughThickness());
+					XftDrawRect(draw_, &decor_, textCol_ * cellSize_.width(), textRow_ * cellSize_.height() + font_->strikethroughOffset(), cellSize_.width() * textSize_, font_->strikethroughThickness());
             }
         }
 
         void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
-            int left = col * cellWidth_;
-            int top = row * cellHeight_;
+            int left = col * cellSize_.width();
+            int top = row * cellSize_.height();
             int widthTop = border.top() == Border::Kind::None ? 0 : (border.top() == Border::Kind::Thick ? widthThick : widthThin);
             int widthLeft = border.left() == Border::Kind::None ? 0 : (border.left() == Border::Kind::Thick ? widthThick : widthThin);
             int widthBottom = border.bottom() == Border::Kind::None ? 0 : (border.bottom() == Border::Kind::Thick ? widthThick : widthThin);
             int widthRight = border.right() == Border::Kind::None ? 0 : (border.right() == Border::Kind::Thick ? widthThick : widthThin);
 
             if (widthTop != 0)
-                XftDrawRect(draw_, &bg_, left, top, cellWidth_, widthTop);
+                XftDrawRect(draw_, &bg_, left, top, cellSize_.width(), widthTop);
             if (widthBottom != 0)
-                XftDrawRect(draw_, &bg_, left, top + cellHeight_ - widthBottom, cellWidth_, widthBottom);
+                XftDrawRect(draw_, &bg_, left, top + cellSize_.height() - widthBottom, cellSize_.width(), widthBottom);
             if (widthLeft != 0) 
-                XftDrawRect(draw_, &bg_, left, top + widthTop, widthLeft, cellHeight_ - widthTop - widthBottom);
+                XftDrawRect(draw_, &bg_, left, top + widthTop, widthLeft, cellSize_.height() - widthTop - widthBottom);
             if (widthRight != 0) 
-                XftDrawRect(draw_, &bg_, left + cellWidth_ - widthRight, top + widthTop, widthRight, cellHeight_ - widthTop - widthBottom);
+                XftDrawRect(draw_, &bg_, left + cellSize_.width() - widthRight, top + widthTop, widthRight, cellSize_.height() - widthTop - widthBottom);
         }
         //@}
 
@@ -287,13 +289,13 @@ namespace tpp {
 
 		/** Given current state as reported from X11, translates it to vterm::Key modifiers
 		 */
-		static unsigned GetStateModifiers(int state);
+		static Key GetStateModifiers(int state);
 
         /** Converts the KeySym and preexisting modifiers as reported by X11 into key. 
 
 		    Because the modifiers are preexisting, but the terminal requires post-state, Shift, Ctrl, Alt and Win keys also update the modifiers based on whether they key was pressed, or released
          */
-        static Key GetKey(KeySym k, unsigned modifiers, bool pressed);
+        static Key GetKey(KeySym k, Key modifiers, bool pressed);
 
         static void EventHandler(XEvent & e);
 

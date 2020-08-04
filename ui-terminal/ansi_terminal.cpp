@@ -430,7 +430,7 @@ namespace ui {
             return;
 		std::string const* seq = GetSequenceForKey_(*event);
 		if (seq != nullptr) {
-			switch (event->code()) {
+			switch (event->key()) {
 			case Key::Up:
 			case Key::Down:
 			case Key::Left:

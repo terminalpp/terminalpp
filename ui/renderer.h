@@ -200,6 +200,9 @@ namespace ui {
         }
 
     protected: 
+        /** Actual rendering. 
+         */
+        virtual void render(Rect const & rect) = 0;
 
         /** Resizes the renderer. 
          
@@ -234,10 +237,6 @@ namespace ui {
         }
 
     private:
-
-        /** Actual rendering. 
-         */
-        virtual void render(Rect const & rect) = 0;
 
         /** Instructs the renderer to repaint given widget. 
          
