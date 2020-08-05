@@ -496,6 +496,7 @@ namespace tpp {
             /* Mouse enters the window. 
              */
             case EnterNotify:
+                window->mouseIn();
                 break;
             /* Mouse leaves the window. 
              */
