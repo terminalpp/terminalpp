@@ -21,10 +21,12 @@ namespace tpp {
 
         ~QtWindow() override;
 
+        /*
         void repaint(Widget * widget) override {
             MARK_AS_UNUSED(widget);
             emit tppRequestUpdate();
         };
+        */
 
         void setTitle(std::string const & value) override;
 
@@ -48,6 +50,19 @@ namespace tpp {
         }
         */
 
+        /** Destroys the renderer's window. 
+         */
+        void close() override {
+            // TODO is the signal really necessary this should be already running in the UI thread
+            RendererWindow::close();
+            emit tppWindowClose();
+        }
+
+        void schedule(std::function<void()> event, Widget * widget) override {
+            Super::schedule(event, widget);
+            emit QtApplication::Instance()->tppUserEvent();
+        }
+
     signals:
        void tppRequestUpdate();
        void tppShowFullScreen();
@@ -55,6 +70,15 @@ namespace tpp {
        void tppWindowClose();
 
     protected:
+
+        /** Renders the window. 
+         
+            Instead of renderring immediately the method simply emits the update() event, which will in turn call the paintEvent() method which does the actual rendering on Qt. 
+         */
+        void render(Rect const & rect) override {
+            MARK_AS_UNUSED(rect);
+            emit tppRequestUpdate();
+        }
 
         /*
         void windowResized(int width, int height) override {
@@ -67,23 +91,16 @@ namespace tpp {
         */
 
 
-        /** Destroys the renderer's window. 
-         */
-        void rendererClose() override {
-            // TODO is the signal really necessary this should be already running in the UI thread
-            RendererWindow::rendererClose();
-            emit tppWindowClose();
-        }
 
         void requestClipboard(Widget * sender) override;
 
         void requestSelection(Widget * sender) override;
 
-        void rendererSetClipboard(std::string const & contents) override;
+        void setClipboard(std::string const & contents) override;
 
-        void rendererRegisterSelection(std::string const & contents, Widget * owner) override;
+        void setSelection(std::string const & contents, Widget * owner) override;
 
-        void rendererClearSelection() override;
+        void clearSelection(Widget * owner) override;
 
     private:
         friend class QtApplication;
@@ -130,11 +147,11 @@ namespace tpp {
         /** \name Rendering Functions
          */
         //@{
-        /** Qt's paint event just delegates to the paint method of the RendererWindow. 
+        /** Qt's paint event just delegates to the render method of the RendererWindow. 
          */
         void paintEvent(QPaintEvent * ev) override {
             MARK_AS_UNUSED(ev);
-            render(rootWidget());
+            Super::render(Rect{Super::size()});
         }
         void initializeDraw() {
             painter_.begin(this);
@@ -142,10 +159,10 @@ namespace tpp {
 
         void finalizeDraw() {
             changeBackgroundColor(backgroundColor());
-            if (widthPx_ % cellWidth_ != 0)
-                painter_.fillRect(QRect{Super::width() * cellWidth_, 0, widthPx_ % cellWidth_, heightPx_}, painter_.brush());
-            if (heightPx_ % cellHeight_ != 0)
-                painter_.fillRect(QRect{0, Super::height() * cellHeight_, widthPx_, heightPx_ % cellHeight_}, painter_.brush());
+            if (sizePx_.width() % cellSize_.width() != 0)
+                painter_.fillRect(QRect{Super::size().width() * cellSize_.width(), 0, sizePx_.width() % cellSize_.width(), sizePx_.height()}, painter_.brush());
+            if (sizePx_.height() % cellSize_.height() != 0)
+                painter_.fillRect(QRect{0, Super::size().height() * cellSize_.height(), sizePx_.width(), sizePx_.height() % cellSize_.height()}, painter_.brush());
             painter_.end();
         }
 
@@ -159,10 +176,10 @@ namespace tpp {
             int fontWidth = state_.font().width();
             int fontHeight = state_.font().height();
             if (state_.bg().a != 0) {
-                painter_.fillRect(col * cellWidth_, (row + 1 - fontHeight)  * cellHeight_, cellWidth_ * fontWidth, cellHeight_ * fontHeight, painter_.brush());   
+                painter_.fillRect(col * cellSize_.width(), (row + 1 - fontHeight)  * cellSize_.height(), cellSize_.width() * fontWidth, cellSize_.height() * fontHeight, painter_.brush());   
             }
             if ((cp != 32) && (!state_.font().blink() || BlinkVisible())) {
-                painter_.drawText(col * cellWidth_, (row + 1 - state_.font().height()) * cellHeight_ + font_->ascent(), QString::fromUcs4(&cp, 1));
+                painter_.drawText(col * cellSize_.width(), (row + 1 - state_.font().height()) * cellSize_.height() + font_->ascent(), QString::fromUcs4(&cp, 1));
             }
             ++glyphRunSize_;
         }
@@ -170,7 +187,7 @@ namespace tpp {
         /** Updates the current font.
          */
         void changeFont(ui::Font font) {
-            font_ = QtFont::Get(font, cellHeight_, cellWidth_);
+            font_ = QtFont::Get(font, cellSize_.height(), cellSize_.width());
             painter_.setFont(font_->qFont());
         }
 
@@ -201,33 +218,33 @@ namespace tpp {
                 return;
             if (!state_.font().blink() || BlinkVisible()) {
                 if (state_.font().underline())
-                    painter_.fillRect(glyphRunStart_.x() * cellWidth_, glyphRunStart_.y() * cellHeight_ + font_->underlineOffset(), cellWidth_ * glyphRunSize_, font_->underlineThickness(), decorationBrush_);
+                    painter_.fillRect(glyphRunStart_.x() * cellSize_.width(), glyphRunStart_.y() * cellSize_.height() + font_->underlineOffset(), cellSize_.width() * glyphRunSize_, font_->underlineThickness(), decorationBrush_);
                 if (state_.font().strikethrough())
-                    painter_.fillRect(glyphRunStart_.x() * cellWidth_, glyphRunStart_.y() * cellHeight_ + font_->strikethroughOffset(), cellWidth_ * glyphRunSize_, font_->strikethroughThickness(), decorationBrush_);
+                    painter_.fillRect(glyphRunStart_.x() * cellSize_.width(), glyphRunStart_.y() * cellSize_.height() + font_->strikethroughOffset(), cellSize_.width() * glyphRunSize_, font_->strikethroughThickness(), decorationBrush_);
             }
         }
 
         void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
-            int left = col * cellWidth_;
-            int top = row * cellHeight_;
+            int left = col * cellSize_.width();
+            int top = row * cellSize_.height();
             int widthTop = border.top() == Border::Kind::None ? 0 : (border.top() == Border::Kind::Thick ? widthThick : widthThin);
             int widthLeft = border.left() == Border::Kind::None ? 0 : (border.left() == Border::Kind::Thick ? widthThick : widthThin);
             int widthBottom = border.bottom() == Border::Kind::None ? 0 : (border.bottom() == Border::Kind::Thick ? widthThick : widthThin);
             int widthRight = border.right() == Border::Kind::None ? 0 : (border.right() == Border::Kind::Thick ? widthThick : widthThin);
 
             if (widthTop != 0)
-                painter_.fillRect(left, top, cellWidth_, widthTop, painter_.brush());
+                painter_.fillRect(left, top, cellSize_.width(), widthTop, painter_.brush());
             if (widthBottom != 0)
-                painter_.fillRect(left, top + cellHeight_ - widthBottom, cellWidth_, widthBottom, painter_.brush());
+                painter_.fillRect(left, top + cellSize_.height() - widthBottom, cellSize_.width(), widthBottom, painter_.brush());
             if (widthLeft != 0) 
-                painter_.fillRect(left, top + widthTop, widthLeft, cellHeight_ - widthTop - widthBottom, painter_.brush());
+                painter_.fillRect(left, top + widthTop, widthLeft, cellSize_.height() - widthTop - widthBottom, painter_.brush());
             if (widthRight != 0) 
-                painter_.fillRect(left + cellWidth_ - widthRight, top + widthTop, widthRight, cellHeight_ - widthTop - widthBottom, painter_.brush());
+                painter_.fillRect(left + cellSize_.width() - widthRight, top + widthTop, widthRight, cellSize_.height() - widthTop - widthBottom, painter_.brush());
         }
         //@}
 
-        static unsigned GetStateModifiers(Qt::KeyboardModifiers const & modifiers);
-        static Key GetKey(int qtKey, unsigned modifiers, bool pressed);
+        static ui::Key GetStateModifiers(Qt::KeyboardModifiers const & modifiers);
+        static ui::Key GetKey(int qtKey, ui::Key modifiers, bool pressed);
 
         QPainter painter_;
         QtFont * font_;

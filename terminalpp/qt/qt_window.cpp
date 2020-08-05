@@ -9,7 +9,7 @@ namespace tpp {
         font_{ nullptr },
         decorationBrush_{QColor{255, 255, 255, 255}},
         borderBrush_{QColor{255, 255, 255, 255}} {
-        QWindowBase::resize(widthPx_, heightPx_);
+        QWindowBase::resize(sizePx_.width(), sizePx_.height());
         QWindowBase::setTitle(title.c_str());
 
         connect(this, &QtWindow::tppRequestUpdate, this, static_cast<void (QtWindow::*)()>(&QtWindow::update), Qt::ConnectionType::QueuedConnection);
@@ -60,7 +60,7 @@ namespace tpp {
     void QtWindow::requestClipboard(Widget * sender) {
         RendererWindow::requestClipboard(sender);
         QString text{QtApplication::Instance()->clipboard()->text(QClipboard::Mode::Clipboard)};
-        rendererClipboardPaste(text.toStdString());
+        pasteClipboard(text.toStdString());
     }
 
     void QtWindow::requestSelection(Widget * sender) {
@@ -68,35 +68,33 @@ namespace tpp {
         QtApplication * app = QtApplication::Instance();
         if (app->clipboard()->supportsSelection()) {
             QString text{QtApplication::Instance()->clipboard()->text(QClipboard::Mode::Selection)};
-            rendererSelectionPaste(text.toStdString());
+            pasteSelection(text.toStdString());
         } else {
             if (app->selectionOwner_ != nullptr)
-                rendererSelectionPaste(app->selection_);
+                pasteSelection(app->selection_);
         }
     }
 
-    void QtWindow::rendererSetClipboard(std::string const & contents) {
+    void QtWindow::setClipboard(std::string const & contents) {
         QtApplication::Instance()->setClipboard(contents);
     }
 
-    void QtWindow::rendererRegisterSelection(std::string const & contents, Widget * owner) {
+    void QtWindow::setSelection(std::string const & contents, Widget * owner) {
         QtApplication * app = QtApplication::Instance();
         QtWindow * oldOwner = app->selectionOwner_;
         // set the owner of the selection
         app->selectionOwner_ = this;
         // if there was a different owner before, clear its selection (since selection owner is already someone else, it will only clear the selection in the widget)
         if (oldOwner != nullptr && oldOwner != this)
-            oldOwner->rendererClearSelection();
+            oldOwner->clearSelection(nullptr);
         // if selection is supported, update it, else store its contents in the application
         if (app->clipboard()->supportsSelection())
             app->clipboard()->setText(QString{contents.c_str()}, QClipboard::Mode::Selection);
         else
             app->selection_ = contents;
-        // deal with the selection in own window
-        RendererWindow::rendererRegisterSelection(contents, owner);
     }
 
-    void QtWindow::rendererClearSelection() {
+    void QtWindow::clearSelection(Widget * sender) {
         QtApplication * app = QtApplication::Instance();
         if (app->selectionOwner_ == this) {
             app->selectionOwner_ = nullptr;
@@ -106,15 +104,15 @@ namespace tpp {
                 app->selection_.clear();
         }
         // deal with the selection clear in itself
-        RendererWindow::rendererClearSelection();
+        RendererWindow::clearSelection(sender);
     }
 
     void QtWindow::keyPressEvent(QKeyEvent* ev) {
         static_assert(sizeof(QChar) == sizeof(utf16_char));
-        activeModifiers_ = Key{Key::Invalid, GetStateModifiers(ev->modifiers())};
-        Key k{GetKey(ev->key(), activeModifiers_.modifiers(), true)};
+        setModifiers(GetStateModifiers(ev->modifiers()));
+        Key k{GetKey(ev->key(), modifiers(), true)};
         if (k != Key::Invalid)
-            rendererKeyDown(k);
+            keyDown(k);
         // if ctrl, alt, or win is active, don't deal with keyChar
         if (k & ( Key::Ctrl + Key::Alt + Key::Win))
             return;
@@ -126,19 +124,19 @@ namespace tpp {
             // raise the keyChar event
             // the delete character (ASCII 127) is also non printable, furthermore on macOS backspace incorrectly translates to it.
             if (c.codepoint() >= 32 && c.codepoint() != 127)
-                rendererKeyChar(c);
+                keyChar(c);
         }
     }
 
     void QtWindow::keyReleaseEvent(QKeyEvent* ev) {
-        activeModifiers_ = Key{Key::Invalid, GetStateModifiers(ev->modifiers())};
-        Key k{GetKey(ev->key(), activeModifiers_.modifiers(), false)};
+        setModifiers(GetStateModifiers(ev->modifiers()));
+        Key k{GetKey(ev->key(), modifiers(), false)};
         if (k != Key::Invalid)
-            rendererKeyUp(k);
+            keyUp(k);
     }
 
     void QtWindow::mousePressEvent(QMouseEvent * ev) {
-        activeModifiers_ = Key{Key::Invalid, GetStateModifiers(ev->modifiers())};
+        setModifiers(GetStateModifiers(ev->modifiers()));
         MouseButton btn;
         switch (ev->button()) {
             case Qt::MouseButton::LeftButton:
@@ -154,11 +152,11 @@ namespace tpp {
                 // TODO should we call super? 
                 return;
         }
-        rendererMouseDown(Point{ev->x(), ev->y()}, btn, activeModifiers_);
+        mouseDown(pixelsToCoords(Point{ev->x(), ev->y()}), btn);
     }
 
     void QtWindow::mouseReleaseEvent(QMouseEvent * ev) {
-        activeModifiers_ = Key{Key::Invalid, GetStateModifiers(ev->modifiers())};
+        setModifiers(GetStateModifiers(ev->modifiers()));
         MouseButton btn;
         switch (ev->button()) {
             case Qt::MouseButton::LeftButton:
@@ -174,32 +172,32 @@ namespace tpp {
                 // TODO should we call super? 
                 return;
         }
-        rendererMouseUp(Point{ev->x(), ev->y()}, btn, activeModifiers_);
+        mouseUp(pixelsToCoords(Point{ev->x(), ev->y()}), btn);
     }
 
     void QtWindow::mouseMoveEvent(QMouseEvent * ev) {
-        activeModifiers_ = Key{Key::Invalid, GetStateModifiers(ev->modifiers())};
-        rendererMouseMove(Point{ev->x(), ev->y()}, activeModifiers_);
+        setModifiers(GetStateModifiers(ev->modifiers()));
+        mouseMove(pixelsToCoords(Point{ev->x(), ev->y()}));
     }
 
     void QtWindow::wheelEvent(QWheelEvent * ev) {
-        activeModifiers_ = Key{Key::Invalid, GetStateModifiers(ev->modifiers())};
+        setModifiers(GetStateModifiers(ev->modifiers()));
         // can't use pixelDelta as it is only high resolution scrolling information not available for regular mouse
-        rendererMouseWheel(Point{ev->x(), ev->y()}, (ev->angleDelta().y() > 0) ? 1 : -1, activeModifiers_);
+        mouseWheel(pixelsToCoords(Point{ev->x(), ev->y()}), (ev->angleDelta().y() > 0) ? 1 : -1);
     }
 
     void QtWindow::focusInEvent(QFocusEvent * ev) {
         QWindowBase::focusInEvent(ev);
-        rendererFocusIn();
+        focusIn();
     }
 
     void QtWindow::focusOutEvent(QFocusEvent * ev) {
         QWindowBase::focusOutEvent(ev);
-        rendererFocusOut();
+        focusOut();
     }
 
-    unsigned QtWindow::GetStateModifiers(Qt::KeyboardModifiers const & modifiers) {
-        unsigned result = 0;
+    ui::Key QtWindow::GetStateModifiers(Qt::KeyboardModifiers const & modifiers) {
+        ui::Key result = ui::Key::Invalid;
         if (modifiers & Qt::KeyboardModifier::ShiftModifier)
             result += ui::Key::Shift;
         if (modifiers & Qt::KeyboardModifier::ControlModifier)
@@ -212,108 +210,108 @@ namespace tpp {
     }
 
     // TODO check if shift meta and friends must do anything with the pressed
-    Key QtWindow::GetKey(int qtKey, unsigned modifiers, bool pressed) {
+    ui::Key QtWindow::GetKey(int qtKey, ui::Key modifiers, bool pressed) {
         MARK_AS_UNUSED(pressed);
         if (qtKey >= Qt::Key::Key_A && qtKey <= Qt::Key::Key_Z) 
-            return Key{static_cast<unsigned>(qtKey), modifiers};
+            return Key::FromCode(static_cast<unsigned>(qtKey)) + modifiers;
         if (qtKey >= Qt::Key::Key_0 && qtKey <= Qt::Key::Key_9) 
-            return Key{static_cast<unsigned>(qtKey), modifiers};
+            return Key::FromCode(static_cast<unsigned>(qtKey)) + modifiers;
         switch (qtKey) {
             case Qt::Key::Key_Backspace:
-                return Key{Key::Backspace, modifiers};
+                return Key::Backspace + modifiers;
             case Qt::Key::Key_Tab:
-                return Key{Key::Tab, modifiers};
+                return Key::Tab + modifiers;
             case Qt::Key::Key_Enter:
             case Qt::Key::Key_Return:
-                return Key{Key::Enter, modifiers};
+                return Key::Enter + modifiers;
             case Qt::Key::Key_Shift:
-                return Key{Key::ShiftKey, modifiers};
+                return Key::ShiftKey + modifiers;
             case Qt::Key::Key_Control:
-                return Key{Key::CtrlKey, modifiers};
+                return Key::CtrlKey + modifiers;
             case Qt::Key::Key_Alt:
             case Qt::Key::Key_AltGr:
-                return Key{Key::AltKey, modifiers};
+                return Key::AltKey + modifiers;
             case Qt::Key::Key_CapsLock:
-                return Key{Key::CapsLock, modifiers};
+                return Key::CapsLock + modifiers;
             case Qt::Key::Key_Escape:
-                return Key{Key::Esc, modifiers};
+                return Key::Esc + modifiers;
             case Qt::Key::Key_Space:
-                return Key{Key::Space, modifiers};
+                return Key::Space + modifiers;
             case Qt::Key::Key_PageUp:
-                return Key{Key::PageUp, modifiers};
+                return Key::PageUp + modifiers;
             case Qt::Key::Key_PageDown:
-                return Key{Key::PageDown, modifiers};
+                return Key::PageDown + modifiers;
             case Qt::Key::Key_End:
-                return Key{Key::End, modifiers};
+                return Key::End + modifiers;
             case Qt::Key::Key_Home:
-                return Key{Key::Home, modifiers};
+                return Key::Home + modifiers;
             case Qt::Key::Key_Left:
-                return Key{Key::Left, modifiers};
+                return Key::Left + modifiers;
             case Qt::Key::Key_Up:
-                return Key{Key::Up, modifiers};
+                return Key::Up + modifiers;
             case Qt::Key::Key_Right:
-                return Key{Key::Right, modifiers};
+                return Key::Right + modifiers;
             case Qt::Key::Key_Down:
-                return Key{Key::Down, modifiers};
+                return Key::Down + modifiers;
             case Qt::Key::Key_Insert:
-                return Key{Key::Insert, modifiers};
+                return Key::Insert + modifiers;
             case Qt::Key::Key_Delete:
-                return Key{Key::Delete, modifiers};
+                return Key::Delete + modifiers;
             case Qt::Key::Key_Meta:
-                return Key{Key::WinKey, modifiers};
+                return Key::WinKey + modifiers;
             case Qt::Key::Key_Menu:
-                return Key{Key::Menu, modifiers};
+                return Key::Menu + modifiers;
             // TODO deal with numeric keyboard
             case Qt::Key::Key_F1:
-                return Key{Key::F1, modifiers};
+                return Key::F1 + modifiers;
             case Qt::Key::Key_F2:
-                return Key{Key::F2, modifiers};
+                return Key::F2 + modifiers;
             case Qt::Key::Key_F3:
-                return Key{Key::F3, modifiers};
+                return Key::F3 + modifiers;
             case Qt::Key::Key_F4:
-                return Key{Key::F4, modifiers};
+                return Key::F4 + modifiers;
             case Qt::Key::Key_F5:
-                return Key{Key::F5, modifiers};
+                return Key::F5 + modifiers;
             case Qt::Key::Key_F6:
-                return Key{Key::F6, modifiers};
+                return Key::F6 + modifiers;
             case Qt::Key::Key_F7:
-                return Key{Key::F7, modifiers};
+                return Key::F7 + modifiers;
             case Qt::Key::Key_F8:
-                return Key{Key::F8, modifiers};
+                return Key::F8 + modifiers;
             case Qt::Key::Key_F9:
-                return Key{Key::F9, modifiers};
+                return Key::F9 + modifiers;
             case Qt::Key::Key_F10:
-                return Key{Key::F10, modifiers};
+                return Key::F10 + modifiers;
             case Qt::Key::Key_F11:
-                return Key{Key::F11, modifiers};
+                return Key::F11 + modifiers;
             case Qt::Key::Key_F12:
-                return Key{Key::F12, modifiers};
+                return Key::F12 + modifiers;
             case Qt::Key::Key_NumLock:
-                return Key{Key::NumLock, modifiers};
+                return Key::NumLock + modifiers;
             case Qt::Key::Key_ScrollLock:
-                return Key{Key::ScrollLock, modifiers};
+                return Key::ScrollLock + modifiers;
             case Qt::Key::Key_Semicolon:
-                return Key{Key::Semicolon, modifiers};
+                return Key::Semicolon + modifiers;
             case Qt::Key::Key_Equal:
-                return Key{Key::Equals, modifiers};
+                return Key::Equals + modifiers;
             case Qt::Key::Key_Comma:
-                return Key{Key::Comma, modifiers};
+                return Key::Comma + modifiers;
             case Qt::Key::Key_Minus:
-                return Key{Key::Minus, modifiers};
+                return Key::Minus + modifiers;
             case Qt::Key::Key_Period:
-                return Key{Key::Dot, modifiers};
+                return Key::Dot + modifiers;
             case Qt::Key::Key_Slash:
-                return Key{Key::Slash, modifiers};
+                return Key::Slash + modifiers;
             // TODO tick (tilde)
             case Qt::Key::Key_BraceLeft:
-                return Key{Key::SquareOpen, modifiers};
+                return Key::SquareOpen + modifiers;
             case Qt::Key::Key_Backslash:
-                return Key{Key::Backslash, modifiers};
+                return Key::Backslash + modifiers;
             case Qt::Key::Key_BraceRight:
-                return Key{Key::SquareClose, modifiers};
+                return Key::SquareClose + modifiers;
             // TODO Quote
             default:
-                return Key{Key::Invalid, modifiers};
+                return Key::Invalid + modifiers;
         }
     }
 

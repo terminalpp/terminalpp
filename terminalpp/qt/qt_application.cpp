@@ -34,10 +34,6 @@ namespace tpp {
         ASSERT(QFile::exists(":/icon_32x32.png"));
         ASSERT(QFile::exists(":/icon-notification_32x32.png"));
 
-        Renderer::Initialize([this](){
-            emit tppUserEvent();
-        });
-
 		QtWindow::StartBlinkerThread();
     }
 
@@ -70,7 +66,7 @@ namespace tpp {
     }
 
     void QtApplication::userEvent() {
-        Renderer::ExecuteUserEvent();
+        ui::TypedEventQueue<QtWindow>::ProcessEvent();        
     }
 
     void QtApplication::selectionChanged() {
@@ -78,7 +74,7 @@ namespace tpp {
             QtWindow * owner = selectionOwner_;
             selectionOwner_ = nullptr;
             ASSERT(selection_.empty());
-            owner->rendererClearSelection();
+            owner->clearSelection(nullptr);
         }
     }
 
