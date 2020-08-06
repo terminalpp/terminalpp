@@ -5,13 +5,22 @@
     "version": "0.2.0",
     "configurations": [
 
-
-
         {
             "name": "(win) terminalpp",
             "type": "cppvsdbg",
             "request": "launch",
             "program": " ${workspaceFolder}/build-Visual Studio Community 2019 Release - amd64/terminalpp/Debug/terminalpp.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        },
+        {
+            "name": "(win) tests",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": " ${workspaceFolder}/build-Visual Studio Community 2019 Release - amd64/tests/Debug/tests.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
