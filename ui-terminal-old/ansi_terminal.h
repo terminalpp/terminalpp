@@ -626,7 +626,7 @@ namespace ui {
     // ============================================================================================
 
     /** Palette
-     */
+     * /
     class AnsiTerminal::Palette {
     public:
 
@@ -714,8 +714,11 @@ namespace ui {
 
     }; // AnsiTerminal::Palette
 
+    */
+
     // ============================================================================================
 
+/*
     class AnsiTerminal::CSISequence {
     public:
 
@@ -763,7 +766,7 @@ namespace ui {
         /** If the given argument has the specified value, it is replaced with the new value given. 
 
             Returns true if the replace occured, false otherwise. 
-            */
+            * /
         bool conditionalReplace(size_t index, int value, int newValue) {
             if (index >= args_.size())
                 return false;
@@ -775,7 +778,7 @@ namespace ui {
 
         /** Parses the CSI sequence from given input. 
 
-         */
+         * /
         static CSISequence Parse(char const * & buffer, char const * end);
 
     private:
@@ -798,7 +801,7 @@ namespace ui {
 
         static bool IsFinalByte(char c) {
             // no need to check the upper bound - char is signed
-            return (c >= 0x40) /*&& (c <= 0x7f) */;
+            return (c >= 0x40) /*&& (c <= 0x7f) * /;
         }
 
         friend std::ostream & operator << (std::ostream & s, CSISequence const & seq) {
@@ -824,7 +827,7 @@ namespace ui {
         }
 
     }; // ui::AnsiTerminal::CSISequence
-
+*/
     // ============================================================================================
 
     class AnsiTerminal::OSCSequence {

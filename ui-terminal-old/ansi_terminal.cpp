@@ -1471,6 +1471,8 @@ namespace ui {
     // ============================================================================================
     // AnsiTerminal::Palette
 
+/*
+
     AnsiTerminal::Palette AnsiTerminal::Palette::Colors16() {
 		return Palette{
 			Color::Black, // 0
@@ -1590,7 +1592,7 @@ namespace ui {
             other.size_ = 0;
         }
         return *this;
-    }
+    } */
 
     // ============================================================================================
     // AnsiTerminal::State
@@ -1875,7 +1877,7 @@ namespace ui {
 
     // ============================================================================================
     // AnsiTerminal::CSISequence
-
+    /*
     AnsiTerminal::CSISequence AnsiTerminal::CSISequence::Parse(char const * & start, char const * end) {
         CSISequence result;
         char const * x = start;
@@ -1929,10 +1931,10 @@ namespace ui {
 			LOG(SEQ_UNKNOWN) << "Unknown, possibly invalid CSI sequence: \x1b" << std::string(start - 1 , x - start + 1);
         start = x;
         return result;
-    }
+    } */
 
     // ============================================================================================
-
+    /*
     AnsiTerminal::OSCSequence AnsiTerminal::OSCSequence::Parse(char const * & start, char const * end) {
         OSCSequence result;
         char const * x = start;
@@ -1974,6 +1976,6 @@ namespace ui {
         ++x; // past the terminating character
         start = x;
         return result;
-    }
+    } */
 
 } // namespace ui
