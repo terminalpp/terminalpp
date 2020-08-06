@@ -10,7 +10,7 @@
 
 #include "tpp-lib/local_pty.h"
 
-#include "ansi_renderer.h"
+#include "ui-terminal/ansi_renderer.h"
 
 #include "ui/widgets/panel.h"
 #include "ui/widgets/label.h"

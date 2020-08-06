@@ -9,7 +9,6 @@
 
 #include "csi_sequence.h"
 
-
 namespace ui {
 
     /** Renders the UI inside an ANSI escape sequences terminal. 

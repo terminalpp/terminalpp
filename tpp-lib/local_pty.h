@@ -65,9 +65,6 @@ namespace tpp {
 
     }; // tpp::LocalPTYMaster
 
-
-
-#if (defined ARCH_UNIX)
     class LocalPTYSlave : public PTYSlave {
     public:
 
@@ -90,6 +87,8 @@ namespace tpp {
 
     private:
 
+#if (defined ARCH_UNIX)
+
         static constexpr int IDLE = 0;
         static constexpr int RECEIVING = 1;
         static constexpr int DESTROYING = 2;
@@ -101,9 +100,9 @@ namespace tpp {
         static std::atomic<bool> Receiving_;
         static LocalPTYSlave * volatile Slave_;
         static void SIGWINCH_handler(int signo);
+#endif
 
     }; // tpp::LocalPTYSlave
-#endif
 
 }
 

@@ -64,6 +64,7 @@ namespace ui {
         /** Only draws the active page as all other are supposed to be invisible. 
          */
         void paint(Canvas & canvas) override {
+            MARK_AS_UNUSED(canvas);
             // paint the active page, if any
             if (! children().empty())
                 paintChild(children().back());

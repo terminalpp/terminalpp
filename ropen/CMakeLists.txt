@@ -4,7 +4,6 @@ project(ropen VERSION ${TPP_VERSION})
 
 # ropen only works on linux for now
 if(ARCH_UNIX) 
-    add_compile_options(-std=c++17 -Wall -Wextra -pedantic)
     find_package(Threads REQUIRED)
     find_library(LUTIL util)
     file(GLOB_RECURSE SRC "*.cpp" "*.h")

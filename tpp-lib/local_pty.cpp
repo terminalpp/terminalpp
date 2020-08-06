@@ -258,7 +258,40 @@ namespace tpp {
 
     // LocalPTYSlave
 
-#if (defined ARCH_UNIX)
+#if (defined ARCH_WINDOWS)
+
+    LocalPTYSlave::LocalPTYSlave() {
+        NOT_IMPLEMENTED;
+    }
+
+    LocalPTYSlave::~LocalPTYSlave() {
+        NOT_IMPLEMENTED;
+    }
+
+    std::pair<int, int> LocalPTYSlave::size() const {
+        NOT_IMPLEMENTED;
+    }
+
+    void LocalPTYSlave::send(char const * buffer, size_t numBytes) {
+        NOT_IMPLEMENTED;
+        MARK_AS_UNUSED(buffer);
+        MARK_AS_UNUSED(numBytes);
+    }
+
+    void LocalPTYSlave::send(Sequence const & seq) {
+        NOT_IMPLEMENTED;
+        MARK_AS_UNUSED(seq);
+    }
+
+
+    size_t LocalPTYSlave::receive(char * buffer, size_t bufferSize) {
+        NOT_IMPLEMENTED;
+        MARK_AS_UNUSED(buffer);
+        MARK_AS_UNUSED(bufferSize);
+    }
+
+
+#elif (defined ARCH_UNIX)
 
     pthread_t volatile  LocalPTYSlave::ReaderThread_;
     std::atomic<bool> LocalPTYSlave::Receiving_{false};
