@@ -11,8 +11,8 @@ namespace ui {
 
     void Widget::schedule(std::function<void()> event) {
         std::lock_guard<std::mutex> g{rendererGuard_};
-        if (visibleArea_.renderer() != nullptr)
-            visibleArea_.renderer()->schedule(event, this);
+        if (renderer_ != nullptr)
+            renderer_->schedule(event, this);
     }
 
     // ============================================================================================
@@ -71,8 +71,8 @@ namespace ui {
     void Widget::detach(Widget * child) {
         ASSERT(child->parent() == this);
         // detach from the renderer first
-        if (visibleArea_.attached())
-            visibleArea_.renderer()->detachTree(child);
+        if (renderer_ != nullptr)
+            renderer_->detachTree(child);
         // then delete from own children
         auto i = std::find(children_.begin(), children_.end(), child);
         ASSERT(i != children_.end());
@@ -146,7 +146,7 @@ namespace ui {
         if (parent_ != nullptr) {
             parent_->relayout();
         } else {
-            ASSERT(! visibleArea_.attached()) << "Root widget does not support moving";
+            ASSERT(renderer_ == nullptr) << "Root widget does not support moving";
         }
         // finally, trigger the onMove event in case parent's relayout did not change own values
         if (rect_.topLeft() == topLeft) {
@@ -275,19 +275,19 @@ namespace ui {
      */
     void Widget::updateVisibleArea() {
         if (isRootWidget()) 
-            updateVisibleArea(renderer()->visibleArea());
-        else if (parent_ != nullptr && parent_->visibleArea_.attached()) 
-            updateVisibleArea(parent_->visibleArea_);
+            updateVisibleArea(renderer()->visibleArea(), renderer_);
+        else if (parent_ != nullptr && parent_->renderer_ != nullptr) 
+            updateVisibleArea(parent_->visibleArea_, renderer_);
         else 
             // otherwise do nothing (the widget is not attached and neither is its parent)
-            ASSERT(! visibleArea_.attached());
+            ASSERT(renderer_ == nullptr);
     }
 
-    void Widget::updateVisibleArea(VisibleArea const & parentArea) {
-        ASSERT(parentArea.attached());
+    void Widget::updateVisibleArea(VisibleArea const & parentArea, Renderer * renderer) {
+        renderer_ = renderer;
         visibleArea_ = parentArea.clip(rect_).offset(scrollOffset_);
         for (Widget * child : children_)
-            child->updateVisibleArea(visibleArea_);
+            child->updateVisibleArea(visibleArea_, renderer);
     }
 
 
@@ -310,6 +310,18 @@ namespace ui {
             // we already checked that parent is not null
             parent_->repaint();
         }
+    }
+
+    void Widget::paint() {
+            pendingRepaint_ = false;
+            Canvas canvas{renderer_->buffer_, visibleArea_, contentsSize()};
+            // paint the background first
+            canvas.setBg(background_);
+            canvas.fill(canvas.rect());
+            // now paint whatever the widget contents is
+            paint(canvas);
+            // TODO paint the border now that the widget has been painted
+            // TODO 
     }
 
     bool Widget::allowRepaintRequest(Widget * immediateChild) {

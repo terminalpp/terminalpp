@@ -23,6 +23,10 @@ namespace ui {
             return Rect{size()};
         }
 
+        Rect visibleRect() const {
+            return visibleArea_.rect();
+        }
+
         Size size() const {
             return size_;
         }
@@ -90,6 +94,10 @@ namespace ui {
          */
         //@{
 
+        /** Draws the buffer starting from given top left corner. 
+         */
+        Canvas & drawBuffer(Buffer const & buffer, Point at);
+
         Canvas & fill(Rect const & rect) {
             return fill(rect, bg_);
         }
@@ -108,6 +116,15 @@ namespace ui {
 
         //@}
 
+        /** \name Single cell access. 
+         */
+        //@{
+
+        Cell & at(Point const & coords);
+        Cell const & at(Point const & coords) const;
+
+        //@}
+
     private:
 
 
@@ -123,17 +140,16 @@ namespace ui {
             Each widget remembers its visible area, which consists of the pointer to its renderer, the offset of the widget's top-left corner in the renderer's absolute coordinates and the area of the widget that translates to a portion of the renderer's buffer. 
         */
         class VisibleArea {
-            friend class Renderer;
         public:
 
-            VisibleArea():
-                renderer_{nullptr} {
-            }
+
+            VisibleArea() = default;
 
             VisibleArea(VisibleArea const & ) = default;
 
-            Renderer * renderer() const {
-                return renderer_;
+            VisibleArea(Point const & offset, Rect const & rect):
+                offset_{offset},
+                rect_{rect} {
             }
 
             /** The offset of the canvas' coordinates from the buffer ones, 
@@ -156,46 +172,23 @@ namespace ui {
                 return rect_ + offset_;
             }
 
-            bool attached() const {
-                return renderer_ != nullptr;
-            }
-
-            void attach(Renderer * renderer) {
-                renderer_ = renderer;
-                rect_ = Rect{};
-                offset_ = Point{};
-            }
-
-            /** Detaches the visible area from the renderer, thus invalidating it. 
-             */
-            void detach() {
-                renderer_ = nullptr;
-            }
-
             VisibleArea clip(Rect const & rect) const {
-                return VisibleArea{renderer_, offset_ + rect.topLeft(), (rect_ & rect) - rect.topLeft()};
+                return VisibleArea{offset_ + rect.topLeft(), (rect_ & rect) - rect.topLeft()};
             }
 
             VisibleArea offset(Point const & by) const {
-                return VisibleArea{renderer_, offset_ - by, rect_};
+                return VisibleArea{offset_ - by, rect_};
             }
 
         private:
 
-            VisibleArea(Renderer * renderer, Point const & offset, Rect const & rect):
-                renderer_{renderer}, 
-                offset_{offset},
-                rect_{rect} {
-            }
-
-            Renderer * renderer_;
             Point offset_;
             Rect rect_;
         }; // ui::Canvas::VisibleArea
 
         /** Creates canvas for given widget. 
          */
-        Canvas(VisibleArea const & visibleArea, Size const & size);
+        Canvas(Buffer & buffer, VisibleArea const & visibleArea, Size const & size);
 
     private:
 
@@ -340,6 +333,9 @@ namespace ui {
             border_ = value;
         }
         //@}
+
+        Cell & operator = (Cell const & other) = default;
+
     private:
 
         char32_t codepoint_;
@@ -490,7 +486,16 @@ namespace ui {
         Cursor cursor_;
         Point cursorPosition_;
 
-    }; // ui::Renderer::Buffer
+    }; // ui::Canvas::Buffer
+
+    inline Canvas::Cell & Canvas::at(Point const & coords) {
+        return buffer_.at(coords);
+    }
+
+    inline Canvas::Cell const & Canvas::at(Point const & coords) const {
+        return buffer_.at(coords);
+    }
+
 
 
 } // namespace ui

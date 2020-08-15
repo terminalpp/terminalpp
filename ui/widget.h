@@ -84,7 +84,7 @@ namespace ui {
             Can only be called for widgets which are attached to a renderer, translates the coordinates irrespectively of whether they belong to the target widget, or not. 
             */
         Point toWidgetCoordinates(Point rendererCoords) const {
-            ASSERT(visibleArea_.attached());
+            ASSERT(renderer_ != nullptr);
             return rendererCoords - visibleArea_.offset();
         }
 
@@ -93,7 +93,7 @@ namespace ui {
             Can only be called for widgets which are attached to a renderer, translates the coordinates irrespectively of whether they are visible in the window, or not. 
             */
         Point toRendererCoordinates(Point widgetCoords) const {
-            ASSERT(visibleArea_.attached());
+            ASSERT(renderer_ != nullptr);
             return widgetCoords + visibleArea_.offset();
         }
 
@@ -132,7 +132,7 @@ namespace ui {
         /** Returns true if the widget is a root widget, i.e. if it has no parent *and* is attached to a renderer. 
          */
         bool isRootWidget() const {
-            return (parent_ == nullptr) && visibleArea_.attached();
+            return (parent_ == nullptr) && (renderer_ != nullptr);
         }
 
         std::deque<Widget *> const & children() const {
@@ -144,7 +144,7 @@ namespace ui {
         Widget * prevWidget(std::function<bool(Widget*)> cond, Widget * last, bool checkParent);
 
     private:
-        /** Mutex protecting the renderer pointer in the visible area for the widget. 
+        /** Mutex protecting the renderer pointer for the widget. 
          */
         std::mutex rendererGuard_;
 
@@ -280,7 +280,7 @@ namespace ui {
         void relayout();
 
     private:
-    
+
         /** Bring canvas' visible area to own scope so that it can be used by children. 
          */
         using VisibleArea = Canvas::VisibleArea;
@@ -289,7 +289,11 @@ namespace ui {
          */
         void updateVisibleArea();
 
-        void updateVisibleArea(VisibleArea const & parentArea);
+        void updateVisibleArea(VisibleArea const & parentArea, Renderer * renderer);
+
+        /** Renderer to which the widget is attached. 
+         */
+        Renderer * renderer_ = nullptr;
 
         /** Visible area of the widget. 
          */
@@ -383,22 +387,12 @@ namespace ui {
 
             To explicitly repaint the widget, the repaint() method should be called instead, which optimizes the number of repaints and tells the renderer to repaint the widget.                 
             */        
-        void paint() {
-            pendingRepaint_ = false;
-            Canvas canvas{visibleArea_, contentsSize()};
-            // paint the background first
-            canvas.setBg(background_);
-            canvas.fill(canvas.rect());
-            // now paint whatever the widget contents is
-            paint(canvas);
-            // TODO paint the border now that the widget has been painted
-            // TODO 
-        }
+        void paint();
 
         /** Returns the attached renderer. 
          */
         Renderer * renderer() const {
-            return visibleArea_.renderer();
+            return renderer_;
         }
 
         /** Determines whether a paint request in the given child's subtree is to be allowed or not. 

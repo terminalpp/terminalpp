@@ -227,7 +227,7 @@ namespace ui {
         /** Returns the visible area of the entire renderer. 
          */
         Canvas::VisibleArea visibleArea() {
-            return Canvas::VisibleArea{this, Point{0,0}, Rect{buffer_.size()}};
+            return Canvas::VisibleArea{Point{0,0}, Rect{buffer_.size()}};
         }
 
         /** Returns the paint buffer. 

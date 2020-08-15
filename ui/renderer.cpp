@@ -47,7 +47,7 @@ namespace ui {
                 detachTree(root_);
             root_ = value;
             if (value != nullptr) {
-                root_->visibleArea_.attach(this);
+                root_->renderer_ = this;
                 // once attached, we can clear the repaint flag
                 root_->pendingRepaint_ = false;
                 // and either resize, or just relayout, which triggers repaint and propagates the visible area update to all children
@@ -110,7 +110,8 @@ namespace ui {
             detachWidget(child);
         // and finally detach the visible area 
         std::lock_guard<std::mutex> g{widget->rendererGuard_};
-        widget->visibleArea_.detach();
+        widget->renderer_ = nullptr;
+        widget->visibleArea_ = Canvas::VisibleArea{};
     }
 
     // Layouting and painting

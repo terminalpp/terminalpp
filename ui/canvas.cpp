@@ -5,9 +5,9 @@
 
 namespace ui {
 
-    Canvas::Canvas(VisibleArea const & visibleArea, Size const & size):
+    Canvas::Canvas(Buffer & buffer, VisibleArea const & visibleArea, Size const & size):
         visibleArea_{visibleArea},
-        buffer_{visibleArea.renderer()->buffer_}, 
+        buffer_{buffer}, 
         size_{size} {
     }
 
@@ -50,6 +50,19 @@ namespace ui {
         }
         // there are no words in the line, just break at the word wrap limit mid-word
         return l;
+    }
+
+    Canvas & Canvas::drawBuffer(Buffer const & buffer, Point at) {
+        // calculate the target rectangle in the canvas and its intersection with the visible rectangle and offset it to the backing buffer coordinates
+        Rect r = (Rect{at, buffer.size()} & visibleArea_.rect()) + visibleArea_.offset();
+        // calculate the buffer offset for the input buffer
+        Point bufferOffset = at + visibleArea_.offset();
+        for (int row = r.top(), re = r.bottom(); row < re; ++row) {
+            for (int col = r.left(), ce = r.right(); col < ce; ++col) {
+                buffer_.at(col, row) = buffer.at(col - bufferOffset.x(), row - bufferOffset.y());
+            }
+        }
+        return *this;
     }
 
     Canvas & Canvas::fill(Rect const & rect, Color color) {
