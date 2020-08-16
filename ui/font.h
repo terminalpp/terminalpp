@@ -68,7 +68,7 @@ namespace ui {
             return (font_ & SIZE_MASK) + 1;
         }
 
-        Font setSize(int size) {
+        Font setSize(int size) const {
             size -= 1;
             ASSERT(size >= 0 && size < 8);
             return Font{SetBits(font_, SIZE_MASK, static_cast<uint16_t>(size))};

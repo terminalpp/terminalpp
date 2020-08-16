@@ -77,6 +77,7 @@ namespace ui {
     }
 
     void Renderer::widgetDetached(Widget * widget) {
+        UI_THREAD_ONLY;
         if (renderWidget_ == widget)
             renderWidget_ = nullptr;
         // check mouse and keyboard focus and emit proper events if disabled
@@ -126,6 +127,7 @@ namespace ui {
     }
 
     void Renderer::paint(Widget * widget) {
+        UI_THREAD_ONLY;
         if (renderWidget_ == nullptr)
             renderWidget_ = widget;
         else
@@ -137,6 +139,7 @@ namespace ui {
     }
 
     void Renderer::paintAndRender() {
+        UI_THREAD_ONLY;
         if (renderWidget_ == nullptr)
             return;
         // paint the widget on the buffer

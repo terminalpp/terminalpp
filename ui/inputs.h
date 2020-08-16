@@ -92,23 +92,23 @@ namespace ui {
         }
 
         Key operator + (Key const & modifier) const {
-            ASSERT(modifier.code() == 0) << "Only modifiers can be added to a key";
+            ASSERT(modifier.code() == 0 || code() == 0) << "Only modifiers can be added to a key";
             return Key{raw_ | (modifier.modifiers().raw_)};
         }
 
         Key & operator += (Key const & modifier) {
-            ASSERT(modifier.code() == 0) << "Only modifiers can be added to a key";
+            ASSERT(modifier.code() == 0 || code() == 0) << "Only modifiers can be added to a key";
             raw_ |= modifier.modifiers().raw_;
             return *this;
         }
 
         Key operator - (Key const & modifier) const {
-            ASSERT(modifier.code() == 0) << "Only modifiers can be removed from a key";
+            ASSERT(modifier.code() == 0 || code() == 0) << "Only modifiers can be removed from a key";
             return Key{raw_ & ~(modifier.modifiers().raw_)};
         }
 
         Key & operator -= (Key const & modifier) {
-            ASSERT(modifier.code() == 0) << "Only modifiers can be removed from a key";
+            ASSERT(modifier.code() == 0 || code() == 0) << "Only modifiers can be removed from a key";
             raw_ &= ~modifier.modifiers().raw_;
             return *this;
         }
@@ -146,6 +146,15 @@ namespace ui {
         unsigned raw_;
     }; // ui::Key
 
-
-
 } // namespace ui
+
+namespace std {
+
+    template<>
+    struct hash<ui::Key> {
+        size_t operator () (ui::Key const & x) const {
+            return std::hash<unsigned>()(x.raw_);
+        }
+    };
+
+} // namespace std

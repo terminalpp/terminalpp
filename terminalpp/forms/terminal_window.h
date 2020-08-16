@@ -5,9 +5,9 @@
 #include "ui/widgets/panel.h"
 #include "ui/widgets/label.h"
 #include "ui/widgets/dialog.h"
-//#include "ui-terminal/ansi_terminal.h"
-//#include "tpp-lib/local_pty.h"
-//#include "tpp-lib/bypass_pty.h"
+#include "ui-terminal/ansi_terminal.h"
+#include "tpp-lib/local_pty.h"
+#include "tpp-lib/bypass_pty.h"
 //#include "tpp-lib/remote_files.h"
 
 #include "../config.h"
@@ -48,7 +48,7 @@ namespace tpp {
 
             main_->setLayout(new Layout::Column{VerticalAlign::Top});
             main_->setBackground(Color::Red);
-            //main_->attach(pager_);
+            main_->attach(pager_);
             setContents(main_);
 
             Config const & config = Config::Instance();
@@ -66,10 +66,6 @@ namespace tpp {
                 window_->setFullscreen(true);
             
             versionChecker_ = std::thread{[this](){
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                schedule([this]() {
-                    showModal(new AboutBox{});
-                });
                 std::string channel = Config::Instance().version.checkChannel();
                 // don't check if empty channel
                 if (channel.empty())
@@ -99,22 +95,17 @@ namespace tpp {
         public:
             std::string name;
             std::string title;
-            /*
-            PTYMaster * pty;
             AnsiTerminal * terminal;
-            AnsiTerminal::Palette palette;
-            */
             bool terminateOnKeyPress;
 
             SessionInfo(Config::sessions_entry const & session):
                 name{session.name()},
                 title{session.name()},
-                //palette{session.palette()},
                 terminateOnKeyPress{false} {
             }
 
             ~SessionInfo() {
-                //delete terminal;
+                delete terminal;
             }
         }; 
 
@@ -144,42 +135,35 @@ namespace tpp {
         }
 
         SessionInfo * sessionInfo(Widget * terminal) {
-            return nullptr;
-            /*
             AnsiTerminal * t = dynamic_cast<AnsiTerminal*>(terminal);
             ASSERT(t != nullptr);
             auto i = sessions_.find(t);
             ASSERT(i != sessions_.end());
             return (i->second);
-            */
         }
 
         void closeSession(SessionInfo * session) {
-            /*
             sessions_.erase(session->terminal);
-            pager_->remove(session->terminal);
+            pager_->removePage(session->terminal);
             delete session;
             // if this was the last session, close the window
             if (sessions_.empty())
-                window_->close();
+                window_->requestClose();
             // otherwise focus the active session instead
             // TODO do we want this always, or should we actually check if the remove session was focused first? 
             else
                 window_->setKeyboardFocus(pager_->activePage());
-                */
         }
 
-        /*
-        void sessionTitleChanged(Event<std::string>::Payload & event) {
+        void sessionTitleChanged(ui::StringEvent::Payload & event) {
             SessionInfo * si = sessionInfo(event.sender());
             si->title = *event;
         }
 
-        void sessionNotification(Event<void>::Payload & event) {
+        void sessionNotification(ui::VoidEvent::Payload & event) {
             MARK_AS_UNUSED(event);
             window_->setIcon(tpp::Window::Icon::Notification);
         }
-        */
 
 
 
@@ -347,12 +331,12 @@ namespace tpp {
         ui::Pager * pager_;
 
 
-/*
 
         std::unordered_map<AnsiTerminal *, SessionInfo *> sessions_; 
 
-        SessionInfo * activeSession_;
+        SessionInfo * activeSession_ = nullptr;
 
+/*
         RemoteFiles * remoteFiles_;
 
     */

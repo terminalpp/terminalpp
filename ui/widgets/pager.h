@@ -14,15 +14,21 @@ namespace ui {
             setLayout(new Layout::Maximized{});
         }
 
-        /** Adds new page to the pager and makes the page active, triggering the onPageChange event. 
+        /** Sets the currently active page to given widget.
+         
+            If the given page is not yet pager's child, it is added as child as well. 
          */
-        void addPage(Widget * page) {
-            if (! children().empty())
-                children().back()->setVisible(false);
-            attach(page);
-            page->setVisible(true);
-            Event<Widget*>::Payload p{page};
-            onPageChange(p, this);
+        void setActivePage(Widget * page) {
+            // re-attaching puts the page in the visible page position
+            if (page != activePage()) {
+                if (! children().empty())
+                    children().back()->setVisible(false);
+                attach(page);
+                page->setVisible(true);
+                Event<Widget*>::Payload p{page};
+                onPageChange(p, this);
+
+            }
         }
 
         /** Removes given page from the pager. 
@@ -44,17 +50,6 @@ namespace ui {
             if (children().empty())
                 return nullptr;
             return children().back();
-        }
-
-        /** Sets the currently active page to given widget.
-         
-            The widget must already be a page (child) of the pager. 
-         */
-        void setActivePage(Widget * page) {
-            ASSERT(page->parent() == this);
-            // re-attaching puts the page in the visible page position
-            if (page != activePage())
-                addPage(page);
         }
 
         Event<Widget*> onPageChange;

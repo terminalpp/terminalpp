@@ -20,9 +20,9 @@
                   KEY(K + Key::Alt + Key::Ctrl + Key::Shift, '\033' << static_cast<char>(K.code() + 1 - 'A'));
 
 #define VT_NUM(K) KEY(K, static_cast<char>(K.code())); \
-                  KEY(K, '\033' << static_cast<char>(K.code()));
+                  KEY(K + Key::Alt, '\033' << static_cast<char>(K.code()));
 
-// letters and their modifiers          
+// letters and their modifiers  
 VT_KEY(Key::A)
 VT_KEY(Key::B)
 VT_KEY(Key::C)

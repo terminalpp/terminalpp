@@ -50,6 +50,16 @@ Issues to be raised:
 
 UI version 3
 
+- scrolling & scrollback buffer, resizing
+- cursor
+- mouse input
+- selection
+
+- font setSize & other setters should perhaps be renamed to withSize, etc to avoid confuision about them being setters
+- size.width() & size.height() should become just width and height
+- some simpler accesses to state-ish properties in the terminal? 
+
+
 - document keyboard focus handling - i.e. only document order and getting next & previous elements
 - things like tab focus and so on should be implemented differently, perhaps by a form widget or some such
 

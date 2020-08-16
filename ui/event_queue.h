@@ -54,8 +54,8 @@ namespace ui {
                     handler = e.first;
                     break;
                 }
-                handler();
             }
+            handler();
             return true;
         }
 

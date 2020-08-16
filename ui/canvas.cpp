@@ -7,10 +7,9 @@ namespace ui {
 
     Canvas::Canvas(Buffer & buffer, VisibleArea const & visibleArea, Size const & size):
         visibleArea_{visibleArea},
-        buffer_{buffer}, 
+        buffer_{& buffer}, 
         size_{size} {
     }
-
 
     std::vector<Canvas::TextLine> Canvas::GetTextMetrics(std::string const & text, int wordWrapAt) {
         std::vector<TextLine> result;
@@ -59,7 +58,7 @@ namespace ui {
         Point bufferOffset = at + visibleArea_.offset();
         for (int row = r.top(), re = r.bottom(); row < re; ++row) {
             for (int col = r.left(), ce = r.right(); col < ce; ++col) {
-                buffer_.at(col, row) = buffer.at(col - bufferOffset.x(), row - bufferOffset.y());
+                buffer_->at(col, row) = buffer.at(col - bufferOffset.x(), row - bufferOffset.y());
             }
         }
         return *this;
@@ -70,7 +69,7 @@ namespace ui {
         if (color.opaque()) {
             for (int y = r.top(), ye = r.bottom(); y < ye; ++y) {
                 for (int x = r.left(), xe = r.right(); x < xe; ++x) {
-                    Cell & c = buffer_.at(x,y);
+                    Cell & c = buffer_->at(x,y);
                     c.setBg(color);
                     c.setCodepoint(' ');
                     c.setBorder(c.border().clear());
@@ -79,7 +78,7 @@ namespace ui {
         } else {
             for (int y = r.top(), ye = r.bottom(); y < ye; ++y) {
                 for (int x = r.left(), xe = r.right(); x < xe; ++x) {
-                    Cell & c = buffer_.at(x,y);
+                    Cell & c = buffer_->at(x,y);
                     c.setFg(color.blendOver(c.fg()));
                     c.setBg(color.blendOver(c.bg()));
                     c.setDecor(color.blendOver(c.decor()));
@@ -90,12 +89,23 @@ namespace ui {
         return *this;
     }
 
+    Canvas & Canvas::fill(Rect const & rect, Cell const & fill) {
+        Rect r = (rect & visibleArea_.rect()) + visibleArea_.offset();
+        for (int y = r.top(), ye = r.bottom(); y < ye; ++y) {
+            for (int x = r.left(), xe = r.right(); x < xe; ++x) {
+                buffer_->at(x,y) = fill;
+            }
+        }
+        return *this;
+
+    }
+
     Canvas & Canvas::textOut(Point x, Char::iterator_utf8 begin, Char::iterator_utf8 end) {
         Rect vr = visibleArea_.rect() + visibleArea_.offset();
         x = x + visibleArea_.offset();
         for (; begin != end; ++begin) {
             if (vr.contains(x)) {
-                Cell & c = buffer_.at(x);
+                Cell & c = buffer_->at(x);
                 c.setFg(fg_);
                 c.setDecor(decor_);
                 c.setBg(bg_.blendOver(c.bg()));
@@ -117,7 +127,7 @@ namespace ui {
             int inc = (from.y() < to.y()) ? 1 : -1;
             for (; from != to; from.setY(from.y() + inc)) {
                 if (vr.contains(from)) {
-                    Cell & c = buffer_.at(from);
+                    Cell & c = buffer_->at(from);
                     c.setBorder(c.border() + border);
                 }
             }
@@ -125,7 +135,7 @@ namespace ui {
             int inc = (from.x() < to.x()) ? 1 : -1;
             for (; from != to; from.setX(from.x() + inc)) {
                 if (vr.contains(from)) {
-                    Cell & c = buffer_.at(from);
+                    Cell & c = buffer_->at(from);
                     c.setBorder(c.border() + border);
                 }
             }

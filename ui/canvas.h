@@ -19,6 +19,8 @@ namespace ui {
         class Cell;
         class Buffer;
 
+        Canvas(Buffer & buffer);
+
         Rect rect() const {
             return Rect{size()};
         }
@@ -101,7 +103,14 @@ namespace ui {
         Canvas & fill(Rect const & rect) {
             return fill(rect, bg_);
         }
+
         Canvas & fill(Rect const & rect, Color color);
+
+        /** Fills the given rectangle with the specified cell. 
+         
+            Overrides any previous information, even if the cell would be transparent. 
+         */
+        Canvas & fill(Rect const & rect, Cell const & fill);
 
         Canvas & textOut(Point x, std::string const & str) {
             return textOut(x, Char::BeginOf(str), Char::EndOf(str));
@@ -192,9 +201,8 @@ namespace ui {
 
     private:
 
-
         VisibleArea visibleArea_;
-        Buffer & buffer_;
+        Buffer * buffer_;
         Size size_;
 
     }; // ui::Canvas
@@ -267,8 +275,9 @@ namespace ui {
             return codepoint_ & 0x1fffff;
         }
 
-        void setCodepoint(char32_t value) {
+        Cell & setCodepoint(char32_t value) {
             codepoint_ = (codepoint_ & 0xffe00000) + (value & 0x1fffff);
+            return *this;
         }
         //@}
 
@@ -279,8 +288,9 @@ namespace ui {
             return fg_;
         }
 
-        void setFg(Color value) {
+        Cell & setFg(Color value) {
             fg_ = value;
+            return *this;
         }
         //@}
 
@@ -291,8 +301,9 @@ namespace ui {
             return bg_;
         }
 
-        void setBg(Color value) {
+        Cell & setBg(Color value) {
             bg_ = value;
+            return *this;
         }
 
         //@}
@@ -304,8 +315,9 @@ namespace ui {
             return decor_;
         }
 
-        void setDecor(Color value) {
+        Cell & setDecor(Color value) {
             decor_ = value;
+            return *this;
         }
         //@}
 
@@ -317,8 +329,9 @@ namespace ui {
             return font_;
         }
 
-        void setFont(Font value) {
+        Cell & setFont(Font value) {
             font_ = value;
+            return *this;
         }
         //@}
 
@@ -329,8 +342,9 @@ namespace ui {
             return border_;
         }
 
-        void setBorder(Border const & value) {
+        Cell & setBorder(Border const & value) {
             border_ = value;
+            return *this;
         }
         //@}
 
@@ -377,6 +391,14 @@ namespace ui {
 
         Size const & size() const {
             return size_;
+        }
+
+        int width() const {
+            return size_.width();
+        }
+
+        int height() const {
+            return size_.height();
         }
 
         /** Determines whether given point lies within the buffer's area. 
@@ -433,7 +455,28 @@ namespace ui {
                 SetUnusedBits(at(cursorPosition_), CURSOR_POSITION);
         }
 
+        /** Fills portion of given row with the specified cell. 
+         
+            Exponentially increases the size of copied cells for performance.
+         */
+        void fillRow(int row, Cell const & fill, int from, int cols) {
+            Cell * r = rows_[row];
+            r[from] = fill;
+            size_t i = 1;
+            size_t next = 2;
+            while (next < cols) {
+                memcpy(r + from + i, r + from, sizeof(Cell) * i);
+                i = next;
+                next *= 2;
+            }
+            memcpy(r + from + i, r + from, sizeof(Cell) * (cols - i));
+        }
+
     protected:
+
+        Cell ** rows() {
+            return rows_;
+        }
 
         Cell const & cellAt(Point const & p) const {
             ASSERT(Rect{size_}.contains(p));
@@ -488,12 +531,17 @@ namespace ui {
 
     }; // ui::Canvas::Buffer
 
+    inline Canvas::Canvas(Canvas::Buffer & buffer):
+        Canvas(buffer, VisibleArea{Point{0,0}, buffer.size()}, buffer.size()) {
+    }
+
+
     inline Canvas::Cell & Canvas::at(Point const & coords) {
-        return buffer_.at(coords);
+        return buffer_->at(coords);
     }
 
     inline Canvas::Cell const & Canvas::at(Point const & coords) const {
-        return buffer_.at(coords);
+        return buffer_->at(coords);
     }
 
 

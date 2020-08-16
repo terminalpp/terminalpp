@@ -6,8 +6,7 @@ cmake_minimum_required (VERSION 3.5)
 project(terminalpp VERSION ${TPP_VERSION})
 
 # the list of libraries to link the executable with
-set(TPP_LINK_LIBRARIES libui)
-#set(TPP_LINK_LIBRARIES libuiterminal libtpp libui)
+set(TPP_LINK_LIBRARIES libuiterminal libtpp libui)
 
 # Required Libraries and Tools
 # ============================

@@ -76,6 +76,10 @@ namespace tpp {
             pty_ = nullptr;
         }
 
+        void send(char const * what, size_t size) {
+            pty_->send(what, size);
+        }
+
         T * pty_;
 
 

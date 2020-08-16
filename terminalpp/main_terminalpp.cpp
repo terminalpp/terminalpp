@@ -117,15 +117,15 @@ int main(int argc, char* argv[]) {
 		Log::Enable(Log::StdOutWriter(), { 
 			Log::Default(),
             Log::Exception(),
-			//ui::AnsiTerminal::SEQ_ERROR,
-			//ui::AnsiTerminal::SEQ_UNKNOWN
+			ui::AnsiTerminal::SEQ_ERROR,
+			ui::AnsiTerminal::SEQ_UNKNOWN
 		});
         
         tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", 80, 25);
         // currently owned by the window, when multiple sessions are available this might change
         tpp::TerminalWindow * tw = new tpp::TerminalWindow{w};
         tw->newSession(config.sessionByName(config.defaultSession()));
-        tw->newSession(config.sessions[0]);
+        //tw->newSession(config.sessions[0]);
         //new tpp::Session{w, config.sessionByName(config.defaultSession())};
         w->show();
         tpp::Application::Instance()->mainLoop();

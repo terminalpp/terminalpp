@@ -295,11 +295,25 @@ namespace ui {
     // Painting
 
     void Widget::repaint() {
+        UI_THREAD_ONLY;
+        // if there is already pending repaint, don't do anything
+        if (pendingRepaint_.exchange(true))
+            return;
+        requestRepaint();
+    }
+
+    void Widget::scheduleRepaint() {
+        // if repaint is already requested, do nothing
+        if (pendingRepaint_.exchange(true))
+            return;
+        schedule([this](){
+            requestRepaint();
+        });
+    }
+
+    void Widget::requestRepaint() {
+        UI_THREAD_ONLY;
         if (parent_ == nullptr || background_.opaque()) {
-            // if there is already pending repaint, don't do anything
-            if (pendingRepaint_ == true)
-                return;
-            pendingRepaint_ = true;
             // propagate the paint event through parents so that they can decide to actually repaint themselves instead, if the repaint is allowed, instruct the renderer to repaint
             if (parent_ == nullptr || parent_->allowRepaintRequest(this)) {
                 ASSERT(renderer() != nullptr);

@@ -6,7 +6,7 @@ namespace ui {
 
     OSCSequence OSCSequence::Parse(char const * & start, char const * end) {
         OSCSequence result;
-        char const * x = start;
+        char const * x = start + 2; // skip the leading '\033]'
         if (x == end) {
             result.num_ = INCOMPLETE;
             return result;

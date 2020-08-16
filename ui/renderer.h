@@ -10,6 +10,7 @@
 #include "inputs.h"
 #include "events.h"
 
+
 namespace ui {
 
     class Widget;
@@ -77,8 +78,6 @@ namespace ui {
       */
     //@{
     public:
-
-
 
         /** Schedule the given event in the main UI thread.
          

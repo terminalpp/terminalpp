@@ -121,13 +121,13 @@ namespace ui {
         /**\name Log Levels.
          */
         //@{
-
+            /*
         static Log SEQ;
         static Log SEQ_UNKNOWN;
         static Log SEQ_ERROR;
         static Log SEQ_WONT_SUPPORT;
         static Log SEQ_SENT;
-
+        */
         //@}
 
         AnsiTerminal(tpp::PTYMaster * pty, Palette * palette, int width = 0, int height = 0, int x = 0, int y = 0); 
@@ -141,13 +141,15 @@ namespace ui {
         //@{
         /** Returns the maximum terminal refreshes per second. 
          */
+        /*
         size_t fps() const {
             return fps_;
         }
+        */
 
         /** Sets the maximum frames per second for the terminal. 
          */
-        virtual void setFps(unsigned value);
+        //virtual void setFps(unsigned value);
 
         /** Sets the maximum number of history rows for the terminal. 
          
@@ -295,10 +297,11 @@ namespace ui {
     protected:
 
         friend class SelectionOwner<AnsiTerminal>;
-        
+        /*
         class CSISequence;
         class OSCSequence;
 
+        /*
         enum class MouseMode {
             Off,
             Normal,
@@ -321,6 +324,7 @@ namespace ui {
             Normal, 
             Application
         }; // AnsiTerminal::KeypadMode
+        */
 
         class State {
         public:
@@ -423,17 +427,21 @@ namespace ui {
 
         /** Keyboard focus in triggers repaint as the cursor must be updated. 
          */
+        /*
         void focusIn(UIEvent<void>::Payload & event) override {
             Widget::focusIn(event);
             repaint();
         }
+        */
 
         /** Keyboard focus out triggers repaint as the cursor must be updated. 
          */
+        /*
         void focusOut(UIEvent<void>::Payload & event) override {
             Widget::focusOut(event);
             repaint();
         }
+        */
 
         void keyChar(UIEvent<Char>::Payload & event) override;
         void keyDown(UIEvent<Key>::Payload & event) override;

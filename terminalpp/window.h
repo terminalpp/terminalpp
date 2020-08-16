@@ -139,6 +139,7 @@ namespace tpp {
             // TODO do I want round, or float instead? 
             cellSize_ = Size{static_cast<int>(baseCellSize_.width() * zoom_),static_cast<int>(baseCellSize_.height() * zoom_)};
             sizePx_ = Size{cellSize_.width() * width, cellSize_.height() * height};
+            //setFps(60);
         }
 
         virtual void windowResized(int width, int height) {

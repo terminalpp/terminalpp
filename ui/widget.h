@@ -9,6 +9,15 @@
 #include "canvas.h"
 #include "layout.h"
 
+#ifndef NDEBUG
+
+#define UI_THREAD_ONLY if (Widget::UIThreadID() != std::this_thread::get_id()) THROW(Exception()) << "Only UI thread is allowed to execute at this point"
+#else
+
+#define UI_THREAD_ONLY
+#endif
+
+
 namespace ui {
 
     class Widget;
@@ -41,6 +50,16 @@ namespace ui {
     /** \name Event Scheduling
      */
     //@{
+#ifndef NDEBUG 
+    public: 
+
+        static std::thread::id UIThreadID() {
+            static std::thread::id id{std::this_thread::get_id()};
+            return id;
+        }
+#endif
+
+
     protected:
         void schedule(std::function<void()> event);
 
@@ -182,6 +201,14 @@ namespace ui {
          */
         Rect const & rect() const {
             return rect_;
+        }
+
+        int width() const {
+            return rect_.width();
+        }
+
+        int height() const {
+            return rect_.height();
         }
 
         SizeHint widthHint() const {
@@ -343,10 +370,14 @@ namespace ui {
         /** Repaints the widget. 
          
             Triggers the repaint of the widget. 
+         */
+        void repaint();
 
-            Widget subclasses can override this method to delegate the repaint event to other widgets up the tree, such as in cases of transparent background widgets. 
-            */
-        virtual void repaint();
+        /** Schedules repaint. 
+         
+            This method can be called from a different thread. 
+         */
+        void scheduleRepaint();
 
         Color const & background() const {
             return background_;
@@ -371,6 +402,12 @@ namespace ui {
         }
 
     protected:
+
+        /** Called when repaint of the widget is requested. 
+
+            Widget subclasses can override this method to delegate the repaint event to other widgets up the tree, such as in cases of transparent background widgets. 
+         */
+        virtual void requestRepaint();
 
         /** Paints given child. 
          
@@ -419,7 +456,7 @@ namespace ui {
 
         /** Since widget's start detached, their paint is blocked by setting pending repaint to true. When attached, and repainted via its parent, the flag will be cleared. 
          */
-        bool pendingRepaint_ = true;
+        std::atomic<bool> pendingRepaint_ = true;
 
         Color background_;
         Border border_;
