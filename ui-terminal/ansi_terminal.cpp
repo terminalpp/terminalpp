@@ -90,7 +90,7 @@ namespace ui {
 #endif
     }
 
-    // Inputs
+    // User Input
 
     void AnsiTerminal::keyDown(KeyEvent::Payload & e) {
         // only scroll to prompt if the key down is not a simple modifier key
@@ -131,9 +131,136 @@ namespace ui {
         // don't propagate to parent as the terminal handles keyboard input itself
         e.stop();
         Widget::keyChar(e);
-
     }
 
+    void AnsiTerminal::mouseMove(MouseMoveEvent::Payload & e) {
+        /*
+        if (// the mouse movement should actually be reported
+            (mouseMode_ == MouseMode::All || (mouseMode_ == MouseMode::ButtonEvent && mouseButtonsDown_ > 0)) && 
+            // only send the mouse information if the mouse is in the range of the window
+            Rect{size()}.contains(e->coords)) {
+                // mouse move adds 32 to the last known button press
+                sendMouseEvent(mouseLastButton_ + 32, e->coords, 'M');
+                LOG(SEQ) << "Mouse moved to " << event->coords;
+        }
+        if (updatingSelection()) 
+            updateSelection(event->coords + scrollOffset(), scrollSize());
+        */
+        // don't propagate to parent as the terminal handles keyboard input itself
+        e.stop();
+        Widget::mouseMove(e);
+    }
+
+    void AnsiTerminal::mouseDown(MouseButtonEvent::Payload & e) {
+        /*
+        ++mouseButtonsDown_;
+		if (mouseMode_ != MouseMode::Off) {
+            mouseLastButton_ = encodeMouseButton(event->button, event->modifiers);
+            if (event.active()) {
+                sendMouseEvent(mouseLastButton_, event->coords, 'M');
+                LOG(SEQ) << "Button " << event->button << " down at " << event->coords;
+            }
+        }
+        */
+        // don't propagate to parent as the terminal handles keyboard input itself
+        e.stop();
+        Widget::mouseDown(e);
+    }
+
+    void AnsiTerminal::mouseUp(MouseButtonEvent::Payload & e) {
+        /*
+        // a bit of defensive programming
+        if (mouseButtonsDown_ > 0) {
+            --mouseButtonsDown_;
+            if (mouseMode_ != MouseMode::Off) {
+                mouseLastButton_ = encodeMouseButton(event->button, event->modifiers);
+                if (event.active()) {
+                    sendMouseEvent(mouseLastButton_, event->coords, 'm');
+                    LOG(SEQ) << "Button " << event->button << " up at " << event->coords;
+                }
+            }
+        }
+        */
+        // don't propagate to parent as the terminal handles keyboard input itself
+        e.stop();
+        Widget::mouseUp(e);
+    }
+
+    void AnsiTerminal::mouseWheel(MouseWheelEvent::Payload & e) {
+        if (historyRows_.size() > 0) {
+            if (e->by > 0)
+                scrollBy(Point{0, -1});
+            else 
+                scrollBy(Point{0, 1});
+        }
+        /*
+		if (mouseMode_ != MouseMode::Off) {
+    		// mouse wheel adds 64 to the value
+            mouseLastButton_ = encodeMouseButton((event->by > 0) ? MouseButton::Left : MouseButton::Right, event->modifiers) + 64;
+            if (event.active()) {
+                sendMouseEvent(mouseLastButton_, event->coords, 'M');
+                LOG(SEQ) << "Wheel offset " << event->by << " at " << event->coords;
+            }
+        }
+        */
+        // don't propagate to parent as the terminal handles keyboard input itself
+        e.stop();
+        Widget::mouseWheel(e);
+    }
+
+    unsigned AnsiTerminal::encodeMouseButton(MouseButton btn, Key modifiers) {
+		unsigned result =
+			((modifiers & Key::Shift) ? 4 : 0) +
+			((modifiers & Key::Alt) ? 8 : 0) +
+			((modifiers & Key::Ctrl) ? 16 : 0);
+		switch (btn) {
+			case MouseButton::Left:
+				return result;
+			case MouseButton::Right:
+				return result + 1;
+			case MouseButton::Wheel:
+				return result + 2;
+			default:
+				UNREACHABLE;
+		}
+    }
+
+    void AnsiTerminal::sendMouseEvent(unsigned button, Point coords, char end) {
+		// first increment col & row since terminal starts from 1
+        coords += Point{1,1};
+		switch (mouseEncoding_) {
+			case MouseEncoding::Default: {
+				// if the event is release, button number is 3
+				if (end == 'm')
+					button |= 3;
+				// increment all values so that we start at 32
+				button += 32;
+                coords += Point{32, 32};
+				// if the col & row are too high, ignore the event
+				if (coords.x() > 255 || coords.y() > 255)
+					return;
+				// otherwise output the sequence
+				char buffer[6];
+				buffer[0] = '\033';
+				buffer[1] = '[';
+				buffer[2] = 'M';
+				buffer[3] = button & 0xff;
+				buffer[4] = static_cast<char>(coords.x());
+				buffer[5] = static_cast<char>(coords.y());
+				send(buffer, 6);
+				break;
+			}
+			case MouseEncoding::UTF8: {
+				LOG(SEQ_WONT_SUPPORT) << "utf8 mouse encoding";
+				break;
+			}
+			case MouseEncoding::SGR: {
+				std::string buffer = STR("\033[<" << button << ';' << coords.x() << ';' << coords.y() << end);
+				send(buffer.c_str(), buffer.size());
+				break;
+			}
+		}
+    }
 
 
     // Terminal State 
@@ -175,18 +302,49 @@ namespace ui {
     // Scrollback buffer
 
     void AnsiTerminal::insertLines(int lines, int top, int bottom, Cell const & fill) {
-        state_->buffer.insertLines(lines, top, bottom, fill);
+        while (lines-- > 0)
+            state_->buffer.insertLine(top, bottom, fill);
     }
 
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
-        if (top == 0 && scrollOffset().y() == historyRows()) {
-            state_->buffer.deleteLines(lines, top, bottom, fill, palette_->defaultBackground());
-            // if the window was scrolled to the end, keep it scrolled to the end as well
-            // this means that when the scroll buffer overflows, the scroll offset won't change, but its contents would
-            // for now I think this is a feature as you then know that your scroll buffer is overflowing
-            setScrollOffset(Point{0, historyRows()});
+        // if the window was scrolled to the end, keep it scrolled to the end as well
+        // this means that when the scroll buffer overflows, the scroll offset won't change, but its contents would
+        // for now I think this is a feature as you then know that your scroll buffer is overflowing
+        bool scrollToTerminal = top == 0 && scrollOffset().y() == historyRows_.size();
+        // scroll the lines
+        while (lines-- > 0) {
+            if (maxHistoryRows_ != 0) {
+                auto removedRow = state_->buffer.copyRow(top, palette_->defaultBackground());
+                addHistoryRow(removedRow.first, removedRow.second);
+            }
+            state_->buffer.deleteLine(top, bottom, fill);
+        }
+        // if the terminal was in view, scroll it back to view
+        if (scrollToTerminal)
+            schedule([this](){
+                setScrollOffset(Point{0, historyRows()});
+            });
+    }
+
+    void AnsiTerminal::addHistoryRow(Cell * row, int cols) {
+        if (cols <= width()) {
+            historyRows_.push_back(std::make_pair(cols, row));
+        // if the line is too long, simply chop it in pieces of maximal length
         } else {
-            state_->buffer.deleteLines(lines, top, bottom, fill, palette_->defaultBackground());
+            Cell * i = row;
+            while (cols != 0) {
+                int xSize = std::min(width(), cols);
+                Cell * x = new Cell[xSize];
+                memcpy(x, i, sizeof(Cell) * xSize); 
+                i += xSize;
+                cols -= xSize;
+                historyRows_.push_back(std::make_pair(xSize, x));
+            }
+            delete [] row;
+        }
+        while (historyRows_.size() > static_cast<size_t>(maxHistoryRows_)) {
+            delete [] historyRows_.front().second;
+            historyRows_.pop_front();
         }
     }
 
@@ -1188,15 +1346,45 @@ namespace ui {
     // ============================================================================================
     // AnsiTerminal::Buffer
 
-    void AnsiTerminal::Buffer::insertLines(int lines, int top, int bottom, Cell const & fill) {
-        while (lines-- > 0) {
-            Cell * x = rows()[bottom - 1];
-            memmove(rows() + top + 1, rows() + top, sizeof(Cell*) * (bottom - top - 1));
-            rows()[top] = x;
-            fillRow(top, fill, 0, width());
-        }
+    void AnsiTerminal::Buffer::insertLine(int top, int bottom, Cell const & fill) {
+        Cell * x = rows_[bottom - 1];
+        memmove(rows_ + top + 1, rows_ + top, sizeof(Cell*) * (bottom - top - 1));
+        rows_[top] = x;
+        fillRow(top, fill, 0, width());
     }
 
+    std::pair<AnsiTerminal::Cell *, int> AnsiTerminal::Buffer::copyRow(int row, Color defaultBg) {
+        int lastCol = width();
+        Cell * x = rows_[row];
+        while (lastCol-- > 0) {
+            Cell & c = x[lastCol];
+            // if we have found end of line character, good
+            if (isLineEnd(c))
+                break;
+            // if we have found a visible character, we must remember the whole line, break the search - any end of line characters left of it will make no difference
+            if (c.codepoint() != ' ' || c.bg() != defaultBg || c.font().underline() || c.font().strikethrough()) {
+                break;
+            }
+        }   
+        // if we are not at the end of line, we must remember the whole line
+        if (isLineEnd(x[lastCol])) 
+            lastCol += 1;
+        else
+            lastCol = width();
+        // make the copy and return it
+        Cell * result = new Cell[lastCol];
+        memcpy(result, x, sizeof(Cell) * lastCol);
+        return std::make_pair(result, lastCol);
+    }
+
+    void AnsiTerminal::Buffer::deleteLine(int top, int bottom, Cell const & fill) {
+        Cell * x = rows_[top];
+        memmove(rows_ + top, rows_ + top + 1, sizeof(Cell*) * (bottom - top - 1));
+        rows_[bottom - 1] = x;
+        fillRow(bottom - 1, fill, 0, width());
+    }
+
+    /*
     void AnsiTerminal::Buffer::deleteLines(int lines, int top, int bottom, Cell const & fill, Color defaultBg) {
         while (lines-- > 0) {
             Cell * x = rows()[top];
@@ -1220,17 +1408,18 @@ namespace ui {
                     lastCol = width();
                 // make the copy and add it to the history line
                 // TODO deal with adding history rows, reeenable
-                /*
+                / *
                 Cell * row = new Cell[lastCol];
                 memcpy(row, x, sizeof(Cell) * lastCol);
                 addHistoryRow(lastCol, row);
-                */
+                * /
             }
             memmove(rows() + top, rows() + top + 1, sizeof(Cell*) * (bottom - top - 1));
             rows()[bottom - 1] = x;
             fillRow(bottom - 1, fill, 0, width());
         }
     }
+    */
 
     // ============================================================================================
     // AnsiTerminal::Palette

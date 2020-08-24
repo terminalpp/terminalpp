@@ -328,7 +328,7 @@ namespace ui {
 
     void Widget::paint() {
             pendingRepaint_ = false;
-            Canvas canvas{renderer_->buffer_, visibleArea_, contentsSize()};
+            Canvas canvas{renderer_->buffer_, visibleArea_, size()};
             // paint the background first
             canvas.setBg(background_);
             canvas.fill(canvas.rect());

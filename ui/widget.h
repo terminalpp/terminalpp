@@ -203,6 +203,10 @@ namespace ui {
             return rect_;
         }
 
+        Size size() const {
+            return rect_.size();
+        }
+
         int width() const {
             return rect_.width();
         }
@@ -280,6 +284,21 @@ namespace ui {
                 updateVisibleArea();
                 repaint();
             } 
+        }
+
+
+        virtual void scrollBy(Point delta) {
+            Point p = scrollOffset_ + delta;
+            Size csize = contentsSize();
+            if (p.x() < 0)
+                p.setX(0);
+            if (p.x() > csize.width() - width())
+                p.setX(csize.width() - width());
+            if (p.y() < 0)
+                p.setY(0);
+            if (p.y() > csize.height() - height())
+                p.setY(csize.height() - height());
+            setScrollOffset(p);
         }
 
         /** Returns the hint about the contents size of the widget. 

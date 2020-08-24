@@ -67,7 +67,7 @@ namespace ui {
 
     //@}
 
-    /** \name Inputs
+    /** \name User Input
      */
     //@{
 
@@ -77,10 +77,26 @@ namespace ui {
 
         void keyUp(KeyEvent::Payload & e) override;
 
-        void keyChar(KeyCharEvent::Payload & e) override ;
+        void keyChar(KeyCharEvent::Payload & e) override;
 
+        void mouseMove(MouseMoveEvent::Payload & e) override;
+
+        void mouseDown(MouseButtonEvent::Payload & e) override;
+
+        void mouseUp(MouseButtonEvent::Payload & e) override;
+
+        void mouseWheel(MouseWheelEvent::Payload & e) override;
+
+        unsigned encodeMouseButton(MouseButton btn, Key modifiers);
+
+        void sendMouseEvent(unsigned button, Point coords, char end);
 
     private:
+
+        /** Number of pressed mouse buttons to determine mouse capture. */
+        unsigned mouseButtonsDown_ = 0;
+        /** Last pressed mouse button for mouse move reporting. */
+        unsigned mouseLastButton_ = 0;
 
         static std::unordered_map<Key, std::string> KeyMap_;
         static std::unordered_set<Key> PrintableKeys_;
@@ -198,6 +214,8 @@ namespace ui {
             */
         void deleteLines(int lines, int top, int bottom, Cell const & fill);
 
+        void addHistoryRow(Cell * row, int cols);
+
 
     private:
         int maxHistoryRows_;
@@ -289,9 +307,11 @@ namespace ui {
             ui::Canvas::Buffer(size) {
         }
 
-        void insertLines(int lines, int top, int bottom, Cell const & fill);
+        void insertLine(int top, int bottom, Cell const & fill);
 
-        void deleteLines(int lines, int top, int bottom, Cell const & fill, Color defaultBg);
+        std::pair<Cell *, int> copyRow(int row, Color defaultBg);
+
+        void deleteLine(int top, int bottom, Cell const & fill);
 
         void markAsLineEnd(Point p) {
             if (p.x() >= 0)

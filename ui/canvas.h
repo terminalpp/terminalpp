@@ -186,7 +186,7 @@ namespace ui {
             }
 
             VisibleArea offset(Point const & by) const {
-                return VisibleArea{offset_ - by, rect_};
+                return VisibleArea{offset_ - by, rect_ + by};
             }
 
         private:
@@ -474,9 +474,11 @@ namespace ui {
 
     protected:
 
+        /*
         Cell ** rows() {
             return rows_;
         }
+        */
 
         Cell const & cellAt(Point const & p) const {
             ASSERT(Rect{size_}.contains(p));
@@ -504,7 +506,7 @@ namespace ui {
          */
         static char32_t constexpr CURSOR_POSITION = 0x200000;
 
-    private:
+    protected:
 
         void create(Size const & size) {
             rows_ = new Cell*[size.height()];
@@ -535,15 +537,12 @@ namespace ui {
         Canvas(buffer, VisibleArea{Point{0,0}, buffer.size()}, buffer.size()) {
     }
 
-
     inline Canvas::Cell & Canvas::at(Point const & coords) {
-        return buffer_->at(coords);
+        return buffer_->at(coords + visibleArea_.offset());
     }
 
     inline Canvas::Cell const & Canvas::at(Point const & coords) const {
-        return buffer_->at(coords);
+        return buffer_->at(coords + visibleArea_.offset());
     }
-
-
 
 } // namespace ui

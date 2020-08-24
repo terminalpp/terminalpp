@@ -50,11 +50,16 @@ Issues to be raised:
 
 UI version 3
 
+- contents size is not really updated, but I guess that is ok - there should be sth like contentssize setter which does the update
+- terminal won't use that and will simply resize its own canvas once it is given it
+- fiull & drawBuffer don't really work well with offsets, must be fixed
+
 - scrolling & scrollback buffer, resizing
 - cursor
 - mouse input
 - selection
 
+- font size is wrong, not taken from settings it seems
 - font setSize & other setters should perhaps be renamed to withSize, etc to avoid confuision about them being setters
 - size.width() & size.height() should become just width and height
 - some simpler accesses to state-ish properties in the terminal? 
