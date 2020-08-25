@@ -56,27 +56,28 @@ namespace ui {
     // Widget
 
     void AnsiTerminal::paint(Canvas & canvas) {
-        std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
+        Canvas ccanvas{contentsCanvas(canvas)};
 #ifdef SHOW_LINE_ENDINGS
         Border endOfLine{Border{Color::Red}.setAll(Border::Kind::Thin)};
 #endif
-        Rect visibleRect{canvas.visibleRect()};
+        Rect visibleRect{ccanvas.visibleRect()};
+        std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
         int top = historyRows();
         // see if there are any history lines that need to be drawn
         for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); ; ++row) {
             if (row >= re)
                 break;
             for (int col = 0, ce = historyRows_[row].first; col < ce; ++col) {
-                canvas.at(Point{col, row}) = historyRows_[row].second[col];
+                ccanvas.at(Point{col, row}) = historyRows_[row].second[col];
 #ifdef SHOW_LINE_ENDINGS
                 if (isEndOfLine(history_[row].second[col]))
-                    canvas.setBorderAt(Point{col, row}, endOfLine);
+                    ccanvas.setBorderAt(Point{col, row}, endOfLine);
 #endif
             }
-            canvas.fill(Rect{Point{historyRows_[row].first, row}, Point{width(), row + 1}});
+            ccanvas.fill(Rect{Point{historyRows_[row].first, row}, Point{width(), row + 1}});
         }
         // now draw the actual buffer
-        canvas.drawBuffer(state_->buffer, Point{0, top});
+        ccanvas.drawBuffer(state_->buffer, Point{0, top});
 #ifdef  SHOW_LINE_ENDINGS
         // now add borders to the cells that are marked as end of line
         for (int row = std::max(top, visibleRect.top()), re = visibleRect.bottom(); ; ++row) {
@@ -84,10 +85,12 @@ namespace ui {
                 break;
             for (int col = 0; col < width(); ++col) {
                 if (isEndOfLine(at(col, row - top)))
-                    canvas.at(Point{col, row}).setBorder(endOfLine);
+                    ccanvas.at(Point{col, row}).setBorder(endOfLine);
             }
         }
 #endif
+        // display scrollbars
+        canvas.verticalScrollbar(historyRows() + height(), scrollOffset().y());
     }
 
     // User Input

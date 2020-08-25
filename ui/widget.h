@@ -263,10 +263,16 @@ namespace ui {
 
         /** Returns the contents size. 
 
-            */
+         */
         virtual Size contentsSize() const {
             return rect_.size();
         }
+
+        /** Returns the canvas used for the contents of the widget. 
+         
+            The canvas has the contentsSize() size and is scrolled according to the scrollOffset().
+         */
+        Canvas contentsCanvas(Canvas & from) const;
 
         /** Returns the scroll offset of the contents. 
          */

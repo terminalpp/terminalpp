@@ -271,13 +271,20 @@ namespace ui {
         relayouting_ = false;
     }
 
+    /** The argument is not used, but is kept to signify that the method should only be called from contexts where the widget's canvas exists. 
+     */
+    Canvas Widget::contentsCanvas(Canvas & from) const {
+        MARK_AS_UNUSED(from);
+        return Canvas{renderer_->buffer_, visibleArea_.offset(scrollOffset_), contentsSize()};
+    }
+
     /** If the widget has normal parent, its contents visible area is used. If the parent is not attached, or non-existent, no visible areas are updated. If the widget is root widget, then renderer's visible area is used. 
      */
     void Widget::updateVisibleArea() {
         if (isRootWidget()) 
             updateVisibleArea(renderer()->visibleArea(), renderer_);
         else if (parent_ != nullptr && parent_->renderer_ != nullptr) 
-            updateVisibleArea(parent_->visibleArea_, renderer_);
+            updateVisibleArea(parent_->visibleArea_.offset(parent_->scrollOffset_), renderer_);
         else 
             // otherwise do nothing (the widget is not attached and neither is its parent)
             ASSERT(renderer_ == nullptr);
@@ -285,9 +292,9 @@ namespace ui {
 
     void Widget::updateVisibleArea(VisibleArea const & parentArea, Renderer * renderer) {
         renderer_ = renderer;
-        visibleArea_ = parentArea.clip(rect_).offset(scrollOffset_);
+        visibleArea_ = parentArea.clip(rect_);
         for (Widget * child : children_)
-            child->updateVisibleArea(visibleArea_, renderer);
+            child->updateVisibleArea(visibleArea_.offset(scrollOffset_), renderer);
     }
 
 

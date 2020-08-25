@@ -50,9 +50,7 @@ Issues to be raised:
 
 UI version 3
 
-
-- add scrollbar - kind of dfone, where to put the drawing functions really... canvas? 
-- would we allow different scrollbar kinds? How to deal with non-border terminals & scrollbars? 
+- terminal scrolling disabled for alternate mode
 
 - implement terminal & history resizing
 - clear the code

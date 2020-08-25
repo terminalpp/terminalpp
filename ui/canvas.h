@@ -131,6 +131,10 @@ namespace ui {
         Canvas & border(Border const & border, Point from, Point to);
         Canvas & border(Border const & border, Rect const & rect);
 
+
+        Canvas & verticalScrollbar(int size, int offset);
+        Canvas & horizontalScrollbar(int size, int offset);
+
         //@}
 
         /** \name Single cell access. 
@@ -147,6 +151,7 @@ namespace ui {
             Don't really know where to put these...
          */
         //@{
+
         static std::pair<int, int> ScrollBarDimensions(int length, int max, int offset) {
             int sliderSize = std::max(1, length * length / max);
             int sliderStart = (offset + length == max) ? (length - sliderSize) : (offset * length / max);
