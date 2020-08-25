@@ -62,7 +62,7 @@ namespace ui {
 #endif
         Rect visibleRect{ccanvas.visibleRect()};
         std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-        int top = historyRows();
+        int top = alternateMode_ ? 0 : historyRows();
         // see if there are any history lines that need to be drawn
         for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); ; ++row) {
             if (row >= re)
@@ -90,7 +90,7 @@ namespace ui {
         }
 #endif
         // display scrollbars
-        canvas.verticalScrollbar(historyRows() + height(), scrollOffset().y());
+        canvas.verticalScrollbar(top + height(), scrollOffset().y());
     }
 
     // User Input
@@ -1099,7 +1099,12 @@ namespace ui {
                         alternateMode_ = value;
                         // TODO renable
                         //setScrollSize(Size{width(), state_->buffer.historyRows() + height()});
-                        //setScrollOffset(Point{0, state_->buffer.historyRows()});
+                        schedule([this](){
+                            if (alternateMode_)
+                                setScrollOffset(Point{0, 0});
+                            else
+                                setScrollOffset(Point{0, historyRows()});
+                        });
                         // if we are entering the alternate mode, reset the state to default values
                         if (value) {
                             state_->reset(palette_->defaultForeground(), palette_->defaultBackground());

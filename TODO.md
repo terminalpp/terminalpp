@@ -50,8 +50,6 @@ Issues to be raised:
 
 UI version 3
 
-- terminal scrolling disabled for alternate mode
-
 - implement terminal & history resizing
 - clear the code
 - implement selection & stuff
