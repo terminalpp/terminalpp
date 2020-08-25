@@ -327,15 +327,15 @@ namespace ui {
     }
 
     void Widget::paint() {
-            pendingRepaint_ = false;
-            Canvas canvas{renderer_->buffer_, visibleArea_, size()};
-            // paint the background first
-            canvas.setBg(background_);
-            canvas.fill(canvas.rect());
-            // now paint whatever the widget contents is
-            paint(canvas);
-            // TODO paint the border now that the widget has been painted
-            // TODO 
+        pendingRepaint_ = false;
+        Canvas canvas{renderer_->buffer_, visibleArea_, size()};
+        // paint the background first
+        canvas.setBg(background_);
+        canvas.fill(canvas.rect());
+        // now paint whatever the widget contents is
+        paint(canvas);
+        // TODO paint the border now that the widget has been painted
+        // TODO 
     }
 
     bool Widget::allowRepaintRequest(Widget * immediateChild) {

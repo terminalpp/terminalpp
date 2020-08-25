@@ -33,6 +33,14 @@ namespace ui {
             return size_;
         }
 
+        int width() const {
+            return size_.width();
+        }
+
+        int height() const {
+            return size_.height();
+        }
+
         /** \name Text metrics
          */
         //@{
@@ -133,6 +141,26 @@ namespace ui {
         Cell const & at(Point const & coords) const;
 
         //@}
+
+        /** \name Helpers
+         
+            Don't really know where to put these...
+         */
+        //@{
+        static std::pair<int, int> ScrollBarDimensions(int length, int max, int offset) {
+            int sliderSize = std::max(1, length * length / max);
+            int sliderStart = (offset + length == max) ? (length - sliderSize) : (offset * length / max);
+            // make sure that slider starts at the top only if we are really at the top
+            if (sliderStart == 0 && offset != 0)
+                sliderStart = 1;
+            // if the slider would go beyond the length, adjust the slider start
+            if (sliderStart + sliderSize > length)
+                sliderStart = length - sliderSize;
+            return std::make_pair(sliderStart, sliderStart + sliderSize);
+        }	
+        //@}
+
+
 
     private:
 

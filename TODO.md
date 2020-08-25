@@ -50,11 +50,17 @@ Issues to be raised:
 
 UI version 3
 
-- contents size is not really updated, but I guess that is ok - there should be sth like contentssize setter which does the update
-- terminal won't use that and will simply resize its own canvas once it is given it
-- fiull & drawBuffer don't really work well with offsets, must be fixed
 
-- scrolling & scrollback buffer, resizing
+- add scrollbar - kind of dfone, where to put the drawing functions really... canvas? 
+- would we allow different scrollbar kinds? How to deal with non-border terminals & scrollbars? 
+
+- implement terminal & history resizing
+- clear the code
+- implement selection & stuff
+
+- contents size is not really updated, but I guess that is ok - there should be sth like contentssize setter which does the update <- CHECK THIS WHAT IT MEANS AND HOW TO DEAL WITH IT
+- terminal won't use that and will simply resize its own canvas once it is given it
+
 - cursor
 - mouse input
 - selection

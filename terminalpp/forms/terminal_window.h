@@ -128,6 +128,8 @@ namespace tpp {
             } else if (*e == SHORTCUT_ZOOM_OUT || *e == SHORTCUT_ZOOM_OUT_ALT) {
                 if (window_->zoom() > 1)
                     window_->setZoom(std::max(1.0, window_->zoom() / 1.25));
+            } else if (*e == SHORTCUT_ABOUT) {
+                showModal(new AboutBox{});
             } else {
                 return;
             }
@@ -200,7 +202,7 @@ namespace tpp {
         }       
         */ 
 
-        void terminalKeyDown(Renderer::KeyEvent::Payload & e) {
+        void onKeyDown(Renderer::KeyEvent::Payload & e) {
             if (window_->icon() != tpp::Window::Icon::Default)
                 window_->setIcon(tpp::Window::Icon::Default);
             // trigger paste event for ourselves so that the paste can be intercepted
