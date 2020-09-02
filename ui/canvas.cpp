@@ -117,6 +117,15 @@ namespace ui {
         return *this;
     }
 
+    Canvas & Canvas::border(Border const & border, Point at) {
+        Rect vr = visibleArea_.rect() + visibleArea_.offset();
+        at = at + visibleArea_.offset();
+        if (vr.contains(at)) 
+            buffer_->at(at).setBorder(border);
+        return *this;
+    }
+
+
     Canvas & Canvas::border(Border const & border, Point from, Point to) {
         if (border.empty())
             return *this;

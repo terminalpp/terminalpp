@@ -41,6 +41,12 @@ namespace ui {
             return size_.height();
         }
 
+        Cursor cursor() const;
+
+        void setCursor(Cursor const & cursor, Point position);
+
+        Point cursorPosition() const;
+
         /** \name Text metrics
          */
         //@{
@@ -127,7 +133,7 @@ namespace ui {
         Canvas & textOut(Point x, Char::iterator_utf8 begin, Char::iterator_utf8 end);
 
 
-
+        Canvas & border(Border const & border, Point at);
         Canvas & border(Border const & border, Point from, Point to);
         Canvas & border(Border const & border, Rect const & rect);
 
@@ -235,6 +241,7 @@ namespace ui {
     private:
 
         VisibleArea visibleArea_;
+        // we need to support assignment on canvas so can't use reference
         Buffer * buffer_;
         Size size_;
 
@@ -242,6 +249,13 @@ namespace ui {
 
     class Canvas::Cursor {
     public:
+
+        Cursor():
+            codepoint_{0x2581},
+            visible_{true},
+            blink_{true},
+            color_{Color::White} {
+        }
 
         char32_t const & codepoint() const {
             return codepoint_;
@@ -392,7 +406,6 @@ namespace ui {
         Font font_;
         Border border_;
     }; // ui::Canvas::Cell
-
 
     class Canvas::Buffer {
     public:
@@ -568,6 +581,18 @@ namespace ui {
 
     inline Canvas::Canvas(Canvas::Buffer & buffer):
         Canvas(buffer, VisibleArea{Point{0,0}, buffer.size()}, buffer.size()) {
+    }
+
+    inline Canvas::Cursor Canvas::cursor() const {
+        return buffer_->cursor();
+    }
+
+    inline void Canvas::setCursor(Cursor const & cursor, Point position) {
+        buffer_->setCursor(cursor, position + visibleArea_.offset());
+    }
+
+    inline Point Canvas::cursorPosition() const {
+        return buffer_->cursorPosition();
     }
 
     inline Canvas::Cell & Canvas::at(Point const & coords) {

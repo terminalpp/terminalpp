@@ -1,3 +1,4 @@
+#include <functional>
 #include "ansi_terminal.h"
 
 namespace ui {
@@ -91,6 +92,14 @@ namespace ui {
 #endif
         // display scrollbars
         canvas.verticalScrollbar(top + height(), scrollOffset().y());
+        // draw the cursor 
+        if (focused()) {
+            // set the cursor via the canvas
+            ccanvas.setCursor(cursor_, cursorPosition() + Point{0, historyRows()});
+        } else {
+            // TODO the color of this should be configurable
+            ccanvas.border(Border::All(inactiveCursorColor_, Border::Kind::Thin), cursorPosition() + Point{0, historyRows()});
+        }
     }
 
     // User Input
@@ -269,37 +278,37 @@ namespace ui {
     // Terminal State 
 
     void AnsiTerminal::deleteCharacters(unsigned num) {
-		int r = state_->cursor.y();
-		for (unsigned c = state_->cursor.x(), e = state_->buffer.width() - num; c < e; ++c) 
+		int r = cursorPosition().y();
+		for (unsigned c = cursorPosition().x(), e = state_->buffer.width() - num; c < e; ++c) 
 			state_->buffer.at(c, r) = state_->buffer.at(c + num, r);
 		for (unsigned c = state_->buffer.width() - num, e = state_->buffer.width(); c < e; ++c)
 			state_->buffer.at(c, r) = state_->cell;
     }
 
     void AnsiTerminal::insertCharacters(unsigned num) {
-		unsigned r = state_->cursor.y();
+		unsigned r = cursorPosition().y();
 		// first copy the characters
-		for (unsigned c = state_->buffer.width() - 1, e = state_->cursor.x() + num; c >= e; --c)
+		for (unsigned c = state_->buffer.width() - 1, e = cursorPosition().x() + num; c >= e; --c)
 			state_->buffer.at(c, r) = state_->buffer.at(c - num, r);
-		for (unsigned c = state_->cursor.x(), e = state_->cursor.x() + num; c < e; ++c)
+		for (unsigned c = cursorPosition().x(), e = cursorPosition().x() + num; c < e; ++c)
 			state_->buffer.at(c, r) = state_->cell;
     }
 
     void AnsiTerminal::updateCursorPosition() {
-        while (state_->cursor.x() >= state_->buffer.width()) {
+        while (cursorPosition().x() >= state_->buffer.width()) {
             ASSERT(state_->buffer.width() > 0);
-            state_->cursor -= Point{state_->buffer.width(), -1};
+            setCursorPosition(cursorPosition() - Point{state_->buffer.width(), -1});
             // if the cursor is on the last line, evict the lines above
-            if (state_->cursor.y() == state_->scrollEnd) 
+            if (cursorPosition().y() == state_->scrollEnd) 
                 deleteLines(1, state_->scrollStart, state_->scrollEnd, state_->cell);
         }
-        if (state_->cursor.y() >= state_->buffer.height())
-            state_->cursor.setY(state_->buffer.height() - 1);
+        if (cursorPosition().y() >= state_->buffer.height())
+            setCursorPosition(cursorPosition() + Point{0, state_->buffer.height() - 1 });
         // the cursor position must be valid now
-        ASSERT(state_->cursor.x() < state_->buffer.width());
-        ASSERT(state_->cursor.y() < state_->buffer.height());
+        ASSERT(cursorPosition().x() < state_->buffer.width());
+        ASSERT(cursorPosition().y() < state_->buffer.height());
         // set last character position to the now definitely valid cursor coordinates
-        state_->lastCharacter_ = state_->cursor;
+        state_->lastCharacter_ = cursorPosition();
     }
 
     // Scrollback buffer
@@ -350,6 +359,26 @@ namespace ui {
             historyRows_.pop_front();
         }
     }
+
+    void AnsiTerminal::resizeHistory(int width) {
+        /*
+        for (auto i = historyRows_.begin(); i != historyRows_.end(); ) {
+
+        }
+        */
+       historyRows_.clear();
+    }
+
+    void AnsiTerminal::resizeBuffers(Size size) {
+        if (alternateMode_) {
+            state_->resize(size, nullptr);
+            stateBackup_->resize(size, std::bind(&AnsiTerminal::addHistoryRow, this, std::placeholders::_1, std::placeholders::_2));
+        } else {
+            state_->resize(size, std::bind(&AnsiTerminal::addHistoryRow, this, std::placeholders::_1, std::placeholders::_2));
+            stateBackup_->resize(size, nullptr);
+        }
+    }
+
 
 
     // Input Processing
@@ -432,12 +461,12 @@ namespace ui {
         LOG(SEQ) << "codepoint " << codepoint << " " << static_cast<char>(codepoint & 0xff);
         updateCursorPosition();
         // set the cell state
-        //Cell & cell = state_->buffer.set(state_->cursor, state_->cell, codepoint);
-        Cell & cell = state_->buffer.at(state_->cursor);
+        //Cell & cell = state_->buffer.set(cursorPosition(), state_->cell, codepoint);
+        Cell & cell = state_->buffer.at(cursorPosition());
         cell = state_->cell;
         cell.setCodepoint(codepoint);
         // advance cursor's column
-        state_->cursor += Point{1, 0};
+        setCursorPosition(cursorPosition() + Point{1, 0});
 
         // what's left is to deal with corner cases, such as larger fonts & double width characters
         int columnWidth = Char::ColumnWidth(codepoint);
@@ -455,21 +484,21 @@ namespace ui {
         // if the font's size is greater than 1, copy the character as required (if we are at the top row of double height characters, increase the size artificially)
         int charWidth = state_->doubleHeightTopLine ? cell.font().width() * 2 : cell.font().width();
 
-        while (columnWidth > 0 && state_->cursor.x() < state_->buffer.width()) {
-            for (int i = 1; (i < charWidth) && state_->cursor.x() < state_->buffer.width(); ++i) {
+        while (columnWidth > 0 && cursorPosition().x() < state_->buffer.width()) {
+            for (int i = 1; (i < charWidth) && cursorPosition().x() < state_->buffer.width(); ++i) {
                 Cell& cell2 = buffer_.at(buffer_.cursor().pos);
                 // copy current cell properties
                 cell2 = cell;
                 // make sure the cell's font is normal size and width and display a space
                 cell2.setCodepoint(' ').setFont(cell.font().setSize(1).setDoubleWidth(false));
-                ++state_->cursor.x();
+                ++cursorPosition().x();
             } 
-            if (--columnWidth > 0 && state_->cursor.x() < state_->buffer.width()) {
+            if (--columnWidth > 0 && cursorPosition().x() < state_->buffer.width()) {
                 Cell& cell2 = buffer_.at(buffer_.cursor().pos);
                 // copy current cell properties
                 cell2 = cell;
                 cell2.setCodepoint(' ');
-                ++state_->cursor.x();
+                ++cursorPosition().x();
             } 
         }
         */
@@ -484,11 +513,11 @@ namespace ui {
 
     void AnsiTerminal::parseTab() {
         updateCursorPosition();
-        if (state_->cursor.x() % 8 == 0)
-            state_->cursor += Point{8, 0};
+        if (cursorPosition().x() % 8 == 0)
+            setCursorPosition(cursorPosition() + Point{8, 0});
         else
-            state_->cursor += Point{8 - state_->cursor.x() % 8, 0};
-        LOG(SEQ) << "Tab: cursor col is " << state_->cursor.x();
+            setCursorPosition(cursorPosition() + Point{8 - cursorPosition().x() % 8, 0});
+        LOG(SEQ) << "Tab: cursor col is " << cursorPosition().x();
     }
 
     void AnsiTerminal::parseLF() {
@@ -496,11 +525,11 @@ namespace ui {
         state_->markLineEnd();
         // disable double width and height chars
         state_->cell.setFont(state_->cell.font().setSize(1).setDoubleWidth(false));
-        state_->cursor += Point{0, 1};
+        setCursorPosition(cursorPosition() + Point{0, 1});
         // determine if region should be scrolled
-        if (state_->cursor.y() == state_->scrollEnd) {
+        if (cursorPosition().y() == state_->scrollEnd) {
             deleteLines(1, state_->scrollStart, state_->scrollEnd, state_->cell);
-            state_->cursor -= Point{0, 1};
+            setCursorPosition(cursorPosition() - Point{0, 1});
         }
         // update the cursor position as LF takes immediate effect
         updateCursorPosition();
@@ -510,17 +539,17 @@ namespace ui {
         LOG(SEQ) << "CR";
         // mark the last character as line end? 
         // TODO
-        state_->cursor.setX(0);
+        setCursorPosition(Point{0, cursorPosition().y()});
     }
 
     void AnsiTerminal::parseBackspace() {
         LOG(SEQ) << "BACKSPACE";
-        if (state_->cursor.x() == 0) {
-            if (state_->cursor.y() > 0)
-                state_->cursor -= Point{0, 1};
-            state_->cursor.setX(state_->buffer.size().width() - 1);
+        if (cursorPosition().x() == 0) {
+            if (cursorPosition().y() > 0)
+                setCursorPosition(cursorPosition() - Point{0, 1});
+            setCursorPosition(Point{state_->buffer.size().width() - 1, cursorPosition().y()});
         } else {
-            state_->cursor -= Point{1, 0};
+            setCursorPosition(cursorPosition() - Point{1, 0});
         }
     }
 
@@ -572,10 +601,10 @@ namespace ui {
 			 */
 			case 'M':
 				LOG(SEQ) << "RI: move cursor 1 line up";
-				if (state_->cursor.y() == state_->scrollStart) 
+				if (cursorPosition().y() == state_->scrollStart) 
 					insertLines(1, state_->scrollStart, state_->scrollEnd, state_->cell);
 				else
-                    state_->setCursor(state_->cursor.x(), state_->cursor.y() - 1);
+                    setCursorPosition(cursorPosition() - Point{0, 1});
 				break;
             /* Device Control String (DCS). 
              */
@@ -680,9 +709,9 @@ namespace ui {
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        unsigned r = state_->cursor.y() >= seq[0] ? state_->cursor.y() - seq[0] : 0;
-                        LOG(SEQ) << "CUU: setCursor " << state_->cursor.x() << ", " << r;
-                        state_->setCursor(state_->cursor.x(), r);
+                        int r = cursorPosition().y() >= seq[0] ? cursorPosition().y() - seq[0] : 0;
+                        LOG(SEQ) << "CUU: setCursor " << cursorPosition().x() << ", " << r;
+                        setCursorPosition(Point{cursorPosition().x(), r});
                         return;
                     }
                     // CSI <n> B -- moves cursor n rows down (CUD)
@@ -690,25 +719,25 @@ namespace ui {
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        LOG(SEQ) << "CUD: setCursor " << state_->cursor.x() << ", " << state_->cursor.y() + seq[0];
-                        state_->setCursor(state_->cursor.x(), state_->cursor.y() + seq[0]);
+                        LOG(SEQ) << "CUD: setCursor " << cursorPosition().x() << ", " << cursorPosition().y() + seq[0];
+                        setCursorPosition(cursorPosition() + Point{0, seq[0]});
                         return;
                     // CSI <n> C -- moves cursor n columns forward (right) (CUF)
                     case 'C':
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        LOG(SEQ) << "CUF: setCursor " << state_->cursor.x() + seq[0] << ", " << state_->cursor.y();
-                        state_->setCursor(state_->cursor.x() + seq[0], state_->cursor.y());
+                        LOG(SEQ) << "CUF: setCursor " << cursorPosition().x() + seq[0] << ", " << cursorPosition().y();
+                        setCursorPosition(cursorPosition() + Point{seq[0], 0});
                         return;
                     // CSI <n> D -- moves cursor n columns back (left) (CUB)
                     case 'D': {// cursor backward
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        unsigned c = state_->cursor.x() >= seq[0] ? state_->cursor.x() - seq[0] : 0;
-                        LOG(SEQ) << "CUB: setCursor " << c << ", " << state_->cursor.y();
-                        state_->setCursor(c, state_->cursor.y());
+                        int c = cursorPosition().x() >= seq[0] ? cursorPosition().x() - seq[0] : 0;
+                        LOG(SEQ) << "CUB: setCursor " << c << ", " << cursorPosition().y();
+                        setCursorPosition(Point{c, cursorPosition().y()});
                         return;
                     }
                     /* CSI <n> G -- set cursor character absolute (CHA)
@@ -716,7 +745,7 @@ namespace ui {
                     case 'G':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "CHA: set column " << seq[0] - 1;
-                        state_->setCursor(seq[0] - 1, state_->cursor.y());
+                        setCursorPosition(Point{seq[0] - 1, cursorPosition().y()});
                         return;
                     /* set cursor position (CUP) */
                     case 'H': // CUP
@@ -727,7 +756,7 @@ namespace ui {
                         seq.conditionalReplace(0, 0, 1);
                         seq.conditionalReplace(1, 0, 1);
                         LOG(SEQ) << "CUP: setCursor " << seq[1] - 1 << ", " << seq[0] - 1;
-                        state_->setCursor(seq[1] - 1, seq[0] - 1);
+                        setCursorPosition(Point{seq[1] - 1, seq[0] - 1});
                         return;
                     /* CSI <n> J -- erase display, depending on <n>:
                         0 = erase from the current position (inclusive) to the end of display
@@ -741,22 +770,22 @@ namespace ui {
                             case 0:
                                 updateCursorPosition();
                                 state_->canvas.fill(
-                                    Rect{state_->cursor, Point{state_->buffer.width(), state_->cursor.y() + 1}},
+                                    Rect{cursorPosition(), Point{state_->buffer.width(), cursorPosition().y() + 1}},
                                     state_->cell
                                 );
                                 state_->canvas.fill(
-                                    Rect{Point{0, state_->cursor.y() + 1}, Point{state_->buffer.width(), state_->buffer.height()}},                                
+                                    Rect{Point{0, cursorPosition().y() + 1}, Point{state_->buffer.width(), state_->buffer.height()}},                                
                                     state_->cell
                                 );
                                 return;
                             case 1:
                                 updateCursorPosition();
                                 state_->canvas.fill(
-                                    Rect{Point{}, Point{state_->buffer.width(), state_->cursor.y()}},
+                                    Rect{Point{}, Point{state_->buffer.width(), cursorPosition().y()}},
                                     state_->cell
                                 );
                                 state_->canvas.fill(
-                                    Rect{Point{0, state_->cursor.y()}, state_->cursor + Point{1,1}},
+                                    Rect{Point{0, cursorPosition().y()}, cursorPosition() + Point{1,1}},
                                     state_->cell
                                 );
                                 return;
@@ -782,21 +811,21 @@ namespace ui {
                             case 0:
                                 updateCursorPosition();
                                 state_->canvas.fill(
-                                    Rect{state_->cursor, Point{state_->buffer.width(), state_->cursor.y() + 1}},
+                                    Rect{cursorPosition(), Point{state_->buffer.width(), cursorPosition().y() + 1}},
                                     state_->cell
                                 );
                                 return;
                             case 1:
                                 updateCursorPosition();
                                 state_->canvas.fill(
-                                    Rect{Point{0, state_->cursor.y()}, Point{state_->cursor.x() + 1, state_->cursor.y() + 1}},
+                                    Rect{Point{0, cursorPosition().y()}, Point{cursorPosition().x() + 1, cursorPosition().y() + 1}},
                                     state_->cell
                                 );
                                 return;
                             case 2:
                                 updateCursorPosition();
                                 state_->canvas.fill(
-                                    Rect{Point{0, state_->cursor.y()}, Size{state_->buffer.width(),1}},
+                                    Rect{Point{0, cursorPosition().y()}, Size{state_->buffer.width(),1}},
                                     state_->cell
                                 );
                                 return;
@@ -809,14 +838,14 @@ namespace ui {
                     case 'L':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "IL: scrollUp " << seq[0];
-                        insertLines(seq[0], state_->cursor.y(), state_->scrollEnd, state_->cell);
+                        insertLines(seq[0], cursorPosition().y(), state_->scrollEnd, state_->cell);
                         return;
                     /* CSI <n> M -- Remove n lines. (DL)
                      */
                     case 'M':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "DL: scrollDown " << seq[0];
-                        deleteLines(seq[0], state_->cursor.y(), state_->scrollEnd, state_->cell);
+                        deleteLines(seq[0], cursorPosition().y(), state_->scrollEnd, state_->cell);
                         return;
                     /* CSI <n> P -- Delete n charcters. (DCH) 
                      */
@@ -837,7 +866,7 @@ namespace ui {
                     case 'T':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "SD: scrollDown " << seq[0];
-                        insertLines(seq[0], state_->cursor.y(), state_->scrollEnd, state_->cell);
+                        insertLines(seq[0], cursorPosition().y(), state_->scrollEnd, state_->cell);
                         return;
                     /* CSI <n> X -- erase <n> characters from the current position
                      */
@@ -848,14 +877,14 @@ namespace ui {
                         updateCursorPosition();
                         // erase from first line
                         int n = static_cast<unsigned>(seq[0]);
-                        int l = std::min(state_->buffer.width() - state_->cursor.x(), n);
+                        int l = std::min(state_->buffer.width() - cursorPosition().x(), n);
                         state_->canvas.fill(
-                            Rect{state_->cursor, Size{l, 1}},
+                            Rect{cursorPosition(), Size{l, 1}},
                             state_->cell
                         );
                         n -= l;
                         // while there is enough stuff left to be larger than a line, erase entire line
-                        l = state_->cursor.y() + 1;
+                        l = cursorPosition().y() + 1;
                         while (n >= state_->buffer.width() && l < state_->buffer.height()) {
                             state_->canvas.fill(
                                 Rect{Point{0,l}, Size{state_->buffer.width(), 1}},
@@ -876,14 +905,14 @@ namespace ui {
                      */
                     case 'b': {
                         seq.setDefault(0, 1);
-                        if (state_->cursor.x() == 0 || state_->cursor.x() + seq[0] >= state_->buffer.width()) {
+                        if (cursorPosition().x() == 0 || cursorPosition().x() + seq[0] >= state_->buffer.width()) {
                             LOG(SEQ_ERROR) << "Repeat previous character out of bounds";
                         } else {
                             LOG(SEQ) << "Repeat previous character " << seq[0] << " times";
-                            Cell const & prev = state_->buffer.at(state_->cursor - Point{1, 0});
+                            Cell const & prev = state_->buffer.at(cursorPosition() - Point{1, 0});
                             for (size_t i = 0, e = seq[0]; i < e; ++i) {
-                                state_->buffer.at(state_->cursor) = prev;
-                                state_->cursor += Point{1,0};
+                                state_->buffer.at(cursorPosition()) = prev;
+                                setCursorPosition(cursorPosition() + Point{1,0});
                             }
                         }
                         return;
@@ -908,8 +937,8 @@ namespace ui {
                             r = 1;
                         else if (r > state_->buffer.height())
                             r = state_->buffer.height();
-                        LOG(SEQ) << "VPA: setCursor " << state_->cursor.x() << ", " << r - 1;
-                        state_->setCursor(state_->cursor.x(), r - 1);
+                        LOG(SEQ) << "VPA: setCursor " << cursorPosition().x() << ", " << r - 1;
+                        setCursorPosition(Point{cursorPosition().x(), r - 1});
                         return;
                     }
                     /* CSI <n> h -- Reset mode enable
@@ -936,7 +965,7 @@ namespace ui {
                      */
                     case 'r':
                         seq.setDefault(0, 1); // inclusive
-                        seq.setDefault(1, state_->cursor.y()); // inclusive
+                        seq.setDefault(1, cursorPosition().y()); // inclusive
                         if (seq.numArgs() != 2)
                             break;
                         // This is not proper 
@@ -948,7 +977,7 @@ namespace ui {
                             break;
                         state_->scrollStart = std::min(seq[0] - 1, state_->buffer.height() - 1); // inclusive
                         state_->scrollEnd = std::min(seq[1], state_->buffer.height()); // exclusive 
-                        state_->setCursor(0, 0);
+                        setCursorPosition(Point{0,0});
                         LOG(SEQ) << "Scroll region set to " << state_->scrollStart << " - " << state_->scrollEnd;
                         return;
                     /* CSI <n> : <n> : <n> t -- window manipulation (xterm)
@@ -1392,42 +1421,62 @@ namespace ui {
         fillRow(bottom - 1, fill, 0, width());
     }
 
-    /*
-    void AnsiTerminal::Buffer::deleteLines(int lines, int top, int bottom, Cell const & fill, Color defaultBg) {
-        while (lines-- > 0) {
-            Cell * x = rows()[top];
-            // if we are deleting the first line, it gets retired to the history buffer instead. Right-most characters that are empty (i.e. space with no font effects and default background color) are excluded if the line ends with an end of line character
-            if (top == 0) {
-                int lastCol = width();
-                while (lastCol-- > 0) {
-                    Cell & c = x[lastCol];
-                    // if we have found end of line character, good
-                    if (isLineEnd(c))
-                        break;
-                    // if we have found a visible character, we must remember the whole line, break the search - any end of line characters left of it will make no difference
-                    if (c.codepoint() != ' ' || c.bg() != defaultBg || c.font().underline() || c.font().strikethrough()) {
-                        break;
-                    }
-                }
-                // if we are not at the end of line, we must remember the whole line
-                if (isLineEnd(x[lastCol])) 
-                    lastCol += 1;
-                else
-                    lastCol = width();
-                // make the copy and add it to the history line
-                // TODO deal with adding history rows, reeenable
-                / *
-                Cell * row = new Cell[lastCol];
-                memcpy(row, x, sizeof(Cell) * lastCol);
-                addHistoryRow(lastCol, row);
-                * /
-            }
-            memmove(rows() + top, rows() + top + 1, sizeof(Cell*) * (bottom - top - 1));
-            rows()[bottom - 1] = x;
-            fillRow(bottom - 1, fill, 0, width());
-        }
+    void AnsiTerminal::Buffer::resize(Size size, Cell const & fill, std::function<void(Cell*, int)> addToHistory) {
+        if (size_ == size)
+            return;
+        // create backup of the cells and new cells
+        Cell ** oldRows = rows_;
+        int oldWidth = this->width();
+        int oldHeight = this->height();
+        rows_ = nullptr;
+        // resize the contents (create new ones)
+        Canvas::Buffer::resize(size);
+		// now determine the row at which we should stop - this is done by going back from cursor's position until we hit end of line, that would be the last line we will use
+		int stopRow = cursorPosition_.y() - 1;
+		while (stopRow >= 0) {
+			Cell* row = oldRows[stopRow];
+			int i = 0;
+			for (; i < oldWidth; ++i)
+                if (isLineEnd(row[i]))
+					break;
+			// we have found the line end
+			if (i < oldWidth) {
+				++stopRow; // stop after current row
+				break;
+			}
+			// otherwise try the above line
+			--stopRow;
+		}
+        if (stopRow < 0)
+            stopRow = 0;
+        // now transfer the contents, moving any lines that won't fit into the terminal will be moved to the history 
+		int oldCursorRow = cursorPosition_.y();
+		cursorPosition_ = Point{0,0};
+		for (int y = 0; y < stopRow; ++y) {
+			for (int x = 0; x < oldWidth; ++x) {
+				Cell& cell = oldRows[y][x];
+				rows_[cursorPosition_.y()][cursorPosition_.x()] = cell;
+				// if the copied cell is end of line, or if we are at the end of new line, increase the cursor row
+				if (isLineEnd(cell) || (cursorPosition_ += Point{1,0}).x() == width())
+                    cursorPosition_ += Point{-cursorPosition_.x(),1};
+				// scroll the new lines if necessary
+				if (cursorPosition_.y() == height()) {
+                    // TODO add to history
+                    deleteLine(0, height(), fill);
+                    cursorPosition_ -= Point{0,1};
+				}
+				// if it was new line, skip whatever was afterwards
+                if (isLineEnd(cell))
+					break;
+			}
+		}
+		// the contents was transferred, delete the old cells
+        for (int i = 0; i < oldHeight; ++i)
+            delete [] oldRows[i];
+        delete [] oldRows;
+		// because the first thing the app will do after resize is to adjust the cursor position if the current line span more than 1 terminal line, we must account for this and update cursor position
+		cursorPosition_ += Point{0, oldCursorRow - stopRow};
     }
-    */
 
     // ============================================================================================
     // AnsiTerminal::Palette

@@ -101,14 +101,12 @@ inline std::vector<std::reference_wrapper<Log>> JSONConfig::FromJSON(JSON const 
             result.push_back(Log::Exception());
         else if (logName == "TELEMETRY") 
             result.push_back(Telemetry::TelemetryLog());
-            /*
         else if (logName == "SEQ_ERROR") 
             result.push_back(ui::AnsiTerminal::SEQ_ERROR);
         else if (logName == "SEQ_UNKNOWN") 
             result.push_back(ui::AnsiTerminal::SEQ_UNKNOWN);
         else if (logName == "SEQ_WONT_SUPPORT") 
             result.push_back(ui::AnsiTerminal::SEQ_WONT_SUPPORT);
-            */
         else
             THROW(JSONError()) << "Invalid log name " << logName;
     }

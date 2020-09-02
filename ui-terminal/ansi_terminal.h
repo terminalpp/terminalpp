@@ -42,6 +42,24 @@ namespace ui {
 
         ~AnsiTerminal() override;
 
+        void resize(Size const & size) override {
+            if (rect().size() == size)
+                return;
+            // under lock, update history and buffers
+            {
+                std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
+                bool scrollToTerminal = scrollOffset().y() == historyRows();    
+                resizeHistory(size.width());
+                resizeBuffers(size);
+                pty_->resize(size.width(), size.height());
+                // TODO update size? 
+
+                if (scrollToTerminal)
+                    setScrollOffset(Point{0, historyRows()});
+            }
+            Widget::resize(size);
+        }
+
     /** \name Events
      */
 
@@ -104,11 +122,56 @@ namespace ui {
     //}
 
 
-    /** \name Terminal State
+    /** \name Terminal State and scrollback buffer
      */
     //@{
     
+    public:
+        int historyRows() const {
+            return static_cast<int>(historyRows_.size());
+        }
+
+        int maxHistoryRows() const {
+            return maxHistoryRows_;
+        }
+
+        void setMaxHistoryRows(int value) {
+            if (value != maxHistoryRows_) {
+                maxHistoryRows_ = std::max(value, 0);
+                while (historyRows_.size() > static_cast<size_t>(maxHistoryRows_)) {
+                    delete [] historyRows_.front().second;
+                    historyRows_.pop_front();
+                }
+            }
+        }
+
     protected:
+
+        /** Returns current cursor position. 
+         */
+        Point cursorPosition() const;
+
+        void setCursorPosition(Point position);
+
+        /** Inserts given number of lines at given top row.
+            
+            Scrolls down all lines between top and bottom accordingly. Fills the new lines with the provided cell.
+        */
+        void insertLines(int lines, int top, int bottom, Cell const & fill);    
+
+        /** Deletes lines and triggers the onLineScrolledOut event if appropriate. 
+         
+            The event is triggered only if the terminal is in normal mode and if the scroll region starts at the top of the window. 
+            */
+        void deleteLines(int lines, int top, int bottom, Cell const & fill);
+
+        void addHistoryRow(Cell * row, int cols);
+
+    protected:
+
+        void resizeHistory(int width);
+        void resizeBuffers(Size size);
+
 
         // TODO change to int
         void deleteCharacters(unsigned num);
@@ -173,51 +236,6 @@ namespace ui {
         State * stateBackup_;
         PriorityLock bufferLock_;
 
-
-    //@}
-
-    /** \name Scrollback buffer
-     
-        
-     */
-    //@{
-    public:
-        int historyRows() const {
-            return static_cast<int>(historyRows_.size());
-        }
-
-        int maxHistoryRows() const {
-            return maxHistoryRows_;
-        }
-
-        void setMaxHistoryRows(int value) {
-            if (value != maxHistoryRows_) {
-                maxHistoryRows_ = std::max(value, 0);
-                while (historyRows_.size() > static_cast<size_t>(maxHistoryRows_)) {
-                    delete [] historyRows_.front().second;
-                    historyRows_.pop_front();
-                }
-            }
-        }
-
-    protected:
-
-        /** Inserts given number of lines at given top row.
-            
-            Scrolls down all lines between top and bottom accordingly. Fills the new lines with the provided cell.
-        */
-        void insertLines(int lines, int top, int bottom, Cell const & fill);    
-
-        /** Deletes lines and triggers the onLineScrolledOut event if appropriate. 
-         
-            The event is triggered only if the terminal is in normal mode and if the scroll region starts at the top of the window. 
-            */
-        void deleteLines(int lines, int top, int bottom, Cell const & fill);
-
-        void addHistoryRow(Cell * row, int cols);
-
-
-    private:
         int maxHistoryRows_;
         std::deque<std::pair<int, Cell*>> historyRows_;
 
@@ -290,9 +308,6 @@ namespace ui {
     //@}
 
 
-
-
-
     }; // ui::AnsiTerminal
 
     // ============================================================================================
@@ -321,6 +336,21 @@ namespace ui {
         bool isLineEnd(Cell & c) {
             return GetUnusedBits(c) & END_OF_LINE;
         }
+
+        Point cursorPosition() const {
+            return cursorPosition_;
+        }
+
+        void setCursorPosition(Point pos) {
+            cursorPosition_ = pos;
+        }
+
+        void setCursor(Canvas::Cursor const & value, Point position) {
+            cursor_ = value;
+            cursorPosition_ = position;
+        }
+
+        void resize(Size size, Cell const & fill, std::function<void(Cell*, int)> addToHistory);
 
     private:
 
@@ -351,7 +381,7 @@ namespace ui {
             cell = Cell{};
             cell.setFg(fg).setDecor(fg).setBg(bg);
             // reset the cursor
-            cursor = Point{0,0};
+            buffer.setCursorPosition(Point{0,0});
             // reset state
             scrollStart = 0;
             scrollEnd = buffer.height();
@@ -360,32 +390,33 @@ namespace ui {
             canvas.fill(Rect{buffer.size()}, cell);
         }
 
-        void resize(Size size, bool resizeContents) {
-            buffer.resize(size);
+        void resize(Size size, std::function<void(Cell*, int)> addToHistory) {
+            buffer.resize(size, cell, addToHistory);
             canvas = Canvas{buffer};
             scrollStart = 0;
             scrollEnd = size.height();
         }
 
-        void setCursor(int col, int row) {
-            cursor = Point{col, row};
+        void setCursor(Point pos) {
+            buffer.setCursorPosition(pos);
             // invalidate the last character's position
             lastCharacter_ = Point{-1, -1};
         }
 
         void saveCursor() {
-            cursorStack_.push_back(cursor);
+            cursorStack_.push_back(buffer.cursorPosition());
         }
 
         void restoreCursor() {
             if (cursorStack_.empty())
                 return;
-            cursor = cursorStack_.back();
+            Point pos = cursorStack_.back();
             cursorStack_.pop_back();
-            if (cursor.x() >= buffer.size().width())
-                cursor.setX(buffer.size().width() - 1);
-            if (cursor.y() >= buffer.size().height())
-                cursor.setX(buffer.size().height() - 1);
+            if (pos.x() >= buffer.size().width())
+                pos.setX(buffer.size().width() - 1);
+            if (pos.y() >= buffer.size().height())
+                pos.setX(buffer.size().height() - 1);
+            buffer.setCursorPosition(pos);
         }
 
         void markLineEnd() {
@@ -395,7 +426,6 @@ namespace ui {
         Buffer buffer;
         Canvas canvas;
         Cell cell;
-        Point cursor{0,0};
         int scrollStart{0};
         int scrollEnd;
         bool inverseMode = false;
@@ -499,6 +529,15 @@ namespace ui {
         Color * colors_;
 
     }; // AnsiTerminal::Palette
+
+    inline Point AnsiTerminal::cursorPosition() const {
+        return state_->buffer.cursorPosition();
+    }
+
+    inline void AnsiTerminal::setCursorPosition(Point position) {
+        state_->buffer.setCursorPosition(position);
+    }
+
 
 
 } // namespace ui

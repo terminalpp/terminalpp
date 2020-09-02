@@ -262,7 +262,6 @@ namespace ui {
         }
 
         /** Returns the contents size. 
-
          */
         virtual Size contentsSize() const {
             return rect_.size();
@@ -291,7 +290,6 @@ namespace ui {
                 repaint();
             } 
         }
-
 
         virtual void scrollBy(Point delta) {
             Point p = scrollOffset_ + delta;

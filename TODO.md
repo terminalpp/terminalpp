@@ -45,23 +45,23 @@ Issues to be raised:
 - add a way to copy from mouse capturing terminal
 - how to & when invalidate selection when there are changes in the terminal's contents
 - fillRect should also update border color
-- history in alternate mode
 - add configuration option to confirm setting clipboard from the terminal
 
 UI version 3
 
-- implement terminal & history resizing
+- !! settings file is settings-2. 
+- have cursor part of canvas, but have canvas parametrized by the buffer so that different buffers may or may not treat the cursor position differently at no cost. Have basic buffer not clear cursor positions, but renderer buffer will. 
+
+- implement terminal & history resizing: history does not resize, terminal resize does not seem to shift contents properly, but resizes the widget all right, most likely does not work because curos position is not set properly
 - clear the code
 - implement selection & stuff
 
 - contents size is not really updated, but I guess that is ok - there should be sth like contentssize setter which does the update <- CHECK THIS WHAT IT MEANS AND HOW TO DEAL WITH IT
 - terminal won't use that and will simply resize its own canvas once it is given it
 
-- cursor
 - mouse input
 - selection
 
-- font size is wrong, not taken from settings it seems
 - font setSize & other setters should perhaps be renamed to withSize, etc to avoid confuision about them being setters
 - size.width() & size.height() should become just width and height
 - some simpler accesses to state-ish properties in the terminal? 
