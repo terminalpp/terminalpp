@@ -361,12 +361,31 @@ namespace ui {
     }
 
     void AnsiTerminal::resizeHistory(int width) {
-        /*
-        for (auto i = historyRows_.begin(); i != historyRows_.end(); ) {
-
+        std::deque<std::pair<int, Cell*>> oldRows{std::move(historyRows_)};
+        Cell * row = nullptr;
+        int rowSize = 0;
+        for (auto & i : oldRows) {
+            if (row == nullptr) {
+                row = i.second;
+                rowSize = i.first;
+            } else {
+                Cell * newRow = new Cell[rowSize + i.first];
+                memcpy(newRow, row, sizeof(Cell) * rowSize);
+                memcpy(newRow + rowSize, i.second, sizeof(Cell) * i.first);
+                rowSize += i.first;
+                delete [] i.second;
+                delete [] row;
+                row = newRow;
+            }
+            ASSERT(row != nullptr);
+            if (Buffer::IsLineEnd(row[rowSize - 1])) {
+                addHistoryRow(row, rowSize);
+                row = nullptr;
+                rowSize = 0;
+            }
         }
-        */
-       historyRows_.clear();
+        if (row != nullptr)
+            addHistoryRow(row, rowSize);
     }
 
     void AnsiTerminal::resizeBuffers(Size size) {
@@ -1396,7 +1415,7 @@ namespace ui {
         while (lastCol-- > 0) {
             Cell & c = x[lastCol];
             // if we have found end of line character, good
-            if (isLineEnd(c))
+            if (IsLineEnd(c))
                 break;
             // if we have found a visible character, we must remember the whole line, break the search - any end of line characters left of it will make no difference
             if (c.codepoint() != ' ' || c.bg() != defaultBg || c.font().underline() || c.font().strikethrough()) {
@@ -1404,7 +1423,7 @@ namespace ui {
             }
         }   
         // if we are not at the end of line, we must remember the whole line
-        if (isLineEnd(x[lastCol])) 
+        if (IsLineEnd(x[lastCol])) 
             lastCol += 1;
         else
             lastCol = width();
@@ -1437,7 +1456,7 @@ namespace ui {
 			Cell* row = oldRows[stopRow];
 			int i = 0;
 			for (; i < oldWidth; ++i)
-                if (isLineEnd(row[i]))
+                if (IsLineEnd(row[i]))
 					break;
 			// we have found the line end
 			if (i < oldWidth) {
@@ -1457,16 +1476,38 @@ namespace ui {
 				Cell& cell = oldRows[y][x];
 				rows_[cursorPosition_.y()][cursorPosition_.x()] = cell;
 				// if the copied cell is end of line, or if we are at the end of new line, increase the cursor row
-				if (isLineEnd(cell) || (cursorPosition_ += Point{1,0}).x() == width())
+				if (IsLineEnd(cell) || (cursorPosition_ += Point{1,0}).x() == width())
                     cursorPosition_ += Point{-cursorPosition_.x(),1};
 				// scroll the new lines if necessary
 				if (cursorPosition_.y() == height()) {
-                    // TODO add to history
+                    // add the line to history, first determine the last column, then create a copy and call the inserter
+                    if (addToHistory) {
+                        Cell * row = rows_[0];
+                        int lastCol = width();
+                        while (lastCol-- > 0) {
+                            Cell & c = row[lastCol];
+                            // if we have found end of line character, good
+                            if (IsLineEnd(c))
+                                break;
+                            // if we have found a visible character, we must remember the whole line, break the search - any end of line characters left of it will make no difference
+                            if (c.codepoint() != ' ' || c.bg() != fill.bg() || c.font().underline() || c.font().strikethrough()) 
+                                break;
+                        }
+                        // if we are not at the end of line, we must remember the whole line
+                        if (IsLineEnd(row[lastCol])) 
+                            lastCol += 1;
+                        else
+                            lastCol = width();
+                        // make the copy and add it to the history line
+                        Cell * rowCopy = new Cell[lastCol];
+                        memcpy(rowCopy, row, sizeof(Cell) * lastCol);
+                        addToHistory(rowCopy, lastCol);
+                    }
                     deleteLine(0, height(), fill);
                     cursorPosition_ -= Point{0,1};
 				}
 				// if it was new line, skip whatever was afterwards
-                if (isLineEnd(cell))
+                if (IsLineEnd(cell))
 					break;
 			}
 		}

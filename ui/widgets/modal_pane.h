@@ -16,7 +16,7 @@ namespace ui {
         ModalPane(): 
             Panel{new Layout::Column{VerticalAlign::Bottom}} {
             setVisible(false);
-            setBackground(Color::Blue.withAlpha(128));
+            setBackground(Color::Black.withAlpha(128));
         }
 
         void attach(Widget * widget) override {

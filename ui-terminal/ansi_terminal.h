@@ -45,19 +45,20 @@ namespace ui {
         void resize(Size const & size) override {
             if (rect().size() == size)
                 return;
+            bool scrollToTerminal;
             // under lock, update history and buffers
             {
                 std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
-                bool scrollToTerminal = scrollOffset().y() == historyRows();    
+                scrollToTerminal = scrollOffset().y() == historyRows();    
                 resizeHistory(size.width());
                 resizeBuffers(size);
                 pty_->resize(size.width(), size.height());
                 // TODO update size? 
 
-                if (scrollToTerminal)
-                    setScrollOffset(Point{0, historyRows()});
             }
             Widget::resize(size);
+            if (scrollToTerminal)
+                setScrollOffset(Point{0, historyRows()});
         }
 
     /** \name Events
@@ -333,7 +334,7 @@ namespace ui {
                 SetUnusedBits(at(p), END_OF_LINE);
         }
 
-        bool isLineEnd(Cell & c) {
+        static bool IsLineEnd(Cell & c) {
             return GetUnusedBits(c) & END_OF_LINE;
         }
 
