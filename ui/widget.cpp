@@ -320,11 +320,12 @@ namespace ui {
 
     void Widget::requestRepaint() {
         UI_THREAD_ONLY;
+
         if (parent_ == nullptr || background_.opaque()) {
             // propagate the paint event through parents so that they can decide to actually repaint themselves instead, if the repaint is allowed, instruct the renderer to repaint
             if (parent_ == nullptr || parent_->allowRepaintRequest(this)) {
-                ASSERT(renderer() != nullptr);
-                renderer()->paint(this);
+                if (renderer() != nullptr)
+                    renderer()->paint(this);
             }
         } else {
             // delegate to parent if background is transparent
@@ -334,6 +335,9 @@ namespace ui {
     }
 
     void Widget::paint() {
+        // Attempting to paint locked widget is no-op
+        if (locked())
+            return;
         pendingRepaint_ = false;
         Canvas canvas{renderer_->buffer_, visibleArea_, size()};
         // paint the background first

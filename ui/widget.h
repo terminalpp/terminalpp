@@ -426,6 +426,32 @@ namespace ui {
 
     protected:
 
+        /** Simple RAII widget lock that when engaged prevents widget from repainting. 
+         */
+        class Lock {
+        public:
+            Lock(Widget * widget):
+                widget_{widget} {
+                ++widget_->lock_;
+            }
+
+            ~Lock() {
+                if (--widget_->lock_ == 0 && widget_->pendingRepaint_ == true) {
+                    widget_->requestRepaint();
+                }
+            }
+        private:
+            Widget * widget_;
+        }; 
+
+        /** Returns whether the widget is locked or not. 
+         
+            A locked widget will not repaint itself.
+         */
+        bool locked() const {
+            return lock_ > 0;
+        }
+
         /** Called when repaint of the widget is requested. 
 
             Widget subclasses can override this method to delegate the repaint event to other widgets up the tree, such as in cases of transparent background widgets. 
@@ -477,9 +503,13 @@ namespace ui {
 
     private:
 
+        friend class Lock;
+
         /** Since widget's start detached, their paint is blocked by setting pending repaint to true. When attached, and repainted via its parent, the flag will be cleared. 
          */
         std::atomic<bool> pendingRepaint_ = true;
+
+        unsigned lock_ = 0;
 
         Color background_;
         Border border_;

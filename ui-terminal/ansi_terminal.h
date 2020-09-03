@@ -45,6 +45,8 @@ namespace ui {
         void resize(Size const & size) override {
             if (rect().size() == size)
                 return;
+            // lock the widget for repainting
+            Lock l(this);
             bool scrollToTerminal;
             // under lock, update history and buffers
             {
