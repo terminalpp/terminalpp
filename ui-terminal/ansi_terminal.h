@@ -47,20 +47,19 @@ namespace ui {
                 return;
             // lock the widget for repainting
             Lock l(this);
-            bool scrollToTerminal;
             // under lock, update history and buffers
             {
                 std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
-                scrollToTerminal = scrollOffset().y() == historyRows();    
+                Widget::resize(size);
+                bool scrollToTerminal = scrollOffset().y() == historyRows();    
                 resizeHistory(size.width());
                 resizeBuffers(size);
                 pty_->resize(size.width(), size.height());
                 // TODO update size? 
 
+                if (scrollToTerminal)
+                    setScrollOffset(Point{0, historyRows()});
             }
-            Widget::resize(size);
-            if (scrollToTerminal)
-                setScrollOffset(Point{0, historyRows()});
         }
 
     /** \name Events

@@ -21,7 +21,6 @@
 	- one place to define the options and their defaults
  */
 
-//#define SHOW_LINE_ENDINGS
 
 #define BYPASS_FOLDER "~/.local/bin"
 #define BYPASS_PATH "~/.local/bin/tpp-bypass"

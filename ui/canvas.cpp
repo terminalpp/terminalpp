@@ -117,7 +117,7 @@ namespace ui {
         return *this;
     }
 
-    Canvas & Canvas::border(Border const & border, Point at) {
+    Canvas & Canvas::setBorder(Point at, Border const & border) {
         Rect vr = visibleArea_.rect() + visibleArea_.offset();
         at = at + visibleArea_.offset();
         if (vr.contains(at)) 
@@ -126,7 +126,7 @@ namespace ui {
     }
 
 
-    Canvas & Canvas::border(Border const & border, Point from, Point to) {
+    Canvas & Canvas::setBorder(Point from, Point to, Border const & border) {
         if (border.empty())
             return *this;
         Rect vr = visibleArea_.rect() + visibleArea_.offset();
@@ -154,11 +154,11 @@ namespace ui {
         return *this;
     }
 
-    Canvas & Canvas::border(Border const & border, Rect const & rect) {
-        this->border(Border::Empty(border.color()).setTop(border.top()), rect.topLeft(), rect.topRight());
-        this->border(Border::Empty(border.color()).setBottom(border.bottom()), rect.bottomLeft() - Point{0,1}, rect.bottomRight() - Point{0,1});
-        this->border(Border::Empty(border.color()).setLeft(border.left()), rect.topLeft(), rect.bottomLeft());
-        this->border(Border::Empty(border.color()).setRight(border.right()), rect.topRight() - Point{1,0}, rect.bottomRight() - Point{1,0});
+    Canvas & Canvas::setBorder(Rect const & rect, Border const & border) {
+        this->setBorder(rect.topLeft(), rect.topRight(), Border::Empty(border.color()).setTop(border.top()));
+        this->setBorder(rect.bottomLeft() - Point{0,1}, rect.bottomRight() - Point{0,1}, Border::Empty(border.color()).setBottom(border.bottom()));
+        this->setBorder(rect.topLeft(), rect.bottomLeft(), Border::Empty(border.color()).setLeft(border.left()));
+        this->setBorder(rect.topRight() - Point{1,0}, rect.bottomRight() - Point{1,0}, Border::Empty(border.color()).setRight(border.right()));
         return *this;
     }
 
@@ -167,13 +167,12 @@ namespace ui {
             std::pair<int, int> dim = ScrollBarDimensions(height(), size, offset);
             Border b = Border::Empty(Color::White.withAlpha(64)).setRight(Border::Kind::Thin);
             int x = width() - 1;
-            border(b, Point{x, 0}, Point{x, dim.first});
-            border(b, Point{x, dim.second}, Point{x, height()});
+            setBorder(Point{x, 0}, Point{x, dim.first}, b);
+            setBorder(Point{x, dim.second}, Point{x, height()}, b);
             b.setRight(Border::Kind::Thick);
-            border(b, Point{x, dim.first}, Point{x, dim.second});
+            setBorder(Point{x, dim.first}, Point{x, dim.second}, b);
         }
         return *this;
-
     }
 
     Canvas & Canvas::horizontalScrollbar(int size, int offset) {
@@ -181,10 +180,10 @@ namespace ui {
             std::pair<int, int> dim = ScrollBarDimensions(width(), size, offset);
             Border b = Border::Empty(Color::White.withAlpha(64)).setRight(Border::Kind::Thin);
             int y = height() - 1;
-            border(b, Point{0,y}, Point{dim.first, y});
-            border(b, Point{dim.second, y}, Point{height(), y});
+            setBorder(Point{0,y}, Point{dim.first, y}, b);
+            setBorder(Point{dim.second, y}, Point{height(), y}, b);
             b.setRight(Border::Kind::Thick);
-            border(b, Point{dim.first, y}, Point{dim.second, y});
+            setBorder(Point{dim.first, y}, Point{dim.second, y}, b);
         }
         return *this;
     }

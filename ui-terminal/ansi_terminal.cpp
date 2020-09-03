@@ -56,10 +56,12 @@ namespace ui {
 
     // Widget
 
+#define SHOW_LINE_ENDINGS
+
     void AnsiTerminal::paint(Canvas & canvas) {
         Canvas ccanvas{contentsCanvas(canvas)};
 #ifdef SHOW_LINE_ENDINGS
-        Border endOfLine{Border{Color::Red}.setAll(Border::Kind::Thin)};
+        Border endOfLine{Border::All(Color::Red, Border::Kind::Thin)};
 #endif
         Rect visibleRect{ccanvas.visibleRect()};
         std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
@@ -71,8 +73,8 @@ namespace ui {
             for (int col = 0, ce = historyRows_[row].first; col < ce; ++col) {
                 ccanvas.at(Point{col, row}) = historyRows_[row].second[col];
 #ifdef SHOW_LINE_ENDINGS
-                if (isEndOfLine(history_[row].second[col]))
-                    ccanvas.setBorderAt(Point{col, row}, endOfLine);
+                if (Buffer::IsLineEnd(historyRows_[row].second[col]))
+                    ccanvas.setBorder(Point{col, row}, endOfLine);
 #endif
             }
             ccanvas.fill(Rect{Point{historyRows_[row].first, row}, Point{width(), row + 1}});
@@ -85,8 +87,8 @@ namespace ui {
             if (row >= re)
                 break;
             for (int col = 0; col < width(); ++col) {
-                if (isEndOfLine(at(col, row - top)))
-                    ccanvas.at(Point{col, row}).setBorder(endOfLine);
+                if (Buffer::IsLineEnd(ccanvas.at(Point{col, row})))
+                    ccanvas.setBorder(Point{col, row}, endOfLine);
             }
         }
 #endif
@@ -98,7 +100,7 @@ namespace ui {
             ccanvas.setCursor(cursor_, cursorPosition() + Point{0, historyRows()});
         } else {
             // TODO the color of this should be configurable
-            ccanvas.border(Border::All(inactiveCursorColor_, Border::Kind::Thin), cursorPosition() + Point{0, historyRows()});
+            ccanvas.setBorder(cursorPosition() + Point{0, historyRows()}, Border::All(inactiveCursorColor_, Border::Kind::Thin));
         }
     }
 

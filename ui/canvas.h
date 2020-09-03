@@ -133,9 +133,9 @@ namespace ui {
         Canvas & textOut(Point x, Char::iterator_utf8 begin, Char::iterator_utf8 end);
 
 
-        Canvas & border(Border const & border, Point at);
-        Canvas & border(Border const & border, Point from, Point to);
-        Canvas & border(Border const & border, Rect const & rect);
+        Canvas & setBorder(Point at, Border const & border);
+        Canvas & setBorder(Point from, Point to, Border const & border);
+        Canvas & setBorder(Rect const & rect, Border const & border);
 
 
         Canvas & verticalScrollbar(int size, int offset);
