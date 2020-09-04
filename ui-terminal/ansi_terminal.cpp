@@ -90,7 +90,7 @@ namespace ui {
             if (row >= re)
                 break;
             for (int col = 0; col < width(); ++col) {
-                if (Buffer::IsLineEnd(ccanvas.at(Point{col, row})))
+                if (Buffer::IsLineEnd(const_cast<Buffer const &>(state_->buffer).at(Point{col, row - top})))
                     ccanvas.setBorder(Point{col, row}, endOfLine);
             }
         }

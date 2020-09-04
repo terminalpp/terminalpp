@@ -42,9 +42,9 @@ Issues to be raised:
 UI version 3
 
 - !! settings file is settings-2. 
-- have cursor part of canvas, but have canvas parametrized by the buffer so that different buffers may or may not treat the cursor position differently at no cost. Have basic buffer not clear cursor positions, but renderer buffer will. 
 - clear the code
 - implement selection & stuff
+- terminal should store cursor information inside the buffer
 
 - contents size is not really updated, but I guess that is ok - there should be sth like contentssize setter which does the update <- CHECK THIS WHAT IT MEANS AND HOW TO DEAL WITH IT
 - terminal won't use that and will simply resize its own canvas once it is given it

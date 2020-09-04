@@ -343,7 +343,7 @@ namespace ui {
                 SetUnusedBits(at(p), END_OF_LINE);
         }
 
-        static bool IsLineEnd(Cell & c) {
+        static bool IsLineEnd(Cell const & c) {
             return GetUnusedBits(c) & END_OF_LINE;
         }
 
