@@ -49,8 +49,6 @@ UI version 3
 - contents size is not really updated, but I guess that is ok - there should be sth like contentssize setter which does the update <- CHECK THIS WHAT IT MEANS AND HOW TO DEAL WITH IT
 - terminal won't use that and will simply resize its own canvas once it is given it
 
-- mouse input
-
 - font setSize & other setters should perhaps be renamed to withSize, etc to avoid confuision about them being setters
 - some simpler accesses to state-ish properties in the terminal? 
 
