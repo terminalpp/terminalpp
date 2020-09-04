@@ -38,7 +38,7 @@ namespace tpp {
         }
 
         void resize(Size const & newSize) override {
-            if (newSize.width() != size().width())
+            if (newSize.width() != width())
                 updateDirectWriteStructures(newSize.width());
             RendererWindow::resize(newSize);
         }
@@ -149,7 +149,7 @@ namespace tpp {
             changeBackgroundColor(backgroundColor());
             if (sizePx_.width() % cellSize_.width() != 0) {
                 D2D1_RECT_F rect = D2D1::RectF(
-                    static_cast<FLOAT>(size().width() * cellSize_.width()),
+                    static_cast<FLOAT>(width() * cellSize_.width()),
                     static_cast<FLOAT>(0),
                     static_cast<FLOAT>(sizePx_.width()),
                     static_cast<FLOAT>(sizePx_.height())
@@ -159,7 +159,7 @@ namespace tpp {
             if (sizePx_.height() % cellSize_.height() != 0) {
                 D2D1_RECT_F rect = D2D1::RectF(
                     static_cast<FLOAT>(0),
-                    static_cast<FLOAT>(size().height() * cellSize_.height()),
+                    static_cast<FLOAT>(height() * cellSize_.height()),
                     static_cast<FLOAT>(sizePx_.width()),
                     static_cast<FLOAT>(sizePx_.height())
                 );

@@ -125,10 +125,10 @@ namespace ui {
                 case VerticalAlign::Top:
                     break; // keep the 0
                 case VerticalAlign::Middle:
-                    x.setY(static_cast<int>((canvas.size().height() - format_.size() * font_.height()) / 2));
+                    x.setY(static_cast<int>((canvas.height() - format_.size() * font_.height()) / 2));
                     break;
                 case VerticalAlign::Bottom:
-                    x.setY(static_cast<int>(canvas.size().height() - format_.size() * font_.height()));
+                    x.setY(static_cast<int>(canvas.height() - format_.size() * font_.height()));
                     break;
             }
             // adjust and print each line
@@ -137,10 +137,10 @@ namespace ui {
                     case HorizontalAlign::Left:
                         break; // keep the 0
                     case HorizontalAlign::Center:
-                        x.setX((canvas.size().width() - line.width) / 2);
+                        x.setX((canvas.width() - line.width) / 2);
                         break;
                     case HorizontalAlign::Right:
-                        x.setX(canvas.size().width() - line.width);
+                        x.setX(canvas.width() - line.width);
                         break;
                 }
                 canvas.textOut(x, line.begin, line.end);

@@ -6,6 +6,7 @@
 - ropen can be interrupted gracefully
 
 - `--session` command-line argument to easily select session
+- fixed issue #20, `--cols` and `--rows` arguments & settings work now
 
 ### TODO
 
@@ -13,24 +14,16 @@
 
 - change settings name to settings.json (GetSettingsFile)
 
+
+Documentation:
+
+Builds & Releases
+
 - source package artifact for deb
 - release ropen package to snap 
 - automatic release to Windows store
 - upload to ppa ? 
 - update the website ? 
-
-Documentation:
-
-- write documentation for layouts and revisit if I want to do anchors (perhaps via a special anchor layout, or via Layout::None that would just notify the child that change has occured) - most likely I do not want this... 
-- document size hints 
-- add comments to keyboard focus stuff
-- mouseUp, Down, WHeel, Move, Click and DoubleClick can propagate to parent, update the documentation
-- and so does the keyboard, propagation to parent disabled by default if event enabled 
-- document the modal pane & modal trait
-- time timer
-
-Builds & Releases
-
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
 - add sonarcloud.io
@@ -38,7 +31,6 @@ Builds & Releases
 Helpers & Logging & Errors overhaul
 
 - helpers filesystem should use paths better
-- perhaps have the basics all in a single file (log, exceptions, asserts)
 
 Issues to be raised:
 
@@ -50,7 +42,6 @@ Issues to be raised:
 UI version 3
 
 - !! settings file is settings-2. 
-- terminal resize would like to first resize, and only then call the repaint, but this is hard to do as repaint can't be prevented now, so implement widget locking... Not perfect, but more robust than other things...
 - have cursor part of canvas, but have canvas parametrized by the buffer so that different buffers may or may not treat the cursor position differently at no cost. Have basic buffer not clear cursor positions, but renderer buffer will. 
 - clear the code
 - implement selection & stuff
@@ -59,33 +50,19 @@ UI version 3
 - terminal won't use that and will simply resize its own canvas once it is given it
 
 - mouse input
-- selection
 
 - font setSize & other setters should perhaps be renamed to withSize, etc to avoid confuision about them being setters
-- size.width() & size.height() should become just width and height
 - some simpler accesses to state-ish properties in the terminal? 
 
 
 - document keyboard focus handling - i.e. only document order and getting next & previous elements
 - things like tab focus and so on should be implemented differently, perhaps by a form widget or some such
 
-
-
-
-- cursor visibility determined by its position too
-- ansi terminal palette in config.h
-
-- for painting Windows can paint any time they want, X11's render will send the expose message (check that repaints are only possible in expose handlers) and for Qt I need to see what needs to be done
 - x11_window seems to no longer need the focusIn and focusOut checks as vcxsrv seems to be fixed. Also check that renderer in release mode ignores the error and repairs what it can 
 
-- locks.h - remove grabber & smartptr, make priority lock non-reentrant
-- ansi-renderer should go to ansi-terminal
 - renderer-widget coordinates, check that they are valid
 - key up not detected on standard terminal, determine how tpp would do it
 - mouse up event, detect click and double click
-- add selection support to renderer
-- ansi-terminal should use the ansi-keys, which should move to tpp-lib - perhaps even the whole terminal should move there
-- CSI sequence moved to own file, should be removed from terminal
 
 - document keyboard, mouse and selection & clipboard inputs in renderer & widgets
 - document event queue and typed event queue

@@ -160,9 +160,9 @@ namespace tpp {
         void finalizeDraw() {
             changeBackgroundColor(backgroundColor());
             if (sizePx_.width() % cellSize_.width() != 0)
-                painter_.fillRect(QRect{Super::size().width() * cellSize_.width(), 0, sizePx_.width() % cellSize_.width(), sizePx_.height()}, painter_.brush());
+                painter_.fillRect(QRect{Super::width() * cellSize_.width(), 0, sizePx_.width() % cellSize_.width(), sizePx_.height()}, painter_.brush());
             if (sizePx_.height() % cellSize_.height() != 0)
-                painter_.fillRect(QRect{0, Super::size().height() * cellSize_.height(), sizePx_.width(), sizePx_.height() % cellSize_.height()}, painter_.brush());
+                painter_.fillRect(QRect{0, Super::height() * cellSize_.height(), sizePx_.width(), sizePx_.height() % cellSize_.height()}, painter_.brush());
             painter_.end();
         }
 

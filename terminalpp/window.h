@@ -338,9 +338,9 @@ namespace tpp {
             changeBg(state_.bg());
             changeDecor(state_.decor());
             // loop over the buffer and draw the cells
-            for (int row = 0, re = size().height(); row < re; ++row) {
+            for (int row = 0, re = height(); row < re; ++row) {
                 initializeGlyphRun(0, row);
-                for (int col = 0, ce = size().width(); col < ce; ) {
+                for (int col = 0, ce = width(); col < ce; ) {
                     Cell const & c = buffer.at(col, row);
                     // detect if there were changes in the font & colors and update the state & draw the glyph run if present. The code looks a bit ugly as we have to first draw the glyph run and only then change the state.
                     bool drawRun = true;
@@ -412,8 +412,8 @@ namespace tpp {
             int wThick = std::min(cellSize_.width(), cellSize_.height()) / 2;
             Color borderColor = buffer.at(0,0).border().color();
             changeBg(borderColor);
-            for (int row = 0, re = size().height(); row < re; ++row) {
-                for (int col = 0, ce = size().width(); col < ce; ++col) {
+            for (int row = 0, re = height(); row < re; ++row) {
+                for (int col = 0, ce = width(); col < ce; ++col) {
                     Border b = buffer.at(col, row).border();
                     if (b.color() != borderColor) {
                         borderColor = b.color();

@@ -51,7 +51,7 @@ namespace tpp {
             main_->attach(pager_);
             setContents(main_);
 
-            Config const & config = Config::Instance();
+            //Config const & config = Config::Instance();
                 /*
 
             pager_->onPageChange.setHandler(&TerminalWindow::activeSessionChanged, this);

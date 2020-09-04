@@ -27,7 +27,7 @@ namespace tpp {
         void show(bool value = true) override;
 
         void resize(Size const & newSize) override {
-            if (newSize.width() != size().width())
+            if (newSize.width() != width())
                 updateXftStructures(newSize.width());
             RendererWindow::resize(newSize);
         }
@@ -132,9 +132,9 @@ namespace tpp {
         void finalizeDraw() {
             changeBackgroundColor(backgroundColor());
             if (sizePx_.width() % cellSize_.width() != 0)
-                XftDrawRect(draw_, &bg_, size().width() * cellSize_.width(), 0, sizePx_.width() % cellSize_.width(), sizePx_.height());
+                XftDrawRect(draw_, &bg_, width() * cellSize_.width(), 0, sizePx_.width() % cellSize_.width(), sizePx_.height());
             if (sizePx_.height() % cellSize_.height() != 0)
-                XftDrawRect(draw_, &bg_, 0, size().height() * cellSize_.height(), sizePx_.width(), sizePx_.height() % cellSize_.height());
+                XftDrawRect(draw_, &bg_, 0, height() * cellSize_.height(), sizePx_.width(), sizePx_.height() % cellSize_.height());
             // now bitblt the buffer
             XCopyArea(display_, buffer_, window_, gc_, 0, 0, sizePx_.width(), sizePx_.height(), 0, 0);
             XftDrawDestroy(draw_);

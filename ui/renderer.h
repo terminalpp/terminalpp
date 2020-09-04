@@ -187,6 +187,14 @@ namespace ui {
             return buffer_.size();
         }
 
+        int width() const {
+            return buffer_.size().width();
+        }
+
+        int height() const {
+            return buffer_.size().height();
+        }
+
         /** Triggers repaint of the entire buffer. 
 
             Can be called from any thread as long as no overlap with destructor is possible. 

@@ -133,8 +133,8 @@ namespace ui {
                 canvas.fill(Rect{selection_.start(), selection_.end()}, background);
 
             } else {
-                canvas.fill(Rect{selection_.start(), Point{canvas.size().width(), selection_.start().y() + 1}}, background);
-                canvas.fill(Rect{Point{0, selection_.start().y() + 1}, Size{canvas.size().width(), selection_.end().y() - selection_.start().y() - 2}}, background);
+                canvas.fill(Rect{selection_.start(), Point{canvas.width(), selection_.start().y() + 1}}, background);
+                canvas.fill(Rect{Point{0, selection_.start().y() + 1}, Size{canvas.width(), selection_.end().y() - selection_.start().y() - 2}}, background);
                 canvas.fill(Rect{Point{0, selection_.end().y() - 1}, selection_.end()}, background);
             }
         }

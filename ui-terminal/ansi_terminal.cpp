@@ -568,7 +568,7 @@ namespace ui {
         if (cursorPosition().x() == 0) {
             if (cursorPosition().y() > 0)
                 setCursorPosition(cursorPosition() - Point{0, 1});
-            setCursorPosition(Point{state_->buffer.size().width() - 1, cursorPosition().y()});
+            setCursorPosition(Point{state_->buffer.width() - 1, cursorPosition().y()});
         } else {
             setCursorPosition(cursorPosition() - Point{1, 0});
         }

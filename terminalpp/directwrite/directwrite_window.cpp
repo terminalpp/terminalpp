@@ -161,7 +161,7 @@ namespace tpp {
         ZeroMemory(&glyphRun_, sizeof(DWRITE_GLYPH_RUN));
 
         // create the glyph run buffer and size it appropriately
-        updateDirectWriteStructures(size().width());
+        updateDirectWriteStructures(width());
 
         // register the window
         RegisterWindowHandle(this, hWnd_);  

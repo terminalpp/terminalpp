@@ -414,10 +414,10 @@ namespace ui {
                 return;
             Point pos = cursorStack_.back();
             cursorStack_.pop_back();
-            if (pos.x() >= buffer.size().width())
-                pos.setX(buffer.size().width() - 1);
-            if (pos.y() >= buffer.size().height())
-                pos.setX(buffer.size().height() - 1);
+            if (pos.x() >= buffer.width())
+                pos.setX(buffer.width() - 1);
+            if (pos.y() >= buffer.height())
+                pos.setX(buffer.height() - 1);
             buffer.setCursorPosition(pos);
         }
 

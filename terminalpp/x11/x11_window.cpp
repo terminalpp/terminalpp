@@ -60,7 +60,7 @@ namespace tpp {
 				XNClientWindow, window_, XNFocusWindow, window_, nullptr);
 		}
 
-        updateXftStructures(size().width());
+        updateXftStructures(width());
 
 		// register the window
         RegisterWindowHandle(this, window_);
