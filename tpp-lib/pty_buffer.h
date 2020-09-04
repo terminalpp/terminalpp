@@ -23,6 +23,10 @@ namespace tpp {
                 terminatePty();
         }
 
+        T * pty() {
+            return pty_;
+        }
+
     protected:
 
         PTYBuffer(T * pty):

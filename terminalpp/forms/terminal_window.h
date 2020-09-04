@@ -8,7 +8,7 @@
 #include "ui-terminal/ansi_terminal.h"
 #include "tpp-lib/local_pty.h"
 #include "tpp-lib/bypass_pty.h"
-//#include "tpp-lib/remote_files.h"
+#include "tpp-lib/remote_files.h"
 
 #include "../config.h"
 #include "../window.h"
@@ -51,13 +51,13 @@ namespace tpp {
             main_->attach(pager_);
             setContents(main_);
 
-            //Config const & config = Config::Instance();
+            Config const & config = Config::Instance();
+            remoteFiles_ = new RemoteFiles(config.remoteFiles.dir());
                 /*
 
             pager_->onPageChange.setHandler(&TerminalWindow::activeSessionChanged, this);
 
     
-            remoteFiles_ = new RemoteFiles(config.remoteFiles.dir());
 
 
             */
@@ -81,7 +81,7 @@ namespace tpp {
 
         ~TerminalWindow() override {
             versionChecker_.join();
-            //delete remoteFiles_;
+            delete remoteFiles_;
         }
 
         void newSession(Config::sessions_entry const & session);
@@ -274,16 +274,18 @@ namespace tpp {
             setClipboard(*event);
         }
 
-        void terminalTppSequence(UIEvent<TppSequenceEvent>::Payload & event) {
+    */
+
+        void terminalTppSequence(TppSequenceEvent::Payload & event) {
             SessionInfo * si = sessionInfo(event.sender());
             try {
                 switch (event->kind) {
                     case tpp::Sequence::Kind::GetCapabilities:
-                        si->pty->send(tpp::Sequence::Capabilities{1});
+                        si->terminal->pty()->send(tpp::Sequence::Capabilities{1});
                         break;
                     case tpp::Sequence::Kind::OpenFileTransfer: {
                         Sequence::OpenFileTransfer req(event->payloadStart, event->payloadEnd);
-                        si->pty->send(remoteFiles_->openFileTransfer(req));
+                        si->terminal->pty()->send(remoteFiles_->openFileTransfer(req));
                         break;
                     }
                     case tpp::Sequence::Kind::Data: {
@@ -295,19 +297,19 @@ namespace tpp {
                     }
                     case tpp::Sequence::Kind::GetTransferStatus: {
                         Sequence::GetTransferStatus req{event->payloadStart, event->payloadEnd};
-                        si->pty->send(remoteFiles_->getTransferStatus(req));
+                        si->terminal->pty()->send(remoteFiles_->getTransferStatus(req));
                         break;
                     }
                     case tpp::Sequence::Kind::ViewRemoteFile: {
                         Sequence::ViewRemoteFile req{event->payloadStart, event->payloadEnd};
                         RemoteFiles::File * f = remoteFiles_->get(req.id());
                         if (f == nullptr) {
-                            si->pty->send(Sequence::Nack{req, "No such file"});
+                            si->terminal->pty()->send(Sequence::Nack{req, "No such file"});
                         } else if (! f->ready()) {
-                            si->pty->send(Sequence::Nack(req, "File not transferred"));
+                            si->terminal->pty()->send(Sequence::Nack(req, "File not transferred"));
                         } else {
                             // send the ack first in case there are local issues with the opening
-                            si->pty->send(Sequence::Ack{req, req.id()});
+                            si->terminal->pty()->send(Sequence::Ack{req, req.id()});
                             Application::Instance()->openLocalFile(f->localPath(), false);
                         }
                         break;
@@ -321,8 +323,6 @@ namespace tpp {
             }
         }
 
-        */
-
 
         tpp::Window * window_;
 
@@ -335,13 +335,9 @@ namespace tpp {
 
         SessionInfo * activeSession_ = nullptr;
 
-/*
         RemoteFiles * remoteFiles_;
 
-    */
-
         std::thread versionChecker_;
-
 
     };
 

@@ -708,8 +708,8 @@ namespace ui {
         tpp::Sequence::Kind kind = tpp::Sequence::ParseKind(i, bufferEnd);
         // now we have kind and beginning and end of the payload so we can process the sequence
         LOG(SEQ) << "t++ sequence " << kind << ", payload size " << (tppEnd - i);
-        // TODO reenable tpp sequences
-        //processTppSequence(TppSequenceEvent{kind, i, tppEnd});
+        // processes the tpp sequence, the default implementation simply raises the tpp sequence event
+        tppSequence(TppSequenceEvent::Payload{kind, i, tppEnd});
         // and return
         return (tppEnd - buffer) + 1; // also process the BEL character at the end of the t++ sequence
     }

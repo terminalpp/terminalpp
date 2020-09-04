@@ -15,6 +15,15 @@
 
 namespace ui {
 
+    class TppSequenceEventPayload {
+    public:
+        tpp::Sequence::Kind kind;
+        char const * payloadStart;
+        char const * payloadEnd;
+    }; // ui::TppSequenceEventPayload
+
+    using TppSequenceEvent = Event<TppSequenceEventPayload>;
+
     /** The terminal alone. 
      
         The simplest interface to the rerminal, no history, selection, etc?
@@ -69,6 +78,7 @@ namespace ui {
         VoidEvent onNotification;
         StringEvent onTitleChange;
         StringEvent onClipboardSetRequest;
+        TppSequenceEvent onTppSequence;
 
     /** \name Widget 
      */
@@ -264,11 +274,9 @@ namespace ui {
          
             The default implementation simply calls the event handler, if registered. 
          */
-        /*
-        virtual void processTppSequence(TppSequenceEvent seq) {
-            UIEvent<TppSequenceEvent>::Payload p{seq};
-            onTppSequence(p, this);
-        } */
+        virtual void tppSequence(TppSequenceEvent::Payload seq) {
+            onTppSequence(seq, this);
+        }
 
         /** Processes given CSI sequence. 
          

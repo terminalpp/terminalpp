@@ -42,8 +42,8 @@ namespace tpp {
         t->onMouseUp.setHandler(&TerminalWindow::terminalMouseUp, this);
         t->onMouseWheel.setHandler(&TerminalWindow::terminalMouseWheel, this);
         t->onSetClipboard.setHandler(&TerminalWindow::terminalSetClipboard, this);
-        t->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
         */
+        t->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
     }
 
 } // namespace tpp
