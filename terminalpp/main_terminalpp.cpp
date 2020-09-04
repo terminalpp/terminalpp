@@ -121,7 +121,9 @@ int main(int argc, char* argv[]) {
 			ui::AnsiTerminal::SEQ_UNKNOWN
 		});
         
-        tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", 80, 25);
+        tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", config.renderer.window.cols(), config.renderer.window.rows());
+        if (config.renderer.window.fullscreen())
+            w->setFullscreen(true);
         // currently owned by the window, when multiple sessions are available this might change
         tpp::TerminalWindow * tw = new tpp::TerminalWindow{w};
         tw->newSession(config.sessionByName(config.defaultSession()));

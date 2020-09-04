@@ -62,9 +62,6 @@ namespace tpp {
 
             */
             window_->setRoot(this);
-            if (config.renderer.window.fullscreen())
-                window_->setFullscreen(true);
-            
             versionChecker_ = std::thread{[this](){
                 std::string channel = Config::Instance().version.checkChannel();
                 // don't check if empty channel
