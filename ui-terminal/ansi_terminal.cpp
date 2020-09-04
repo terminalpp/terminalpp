@@ -305,7 +305,7 @@ namespace ui {
                 deleteLines(1, state_->scrollStart, state_->scrollEnd, state_->cell);
         }
         if (cursorPosition().y() >= state_->buffer.height())
-            setCursorPosition(cursorPosition() + Point{0, state_->buffer.height() - 1 });
+            setCursorPosition(Point{cursorPosition().x(), state_->buffer.height() - 1 });
         // the cursor position must be valid now
         ASSERT(cursorPosition().x() < state_->buffer.width());
         ASSERT(cursorPosition().y() < state_->buffer.height());
