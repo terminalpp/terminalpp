@@ -24,6 +24,8 @@ namespace ui {
 
     using TppSequenceEvent = Event<TppSequenceEventPayload>;
 
+    using ExitCodeEvent = Event<ExitCode>;
+
     /** The terminal alone. 
      
         The simplest interface to the rerminal, no history, selection, etc?
@@ -61,7 +63,7 @@ namespace ui {
                 std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
                 Widget::resize(size);
                 bool scrollToTerminal = scrollOffset().y() == historyRows();    
-                resizeHistory(size.width());
+                resizeHistory();
                 resizeBuffers(size);
                 pty_->resize(size.width(), size.height());
                 // TODO update size? 
@@ -79,6 +81,8 @@ namespace ui {
         StringEvent onTitleChange;
         StringEvent onClipboardSetRequest;
         TppSequenceEvent onTppSequence;
+        ExitCodeEvent onPTYTerminated;
+
 
     /** \name Widget 
      */
@@ -179,9 +183,16 @@ namespace ui {
 
         void addHistoryRow(Cell * row, int cols);
 
+        void ptyTerminated(ExitCode exitCode) override {
+            schedule([this, exitCode](){
+                ExitCodeEvent::Payload p{exitCode};
+                onPTYTerminated(p, this);
+            });
+        }
+
     protected:
 
-        void resizeHistory(int width);
+        void resizeHistory();
         void resizeBuffers(Size size);
 
 

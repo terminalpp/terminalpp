@@ -354,7 +354,7 @@ namespace ui {
         }
     }
 
-    void AnsiTerminal::resizeHistory(int width) {
+    void AnsiTerminal::resizeHistory() {
         std::deque<std::pair<int, Cell*>> oldRows{std::move(historyRows_)};
         Cell * row = nullptr;
         int rowSize = 0;

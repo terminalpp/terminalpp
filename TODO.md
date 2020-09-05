@@ -42,6 +42,7 @@ Issues to be raised:
 UI version 3
 
 - !! settings file is settings-2. 
+
 - clear the code
 - implement selection & stuff
 - terminal should store cursor information inside the buffer

@@ -32,9 +32,9 @@ namespace tpp {
         pager_->setActivePage(t);
         window_->setKeyboardFocus(t);
         // add terminal events (so that they are called only *after* the session is registered)
-        /*
         t->onPTYTerminated.setHandler(&TerminalWindow::sessionPTYTerminated, this);
         t->onTitleChange.setHandler(&TerminalWindow::sessionTitleChanged, this);
+        /*
         t->onNotification.setHandler(&TerminalWindow::sessionNotification, this);
         t->onKeyDown.setHandler(&TerminalWindow::terminalKeyDown, this);
         t->onMouseMove.setHandler(&TerminalWindow::terminalMouseMove, this);

@@ -53,14 +53,9 @@ namespace tpp {
 
             Config const & config = Config::Instance();
             remoteFiles_ = new RemoteFiles(config.remoteFiles.dir());
-                /*
 
             pager_->onPageChange.setHandler(&TerminalWindow::activeSessionChanged, this);
 
-    
-
-
-            */
             window_->setRoot(this);
             versionChecker_ = std::thread{[this](){
                 std::string channel = Config::Instance().version.checkChannel();
@@ -75,6 +70,8 @@ namespace tpp {
                     });
                 }
             }};
+
+            setFocusable(true);
 
             //setName("TerminalWindow");
         }
@@ -157,6 +154,7 @@ namespace tpp {
         void sessionTitleChanged(ui::StringEvent::Payload & event) {
             SessionInfo * si = sessionInfo(event.sender());
             si->title = *event;
+            // TODO set title if default session
         }
 
         void sessionNotification(ui::VoidEvent::Payload & event) {
@@ -166,14 +164,14 @@ namespace tpp {
 
 
 
-        /*
-
-        void keyDown(UIEvent<Key>::Payload & event) override {
+        void keyDown(KeyEvent::Payload & e) override {
             if (activeSession_->terminateOnKeyPress) 
                 closeSession(activeSession_);
             else 
-                Widget::keyDown(event);
+                Widget::keyDown(e);
         }
+
+        /*
 
 
 
@@ -181,14 +179,17 @@ namespace tpp {
             return activeSession_->terminal->scrollBy(by);
         }
 
-        void activeSessionChanged(UIEvent<Widget*>::Payload & event) {
-            activeSession_ = *event == nullptr ? nullptr : sessionInfo(*event);
+        */
+
+        void activeSessionChanged(ui::Event<Widget*>::Payload & e) {
+            activeSession_ = *e == nullptr ? nullptr : sessionInfo(*e);
         }
 
-        void sessionPTYTerminated(UIEvent<ExitCode>::Payload & event) {
-            SessionInfo * si = sessionInfo(event.sender());
+
+        void sessionPTYTerminated(ExitCodeEvent::Payload & e) {
+            SessionInfo * si = sessionInfo(e.sender());
             window_->setIcon(tpp::Window::Icon::Notification);
-            si->title = STR("Terminated, exit code " << *event);
+            si->title = STR("Terminated, exit code " << *e);
             Config const & config = Config::Instance();
             if (! config.renderer.window.waitAfterPtyTerminated()) {
                 closeSession(activeSession_);
@@ -196,8 +197,7 @@ namespace tpp {
                 window_->setKeyboardFocus(this);
                 activeSession_->terminateOnKeyPress = true;
             }
-        }       
-        */ 
+        }
 
         void onKeyDown(Renderer::KeyEvent::Payload & e) {
             if (window_->icon() != tpp::Window::Icon::Default)
@@ -328,8 +328,6 @@ namespace tpp {
 
         ui::Panel * main_;
         ui::Pager * pager_;
-
-
 
         std::unordered_map<AnsiTerminal *, SessionInfo *> sessions_; 
 
