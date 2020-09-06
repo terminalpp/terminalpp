@@ -20,11 +20,11 @@ namespace tpp {
 #endif
         // and the terminal
         si->terminal = new AnsiTerminal{pty, session.palette()};
-        /*
-        si->terminal->setHistoryLimit(config.renderer.window.historyLimit());
-        si->terminal->setDefaultCursor(session.cursor());
-        si->terminal->setInactiveCursorColor(session.cursor.inactiveColor());
+        si->terminal->setMaxHistoryRows(config.renderer.window.historyLimit());
         si->terminal->setBoldIsBright(config.sequences.boldIsBright());
+        si->terminal->setInactiveCursorColor(session.cursor.inactiveColor());
+        /*
+        si->terminal->setDefaultCursor(session.cursor());
         */
         // register the session and set it as active page
         AnsiTerminal * t = si->terminal;
@@ -34,6 +34,7 @@ namespace tpp {
         // add terminal events (so that they are called only *after* the session is registered)
         t->onPTYTerminated.setHandler(&TerminalWindow::sessionPTYTerminated, this);
         t->onTitleChange.setHandler(&TerminalWindow::sessionTitleChanged, this);
+        t->onClipboardSetRequest.setHandler(&TerminalWindow::terminalSetClipboard, this);
         /*
         t->onNotification.setHandler(&TerminalWindow::sessionNotification, this);
         t->onKeyDown.setHandler(&TerminalWindow::terminalKeyDown, this);
@@ -41,7 +42,6 @@ namespace tpp {
         t->onMouseDown.setHandler(&TerminalWindow::terminalMouseDown, this);
         t->onMouseUp.setHandler(&TerminalWindow::terminalMouseUp, this);
         t->onMouseWheel.setHandler(&TerminalWindow::terminalMouseWheel, this);
-        t->onSetClipboard.setHandler(&TerminalWindow::terminalSetClipboard, this);
         */
         t->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
     }

@@ -143,6 +143,29 @@ namespace ui {
     //@{
     
     public:
+
+        bool boldIsBright() const {
+            return boldIsBright_;
+        }
+
+        virtual void setBoldIsBright(bool value = true) {
+            if (boldIsBright_ != value) {
+                boldIsBright_ = value;
+                repaint();
+            }
+        }
+
+        Color inactiveCursorColor() const {
+            return inactiveCursorColor_;
+        }
+
+        virtual void setInactiveCursorColor(Color value) {
+            if (inactiveCursorColor_ != value) {
+                inactiveCursorColor_ = value;
+                repaint();
+            }
+        }
+
         int historyRows() const {
             return static_cast<int>(historyRows_.size());
         }

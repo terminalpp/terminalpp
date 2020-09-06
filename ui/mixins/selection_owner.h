@@ -118,12 +118,6 @@ namespace ui {
                 r->setSelection(contents, this);
         }
 
-        void setClipboard(std::string const & contents) {
-            Renderer * r = renderer();
-            if (r != nullptr)
-                r->setClipboard(contents);
-        }
-
         /** Marks the selection on the given canvas. 
          */
         void paintSelection(Canvas & canvas, Color background) {

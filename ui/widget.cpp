@@ -412,6 +412,12 @@ namespace ui {
 
     // Selection
 
+    void Widget::setClipboard(std::string const & contents) {
+        Renderer * r = renderer();
+        if (r != nullptr)
+            r->setClipboard(contents);
+    }
+
     void Widget::requestClipboardPaste() {
         Renderer * r = renderer();
         if (r != nullptr)

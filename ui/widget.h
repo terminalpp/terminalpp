@@ -702,6 +702,8 @@ namespace ui {
             onPaste(e, this);
         }
 
+        void setClipboard(std::string const & contents);
+
         void requestClipboardPaste();
         void requestSelectionPaste();
 

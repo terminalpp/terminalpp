@@ -151,10 +151,11 @@ namespace tpp {
                 window_->setKeyboardFocus(pager_->activePage());
         }
 
-        void sessionTitleChanged(ui::StringEvent::Payload & event) {
-            SessionInfo * si = sessionInfo(event.sender());
-            si->title = *event;
-            // TODO set title if default session
+        void sessionTitleChanged(ui::StringEvent::Payload & e) {
+            SessionInfo * si = sessionInfo(e.sender());
+            si->title = *e;
+            if (activeSession_ == si)
+                window_->setTitle(*e);
         }
 
         void sessionNotification(ui::VoidEvent::Payload & event) {
@@ -190,6 +191,8 @@ namespace tpp {
             SessionInfo * si = sessionInfo(e.sender());
             window_->setIcon(tpp::Window::Icon::Notification);
             si->title = STR("Terminated, exit code " << *e);
+            if (activeSession_ == si)
+                window_->setTitle(si->title);
             Config const & config = Config::Instance();
             if (! config.renderer.window.waitAfterPtyTerminated()) {
                 closeSession(activeSession_);
@@ -269,12 +272,11 @@ namespace tpp {
                 event.stop();
             //}
         }
+        */
 
-        void terminalSetClipboard(UIEvent<std::string>::Payload & event) {
-            setClipboard(*event);
+        void terminalSetClipboard(StringEvent::Payload & e) {
+            setClipboard(*e);
         }
-
-    */
 
         void terminalTppSequence(TppSequenceEvent::Payload & event) {
             SessionInfo * si = sessionInfo(event.sender());
