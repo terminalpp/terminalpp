@@ -3,6 +3,7 @@
 namespace ui {
 
     Key const Key::Invalid{0};
+    Key const Key::None{0};
 
 #define KEY(NAME, CODE) Key const Key::NAME{CODE};
 #include "keys.inc.h"

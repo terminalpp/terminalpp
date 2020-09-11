@@ -104,9 +104,10 @@ namespace tpp {
         }; 
 
         /** The window has been requested to close. 
+         
+            TODO check that there are no active sessions and perhaps ask if there are whether really to exit. 
          */
         void windowCloseRequest(tpp::Window::CloseEvent::Payload & e) {
-            // TODO Determine what to do here. 
         }
 
         /** Global hotkeys handling. 

@@ -41,6 +41,7 @@ namespace ui {
     public:
 
         static Key const Invalid;
+        static Key const None;
 
 #define KEY(NAME, CODE) static Key const NAME;
 #include "keys.inc.h"

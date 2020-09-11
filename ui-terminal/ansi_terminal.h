@@ -30,7 +30,7 @@ namespace ui {
      
         The simplest interface to the rerminal, no history, selection, etc?
      */
-    class AnsiTerminal : public virtual Widget, public tpp::PTYBuffer<tpp::PTYMaster> {
+    class AnsiTerminal : public virtual Widget, public tpp::PTYBuffer<tpp::PTYMaster>, SelectionOwner {
     public:
         using Cell = Canvas::Cell;
         class Buffer;
@@ -124,6 +124,8 @@ namespace ui {
         unsigned encodeMouseButton(MouseButton btn, Key modifiers);
 
         void sendMouseEvent(unsigned button, Point coords, char end);
+
+        std::string getSelectionContents() override;
 
     private:
 

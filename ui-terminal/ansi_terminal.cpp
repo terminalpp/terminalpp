@@ -95,6 +95,8 @@ namespace ui {
             }
         }
 #endif
+        // draw the selection, if any 
+        SelectionOwner::paint(ccanvas);
         // display scrollbars
         canvas.verticalScrollbar(top + height(), scrollOffset().y());
         // draw the cursor 
@@ -158,6 +160,8 @@ namespace ui {
                 // mouse move adds 32 to the last known button press
                 sendMouseEvent(mouseLastButton_ + 32, e->coords, 'M');
                 LOG(SEQ) << "Mouse moved to " << e->coords;
+        } else {
+            SelectionOwner::mouseMove(e);
         }
         /*
         if (updatingSelection()) 
@@ -174,6 +178,8 @@ namespace ui {
             mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
             sendMouseEvent(mouseLastButton_, e->coords, 'M');
             LOG(SEQ) << "Button " << e->button << " down at " << e->coords;
+        } else {
+            SelectionOwner::mouseDown(e);
         }
         // don't propagate to parent as the terminal handles keyboard input itself
         e.stop();
@@ -188,6 +194,8 @@ namespace ui {
                 mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
                 sendMouseEvent(mouseLastButton_, e->coords, 'm');
                 LOG(SEQ) << "Button " << e->button << " up at " << e->coords;
+            } else {
+                SelectionOwner::mouseUp(e);
             }
         }
         // don't propagate to parent as the terminal handles keyboard input itself
@@ -268,6 +276,9 @@ namespace ui {
 		}
     }
 
+    std::string AnsiTerminal::getSelectionContents() {
+        return "foobar";
+    }
 
     // Terminal State 
 

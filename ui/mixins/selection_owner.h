@@ -179,12 +179,54 @@ namespace ui {
                 }
             }
         }
-        //@}        
+        //@}      
+
+        /** \name Default selection behavior. 
+         */
+        //@{
+
+        void paint(Canvas & canvas) override {
+            // TODO get the selection color from style
+            if (! selection_.empty())
+                paintSelection(canvas, Color::Blue.withAlpha(64));            
+        }
+
+        void mouseMove(MouseMoveEvent::Payload & e) override {
+            if (updatingSelection())
+                updateSelection(e->coords + scrollOffset(), contentsSize());
+        }
+
+        void mouseDown(MouseButtonEvent::Payload & e) override {
+            if (e->modifiers == Key::None) {
+                if (e->button == MouseButton::Left) {
+                    startSelectionUpdate(e->coords + scrollOffset());
+                } else if (e->button == MouseButton::Wheel) {
+                    requestSelectionPaste();
+                } else if (e->button == MouseButton::Right && ! selection_.empty()) {
+                    setClipboard(getSelectionContents());
+                    clearSelection();
+                }
+            }
+        }
+
+        void mouseUp(MouseButtonEvent::Payload & e) override {
+            if (e->modifiers == Key::None) {
+                if (e->button == MouseButton::Left) 
+                    endSelectionUpdate();
+            }
+        }
+
+        void keyDown(KeyEvent::Payload & e) override {
+
+        }
+
+
+        //@}  
 
     private:
 
         Selection selection_;
-        Point selectionStart_;
+        Point selectionStart_ = Point{-1, -1};
 
     }; // ui::SelectionOwner
 
