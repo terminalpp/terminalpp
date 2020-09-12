@@ -363,6 +363,7 @@ namespace ui {
         Like canvas buffer, but has support for tagging characters that are end of line and provides scrolling history. 
      */
     class AnsiTerminal::Buffer : public ui::Canvas::Buffer {
+        friend class AnsiTerminal;
     public:
         Buffer(Size const & size):
             ui::Canvas::Buffer(size) {
@@ -399,6 +400,11 @@ namespace ui {
         void resize(Size size, Cell const & fill, std::function<void(Cell*, int)> addToHistory);
 
     private:
+
+        Cell * row(int row) {
+            ASSERT(row >= 0 && row < height());
+            return rows_[row];
+        }
 
         /** Flag designating the end of line in the buffer. 
          */

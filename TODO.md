@@ -43,8 +43,9 @@ UI version 3
 
 - !! settings file is settings-2. 
 
+- implement selection : check that selection contents work, fix for alternate mode with no history and make sure that selection & clipboard copy & paste work
+- add paste dialog
 - clear the code
-- implement selection & stuff
 - terminal should store cursor information inside the buffer
 
 - contents size is not really updated, but I guess that is ok - there should be sth like contentssize setter which does the update <- CHECK THIS WHAT IT MEANS AND HOW TO DEAL WITH IT

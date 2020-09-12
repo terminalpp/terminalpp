@@ -277,7 +277,53 @@ namespace ui {
     }
 
     std::string AnsiTerminal::getSelectionContents() {
-        return "foobar";
+        std::stringstream result;
+        Selection sel = selection();
+        int row = sel.start().y();
+        int endRow = sel.end().y();
+        int col = sel.start().x();
+        std::lock_guard<PriorityLock> g(bufferLock_);
+        while (row < endRow) {
+            int endCol = (row < endRow - 1) ? width() : sel.end().x();
+            Cell * rowCells;
+            // if the current row comes from the history, get the appropriate cells
+            if (row < static_cast<int>(historyRows_.size())) {
+                rowCells = historyRows_[row].second;
+                // if the stored row is shorter than the start of the selection, adjust the endCol so that no processing will be involved
+                if (endCol > historyRows_[row].first)
+                    endCol = historyRows_[row].first;
+            } else {
+                rowCells = state_->buffer.row(row - historyRows_.size());
+            }
+            // analyze the line and add it to the selection now
+            std::stringstream line;
+            for (; col < endCol; ) {
+                line << Char{rowCells[col].codepoint()};
+                if (Buffer::IsLineEnd(rowCells[col]))
+                    line << std::endl;
+                col += rowCells[col].font().width();
+            }
+            // remove whitespace at the end of the line if the line ends with enter
+            std::string l{line.str()};
+            if (! l.empty()) {
+                size_t lineEnd = l.size();
+                while (lineEnd > 0) {
+                    --lineEnd;
+                    if (l[lineEnd] == '\n')
+                        break;
+                    if (l[lineEnd] != ' ' && l[lineEnd] != '\t')
+                        break;
+                }
+                if (l[lineEnd] == '\n')
+                    result << l.substr(0, lineEnd + 1);
+                else
+                    result << l;
+            }
+            // do next row, all next rows start from 0
+            ++row;
+            col = 0;
+        }
+        return result.str();
     }
 
     // Terminal State 

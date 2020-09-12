@@ -90,6 +90,19 @@ namespace ui {
 
     protected:
 
+        SelectionOwner() {
+            autoScrollTimer_.setInterval(50);
+            autoScrollTimer_.setHandler([this]() {
+                schedule([this](){
+                    Point oldSo = scrollOffset();
+                    scrollBy(autoScrollIncrement_);
+                    if (scrollOffset() == oldSo)
+                        stopAutoScroll();
+                });
+                return true;
+            });
+        }
+
         virtual std::string getSelectionContents() = 0;
 
         /** Clears the selection. 
@@ -133,9 +146,16 @@ namespace ui {
             }
         }
 
-        /** \name Selection Update
-         */
-        //@{
+    private:
+
+        Selection selection_;
+        Point selectionStart_ = Point{-1, -1};
+
+    /** \name Selection Update
+     */
+    //@{
+    
+    protected:
 
         /** Starts the selection update. 
          
@@ -179,11 +199,41 @@ namespace ui {
                 }
             }
         }
-        //@}      
 
-        /** \name Default selection behavior. 
-         */
-        //@{
+    //@}      
+
+    /** \name Autoscrolling.
+     */
+    //@{
+    protected:
+
+        void startAutoScroll(Point const & step) {
+            autoScrollTimer_.stop();
+            autoScrollIncrement_ = step;
+            autoScrollTimer_.start();
+        }
+
+        void stopAutoScroll() {
+            autoScrollTimer_.stop();
+        }
+
+        bool autoScrollActive() const {
+            return autoScrollTimer_.running();
+        }
+
+    private:
+
+        Point autoScrollIncrement_ = Point{0,0};
+
+        Timer autoScrollTimer_;
+
+    //@}
+
+    /** \name Default selection behavior. 
+     */
+    //@{
+
+    protected:
 
         void paint(Canvas & canvas) override {
             // TODO get the selection color from style
@@ -192,8 +242,18 @@ namespace ui {
         }
 
         void mouseMove(MouseMoveEvent::Payload & e) override {
-            if (updatingSelection())
+            if (updatingSelection()) {
                 updateSelection(e->coords + scrollOffset(), contentsSize());
+                // if the coordinates are outside the widget, do autoscrolling
+                if (!Rect{size()}.contains(e->coords)) {
+                    startAutoScroll(Point{
+                        e->coords.x() < 0 ? -1 : 1,
+                        e->coords.y() < 0 ? -1 : 1,
+                    });
+                } else {
+                    stopAutoScroll();
+                }
+            }
         }
 
         void mouseDown(MouseButtonEvent::Payload & e) override {
@@ -211,8 +271,11 @@ namespace ui {
 
         void mouseUp(MouseButtonEvent::Payload & e) override {
             if (e->modifiers == Key::None) {
-                if (e->button == MouseButton::Left) 
+                if (e->button == MouseButton::Left) {
+                    if (autoScrollActive())
+                        stopAutoScroll();
                     endSelectionUpdate();
+                }
             }
         }
 
@@ -220,16 +283,7 @@ namespace ui {
 
         }
 
-
-        //@}  
-
-    private:
-
-        Selection selection_;
-        Point selectionStart_ = Point{-1, -1};
-
+    //@}  
     }; // ui::SelectionOwner
-
-
 
 } // namespace ui
