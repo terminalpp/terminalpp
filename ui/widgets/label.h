@@ -12,6 +12,7 @@ namespace ui {
 
         Label(std::string const & text):
             text_{text} {
+            setHeightHint(SizeHint::AutoSize());
         }
 
         using Widget::setWidthHint;
@@ -101,7 +102,7 @@ namespace ui {
             if (widthHint() == SizeHint::AutoSize()) 
                 format_ = Canvas::GetTextMetrics(text_, Canvas::NoWordWrap);
             else
-                format_ = Canvas::GetTextMetrics(text_, wordWrap_ ? rect().width() : Canvas::NoWordWrap);
+                format_ = Canvas::GetTextMetrics(text_, wordWrap_ ? std::max(1, rect().width()) : Canvas::NoWordWrap);
             Size result = rect().size();
             if (widthHint() == SizeHint::AutoSize()) {
                 result.setWidth(format_[0].width);
@@ -150,7 +151,7 @@ namespace ui {
 
 
         std::string text_;
-        Color color_;
+        Color color_ = Color::White;
         Color background_;
         Font font_;
         HorizontalAlign hAlign_;

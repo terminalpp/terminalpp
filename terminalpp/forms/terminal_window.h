@@ -56,6 +56,10 @@ namespace tpp {
             Dialog::YesNoCancel::keyDown(event);
         }
 
+        void paint(Canvas & canvas) override {
+            YesNoCancel::paint(canvas);
+        }
+
     private:
         Label * contents_;
     };     
@@ -261,9 +265,9 @@ namespace tpp {
                 session->pendingPaste->cancel();
             session->pendingPaste = new PasteDialog(*e);
             session->pendingPaste->onDismiss.setHandler([this, session](ui::Event<Widget*>::Payload & e) {
-                session->pendingPaste = nullptr;
                 if (*e == session->pendingPaste->btnYes())
                     session->terminal->paste(session->pendingPaste->contents());
+                session->pendingPaste = nullptr;
             });
             showModal(session->pendingPaste);
         }

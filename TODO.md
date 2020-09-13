@@ -43,8 +43,8 @@ UI version 3
 
 - !! settings file is settings-2. 
 
+- dialog clicking mouse does not seem to work properly
 - when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
-- add paste dialog
 - clear the code
 - terminal should store cursor information inside the buffer
 

@@ -19,7 +19,7 @@ namespace ui {
             title_{title},
             header_{new Panel{new Layout::Row{HorizontalAlign::Right}}} {
             setLayout(new Layout::Column{});
-            header_->setHeightHint(SizeHint::AutoLayout());
+            header_->setHeightHint(SizeHint::AutoSize());
             header_->setBackground(Color::Red);
             attach(header_);
             setHeightHint(SizeHint::AutoSize());
@@ -86,7 +86,7 @@ namespace ui {
 
         std::string title_;
         Panel * header_;
-        Widget * body_;
+        Widget * body_ = nullptr;
 
     }; // ui::Dialog 
 
