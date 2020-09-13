@@ -43,7 +43,7 @@ UI version 3
 
 - !! settings file is settings-2. 
 
-- implement selection : check that selection contents work, fix for alternate mode with no history and make sure that selection & clipboard copy & paste work
+- when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
 - add paste dialog
 - clear the code
 - terminal should store cursor information inside the buffer
@@ -114,6 +114,7 @@ UI version 3
 > These are features that I am considering to add, but no immediate plans to do so, noty even sure if they will happen.  
 
 - keyboard shortcuts
+  - when implemented, add keyDown in selection owner to deal with selection & clipboard
 - UI actions
 - add zoom out? and default zoom? 
 - xim is wrong, it works on linux, but fails on mac

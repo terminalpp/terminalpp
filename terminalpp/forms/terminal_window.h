@@ -31,11 +31,40 @@ namespace tpp {
         Label * contents_;
     };
 
+    /** Paste confirmation dialog. 
+     */
+    class PasteDialog : public ui::Dialog::YesNoCancel {
+    public:
+
+        PasteDialog(std::string const & contents):
+            ui::Dialog::YesNoCancel{"Are you sure you want to paste?"},
+            contents_{new ui::Label{contents}} {
+            setBody(contents_);
+        }
+
+        std::string const & contents() const {
+            return contents_->text();
+        }
+
+    protected:
+
+        void keyDown(KeyEvent::Payload & event) override {
+            if (*event == SHORTCUT_PASTE) {
+                dismiss(btnYes());
+                return;
+            }
+            Dialog::YesNoCancel::keyDown(event);
+        }
+
+    private:
+        Label * contents_;
+    };     
+
     /** The terminal window. 
      
         
      */
-    class TerminalWindow : public ui::Window /*, public ui::AutoScroller<TerminalWindow> */ {
+    class TerminalWindow : public ui::Window {
     public:
 
         TerminalWindow(tpp::Window * window):
@@ -90,12 +119,12 @@ namespace tpp {
             std::string name;
             std::string title;
             AnsiTerminal * terminal;
-            bool terminateOnKeyPress;
+            bool terminateOnKeyPress = false;
+            PasteDialog * pendingPaste = nullptr;
 
             SessionInfo(Config::sessions_entry const & session):
                 name{session.name()},
-                title{session.name()},
-                terminateOnKeyPress{false} {
+                title{session.name()} {
             }
 
             ~SessionInfo() {
@@ -140,6 +169,9 @@ namespace tpp {
         }
 
         void closeSession(SessionInfo * session) {
+            UI_THREAD_ONLY;
+            if (session->pendingPaste != nullptr)
+                session->pendingPaste->dismiss(session->pendingPaste->btnCancel());
             sessions_.erase(session->terminal);
             pager_->removePage(session->terminal);
             delete session;
@@ -164,24 +196,12 @@ namespace tpp {
             window_->setIcon(tpp::Window::Icon::Notification);
         }
 
-
-
         void keyDown(KeyEvent::Payload & e) override {
             if (activeSession_->terminateOnKeyPress) 
                 closeSession(activeSession_);
             else 
                 Widget::keyDown(e);
         }
-
-        /*
-
-
-
-        bool autoScrollStep(Point by) override {
-            return activeSession_->terminal->scrollBy(by);
-        }
-
-        */
 
         void activeSessionChanged(ui::Event<Widget*>::Payload & e) {
             activeSession_ = *e == nullptr ? nullptr : sessionInfo(*e);
@@ -218,65 +238,34 @@ namespace tpp {
             }
         }
 
-        /*
-
-        void terminalMouseMove(UIEvent<MouseMoveEvent>::Payload & event) {
-            if (activeSession_->terminal->mouseCaptured())
-                return;
-            if (activeSession_->terminal->updatingSelection()) {
-                if (event->coords.y() < 0 || event->coords.y() >= activeSession_->terminal->height())
-                    startAutoScroll(Point{0, event->coords.y() < 0 ? -1 : 1});
-                else
-                    stopAutoScroll();
-            }
-        }
-
-        void terminalMouseDown(UIEvent<MouseButtonEvent>::Payload & event) {
-            if (activeSession_->terminal->mouseCaptured())
-                return;
-            if (event->modifiers == 0) {
-                if (event->button == MouseButton::Left) {
-                    activeSession_->terminal->startSelectionUpdate(event->coords);
-                } else if (event->button == MouseButton::Wheel) {
-                    requestSelection(); 
-                } else if (event->button == MouseButton::Right && ! activeSession_->terminal->selection().empty()) {
-                    setClipboard(activeSession_->terminal->getSelectionContents());
-                    activeSession_->terminal->clearSelection();
-                } else {
-                    return;
-                }
-            }
-            event.stop();
-        }
-
-        void terminalMouseUp(UIEvent<MouseButtonEvent>::Payload & event) {
-            if (activeSession_->terminal->mouseCaptured())
-                return;
-            if (event->modifiers == 0) {
-                if (event->button == MouseButton::Left) 
-                    activeSession_->terminal->endSelectionUpdate();
-                else
-                    return;
-            }
-            event.stop();
-        }
-
-        void terminalMouseWheel(UIEvent<MouseWheelEvent>::Payload & event) {
-            AnsiTerminal * t = dynamic_cast<AnsiTerminal*>(event.sender());
-            if (t->mouseCaptured())
-                return;
-            //if (state_.buffer.historyRows() > 0) {
-                if (event->by > 0)
-                    t->scrollBy(Point{0, -1});
-                else 
-                    t->scrollBy(Point{0, 1});
-                event.stop();
-            //}
-        }
-        */
-
         void terminalSetClipboard(StringEvent::Payload & e) {
             setClipboard(*e);
+        }
+
+        void terminalPaste(StringEvent::Payload & e) {
+            SessionInfo * session = activeSession_;
+            switch (Config().sequences.confirmPaste()) {
+                case config::ConfirmPaste::Never:
+                    session->terminal->paste(*e);
+                    return;
+                case config::ConfirmPaste::Multiline:
+                    if ((*e).find('\n') == std::string::npos) {
+                        session->terminal->paste(*e);
+                        return;
+                    }
+                    // fallthrough to always
+                case config::ConfirmPaste::Always:
+                    break;
+            }
+            if (session->pendingPaste != nullptr)
+                session->pendingPaste->cancel();
+            session->pendingPaste = new PasteDialog(*e);
+            session->pendingPaste->onDismiss.setHandler([this, session](ui::Event<Widget*>::Payload & e) {
+                session->pendingPaste = nullptr;
+                if (*e == session->pendingPaste->btnYes())
+                    session->terminal->paste(session->pendingPaste->contents());
+            });
+            showModal(session->pendingPaste);
         }
 
         void terminalTppSequence(TppSequenceEvent::Payload & event) {

@@ -279,10 +279,6 @@ namespace ui {
             }
         }
 
-        void keyDown(KeyEvent::Payload & e) override {
-
-        }
-
     //@}  
     }; // ui::SelectionOwner
 

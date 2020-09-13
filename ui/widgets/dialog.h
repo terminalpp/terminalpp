@@ -11,6 +11,9 @@ namespace ui {
     public:
 
         class Cancel;
+        class YesNoCancel;
+
+        class Error;
 
         Dialog(std::string const & title):
             title_{title},
@@ -95,8 +98,12 @@ namespace ui {
             addHeaderButton(btnCancel_);
         }
 
-        Button const * btnCancel() const {
+        Button * btnCancel() const {
             return btnCancel_;
+        }
+
+        void cancel() {
+            dismiss(btnCancel_);
         }
 
     protected:
@@ -113,8 +120,67 @@ namespace ui {
 
         Button * btnCancel_;
 
+    }; // ui::Dialog::Cancel
 
+    class Dialog::YesNoCancel : public Dialog {
+    public:
+        YesNoCancel(std::string const & title):
+            Dialog{title},
+            btnYes_{new Button{" Yes "}},
+            btnNo_{new Button{" No "}},
+            btnCancel_{new Button{" X "}} {
+            addHeaderButton(btnCancel_);
+            addHeaderButton(btnNo_);
+            addHeaderButton(btnYes_);
+        }
 
-    }; 
+        Button * btnCancel() const {
+            return btnCancel_;
+        }
+
+        Button * btnYes() const {
+            return btnYes_;
+        }
+
+        Button * btnNo() const {
+            return btnNo_;
+        }
+
+        void cancel() {
+            dismiss(btnCancel_);
+        }
+
+    protected:
+
+        void keyDown(KeyEvent::Payload & event) override {
+            if (*event == Key::Esc) {
+                dismiss(btnCancel_);
+            } else {
+                Dialog::keyDown(event);
+            }
+        }
+
+    private:
+
+        Button * btnYes_;
+        Button * btnNo_;
+        Button * btnCancel_;
+
+    }; // ui::Dialog::YesNoCancel
+
+    /** Error dialog. 
+     */
+    class Dialog::Error : public Dialog::Cancel {
+    public:
+        Error(std::string const & message):
+            Dialog::Cancel{"Error"},
+            contents_{new Label{message}} {
+            setBody(contents_);
+        }
+
+    private:
+        Label * contents_;
+    };
+
 
 } // namespace ui

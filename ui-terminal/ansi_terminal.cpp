@@ -110,6 +110,16 @@ namespace ui {
     }
 
     // User Input
+    
+    void AnsiTerminal::paste(std::string const & contents) {
+        if (bracketedPaste_) {
+            send("\033[200~", 6);
+            send(contents.c_str(), contents.size());
+            send("\033[201~", 6);
+        } else {
+            send(contents.c_str(), contents.size());
+        }        
+    }
 
     void AnsiTerminal::keyDown(KeyEvent::Payload & e) {
         // only scroll to prompt if the key down is not a simple modifier key

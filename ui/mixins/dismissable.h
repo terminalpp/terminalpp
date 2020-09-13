@@ -9,20 +9,6 @@ namespace ui {
 
         Event<Widget*> onDismiss;
 
-    protected:
-
-        Dismissable(bool deleteOnDismiss = true):
-            deleteOnDismiss_{deleteOnDismiss} {
-        }
-
-        bool deleteOnDismiss() const {
-            return deleteOnDismiss_;
-        }
-
-        void setDeleteOnDismiss(bool value = true) {
-            deleteOnDismiss_ = value;
-        }
-
         virtual void dismiss(Widget * cause) {
             ASSERT(parent() != nullptr);
             // first call the onDismiss event
@@ -35,6 +21,20 @@ namespace ui {
             // and delete itself, if requested
             if (deleteOnDismiss_)
                 delete this;
+        }
+
+    protected:
+
+        Dismissable(bool deleteOnDismiss = true):
+            deleteOnDismiss_{deleteOnDismiss} {
+        }
+
+        bool deleteOnDismiss() const {
+            return deleteOnDismiss_;
+        }
+
+        void setDeleteOnDismiss(bool value = true) {
+            deleteOnDismiss_ = value;
         }
         
     private:

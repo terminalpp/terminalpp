@@ -44,6 +44,14 @@
 
 #define SHORTCUT_PASTE (Key::V + Key::Ctrl + Key::Shift)
 
+namespace config {
+    enum class ConfirmPaste {
+        Never,
+        Always,
+        Multiline
+    };
+}
+
 template<>
 inline Command JSONConfig::FromJSON(JSON const & json) {
     if (json.kind() != JSON::Kind::Array)
@@ -111,11 +119,25 @@ inline std::vector<std::reference_wrapper<Log>> JSONConfig::FromJSON(JSON const 
     }
     return result;
 }
+template<>
+inline config::ConfirmPaste JSONConfig::FromJSON(JSON const & json) {
+    if (json.kind() != JSON::Kind::String)
+        THROW(JSONError()) << "Element must be an array";
+    if (json.toString() == "never") 
+        return config::ConfirmPaste::Never;
+    else if (json.toString() == "always")
+        return config::ConfirmPaste::Always;
+    else if (json.toString() == "multiline")
+        return config::ConfirmPaste::Multiline;
+    else 
+        THROW(JSONError()) << "Only values 'never', 'always' or 'multiline' are permitted";
+}
 
 namespace tpp {	
 
     class Config : public JSONConfig::CmdArgsRoot {
     public:
+
         CONFIG_OBJECT(
             version,
             "Version information & checks",
@@ -228,7 +250,7 @@ namespace tpp {
 				confirmPaste,
 				"Determines whether pasting into terminal should be explicitly confirmed. Allowed values are 'never', 'always', 'multiline'.",
 				JSON{"multiline"},
-			    std::string
+			    config::ConfirmPaste
 			);
             CONFIG_PROPERTY(
                 boldIsBright,

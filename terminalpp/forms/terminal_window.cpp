@@ -35,14 +35,8 @@ namespace tpp {
         t->onPTYTerminated.setHandler(&TerminalWindow::sessionPTYTerminated, this);
         t->onTitleChange.setHandler(&TerminalWindow::sessionTitleChanged, this);
         t->onClipboardSetRequest.setHandler(&TerminalWindow::terminalSetClipboard, this);
-        /*
+        t->onPaste.setHandler(&TerminalWindow::terminalPaste, this);
         t->onNotification.setHandler(&TerminalWindow::sessionNotification, this);
-        t->onKeyDown.setHandler(&TerminalWindow::terminalKeyDown, this);
-        t->onMouseMove.setHandler(&TerminalWindow::terminalMouseMove, this);
-        t->onMouseDown.setHandler(&TerminalWindow::terminalMouseDown, this);
-        t->onMouseUp.setHandler(&TerminalWindow::terminalMouseUp, this);
-        t->onMouseWheel.setHandler(&TerminalWindow::terminalMouseWheel, this);
-        */
         t->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
     }
 

@@ -104,7 +104,12 @@ namespace ui {
     /** \name User Input
      */
     //@{
+    public:
 
+        /** Sends the specified text as clipboard to the PTY. 
+         */
+        void paste(std::string const & contents);
+        
     protected:
 
         void keyDown(KeyEvent::Payload & e) override ;
