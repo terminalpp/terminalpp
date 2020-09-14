@@ -235,6 +235,7 @@ namespace ui {
         // if we have focused widget, refocus it
         if (keyboardFocus_ != nullptr) {
             ui::VoidEvent::Payload p{};
+            p.updateSender(keyboardFocus_);
             keyboardFocus_->focusIn(p);
         }
     }
@@ -244,6 +245,7 @@ namespace ui {
         focusIn_ = false;
         if (keyboardFocus_ != nullptr) {
             ui::VoidEvent::Payload p{};
+            p.updateSender(keyboardFocus_);
             keyboardFocus_->focusOut(p);
         }
         {
@@ -264,6 +266,7 @@ namespace ui {
         }
         if (keyboardFocus_ != nullptr) {
             ui::KeyEvent::Payload p{k};
+            p.updateSender(keyboardFocus_);
             keyboardFocus_->keyDown(p);
         }
     }
@@ -279,6 +282,7 @@ namespace ui {
         }
         if (keyboardFocus_ != nullptr) {
             ui::KeyEvent::Payload p{k};
+            p.updateSender(keyboardFocus_);
             keyboardFocus_->keyUp(p);
         }
     }
@@ -296,6 +300,7 @@ namespace ui {
         if (keyboardFocus_ == keyDownFocus_ && keyboardFocus_ != nullptr) {
             keyDownFocus_ = nullptr;
             ui::KeyCharEvent::Payload p{c};
+            p.updateSender(keyboardFocus_);
             keyboardFocus_->keyChar(p);
         }
     }
@@ -316,11 +321,14 @@ namespace ui {
         ASSERT(mouseIn_);
         if (mouseFocus_ != nullptr) {
             ui::VoidEvent::Payload p{};
+            p.updateSender(mouseFocus_);
             mouseFocus_->mouseOut(p);
         }
         mouseIn_ = false;
         mouseButtons_ = 0;
         mouseFocus_ = nullptr;
+        VoidEvent::Payload p{};
+        onMouseOut(p, this);
     }
 
     void Renderer::mouseMove(Point coords) {
@@ -334,6 +342,7 @@ namespace ui {
         }
         if (mouseFocus_ != nullptr) {
             ui::MouseMoveEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), modifiers_};
+            p.updateSender(mouseFocus_);
             mouseFocus_->mouseMove(p);
         }
     }
@@ -349,6 +358,7 @@ namespace ui {
         }
         if (mouseFocus_ != nullptr) {
             ui::MouseWheelEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), by, modifiers_};
+            p.updateSender(mouseFocus_);
             mouseFocus_->mouseWheel(p);
         }
     }
@@ -374,6 +384,7 @@ namespace ui {
         }
         if (mouseFocus_ != nullptr) {
             ui::MouseButtonEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), button, modifiers_};
+            p.updateSender(mouseFocus_);
             mouseFocus_->mouseDown(p);
         }
     }
@@ -395,6 +406,7 @@ namespace ui {
         }
         if (mouseFocus_ != nullptr) {
             ui::MouseButtonEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), button, modifiers_};
+            p.updateSender(mouseFocus_);
             mouseFocus_->mouseUp(p);
         }
         // determine if we are dealing with a click, or a double click
@@ -420,6 +432,7 @@ namespace ui {
                     lastMouseClickTarget_ = mouseFocus_;
                 }
             }
+            mouseButtons_ = 0;
             mouseClickButton_ = 0;
             lastMouseClickTarget_ = nullptr;
         // if not click or double click, update the mouse buttons and clear the click and double click state
@@ -440,6 +453,7 @@ namespace ui {
         }
         if (mouseFocus_ != nullptr) {
             ui::MouseButtonEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), button, modifiers_};
+            p.updateSender(mouseFocus_);
             mouseFocus_->mouseClick(p);
         }
     }
@@ -454,6 +468,7 @@ namespace ui {
         }
         if (mouseFocus_ != nullptr) {
             ui::MouseButtonEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), button, modifiers_};
+            p.updateSender(mouseFocus_);
             mouseFocus_->mouseDoubleClick(p);
         }
     }

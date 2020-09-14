@@ -86,9 +86,10 @@ HELPERS_NAMESPACE_BEGIN
 		}
 
         void operator() (Payload & payload, SENDER * sender) {
-            payload.updateSender(sender);
-            if (handler_) 
+            if (handler_) {
+                payload.updateSender(sender);
                 handler_(payload);
+            }
         }
 
 	private:
