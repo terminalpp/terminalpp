@@ -106,6 +106,10 @@ namespace ui {
     //@{
     public:
 
+        using Widget::requestClipboardPaste;
+
+        using Widget::requestSelectionPaste;
+
         /** Sends the specified text as clipboard to the PTY. 
          */
         void paste(std::string const & contents);

@@ -158,6 +158,9 @@ namespace tpp {
                     window_->setZoom(std::max(1.0, window_->zoom() / 1.25));
             } else if (*e == SHORTCUT_ABOUT) {
                 showModal(new AboutBox{});
+            } else if (*e == SHORTCUT_PASTE) {
+                ASSERT(activeSession_ != nullptr);
+                activeSession_->terminal->requestClipboardPaste();
             } else {
                 return;
             }
@@ -211,7 +214,6 @@ namespace tpp {
             activeSession_ = *e == nullptr ? nullptr : sessionInfo(*e);
         }
 
-
         void sessionPTYTerminated(ExitCodeEvent::Payload & e) {
             SessionInfo * si = sessionInfo(e.sender());
             window_->setIcon(tpp::Window::Icon::Notification);
@@ -224,21 +226,6 @@ namespace tpp {
             } else {
                 window_->setKeyboardFocus(this);
                 activeSession_->terminateOnKeyPress = true;
-            }
-        }
-
-        void onKeyDown(Renderer::KeyEvent::Payload & e) {
-            if (window_->icon() != tpp::Window::Icon::Default)
-                window_->setIcon(tpp::Window::Icon::Default);
-            // trigger paste event for ourselves so that the paste can be intercepted
-            if (*e == SHORTCUT_PASTE) {
-                //requestClipboard();
-                e.stop();
-            } else if (*e == SHORTCUT_ABOUT) {
-                showModal(new AboutBox{});
-                e.stop();
-            } else if (*e == SHORTCUT_SETTINGS) {
-                Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit */ true); 
             }
         }
 
