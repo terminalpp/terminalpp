@@ -38,6 +38,7 @@ namespace tpp {
         t->onPaste.setHandler(&TerminalWindow::terminalPaste, this);
         t->onNotification.setHandler(&TerminalWindow::sessionNotification, this);
         t->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
+        t->onKeyDown.setHandler(&TerminalWindow::terminalKeyDown, this);
     }
 
 } // namespace tpp

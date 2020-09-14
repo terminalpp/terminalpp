@@ -74,12 +74,14 @@ namespace ui {
         /** The dialog window suppports tab focus. 
          */
         void keyDown(KeyEvent::Payload & e) override {
-            if (*e == Key::Tab)
+            if (*e == Key::Tab) {
                 renderer()->setKeyboardFocus(renderer()->nextKeyboardFocus());
-            else if (*e == Key::Tab + Key::Shift)
+                e.stop();
+            } else if (*e == Key::Tab + Key::Shift) {
                 renderer()->setKeyboardFocus(renderer()->prevKeyboardFocus());
-            else
-                Widget::keyDown(e);
+                e.stop();
+            } 
+            Widget::keyDown(e);
         }
 
     private:

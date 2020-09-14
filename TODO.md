@@ -43,7 +43,9 @@ UI version 3
 
 - !! settings file is settings-2. 
 
-- dialog clicking mouse does not seem to work properly
+- keyboard and mouse events propagation to parents should not happen if inactive, but the user event should be always called (i.e. after stopping the event, widget's implementation should still be called)
+- the same for mouse? 
+
 - when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
 - clear the code
 - terminal should store cursor information inside the buffer
@@ -54,7 +56,6 @@ UI version 3
 - font setSize & other setters should perhaps be renamed to withSize, etc to avoid confuision about them being setters
 - some simpler accesses to state-ish properties in the terminal? 
 
-
 - document keyboard focus handling - i.e. only document order and getting next & previous elements
 - things like tab focus and so on should be implemented differently, perhaps by a form widget or some such
 
@@ -62,7 +63,6 @@ UI version 3
 
 - renderer-widget coordinates, check that they are valid
 - key up not detected on standard terminal, determine how tpp would do it
-- mouse up event, detect click and double click
 
 - document keyboard, mouse and selection & clipboard inputs in renderer & widgets
 - document event queue and typed event queue

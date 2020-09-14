@@ -122,44 +122,46 @@ namespace ui {
     }
 
     void AnsiTerminal::keyDown(KeyEvent::Payload & e) {
-        // only scroll to prompt if the key down is not a simple modifier key
-        if (*e != Key::Shift + Key::ShiftKey && *e != Key::Alt + Key::AltKey && *e != Key::Ctrl + Key::CtrlKey && *e != Key::Win + Key::WinKey)
-            setScrollOffset(Point{0, historyRows()});
-        auto i = KeyMap_.find(*e);
-        // only emit keyDown for non-printable keys as printable keys will go through the keyCHar event
-        if (i != KeyMap_.end() && PrintableKeys_.find(*e) == PrintableKeys_.end()) {
-    		std::string const * seq = &(i->second);
-            if ((cursorMode_ == CursorMode::Application &&
-                e->modifiers() == Key::Invalid) && (
-                e->key() == Key::Up ||
-                e->key() == Key::Down || 
-                e->key() == Key::Left || 
-                e->key() == Key::Right || 
-                e->key() == Key::Home || 
-                e->key() == Key::End)) {
-					std::string sa(*seq);
-					sa[1] = 'O';
-					send(sa.c_str(), sa.size());
-			} else {
-        			send(seq->c_str(), seq->size());
+        onKeyDown(e, this);
+        if (e.active()) {
+            // only scroll to prompt if the key down is not a simple modifier key
+            if (*e != Key::Shift + Key::ShiftKey && *e != Key::Alt + Key::AltKey && *e != Key::Ctrl + Key::CtrlKey && *e != Key::Win + Key::WinKey)
+                setScrollOffset(Point{0, historyRows()});
+            auto i = KeyMap_.find(*e);
+            // only emit keyDown for non-printable keys as printable keys will go through the keyCHar event
+            if (i != KeyMap_.end() && PrintableKeys_.find(*e) == PrintableKeys_.end()) {
+                std::string const * seq = &(i->second);
+                if ((cursorMode_ == CursorMode::Application &&
+                    e->modifiers() == Key::Invalid) && (
+                    e->key() == Key::Up ||
+                    e->key() == Key::Down || 
+                    e->key() == Key::Left || 
+                    e->key() == Key::Right || 
+                    e->key() == Key::Home || 
+                    e->key() == Key::End)) {
+                        std::string sa(*seq);
+                        sa[1] = 'O';
+                        send(sa.c_str(), sa.size());
+                } else {
+                        send(seq->c_str(), seq->size());
+                }
             }
-		}
+        }
         // don't propagate to parent as the terminal handles keyboard input itself
-        e.stop();
-        Widget::keyDown(e);
     }
 
     void AnsiTerminal::keyUp(KeyEvent::Payload & e) {
-        e.stop();
-        Widget::keyUp(e);
+        onKeyUp(e, this);
+        // don't propagate to parent as the terminal handles keyboard input itself
     }
 
     void AnsiTerminal::keyChar(KeyCharEvent::Payload & e) {
-        ASSERT(e->codepoint() >= 32);
-        send(e->toCharPtr(), e->size());
+        onKeyChar(e, this);
+        if (e.active()) {
+            ASSERT(e->codepoint() >= 32);
+            send(e->toCharPtr(), e->size());
+        }
         // don't propagate to parent as the terminal handles keyboard input itself
-        e.stop();
-        Widget::keyChar(e);
     }
 
     void AnsiTerminal::mouseMove(MouseMoveEvent::Payload & e) {

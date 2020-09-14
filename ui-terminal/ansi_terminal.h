@@ -102,6 +102,8 @@ namespace ui {
     //@}
 
     /** \name User Input
+     
+        Unlike generic widgets, which first process the event themselves and only then trigger the user events or propagate to parents, the terminal first triggers the user event, which may in theory stop the event from propagating to the terminal and only then processes the event in the terminal. No keyboard events propagate to parents. 
      */
     //@{
     public:

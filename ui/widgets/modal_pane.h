@@ -49,6 +49,20 @@ namespace ui {
             }
         }
 
+        void keyDown(KeyEvent::Payload & e) override {
+            onKeyDown(e, this);
+        }
+
+        void keyUp(KeyEvent::Payload & e) override {
+            onKeyUp(e, this);
+        }
+
+        void keyChar(KeyCharEvent::Payload & e) override {
+            onKeyChar(e, this);
+        }
+
+
+
     }; // ui::ModalPane
 
 

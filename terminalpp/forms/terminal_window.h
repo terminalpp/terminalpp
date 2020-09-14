@@ -158,9 +158,6 @@ namespace tpp {
                     window_->setZoom(std::max(1.0, window_->zoom() / 1.25));
             } else if (*e == SHORTCUT_ABOUT) {
                 showModal(new AboutBox{});
-            } else if (*e == SHORTCUT_PASTE) {
-                ASSERT(activeSession_ != nullptr);
-                activeSession_->terminal->requestClipboardPaste();
             } else {
                 return;
             }
@@ -234,29 +231,39 @@ namespace tpp {
         }
 
         void terminalPaste(StringEvent::Payload & e) {
-            SessionInfo * session = activeSession_;
+            SessionInfo * si = sessionInfo(e.sender());
             switch (Config().sequences.confirmPaste()) {
                 case config::ConfirmPaste::Never:
-                    session->terminal->paste(*e);
+                    si->terminal->paste(*e);
                     return;
                 case config::ConfirmPaste::Multiline:
                     if ((*e).find('\n') == std::string::npos) {
-                        session->terminal->paste(*e);
+                        si->terminal->paste(*e);
                         return;
                     }
                     // fallthrough to always
                 case config::ConfirmPaste::Always:
                     break;
             }
-            if (session->pendingPaste != nullptr)
-                session->pendingPaste->cancel();
-            session->pendingPaste = new PasteDialog(*e);
-            session->pendingPaste->onDismiss.setHandler([this, session](ui::Event<Widget*>::Payload & e) {
-                if (*e == session->pendingPaste->btnYes())
-                    session->terminal->paste(session->pendingPaste->contents());
-                session->pendingPaste = nullptr;
+            if (si->pendingPaste != nullptr)
+                si->pendingPaste->cancel();
+            si->pendingPaste = new PasteDialog(*e);
+            si->pendingPaste->onDismiss.setHandler([this, si](ui::Event<Widget*>::Payload & e) {
+                if (*e == si->pendingPaste->btnYes())
+                    si->terminal->paste(si->pendingPaste->contents());
+                si->pendingPaste = nullptr;
             });
-            showModal(session->pendingPaste);
+            showModal(si->pendingPaste);
+        }
+
+        void terminalKeyDown(KeyEvent::Payload & e) {
+            SessionInfo * si = sessionInfo(e.sender());
+            if (*e == SHORTCUT_PASTE) {
+                si->terminal->requestClipboardPaste();
+            } else {
+                return;
+            }
+            e.stop();
         }
 
         void terminalTppSequence(TppSequenceEvent::Payload & event) {
