@@ -49,17 +49,56 @@ namespace ui {
             }
         }
 
+        /** \name Input events. 
+         
+            All input events that would normally propagate to parents are stopped by the modal pane so that they won't get higher. 
+         */
+        //@{
         void keyDown(KeyEvent::Payload & e) override {
-            onKeyDown(e, this);
+            e.stop();
+            Widget::keyDown(e);
         }
 
         void keyUp(KeyEvent::Payload & e) override {
-            onKeyUp(e, this);
+            e.stop();
+            Widget::keyUp(e);
         }
 
         void keyChar(KeyCharEvent::Payload & e) override {
-            onKeyChar(e, this);
+            e.stop();
+            Widget::keyChar(e);
         }
+
+        void mouseMove(MouseMoveEvent::Payload & e) override {
+            e.stop();
+            Widget::mouseMove(e);
+        }
+
+        void mouseWheel(MouseWheelEvent::Payload & e) override {
+            e.stop();
+            Widget::mouseWheel(e);
+        }
+
+        void mouseDown(MouseButtonEvent::Payload & e) override {
+            e.stop();
+            Widget::mouseDown(e);
+        }
+
+        void mouseUp(MouseButtonEvent::Payload & e) override {
+            e.stop();
+            Widget::mouseUp(e);
+        }
+
+        void mouseClick(MouseButtonEvent::Payload & e) override {
+            e.stop();
+            Widget::mouseClick(e);
+        }
+
+        void mouseDoubleClick(MouseButtonEvent::Payload & e) override {
+            e.stop();
+            Widget::mouseDoubleClick(e);
+        }
+        //@}
 
 
 
