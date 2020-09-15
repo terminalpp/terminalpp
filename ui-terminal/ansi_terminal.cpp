@@ -165,73 +165,69 @@ namespace ui {
     }
 
     void AnsiTerminal::mouseMove(MouseMoveEvent::Payload & e) {
-        if (// the mouse movement should actually be reported
-            (mouseMode_ == MouseMode::All || (mouseMode_ == MouseMode::ButtonEvent && mouseButtonsDown_ > 0)) && 
-            // only send the mouse information if the mouse is in the range of the window
-            Rect{size()}.contains(e->coords)) {
-                // mouse move adds 32 to the last known button press
-                sendMouseEvent(mouseLastButton_ + 32, e->coords, 'M');
-                LOG(SEQ) << "Mouse moved to " << e->coords;
-        } else {
-            SelectionOwner::mouseMove(e);
+        onMouseMove(e, this);
+        if (e.active()) {
+            if (// the mouse movement should actually be reported
+                (mouseMode_ == MouseMode::All || (mouseMode_ == MouseMode::ButtonEvent && mouseButtonsDown_ > 0)) && 
+                // only send the mouse information if the mouse is in the range of the window
+                Rect{size()}.contains(e->coords)) {
+                    // mouse move adds 32 to the last known button press
+                    sendMouseEvent(mouseLastButton_ + 32, e->coords, 'M');
+                    LOG(SEQ) << "Mouse moved to " << e->coords;
+            } else {
+                SelectionOwner::mouseMove(e);
+            }
         }
-        /*
-        if (updatingSelection()) 
-            updateSelection(event->coords + scrollOffset(), scrollSize());
-        */
-        // don't propagate to parent as the terminal handles keyboard input itself
-        e.stop();
-        Widget::mouseMove(e);
     }
 
     void AnsiTerminal::mouseDown(MouseButtonEvent::Payload & e) {
         ++mouseButtonsDown_;
-		if (mouseMode_ != MouseMode::Off) {
-            mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
-            sendMouseEvent(mouseLastButton_, e->coords, 'M');
-            LOG(SEQ) << "Button " << e->button << " down at " << e->coords;
-        } else {
-            SelectionOwner::mouseDown(e);
+        onMouseDown(e, this);
+        if (e.active()) {
+            if (mouseMode_ != MouseMode::Off) {
+                mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
+                sendMouseEvent(mouseLastButton_, e->coords, 'M');
+                LOG(SEQ) << "Button " << e->button << " down at " << e->coords;
+            } else {
+                SelectionOwner::mouseDown(e);
+            }
         }
-        // don't propagate to parent as the terminal handles keyboard input itself
-        e.stop();
-        Widget::mouseDown(e);
     }
 
     void AnsiTerminal::mouseUp(MouseButtonEvent::Payload & e) {
-        // a bit of defensive programming
-        if (mouseButtonsDown_ > 0) {
-            --mouseButtonsDown_;
-            if (mouseMode_ != MouseMode::Off) {
-                mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
-                sendMouseEvent(mouseLastButton_, e->coords, 'm');
-                LOG(SEQ) << "Button " << e->button << " up at " << e->coords;
-            } else {
-                SelectionOwner::mouseUp(e);
+        onMouseUp(e, this);
+        if (e.active()) {
+            // a bit of defensive programming
+            if (mouseButtonsDown_ > 0) {
+                --mouseButtonsDown_;
+                if (mouseMode_ != MouseMode::Off) {
+                    mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
+                    sendMouseEvent(mouseLastButton_, e->coords, 'm');
+                    LOG(SEQ) << "Button " << e->button << " up at " << e->coords;
+                } else {
+                    SelectionOwner::mouseUp(e);
+                }
             }
         }
-        // don't propagate to parent as the terminal handles keyboard input itself
-        e.stop();
-        Widget::mouseUp(e);
     }
 
     void AnsiTerminal::mouseWheel(MouseWheelEvent::Payload & e) {
-        if (! alternateMode_ && historyRows_.size() > 0) {
-            if (e->by > 0)
-                scrollBy(Point{0, -1});
-            else 
-                scrollBy(Point{0, 1});
-        } else {
-            if (mouseMode_ != MouseMode::Off) {
-                // mouse wheel adds 64 to the value
-                mouseLastButton_ = encodeMouseButton((e->by > 0) ? MouseButton::Left : MouseButton::Right, e->modifiers) + 64;
-                sendMouseEvent(mouseLastButton_, e->coords, 'M');
-                LOG(SEQ) << "Wheel offset " << e->by << " at " << e->coords;
+        onMouseWheel(e, this);
+        if (e.active()) {
+            if (! alternateMode_ && historyRows_.size() > 0) {
+                if (e->by > 0)
+                    scrollBy(Point{0, -1});
+                else 
+                    scrollBy(Point{0, 1});
+            } else {
+                if (mouseMode_ != MouseMode::Off) {
+                    // mouse wheel adds 64 to the value
+                    mouseLastButton_ = encodeMouseButton((e->by > 0) ? MouseButton::Left : MouseButton::Right, e->modifiers) + 64;
+                    sendMouseEvent(mouseLastButton_, e->coords, 'M');
+                    LOG(SEQ) << "Wheel offset " << e->by << " at " << e->coords;
+                }
             }
         }
-        // don't propagate to parent as the terminal handles keyboard input itself
-        e.stop();
-        Widget::mouseWheel(e);
     }
 
     unsigned AnsiTerminal::encodeMouseButton(MouseButton btn, Key modifiers) {

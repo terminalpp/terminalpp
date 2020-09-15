@@ -21,11 +21,10 @@ namespace ui {
         }
 
     protected:
-        StoppableEventPayload():
-            active_{true} {
+        StoppableEventPayload() {
         }
     private:
-        bool active_;
+        bool active_ = true;
     }; // StoppableEventPayload
 
     template<typename P, typename T = Widget>

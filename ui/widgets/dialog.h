@@ -63,12 +63,18 @@ namespace ui {
             header_->attachBack(widget);
         }
 
-        void mouseClick(MouseButtonEvent::Payload & event) override {
-            // don't propagate further since the button click is used to dismiss the dialog
-            //Widget::mouseClick(event);
-            dismiss(event.sender());
-            //Event<Widget*>::Payload p{this};
-            //onDismiss(p, this);
+        /** Dismisses the dialog if its buttons were clicked and the event propageted. 
+         
+            Since the header buttons do not have registered handlers their click events will propagate to their parent dialog. 
+            
+            If a button is not to be used for dismissal, its click event should be stopped. 
+         */
+        void mouseClick(MouseButtonEvent::Payload & e) override {
+            if (dynamic_cast<Button*>(e.sender())) {
+                dismiss(e.sender());
+            } else {
+                Widget::mouseClick(e);
+            }
         }
 
         /** The dialog window suppports tab focus. 

@@ -55,48 +55,39 @@ namespace ui {
          */
         //@{
         void keyDown(KeyEvent::Payload & e) override {
-            e.stop();
-            Widget::keyDown(e);
+            onKeyDown(e, this);
         }
 
         void keyUp(KeyEvent::Payload & e) override {
-            e.stop();
-            Widget::keyUp(e);
+            onKeyUp(e, this);
         }
 
         void keyChar(KeyCharEvent::Payload & e) override {
-            e.stop();
-            Widget::keyChar(e);
+            onKeyChar(e, this);
         }
 
         void mouseMove(MouseMoveEvent::Payload & e) override {
-            e.stop();
-            Widget::mouseMove(e);
+            onMouseMove(e, this);
         }
 
         void mouseWheel(MouseWheelEvent::Payload & e) override {
-            e.stop();
-            Widget::mouseWheel(e);
+            onMouseWheel(e, this);
         }
 
         void mouseDown(MouseButtonEvent::Payload & e) override {
-            e.stop();
-            Widget::mouseDown(e);
+            onMouseDown(e, this);
         }
 
         void mouseUp(MouseButtonEvent::Payload & e) override {
-            e.stop();
-            Widget::mouseUp(e);
+            onMouseUp(e, this);
         }
 
         void mouseClick(MouseButtonEvent::Payload & e) override {
-            e.stop();
-            Widget::mouseClick(e);
+            onMouseClick(e, this);
         }
 
         void mouseDoubleClick(MouseButtonEvent::Payload & e) override {
-            e.stop();
-            Widget::mouseDoubleClick(e);
+            onMouseDoubleClick(e, this);
         }
         //@}
 

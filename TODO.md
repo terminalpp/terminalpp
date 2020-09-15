@@ -43,9 +43,6 @@ UI version 3
 
 - !! settings file is settings-2. 
 
-- keyboard and mouse events propagation to parents should not happen if inactive, but the user event should be always called (i.e. after stopping the event, widget's implementation should still be called)
-- the same for mouse? 
-
 - when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
 - clear the code
 - terminal should store cursor information inside the buffer
