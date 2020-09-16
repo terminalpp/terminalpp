@@ -12,6 +12,7 @@
 #undef RootWindow
 #undef Success
 #undef index
+#undef Always
 
 namespace x11 {
 	static constexpr long None = 0;
