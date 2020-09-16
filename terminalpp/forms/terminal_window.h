@@ -93,10 +93,10 @@ namespace tpp {
             versionChecker_ = std::thread{[this](){
                 std::string channel = Config::Instance().version.checkChannel();
                 // don't check if empty channel
-                if (channel.empty())
-                    return;
+                //if (channel.empty())
+                //    return;
                 std::string newVersion = Application::Instance()->checkLatestVersion(channel);
-                if (!newVersion.empty()) {
+                if (true || !newVersion.empty()) {
                     schedule([this, newVersion]() {
                         NewVersionDialog * d = new NewVersionDialog{STR("New version " << newVersion << " is available")};
                         showModal(d);

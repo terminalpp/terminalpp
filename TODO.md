@@ -43,6 +43,8 @@ UI version 3
 
 - !! settings file is settings-2. 
 
+- exec in helpers does not work properly. Why? It used to...
+
 - when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
 - clear the code
 - terminal should store cursor information inside the buffer

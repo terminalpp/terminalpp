@@ -13,7 +13,6 @@
 
 #include "helpers.h"
 #include "string.h"
-#include "platform.h"
 
 
 HELPERS_NAMESPACE_BEGIN
@@ -231,141 +230,181 @@ HELPERS_NAMESPACE_BEGIN
 		std::unordered_map<std::string, std::string> map_;
 	};
 
-	/** Executes the given command and returns its output as a string. 
-	 
-	    Empty path means current directory.
-	 */
-	inline std::string Exec(Command const& command, std::string const & path, ExitCode* exitCode = nullptr) {
 #ifdef ARCH_WINDOWS
-		ExitCode ec = EXIT_FAILURE;
-		std::string output;
-		// create the pipes
-		SECURITY_ATTRIBUTES attrs;
-		attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
-		attrs.bInheritHandle = TRUE;
-		attrs.lpSecurityDescriptor = NULL;
-		Win32Handle pipeIn;
-		Win32Handle pipeOut;
-		Win32Handle pipeTheirIn;
-		Win32Handle pipeTheirOut;
-		// create the pipes
-		if (!CreatePipe(pipeTheirIn, pipeOut, &attrs, 0) || !CreatePipe(pipeIn, pipeTheirOut, &attrs, 0))
-			THROW(Exception()) << "Unable to open pipes for " << command;
-		// make sure the pipes are not inherited
-		if (!SetHandleInformation(pipeIn, HANDLE_FLAG_INHERIT, 0) || !SetHandleInformation(pipeOut, HANDLE_FLAG_INHERIT, 0))
-			THROW(Exception()) << "Unable to open pipes for " << command;
-		// create the process
-		PROCESS_INFORMATION pi;
-		ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
-		STARTUPINFOA sInfo;
-		ZeroMemory(&sInfo, sizeof(STARTUPINFOA));
-		sInfo.cb = sizeof(STARTUPINFO);
-		sInfo.hStdError = pipeTheirOut;
-		sInfo.hStdOutput = pipeTheirOut;
-		sInfo.hStdInput = pipeTheirIn;
-		sInfo.dwFlags |= STARTF_USESTDHANDLES;
-		std::string cmd = command.toString();
-		if (CreateProcessA(NULL,
-			&cmd[0], // the command to execute
-			NULL, // process security attributes 
-			NULL, // primary thread security attributes 
-			true, // handles are inherited 
-			0, // creation flags 
-			NULL, // use parent's environment 
-			path.empty() ? nullptr : path.c_str(), // current directory
-			&sInfo,  // startup info
-			&pi)  // info about the process
-			) {
-			// we can close our handles to the other ends now
-			pipeTheirOut.close();
-			pipeTheirIn.close();
-			// read the output
-			std::stringstream result;
-			char buffer[128];
-			DWORD bytesRead;
-			while (ReadFile(pipeIn, &buffer, 128, &bytesRead, nullptr)) {
-				if (bytesRead != 0)
-					result << std::string(&buffer[0], &buffer[0] + bytesRead);
-			}
-			GetExitCodeProcess(pi.hProcess, &ec);
-			// close the handles to created process & thread since we do not need them
-			CloseHandle(pi.hProcess);
-			CloseHandle(pi.hThread);
-			output = result.str();
-			// a crude detection whether the output is given in UTF16, or UTF8 (ASCII)
-			if (output.size() > 1 && output[1] == 0)
-				output = UTF16toUTF8(std::wstring{reinterpret_cast<utf16_char const *>(output.c_str()), output.size() / 2}.c_str());
-		} 
-		if (exitCode != nullptr)
-			* exitCode = ec;
-		else if (ec != EXIT_SUCCESS)
-			THROW(Exception()) << "Command " << command << " exited with code " << ec << ", output:\n" << output;
-		return output;
-#else
-		// create the pipes
-		int       toCmd[2];
-		int       fromCmd[2];
-		OSCHECK(pipe(toCmd) == 0 && pipe(fromCmd) == 0) << "Cannot create pipes for command " << command;
-		// fork, create process and split between process and us (the reading)
-		pid_t     pid;
-		switch (pid = fork()) {
-			case -1:
-				OSCHECK(false) << "Cannot fork for command " << command;
-				/* The child patches the pipe to the standatd input and output and then executes the command.
-				 */
-			case 0: {
-				// TODO perhaps no reason to do OSCHECK here since failure is in different process anyways? 
-				OSCHECK(
-					dup2(toCmd[0], STDIN_FILENO) != -1 &&
-					dup2(fromCmd[1], STDOUT_FILENO) != -1 &&
-					dup2(fromCmd[1], STDERR_FILENO) != -1 &&
-					close(toCmd[1]) == 0 &&
-					close(fromCmd[0]) == 0
-				) << "Unable to change standard output for process " << command;
-				// change directory only if the path is not empty (current dir)
-				if (!path.empty())
-				    OSCHECK(chdir(path.c_str()) == 0) << "Cannot change dir to " << path << " for command " << command;
-				char** argv = command.toArgv();
-				// execvp never returns
-				OSCHECK(execvp(command.command().c_str(), argv) != -1) << "Unable to execute command" << command;
-				UNREACHABLE;
-				break;
-			}
-			// parent is after the switch
-			default: 
-				break;
-		}
-		/** If we are the parrent still, close our excess handles to the pipes and read the output.
-		 */
-		OSCHECK(
-			close(toCmd[0]) == 0 &&
-			close(fromCmd[1]) == 0
-		) << "Unable to close pipes for command " << command;
-		// now read the file
-		std::stringstream result;
-		char buffer[128];
-		while (true) {
-			int numBytes = ::read(fromCmd[0], buffer, 128);
-			// end of file
-			if (numBytes == 0)
-				break;
-			if (numBytes == -1) {
-				if (errno == EINTR || errno == EAGAIN)
-					continue;
-				OSCHECK(false) << "Cannot read output of command " << command;
-			}
-			// otherwise add the read data to the result
-			result << std::string(buffer, numBytes);
-		}
-		// now get the exit code
-		ExitCode ec;
-		OSCHECK(waitpid(pid, &ec, 0) == pid);
-		if (exitCode != nullptr)
-			* exitCode = WEXITSTATUS(ec);
-		else if (ec != EXIT_SUCCESS)
-			THROW(Exception()) << "Command " << command << " exited with code " << ec << ", output:\n" << result.str();
-		return result.str();
+    /** Global lock for creating processes on Windows. 
+     
+        To capture child process output a pipe has to be creates, allowing its handles to be inherited, then create the process swapping its std in/out and then closing our ends of the pipes. This means that when the child process closes its handles, the pipe will die and our ReadFile will be interrupted. 
+
+        However if this process creation is interrupted by another process creation from different thread *after* the shared handle is created, but *before* it is closed, then both processes will inherit the handle and only when both processes die will the ReadFile be terminated. 
+
+        Wrapping the problematic area in the CreateProcessGuard instance ensures that only one thread at a time can create these inherited handles, launch new process and close its own ends at a time.   
+     */
+    class CreateProcessGuard {
+    public:
+        CreateProcessGuard() {
+            Mutex_().lock();
+        }
+
+        ~CreateProcessGuard() {
+            Mutex_().unlock();
+        }
+
+    private: 
+        static std::mutex & Mutex_() {
+            static std::mutex m;
+            return m;
+        }
+
+    }; // CreateProcessGuard
+
 #endif
-	}
+
+
+    /** Executes the given command and returns its output as a string. 
+     
+        Empty path means current directory.
+
+
+    */
+    inline std::string Exec(Command const& command, std::string const & path, ExitCode* exitCode = nullptr) {
+#ifdef ARCH_WINDOWS
+        ExitCode ec = EXIT_FAILURE;
+        std::string output;
+        HANDLE pipeIn;
+        HANDLE pipeTheirOut;
+        PROCESS_INFORMATION pi;
+        ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+        {
+            CreateProcessGuard g;
+            // create the pipes
+            SECURITY_ATTRIBUTES attrs;
+            attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
+            attrs.bInheritHandle = TRUE;
+            attrs.lpSecurityDescriptor = NULL;
+            // create the pipes
+            if (!CreatePipe(& pipeIn, & pipeTheirOut, &attrs, 0))
+                THROW(Exception()) << "Unable to open pipes for " << command;
+            // make sure the pipes are not inherited
+            if (!SetHandleInformation(pipeIn, HANDLE_FLAG_INHERIT, 0))
+                THROW(Exception()) << "Unable to open pipes for " << command;
+            // create the process
+            STARTUPINFOA sInfo;
+            ZeroMemory(&sInfo, sizeof(STARTUPINFOA));
+            sInfo.cb = sizeof(STARTUPINFO);
+            sInfo.hStdError = pipeTheirOut;
+            sInfo.hStdOutput = pipeTheirOut;
+            sInfo.dwFlags |= STARTF_USESTDHANDLES;
+            std::string cmd = command.toString();
+            OSCHECK(CreateProcessA(NULL,
+                &cmd[0], // the command to execute
+                NULL, // process security attributes 
+                NULL, // primary thread security attributes 
+                true, // handles are inherited 
+                0, // creation flags 
+                NULL, // use parent's environment 
+                path.empty() ? nullptr : path.c_str(), // current directory
+                &sInfo,  // startup info
+                &pi)  // info about the process
+            );
+            // we can close our handles to the other ends now
+            CloseHandle(pipeTheirOut);
+        }
+        // read the output
+        std::stringstream result;
+        char buffer[128];
+        DWORD bytesRead;
+        std::thread termination_monitor = std::thread([& pi, & ec](){
+            OSCHECK(WaitForSingleObject(pi.hProcess, INFINITE) == 0);
+            OSCHECK(GetExitCodeProcess(pi.hProcess, &ec) != 0);
+        });
+        //GetExitCodeProcess(pi.hProcess, &ec);
+        while (ReadFile(pipeIn, &buffer, 128, &bytesRead, nullptr)) {
+            if (bytesRead != 0)
+                result << std::string(&buffer[0], &buffer[0] + bytesRead);
+        }
+        termination_monitor.join();
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        CloseHandle(pipeIn);
+        //CloseHandle(pipeOut);
+        // close the handles to created process & thread since we do not need them
+        //CloseHandle(pi.hProcess);
+        //CloseHandle(pi.hThread);
+        output = result.str();
+        // a crude detection whether the output is given in UTF16, or UTF8 (ASCII)
+        if (output.size() > 1 && output[1] == 0) 
+            output = UTF16toUTF8(std::wstring{reinterpret_cast<utf16_char const *>(output.c_str()), output.size() / 2}.c_str());
+        if (exitCode != nullptr)
+            * exitCode = ec;
+        else if (ec != EXIT_SUCCESS)
+            THROW(Exception()) << "Command " << command << " exited with code " << ec << ", output:\n" << output;
+        return output;
+#else
+        // create the pipes
+        int       toCmd[2];
+        int       fromCmd[2];
+        OSCHECK(pipe(toCmd) == 0 && pipe(fromCmd) == 0) << "Cannot create pipes for command " << command;
+        // fork, create process and split between process and us (the reading)
+        pid_t     pid;
+        switch (pid = fork()) {
+            case -1:
+                OSCHECK(false) << "Cannot fork for command " << command;
+                /* The child patches the pipe to the standatd input and output and then executes the command.
+                */
+            case 0: {
+                // TODO perhaps no reason to do OSCHECK here since failure is in different process anyways? 
+                OSCHECK(
+                    dup2(toCmd[0], STDIN_FILENO) != -1 &&
+                    dup2(fromCmd[1], STDOUT_FILENO) != -1 &&
+                    dup2(fromCmd[1], STDERR_FILENO) != -1 &&
+                    close(toCmd[1]) == 0 &&
+                    close(fromCmd[0]) == 0
+                ) << "Unable to change standard output for process " << command;
+                // change directory only if the path is not empty (current dir)
+                if (!path.empty())
+                    OSCHECK(chdir(path.c_str()) == 0) << "Cannot change dir to " << path << " for command " << command;
+                char** argv = command.toArgv();
+                // execvp never returns
+                OSCHECK(execvp(command.command().c_str(), argv) != -1) << "Unable to execute command" << command;
+                UNREACHABLE;
+                break;
+            }
+            // parent is after the switch
+            default: 
+                break;
+        }
+        /** If we are the parrent still, close our excess handles to the pipes and read the output.
+         */
+        OSCHECK(
+            close(toCmd[0]) == 0 &&
+            close(fromCmd[1]) == 0
+        ) << "Unable to close pipes for command " << command;
+        // now read the file
+        std::stringstream result;
+        char buffer[128];
+        while (true) {
+            int numBytes = ::read(fromCmd[0], buffer, 128);
+            // end of file
+            if (numBytes == 0)
+                break;
+            if (numBytes == -1) {
+                if (errno == EINTR || errno == EAGAIN)
+                    continue;
+                OSCHECK(false) << "Cannot read output of command " << command;
+            }
+            // otherwise add the read data to the result
+            result << std::string(buffer, numBytes);
+        }
+        // now get the exit code
+        ExitCode ec;
+        OSCHECK(waitpid(pid, &ec, 0) == pid);
+        if (exitCode != nullptr)
+            * exitCode = WEXITSTATUS(ec);
+        else if (ec != EXIT_SUCCESS)
+            THROW(Exception()) << "Command " << command << " exited with code " << ec << ", output:\n" << result.str();
+        return result.str();
+#endif
+    }
+
 
 HELPERS_NAMESPACE_END

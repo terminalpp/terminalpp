@@ -9,8 +9,6 @@
 
 #include <thread>
 
-#include "helpers/platform.h"
-
 #include "pty.h"
 
 namespace tpp {

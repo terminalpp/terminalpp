@@ -35,40 +35,43 @@ namespace tpp {
 		HANDLE pipePTYIn;
 		// create the pipes
 		SECURITY_ATTRIBUTES attrs;
-		attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
-		attrs.bInheritHandle = TRUE;
-		attrs.lpSecurityDescriptor = NULL;
-		// first create the pipes we need, no security arguments and we use default buffer size for now
-		OSCHECK(
-			CreatePipe(&pipePTYIn, &pipeOut_, &attrs, 0) && CreatePipe(&pipeIn_, &pipePTYOut, &attrs, 0)
-		) << "Unable to create pipes for the subprocess";
-		// make sure that own handles are not inherited
-		OSCHECK(
-			SetHandleInformation(pipeIn_, HANDLE_FLAG_INHERIT, 0) && SetHandleInformation(pipeOut_, HANDLE_FLAG_INHERIT, 0)
-		) << "Unable to disable child process handle inheritance";
-		// and now create the process
-		STARTUPINFO sInfo;
-		ZeroMemory(&sInfo, sizeof(STARTUPINFO));
-		sInfo.cb = sizeof(STARTUPINFO);
-		sInfo.hStdError = pipePTYOut;
-		sInfo.hStdOutput = pipePTYOut;
-		sInfo.hStdInput = pipePTYIn;
-		sInfo.dwFlags |= STARTF_USESTDHANDLES;
-		utf16_string cmd = UTF8toUTF16(command_.toString());
-		OSCHECK(CreateProcess(NULL,
-			&cmd[0], // the command to execute
-			NULL, // process security attributes 
-			NULL, // primary thread security attributes 
-			true, // handles are inherited 
-			0, // creation flags 
-			NULL, // use parent's environment 
-			NULL, // use parent's directory 
-			&sInfo,  // startup info
-			&pInfo_)  // info about the process
-		) << "Unable to execute process " << command_.toString();
-		// we can close our handles to the other ends now
-		OSCHECK(CloseHandle(pipePTYOut));
-		OSCHECK(CloseHandle(pipePTYIn));
+        {
+            CreateProcessGuard g;
+            attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
+            attrs.bInheritHandle = TRUE;
+            attrs.lpSecurityDescriptor = NULL;
+            // first create the pipes we need, no security arguments and we use default buffer size for now
+            OSCHECK(
+                CreatePipe(&pipePTYIn, &pipeOut_, &attrs, 0) && CreatePipe(&pipeIn_, &pipePTYOut, &attrs, 0)
+            ) << "Unable to create pipes for the subprocess";
+            // make sure that own handles are not inherited
+            OSCHECK(
+                SetHandleInformation(pipeIn_, HANDLE_FLAG_INHERIT, 0) && SetHandleInformation(pipeOut_, HANDLE_FLAG_INHERIT, 0)
+            ) << "Unable to disable child process handle inheritance";
+            // and now create the process
+            STARTUPINFO sInfo;
+            ZeroMemory(&sInfo, sizeof(STARTUPINFO));
+            sInfo.cb = sizeof(STARTUPINFO);
+            sInfo.hStdError = pipePTYOut;
+            sInfo.hStdOutput = pipePTYOut;
+            sInfo.hStdInput = pipePTYIn;
+            sInfo.dwFlags |= STARTF_USESTDHANDLES;
+            utf16_string cmd = UTF8toUTF16(command_.toString());
+            OSCHECK(CreateProcess(NULL,
+                &cmd[0], // the command to execute
+                NULL, // process security attributes 
+                NULL, // primary thread security attributes 
+                true, // handles are inherited 
+                0, // creation flags 
+                NULL, // use parent's environment 
+                NULL, // use parent's directory 
+                &sInfo,  // startup info
+                &pInfo_)  // info about the process
+            ) << "Unable to execute process " << command_.toString();
+            // we can close our handles to the other ends now
+            OSCHECK(CloseHandle(pipePTYOut));
+            OSCHECK(CloseHandle(pipePTYIn));
+        }
         // start the waiter thread
         waiter_ = std::thread{[this](){
             while (true) {

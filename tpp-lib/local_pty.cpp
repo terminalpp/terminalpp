@@ -54,60 +54,64 @@ namespace tpp {
 		HRESULT result{ E_UNEXPECTED };
 		HANDLE pipePTYIn{ INVALID_HANDLE_VALUE };
 		HANDLE pipePTYOut{ INVALID_HANDLE_VALUE };
-		// first create the pipes we need, no security arguments and we use default buffer size for now
-		OSCHECK(
-			CreatePipe(&pipePTYIn, &pipeOut_, NULL, 0) && CreatePipe(&pipeIn_, &pipePTYOut, NULL, 0)
-		) << "Unable to create pipes for the subprocess";
-		// determine the console size from the terminal we have
-		COORD consoleSize{};
-		consoleSize.X = 80;
-		consoleSize.Y = 25;
-		// now create the pseudo console
-		result = CreatePseudoConsole(consoleSize, pipePTYIn, pipePTYOut, 0, &conPTY_);
-		// delete the pipes on PTYs end, since they are now in conhost and will be deleted when the conpty is deleted
-		if (pipePTYIn != INVALID_HANDLE_VALUE)
-			CloseHandle(pipePTYIn);
-		if (pipePTYOut != INVALID_HANDLE_VALUE)
-			CloseHandle(pipePTYOut);
-		OSCHECK(result == S_OK) << "Unable to open pseudo console";
-        // generate the startup info
-		SIZE_T attrListSize = 0;
-		startupInfo_.StartupInfo.cb = sizeof(STARTUPINFOEX);
-		// allocate the attribute list of required size
-		InitializeProcThreadAttributeList(nullptr, 1, 0, &attrListSize); // get size of list of 1 attribute
-		startupInfo_.lpAttributeList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(new char[attrListSize]);
-		// initialize the attribute list
-		OSCHECK(
-			InitializeProcThreadAttributeList(startupInfo_.lpAttributeList, 1, 0, &attrListSize)
-		) << "Unable to create attribute list";
-		// set the pseudoconsole attribute
-		OSCHECK(
-			UpdateProcThreadAttribute(
-				startupInfo_.lpAttributeList,
-				0,
-				PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
-				conPTY_,
-				sizeof(HPCON),
-				nullptr,
-				nullptr
-			)
-		) << "Unable to set pseudoconsole attribute";
-		// finally, create the process with given commandline
-		utf16_string cmd = UTF8toUTF16(command_.toString());
-		OSCHECK(
-			CreateProcess(
-				nullptr,
-				&cmd[0], // the command to execute
-				nullptr, // process handle cannot be inherited
-				nullptr, // thread handle cannot be inherited
-				false, // the new process does not inherit any handles
-				EXTENDED_STARTUPINFO_PRESENT, // we have extra info 
-				nullptr, // use parent's environment
-				nullptr, // use parent's directory
-				&startupInfo_.StartupInfo, // startup info
-				&pInfo_ // info about the process
-			)
-		) << "Unable to start process " << command_;
+        {
+            // make sure that only one thread creates new processes in Windows
+            CreateProcessGuard g;
+            // first create the pipes we need, no security arguments and we use default buffer size for now
+            OSCHECK(
+                CreatePipe(&pipePTYIn, &pipeOut_, NULL, 0) && CreatePipe(&pipeIn_, &pipePTYOut, NULL, 0)
+            ) << "Unable to create pipes for the subprocess";
+            // determine the console size from the terminal we have
+            COORD consoleSize{};
+            consoleSize.X = 80;
+            consoleSize.Y = 25;
+            // now create the pseudo console
+            result = CreatePseudoConsole(consoleSize, pipePTYIn, pipePTYOut, 0, &conPTY_);
+            // delete the pipes on PTYs end, since they are now in conhost and will be deleted when the conpty is deleted
+            if (pipePTYIn != INVALID_HANDLE_VALUE)
+                CloseHandle(pipePTYIn);
+            if (pipePTYOut != INVALID_HANDLE_VALUE)
+                CloseHandle(pipePTYOut);
+            OSCHECK(result == S_OK) << "Unable to open pseudo console";
+            // generate the startup info
+            SIZE_T attrListSize = 0;
+            startupInfo_.StartupInfo.cb = sizeof(STARTUPINFOEX);
+            // allocate the attribute list of required size
+            InitializeProcThreadAttributeList(nullptr, 1, 0, &attrListSize); // get size of list of 1 attribute
+            startupInfo_.lpAttributeList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(new char[attrListSize]);
+            // initialize the attribute list
+            OSCHECK(
+                InitializeProcThreadAttributeList(startupInfo_.lpAttributeList, 1, 0, &attrListSize)
+            ) << "Unable to create attribute list";
+            // set the pseudoconsole attribute
+            OSCHECK(
+                UpdateProcThreadAttribute(
+                    startupInfo_.lpAttributeList,
+                    0,
+                    PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
+                    conPTY_,
+                    sizeof(HPCON),
+                    nullptr,
+                    nullptr
+                )
+            ) << "Unable to set pseudoconsole attribute";
+            // finally, create the process with given commandline
+            utf16_string cmd = UTF8toUTF16(command_.toString());
+            OSCHECK(
+                CreateProcess(
+                    nullptr,
+                    &cmd[0], // the command to execute
+                    nullptr, // process handle cannot be inherited
+                    nullptr, // thread handle cannot be inherited
+                    false, // the new process does not inherit any handles
+                    EXTENDED_STARTUPINFO_PRESENT, // we have extra info 
+                    nullptr, // use parent's environment
+                    nullptr, // use parent's directory
+                    &startupInfo_.StartupInfo, // startup info
+                    &pInfo_ // info about the process
+                )
+            ) << "Unable to start process " << command_;
+        }
         // start the waiter thread
         waiter_ = std::thread{[this](){
             while (true) {
