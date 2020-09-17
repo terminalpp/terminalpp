@@ -7,10 +7,13 @@ namespace ui {
 
     void Layout::calculateOverlay(Widget * widget) const {
         Rect r;
-        for (Widget * child : widget->children_) {
-            child->overlaid_ = ! (r & child->rect()).empty();
+        auto kids = children(widget);
+        // use reverse iterator to start with kids that are last
+        for (auto i = kids.rbegin(), e = kids.rend(); i != e; ++i) {
+            Widget * child = *i;
+            setOverlaid(child, ! (r & child->rect()).empty());
             r = r | child->rect();
-        }
+        }        
     }
 
     Size Layout::contentsSize(Widget * widget) const {
@@ -57,11 +60,15 @@ namespace ui {
     }
 
     void Layout::Maximized::calculateOverlay(Widget * widget) const {
-        bool overlaid = false;        
-        for (Widget * child : children(widget)) {
-            setOverlaid(child, overlaid);
-            overlaid = true;
-        }
+        bool overlaid = false;
+        auto kids = children(widget);
+        // use reverse iterator to start with kids that are last
+        for (auto i = kids.rbegin(), e = kids.rend(); i != e; ++i) {
+            if ((*i)->visible()) {
+                setOverlaid(*i, overlaid);
+                overlaid = true;
+            }
+        }        
     }
 
     // Row
