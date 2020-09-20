@@ -16,25 +16,24 @@ namespace ui {
         class Error;
 
         Dialog(std::string const & title):
-            title_{title},
-            header_{new Panel{new Layout::Row{HorizontalAlign::Right}}} {
+            title_{new Label(title)},
+            header_{new Panel{new Layout::Row{HorizontalAlign::Left}}} {
             setLayout(new Layout::Column{});
             header_->setHeightHint(SizeHint::AutoSize());
             header_->setBackground(Color::Blue);
             attach(header_);
             setHeightHint(SizeHint::AutoSize());
             setBackground(Color::Blue);
+            title_->setHeightHint(SizeHint::AutoLayout());
+            header_->attach(title_);
         }
 
         std::string const & title() const {
-            return title_;
+            return title_->text();
         }
 
         virtual void setTitle(std::string const & value) {
-            if (title_ != value) {
-                title_ = value;
-                repaint();
-            }
+            title_->setText(value);
         }
 
         /** Returns the body of the dialog. 
@@ -62,6 +61,7 @@ namespace ui {
 
         void addHeaderButton(Widget * widget) {
             header_->attachBack(widget);
+            header_->attachBack(title_);
         }
 
         /** Dismisses the dialog if its buttons were clicked and the event propageted. 
@@ -93,8 +93,8 @@ namespace ui {
 
     private:
 
-        std::string title_;
-        Panel * header_;
+        Label * title_ = nullptr;
+        Panel * header_ = nullptr;
         Widget * body_ = nullptr;
 
     }; // ui::Dialog 
