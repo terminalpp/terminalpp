@@ -43,8 +43,6 @@ UI version 3
 
 - !! settings file is settings-2. 
 
-- ls -la then htop and alt causes error
-
 - when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
 - clear the code
 - terminal should store cursor information inside the buffer

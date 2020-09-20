@@ -40,17 +40,6 @@ namespace ui {
             }
         }
 
-        Color background() const {
-            return background_;
-        }
-
-        virtual void setBackground(Color value) {
-            if (background_ != value) {
-                background_ = value;
-                repaint();
-            }
-        }
-
         Font font() const {
             return font_;
         }
@@ -60,7 +49,6 @@ namespace ui {
                 font_ = value;
                 relayout();
             }
-
         }
 
         HorizontalAlign hAlign() const {
@@ -118,9 +106,7 @@ namespace ui {
         void paint(Canvas & canvas) override {
             Point x{0,0};
             canvas.setFg(color_);
-            canvas.setBg(background_);
             canvas.setFont(font_);
-            canvas.fill(canvas.rect());
             // adjust the text output vertically
             switch (vAlign_) {
                 case VerticalAlign::Top:
@@ -152,7 +138,6 @@ namespace ui {
 
         std::string text_;
         Color color_ = Color::White;
-        Color background_;
         Font font_;
         HorizontalAlign hAlign_;
         VerticalAlign vAlign_;

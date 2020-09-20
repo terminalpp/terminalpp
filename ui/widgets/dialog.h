@@ -20,9 +20,10 @@ namespace ui {
             header_{new Panel{new Layout::Row{HorizontalAlign::Right}}} {
             setLayout(new Layout::Column{});
             header_->setHeightHint(SizeHint::AutoSize());
-            header_->setBackground(Color::Red);
+            header_->setBackground(Color::Blue);
             attach(header_);
             setHeightHint(SizeHint::AutoSize());
+            setBackground(Color::Blue);
         }
 
         std::string const & title() const {

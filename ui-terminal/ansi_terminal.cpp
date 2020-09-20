@@ -124,8 +124,12 @@ namespace ui {
     void AnsiTerminal::keyDown(KeyEvent::Payload & e) {
         onKeyDown(e, this);
         if (e.active()) {
-            // only scroll to prompt if the key down is not a simple modifier key
-            if (*e != Key::Shift + Key::ShiftKey && *e != Key::Alt + Key::AltKey && *e != Key::Ctrl + Key::CtrlKey && *e != Key::Win + Key::WinKey)
+            // only scroll to prompt if the key down is not a simple modifier key, but don't do this in alternate mode when scrolling is disabled
+            if (! alternateMode_ 
+                && *e != Key::ShiftKey + Key::Shift 
+                && *e != Key::AltKey + Key::Alt
+                && *e != Key::CtrlKey + Key::Ctrl
+                && *e != Key::WinKey + Key::Win)
                 setScrollOffset(Point{0, historyRows()});
             auto i = KeyMap_.find(*e);
             // only emit keyDown for non-printable keys as printable keys will go through the keyCHar event
@@ -1195,12 +1199,10 @@ namespace ui {
 				case 1049: 
                     if (alternateMode_ != value) {
                         // if the selection update was in progress, cancel it. If the selection is not empty, clear it - this has to be an UI event as clearSelection is UI action
-                        /* TODO re-enable this when we deal with selection
                         schedule([this](){
                             cancelSelectionUpdate();
                             clearSelection();
                         });
-                        */
                         // perform the mode change
                         std::swap(state_, stateBackup_);
                         alternateMode_ = value;

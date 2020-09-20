@@ -12,7 +12,7 @@ namespace ui {
             setHeightHint(SizeHint::AutoSize());
             setWidthHint(SizeHint::AutoSize());
             setFocusable(true);
-            setBackground(Color::Yellow);
+            setBackground(Color::Blue);
         }
 
         /** \name Button text. 

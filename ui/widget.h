@@ -512,7 +512,7 @@ namespace ui {
 
         unsigned lock_ = 0;
 
-        Color background_;
+        Color background_ = Color::None;
         Border border_;
 
     //@}
