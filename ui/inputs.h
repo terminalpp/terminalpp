@@ -73,10 +73,16 @@ namespace ui {
             return Key{raw_ & 0xffff};
         }
 
-        /** Returns true if the key consists only of modifier keys. 
+        /** Returns true if the key consists only of modifier key's status (i.e. no key is actually pressed as partof the event, including the modifier keys) 
          */
         bool isModifier() const {
             return raw_ != 0 && code() == 0;
+        }
+
+        /** Returns true if the reported key is pressed is a modifier. 
+         */
+        bool isModifierKey() const {
+            return key() == Key::ShiftKey || key() == Key::CtrlKey || key() == Key::AltKey || key() == Key::WinKey;
         }
 
 		bool operator == (Key const & other) const {

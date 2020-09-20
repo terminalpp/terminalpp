@@ -305,7 +305,7 @@ namespace ui {
                 if (endCol > historyRows_[row].first)
                     endCol = historyRows_[row].first;
             } else {
-                rowCells = state_->buffer.row(row - historyRows_.size());
+                rowCells = state_->buffer.row(row - static_cast<int>(historyRows_.size()));
             }
             // analyze the line and add it to the selection now
             std::stringstream line;
@@ -385,7 +385,7 @@ namespace ui {
         // if the window was scrolled to the end, keep it scrolled to the end as well
         // this means that when the scroll buffer overflows, the scroll offset won't change, but its contents would
         // for now I think this is a feature as you then know that your scroll buffer is overflowing
-        bool scrollToTerminal = top == 0 && scrollOffset().y() == historyRows_.size();
+        bool scrollToTerminal = top == 0 && scrollOffset().y() == static_cast<int>(historyRows_.size());
         // scroll the lines
         while (lines-- > 0) {
             if (maxHistoryRows_ != 0) {

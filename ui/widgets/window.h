@@ -2,6 +2,7 @@
 
 #include "../widget.h"
 #include "modal_pane.h"
+#include "dialog.h"
 
 namespace ui {
 
@@ -50,13 +51,10 @@ namespace ui {
         /** Shows an error box. 
          */
         void showError(std::string const & error) {
-            NOT_IMPLEMENTED;
-            /*
-            sendEvent([this, error]() {
-                ErrorDialog * e = new ErrorDialog{error};
-                modalPane_->add(e);
+            schedule([this, error]() {
+                Dialog::Error * e = new Dialog::Error{error};
+                showModal(e);
             });
-            */
         }
 
 

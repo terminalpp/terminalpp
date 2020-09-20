@@ -187,6 +187,7 @@ namespace tpp {
     }
 
     void X11Window::setSelection(std::string const & contents, Widget * owner) {
+        MARK_AS_UNUSED(owner);
         X11Application * app = X11Application::Instance();
         X11Window * oldOwner = app->selectionOwner_;
         // set the contents in the application

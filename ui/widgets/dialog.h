@@ -3,6 +3,7 @@
 #include "../mixins/dismissable.h"
 
 #include "panel.h"
+#include "label.h"
 #include "button.h"
 
 namespace ui {

@@ -508,8 +508,8 @@ namespace ui {
         void fillRow(int row, Cell const & fill, int from, int cols) {
             Cell * r = rows_[row];
             r[from] = fill;
-            size_t i = 1;
-            size_t next = 2;
+            int i = 1;
+            int next = 2;
             while (next < cols) {
                 memcpy(r + from + i, r + from, sizeof(Cell) * i);
                 i = next;

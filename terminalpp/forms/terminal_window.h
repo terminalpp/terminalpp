@@ -92,11 +92,10 @@ namespace tpp {
             window_->setRoot(this);
             versionChecker_ = std::thread{[this](){
                 std::string channel = Config::Instance().version.checkChannel();
-                // don't check if empty channel
-                //if (channel.empty())
-                //    return;
+                if (channel.empty())
+                    return;
                 std::string newVersion = Application::Instance()->checkLatestVersion(channel);
-                if (true || !newVersion.empty()) {
+                if (!newVersion.empty()) {
                     schedule([this, newVersion]() {
                         NewVersionDialog * d = new NewVersionDialog{STR("New version " << newVersion << " is available")};
                         showModal(d);
@@ -201,7 +200,7 @@ namespace tpp {
         }
 
         void keyDown(KeyEvent::Payload & e) override {
-            if (activeSession_->terminateOnKeyPress) 
+            if (activeSession_->terminateOnKeyPress && ! e->isModifierKey()) 
                 closeSession(activeSession_);
             else 
                 Widget::keyDown(e);

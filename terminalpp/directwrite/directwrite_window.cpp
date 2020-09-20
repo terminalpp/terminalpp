@@ -85,6 +85,7 @@ namespace tpp {
     }
 
     void DirectWriteWindow::setSelection(std::string const & contents, Widget * owner) {
+        MARK_AS_UNUSED(owner);
         DirectWriteApplication * app = DirectWriteApplication::Instance();
         // first we clear the selection if it belongs to different window
         if (app->selectionOwner_ != nullptr && app->selectionOwner_ != this)
