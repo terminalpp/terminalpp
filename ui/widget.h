@@ -660,7 +660,8 @@ namespace ui {
          */
         virtual void focusOut(VoidEvent::Payload & e) {
             onFocusOut(e, this);
-            repaint();
+            // make sure the repaint is scheduled because as of now, the widget still has the focus and will only lose it after this function returns
+            scheduleRepaint();
         }
 
         virtual void keyDown(KeyEvent::Payload & e) {
