@@ -62,15 +62,14 @@ namespace ui {
             {
                 std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
                 Widget::resize(size);
-                bool scrollToTerminal = scrollOffset().y() == historyRows();    
                 resizeHistory();
                 resizeBuffers(size);
                 pty_->resize(size.width(), size.height());
                 // TODO update size? 
 
-                if (scrollToTerminal)
-                    setScrollOffset(Point{0, historyRows()});
             }
+                if (scrollToTerminal_)
+                    setScrollOffset(Point{0, historyRows()});
         }
 
     /** \name Events
@@ -94,7 +93,7 @@ namespace ui {
             if (alternateMode_)
                 return Widget::contentsSize();
             else 
-                return Size{width(), height() + historyRows()};
+                return Size{width(), height() + static_cast<int>(historyRows_.size())};
         }
 
         void paint(Canvas & canvas) override;
@@ -179,7 +178,12 @@ namespace ui {
             }
         }
 
-        int historyRows() const {
+        /** Returns the number of current history rows. 
+         
+            Note that to do so, the buffer must be locked as history rows are protected by its mutex so this function is not as cheap as getting a size of a vector. 
+         */
+        int historyRows() {
+            std::lock_guard<PriorityLock> g{bufferLock_};
             return static_cast<int>(historyRows_.size());
         }
 
@@ -190,6 +194,7 @@ namespace ui {
         void setMaxHistoryRows(int value) {
             if (value != maxHistoryRows_) {
                 maxHistoryRows_ = std::max(value, 0);
+                std::lock_guard<PriorityLock> g{bufferLock_};
                 while (historyRows_.size() > static_cast<size_t>(maxHistoryRows_)) {
                     delete [] historyRows_.front().second;
                     historyRows_.pop_front();
@@ -198,6 +203,11 @@ namespace ui {
         }
 
     protected:
+
+        void setScrollOffset(Point const & value) override {
+            Widget::setScrollOffset(value);
+            scrollToTerminal_ = value.y() == historyRows();
+        }
 
         /** Returns current cursor position. 
          */
@@ -225,8 +235,6 @@ namespace ui {
                 onPTYTerminated(p, this);
             });
         }
-
-    protected:
 
         void resizeHistory();
         void resizeBuffers(Size size);
@@ -288,6 +296,10 @@ namespace ui {
 
         /** Determines whether alternate mode is active or not. */
         bool alternateMode_ = false;
+
+        /** On when the terminal is scrolled completely in view (i.e. past all history rows) and any history rows added will automatically scroll the terminal as well. 
+         */
+        bool scrollToTerminal_ = true;
 
         /** Current state and its backup. The states are swapped and current state kind is determined by the alternateMode(). 
          */

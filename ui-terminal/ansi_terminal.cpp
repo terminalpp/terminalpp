@@ -68,7 +68,7 @@ namespace ui {
 #endif
         Rect visibleRect{ccanvas.visibleRect()};
         std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-        int top = alternateMode_ ? 0 : historyRows();
+        int top = alternateMode_ ? 0 : historyRows_.size();
         // see if there are any history lines that need to be drawn
         for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); ; ++row) {
             if (row >= re)
@@ -102,10 +102,10 @@ namespace ui {
         // draw the cursor 
         if (focused()) {
             // set the cursor via the canvas
-            ccanvas.setCursor(cursor_, cursorPosition() + Point{0, historyRows()});
+            ccanvas.setCursor(cursor_, cursorPosition() + Point{0, static_cast<int>(historyRows_.size())});
         } else {
             // TODO the color of this should be configurable
-            ccanvas.setBorder(cursorPosition() + Point{0, historyRows()}, Border::All(inactiveCursorColor_, Border::Kind::Thin));
+            ccanvas.setBorder(cursorPosition() + Point{0, static_cast<int>(historyRows_.size())}, Border::All(inactiveCursorColor_, Border::Kind::Thin));
         }
     }
 
@@ -382,10 +382,6 @@ namespace ui {
     }
 
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
-        // if the window was scrolled to the end, keep it scrolled to the end as well
-        // this means that when the scroll buffer overflows, the scroll offset won't change, but its contents would
-        // for now I think this is a feature as you then know that your scroll buffer is overflowing
-        bool scrollToTerminal = top == 0 && scrollOffset().y() == static_cast<int>(historyRows_.size());
         // scroll the lines
         while (lines-- > 0) {
             if (maxHistoryRows_ != 0) {
@@ -395,9 +391,9 @@ namespace ui {
             state_->buffer.deleteLine(top, bottom, fill);
         }
         // if the terminal was in view, scroll it back to view
-        if (scrollToTerminal)
+        if (scrollToTerminal_)
             schedule([this](){
-                setScrollOffset(Point{0, historyRows()});
+                setScrollOffset(Point{0, static_cast<int>(historyRows_.size())});
             });
     }
 
@@ -1207,12 +1203,12 @@ namespace ui {
                         std::swap(state_, stateBackup_);
                         alternateMode_ = value;
                         // TODO renable
-                        //setScrollSize(Size{width(), state_->buffer.historyRows() + height()});
+                        //setScrollSize(Size{width(), state_->buffer.historyROws_.size() + height()});
                         schedule([this](){
                             if (alternateMode_)
                                 setScrollOffset(Point{0, 0});
                             else
-                                setScrollOffset(Point{0, historyRows()});
+                                setScrollOffset(Point{0, static_cast<int>(historyRows_.size())});
                         });
                         // if we are entering the alternate mode, reset the state to default values
                         if (value) {
