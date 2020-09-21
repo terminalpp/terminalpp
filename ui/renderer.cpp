@@ -25,7 +25,7 @@ namespace ui {
         eq_->cancelEvents(eventDummy_);
         delete eventDummy_;
         delete eq_;
-        ASSERT(root_ == nullptr) << "Deleting renderer with attached widgets is an error.";
+        ASSERT_PANIC(root_ == nullptr) << "Deleting renderer with attached widgets is an error.";
     }
 
     // Events

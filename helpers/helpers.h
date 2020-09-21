@@ -68,10 +68,12 @@ In case an exception needs to be created, but not thrown, a non-throwing constru
 
 Convenience macros `NOT_IMPLEMENTED` and `UNREACHABLE` which throw the Exception with a short explanation are provided.
 
+Finally the `PANIC` macro creates an exception, logs its creation, then prints the exception to std::cerr and calls the exit() function immediately. This is useful when the exception based reporting should be used in contexts where exceptions should not be thrown (such as destructors, etc). 
  */
 
 #define THROW(...) throw Log::Exception() && __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__, __LINE__,__FILE__)
 #define CREATE_EXCEPTION(...) __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__, __LINE__, __FILE__)
+#define PANIC(...) Exception::Panic{} <<= Log::Exception() && __VA_ARGS__ & HELPERS_NAMESPACE_DECL::Exception::Builder(#__VA_ARGS__, __LINE__, __FILE__)
 
 #define NOT_IMPLEMENTED THROW(HELPERS_NAMESPACE_DECL::Exception()) << "Not implemented code triggered"
 #define UNREACHABLE THROW(HELPERS_NAMESPACE_DECL::Exception()) << "Unreachable code triggered"
@@ -111,6 +113,20 @@ HELPERS_NAMESPACE_BEGIN
             char const * file_;
             std::stringstream what_;
         }; // Exception::Builder
+
+        /** RAII panic initiator. 
+         
+            When `<<=` is called on the Panic initiator with an exception, the exception is printed and then the program is terminated with EXIT_FAILURE code. 
+
+            The `<<=` has been selected as the lowest priority operator so that the exception passed to it in the `PANIC` macro can be logged and created as all other exceptions are. 
+         */
+        class Panic {
+        public:
+            void operator <<= (Exception const & e) {
+                std::cerr << "PANIC: " << e;
+                exit(EXIT_FAILURE);
+            }
+        }; 
 
         Exception():
             exception_{nullptr} {
@@ -211,11 +227,14 @@ HELPERS_NAMESPACE_END
 
     If `NDEBUG` is specified, `ASSERT` translates to dead code and will be removed by the optimizer. 
 
+    The `ASSERT_PANIC` macro works as `ASSERT`, but instead of raising the assect exception, terminates immediately. This is useful when the assertion mechanics should be used in contexts where exceptions are not supported, such as destructors. 
  */
 #ifdef NDEBUG 
     #define ASSERT(...) if (false) std::stringstream()
+    #define ASSERT_PANIC(...) if (false) std::stringstream()
 #else
     #define ASSERT(...) if (! (__VA_ARGS__)) THROW(HELPERS_NAMESPACE_DECL::AssertionError(#__VA_ARGS__))
+    #define ASSERT_PANIC(...) if (! (__VA_ARGS__)) PANIC(HELPERS_NAMESPACE_DECL::AssertionError(#__VA_ARGS__))
 #endif
 
 HELPERS_NAMESPACE_BEGIN

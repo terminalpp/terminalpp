@@ -120,7 +120,7 @@ int main(int argc, char* argv[]) {
 			ui::AnsiTerminal::SEQ_ERROR,
 			ui::AnsiTerminal::SEQ_UNKNOWN
 		});
-        
+
         tpp::Window * w = tpp::Application::Instance()->createWindow("Foobar", config.renderer.window.cols(), config.renderer.window.rows());
         if (config.renderer.window.fullscreen())
             w->setFullscreen(true);

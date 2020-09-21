@@ -58,6 +58,8 @@ HELPERS_NAMESPACE_BEGIN
         class Property;
 
         virtual ~JSONConfig() {
+            if (parent_ == nullptr)
+                delete json_;
         }
 
         /** Returns the full name of the configuration option. 
@@ -469,10 +471,6 @@ HELPERS_NAMESPACE_BEGIN
 
         Root(std::string description):
             Object{ nullptr, "", description } {
-        }
-
-        ~Root() override {
-            delete json_;
         }
 
     protected:

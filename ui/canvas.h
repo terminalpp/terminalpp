@@ -200,6 +200,8 @@ namespace ui {
                 rect_{rect} {
             }
 
+            VisibleArea & operator = (VisibleArea const &) = default;
+
             /** The offset of the canvas' coordinates from the buffer ones, 
              
                 Corresponds to the buffer coordinates of canvas' [0,0].
