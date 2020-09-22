@@ -385,22 +385,21 @@ namespace ui {
             state_->buffer.insertLine(top, bottom, fill);
     }
 
+    /** If history is enabled, i.e. when history limit is greater than 0 and the terminal is not in alternate mode, the deleted line is added to the history. 
+     */
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         // scroll the lines
         while (lines-- > 0) {
-            if (maxHistoryRows_ != 0) {
+            if (! alternateMode_ && maxHistoryRows_ != 0) {
                 auto removedRow = state_->buffer.copyRow(top, palette_->defaultBackground());
                 addHistoryRow(removedRow.first, removedRow.second);
             }
             state_->buffer.deleteLine(top, bottom, fill);
         }
-        // if the terminal was in view, scroll it back to view
-        if (scrollToTerminal_)
-            schedule([this](){
-                setScrollOffset(Point{0, static_cast<int>(historyRows_.size())});
-            });
     }
 
+    /** If the terminal is scrolled into view, scrolls the terminal into view after the history line has been added as well. 
+     */
     void AnsiTerminal::addHistoryRow(Cell * row, int cols) {
         if (cols <= width()) {
             historyRows_.push_back(std::make_pair(cols, row));
@@ -421,6 +420,10 @@ namespace ui {
             delete [] historyRows_.front().second;
             historyRows_.pop_front();
         }
+        if (scrollToTerminal_)
+            schedule([this](){
+                setScrollOffset(Point{0, static_cast<int>(historyRows_.size())});
+            });
     }
 
     void AnsiTerminal::resizeHistory() {
