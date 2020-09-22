@@ -68,7 +68,7 @@ namespace tpp {
 	}
 
 	std::string Config::GetSettingsFile() {
-		return JoinPath(GetSettingsFolder(), "settings-2.json");
+		return JoinPath(GetSettingsFolder(), "settings.json");
 	}
 
 	JSON Config::TerminalVersion() {
@@ -81,6 +81,8 @@ namespace tpp {
                 return;
             userConfig["version"].erase("version");
         } catch (...) {
+            // if there was an error parsing version, erase entire version
+            userConfig.erase("version");
         }
 		Application::Instance()->alert(STR("Settings version differs from current terminal version (" << PROJECT_VERSION << "). The configuration will be updated to the new version."));
 	}

@@ -272,6 +272,8 @@ HELPERS_NAMESPACE_BEGIN
         std::string output;
         HANDLE pipeIn;
         HANDLE pipeTheirOut;
+        HANDLE pipeOut;
+        HANDLE pipeTheirIn;
         PROCESS_INFORMATION pi;
         ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
         {
@@ -282,10 +284,10 @@ HELPERS_NAMESPACE_BEGIN
             attrs.bInheritHandle = TRUE;
             attrs.lpSecurityDescriptor = NULL;
             // create the pipes
-            if (!CreatePipe(& pipeIn, & pipeTheirOut, &attrs, 0))
+            if (!CreatePipe(& pipeIn, & pipeTheirOut, &attrs, 0) || !CreatePipe(& pipeTheirIn, & pipeOut, & attrs, 0))
                 THROW(Exception()) << "Unable to open pipes for " << command;
             // make sure the pipes are not inherited
-            if (!SetHandleInformation(pipeIn, HANDLE_FLAG_INHERIT, 0))
+            if (!SetHandleInformation(pipeIn, HANDLE_FLAG_INHERIT, 0) || !SetHandleInformation(pipeOut, HANDLE_FLAG_INHERIT, 0))
                 THROW(Exception()) << "Unable to open pipes for " << command;
             // create the process
             STARTUPINFOA sInfo;
@@ -293,6 +295,7 @@ HELPERS_NAMESPACE_BEGIN
             sInfo.cb = sizeof(STARTUPINFO);
             sInfo.hStdError = pipeTheirOut;
             sInfo.hStdOutput = pipeTheirOut;
+            sInfo.hStdInput = pipeTheirIn;
             sInfo.dwFlags |= STARTF_USESTDHANDLES;
             std::string cmd = command.toString();
             OSCHECK(CreateProcessA(NULL,
@@ -308,6 +311,7 @@ HELPERS_NAMESPACE_BEGIN
             );
             // we can close our handles to the other ends now
             CloseHandle(pipeTheirOut);
+            CloseHandle(pipeTheirIn);
         }
         // read the output
         std::stringstream result;
@@ -326,6 +330,7 @@ HELPERS_NAMESPACE_BEGIN
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
         CloseHandle(pipeIn);
+        CloseHandle(pipeOut);
         //CloseHandle(pipeOut);
         // close the handles to created process & thread since we do not need them
         //CloseHandle(pi.hProcess);

@@ -1,6 +1,12 @@
 #include <functional>
 #include "ansi_terminal.h"
 
+/** Inside debug builds, end of line is highlighted by red border.
+ */
+#ifndef NDEBUG
+#define SHOW_LINE_ENDINGS
+#endif
+
 namespace ui {
 
     namespace {
@@ -59,8 +65,6 @@ namespace ui {
 
     // Widget
 
-#define SHOW_LINE_ENDINGS
-
     void AnsiTerminal::paint(Canvas & canvas) {
         Canvas ccanvas{contentsCanvas(canvas)};
 #ifdef SHOW_LINE_ENDINGS
@@ -68,7 +72,7 @@ namespace ui {
 #endif
         Rect visibleRect{ccanvas.visibleRect()};
         std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-        int top = alternateMode_ ? 0 : historyRows_.size();
+        int top = alternateMode_ ? 0 : static_cast<int>(historyRows_.size());
         // see if there are any history lines that need to be drawn
         for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); ; ++row) {
             if (row >= re)
