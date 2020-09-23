@@ -69,7 +69,7 @@ template<>
 inline void JSONConfig::Property<Command>::cmdArgUpdate(char const * value, size_t index) {
     JSON x = (index == 0) ? JSON::Array() : toJSON(false);
     x.add(JSON{value});
-    update(x, [](JSONError &&e) { throw e;});
+    update(x, [](JSONError &&e) { throw std::move(e);});
 }
 
 template<>

@@ -144,7 +144,7 @@ HELPERS_NAMESPACE_BEGIN
 
             Returns whether any of the child properties (if any) were updated to user specified, or calculated default values.  
          */
-        virtual bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw e; }) = 0;
+        virtual bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw std::move(e); }) = 0;
 
         /** Returns the default value for the property. 
          
@@ -168,7 +168,7 @@ HELPERS_NAMESPACE_BEGIN
          
             Required due to friend delcarations only valid on this object, so that subclasses have no way of calling update on other items than themselves.
             */
-        bool updateOther(JSONConfig * config, JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw e; }) {
+        bool updateOther(JSONConfig * config, JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw std::move(e); }) {
             return config->update(value, errorHandler);
         }
 
@@ -199,7 +199,7 @@ HELPERS_NAMESPACE_BEGIN
         virtual void cmdArgUpdate(char const * value, size_t index) {
             if (index != 0)
                 THROW(JSONError()) << "Value for " << name() << " already provided";
-            update(JSON::Parse(value), [](JSONError && e) { throw e; });
+            update(JSON::Parse(value), [](JSONError && e) { throw std::move(e); });
         }
 
         //@}
@@ -238,7 +238,7 @@ HELPERS_NAMESPACE_BEGIN
 
     protected:
 
-        bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw e; }) override {
+        bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw std::move(e); }) override {
             ASSERT(json_ != nullptr);
             if (value.kind() != JSON::Kind::Object) {
                 errorHandler(CREATE_EXCEPTION(JSONError())  << "Initializing " << name() << " with " << value << ", but object expected");
@@ -349,7 +349,7 @@ HELPERS_NAMESPACE_BEGIN
 
     protected:
 
-        bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw e; }) override {
+        bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw std::move(e); }) override {
             ASSERT(json_ != nullptr);
             *json_ = JSON::Array();
             if (value.kind() != JSON::Kind::Array) {
@@ -423,7 +423,7 @@ HELPERS_NAMESPACE_BEGIN
 
     protected:
 
-        bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw e; }) override {
+        bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw std::move(e); }) override {
             ASSERT(json_ != nullptr);
             try {
                 value_ = JSONConfig::FromJSON<T>(value);

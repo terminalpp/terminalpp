@@ -247,7 +247,7 @@ namespace tpp {
             if (si->pendingPaste != nullptr)
                 si->pendingPaste->cancel();
             si->pendingPaste = new PasteDialog(*e);
-            si->pendingPaste->onDismiss.setHandler([this, si](ui::Event<Widget*>::Payload & e) {
+            si->pendingPaste->onDismiss.setHandler([si](ui::Event<Widget*>::Payload & e) {
                 if (*e == si->pendingPaste->btnYes())
                     si->terminal->paste(si->pendingPaste->contents());
                 si->pendingPaste = nullptr;
