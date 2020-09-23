@@ -7,6 +7,7 @@
 
 - `--session` command-line argument to easily select session
 - fixed issue #20, `--cols` and `--rows` arguments & settings work now
+- fixed issue #21, Device Status Report sequence support
 
 ### TODO
 
@@ -16,6 +17,11 @@
 
 
 Documentation:
+
+- document keyboard focus handling - i.e. only document order and getting next & previous elements
+- things like tab focus and so on should be implemented differently, perhaps by a form widget or some such
+- document keyboard, mouse and selection & clipboard inputs in renderer & widgets
+- document event queue and typed event queue
 
 Builds & Releases
 
@@ -38,25 +44,18 @@ Issues to be raised:
 - how to & when invalidate selection when there are changes in the terminal's contents
 - fillRect should also update border color
 - add configuration option to confirm setting clipboard from the terminal
+- resizing does not work in xterm on WSL
 
 UI version 3
 
+- QT is broken
+
 - when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
-- clear the code
 
 - some simpler accesses to state-ish properties in the terminal? 
 
-- document keyboard focus handling - i.e. only document order and getting next & previous elements
-- things like tab focus and so on should be implemented differently, perhaps by a form widget or some such
-
-- x11_window seems to no longer need the focusIn and focusOut checks as vcxsrv seems to be fixed. Also check that renderer in release mode ignores the error and repairs what it can 
-
 - key up not detected on standard terminal, determine how tpp would do it
 
-- document keyboard, mouse and selection & clipboard inputs in renderer & widgets
-- document event queue and typed event queue
-
-- resizing does not work in xterm
 
 # Roadmap
 

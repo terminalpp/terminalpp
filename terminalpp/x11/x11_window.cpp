@@ -12,7 +12,6 @@ namespace tpp {
 
     X11Window::X11Window(std::string const & title, int cols, int rows):
         RendererWindow{cols, rows},
-        focusCheck_{false},
 		display_{X11Application::Instance()->xDisplay_},
 		screen_{X11Application::Instance()->xScreen_},
 	    visual_{DefaultVisual(display_, screen_)},
