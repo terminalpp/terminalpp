@@ -8,12 +8,11 @@
 
 namespace tpp {
 
-    typedef QOpenGLWindow QWindowBase;
-
     // QT object must be the first base, otherwise teh code won't compile
-    class QtWindow : public QWindowBase, public RendererWindow<QtWindow, QWindow *> {
+    class QtWindow : public QWidget, public RendererWindow<QtWindow, QWidget *> {
         Q_OBJECT
     public:
+        using RendererWindow<QtWindow, QWidget *>::repaint;
 
         /** Bring the font to the class' namespace so that the RendererWindow can find it. 
          */
@@ -104,8 +103,8 @@ namespace tpp {
 
     private:
         friend class QtApplication;
-        friend class RendererWindow<QtWindow, QWindow*>;
-        typedef RendererWindow<QtWindow, QWindow *> Super;
+        friend class RendererWindow<QtWindow, QWidget*>;
+        typedef RendererWindow<QtWindow, QWidget *> Super;
 
         /** Creates the renderer window of appropriate size using the default font and zoom of 1.0. 
          */
@@ -114,7 +113,7 @@ namespace tpp {
         /** Qt's resize event.
          */
         void resizeEvent(QResizeEvent* ev) override {
-            QWindowBase::resizeEvent(ev);
+            QWidget::resizeEvent(ev);
             windowResized(ev->size().width(), ev->size().height());
         }
 
@@ -140,6 +139,10 @@ namespace tpp {
         void focusInEvent(QFocusEvent * ev) override;
 
         void focusOutEvent(QFocusEvent * ev) override;
+
+        void enterEvent(QEvent * ev) override;
+
+        void leaveEvent(QEvent * ev) override;
 
         //@}
 

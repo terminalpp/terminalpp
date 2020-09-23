@@ -9,8 +9,9 @@ namespace tpp {
         font_{ nullptr },
         decorationBrush_{QColor{255, 255, 255, 255}},
         borderBrush_{QColor{255, 255, 255, 255}} {
-        QWindowBase::resize(sizePx_.width(), sizePx_.height());
-        QWindowBase::setTitle(title.c_str());
+        QWidget::resize(sizePx_.width(), sizePx_.height());
+        QWidget::setWindowTitle(title.c_str());
+        setFocusPolicy(Qt::StrongFocus);
 
         connect(this, &QtWindow::tppRequestUpdate, this, static_cast<void (QtWindow::*)()>(&QtWindow::update), Qt::ConnectionType::QueuedConnection);
         connect(this, &QtWindow::tppShowFullScreen, this, &QtWindow::showFullScreen, Qt::ConnectionType::QueuedConnection);
@@ -30,7 +31,7 @@ namespace tpp {
 
     void QtWindow::setTitle(std::string const & value) {
         RendererWindow::setTitle(value);
-        QWindowBase::setTitle(QString{value.c_str()});
+        QWidget::setWindowTitle(QString{value.c_str()});
     }
 
     void QtWindow::setIcon(Window::Icon icon) {
@@ -38,11 +39,11 @@ namespace tpp {
         QtApplication * app = QtApplication::Instance();
         switch (icon) {
             case Icon::Default:
-                QWindowBase::setIcon(app->iconDefault_);
+                QWidget::setWindowIcon(app->iconDefault_);
                 app->setWindowIcon(app->iconDefault_);
                 break;
             case Icon::Notification:
-                QWindowBase::setIcon(app->iconNotification_);
+                QWidget::setWindowIcon(app->iconNotification_);
                 app->setWindowIcon(app->iconNotification_);
                 break;
             default:
@@ -52,9 +53,9 @@ namespace tpp {
 
     void QtWindow::show(bool value) {
         if (value)
-            QWindowBase::show();
+            QWidget::show();
         else 
-            QWindowBase::hide();
+            QWidget::hide();
     }
 
     void QtWindow::requestClipboard(Widget * sender) {
@@ -187,14 +188,25 @@ namespace tpp {
     }
 
     void QtWindow::focusInEvent(QFocusEvent * ev) {
-        QWindowBase::focusInEvent(ev);
+        QWidget::focusInEvent(ev);
         focusIn();
     }
 
     void QtWindow::focusOutEvent(QFocusEvent * ev) {
-        QWindowBase::focusOutEvent(ev);
+        QWidget::focusOutEvent(ev);
         focusOut();
     }
+
+    void QtWindow::enterEvent(QEvent * ev) {
+        QWidget::enterEvent(ev);
+        mouseIn();
+    }
+
+    void QtWindow::leaveEvent(QEvent * ev) {
+        QWidget::leaveEvent(ev);
+        mouseOut();
+    }
+
 
     ui::Key QtWindow::GetStateModifiers(Qt::KeyboardModifiers const & modifiers) {
         ui::Key result = ui::Key::Invalid;
