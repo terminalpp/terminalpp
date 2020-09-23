@@ -20,58 +20,65 @@ namespace ui {
             return font_ & BOLD;
         }
 
-        Font setBold(bool value = true) const {
-            return Font{SetBit(font_, BOLD, value)};
+        Font & setBold(bool value = true) {
+            font_ = SetBit(font_, BOLD, value);
+            return *this;
         }
 
         bool italic() const {
             return font_ & ITALIC;
         }
 
-        Font setItalic(bool value = true) const {
-            return Font{SetBit(font_, ITALIC, value)};
+        Font & setItalic(bool value = true) {
+            font_ = SetBit(font_, ITALIC, value);
+            return *this;
         }
 
         bool underline() const {
             return font_ & UNDERLINE;
         }
 
-        Font setUnderline(bool value = true) const {
-            return Font{SetBit(font_, UNDERLINE, value)};
+        Font & setUnderline(bool value = true) {
+            font_ = SetBit(font_, UNDERLINE, value);
+            return *this;
         }
 
         bool strikethrough() const {
             return font_ & STRIKETHROUGH;
         }
 
-        Font setStrikethrough(bool value = true) const {
-            return Font{SetBit(font_, STRIKETHROUGH, value)};
+        Font & setStrikethrough(bool value = true) {
+            font_ = SetBit(font_, STRIKETHROUGH, value);
+            return *this;
         }
 
         bool blink() const {
             return font_ & BLINK;
         }
 
-        Font setBlink(bool value = true) const {
-            return Font{SetBit(font_, BLINK, value)};
+        Font & setBlink(bool value = true) {
+            font_ = SetBit(font_, BLINK, value);
+            return *this;
         }
 
         bool doubleWidth() const {
             return font_ & DOUBLE_WIDTH;
         }
 
-        Font setDoubleWidth(bool value = true) const {
-            return Font{SetBit(font_, DOUBLE_WIDTH, value)};
+        Font & setDoubleWidth(bool value = true) {
+            font_ = SetBit(font_, DOUBLE_WIDTH, value);
+            return *this;
         }
 
         int size() const {
             return (font_ & SIZE_MASK) + 1;
         }
 
-        Font setSize(int size) const {
+        Font & setSize(int size) {
             size -= 1;
             ASSERT(size >= 0 && size < 8);
-            return Font{SetBits(font_, SIZE_MASK, static_cast<uint16_t>(size))};
+            font_ = SetBits(font_, SIZE_MASK, static_cast<uint16_t>(size));
+            return *this;
         }
 
         int width() const {

@@ -43,12 +43,7 @@ UI version 3
 
 - when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
 - clear the code
-- terminal should store cursor information inside the buffer
 
-- contents size is not really updated, but I guess that is ok - there should be sth like contentssize setter which does the update <- CHECK THIS WHAT IT MEANS AND HOW TO DEAL WITH IT
-- terminal won't use that and will simply resize its own canvas once it is given it
-
-- font setSize & other setters should perhaps be renamed to withSize, etc to avoid confuision about them being setters
 - some simpler accesses to state-ish properties in the terminal? 
 
 - document keyboard focus handling - i.e. only document order and getting next & previous elements
@@ -56,7 +51,6 @@ UI version 3
 
 - x11_window seems to no longer need the focusIn and focusOut checks as vcxsrv seems to be fixed. Also check that renderer in release mode ignores the error and repairs what it can 
 
-- renderer-widget coordinates, check that they are valid
 - key up not detected on standard terminal, determine how tpp would do it
 
 - document keyboard, mouse and selection & clipboard inputs in renderer & widgets

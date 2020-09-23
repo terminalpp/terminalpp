@@ -80,7 +80,7 @@ namespace ui {
          */
         //@{
 
-        Color fg() const {
+        Color const & fg() const {
             return fg_;
         }
 
@@ -88,7 +88,7 @@ namespace ui {
             fg_ = value;
         }
 
-        Color bg() const {
+        Color const & bg() const {
             return bg_;
         }
 
@@ -96,7 +96,11 @@ namespace ui {
             bg_ = value;
         }
 
-        Font font() const {
+        Font const & font() const {
+            return font_;
+        }
+
+        Font & font() {
             return font_;
         }
 
@@ -378,6 +382,10 @@ namespace ui {
             return font_;
         }
 
+        Font & font() {
+            return font_;
+        }
+
         Cell & setFont(Font value) {
             font_ = value;
             return *this;
@@ -483,7 +491,11 @@ namespace ui {
 
         /** Returns the cursor properties. 
          */
-        Cursor cursor() const {
+        Cursor const & cursor() const {
+            return cursor_;
+        }
+
+        Cursor & cursor() {
             return cursor_;
         }
 

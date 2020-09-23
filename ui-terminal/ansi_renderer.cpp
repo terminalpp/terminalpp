@@ -69,23 +69,23 @@ namespace ui {
                     s << ansi::Bg(state.bg().r, state.bg().g, state.bg().b);
                 }
                 if (c.font().bold() != state.font().bold()) {
-                    state.setFont(state.font().setBold(c.font().bold()));
+                    state.font().setBold(c.font().bold());
                     s << ansi::Bold(state.font().bold());
                 }
                 if (c.font().italic() != state.font().italic()) {
-                    state.setFont(state.font().setItalic(c.font().italic()));
+                    state.font().setItalic(c.font().italic());
                     s << ansi::Italic(state.font().italic());
                 }
                 if (c.font().underline() != state.font().underline()) {
-                    state.setFont(state.font().setUnderline(c.font().underline()));
+                    state.font().setUnderline(c.font().underline());
                     s << ansi::Underline(state.font().underline());
                 }
                 if (c.font().strikethrough() != state.font().strikethrough()) {
-                    state.setFont(state.font().setStrikethrough(c.font().strikethrough()));
+                    state.font().setStrikethrough(c.font().strikethrough());
                     s << ansi::Strikethrough(state.font().strikethrough());
                 }
                 if (c.font().blink() != state.font().blink()) {
-                    state.setFont(state.font().setBlink(c.font().blink()));
+                    state.font().setBlink(c.font().blink());
                     s << ansi::Blink(state.font().blink());
                 }
                 // finally output the codepoint

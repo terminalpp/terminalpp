@@ -50,7 +50,7 @@ namespace tpp {
 #else
             canvas.textOut(Point{3, 6}, STR("platform: " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build));
 #endif
-            canvas.setFont(canvas.font().setBlink(true));
+            canvas.font().setBlink(true);
             canvas.textOut(Point{20, 8}, "Hit esc to dismiss");
             canvas.setFont(ui::Font{});
         }

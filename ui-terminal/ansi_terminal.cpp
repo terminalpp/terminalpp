@@ -106,7 +106,7 @@ namespace ui {
         // draw the cursor 
         if (focused()) {
             // set the cursor via the canvas
-            ccanvas.setCursor(cursor_, cursorPosition() + Point{0, static_cast<int>(historyRows_.size())});
+            ccanvas.setCursor(cursor(), cursorPosition() + Point{0, static_cast<int>(historyRows_.size())});
         } else {
             // TODO the color of this should be configurable
             ccanvas.setBorder(cursorPosition() + Point{0, static_cast<int>(historyRows_.size())}, Border::All(inactiveCursorColor_, Border::Kind::Thin));
@@ -559,7 +559,7 @@ namespace ui {
         // if the character's column width is 2 and current font is not double width, update to double width font
         if (columnWidth == 2 && ! cell.font().doubleWidth()) {
             //columnWidth = 1;
-            cell.setFont(cell.font().setDoubleWidth(true));
+            cell.font().setDoubleWidth(true);
         }
 
         // TODO do double width & height characters properly for the per-line 
@@ -609,7 +609,7 @@ namespace ui {
         LOG(SEQ) << "LF";
         state_->markLineEnd();
         // disable double width and height chars
-        state_->cell.setFont(state_->cell.font().setSize(1).setDoubleWidth(false));
+        state_->cell.font().setSize(1).setDoubleWidth(false);
         setCursorPosition(cursorPosition() + Point{0, 1});
         // determine if region should be scrolled
         if (cursorPosition().y() == state_->scrollEnd) {
@@ -1046,6 +1046,21 @@ namespace ui {
                      */
                     case 'm':
                         return parseSGR(seq);
+                    /** Device Status Report - DSR
+                     */
+                    case 'n':
+                        // status report, send CSI 0 n which means OK
+                        if (seq[0] == 5) {
+                            send("\033[0n", 4);
+                        // cursor position, send CSI row ; col R
+                        } else if (seq[0] == 6) {
+                            std::string cpos = STR("\033[" << (cursorPosition().y() + 1) << ";" << (cursorPosition().x() + 1) << "R");
+                            send(cpos.c_str(), cpos.size());
+                        // invalid DSR code
+                        } else {
+                            break;
+                        }
+                        return;
                     /* CSI <n> ; <n> r -- Set scrolling region (default is the whole window) (DECSTBM)
                      */
                     case 'r':
@@ -1149,12 +1164,12 @@ namespace ui {
 					continue;
 				// cursor blinking
 				case 12:
-                    cursor_.setBlink(value);
+                    cursor().setBlink(value);
 					LOG(SEQ) << "cursor blinking: " << value;
 					continue;
 				// cursor show/hide
 				case 25:
-                    cursor_.setVisible(value);
+                    cursor().setVisible(value);
 					LOG(SEQ) << "cursor visible: " << value;
 					continue;
 				/* Mouse tracking movement & buttons.
@@ -1259,7 +1274,7 @@ namespace ui {
 					break;
 				/* Bold / bright foreground. */
 				case 1:
-					state_->cell.setFont(state_->cell.font().setBold());
+					state_->cell.font().setBold();
 					LOG(SEQ) << "bold set";
 					break;
 				/* faint font (light) - won't support for now, though in theory we easily can. */
@@ -1268,17 +1283,17 @@ namespace ui {
 					break;
 				/* Italic */
 				case 3:
-					state_->cell.setFont(state_->cell.font().setItalic());
+					state_->cell.font().setItalic();
 					LOG(SEQ) << "italics set";
 					break;
 				/* Underline */
 				case 4:
-                    state_->cell.setFont(state_->cell.font().setUnderline());
+                    state_->cell.font().setUnderline();
 					LOG(SEQ) << "underline set";
 					break;
 				/* Blinking text */
 				case 5:
-                    state_->cell.setFont(state_->cell.font().setBlink());
+                    state_->cell.font().setBlink();
 					LOG(SEQ) << "blink set";
 					break;
 				/* Inverse on */
@@ -1293,32 +1308,32 @@ namespace ui {
                     break;
 				/* Strikethrough */
 				case 9:
-                    state_->cell.setFont(state_->cell.font().setStrikethrough());
+                    state_->cell.font().setStrikethrough();
 					LOG(SEQ) << "strikethrough";
 					break;
 				/* Bold off */
 				case 21:
-					state_->cell.setFont(state_->cell.font().setBold(false));
+					state_->cell.font().setBold(false);
 					LOG(SEQ) << "bold off";
 					break;
 				/* Normal - neither bold, nor faint. */
 				case 22:
-					state_->cell.setFont(state_->cell.font().setBold(false).setItalic(false));
+					state_->cell.font().setBold(false).setItalic(false);
 					LOG(SEQ) << "normal font set";
 					break;
 				/* Italic off. */
 				case 23:
-					state_->cell.setFont(state_->cell.font().setItalic(false));
+					state_->cell.font().setItalic(false);
 					LOG(SEQ) << "italic off";
 					break;
 				/* Disable underline. */
 				case 24:
-                    state_->cell.setFont(state_->cell.font().setUnderline(false));
+                    state_->cell.font().setUnderline(false);
 					LOG(SEQ) << "undeline off";
 					break;
 				/* Disable blinking. */
 				case 25:
-                    state_->cell.setFont(state_->cell.font().setBlink(false));
+                    state_->cell.font().setBlink(false);
 					LOG(SEQ) << "blink off";
 					break;
                 /* Inverse off */
@@ -1333,7 +1348,7 @@ namespace ui {
                     break;
 				/* Disable strikethrough. */
 				case 29:
-                    state_->cell.setFont(state_->cell.font().setStrikethrough(false));
+                    state_->cell.font().setStrikethrough(false);
 					LOG(SEQ) << "Strikethrough off";
 					break;
 				/* 30 - 37 are dark foreground colors, handled in the default case. */
@@ -1454,7 +1469,7 @@ namespace ui {
              */
             case 112:
                 LOG(SEQ) << "Cursor color reset";
-                cursor_.setColor(defaultCursor_.color());
+                cursor().setColor(defaultCursor_.color());
                 break;
             default:
         		LOG(SEQ_UNKNOWN) << "Invalid OSC sequence: " << seq;

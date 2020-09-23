@@ -33,6 +33,7 @@ namespace ui {
     class AnsiTerminal : public virtual Widget, public tpp::PTYBuffer<tpp::PTYMaster>, SelectionOwner {
     public:
         using Cell = Canvas::Cell;
+        using Cursor = Canvas::Cursor;
         class Buffer;
         class State;
         class Palette;
@@ -215,6 +216,10 @@ namespace ui {
 
         void setCursorPosition(Point position);
 
+        /** Returns the current cursor. 
+         */
+        Cursor & cursor();
+
         /** Inserts given number of lines at given top row.
             
             Scrolls down all lines between top and bottom accordingly. Fills the new lines with the provided cell.
@@ -273,8 +278,6 @@ namespace ui {
         Palette * palette_;
 
         CursorMode cursorMode_ = CursorMode::Normal;
-        /** The actual cursor, which can be updated by the terminal client. */
-        Canvas::Cursor cursor_;
         /** The default cursor as specified by the configuration. */
         Canvas::Cursor defaultCursor_;
         /** Color of the inactive cursor rectangle. */
@@ -613,6 +616,8 @@ namespace ui {
         state_->buffer.setCursorPosition(position);
     }
 
-
+    inline AnsiTerminal::Cursor & AnsiTerminal::cursor() {
+        return state_->buffer.cursor();
+    }
 
 } // namespace ui
