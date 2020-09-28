@@ -6,6 +6,8 @@
 
 #include "stamp.h"
 
+#include "ui/event_queue.h"
+
 namespace tpp {
 
     class Window;
@@ -83,6 +85,8 @@ namespace tpp {
         
         JSON getLatestVersion();
         JSON getCachedLatestVersion();
+
+        ui::EventQueue eventQueue_;
 
     private:
 

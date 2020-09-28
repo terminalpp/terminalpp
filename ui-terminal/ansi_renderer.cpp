@@ -19,8 +19,8 @@ namespace ui {
 
     MatchingFSM<Key, char> AnsiRenderer::VtKeys_;
 
-    AnsiRenderer::AnsiRenderer(tpp::PTYSlave * pty):
-        Renderer{pty->size(), new TypedEventQueue<AnsiRenderer>{}},
+    AnsiRenderer::AnsiRenderer(tpp::PTYSlave * pty, EventQueue & eventQueue):
+        Renderer{pty->size(), eventQueue},
         tpp::TerminalClient{pty} {
         if (VtKeys_.empty())
             InitializeVTKeys(VtKeys_);

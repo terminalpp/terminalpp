@@ -11,6 +11,7 @@
 #include "tpp-lib/local_pty.h"
 
 #include "ui-terminal/ansi_renderer.h"
+#include "ui/event_queue.h"
 
 #include "ui/widgets/panel.h"
 #include "ui/widgets/label.h"
@@ -28,7 +29,8 @@ int main(int argc, char * argv[]) {
     using namespace ui;
     using namespace tpp;
 //    try {
-        AnsiRenderer renderer{new LocalPTYSlave()};
+        ui::EventQueue eq{};
+        AnsiRenderer renderer{new LocalPTYSlave(), eq};
         Panel * p = new Panel();
         p->setBackground(Color::Blue);
         Label * p2 = new Label();

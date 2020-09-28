@@ -4,8 +4,8 @@
 
 namespace tpp {
 
-    QtWindow::QtWindow(std::string const & title, int cols, int rows):
-        RendererWindow{cols, rows},
+    QtWindow::QtWindow(std::string const & title, int cols, int rows, EventQueue & eventQueue):
+        RendererWindow{cols, rows, eventQueue},
         font_{ nullptr },
         decorationBrush_{QColor{255, 255, 255, 255}},
         borderBrush_{QColor{255, 255, 255, 255}} {

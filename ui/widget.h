@@ -49,22 +49,36 @@ namespace ui {
 
     // ============================================================================================
     /** \name Event Scheduling
+     
+        The widget has a shorthand schedule() method which can be used to schedule a new event linked to the widget. 
+
+        Each widget also remembers the number of pending events, i.e. events that were scheduled, but not yet executed so that when the widget is detached, the events can be cancelled automatically. 
      */
     //@{
 #ifndef NDEBUG 
     public: 
-
+        /** Check to make sure that code is executed in main UI thread. 
+         
+            This is only enabled in debug builds. See the UI_THREAD_ONLY macro for more details. 
+         */
         static std::thread::id UIThreadID() {
             static std::thread::id id{std::this_thread::get_id()};
             return id;
         }
 #endif
 
-
     protected:
+        /** Schedules given event and links it to the current widget. 
+         
+            Does nothing if the widget is not attached to a renderer. 
+         */
         void schedule(std::function<void()> event);
 
     private:
+        /** Number of pending events linked to the widget. 
+         
+            These are only accessed from the event queue and such are protected by the event queue access mutex. 
+         */
         size_t pendingEvents_{0};
 
     //@}

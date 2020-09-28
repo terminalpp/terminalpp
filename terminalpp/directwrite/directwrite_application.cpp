@@ -78,7 +78,7 @@ namespace tpp {
 
 
 	Window * DirectWriteApplication::createWindow(std::string const & title, int cols, int rows) {
-		return new DirectWriteWindow(title, cols, rows);
+		return new DirectWriteWindow(title, cols, rows, eventQueue_);
 	}
 
     void DirectWriteApplication::mainLoop() {
@@ -172,7 +172,7 @@ namespace tpp {
 	LRESULT CALLBACK DirectWriteApplication::UserEventHandler_(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         switch (msg) {
             case WM_USER:
-                ui::TypedEventQueue<DirectWriteWindow>::ProcessEvent();
+                DirectWriteApplication::Instance()->userEvent();
                 break;
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);

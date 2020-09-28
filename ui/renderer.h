@@ -9,25 +9,12 @@
 #include "canvas.h"
 #include "inputs.h"
 #include "events.h"
+#include "event_queue.h"
 
 
 namespace ui {
 
     class Widget;
-
-    class EventQueue {
-    public:
-        virtual ~EventQueue() {}
-        virtual void schedule(std::function<void()> event, Widget * widget) = 0;
-        virtual bool processEvent() = 0;
-        virtual void cancelEvents(Widget * forWidget) = 0;
-
-    protected:
-        
-        static size_t & PendingEvents(Widget * w);
-
-    }; // EventQueue
-
 
     // ============================================================================================
 
@@ -62,19 +49,20 @@ namespace ui {
 
     protected:
 
-        Renderer(Size const & size, EventQueue * eq);
+        Renderer(Size const & size, EventQueue & eq);
 
-        Renderer(std::pair<int, int> const & size, EventQueue * eq):
+        Renderer(std::pair<int, int> const & size, EventQueue & eq):
             Renderer(Size{size.first, size.second}, eq) {
         }
 
     // ============================================================================================
     /** \name Events & Scheduling
 
-        Renderer provides an interface for the widgets to schedule functions to be executed in the main thread. This functionality is decoupled from the renderer and is provided by the EventQueue implementations, such as the TypedEventQueue<T> which shares the event queue across all instances of the same type. 
+        The renderer provides interface to schedule functions to be executed in trhe main UI thread. These functions can be tied to a particular widget belonging to the renderer, in which case the scheduled function will only execute igf the widget has not been detached in the meantime. If scheduled function is not tied to a widget, it will always execute as long as the renderer which created it still exists. 
 
-        Only a valid widget from the renderer's tree can schedule an event, to support widget-less events, each renderer creates own dummy widget which is used in place of the real widget when scheduling an event. When a widget is detached, all its pending events are removed from the queue. 
+        Internally each renderer has a dummy widget that is used to tie all its unregistered events, and which gets deleted when the renderer is deleted so that the events can be tracked. A widget remembers its number of currently scheduled events and if this is non-zero and the widget is detached, the event queue is examined and the events are descheduled. 
 
+        The renderer and its event queue are decoupled so that multiple renderer instances running in same thread can share same event queue. The event queue also abstracts of the implementation details of scheduling and executing the events and allows event processing separate from the renderer itself. 
       */
     //@{
     public:
@@ -86,7 +74,7 @@ namespace ui {
             This function can be called from any thread as long as it does not clash with the destructor of the renderer. 
          */
         virtual void schedule(std::function<void()> event, Widget * widget) {
-            eq_->schedule(event, widget);
+            eq_.schedule(event, widget);
         }
 
         /** Schedules the given event in the main UI thread. 
@@ -107,21 +95,13 @@ namespace ui {
 
     protected:
 
-        /** Processes user event if one exists. If multiple events are available, processes only one. 
-         
-            Returns true if event was processed, or false if the queue was empty. 
-         */
-        bool processEvent() {
-            return eq_->processEvent();
-        }
+        /** The queue for the events. */
+        EventQueue & eq_;
 
     private:
 
         std::mutex yieldGuard_;
         std::condition_variable yieldCv_;
-
-        /** The queue for the events. */
-        EventQueue * eq_;
 
         /** A dummy widget the renderer can use to schedule renderer-specific events, such as repaints. */
         Widget * eventDummy_;

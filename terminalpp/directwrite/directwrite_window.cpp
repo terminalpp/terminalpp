@@ -105,8 +105,8 @@ namespace tpp {
         RendererWindow::clearSelection(sender);
     }
 
-    DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows):
-        RendererWindow<DirectWriteWindow, HWND>{cols, rows},
+    DirectWriteWindow::DirectWriteWindow(std::string const & title, int cols, int rows, EventQueue & eventQueue):
+        RendererWindow<DirectWriteWindow, HWND>{cols, rows, eventQueue},
         wndPlacement_{ sizeof(wndPlacement_) },
         frameWidth_{0},
         frameHeight_{0},

@@ -6,11 +6,7 @@
 
 namespace ui {
 
-    size_t & EventQueue::PendingEvents(Widget * w) {
-        return w->pendingEvents_;
-    }
-
-    Renderer::Renderer(Size const & size, EventQueue * eq):
+    Renderer::Renderer(Size const & size, EventQueue & eq):
         eq_{eq},
         eventDummy_{new Widget()},
         buffer_{size} {
@@ -22,9 +18,8 @@ namespace ui {
             fps_ = 0;
             fpsThread_.join();
         }
-        eq_->cancelEvents(eventDummy_);
+        eq_.cancelEvents(eventDummy_);
         delete eventDummy_;
-        delete eq_;
         ASSERT_PANIC(root_ == nullptr) << "Deleting renderer with attached widgets is an error.";
     }
 
@@ -97,7 +92,7 @@ namespace ui {
         if (selectionRequestTarget_ == widget)
             selectionRequestTarget_ = nullptr;
         // cancel all user events pending on the widget
-        eq_->cancelEvents(widget);
+        eq_.cancelEvents(widget);
     }
 
 

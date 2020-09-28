@@ -65,6 +65,11 @@ namespace tpp {
 
         void registerDummyClass();
 
+        /** Executes single user event from the event queue, if any. 
+         */
+        void userEvent() {
+            eventQueue_.processEvent();
+        }
 
         /* Default locale for the user. */
         wchar_t localeName_[LOCALE_NAME_MAX_LENGTH];

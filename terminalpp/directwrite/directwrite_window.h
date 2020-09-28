@@ -135,7 +135,7 @@ namespace tpp {
          
             TODO in the future, I want the zoom to be configurable. 
          */
-        DirectWriteWindow(std::string const & title, int width, int height);
+        DirectWriteWindow(std::string const & title, int width, int height, EventQueue & eventQueue);
 
         /** \name Rendering Functions
          */

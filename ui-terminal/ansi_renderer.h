@@ -16,7 +16,7 @@ namespace ui {
     class AnsiRenderer : public Renderer, public tpp::TerminalClient {
     public:
 
-        AnsiRenderer(tpp::PTYSlave * pty);
+        AnsiRenderer(tpp::PTYSlave * pty, EventQueue & eventQueue);
 
         ~AnsiRenderer() override;
 
@@ -60,7 +60,7 @@ namespace ui {
                     case Event::Kind::Terminate:
                         return;
                     case Event::Kind::User:
-                        processEvent();
+                        eq_.processEvent();
                         break;
                     case Event::Kind::Resize:
                         Renderer::resize(Size{e.payload.size.first, e.payload.size.second});

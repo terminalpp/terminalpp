@@ -13,15 +13,11 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- change settings name to settings.json (GetSettingsFile)
-
-
 Documentation:
 
 - document keyboard focus handling - i.e. only document order and getting next & previous elements
 - things like tab focus and so on should be implemented differently, perhaps by a form widget or some such
 - document keyboard, mouse and selection & clipboard inputs in renderer & widgets
-- document event queue and typed event queue
 
 Builds & Releases
 

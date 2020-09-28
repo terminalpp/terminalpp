@@ -89,7 +89,7 @@ namespace tpp {
 
         /** Creates the renderer window of appropriate size using the default font and zoom of 1.0. 
          */
-        X11Window(std::string const & title, int cols, int rows);
+        X11Window(std::string const & title, int cols, int rows, EventQueue & eventQueue);
 
         /** \name Rendering Functions
          */

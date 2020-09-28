@@ -38,7 +38,7 @@ namespace tpp {
     }
 
     Window * QtApplication::createWindow(std::string const & title, int cols, int rows) {
-        return new QtWindow{title, cols, rows};
+        return new QtWindow{title, cols, rows, eventQueue_};
     }
 
     void QtApplication::alert(std::string const & message) {
@@ -66,7 +66,7 @@ namespace tpp {
     }
 
     void QtApplication::userEvent() {
-        ui::TypedEventQueue<QtWindow>::ProcessEvent();        
+        eventQueue_.processEvent();        
     }
 
     void QtApplication::selectionChanged() {

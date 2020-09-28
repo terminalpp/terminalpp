@@ -123,7 +123,7 @@ namespace tpp {
     }
 
     Window * X11Application::createWindow(std::string const & title, int cols, int rows) {
-		return new X11Window{title, cols, rows};
+		return new X11Window{title, cols, rows, eventQueue_};
     }
 
     void X11Application::mainLoop() {
@@ -240,7 +240,7 @@ namespace tpp {
             case ClientMessage:
                 if (e.xany.window == broadcastWindow_) {
                     if (static_cast<unsigned long>(e.xclient.message_type) == xAppEvent_) 
-                        ui::TypedEventQueue<X11Window>::ProcessEvent();
+                        eventQueue_.processEvent();
                     break;
                 }
                 // fallthrough

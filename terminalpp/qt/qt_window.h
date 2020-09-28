@@ -108,7 +108,7 @@ namespace tpp {
 
         /** Creates the renderer window of appropriate size using the default font and zoom of 1.0. 
          */
-        QtWindow(std::string const & title, int cols, int rows);
+        QtWindow(std::string const & title, int cols, int rows, EventQueue & eventQueue);
 
         /** Qt's resize event.
          */
