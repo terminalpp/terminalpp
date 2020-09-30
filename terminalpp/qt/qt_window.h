@@ -20,13 +20,6 @@ namespace tpp {
 
         ~QtWindow() override;
 
-        /*
-        void repaint(Widget * widget) override {
-            MARK_AS_UNUSED(widget);
-            emit tppRequestUpdate();
-        };
-        */
-
         void setTitle(std::string const & value) override;
 
         void setIcon(Window::Icon icon) override;
@@ -41,20 +34,12 @@ namespace tpp {
 
         void show(bool value = true) override;
 
-        /*
-        void resize(int newWidth, int newHeight) override {
-            if (newWidth != width())
-                updateXftStructures(newWidth);
-            RendererWindow::resize(newWidth, newHeight);
-        }
-        */
-
         /** Destroys the renderer's window. 
          */
         void close() override {
-            // TODO is the signal really necessary this should be already running in the UI thread
+            closing_ = true;
             RendererWindow::close();
-            emit tppWindowClose();
+            QWidget::close();
         }
 
         void schedule(std::function<void()> event, Widget * widget) override {
@@ -62,11 +47,12 @@ namespace tpp {
             emit QtApplication::Instance()->tppUserEvent();
         }
 
+        using RendererWindow<QtWindow, QWidget*>::schedule; 
+
     signals:
        void tppRequestUpdate();
        void tppShowFullScreen();
        void tppShowNormal();
-       void tppWindowClose();
 
     protected:
 
@@ -78,18 +64,6 @@ namespace tpp {
             MARK_AS_UNUSED(rect);
             emit tppRequestUpdate();
         }
-
-        /*
-        void windowResized(int width, int height) override {
-			if (buffer_ != 0) {
-				XFreePixmap(display_, buffer_);
-				buffer_ = 0;
-			}
-            RendererWindow::windowResized(width, height);
-        }
-        */
-
-
 
         void requestClipboard(Widget * sender) override;
 
@@ -115,6 +89,18 @@ namespace tpp {
         void resizeEvent(QResizeEvent* ev) override {
             QWidget::resizeEvent(ev);
             windowResized(ev->size().width(), ev->size().height());
+        }
+
+        void closeEvent(QCloseEvent * ev) override {
+            if (closing_) {
+                QWidget::closeEvent(ev);
+            } else {
+                ev->ignore();
+                // we have to schedule the event since the request close will generate its own call to close() and therefore closingEvent
+                schedule([this](){
+                    requestClose();
+                });
+            }
         }
 
         /** \name Input handling. 
@@ -257,6 +243,9 @@ namespace tpp {
 
         Point glyphRunStart_;
         int glyphRunSize_;
+
+        /** True if the window is in the process of closing itself, i.e. the closeEvent should be accepted unconditionally. */
+        bool closing_ = false;
 
     }; // tpp::QtWindow
 

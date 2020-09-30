@@ -16,7 +16,6 @@ namespace tpp {
         connect(this, &QtWindow::tppRequestUpdate, this, static_cast<void (QtWindow::*)()>(&QtWindow::update), Qt::ConnectionType::QueuedConnection);
         connect(this, &QtWindow::tppShowFullScreen, this, &QtWindow::showFullScreen, Qt::ConnectionType::QueuedConnection);
         connect(this, &QtWindow::tppShowNormal, this, &QtWindow::showNormal, Qt::ConnectionType::QueuedConnection);
-        connect(this, &QtWindow::tppWindowClose, this, &QtWindow::close, Qt::ConnectionType::QueuedConnection);
 
         //setMouseTracking(true);
         RegisterWindowHandle(this, this);

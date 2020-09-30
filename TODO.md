@@ -44,8 +44,6 @@ Issues to be raised:
 
 UI version 3
 
-- QT is unstable, needs some checking, on Mac too
-
 - when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
 
 - some simpler accesses to state-ish properties in the terminal? 
