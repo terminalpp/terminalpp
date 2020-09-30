@@ -1446,7 +1446,7 @@ namespace ui {
                     StringEvent::Payload p(title);
                     onTitleChange(p, this);
                 });
-                break;
+                return;
             }
             /* OSC 1 - change icon name 
                
@@ -1454,26 +1454,32 @@ namespace ui {
              */
             case 1: {
                 // TODO do we want to support this? Not ATM...
-                break;
+                return;
             }
             /* OSC 52 - set clipboard to given value. 
              */
-            case 52:
-                LOG(SEQ) << "Clipboard set to " << seq.value();
-                schedule([this, contents = seq.value()]() {
-                    StringEvent::Payload p{contents};
-                    onClipboardSetRequest(p, this);
-                });
+            case 52: {
+                if (StartsWith(seq.value(), "c;")) {
+                    std::string text = seq.value().substr(2);
+                    LOG(SEQ) << "Clipboard set to " << text;
+                    schedule([this, contents = text]() {
+                        StringEvent::Payload p{contents};
+                        onClipboardSetRequest(p, this);
+                    });
+                    return;
+                }
                 break;
+            }
             /* OSC 112 - reset cursor color. 
              */
             case 112:
                 LOG(SEQ) << "Cursor color reset";
                 cursor().setColor(defaultCursor_.color());
-                break;
+                return;
             default:
-        		LOG(SEQ_UNKNOWN) << "Invalid OSC sequence: " << seq;
+                break;
         }
+        LOG(SEQ_UNKNOWN) << "Invalid OSC sequence: " << seq;
     }
 
 

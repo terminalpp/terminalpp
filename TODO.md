@@ -9,6 +9,7 @@
 - improved Qt support (QWidget instead of QWindow-based renderer) (issue #10)
 - fixed issue #20, `--cols` and `--rows` arguments & settings work now
 - fixed issue #21, Device Status Report sequence support
+- added option to specifyu clipboard setting behavior (#23)
 
 ### TODO
 

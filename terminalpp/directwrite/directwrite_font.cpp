@@ -126,7 +126,7 @@ namespace tpp {
 
     void DirectWriteFont::initializeFromFontFace() {
         // now we need to determine the dimensions of single character, which is relatively involved operation, so first we get the dpi and font metrics
-        FLOAT dpiY = GetDpiForSystem();
+        FLOAT dpiY = static_cast<FLOAT>(GetDpiForSystem());
         DWRITE_FONT_METRICS metrics;
         fontFace_->GetMetrics(&metrics);
         // the em size is size in pixels divided by (DPI / 96)

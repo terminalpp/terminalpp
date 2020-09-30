@@ -43,12 +43,23 @@
 #define SHORTCUT_ZOOM_OUT_ALT (Key::Minus + Key::Ctrl + Key::Shift)
 
 #define SHORTCUT_PASTE (Key::V + Key::Ctrl + Key::Shift)
+#define SHORTCUT_COPY (Key::C + Key::Ctrl)
 
 namespace config {
     enum class ConfirmPaste {
         Never,
         Always,
         Multiline
+    };
+
+    /** Determines whether the terminal applications can set local clipboard. 
+     
+        If allowed, all requests to set clipboard will be processed immediately. If denied, all will be silently ignored and when set to ask, each request will require confirmation.
+     */
+    enum class AllowClipboardUpdate {
+        Allow,
+        Deny,
+        Ask
     };
 }
 
@@ -119,6 +130,7 @@ inline std::vector<std::reference_wrapper<Log>> JSONConfig::FromJSON(JSON const 
     }
     return result;
 }
+
 template<>
 inline config::ConfirmPaste JSONConfig::FromJSON(JSON const & json) {
     if (json.kind() != JSON::Kind::String)
@@ -131,6 +143,20 @@ inline config::ConfirmPaste JSONConfig::FromJSON(JSON const & json) {
         return config::ConfirmPaste::Multiline;
     else 
         THROW(JSONError()) << "Only values 'never', 'always' or 'multiline' are permitted";
+}
+
+template<>
+inline config::AllowClipboardUpdate JSONConfig::FromJSON(JSON const & json) {
+    if (json.kind() != JSON::Kind::String)
+        THROW(JSONError()) << "Element must be an array";
+    if (json.toString() == "allow") 
+        return config::AllowClipboardUpdate::Allow;
+    else if (json.toString() == "deny")
+        return config::AllowClipboardUpdate::Deny;
+    else if (json.toString() == "ask")
+        return config::AllowClipboardUpdate::Ask;
+    else 
+        THROW(JSONError()) << "Only values 'allow', 'deny' or 'ask' are permitted";
 }
 
 namespace tpp {	
@@ -245,13 +271,18 @@ namespace tpp {
         CONFIG_OBJECT(
             sequences,
             "Behavior customization for terminal escape sequences (VT100)",
-            // TODO this should be enum so that the type is meaningful for metadata generation, such as schema
 			CONFIG_PROPERTY(
 				confirmPaste,
 				"Determines whether pasting into terminal should be explicitly confirmed. Allowed values are 'never', 'always', 'multiline'.",
 				JSON{"multiline"},
 			    config::ConfirmPaste
 			);
+            CONFIG_PROPERTY(
+                allowClipboardUpdate,
+                "Determines whether terminal applications can set local clipboard. Allowed values are 'allow', 'deny' and 'ask'",
+                JSON{"allow"},
+                config::AllowClipboardUpdate
+            );
             CONFIG_PROPERTY(
                 boldIsBright,
                 "If true, bold text is rendered in bright colors.",

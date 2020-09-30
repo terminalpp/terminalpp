@@ -56,13 +56,37 @@ namespace tpp {
             Dialog::YesNoCancel::keyDown(event);
         }
 
-        void paint(Canvas & canvas) override {
-            YesNoCancel::paint(canvas);
+    private:
+        Label * contents_;
+    };     
+
+    /** Clipboard copy confirmation dialog. 
+     */
+    class CopyDialog : public ui::Dialog::YesNoCancel {
+    public:
+        CopyDialog(std::string const & contents):
+            ui::Dialog::YesNoCancel{"Do you want to set clipboard to the following?"},
+            contents_{new ui::Label{contents}} {
+            setBody(contents_);
+        }
+
+        std::string const & contents() const {
+            return contents_->text();
+        }
+
+    protected:
+
+        void keyDown(KeyEvent::Payload & event) override {
+            if (*event == SHORTCUT_COPY) {
+                dismiss(btnYes());
+                return;
+            }
+            Dialog::YesNoCancel::keyDown(event);
         }
 
     private:
         Label * contents_;
-    };     
+    };
 
     /** The terminal window. 
      
@@ -226,12 +250,27 @@ namespace tpp {
         }
 
         void terminalSetClipboard(StringEvent::Payload & e) {
-            setClipboard(*e);
+            switch (Config::Instance().sequences.allowClipboardUpdate()) {
+                case config::AllowClipboardUpdate::Deny:
+                    break;
+                case config::AllowClipboardUpdate::Allow:
+                    setClipboard(*e);
+                    break;
+                case config::AllowClipboardUpdate::Ask: {
+                    CopyDialog * d = new CopyDialog(*e);
+                    d->onDismiss.setHandler([d, this](ui::Event<Widget*>::Payload & e) {
+                        if (*e == d->btnYes())
+                            setClipboard(d->contents());
+                    });
+                    showModal(d);
+                    break;
+                }
+            }
         }
 
         void terminalPaste(StringEvent::Payload & e) {
             SessionInfo * si = sessionInfo(e.sender());
-            switch (Config().sequences.confirmPaste()) {
+            switch (Config::Instance().sequences.confirmPaste()) {
                 case config::ConfirmPaste::Never:
                     si->terminal->paste(*e);
                     return;
