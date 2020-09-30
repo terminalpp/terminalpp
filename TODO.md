@@ -1,11 +1,12 @@
 ﻿The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-## Next version: v0.7.3 or 0.8
+## Next version: 0.8
 
 - alternate zoom shortcuts (`C-S--` and `C-S-=`)
 - ropen can be interrupted gracefully
-
-- `--session` command-line argument to easily select session
+- proper single-thread UI rewrite, simpler & more robust UI
+- multiple sessions can be specified in the configuration and switched with `--session` command-line argument
+- improved Qt support (QWidget instead of QWindow-based renderer) (issue #10)
 - fixed issue #20, `--cols` and `--rows` arguments & settings work now
 - fixed issue #21, Device Status Report sequence support
 
@@ -28,7 +29,6 @@ Builds & Releases
 - update the website ? 
 - add benchmarking
 - revisit how errors are reported and logged and how things are checked before releases
-- add sonarcloud.io
 
 Helpers & Logging & Errors overhaul
 
@@ -38,9 +38,6 @@ Issues to be raised:
 
 - add a way to copy from mouse capturing terminal
 - how to & when invalidate selection when there are changes in the terminal's contents
-- fillRect should also update border color
-- add configuration option to confirm setting clipboard from the terminal
-- resizing does not work in xterm on WSL
 
 UI version 3
 
@@ -48,14 +45,17 @@ UI version 3
 
 - some simpler accesses to state-ish properties in the terminal? 
 
-- key up not detected on standard terminal, determine how tpp would do it
 
+tpp-server
+
+- key up not detected on standard terminal, determine how tpp would do it
+- resizing does not work in xterm on WSL
 
 # Roadmap
 
 > This section discusses plan for next versions and drafts the features planned. 
 
-### v0.8
+### v0.9
 
 - some basic styling for the GUI via a style object, similar to CSS?, more powerful buttons & labels
 - color for dimming disabled terminal (via styling)
@@ -70,18 +70,18 @@ UI version 3
 - geometry.h is areally bad name for some of the classes defined therein
 
 
-### v0.9
+### v0.10
 
 - even more UI elements
 - multiple sessions (in same window)
 
-### v0.10
+### v0.11
 
 - multiple sessions in multiple windows or tiling
 - better bug reporting support and optional checking of updates for non-store installers
 - systray support & platform notifications
 
-### v0.11
+### v0.12
 
 - proper multiplexing of the terminal sessions (wrt remote files)
 - remote files should use absolute path, or some other form of same file detection

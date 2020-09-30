@@ -72,7 +72,7 @@ file(GLOB_RECURSE SRC "*.cpp" "*.h" "${CMAKE_SOURCE_DIR}/stamp.h")
 # Creates the executable. On Windows, the WIN32 GUI app has to be selected and the resources description must be added to the sources. On UNIX, the executable is straightforward. 
 if(ARCH_WINDOWS)
     if(RENDERER_NATIVE)
-        add_executable(terminalpp WIN32 ${SRC} "directwrite/terminalpp.rc")
+        add_executable(terminalpp WIN32 ${SRC} "directwrite/terminalpp.rc" "directwrite/terminalpp.exe.manifest")
     else() # RENDERER_QT
         add_executable(terminalpp WIN32 ${SRC} "qt/terminalpp.qrc")
         # add QT dlls to the executable
