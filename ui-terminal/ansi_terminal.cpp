@@ -107,7 +107,7 @@ namespace ui {
         if (focused()) {
             // set the cursor via the canvas
             ccanvas.setCursor(cursor(), cursorPosition() + Point{0, top});
-        } else {
+        } else if (cursor().visible()) {
             // TODO the color of this should be configurable
             ccanvas.setBorder(cursorPosition() + Point{0, top}, Border::All(inactiveCursorColor_, Border::Kind::Thin));
         }
