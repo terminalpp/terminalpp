@@ -106,10 +106,10 @@ namespace ui {
         // draw the cursor 
         if (focused()) {
             // set the cursor via the canvas
-            ccanvas.setCursor(cursor(), cursorPosition() + Point{0, static_cast<int>(historyRows_.size())});
+            ccanvas.setCursor(cursor(), cursorPosition() + Point{0, top});
         } else {
             // TODO the color of this should be configurable
-            ccanvas.setBorder(cursorPosition() + Point{0, static_cast<int>(historyRows_.size())}, Border::All(inactiveCursorColor_, Border::Kind::Thin));
+            ccanvas.setBorder(cursorPosition() + Point{0, top}, Border::All(inactiveCursorColor_, Border::Kind::Thin));
         }
     }
 
