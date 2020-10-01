@@ -24,7 +24,7 @@ if(RENDERER_NATIVE)
             message(FATAL_ERROR "xft not found - please install libxft-dev")
         endif()
         # link with the required libraries
-        list(APPEND TPP_LINK_LIBRARIES ${X11_LIBRARIES} ${X11_Xft_LIB} ${FREETYPE_LIBRARIES} fontconfig)
+        list(APPEND TPP_LINK_LIBRARIES ${X11_LIBRARIES} ${X11_Xft_LIB} ${X11_Xrender_LIB} ${FREETYPE_LIBRARIES} fontconfig)
     endif()
 # For the QT renderer, the Qt Installation must be found. This works out of the box on Linux, but Windows and macOS need some extra information. For windows, the version 5.14.1 and location C:\Qt is hardcoded, which macOS assumes that Qt was installed using brew. 
 # On Windows shared QT libraries must be deployed together with the executable so the windeployqt exacutable must be found. 

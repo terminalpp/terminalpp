@@ -14,8 +14,6 @@ namespace tpp {
         RendererWindow{cols, rows, eventQueue},
 		display_{X11Application::Instance()->xDisplay_},
 		screen_{X11Application::Instance()->xScreen_},
-	    visual_{DefaultVisual(display_, screen_)},
-	    colorMap_{DefaultColormap(display_, screen_)},
 		ic_{nullptr},
 	    buffer_{0},
 	    draw_{nullptr},
@@ -25,7 +23,30 @@ namespace tpp {
 		unsigned long white = WhitePixel(display_, screen_);  /* get color white */
         x11::Window parent = XRootWindow(display_, screen_);
 
-		window_ = XCreateSimpleWindow(display_, parent, 0, 0, sizePx_.width(), sizePx_.height(), 1, white, black);
+        // determine the ARGB visual
+        XVisualInfo vinfo;
+        XMatchVisualInfo(display_, screen_, 32, TrueColor, &vinfo);
+        visual_ = vinfo.visual;
+
+		if (visual_ == nullptr) {
+            THROW(Exception()) << "Cannot open appropriate X connections (ARGB visual not supported)";
+		}
+
+        colorMap_ = XCreateColormap(display_, XRootWindow(display_, screen_), visual_, x11::None);
+
+		/* Set the properties for the new window. 
+		*/
+
+        XSetWindowAttributes winAttrs;
+        winAttrs.background_pixel = black;
+        winAttrs.border_pixel = white;
+        winAttrs.bit_gravity = NorthWestGravity;
+        winAttrs.event_mask = ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask;
+        winAttrs.colormap = colorMap_;
+
+        /** And create the window. 
+         */
+        window_ = XCreateWindow(display_, parent, 0, 0, sizePx_.width(), sizePx_.height(), 0, 32, InputOutput, visual_, CWBackPixel | CWBorderPixel | CWBitGravity | CWEventMask | CWColormap, &winAttrs);
 
 		// from http://math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html
 
@@ -36,21 +57,18 @@ namespace tpp {
 			*/
 		XSetStandardProperties(display_, window_, title.c_str(), nullptr, x11::None, nullptr, 0, nullptr);
 
-		/* this routine determines which types of input are allowed in
-		   the input.  see the appropriate section for details...
-		*/
-		XSelectInput(display_, window_, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | VisibilityChangeMask | ExposureMask | FocusChangeMask);
-
 		/* X11 in itself does not deal with window close requests, but this enables sending of the WM_DELETE_WINDOW message when the close button is send and the application can decide what to do instead. 
 
 		   The message is received as a client message with the wmDeleteMessage_ atom in its first long payload.
 		 */
 		XSetWMProtocols(display_, window_, & X11Application::Instance()->wmDeleteMessage_, 1);
 
+        // create the buffer and gc
         XGCValues gcv;
         memset(&gcv, 0, sizeof(XGCValues));
     	gcv.graphics_exposures = False;
-        gc_ = XCreateGC(display_, parent, GCGraphicsExposures, &gcv);
+        buffer_ = XCreatePixmap(display_, window_, sizePx_.width(), sizePx_.height(), 32);
+        gc_ = XCreateGC(display_, buffer_, GCGraphicsExposures, &gcv);
 
 		// only create input context if XIM is present
 		if (X11Application::Instance()->xIm_ != nullptr) {

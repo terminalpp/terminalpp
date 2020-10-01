@@ -57,10 +57,8 @@ namespace tpp {
         }
 
         void windowResized(int width, int height) override {
-			if (buffer_ != 0) {
-				XFreePixmap(display_, buffer_);
-				buffer_ = 0;
-			}
+            XFreePixmap(display_, buffer_);
+            buffer_ = XCreatePixmap(display_, window_, width, height, 32);
             RendererWindow::windowResized(width, height);
         }
 
@@ -95,11 +93,8 @@ namespace tpp {
          */
         //@{
         void initializeDraw() {
+            ASSERT(buffer_ != 0);
             ASSERT(draw_ == nullptr);
-            if (buffer_ == 0) {
-                buffer_ = XCreatePixmap(display_, window_, sizePx_.width(), sizePx_.height(), DefaultDepth(display_, screen_));
-                ASSERT(buffer_ != 0);
-            }
             draw_ = XftDrawCreate(display_, buffer_, visual_, colorMap_);
         }
 
@@ -224,17 +219,21 @@ namespace tpp {
 
 		XftColor toXftColor(ui::Color const& c) {
 			XftColor result;
-			result.color.red = c.r * 256;
-			result.color.green = c.g * 256;
-			result.color.blue = c.b * 256;
-			result.color.alpha = c.a * 256;
+			result.color.red = (c.r << 8) + c.r;
+			result.color.green = (c.g << 8) + c.g;
+			result.color.blue = (c.b << 8) + c.b;
+			result.color.alpha = (c.a << 8) + c.a;
+            // premultiply
+            result.color.red = result.color.red * result.color.alpha / 65535;
+            result.color.green = result.color.green * result.color.alpha / 65535;
+            result.color.blue = result.color.blue * result.color.alpha / 65535;
 			return result;
 		}
 
         x11::Window window_;
         Display * display_;
         int screen_;
-        Visual * visual_;
+        Visual * visual_ = nullptr;
         Colormap colorMap_;
         XIC ic_;
 
