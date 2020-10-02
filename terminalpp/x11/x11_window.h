@@ -193,6 +193,10 @@ namespace tpp {
             }
         }
 
+        /** Draws the border. 
+         
+            Since the border is rendered over the contents and its color may be transparent, we can't use Xft's drawing, but have to revert to XRender which does the blending properly. 
+         */
         void drawBorder(int col, int row, Border const & border, int widthThin, int widthThick) {
             int left = col * cellSize_.width();
             int top = row * cellSize_.height();
@@ -202,13 +206,13 @@ namespace tpp {
             int widthRight = border.right() == Border::Kind::None ? 0 : (border.right() == Border::Kind::Thick ? widthThick : widthThin);
 
             if (widthTop != 0)
-                XftDrawRect(draw_, &bg_, left, top, cellSize_.width(), widthTop);
+                XRenderFillRectangle(display_, PictOpOver, XftDrawPicture(draw_), &bg_.color, left, top, cellSize_.width(), widthTop);            
             if (widthBottom != 0)
-                XftDrawRect(draw_, &bg_, left, top + cellSize_.height() - widthBottom, cellSize_.width(), widthBottom);
+                XRenderFillRectangle(display_, PictOpOver, XftDrawPicture(draw_), &bg_.color, left, top + cellSize_.height() - widthBottom, cellSize_.width(), widthBottom);
             if (widthLeft != 0) 
-                XftDrawRect(draw_, &bg_, left, top + widthTop, widthLeft, cellSize_.height() - widthTop - widthBottom);
-            if (widthRight != 0) 
-                XftDrawRect(draw_, &bg_, left + cellSize_.width() - widthRight, top + widthTop, widthRight, cellSize_.height() - widthTop - widthBottom);
+                XRenderFillRectangle(display_, PictOpOver, XftDrawPicture(draw_), &bg_.color, left, top + widthTop, widthLeft, cellSize_.height() - widthTop - widthBottom);
+            if (widthRight != 0)
+                XRenderFillRectangle(display_, PictOpOver, XftDrawPicture(draw_), &bg_.color, left + cellSize_.width() - widthRight, top + widthTop, widthRight, cellSize_.height() - widthTop - widthBottom); 
         }
         //@}
 

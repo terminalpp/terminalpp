@@ -69,7 +69,6 @@ namespace tpp {
     	gcv.graphics_exposures = False;
         buffer_ = XCreatePixmap(display_, window_, sizePx_.width(), sizePx_.height(), 32);
         gc_ = XCreateGC(display_, buffer_, GCGraphicsExposures, &gcv);
-
 		// only create input context if XIM is present
 		if (X11Application::Instance()->xIm_ != nullptr) {
 			// create input context for the window... The extra arguments to the XCreateIC are c-c c-v from the internet and for now are a mystery to me
