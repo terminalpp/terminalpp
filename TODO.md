@@ -10,6 +10,7 @@
 - fixed issue #20, `--cols` and `--rows` arguments & settings work now
 - fixed issue #21, Device Status Report sequence support
 - added option to specifyu clipboard setting behavior (#23)
+- scrollbars in linux do not obscure text underneath (#11)
 
 ### TODO
 
@@ -101,7 +102,9 @@ tpp-server
 - UI actions
 - add zoom out? and default zoom? 
 - xim is wrong, it works on linux, but fails on mac
-- how to deal with palette? (like a global palette object, and being able to set palette mappings for the widgets? 
 - add transparency for entire window? on Windows - https://msdn.microsoft.com/en-us/magazine/ee819134.aspx?f=255&MSPPError=-2147217396 and use layered windows
+  on Linux this is almost ready by switching to ARGB visual as part of searching for ways to draw transparent rectangles (perhaps we want this to be turnable on/off - see commit https://github.com/terminalpp/terminalpp/commit/22e4ea42c8496e7e0ac842df5f33fc1e44af9945)
+
+
 
 
