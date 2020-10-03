@@ -257,7 +257,7 @@ namespace tpp {
                 CONFIG_PROPERTY(
                     waitAfterPtyTerminated,
                     "Determines the behavior of the session when the attached command terminates.",
-                    JSON{true},
+                    JSON{false},
                     bool
                 );
                 CONFIG_PROPERTY(
@@ -321,21 +321,21 @@ namespace tpp {
 				CONFIG_PROPERTY(
 				    defaultForeground,
 					"Specifies the index of the default foreground color in the palette.",
-					JSON{15},
-				    size_t
+					JSON{"#ffffff"},
+				    ui::Color
 				);
 				CONFIG_PROPERTY(
 					defaultBackground,
 					"Specifies the index of the default background color in the palette.",
-					JSON{0},
-				    size_t
+					JSON{"#000000"},
+				    ui::Color
 				);
 				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
 				 */
 				ui::AnsiTerminal::Palette * operator () () const {
 					auto result = new ui::AnsiTerminal::Palette{colors()};
-					result->setDefaultForegroundIndex(defaultForeground());
-					result->setDefaultBackgroundIndex(defaultBackground());
+					result->setDefaultForeground(defaultForeground());
+					result->setDefaultBackground(defaultBackground());
 					return result;
 				}
 			);
@@ -421,21 +421,21 @@ namespace tpp {
 				CONFIG_PROPERTY(
 				    defaultForeground,
 					"Specifies the index of the default foreground color in the palette.",
-					JSON{15},
-				    size_t
+					JSON{"#ffffff"},
+				    ui::Color
 				);
 				CONFIG_PROPERTY(
 					defaultBackground,
 					"Specifies the index of the default background color in the palette.",
-					JSON{0},
-				    size_t
+					JSON{"#000000"},
+				    ui::Color
 				);
 				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
 				 */
 				ui::AnsiTerminal::Palette * operator () () const {
 					auto result = new ui::AnsiTerminal::Palette{colors()};
-					result->setDefaultForegroundIndex(defaultForeground());
-					result->setDefaultBackgroundIndex(defaultBackground());
+					result->setDefaultForeground(defaultForeground());
+					result->setDefaultBackground(defaultBackground());
 					return result;
 				}
 			);
@@ -569,8 +569,22 @@ namespace tpp {
 
         static bool WSLInstallBypass(std::string const & distro);
 
+        /** Adds the cmd.exe session to the list of sessions and sets it as default. 
+         
+            `cmd.exe` is expected to be installed on every Windows computer so is added without check. 
+         */
         static void Win32AddCmdExe(JSON & sessions, std::string & defaultSessionName);
+
+        /** Adds the powershell session to the list of sessions and sets it as default. 
+         
+            `powershell` is expected to be installed on every Windows computer so is added without check. 
+         */
         static void Win32AddPowershell(JSON & sessions, std::string & defaultSessionName);
+
+        /** Adds sessions for WSL distributions and sets the default WSL distro as default session. 
+         
+            The presence of WSL and its distributions and their names is checked as it's an optional feature. 
+         */
         static void Win32AddWSL(JSON & sessions, std::string & defaultSessionName);
 
     #endif

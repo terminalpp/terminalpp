@@ -7,8 +7,6 @@
 
 HELPERS_NAMESPACE_BEGIN
 
-    // TODO ui should do without reentrancy of the prioritylock
-
     /** A simple lock that allows locking in normal and priority modes, guaranteeing that a priority lock request will be serviced before any waiting normal locks. 
      */
     class PriorityLock {

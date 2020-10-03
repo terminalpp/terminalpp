@@ -75,11 +75,16 @@ namespace tpp {
         virtual void show(bool value = true) = 0;
 
         /** Determines the background color of the window. 
-         
-            TODO this should take the default background color from the terminal that is visible, or something like that. 
+
+            The background color of the renderer is used to draw the parts of the window that are not accessible from the cells, such as when the pixel size does not correspond to cell size multiplies. 
+
+            This is obtained from the root widget's background so that there are no borders of different color around the widget. This means that the root widget's background color for full size appliactions (such as the terminal itself) must be properly adjusted to the terminal itself. 
          */
         Color backgroundColor() const {
-            return Color::Black;
+            if (root() != nullptr)
+                return root()->background();
+            else 
+                Color::Black;
         }
 
     /** \name Window Closing. 

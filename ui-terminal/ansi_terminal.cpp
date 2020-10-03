@@ -31,13 +31,11 @@ namespace ui {
     std::unordered_set<Key> AnsiTerminal::PrintableKeys_;
 
 
-    // TODO remove the underscores
     Log AnsiTerminal::SEQ("VT100");
     Log AnsiTerminal::SEQ_UNKNOWN("VT100_UNKNOWN");
     Log AnsiTerminal::SEQ_ERROR("VT100_ERROR");
     Log AnsiTerminal::SEQ_WONT_SUPPORT("VT100_WONT_SUPPORT");
     Log AnsiTerminal::SEQ_SENT("VT100_SENT");
-
 
     char32_t AnsiTerminal::LineDrawingChars_[15] = {0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0, 0, 0x2500, 0, 0, 0x251c, 0x2524, 0x2534, 0x252c, 0x2502};
 
@@ -375,7 +373,7 @@ namespace ui {
         ASSERT(cursorPosition().x() < state_->buffer.width());
         ASSERT(cursorPosition().y() < state_->buffer.height());
         // set last character position to the now definitely valid cursor coordinates
-        state_->lastCharacter_ = cursorPosition();
+        state_->setLastCharacter(cursorPosition());
     }
 
     // Scrollback buffer
@@ -1224,8 +1222,6 @@ namespace ui {
                         // perform the mode change
                         std::swap(state_, stateBackup_);
                         alternateMode_ = value;
-                        // TODO renable
-                        //setScrollSize(Size{width(), state_->buffer.historyROws_.size() + height()});
                         schedule([this](){
                             if (alternateMode_)
                                 setScrollOffset(Point{0, 0});
@@ -1235,7 +1231,7 @@ namespace ui {
                         // if we are entering the alternate mode, reset the state to default values
                         if (value) {
                             state_->reset(palette_->defaultForeground(), palette_->defaultBackground());
-                            state_->lastCharacter_ = Point{-1,-1};
+                            state_->invalidateLastCharacter();
                             LOG(SEQ) << "Alternate mode on";
                         } else {
                             LOG(SEQ) << "Alternate mode off";
@@ -1675,12 +1671,11 @@ namespace ui {
         return result;
     }
 
-    AnsiTerminal::Palette::Palette(std::initializer_list<Color> colors, size_t defaultFg, size_t defaultBg):
+    AnsiTerminal::Palette::Palette(std::initializer_list<Color> colors, Color defaultFg, Color defaultBg):
         size_(colors.size()),
         defaultFg_(defaultFg),
         defaultBg_(defaultBg),
         colors_(new Color[colors.size()]) {
-        ASSERT(defaultFg < size_ && defaultBg < size_);
 		unsigned i = 0;
 		for (Color c : colors)
 			colors_[i++] = c;

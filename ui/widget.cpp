@@ -345,8 +345,8 @@ namespace ui {
         canvas.fill(canvas.rect());
         // now paint whatever the widget contents is
         paint(canvas);
-        // TODO paint the border now that the widget has been painted
-        // TODO 
+        // paint the border now that the widget has been painted
+        canvas.setBorder(canvas.rect(), border());
     }
 
     bool Widget::allowRepaintRequest(Widget * immediateChild) {

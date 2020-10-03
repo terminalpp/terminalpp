@@ -118,6 +118,8 @@ namespace ui {
     }
 
     Canvas & Canvas::setBorder(Point at, Border const & border) {
+        if (border.empty())
+            return *this;
         Rect vr = visibleArea_.rect() + visibleArea_.offset();
         at = at + visibleArea_.offset();
         if (vr.contains(at)) 

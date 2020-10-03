@@ -66,11 +66,15 @@ namespace ui {
                 resizeHistory();
                 resizeBuffers(size);
                 pty_->resize(size.width(), size.height());
-                // TODO update size? 
-
             }
-                if (scrollToTerminal_)
-                    setScrollOffset(Point{0, historyRows()});
+            if (scrollToTerminal_)
+                setScrollOffset(Point{0, historyRows()});
+        }
+
+        /** Returns the palette of the terminal. 
+         */
+        Palette const * palette() const {
+            return palette_;
         }
 
     /** \name Events
@@ -477,8 +481,7 @@ namespace ui {
 
         void setCursor(Point pos) {
             buffer.setCursorPosition(pos);
-            // invalidate the last character's position
-            lastCharacter_ = Point{-1, -1};
+            invalidateLastCharacter();
         }
 
         void saveCursor() {
@@ -501,6 +504,14 @@ namespace ui {
             buffer.markAsLineEnd(lastCharacter_);
         }
 
+        void invalidateLastCharacter() {
+            lastCharacter_ = Point{1,1};
+        }
+
+        void setLastCharacter(Point p) {
+            lastCharacter_ = p;
+        }
+
         Buffer buffer;
         Canvas canvas;
         Cell cell;
@@ -508,11 +519,8 @@ namespace ui {
         int scrollEnd;
         bool inverseMode = false;
 
-        // TODO this should be private
-        Point lastCharacter_;
-
-
     protected:
+        Point lastCharacter_;
         std::vector<Point> cursorStack_;
         
     }; // ui::AnsiTerminal::State
@@ -529,22 +537,21 @@ namespace ui {
 
         Palette():
             size_{2},
-            defaultFg_{1},
-            defaultBg_{0},
+            defaultFg_{Color::White},
+            defaultBg_{Color::Black},
             colors_{new Color[2]} {
             colors_[0] = Color::Black;
             colors_[1] = Color::White;
         }
 
-        Palette(size_t size, size_t defaultFg = 15, size_t defaultBg = 0):
+        Palette(size_t size, Color defaultFg = Color::White, Color defaultBg = Color::Black):
             size_(size),
             defaultFg_(defaultFg),
             defaultBg_(defaultBg),
             colors_(new Color[size]) {
-            ASSERT(defaultFg < size && defaultBg < size);
         }
 
-        Palette(std::initializer_list<Color> colors, size_t defaultFg = 15, size_t defaultBg = 0);
+        Palette(std::initializer_list<Color> colors, Color defaultFg = Color::White, Color defaultBg = Color::Black);
 
         Palette(Palette const & from);
 
@@ -562,19 +569,27 @@ namespace ui {
         }
 
         Color defaultForeground() const {
-            return colors_[defaultFg_];
+            return defaultFg_;
         }
 
         Color defaultBackground() const {
-            return colors_[defaultBg_];
+            return defaultBg_;
         }
 
-        void setDefaultForegroundIndex(size_t value) {
-            defaultFg_ = value;
+        void setDefaultForeground(size_t index) {
+            defaultFg_ = colors_[index];
         }
 
-        void setDefaultBackgroundIndex(size_t value) {
-            defaultBg_ = value;
+        void setDefaultForeground(Color color) {
+            defaultFg_ = color;
+        }
+
+        void setDefaultBackground(size_t index) {
+            defaultBg_ = colors_[index];
+        }
+
+        void setDefaultBackground(Color color) {
+            defaultBg_ = color;
         }
 
         void setColor(size_t index, Color color) {
@@ -602,8 +617,8 @@ namespace ui {
     private:
 
         size_t size_;
-        size_t defaultFg_;
-        size_t defaultBg_;
+        Color defaultFg_;
+        Color defaultBg_;
         Color * colors_;
 
     }; // AnsiTerminal::Palette

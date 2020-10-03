@@ -9,19 +9,6 @@
 
 HELPERS_NAMESPACE_BEGIN
 
-    /** Info about a single line of text.
-
-        Useful for breaking up large string into separate lines.
-     */
-    // TODO replaced by canvas
-    struct StringLine {
-        int width;
-        Char::iterator_utf8 begin;
-        Char::iterator_utf8 end;    
-    };
-
-    static constexpr int NoWordWrap = std::numeric_limits<int>::max();
-
 	/** Creates a random alphanumeric string of given length. 
 	 */
 	inline std::string CreateRandomAlphanumericString(size_t numChars) {
@@ -138,34 +125,6 @@ HELPERS_NAMESPACE_BEGIN
 			    ++result;
 		return result;
 	}
-
-    /** Returns the next line from the string. 
-     */
-    // TODO Delete - replaced by canvas
-    inline StringLine GetLine(Char::iterator_utf8 start, Char::iterator_utf8 end, int wrapAt = NoWordWrap, bool wordWrap = true) {
-		Char::iterator_utf8 i = start;
-        int size = 0;
-        while (size < wrapAt) {
-            // if we are at the end of the string, or end of line, return the line info
-            if (i == end || Char::IsLineEnd(*i))
-                return StringLine{size, start, i};
-            size += Char::ColumnWidth(*i);
-            ++i;
-        }
-        // now the current line is longer than the max line
-        Char::iterator_utf8 ii = end;
-        while (i != start) {
-            if (size <= wrapAt) {
-                if (! wordWrap || Char::IsWordSeparator(*i))
-                    return StringLine{size, start, i};
-                if (ii == end)
-                  ii = i;
-            }
-            size -= Char::ColumnWidth(*i);
-            --i;
-        }
-        return StringLine{size, start, ii};
-    }
 
 	/** Splits the given string by given delimiter and trims all substrings. 
 	 */
