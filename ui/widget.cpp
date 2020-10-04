@@ -70,13 +70,13 @@ namespace ui {
 
     void Widget::detach(Widget * child) {
         ASSERT(child->parent() == this);
-        // detach from the renderer first
-        if (renderer_ != nullptr)
-            renderer_->detachTree(child);
-        // then delete from own children
+        // delete from own children first (so that the renderer already sees the correct tree while the widget is detached if needed for things such as focus changes)
         auto i = std::find(children_.begin(), children_.end(), child);
         ASSERT(i != children_.end());
         children_.erase(i);
+        // then detach from the renderer first
+        if (renderer_ != nullptr)
+            renderer_->detachTree(child);
         // and finally relayout itself
         relayout();
     }

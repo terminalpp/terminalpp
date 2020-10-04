@@ -84,7 +84,7 @@ namespace tpp {
             if (root() != nullptr)
                 return root()->background();
             else 
-                Color::Black;
+                return Color::Black;
         }
 
     /** \name Window Closing. 

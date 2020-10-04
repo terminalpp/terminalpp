@@ -1039,6 +1039,7 @@ namespace ui {
                         // enable replace mode (IRM) since this is the only mode we allow, do nothing
                         if (seq[0] == 4)
                             return;
+                        // powershell is sending CSI 25 l which means nothing and likely is a bug, perhaps should be CSI ? 25 l to disable cursor? 
                         break;
                     /* SGR
                      */

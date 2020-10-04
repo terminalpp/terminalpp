@@ -138,8 +138,10 @@ namespace ui {
          */
         void detachTree(Widget * root) {
             detachWidget(root);
-            // now that the whole tree has been detached, fix keyboard & mouse issues, etc. 
-            // TODO
+            // now that the whole tree has been detached, fix keyboard focus, etc., special case is whet we are removing root_ widget, then there is no widget to set focus to, but the root is still attached (root_ is set to null only after it is removed)
+            if (keyboardFocus_ == nullptr && root != root_)
+                setKeyboardFocus(nextKeyboardFocus());
+            // TODO do we need to fix mouse too? 
         }
 
         /** Detaches the given widget by invalidating its visible area, including its entire subtree, when detached, calls the widgetDetached() method.
