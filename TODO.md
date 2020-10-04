@@ -11,7 +11,7 @@
 - fixed issue #21, Device Status Report sequence support
 - added option to specifyu clipboard setting behavior (#23)
 - scrollbars in linux do not obscure text underneath (#11)
-- default foreground and background colors inserted directly and they do not have to be from the palette
+- default foreground and background colors inserted directly and they do not have to be from the palette, as a side-effect, transparent background is supported on X11
 
 ### TODO
 
@@ -43,8 +43,6 @@ Issues to be raised:
 - how to & when invalidate selection when there are changes in the terminal's contents
 
 UI version 3
-
-- assertion failures on linux wrt keyboard input
 
 - when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
 

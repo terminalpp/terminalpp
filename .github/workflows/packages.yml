@@ -4,7 +4,8 @@ on:
   push:
     branch:
     - master
-
+    - release
+    
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ROOT: /mnt/c/Users/peta/actions-runner/_work/terminalpp/terminalpp
@@ -396,10 +397,19 @@ jobs:
 #
 # This looks like a good start:
 #
-# https://docs.microsoft.com/en-us/windows/uwp/monetize/create-an-app-submission
-# https://docs.microsoft.com/en-us/windows/uwp/monetize/csharp-code-examples-for-the-windows-store-submission-api
-#
-# on powreshell Invoke-RestMethod (curl)
+# https://github.com/Microsoft/StoreBroker
+
+
+  release-windows-store:
+    runs-on: windows-latest
+    steps:
+    - name: setup
+      run: |
+        Install-Module -Name StoreBroker
+#    - name: submit
+#      run: |
+#        Update-ApplicationSubmission -AppId 9NNH6JQFJ7HD -SubmissionDataPath ".json" -PackagePath ".zip" -Force -ReplacePackages
+# add -AutoCommit
 
 
 # Release to snap store
