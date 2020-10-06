@@ -7,7 +7,6 @@ on:
     - release
     
 env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ROOT: /mnt/c/Users/peta/actions-runner/_work/terminalpp/terminalpp
 
 jobs:
@@ -32,7 +31,7 @@ jobs:
     - name: terminalpp-msix-sign
       run: |
           $pfxPassword = "${{ secrets.TERMINALPP_CERT_PASSWORD }}"
-          $pfx = [Convert]::FromBase64String("${{ secrets. TERMINALPP_CERT }}")
+          $pfx = [Convert]::FromBase64String("${{ secrets.TERMINALPP_CERT }}")
           [IO.File]::WriteAllBytes("terminalpp-cert.pfx", $pfx)          
           SignTool sign /fd SHA256 /a /f terminalpp-cert.pfx /p $pfxPassword build/packages/terminalpp.msix
     - name: artifact-terminalpp-msix
