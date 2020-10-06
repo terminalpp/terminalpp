@@ -400,12 +400,15 @@ jobs:
 # https://github.com/Microsoft/StoreBroker
 
 
-  release-windows-store:
-    runs-on: windows-latest
-    steps:
-    - name: setup
-      run: |
-        Install-Module -Name StoreBroker
+#  release-windows-store:
+#    runs-on: windows-latest
+#    steps:
+#    - name: setup
+#      run: |
+#        Install-Module -Name StoreBroker
+#        Import-Module StoreBroker
+#        Set-StoreBrokerAuthentication -TenantId 88f0da95-9909-4691-8798-2cfe03d57cd5 -OnlyCacheTenantId
+
 #    - name: submit
 #      run: |
 #        Update-ApplicationSubmission -AppId 9NNH6JQFJ7HD -SubmissionDataPath ".json" -PackagePath ".zip" -Force -ReplacePackages

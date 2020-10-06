@@ -167,7 +167,7 @@ namespace ui {
     Canvas & Canvas::verticalScrollbar(int size, int offset) {
         if (size > height()) {
             std::pair<int, int> dim = ScrollBarDimensions(height(), size, offset);
-            Border b = Border::Empty(Color::White.withAlpha(64)).setRight(Border::Kind::Thin);
+            Border b = Border::Empty(Color::Gray.withAlpha(128)).setRight(Border::Kind::Thin);
             int x = width() - 1;
             setBorder(Point{x, 0}, Point{x, dim.first}, b);
             setBorder(Point{x, dim.second}, Point{x, height()}, b);

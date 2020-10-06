@@ -71,6 +71,7 @@ namespace ui {
         Rect visibleRect{ccanvas.visibleRect()};
         std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
         int top = alternateMode_ ? 0 : static_cast<int>(historyRows_.size());
+        ccanvas.setBg(palette_->defaultBackground());
         // see if there are any history lines that need to be drawn
         for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); ; ++row) {
             if (row >= re)
