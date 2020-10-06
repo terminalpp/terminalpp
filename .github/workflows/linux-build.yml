@@ -2,8 +2,8 @@ name: linux-build
 
 on:
   push:
-    branches:
-      - master
+    branches-ignore:
+      - release
 
 jobs:
   build:

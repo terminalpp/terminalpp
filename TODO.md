@@ -27,7 +27,6 @@ Builds & Releases
 
 - source package artifact for deb
 - release ropen package to snap 
-- automatic release to Windows store
 - upload to ppa ? 
 - update the website ? 
 - add benchmarking

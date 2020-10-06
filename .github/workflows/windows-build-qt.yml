@@ -2,8 +2,8 @@ name: windows-build-qt
 
 on:
   push:
-    branches:
-      - master
+    branches-ignore:
+      - release
 
 jobs:
   build:

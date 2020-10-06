@@ -2,7 +2,7 @@ name: packages
 
 on:
   push:
-    branch:
+    branches:
     - master
     - release
     
@@ -205,72 +205,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     # download terminalpp windows installers
-    - name: get-terminalpp-msi
-      uses: actions/download-artifact@v1
+    - name: get-artifacts
+      uses: actions/download-artifact@v2
       with:
-        name: terminalpp.msi
-    - name: get-terminalpp-msix
-      uses: actions/download-artifact@v1
-      with:
-        name: terminalpp.msix
-    # download terminalpp linux binary packages
-    - name: get-terminalpp-deb
-      uses: actions/download-artifact@v1
-      with:
-        name: terminalpp.deb
-    - name: get-terminalpp-rpm
-      uses: actions/download-artifact@v1
-      with:
-        name: terminalpp.rpm
-    - name: get-terminalpp-snap
-      uses: actions/download-artifact@v1
-      with:
-        name: terminalpp.snap
-    # download terminalpp source packages
-    - name: get-terminalpp-src.rpm
-      uses: actions/download-artifact@v1
-      with:
-        name: terminalpp.src.rpm
-    # download macOS bundle
-    - name: get-terminalpp-macos-zip
-      uses: actions/download-artifact@v1
-      with:
-        name: terminalpp-macos.zip
-    # download ropen linux binary packages
-    - name: get-ropen-deb
-      uses: actions/download-artifact@v1
-      with:
-        name: ropen.deb
-    - name: get-ropen-rpm
-      uses: actions/download-artifact@v1
-      with:
-        name: ropen.rpm
-    - name: get-ropen-snap
-      uses: actions/download-artifact@v1
-      with:
-        name: ropen.snap
-    # download ropen source packages
-    - name: get-ropen-src-rpm
-      uses: actions/download-artifact@v1
-      with:
-        name: ropen.src.rpm
-    # download bypass for WSL distributions
-    - name: get-bypass-ubuntu-18.04
-      uses: actions/download-artifact@v1
-      with:
-        name: tpp-bypass-ubuntu-18.04
-    - name: get-bypass-ubuntu-20.04
-      uses: actions/download-artifact@v1
-      with:
-        name: tpp-bypass-ubuntu-20.04
-    - name: get-bypass-debian
-      uses: actions/download-artifact@v1
-      with:
-        name: tpp-bypass-debian
-    - name: get-bypass-openSUSE-Leap-15-1
-      uses: actions/download-artifact@v1
-      with:
-        name: tpp-bypass-openSUSE-Leap-15-1
+        path: artifacts
     # now that we have all packages locally, create the release draft
     - name: create-release
       id: create-release
@@ -285,14 +223,14 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./terminalpp.msi/terminalpp.msi
+        asset_path: ./artifacts/terminalpp.msi
         asset_name: terminalpp.msi
         asset_content_type: application/octet-stream
     - name: upload-terminalpp-msix
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./terminalpp.msix/terminalpp.msix
+        asset_path: ./artifacts/terminalpp.msix
         asset_name: terminalpp.msix
         asset_content_type: application/octet-stream
     # upload terminalpp linux binaries
@@ -300,21 +238,21 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./terminalpp.deb/terminalpp.deb
+        asset_path: ./artifacts/terminalpp.deb
         asset_name: terminalpp.deb
         asset_content_type: application/octet-stream
     - name: upload-terminalpp-rpm
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./terminalpp.rpm/terminalpp.rpm
+        asset_path: ./artifacts/terminalpp.rpm
         asset_name: terminalpp.rpm
         asset_content_type: application/octet-stream
     - name: upload-terminalpp-snap
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./terminalpp.snap/terminalpp.snap
+        asset_path: ./artifacts/terminalpp.snap
         asset_name: terminalpp.snap
         asset_content_type: application/octet-stream
     # upload terminalpp linux source packages
@@ -322,7 +260,7 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./terminalpp.src.rpm/terminalpp.src.rpm
+        asset_path: ./artifacts/terminalpp.src.rpm
         asset_name: terminalpp.src.rpm
         asset_content_type: application/octet-stream
     # upload terminalpp macOS bundle
@@ -330,7 +268,7 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./terminalpp-macos.zip/terminalpp.zip
+        asset_path: ./artifacts/terminalpp.zip
         asset_name: terminalpp-macos.zip
         asset_content_type: application/zip
     # upload ropen linux binaries
@@ -338,21 +276,21 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./ropen.deb/ropen.deb
+        asset_path: ./artifacts/ropen.deb
         asset_name: ropen.deb
         asset_content_type: application/octet-stream
     - name: upload-ropen-rpm
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./ropen.rpm/ropen.rpm
+        asset_path: ./artifacts/ropen.rpm
         asset_name: ropen.rpm
         asset_content_type: application/octet-stream
     - name: upload-ropen-snap
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./ropen.snap/ropen.snap
+        asset_path: ./artifacts/ropen.snap
         asset_name: ropen.snap
         asset_content_type: application/octet-stream
     # upload ropen linux source packages
@@ -360,7 +298,7 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./ropen.src.rpm/ropen.src.rpm
+        asset_path: ./artifacts/ropen.src.rpm
         asset_name: ropen.src.rpm
         asset_content_type: application/octet-stream
     # upload bypass WSL binaries
@@ -368,28 +306,28 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./tpp-bypass-ubuntu-18.04/tpp-bypass
+        asset_path: ./artifacts/tpp-bypass
         asset_name: tpp-bypass-ubuntu-18.04
         asset_content_type: application/octet-stream
     - name: upload-bypass-ubuntu-20.04
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./tpp-bypass-ubuntu-20.04/tpp-bypass
+        asset_path: ./artifacts/tpp-bypass
         asset_name: tpp-bypass-ubuntu-20.04
         asset_content_type: application/octet-stream
     - name: upload-bypass-debian
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./tpp-bypass-debian/tpp-bypass
+        asset_path: ./artifacts/tpp-bypass
         asset_name: tpp-bypass-debian
         asset_content_type: application/octet-stream
     - name: upload-bypass-openSUSE-Leap-15-1
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./tpp-bypass-openSUSE-Leap-15-1/tpp-bypass
+        asset_path: ./artifacts/tpp-bypass
         asset_name: tpp-bypass-openSUSE-Leap-15-1
         asset_content_type: application/octet-stream
 
@@ -400,20 +338,43 @@ jobs:
 # https://github.com/Microsoft/StoreBroker
 
 
-#  release-windows-store:
-#    runs-on: windows-latest
-#    steps:
-#    - name: setup
-#      run: |
-#        Install-Module -Name StoreBroker
-#        Import-Module StoreBroker
-#        Set-StoreBrokerAuthentication -TenantId 88f0da95-9909-4691-8798-2cfe03d57cd5 -OnlyCacheTenantId
-
-#    - name: submit
-#      run: |
-#        Update-ApplicationSubmission -AppId 9NNH6JQFJ7HD -SubmissionDataPath ".json" -PackagePath ".zip" -Force -ReplacePackages
-# add -AutoCommit
-
+  release-windows-store:
+    if: ${{ github.ref == 'refs/heads/release' }}
+    runs-on: windows-latest
+    needs: [create-release]
+    steps:
+    - name: setup
+      run: |
+        Install-Module StoreBroker -Force
+        Import-Module StoreBroker
+    # get the msix
+    - name: get-terminalpp-msix
+      uses: actions/download-artifact@v2
+      with:
+        name: terminalpp.msix
+    # show what we have inside 
+    - name: create-store-package
+      run: |
+          Compress-Archive terminalpp.msix terminalpp.zip
+    # do the submission
+    - name: 
+      run: |
+          # login with the StoreBroker
+          $password = ConvertTo-SecureString "${{ secrets.WINDOWS_STORE_KEY }}" -AsPlainText -Force
+          $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.WINDOWS_STORE_CLIENT_ID }}", $password)
+          Set-StoreBrokerAuthentication -TenantId ${{ secrets.WINDOWS_STORE_TENANT_ID }} -Credential $cred      
+          # create the submission and add new package
+          $sub = New-ApplicationSubmission -AppId 9NNH6JQFJ7HD -Force
+          $sub.applicationPackages | ForEach-Object { $_.fileStatus = "PendingDelete" }
+          $pkg = $sub.applicationPackages[0].PSObject.Copy()
+          $pkg.fileName = "terminalpp.msix"
+          $pkg.fileStatus = "PendingUpload"
+          $pkg.PSObject.Properties.Remove("version")
+          $pkg.PSObject.Properties.Remove("id")
+          $sub.applicationPackages += $pkg
+          Set-ApplicationSubmission -AppId 9NNH6JQFJ7HD -UpdatedSubmission $sub
+          Set-SubmissionPackage -PackagePath 'terminalpp.zip' -UploadUrl ($sub.fileUploadUrl)
+          Complete-ApplicationSubmission -AppId 9NNH6JQFJ7HD -SubmissionId ($sub.id)
 
 # Release to snap store
 # 
@@ -431,20 +392,20 @@ jobs:
         rm snapcraft-edge-login
     # release terminalpp
     - name: get-terminalpp-snap
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v2
       with:
         name: terminalpp.snap
     - name: release-snap-terminalpp
       run: |
-        snapcraft upload --release=edge terminalpp.snap/terminalpp.snap
+        snapcraft upload --release=edge terminalpp.snap
     # release ropen
     - name: get-ropen-snap
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v2
       with:
         name: ropen.snap
     - name: release-snap-ropen
       run: |
-        sudo snapcraft upload --release=edge ropen.snap/ropen.snap
+        sudo snapcraft upload --release=edge ropen.snap
 
 
 
