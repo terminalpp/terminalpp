@@ -181,6 +181,16 @@ namespace tpp {
             );
         );
         CONFIG_OBJECT(
+            application,
+            "Application specific settings",
+            CONFIG_PROPERTY(
+                checkProfileShortcuts,
+                "If true, checks that profile shortcuts (if supported on given platform) will be updated at every startup",
+                JSON{true},
+                bool
+            );
+        );
+        CONFIG_OBJECT(
             telemetry,
             "Telemetry Settings for bug and feature requests reporting",
             CONFIG_PROPERTY(

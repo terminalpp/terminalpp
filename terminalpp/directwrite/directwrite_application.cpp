@@ -2,9 +2,14 @@
 
 #include <iostream>
 
+#include <shobjidl.h>
+#include <propkey.h>
+#include <propvarutil.h>
+#include <atlbase.h>
 
 #include "helpers/helpers.h"
 #include "helpers/filesystem.h"
+#include "helpers/raii.h"
 
 #include "windows.h"
 
@@ -87,6 +92,52 @@ namespace tpp {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
 		}
+    }
+
+    // https://github.com/microsoft/Windows-classic-samples/blob/master/Samples/Win7Samples/winui/shell/appshellintegration/CustomJumpList/CustomJumpListSample.cpp
+
+    void DirectWriteApplication::updateProfilesJumplist() {
+        RAIICleaner cleanup;
+        Config & config = Config::Instance();
+        // get own path 
+        WCHAR ownPath[MAX_PATH];
+        OSCHECK(GetModuleFileName(nullptr, ownPath, ARRAYSIZE(ownPath)));        
+        // initialize COM
+        OSCHECK(SUCCEEDED(CoInitialize(nullptr)));
+        cleanup.add([](){ CoUninitialize(); });
+        // initialize the collection that will become tasks
+        CComPtr<IObjectCollection> tasks;
+        OSCHECK(SUCCEEDED(tasks.CoCreateInstance(CLSID_EnumerableObjectCollection)));
+        // create task for each session 
+        for (auto & session : config.sessions) {
+            utf16_string args = UTF8toUTF16(STR("--session \"" << session.name() << "\""));
+            CComPtr<IShellLink> task;
+            OSCHECK(SUCCEEDED(task.CoCreateInstance(CLSID_ShellLink)));
+            OSCHECK(SUCCEEDED(task->SetPath(ownPath)));
+            OSCHECK(SUCCEEDED(task->SetArguments(args.c_str())));
+            // set the title
+            CComPtr<IPropertyStore> ps;
+            OSCHECK(SUCCEEDED(task->QueryInterface(IID_PPV_ARGS(&ps))));
+            PROPVARIANT propvar;
+            OSCHECK(SUCCEEDED(InitPropVariantFromString(UTF8toUTF16(session.name()).c_str(), &propvar)));
+            RAIICleaner propCleanup{[&](){ PropVariantClear(&propvar); }};
+            OSCHECK(SUCCEEDED(ps->SetValue(PKEY_Title, propvar)));
+            OSCHECK(SUCCEEDED(ps->Commit()));
+            OSCHECK(SUCCEEDED(tasks->AddObject(task)));
+        }
+        // now that we have the tasks, let's add them to the jump list
+        // initialize the jumplist
+        CComPtr<ICustomDestinationList> jumpList;
+        OSCHECK(SUCCEEDED(jumpList.CoCreateInstance(CLSID_DestinationList)));
+        // convert the tasks to array
+        CComPtr<IObjectArray> tasksArray;
+        OSCHECK(SUCCEEDED(tasks->QueryInterface(IID_PPV_ARGS(&tasksArray))));
+        // begin the list update, add user tasks and then commit the list
+        UINT visibleSlots;
+        CComPtr<IObjectArray> old;
+        OSCHECK(SUCCEEDED(jumpList->BeginList(&visibleSlots, IID_PPV_ARGS(&old))));
+        OSCHECK(SUCCEEDED(jumpList->AddUserTasks(tasksArray)));
+        OSCHECK(SUCCEEDED(jumpList->CommitList()));
     }
 
     DirectWriteApplication::DirectWriteApplication(HINSTANCE hInstance):

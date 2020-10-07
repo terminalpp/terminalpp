@@ -45,6 +45,9 @@ namespace tpp {
 
         void mainLoop() override;
 
+        /** Updates the jumplist of the application to include profiles specified in the settings. 
+         */
+        void updateProfilesJumplist();
 
     private:
 

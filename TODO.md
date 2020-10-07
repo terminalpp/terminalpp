@@ -12,6 +12,7 @@
 - added option to specifyu clipboard setting behavior (#23)
 - scrollbars in linux do not obscure text underneath (#11)
 - default foreground and background colors inserted directly and they do not have to be from the palette, as a side-effect, transparent background is supported on X11
+- profiles added to jumplist on Windows 
 
 ### TODO
 

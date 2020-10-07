@@ -130,6 +130,14 @@ int main(int argc, char* argv[]) {
         //tw->newSession(config.sessions[0]);
         //new tpp::Session{w, config.sessionByName(config.defaultSession())};
         w->show();
+#if (defined ARCH_WINDOWS && defined RENDERER_NATIVE)
+        // TODO se how fast this is and perhaps execute in separate thread?
+        if (config.application.checkProfileShortcuts()) {
+            w->schedule([](){
+                tpp::DirectWriteApplication::Instance()->updateProfilesJumplist();
+            });
+        }
+#endif
         tpp::Application::Instance()->mainLoop();
         return EXIT_SUCCESS;
 	} catch (Exception const& e) {

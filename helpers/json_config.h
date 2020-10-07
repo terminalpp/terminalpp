@@ -297,6 +297,44 @@ HELPERS_NAMESPACE_BEGIN
     template<typename T>
     class JSONConfig::Array : public JSONConfig {
     public:
+
+        /** Iterator into the configuration array. 
+         */
+        class ConstIterator {
+        public:
+            T & operator * () {
+                return * dynamic_cast<T*>(*i_);
+            }
+
+            T * operator -> () {
+                return dynamic_cast<T*>(*i_);
+            }
+
+            ConstIterator & operator ++ () {
+                ++i_;
+                return *this;
+            }
+
+            bool operator == (ConstIterator & other) const {
+                return i_ == other.i_;
+            }
+
+            bool operator != (ConstIterator & other) const {
+                return i_ != other.i_;
+            }
+
+        private:
+
+            friend class Array;
+
+            ConstIterator(std::vector<JSONConfig*>::const_iterator i):
+                i_{i} {
+            }
+            
+            std::vector<JSONConfig*>::const_iterator i_;
+
+        }; // JSONConfig::Array::ConstIterator
+
         Array(JSONConfig * parent, std::string const & name, std::string const & description):
             JSONConfig{parent, name, description, JSON::Array()} {
         }
@@ -321,6 +359,14 @@ HELPERS_NAMESPACE_BEGIN
         T & operator [] (size_t index) {
             ASSERT(index < elements_.size());
             return * dynamic_cast<T*>(elements_[index]);
+        }
+
+        ConstIterator begin() const {
+            return ConstIterator{elements_.begin()};
+        }
+
+        ConstIterator end() const {
+            return ConstIterator{elements_.end()};
         }
 
         JSON toJSON(bool updatedOnly = true) const override {
