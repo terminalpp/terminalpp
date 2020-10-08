@@ -395,8 +395,9 @@ namespace ui {
     class AnsiTerminal::Buffer : public ui::Canvas::Buffer {
         friend class AnsiTerminal;
     public:
-        Buffer(Size const & size):
+        Buffer(Size const & size, Cell const & defaultCell):
             ui::Canvas::Buffer(size) {
+            fill(defaultCell);
         }
 
         void insertLine(int top, int bottom, Cell const & fill);
@@ -427,6 +428,14 @@ namespace ui {
             cursorPosition_ = position;
         }
 
+        /** Fills the entire terminal withe the given cell. 
+         */
+        void fill(Cell const& defaultCell) {
+            fillRow(0, defaultCell, 0, width());
+            for (int i = 1, e = height(); i < e; ++i)
+                memcpy(rows_[i], rows_[0], sizeof(Cell) * width());
+        }
+
         void resize(Size size, Cell const & fill, std::function<void(Cell*, int)> addToHistory);
 
     private:
@@ -448,12 +457,12 @@ namespace ui {
     class AnsiTerminal::State {
     public:
 
-        State():
-            State{Size{80,25}} {
+        State(Color defaultBackground):
+            State{Size{80,25}, defaultBackground} {
         }
 
-        State(Size size):
-            buffer{size},
+        State(Size size, Color defaultBackground):
+            buffer{ size, Cell{}.setBg(defaultBackground) },
             canvas{buffer},
             scrollEnd{size.height()},
             lastCharacter_{-1,-1} {

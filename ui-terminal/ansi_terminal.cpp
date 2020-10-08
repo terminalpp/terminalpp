@@ -42,8 +42,8 @@ namespace ui {
     AnsiTerminal::AnsiTerminal(tpp::PTYMaster * pty, Palette * palette):
         PTYBuffer{pty},
         palette_{palette},
-        state_{new State{}},
-        stateBackup_{new State{}} {
+        state_{new State{palette->defaultBackground()}},
+        stateBackup_{new State{palette->defaultBackground()}} {
         if (KeyMap_.empty()) {
             InitializeKeyMap(KeyMap_);
             InitializePrintableKeys(PrintableKeys_);
@@ -1531,8 +1531,9 @@ namespace ui {
         int oldWidth = this->width();
         int oldHeight = this->height();
         rows_ = nullptr;
-        // resize the contents (create new ones)
+        // resize the contents (create new ones) and fill it with the specified cell
         Canvas::Buffer::resize(size);
+        this->fill(fill);
 		// now determine the row at which we should stop - this is done by going back from cursor's position until we hit end of line, that would be the last line we will use
 		int stopRow = cursorPosition_.y() - 1;
 		while (stopRow >= 0) {
