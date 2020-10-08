@@ -93,6 +93,7 @@ inline ui::AnsiTerminal::Palette JSONConfig::FromJSON(JSON const & json) {
         if (c.kind() != JSON::Kind::String) 
             THROW(JSONError()) << "Element items must be HTML colors, but " << c.kind() << " found";
         result[i] = ui::Color::FromHTML(c.toString());
+        ++i;
     }
     return result;
 }
