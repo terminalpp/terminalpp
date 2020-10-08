@@ -53,6 +53,29 @@ if(PACKAGE_MSIX AND RENDERER_NATIVE)
         DEPENDS terminalpp
     )
     add_dependencies(packages terminalpp-msix)
+    # also configure the nightly build
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msix/appxmanifest-nightly.xml ${CMAKE_CURRENT_BINARY_DIR}/msix-nightly/appxmanifest.xml @ONLY)
+    add_custom_target(terminalpp-msix-nightly
+        COMMAND ${CMAKE_COMMAND} -E make_directory Assets
+        COMMAND ${CMAKE_COMMAND} -E make_directory VFS
+        COMMAND makepri.exe new /pr . /cf ${CMAKE_CURRENT_SOURCE_DIR}/msix/priconfig.xml /o
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${PROJECT_EXECUTABLE}
+                VFS/terminalpp.exe
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_48x48.png
+                Assets/icons/icon_48x48.png
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_128x128.png
+                Assets/icons/icon_128x128.png
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_256x256.png
+                Assets/icons/icon_256x256.png
+        COMMAND MakeAppx.exe pack /d . /p ${CMAKE_BINARY_DIR}/packages/terminalpp-nightly.msix /o
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/msix-nightly
+        DEPENDS terminalpp
+    )
+    add_dependencies(packages terminalpp-msix-nightly)
 endif()
 
 # Linux

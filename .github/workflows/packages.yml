@@ -39,6 +39,17 @@ jobs:
       with:
         name: terminalpp.msix
         path: build/packages/terminalpp.msix
+    - name: terminalpp-nightly-msix-sign
+      run: |
+          $pfxPassword = "${{ secrets.TERMINALPP_CERT_PASSWORD }}"
+          $pfx = [Convert]::FromBase64String("${{ secrets.TERMINALPP_CERT }}")
+          [IO.File]::WriteAllBytes("terminalpp-cert.pfx", $pfx)          
+          SignTool sign /fd SHA256 /a /f terminalpp-cert.pfx /p $pfxPassword build/packages/terminalpp-nightly.msix
+    - name: artifact-terminalpp-nightly-msix
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp-nightly.msix
+        path: build/packages/terminalpp-nightly.msix
 
   # Source and Binary packages for Linux 
   #
