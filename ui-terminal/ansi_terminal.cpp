@@ -48,6 +48,8 @@ namespace ui {
             InitializeKeyMap(KeyMap_);
             InitializePrintableKeys(PrintableKeys_);
         }
+        state_->reset(palette_->defaultForeground(), palette_->defaultBackground());
+        stateBackup_->reset(palette_->defaultForeground(), palette_->defaultBackground());
         setFocusable(true);
         
         startPTYReader();

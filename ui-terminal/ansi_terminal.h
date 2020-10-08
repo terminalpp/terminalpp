@@ -464,7 +464,7 @@ namespace ui {
         State(Size size, Color defaultBackground):
             buffer{ size, Cell{}.setBg(defaultBackground) },
             canvas{buffer},
-            scrollEnd{size.height()},
+            scrollEnd{size.height()},  
             lastCharacter_{-1,-1} {
         }
 
