@@ -202,50 +202,54 @@ namespace tpp {
     }
 
     void Config::Win32AddWSL(JSON & sessions, std::string & defaultSessionName) {
-        ExitCode ec; // to silence errors
-        std::vector<std::string> lines = SplitAndTrim(Exec(Command("wsl.exe", {"--list"}), "", &ec), "\n");
-        // check if we have found WSL
-        if (lines.size() < 1 || lines[0] != "Windows Subsystem for Linux Distributions:")
-            return;
-        // get the installed WSL distributions and determine the default ones
-        std::vector<std::string> distributions;
-        size_t defaultIndex = 0;
-        for (size_t i = 1, e = lines.size(); i != e; ++i) {
-            if (EndsWith(lines[i], "(Default)")) {
-                defaultIndex = distributions.size();
-                defaultSessionName = Split(lines[i], " ")[0];
-                distributions.push_back(defaultSessionName);
-            } else {
-                distributions.push_back(lines[i]);
+        try {
+            ExitCode ec; // to silence errors
+            std::vector<std::string> lines = SplitAndTrim(Exec(Command("wsl.exe", {"--list"}), "", &ec), "\n");
+            // check if we have found WSL
+            if (lines.size() < 1 || lines[0] != "Windows Subsystem for Linux Distributions:")
+                return;
+            // get the installed WSL distributions and determine the default ones
+            std::vector<std::string> distributions;
+            size_t defaultIndex = 0;
+            for (size_t i = 1, e = lines.size(); i != e; ++i) {
+                if (EndsWith(lines[i], "(Default)")) {
+                    defaultIndex = distributions.size();
+                    defaultSessionName = Split(lines[i], " ")[0];
+                    distributions.push_back(defaultSessionName);
+                } else {
+                    distributions.push_back(lines[i]);
+                }
             }
-        }
-        // if we found no distributions, return
-        if (distributions.empty())
-            return;
-        // create session for each distribution we have found
-        for (size_t i = 0, e = distributions.size(); i < e; ++i) {
-            std::string pty = "local";
-            JSON session{JSON::Kind::Object};
-            session.setComment(STR("WSL distribution " << distributions[i]));
-            if (defaultIndex == i)
-                session.setComment(session.comment() + " (default)");
-            if (WSLIsBypassPresent(distributions[i])) {
-                pty = "bypass";
-            } else {
-                if (Application::Instance()->query("ConPTY Bypass Installation", STR("Do you want to install the ConPTY bypass, which allows for faster I/O and has full support for ANSI escape sequences into WSL distribution " << distributions[i]))) 
-                    if (WSLInstallBypass(distributions[i])) {
-                        pty = "bypass";
-                    } else {
-                        Application::Instance()->alert("Bypass installation failed, most likely due to missing binary for your WSL distribution. Terminal++ will continue with ConPTY, you can install the bypass manually later");
-                    }
+            // if we found no distributions, return
+            if (distributions.empty())
+                return;
+            // create session for each distribution we have found
+            for (size_t i = 0, e = distributions.size(); i < e; ++i) {
+                std::string pty = "local";
+                JSON session{JSON::Kind::Object};
+                session.setComment(STR("WSL distribution " << distributions[i]));
+                if (defaultIndex == i)
+                    session.setComment(session.comment() + " (default)");
+                if (WSLIsBypassPresent(distributions[i])) {
+                    pty = "bypass";
+                } else {
+                    if (Application::Instance()->query("ConPTY Bypass Installation", STR("Do you want to install the ConPTY bypass, which allows for faster I/O and has full support for ANSI escape sequences into WSL distribution " << distributions[i]))) 
+                        if (WSLInstallBypass(distributions[i])) {
+                            pty = "bypass";
+                        } else {
+                            Application::Instance()->alert("Bypass installation failed, most likely due to missing binary for your WSL distribution. Terminal++ will continue with ConPTY, you can install the bypass manually later");
+                        }
+                }
+                session.add("name", JSON{distributions[i]});
+                session.add("pty", JSON{pty});
+                if (pty == "local")
+                    session.add("command", JSON::Parse(STR("[\"wsl.exe\", \"--distribution\", \"" << distributions[i] << "\"]")));
+                else
+                    session.add("command", JSON::Parse(STR("[\"wsl.exe\", \"--distribution\", \"" << distributions[i] << "\", \"--\", \"" << BYPASS_PATH << "\"]")));
+                sessions.add(session);
             }
-            session.add("name", JSON{distributions[i]});
-            session.add("pty", JSON{pty});
-            if (pty == "local")
-                session.add("command", JSON::Parse(STR("[\"wsl.exe\", \"--distribution\", \"" << distributions[i] << "\"]")));
-            else
-                session.add("command", JSON::Parse(STR("[\"wsl.exe\", \"--distribution\", \"" << distributions[i] << "\", \"--\", \"" << BYPASS_PATH << "\"]")));
-            sessions.add(session);
+        } catch (OSError const & e) {
+            // do nothing, when we get os error from calling WSL just don't include any sessions
         }
     }
 
