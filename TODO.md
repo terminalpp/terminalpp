@@ -48,7 +48,6 @@ UI version 3
 
 - some simpler accesses to state-ish properties in the terminal? 
 
-
 tpp-server
 
 - key up not detected on standard terminal, determine how tpp would do it

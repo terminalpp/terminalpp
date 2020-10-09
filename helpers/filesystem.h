@@ -152,7 +152,8 @@ HELPERS_NAMESPACE_BEGIN
 		wchar_t * wpath;
 		OSCHECK(SHGetKnownFolderPath(
 			FOLDERID_RoamingAppData,
-			0, 
+            // this flag forces the redirection to real file paths in msix so that the settings file can be opened by other applications as well
+			KF_FLAG_FORCE_APP_DATA_REDIRECTION, 
 			nullptr,
 			& wpath
 		) == S_OK) << "Unable to determine stetings folder location";
