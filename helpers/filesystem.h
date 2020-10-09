@@ -191,7 +191,17 @@ HELPERS_NAMESPACE_BEGIN
      */
     inline std::string TempDir() {
 #if (defined ARCH_WINDOWS)
-        return UTF16toUTF8(std::filesystem::temp_directory_path().c_str());
+		wchar_t * wpath;
+		OSCHECK(SHGetKnownFolderPath(
+			FOLDERID_LocalAppData,
+            // this flag forces the redirection to real file paths in msix so that the settings file can be opened by other applications as well
+			KF_FLAG_FORCE_APP_DATA_REDIRECTION, 
+			nullptr,
+			& wpath
+		) == S_OK) << "Unable to determine stetings folder location";
+		std::string path(HELPERS_NAMESPACE_DECL::UTF16toUTF8(wpath));
+		CoTaskMemFree(wpath);
+        return path + "\\Temp";
 #else
         return std::filesystem::temp_directory_path().c_str();
 #endif
