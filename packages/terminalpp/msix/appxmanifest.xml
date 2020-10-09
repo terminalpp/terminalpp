@@ -36,9 +36,9 @@
             <uap:VisualElements 
                 DisplayName="Terminal++" 
                 Description="@TERMINALPP_SUMMARY@"	
-                Square150x150Logo="Assets/icons/icon_128x128.png"
-				Square44x44Logo="Assets/icons/icon_48x48.png"
-                BackgroundColor="#000000" 
+                Square150x150Logo="Assets/icons/icon_150x150.png"
+				Square44x44Logo="Assets/icons/icon_44x44.png"
+                BackgroundColor="transparent"
             />
         </Application>
     </Applications>

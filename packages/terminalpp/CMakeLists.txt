@@ -40,11 +40,11 @@ if(PACKAGE_MSIX AND RENDERER_NATIVE)
                 ${PROJECT_EXECUTABLE}
                 VFS/terminalpp.exe
         COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_SOURCE_DIR}/resources/icons/icon_48x48.png
-                Assets/icons/icon_48x48.png
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_44x44.png
+                Assets/icons/icon_44x44.png
         COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_SOURCE_DIR}/resources/icons/icon_128x128.png
-                Assets/icons/icon_128x128.png
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_150x150.png
+                Assets/icons/icon_150x150.png
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/resources/icons/icon_256x256.png
                 Assets/icons/icon_256x256.png
@@ -53,6 +53,7 @@ if(PACKAGE_MSIX AND RENDERER_NATIVE)
         DEPENDS terminalpp
     )
     add_dependencies(packages terminalpp-msix)
+    
     # also configure the nightly build
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msix/appxmanifest-nightly.xml ${CMAKE_CURRENT_BINARY_DIR}/msix-nightly/appxmanifest.xml @ONLY)
     add_custom_target(terminalpp-msix-nightly
@@ -63,11 +64,11 @@ if(PACKAGE_MSIX AND RENDERER_NATIVE)
                 ${PROJECT_EXECUTABLE}
                 VFS/terminalpp.exe
         COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_SOURCE_DIR}/resources/icons/icon_48x48.png
-                Assets/icons/icon_48x48.png
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_44x44.png
+                Assets/icons/icon_44x44.png
         COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_SOURCE_DIR}/resources/icons/icon_128x128.png
-                Assets/icons/icon_128x128.png
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_150x150.png
+                Assets/icons/icon_150x150.png
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/resources/icons/icon_256x256.png
                 Assets/icons/icon_256x256.png

@@ -42,6 +42,9 @@ if(ARCH_LINUX)
         COMMAND convert ../images/logo-notification.png -resize 512x512 icon-notification_512x512.png
         # 1080x1080 box art for windows store
         COMMAND convert ../images/logo.png -resize 1080x1080 icon_1080x1080.png
+        # 150x150 and 44x44 icon for msix
+        COMMAND convert ../images/logo.png -resize 150x150 icon_150x150.png
+        COMMAND convert ../images/logo.png -resize 44x44 icon_44x44.png
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/icons
         DEPENDS xIconCpp
     )
