@@ -35,7 +35,6 @@ if(PACKAGE_MSIX AND RENDERER_NATIVE)
     add_custom_target(terminalpp-msix
         COMMAND ${CMAKE_COMMAND} -E make_directory Assets
         COMMAND ${CMAKE_COMMAND} -E make_directory VFS
-        COMMAND makepri.exe new /pr . /cf ${CMAKE_CURRENT_SOURCE_DIR}/msix/priconfig.xml /o
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${PROJECT_EXECUTABLE}
                 VFS/terminalpp.exe
@@ -43,11 +42,21 @@ if(PACKAGE_MSIX AND RENDERER_NATIVE)
                 ${CMAKE_SOURCE_DIR}/resources/icons/icon_44x44.png
                 Assets/icons/icon_44x44.png
         COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_44x44.png
+                Assets/icons/icon_44x44.targetsize-44_altform-unplated.png
+        COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/resources/icons/icon_150x150.png
                 Assets/icons/icon_150x150.png
         COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_150x150.png
+                Assets/icons/icon_150x150.targetsize-150_altform-unplated.png
+        COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/resources/icons/icon_256x256.png
                 Assets/icons/icon_256x256.png
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_256x256.png
+                Assets/icons/icon_256x256.targetsize-256_altform-unplated.png
+        COMMAND makepri.exe new /pr . /cf ${CMAKE_CURRENT_SOURCE_DIR}/msix/priconfig.xml /o
         COMMAND MakeAppx.exe pack /d . /p ${CMAKE_BINARY_DIR}/packages/terminalpp.msix /o
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/msix
         DEPENDS terminalpp
@@ -59,7 +68,6 @@ if(PACKAGE_MSIX AND RENDERER_NATIVE)
     add_custom_target(terminalpp-msix-nightly
         COMMAND ${CMAKE_COMMAND} -E make_directory Assets
         COMMAND ${CMAKE_COMMAND} -E make_directory VFS
-        COMMAND makepri.exe new /pr . /cf ${CMAKE_CURRENT_SOURCE_DIR}/msix/priconfig.xml /o
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${PROJECT_EXECUTABLE}
                 VFS/terminalpp.exe
@@ -67,14 +75,25 @@ if(PACKAGE_MSIX AND RENDERER_NATIVE)
                 ${CMAKE_SOURCE_DIR}/resources/icons/icon_44x44.png
                 Assets/icons/icon_44x44.png
         COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_44x44.png
+                Assets/icons/icon_44x44.targetsize-44_altform-unplated.png
+        COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/resources/icons/icon_150x150.png
                 Assets/icons/icon_150x150.png
         COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_150x150.png
+                Assets/icons/icon_150x150.targetsize-150_altform-unplated.png
+        COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/resources/icons/icon_256x256.png
                 Assets/icons/icon_256x256.png
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/resources/icons/icon_256x256.png
+                Assets/icons/icon_256x256.targetsize-256_altform-unplated.png
+        COMMAND makepri.exe new /pr . /cf ${CMAKE_CURRENT_SOURCE_DIR}/msix/priconfig.xml /o
         COMMAND MakeAppx.exe pack /d . /p ${CMAKE_BINARY_DIR}/packages/terminalpp-nightly.msix /o
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/msix-nightly
         DEPENDS terminalpp
+                
     )
     add_dependencies(packages terminalpp-msix-nightly)
 endif()
