@@ -18,8 +18,6 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- once BEL raised, it never disappears it seems
-
 Documentation:
 
 - document keyboard focus handling - i.e. only document order and getting next & previous elements

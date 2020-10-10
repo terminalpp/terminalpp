@@ -147,6 +147,9 @@ namespace tpp {
             std::string title;
             AnsiTerminal * terminal;
             bool terminateOnKeyPress = false;
+            /** If true, the current session has an active notification. 
+             */
+            bool notification = false;
             PasteDialog * pendingPaste = nullptr;
 
             SessionInfo(Config::sessions_entry const & session):
@@ -169,6 +172,15 @@ namespace tpp {
         /** Global hotkeys handling. 
          */
         void windowKeyDown(tpp::Window::KeyEvent::Payload & e) {
+            // a keydown also clears any active notification in the current session, and if this is the last active notification, also the notification icon
+            if (activeSession_ != nullptr) {
+                if (activeSession_->notification) {
+                    activeSession_->notification = false;
+                    ASSERT(activeNotifications_ > 0);
+                    if (--activeNotifications_ == 0)
+                        window_->setIcon(tpp::Window::Icon::Default);
+                }
+            }
             if (*e == SHORTCUT_FULLSCREEN) {
                 window_->setFullscreen(! window_->fullscreen());
             } else if (*e == SHORTCUT_SETTINGS) {
@@ -218,9 +230,18 @@ namespace tpp {
                 window_->setTitle(*e);
         }
 
-        void sessionNotification(ui::VoidEvent::Payload & event) {
-            MARK_AS_UNUSED(event);
-            window_->setIcon(tpp::Window::Icon::Notification);
+        /** Changes the icon when terminal sends notification. 
+         
+            Changes the icon, marks the notification flag for the terminal's session and increments the window notifications counter. 
+         */
+        void sessionNotification(ui::VoidEvent::Payload & e) {
+            SessionInfo * si = sessionInfo(e.sender());
+            // only increment the counter if current session does not have active notification enabled already
+            if (si->notification == false) {
+                si->notification = true;
+                if (++activeNotifications_ == 1)
+                    window_->setIcon(tpp::Window::Icon::Notification);
+            }
         }
 
         void keyDown(KeyEvent::Payload & e) override {
@@ -364,6 +385,7 @@ namespace tpp {
         std::unordered_map<AnsiTerminal *, SessionInfo *> sessions_; 
 
         SessionInfo * activeSession_ = nullptr;
+        unsigned activeNotifications_ = 0;
 
         RemoteFiles * remoteFiles_;
 
