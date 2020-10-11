@@ -127,6 +127,12 @@ namespace ui {
 
         virtual void setModalRoot(Widget * widget); 
 
+        /** Returns true if the renderer is currently showing a modal widget. 
+         */
+        bool isModal() const {
+            return modalRoot_ != root_;
+        }
+
     private:
         /** Triggered by the widgets when they are detached from the renderer. 
          

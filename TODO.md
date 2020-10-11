@@ -2,21 +2,25 @@
 
 ## Next version: 0.8
 
-- alternate zoom shortcuts (`C-S--` and `C-S-=`)
-- ropen can be interrupted gracefully
-- proper single-thread UI rewrite, simpler & more robust UI
+- proper single-thread UI - complete rewrite, simpler & more robust UI
 - multiple sessions can be specified in the configuration and switched with `--session` command-line argument
 - improved Qt support (QWidget instead of QWindow-based renderer) (issue #10)
+- alternate zoom shortcuts (`C-S--` and `C-S-=`)
+- ropen can be interrupted gracefully
 - fixed issue #20, `--cols` and `--rows` arguments & settings work now
 - fixed issue #21, Device Status Report sequence support
 - added option to specifyu clipboard setting behavior (#23)
 - scrollbars in linux do not obscure text underneath (#11)
 - default foreground and background colors inserted directly and they do not have to be from the palette, as a side-effect, transparent background is supported on X11
 - profiles added to jumplist on Windows 
+- fixed MSIX icons & paths
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
+
+- make MSIX start in home folder
+- add some executable visible from the outside so that terminal can be launched from commandline (MSIX)
 
 Documentation:
 

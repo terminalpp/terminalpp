@@ -191,7 +191,7 @@ namespace tpp {
             } else if (*e == SHORTCUT_ZOOM_OUT || *e == SHORTCUT_ZOOM_OUT_ALT) {
                 if (window_->zoom() > 1)
                     window_->setZoom(std::max(1.0, window_->zoom() / 1.25));
-            } else if (*e == SHORTCUT_ABOUT) {
+            } else if (*e == SHORTCUT_ABOUT && ! window_->isModal()) {
                 showModal(new AboutBox{});
             } else {
                 return;
