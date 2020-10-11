@@ -20,7 +20,6 @@
 > These are items I currently work on towards the next version. When they are done, they die.  
 
 - make MSIX start in home folder
-- add some executable visible from the outside so that terminal can be launched from commandline (MSIX)
 
 Documentation:
 
