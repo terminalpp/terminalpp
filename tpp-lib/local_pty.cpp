@@ -97,6 +97,7 @@ namespace tpp {
             ) << "Unable to set pseudoconsole attribute";
             // finally, create the process with given commandline
             utf16_string cmd = UTF8toUTF16(command_.toString());
+            utf16_string path = UTF8toUTF16(command_.workingDirectory());
             OSCHECK(
                 CreateProcess(
                     nullptr,
@@ -106,7 +107,7 @@ namespace tpp {
                     false, // the new process does not inherit any handles
                     EXTENDED_STARTUPINFO_PRESENT, // we have extra info 
                     nullptr, // use parent's environment
-                    nullptr, // use parent's directory
+                    path.empty() ? nullptr : path.c_str(), // working directory
                     &startupInfo_.StartupInfo, // startup info
                     &pInfo_ // info about the process
                 )

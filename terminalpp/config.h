@@ -190,6 +190,12 @@ namespace tpp {
                 JSON{true},
                 bool
             );
+            CONFIG_PROPERTY(
+                useCwdForSessions,
+                "If true, session's working directories are ignored and the current working directory is used instead",
+                JSON{false},
+                bool
+            );
         );
         CONFIG_OBJECT(
             telemetry,
@@ -420,6 +426,12 @@ namespace tpp {
 				JSON::Array(),
 			    Command
 			);
+            CONFIG_PROPERTY(
+                workingDirectory,
+                "Where the terminal session should be launched, empty to use current working directory",
+                JSON{""},
+                std::string
+            );
 			CONFIG_OBJECT(
 				palette,
 				"Definition of the palette used for the session.",
@@ -525,7 +537,6 @@ namespace tpp {
             THROW(Exception()) << "Session " << sessionName << " not found";
         }
 
-
     protected:
         void parseCommandLine(int argc, char * argv[]) {
             addArgument(renderer.fps, { "--fps"});
@@ -533,6 +544,7 @@ namespace tpp {
             addArgument(renderer.font.size, {"--font-size"});
             addArgument(renderer.window.cols, {"--cols", "-c"});
             addArgument(renderer.window.rows, {"--rows", "-r"});
+            addArgument(application.useCwdForSessions, {"-cwd"});
             addArgument(defaultSession, {"--session"});
             // create new empty session
             sessions_entry & cmdSession = sessions.addElement();

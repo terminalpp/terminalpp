@@ -104,7 +104,7 @@ namespace tpp {
 		char const * fonts[] = { "Monospace", "DejaVu Sans Mono", "Nimbus Mono", "Liberation Mono", nullptr };
 		char const ** f = fonts;
 		while (*f != nullptr) {
-			std::string found{Exec(Command("fc-list", { *f }), "")};
+			std::string found{Exec(Command("fc-list", { *f }))};
 			if (! found.empty())
 			    return JSON{*f};
 			++f;
@@ -127,12 +127,14 @@ namespace tpp {
         shell.setComment("Default login shell");
         shell.add("name", JSON{defaultSessionName});
         shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\", \"--login\"]")));
+        shell.add("workingDirectory", JSON{HomeDir()});
         result.add(shell);        
     #elif (defined ARCH_UNIX)
         JSON shell{JSON::Object()};
         shell.setComment("Default login shell");
         shell.add("name", JSON{defaultSessionName});
         shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\"]")));
+        shell.add("workingDirectory", JSON{HomeDir()});
         result.add(shell);        
     #elif (defined ARCH_WINDOWS)
         Win32AddCmdExe(result, defaultSessionName);
@@ -150,7 +152,7 @@ namespace tpp {
 
     bool Config::WSLIsBypassPresent(std::string const & distro) {
         ExitCode ec; // to silence errors
-		std::string output{Exec(Command("wsl.exe", {"--distribution", distro, "--", BYPASS_PATH, "--version"}), "", &ec)};
+		std::string output{Exec(Command("wsl.exe", {"--distribution", distro, "--", BYPASS_PATH, "--version"}), &ec)};
 		return output.find("ConPTY bypass for terminal++, version") == 0;
     }
 
@@ -161,7 +163,7 @@ namespace tpp {
             if (distro == "Ubuntu") {
                 ExitCode ec;
                 std::vector<std::string> lines = SplitAndTrim(
-                    Exec(Command("wsl.exe", {"--distribution", distro, "--", "lsb_release", "-a"}), "", &ec),
+                    Exec(Command("wsl.exe", {"--distribution", distro, "--", "lsb_release", "-a"}), &ec),
                     "\n"
                 );
                 for (std::string const & line : lines) {
@@ -172,9 +174,9 @@ namespace tpp {
                     }
                 }
             }
-            Exec(Command("wsl.exe", {"--distribution", distro, "--", "mkdir", "-p", BYPASS_FOLDER}), "");
-            Exec(Command("wsl.exe", {"--distribution", distro, "--", "wget", "-O", BYPASS_PATH, url}), "");
-            Exec(Command("wsl.exe", {"--distribution", distro, "--", "chmod", "+x", BYPASS_PATH}), "");
+            Exec(Command("wsl.exe", {"--distribution", distro, "--", "mkdir", "-p", BYPASS_FOLDER}));
+            Exec(Command("wsl.exe", {"--distribution", distro, "--", "wget", "-O", BYPASS_PATH, url}));
+            Exec(Command("wsl.exe", {"--distribution", distro, "--", "chmod", "+x", BYPASS_PATH}));
             // just double check
             return WSLIsBypassPresent(distro);
         } catch (...) {
@@ -188,6 +190,7 @@ namespace tpp {
         session.setComment("cmd.exe");
         session.add("name", JSON{defaultSessionName});
         session.add("command", JSON::Parse(STR("[\"cmd.exe\"]")));
+        session.add("workingDirectory", JSON{HomeDir()});
         sessions.add(session);        
     }
 
@@ -198,13 +201,14 @@ namespace tpp {
         session.add("name", JSON{defaultSessionName});
         session.add("command", JSON::Parse(STR("[\"powershell.exe\"]")));
         session.add("palette", JSON::Parse("{\"defaultForeground\" : \"ffffff\", \"defaultBackground\" : \"#0000ff\" }"));
+        session.add("workingDirectory", JSON{HomeDir()});
         sessions.add(session);        
     }
 
     void Config::Win32AddWSL(JSON & sessions, std::string & defaultSessionName) {
         try {
             ExitCode ec; // to silence errors
-            std::vector<std::string> lines = SplitAndTrim(Exec(Command("wsl.exe", {"--list"}), "", &ec), "\n");
+            std::vector<std::string> lines = SplitAndTrim(Exec(Command("wsl.exe", {"--list"}), &ec), "\n");
             // check if we have found WSL
             if (lines.size() < 1 || lines[0] != "Windows Subsystem for Linux Distributions:")
                 return;
@@ -242,6 +246,7 @@ namespace tpp {
                 }
                 session.add("name", JSON{distributions[i]});
                 session.add("pty", JSON{pty});
+                session.add("workingDirectory", JSON{HomeDir()});
                 if (pty == "local")
                     session.add("command", JSON::Parse(STR("[\"wsl.exe\", \"--distribution\", \"" << distributions[i] << "\"]")));
                 else

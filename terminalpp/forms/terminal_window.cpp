@@ -10,13 +10,17 @@ namespace tpp {
         std::unique_ptr<SessionInfo> si{new SessionInfo{session}};
         // create the pty
         PTYMaster * pty = nullptr;
+        // sets the working directory of the command to the specified working directory of the session, unless the useCwdForSessions setting is enabled, in which case use the current working directory for the commands 
+        Command cmd = session.command();
+        if (! config.application.useCwdForSessions())
+            cmd.setWorkingDirectory(session.workingDirectory());
 #if (ARCH_WINDOWS)
         if (session.pty() != "bypass") 
-            pty = new LocalPTYMaster(session.command());
+            pty = new LocalPTYMaster(cmd);
         else
-            pty = new BypassPTYMaster(session.command());
+            pty = new BypassPTYMaster(cmd);
 #else
-        pty = new LocalPTYMaster{session.command()};
+        pty = new LocalPTYMaster{cmd};
 #endif
         // and the terminal
         si->terminal = new AnsiTerminal{pty, session.palette()};

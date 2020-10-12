@@ -16,9 +16,9 @@ HELPERS_NAMESPACE_BEGIN
      */
     inline std::string Curl(std::string const & url) {
 #if (ARCH_WINDOWS)
-        return Exec(Command{"powershell.exe", { STR("(curl " << url << " -UseBasicParsing).Content")}}, "");
+        return Exec(Command{"powershell.exe", { STR("(curl " << url << " -UseBasicParsing).Content")}});
 #elif (ARCH_UNIX)
-        return Exec(Command{"curl", {"-s", url}}, "");
+        return Exec(Command{"curl", {"-s", url}});
 #endif
     }
 

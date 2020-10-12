@@ -173,13 +173,17 @@ HELPERS_NAMESPACE_BEGIN
      */
     inline std::string HomeDir() {
 #if (defined ARCH_WINDOWS)
-        char * x;
-        size_t size;
-        OSCHECK(_dupenv_s(& x, & size, "HOMEDIR") == 0);
-        std::unique_ptr<char> homeDir{x};
-        OSCHECK(_dupenv_s(& x, & size, "HOMEDRIVE") == 0);
-        std::unique_ptr<char> homeDrive{x};
-        return STR(homeDrive.get() << homeDir.get());
+		wchar_t * wpath;
+		OSCHECK(SHGetKnownFolderPath(
+			FOLDERID_Profile,
+            // this flag forces the redirection to real file paths in msix so that the settings file can be opened by other applications as well
+			KF_FLAG_FORCE_APP_DATA_REDIRECTION, 
+			nullptr,
+			& wpath
+		) == S_OK) << "Unable to determine home folder location";
+		std::string path(HELPERS_NAMESPACE_DECL::UTF16toUTF8(wpath));
+		CoTaskMemFree(wpath);
+        return path;
 #else
         return getenv("HOME");
 #endif
@@ -198,7 +202,7 @@ HELPERS_NAMESPACE_BEGIN
 			KF_FLAG_FORCE_APP_DATA_REDIRECTION, 
 			nullptr,
 			& wpath
-		) == S_OK) << "Unable to determine stetings folder location";
+		) == S_OK) << "Unable to determine temp folder location";
 		std::string path(HELPERS_NAMESPACE_DECL::UTF16toUTF8(wpath));
 		CoTaskMemFree(wpath);
         return path + "\\Temp";

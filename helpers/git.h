@@ -25,7 +25,7 @@ HELPERS_NAMESPACE_BEGIN
 		 */
 		std::string currentCommit() const {
 			try {
-				std::string result = Trim(Exec(Command("git", { "rev-parse", "HEAD" }), path_));
+				std::string result = Trim(Exec(Command("git", { "rev-parse", "HEAD" }, path_)));
 				ASSERT(result.size() == 40) << "Invalid SHA1 hash size";
 				return result;
 			} catch (Exception &) {
@@ -37,7 +37,7 @@ HELPERS_NAMESPACE_BEGIN
 		 */
 		bool hasPendingChanges() const {
 			try {
-			    return ! Exec(Command("git", { "status", "--short" }), path_).empty();
+			    return ! Exec(Command("git", { "status", "--short" }, path_)).empty();
 			} catch (Exception &) {
 				// if it's not a git repo, then there is no way to determine if we have pending changes
 				return false;
@@ -48,7 +48,7 @@ HELPERS_NAMESPACE_BEGIN
 		 */
 		std::vector<std::string> currentTags() {
 			try {
-				return Split(Trim(Exec(Command("git", { "tag", "--points-at", "HEAD" }), path_)), "\n");
+				return Split(Trim(Exec(Command("git", { "tag", "--points-at", "HEAD" }, path_))), "\n");
 			} catch (Exception &) {
 				return std::vector<std::string>{};
 			}

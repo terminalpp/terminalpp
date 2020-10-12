@@ -29,7 +29,7 @@ HELPERS_NAMESPACE_BEGIN
 
 	/** Encapsulation of a local command to be executed.
 
-		Local command consists of the name (path) to the command (most likely an executable, but depending on the shell used can also be a shell command) and a vector of its arguments.
+		Local command consists of the name (path) to the command (most likely an executable, but depending on the shell used can also be a shell command), list of its arguments and optionally its working directory. 
 	 */
 	class Command {
 	public:
@@ -41,18 +41,36 @@ HELPERS_NAMESPACE_BEGIN
 			command_ = command;
 		}
 
+        /** \name Working Directory
+         
+            The command may specify its working directory. If the working directory is empty (default value), then the working directory of the current process should be used. 
+         */
+        //@{
+
+        std::string const & workingDirectory() const {
+            return workingDirectory_;
+        }
+
+        Command & setWorkingDirectory(std::string const & value) {
+            workingDirectory_ = value;
+            return *this;
+        }
+        //@}
+
 		std::vector<std::string> const& args() const {
 			return args_;
 		}
 
-		void setArgs(std::vector<std::string> const& args) {
+		Command & setArgs(std::vector<std::string> const& args) {
 			args_ = args;
+            return *this;
 		}
 
-		void setArgs(std::initializer_list<char const*> args) {
+		Command & setArgs(std::initializer_list<char const*> args) {
 			args_.clear();
 			for (auto i : args)
 				args_.push_back(i);
+            return *this;
 		}
 
 		/** Converts the command into a single string. 
@@ -91,9 +109,21 @@ HELPERS_NAMESPACE_BEGIN
 			setArgs(args);
 		}
 
+		Command(std::string const& command, std::initializer_list<char const*> args, std::string const & workingDirectory) :
+			command_(command),
+            workingDirectory_(workingDirectory) {
+			setArgs(args);
+		}
+
 		Command(std::string const& command, std::vector<std::string> const& args) :
 			command_(command),
 			args_(args) {
+		}
+
+		Command(std::string const& command, std::vector<std::string> const& args, std::string const & workingDirectory) :
+			command_{command},
+			args_{args},
+            workingDirectory_{workingDirectory} {
 		}
 
 		Command(std::vector<std::string> const& command) {
@@ -107,14 +137,21 @@ HELPERS_NAMESPACE_BEGIN
             }
 		}
 
+		Command(std::vector<std::string> const& command, std::string const & workingDirectory):
+            Command{command} {
+            workingDirectory_ = workingDirectory; 
+    	}
+
 		Command(Command const & from):
-		    command_(from.command_),
-			args_(from.args_) {
+		    command_{from.command_},
+			args_{from.args_},
+            workingDirectory_{from.workingDirectory_} {
 		}
 
 		Command& operator = (Command const& other) {
 			command_ = other.command_;
 			args_ = other.args_;
+            workingDirectory_ = other.workingDirectory_;
 			return *this;
 		}
 
@@ -152,11 +189,14 @@ HELPERS_NAMESPACE_BEGIN
 
 		friend std::ostream& operator << (std::ostream& s, Command const& cmd) {
 			s << cmd.toString();
+            if (! cmd.workingDirectory().empty())
+                s << " [in " << cmd.workingDirectory() << "]";
 			return s;
 		}
 
 		std::string command_;
 		std::vector<std::string> args_;
+        std::string workingDirectory_;
 	};
 
 	/** Represents access to the environment variables of a process. 
@@ -266,7 +306,7 @@ HELPERS_NAMESPACE_BEGIN
 
 
     */
-    inline std::string Exec(Command const& command, std::string const & path, ExitCode* exitCode = nullptr) {
+    inline std::string Exec(Command const& command, ExitCode* exitCode = nullptr) {
 #ifdef ARCH_WINDOWS
         ExitCode ec = EXIT_FAILURE;
         std::string output;
@@ -305,7 +345,7 @@ HELPERS_NAMESPACE_BEGIN
                 true, // handles are inherited 
                 0, // creation flags 
                 NULL, // use parent's environment 
-                path.empty() ? nullptr : path.c_str(), // current directory
+                command.workingDirectory().empty() ? nullptr : command.workingDirectory().c_str(), // current directory
                 &sInfo,  // startup info
                 &pi)  // info about the process
             );
@@ -366,8 +406,8 @@ HELPERS_NAMESPACE_BEGIN
                     close(fromCmd[0]) == 0
                 ) << "Unable to change standard output for process " << command;
                 // change directory only if the path is not empty (current dir)
-                if (!path.empty())
-                    OSCHECK(chdir(path.c_str()) == 0) << "Cannot change dir to " << path << " for command " << command;
+                if (!command.workingDirectory().empty())
+                    OSCHECK(chdir(command.workingDirectory().c_str()) == 0) << "Cannot change dir for command " << command;
                 char** argv = command.toArgv();
                 // execvp never returns
                 OSCHECK(execvp(command.command().c_str(), argv) != -1) << "Unable to execute command" << command;
@@ -410,6 +450,5 @@ HELPERS_NAMESPACE_BEGIN
         return result.str();
 #endif
     }
-
 
 HELPERS_NAMESPACE_END

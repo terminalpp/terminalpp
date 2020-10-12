@@ -57,14 +57,15 @@ namespace tpp {
             sInfo.hStdInput = pipePTYIn;
             sInfo.dwFlags |= STARTF_USESTDHANDLES;
             utf16_string cmd = UTF8toUTF16(command_.toString());
-            OSCHECK(CreateProcess(NULL,
+            utf16_string path = UTF8toUTF16(command_.workingDirectory());
+            OSCHECK(CreateProcess(nullptr,
                 &cmd[0], // the command to execute
-                NULL, // process security attributes 
-                NULL, // primary thread security attributes 
+                nullptr, // process security attributes 
+                nullptr, // primary thread security attributes 
                 true, // handles are inherited 
                 0, // creation flags 
-                NULL, // use parent's environment 
-                NULL, // use parent's directory 
+                nullptr, // use parent's environment 
+                path.empty() ? nullptr : path.c_str(), // working directory
                 &sInfo,  // startup info
                 &pInfo_)  // info about the process
             ) << "Unable to execute process " << command_.toString();

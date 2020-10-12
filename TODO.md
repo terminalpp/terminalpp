@@ -14,12 +14,13 @@
 - default foreground and background colors inserted directly and they do not have to be from the palette, as a side-effect, transparent background is supported on X11
 - profiles added to jumplist on Windows 
 - fixed MSIX icons & paths
+- per session working directory specification
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- make MSIX start in home folder
+- make sure that --session and --pty and --e can be specified together
 
 Documentation:
 

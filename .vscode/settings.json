@@ -79,6 +79,7 @@
         "memory_resource": "cpp",
         "numeric": "cpp",
         "random": "cpp",
-        "compare": "cpp"
+        "compare": "cpp",
+        "*.rh": "cpp"
     }
 }
