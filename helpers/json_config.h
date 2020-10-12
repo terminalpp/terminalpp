@@ -389,6 +389,7 @@ HELPERS_NAMESPACE_BEGIN
                 if (elements_[i] == & element) {
                     elements_.erase(elements_.begin() + i);
                     json_->erase(i);
+                    return;
                 }
             }
         }

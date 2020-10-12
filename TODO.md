@@ -2,6 +2,7 @@
 
 ## Next version: 0.8
 
+- MSIX installer as default distribution channel on Windows, Windows Store listing
 - proper single-thread UI - complete rewrite, simpler & more robust UI
 - multiple sessions can be specified in the configuration and switched with `--session` command-line argument
 - improved Qt support (QWidget instead of QWindow-based renderer) (issue #10)
@@ -13,14 +14,12 @@
 - scrollbars in linux do not obscure text underneath (#11)
 - default foreground and background colors inserted directly and they do not have to be from the palette, as a side-effect, transparent background is supported on X11
 - profiles added to jumplist on Windows 
-- fixed MSIX icons & paths
 - per session working directory specification
+- `--session`, `--pty` and `-e` command line arguments can be used together
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
-
-- make sure that --session and --pty and --e can be specified together
 
 Documentation:
 

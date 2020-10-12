@@ -546,20 +546,30 @@ namespace tpp {
             addArgument(renderer.window.rows, {"--rows", "-r"});
             addArgument(application.useCwdForSessions, {"-cwd"});
             addArgument(defaultSession, {"--session"});
-            // create new empty session
+            // create new empty session that we use to store the pty and command arguments
             sessions_entry & cmdSession = sessions.addElement();
             addArgument(cmdSession.pty, {"--pty"});
             addArgument(cmdSession.command, {"-e"});
             setLastArgument(cmdSession.command);
             CmdArgsRoot::parseCommandLine(argc, argv);
-            if (cmdSession.updated()) {
+            // if any of the session arguments are overriden, create proper session this time, initialize it with default session (now reflecting the --session argument value, if any)
+            // this is by no means efficient, but since its done only once at startup, we don't really care
+            if (cmdSession.pty.updated() || cmdSession.command.updated()) {
+                sessions_entry & base = sessionByName(defaultSession());
+                sessions_entry & session = sessions.addElement();
+                // copy base to the session 
+                session.set(base.toJSON());
+                // copy the changed command line values
+                if (cmdSession.pty.updated())
+                    session.pty.set(cmdSession.pty.toJSON());
+                if (cmdSession.command.updated())
+                    session.command.set(cmdSession.command.toJSON());
+                // set the session name and set it as default session 
                 JSON name{"command-line-override"};
                 defaultSession.set(name);
-                cmdSession.name.set(name);
-            } else {
-                sessions.erase(cmdSession);
-            }
-
+                session.name.set(name);
+            } 
+            sessions.erase(cmdSession);
         }
 
     private:
