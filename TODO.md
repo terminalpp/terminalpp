@@ -51,6 +51,8 @@ UI version 3
 
 - some simpler accesses to state-ish properties in the terminal? 
 
+- how about the terminal size & history on/off in alternate mode? perhaps always show history, just do not allow scrolling in alternate mode, would this be better? 
+
 tpp-server
 
 - key up not detected on standard terminal, determine how tpp would do it

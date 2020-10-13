@@ -300,17 +300,18 @@ namespace ui {
         int endRow = sel.end().y();
         int col = sel.start().x();
         std::lock_guard<PriorityLock> g(bufferLock_);
+        int terminalTop =  alternateMode_ ? 0 : static_cast<int>(historyRows_.size());
         while (row < endRow) {
             int endCol = (row < endRow - 1) ? width() : sel.end().x();
             Cell * rowCells;
             // if the current row comes from the history, get the appropriate cells
-            if (row < static_cast<int>(historyRows_.size())) {
+            if (row < terminalTop) {
                 rowCells = historyRows_[row].second;
                 // if the stored row is shorter than the start of the selection, adjust the endCol so that no processing will be involved
                 if (endCol > historyRows_[row].first)
                     endCol = historyRows_[row].first;
             } else {
-                rowCells = state_->buffer.row(row - static_cast<int>(historyRows_.size()));
+                rowCells = state_->buffer.row(row - terminalTop);
             }
             // analyze the line and add it to the selection now
             std::stringstream line;
