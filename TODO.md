@@ -16,7 +16,6 @@
 - profiles added to jumplist on Windows 
 - per session working directory specification
 - `--session`, `--pty` and `-e` command line arguments can be used together
-- 
 
 ### TODO
 

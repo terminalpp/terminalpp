@@ -1,0 +1,69 @@
+name: terminalpp-preview
+
+on:
+  workflow_dispatch
+
+jobs:
+  # Builds the packages on Windows
+  #
+  windows-terminalpp:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ilammy/msvc-dev-cmd@v1
+    - name: build
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --clean-first --config Release --target terminalpp-msix-preview
+    - name: terminalpp-preview-msix-sign
+      run: |
+          $pfxPassword = "${{ secrets.TERMINALPP_CERT_PASSWORD }}"
+          $pfx = [Convert]::FromBase64String("${{ secrets.TERMINALPP_CERT }}")
+          [IO.File]::WriteAllBytes("terminalpp-cert.pfx", $pfx)          
+          SignTool sign /fd SHA256 /a /f terminalpp-cert.pfx /p $pfxPassword build/packages/terminalpp-preview.msix
+    - name: artifact-terminalpp-preview-msix
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp-preview.msix
+        path: build/packages/terminalpp-preview.msix
+  
+# each build generates a nightly preview submission in the windows store without actually committing it so that if we want to, we can commit each build of interest manually without stressing the store certification too much. 
+  release-windows-store:
+    runs-on: windows-latest
+    needs: [windows-terminalpp]
+    steps:
+    - name: setup
+      run: |
+        Install-Module StoreBroker -Force
+        Import-Module StoreBroker
+    # get the msix
+    - name: get-terminalpp-preview-msix
+      uses: actions/download-artifact@v2
+      with:
+        name: terminalpp-preview.msix
+    # show what we have inside 
+    - name: create-store-package
+      run: |
+          Compress-Archive terminalpp-preview.msix terminalpp-preview.zip
+    # do the submission
+    - name: 
+      run: |
+          # login with the StoreBroker
+          $password = ConvertTo-SecureString "${{ secrets.WINDOWS_STORE_KEY }}" -AsPlainText -Force
+          $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.WINDOWS_STORE_CLIENT_ID }}", $password)
+          Set-StoreBrokerAuthentication -TenantId ${{ secrets.WINDOWS_STORE_TENANT_ID }} -Credential $cred      
+          # create the submission and add new package
+          $sub = New-ApplicationSubmission -AppId 9NFGKR4CHN0T -Force
+          $sub.applicationPackages | ForEach-Object { $_.fileStatus = "PendingDelete" }
+          $pkg = $sub.applicationPackages[0].PSObject.Copy()
+          $pkg.fileName = "terminalpp-preview.msix"
+          $pkg.fileStatus = "PendingUpload"
+          $pkg.PSObject.Properties.Remove("version")
+          $pkg.PSObject.Properties.Remove("id")
+          $sub.applicationPackages += $pkg
+          Set-ApplicationSubmission -AppId 9NFGKR4CHN0T -UpdatedSubmission $sub
+          Set-SubmissionPackage -PackagePath 'terminalpp-preview.zip' -UploadUrl ($sub.fileUploadUrl)
+          Complete-ApplicationSubmission -AppId 9NFGKR4CHN0T -SubmissionId ($sub.id)
+

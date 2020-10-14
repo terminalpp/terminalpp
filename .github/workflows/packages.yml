@@ -39,17 +39,6 @@ jobs:
       with:
         name: terminalpp.msix
         path: build/packages/terminalpp.msix
-    - name: terminalpp-nightly-msix-sign
-      run: |
-          $pfxPassword = "${{ secrets.TERMINALPP_CERT_PASSWORD }}"
-          $pfx = [Convert]::FromBase64String("${{ secrets.TERMINALPP_CERT }}")
-          [IO.File]::WriteAllBytes("terminalpp-cert.pfx", $pfx)          
-          SignTool sign /fd SHA256 /a /f terminalpp-cert.pfx /p $pfxPassword build/packages/terminalpp-nightly.msix
-    - name: artifact-terminalpp-nightly-msix
-      uses: actions/upload-artifact@master
-      with:
-        name: terminalpp-nightly.msix
-        path: build/packages/terminalpp-nightly.msix
 
   # Source and Binary packages for Linux 
   #
@@ -385,45 +374,6 @@ jobs:
           Set-SubmissionPackage -PackagePath 'terminalpp.zip' -UploadUrl ($sub.fileUploadUrl)
           Complete-ApplicationSubmission -AppId 9NNH6JQFJ7HD -SubmissionId ($sub.id)
 
-# each build generates a nightly preview submission in the windows store without actually committing it so that if we want to, we can commit each build of interest manually without stressing the store certification too much. 
-  release-windows-store-nightly:
-    runs-on: windows-latest
-    needs: [windows-terminalpp]
-    steps:
-    - name: setup
-      run: |
-        Install-Module StoreBroker -Force
-        Import-Module StoreBroker
-    # get the msix
-    - name: get-terminalpp-nightly-msix
-      uses: actions/download-artifact@v2
-      with:
-        name: terminalpp-nightly.msix
-    # show what we have inside 
-    - name: create-store-package
-      run: |
-          Compress-Archive terminalpp-nightly.msix terminalpp-nightly.zip
-    # do the submission
-    - name: 
-      run: |
-          # login with the StoreBroker
-          $password = ConvertTo-SecureString "${{ secrets.WINDOWS_STORE_KEY }}" -AsPlainText -Force
-          $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.WINDOWS_STORE_CLIENT_ID }}", $password)
-          Set-StoreBrokerAuthentication -TenantId ${{ secrets.WINDOWS_STORE_TENANT_ID }} -Credential $cred      
-          # create the submission and add new package
-          $sub = New-ApplicationSubmission -AppId 9N69TN8LTKR0 -Force
-          $sub.applicationPackages | ForEach-Object { $_.fileStatus = "PendingDelete" }
-          $pkg = $sub.applicationPackages[0].PSObject.Copy()
-          $pkg.fileName = "terminalpp-nightly.msix"
-          $pkg.fileStatus = "PendingUpload"
-          $pkg.PSObject.Properties.Remove("version")
-          $pkg.PSObject.Properties.Remove("id")
-          $sub.applicationPackages += $pkg
-          Set-ApplicationSubmission -AppId 9N69TN8LTKR0 -UpdatedSubmission $sub
-          Set-SubmissionPackage -PackagePath 'terminalpp-nightly.zip' -UploadUrl ($sub.fileUploadUrl)
-          # don't submit the submission, nightly builds are submitted manually, this only creates the submission
-
-
 # Release to snap store
 # 
   release-snap-edge:
@@ -454,6 +404,3 @@ jobs:
     - name: release-snap-ropen
       run: |
         sudo snapcraft upload --release=edge ropen.snap
-
-
-

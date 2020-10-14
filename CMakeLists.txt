@@ -13,7 +13,7 @@ endif()
 # ==============================
 #
 # For releasing simplicity, all of the packages follow the terminalpp's version numbering. This is the only place where the version should be changed. It will get updated to the subprojects automatically. 
-set(TPP_VERSION 0.7.100)
+set(TPP_VERSION 0.7.101)
 # The pseudoproject for the tools defined in this cmake. 
 project(tpp VERSION ${TPP_VERSION})
 
@@ -107,61 +107,3 @@ add_subdirectory("tests")
 add_subdirectory("terminalpp")
 add_subdirectory("tools")
 add_subdirectory("packages")
-
-
-
-# CPack and Packages Targets
-# ==========================
-#
-# Detect if the selected package subproject produced any of the supported packages and if so update the target dependencies and cpack generators accordingly (i.e. add respective cpack generators, or if cpack is not used, add the dependency on the target that produces the package).
-#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packages)
-#add_custom_target(packages)
-#set_target_properties(packages PROPERTIES EXCLUDE_FROM_ALL TRUE)
-#if(ARCH_LINUX)
-#    if(PACKAGE_DEB AND DEFINED CPACK_DEBIAN_PACKAGE_DEPENDS)
-#        message(STATUS "packages: deb package configured for ${PACKAGE}")
-#        set(CPACK_GENERATOR "${CPACK_GENERATOR}DEB;")
-#        add_dependencies(packages package-build)
-#    endif()
-#    if(PACKAGE_RPM AND DEFINED CPACK_RPM_PACKAGE_REQUIRES)
-#        message(STATUS "packages: rpm package configured for ${PACKAGE}")
-#        set(CPACK_GENERATOR "${CPACK_GENERATOR}RPM;")
-#        add_dependencies(packages package-build)
-#    endif()
-#    if(TARGET package-snap)
-#        message(STATUS "packages: snap package configured for ${PACKAGE}")
-#        set_target_properties(package-snap PROPERTIES EXCLUDE_FROM_ALL TRUE)
-#        add_dependencies(packages package-snap)
-#    endif()
-#elseif(ARCH_WINDOWS)
-#    if(TARGET package-msi)
-#        message(STATUS "packages: msi installer configured for ${PACKAGE}")
-#        set_target_properties(package-msi PROPERTIES EXCLUDE_FROM_ALL TRUE)
-#        add_dependencies(packages package-msi)
-#    endif()
-#    if(TARGET package-msix)
-#        message(STATUS "packages: msix installer configured for ${PACKAGE}")
-#        set_target_properties(package-msix PROPERTIES EXCLUDE_FROM_ALL TRUE)
-#        add_dependencies(packages package-msix)
-#    endif()
-#elseif(ARCH_MACOS)
-#    if(TARGET package-appbundle)
-#        message(STATUS "packages: appbundle will be created for ${PACKAGE}")
-#        set_target_properties(package-appbundle PROPERTIES EXCLUDE_FROM_ALL TRUE)
-#        add_dependencies(packages package-appbundle)
-#    endif()
-#endif()
-
-# there is an issue with CMake that does not allow targets depend on special targets such as package. This workaround simply creates a package-build target which explicitly builds the packages by calling cmake. But since it is a user target we can then depend on it
-#add_custom_target(package-build
-#    COMMAND "${CMAKE_COMMAND}" --build . --target package
-#    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-#    COMMENT "Building CPack packages"
-#    DEPENDS ${PACKAGE}
-#    VERBATIM
-#)
-#set_target_properties(package-build PROPERTIES EXCLUDE_FROM_ALL TRUE)
-
-# Finally, include cpack and set its output directory
-#set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")
-#include(CPack)
