@@ -575,8 +575,14 @@ HELPERS_NAMESPACE_BEGIN
         }
 
         /** Parses the command line arguments. 
+         
+            Clears the updated tags of all listed arguments and then parses the arguments so that only those provided on the commandline will have the updated tag set. 
          */
         void parseCommandLine(int argc, char * argv[]) {
+            for (auto i : keywordArguments_)
+                i.second->updated_ = false;
+            for (auto i : positionalArguments_)
+                i->updated_ = false;
             try {
                 std::unordered_map<JSONConfig *, size_t> occurences;
                 int i = 1;

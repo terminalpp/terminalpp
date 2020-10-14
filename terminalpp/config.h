@@ -538,6 +538,9 @@ namespace tpp {
         }
 
     protected:
+        /** Parses the command line arguments. 
+            
+         */
         void parseCommandLine(int argc, char * argv[]) {
             addArgument(renderer.fps, { "--fps"});
             addArgument(renderer.font.family, {"--font"});
@@ -546,11 +549,12 @@ namespace tpp {
             addArgument(renderer.window.rows, {"--rows", "-r"});
             addArgument(application.useCwdForSessions, {"-cwd"});
             addArgument(defaultSession, {"--session"});
-            // create new empty session that we use to store the pty and command arguments
+            // create new empty session that we use to store the pty and command arguments so that they are matched the same way
             sessions_entry & cmdSession = sessions.addElement();
-            addArgument(cmdSession.pty, {"--pty"});
             addArgument(cmdSession.command, {"-e"});
             setLastArgument(cmdSession.command);
+            addArgument(cmdSession.pty, {"--pty"});
+            // parse the arguments
             CmdArgsRoot::parseCommandLine(argc, argv);
             // if any of the session arguments are overriden, create proper session this time, initialize it with default session (now reflecting the --session argument value, if any)
             // this is by no means efficient, but since its done only once at startup, we don't really care
