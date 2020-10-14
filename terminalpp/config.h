@@ -620,6 +620,12 @@ namespace tpp {
          */
         static void Win32AddWSL(JSON & sessions, std::string & defaultSessionName);
 
+        /** Adds sessions for msys2, if found.
+         
+            Does not set msys2 as the default session. The msys2 session specifications are taken from  https://www.msys2.org/docs/terminals/.
+         */
+        static void Win32AddMsys2(JSON & sessions, std::string & defaultSessionName);
+
     #endif
 
     }; // tpp::Config

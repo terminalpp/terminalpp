@@ -145,7 +145,7 @@ namespace tpp {
         public:
             std::string name;
             std::string title;
-            AnsiTerminal * terminal;
+            AnsiTerminal * terminal = nullptr;
             bool terminateOnKeyPress = false;
             /** If true, the current session has an active notification. 
              */

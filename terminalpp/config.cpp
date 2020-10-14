@@ -68,7 +68,7 @@ namespace tpp {
 	}
 
 	std::string Config::GetSettingsFile() {
-		return JoinPath(GetSettingsFolder(), "settings.json");
+		return JoinPath(GetSettingsFolder(), "settings2.json");
 	}
 
 	JSON Config::TerminalVersion() {
@@ -140,6 +140,7 @@ namespace tpp {
         Win32AddCmdExe(result, defaultSessionName);
         Win32AddPowershell(result, defaultSessionName);
         Win32AddWSL(result, defaultSessionName);
+        Win32AddMsys2(result, defaultSessionName);
     #endif
         // update the default session name
         JSON ds{defaultSessionName};
@@ -253,6 +254,36 @@ namespace tpp {
                     session.add("command", JSON::Parse(STR("[\"wsl.exe\", \"--distribution\", \"" << distributions[i] << "\", \"--\", \"" << BYPASS_PATH << "\"]")));
                 sessions.add(session);
             }
+        } catch (OSError const & e) {
+            // do nothing, when we get os error from calling WSL just don't include any sessions
+        }
+    }
+
+    void Config::Win32AddMsys2(JSON & sessions, std::string & defaultSessionName) {
+        try {
+            ExitCode ec; // to silence errors
+            Exec(Command{"C:\\msys64\\msys2_shell.cmd", {"--help"}}, &ec);
+            // if there is no msys2, return now, otherwise add the sessions
+            if (ec != EXIT_SUCCESS)
+                return;
+            JSON mingw64{JSON::Kind::Object};
+            mingw64.setComment("msys2 - mingw64");
+            mingw64.add("name", JSON{"mingw64 (msys2)"});
+            mingw64.add("workingDirectory", JSON{STR("C:\\msys64\\home\\" << GetUsername())});
+            mingw64.add("command", JSON::Parse("[\"C:\\\\msys64\\\\msys2_shell.cmd\",\"-defterm\",\"-here\",\"-no-start\",\"-mingw64\"]"));
+            sessions.add(mingw64);
+            JSON mingw32{JSON::Kind::Object};
+            mingw32.setComment("msys2 - mingw32");
+            mingw32.add("name", JSON{"mingw32 (msys2)"});
+            mingw32.add("workingDirectory", JSON{STR("C:\\msys64\\home\\" << GetUsername())});
+            mingw32.add("command", JSON::Parse("[\"C:\\\\msys64\\\\msys2_shell.cmd\",\"-defterm\",\"-here\",\"-no-start\",\"-mingw32\"]"));
+            sessions.add(mingw32);
+            JSON msys{JSON::Kind::Object};
+            msys.setComment("msys2 - msys");
+            msys.add("name", JSON{"msys (msys2)"});
+            msys.add("workingDirectory", JSON{STR("C:\\msys64\\home\\" << GetUsername())});
+            msys.add("command", JSON::Parse("[\"C:\\\\msys64\\\\msys2_shell.cmd\",\"-defterm\",\"-here\",\"-no-start\",\"-msys\"]"));
+            sessions.add(msys);
         } catch (OSError const & e) {
             // do nothing, when we get os error from calling WSL just don't include any sessions
         }

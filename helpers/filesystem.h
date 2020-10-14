@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <fileapi.h>
 #include <ShlObj_core.h>
+#include <Lmcons.h>
 #else
 #include <limits.h>
 #include <unistd.h>
@@ -61,6 +62,22 @@ HELPERS_NAMESPACE_BEGIN
         char buffer[_POSIX_HOST_NAME_MAX];
         gethostname(buffer, _POSIX_HOST_NAME_MAX);
         return std::string(buffer);
+#endif
+    }
+
+    /** Returns the name of the current user. 
+     */
+    inline std::string GetUsername() {
+#if (defined ARCH_WINDOWS)
+    TCHAR buffer[UNLEN + 1];
+    DWORD bufSize = UNLEN + 1;
+    OSCHECK(GetUserName(buffer, & bufSize));
+    return UTF16toUTF8(buffer);
+#else 
+    uid_t uid = geteuid();
+    struct passwd * pw = getpwuid(uid);
+    OSCHECK(pw != nullptr);
+    return pw->pw_name;
 #endif
     }
 

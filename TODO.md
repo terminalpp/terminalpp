@@ -16,10 +16,15 @@
 - profiles added to jumplist on Windows 
 - per session working directory specification
 - `--session`, `--pty` and `-e` command line arguments can be used together
+- 
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
+
+- check username on macOS
+
+- deal with cmdline args when -e is specified and not -pty or --session on windows
 
 Documentation:
 
