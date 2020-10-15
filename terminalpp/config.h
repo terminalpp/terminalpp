@@ -563,9 +563,12 @@ namespace tpp {
                 sessions_entry & session = sessions.addElement();
                 // copy base to the session 
                 session.set(base.toJSON());
-                // copy the changed command line values
+                // if the pty was explicitly updated, propagate to the new session, otherwise reset whatever pty was there to local
                 if (cmdSession.pty.updated())
                     session.pty.set(cmdSession.pty.toJSON());
+                else
+                    session.pty.set(JSON{"local"});
+                // copy the changed command line values
                 if (cmdSession.command.updated())
                     session.command.set(cmdSession.command.toJSON());
                 // set the session name and set it as default session 

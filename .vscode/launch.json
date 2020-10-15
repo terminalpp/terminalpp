@@ -10,7 +10,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": " ${workspaceFolder}/build-Visual Studio Community 2019 Release - amd64/terminalpp/Debug/terminalpp.exe",
-            "args": ["--session", "mingw64 (msys2)"],
+            "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
