@@ -118,7 +118,7 @@ namespace ui {
 
         /** Sends the specified text as clipboard to the PTY. 
          */
-        void paste(std::string const & contents);
+        void pasteContents(std::string const & contents);
         
     protected:
 

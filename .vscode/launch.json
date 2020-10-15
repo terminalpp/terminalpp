@@ -88,7 +88,7 @@
             "name":"(macos) terminalpp",
             "type":"lldb",
             "request":"launch",
-            "program":"${workspaceFolder}/build-${buildKit}/terminalpp/terminalpp.app/Contents/MacOS/terminalpp",
+            "program":"${workspaceFolder}/build/terminalpp/terminalpp.app/Contents/MacOS/terminalpp",
             "args":[ ],
             "cwd":"${workspaceFolder}",
          }

@@ -80,6 +80,7 @@ namespace tpp {
     }
 
     void QtWindow::setSelection(std::string const & contents, Widget * owner) {
+        MARK_AS_UNUSED(owner);
         QtApplication * app = QtApplication::Instance();
         QtWindow * oldOwner = app->selectionOwner_;
         // set the owner of the selection

@@ -167,6 +167,7 @@ namespace tpp {
             TODO check that there are no active sessions and perhaps ask if there are whether really to exit. 
          */
         void windowCloseRequest(tpp::Window::CloseEvent::Payload & e) {
+            MARK_AS_UNUSED(e);
         }
 
         /** Global hotkeys handling. 
@@ -297,11 +298,11 @@ namespace tpp {
             SessionInfo * si = sessionInfo(e.sender());
             switch (Config::Instance().sequences.confirmPaste()) {
                 case config::ConfirmPaste::Never:
-                    si->terminal->paste(*e);
+                    si->terminal->pasteContents(*e);
                     return;
                 case config::ConfirmPaste::Multiline:
                     if ((*e).find('\n') == std::string::npos) {
-                        si->terminal->paste(*e);
+                        si->terminal->pasteContents(*e);
                         return;
                     }
                     // fallthrough to always
@@ -313,7 +314,7 @@ namespace tpp {
             si->pendingPaste = new PasteDialog(*e);
             si->pendingPaste->onDismiss.setHandler([si](ui::Event<Widget*>::Payload & e) {
                 if (*e == si->pendingPaste->btnYes())
-                    si->terminal->paste(si->pendingPaste->contents());
+                    si->terminal->pasteContents(si->pendingPaste->contents());
                 si->pendingPaste = nullptr;
             });
             showModal(si->pendingPaste);
