@@ -68,7 +68,7 @@ namespace tpp {
 	}
 
 	std::string Config::GetSettingsFile() {
-		return JoinPath(GetSettingsFolder(), "settings2.json");
+		return JoinPath(GetSettingsFolder(), "settings.json");
 	}
 
 	JSON Config::TerminalVersion() {

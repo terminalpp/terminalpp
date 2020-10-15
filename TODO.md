@@ -22,7 +22,6 @@
 > These are items I currently work on towards the next version. When they are done, they die.  
 
 - check username on macOS
-- mouse wheel recorded also when mouse not in the window
 
 Documentation:
 

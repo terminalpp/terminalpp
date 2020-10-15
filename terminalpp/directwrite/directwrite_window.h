@@ -75,6 +75,18 @@ namespace tpp {
             RendererWindow::mouseIn();
         }
 
+        /** Triggered when mouse leaves the window. 
+         
+            Since there are spurious double WM_MOUSELEAVE messages sent to the window in certain cases (such as when wheel message is received *before* mouse move), all but the first mouse out invocation after mouse capture are stopped. 
+         */
+        void mouseOut() override {
+            // stop spurious mouse leaves when we do not expect them
+            if (! mouseLeaveTracked_)
+                return;
+            mouseLeaveTracked_ = false;
+            RendererWindow::mouseOut();
+        }
+
         /** Registers mouse button down.
           
             Starts mouse capture if no mouse button has been pressed previously, which allows the terminal window to track mouse movement outside of the window if at least one mouse button is pressed. 
@@ -113,6 +125,16 @@ namespace tpp {
                 ASSERT(mouseLeaveTracked_);
             }
             RendererWindow::mouseMove(coords);
+        }
+
+        /** Mouse wheel movement. 
+         
+            Mouse wheel can event can be received *before* mouse move when the mouse scrolls and enters the window, if that is the case triggers the mouseMove event first. 
+         */
+        void mouseWheel(Point coords, int by) override {
+            if (!rendererMouseCaptured())
+                mouseMove(coords);
+            RendererWindow::mouseWheel(coords, by);
         }
 
         void requestClipboard(Widget * sender) override;

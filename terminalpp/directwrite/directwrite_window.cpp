@@ -390,11 +390,10 @@ namespace tpp {
 			case WM_MOUSEMOVE:
 				window->mouseMove(window->pixelsToCoords(Point{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)}));
 				break;
-			/* Triggered when mouse leaves the window.
+			/* Triggered when mouse leaves the window. There
  			 */
 			case WM_MOUSELEAVE:
-				window->mouseLeaveTracked_ = false;
-				window->mouseOut();
+                window->mouseOut();
 				break;
 
         }
