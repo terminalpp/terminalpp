@@ -10,6 +10,7 @@
 #include "helpers/helpers.h"
 #include "helpers/filesystem.h"
 #include "helpers/raii.h"
+#include "helpers/string.h"
 
 #include "windows.h"
 
@@ -35,21 +36,39 @@ namespace tpp {
     void DirectWriteApplication::openLocalFile(std::string const & filename, bool edit) {
         utf16_string f{UTF8toUTF16(filename)};
         HINSTANCE result = ShellExecute(
-            0, // handle to parent window, null since we want own process
+            nullptr, // handle to parent window, null since we want own process
             edit ? L"edit" : nullptr, // what to do with the file - this will choose the default action
             f.c_str(), // the file to open
-            0, // no parameters since the local file is not an executable
-            0, // working directory - leave the same as us for now
+            nullptr, // no parameters since the local file is not an executable
+            nullptr, // working directory - leave the same as us for now
             SW_SHOWDEFAULT // whatever is the action for the associated program
         );
         // a bit ugly error checking (Win16 backwards compatribility as per MSDN)
         #pragma warning(push)
         #pragma warning(disable: 4302 4311)
         if ((int)result <= 32) {
-            if (edit && (int)result == SE_ERR_NOASSOC)
-                openLocalFile(filename, false);
-            else
-                alert(STR("Unable to determine proper viewer for file: " << filename));
+            // if there is no association, try first the open verb if we are editing. If even that does not work and the file is of known extension (settings file for now, i.e. json), forcefully open via notepad.exe
+            if ((int)result == SE_ERR_NOASSOC) {
+                if (edit) {
+                    return openLocalFile(filename, false);
+                } else if (EndsWith(filename, ".json")) {
+                    result = ShellExecute(
+                        nullptr, // handle to parent window, null since we want own process
+                        nullptr, // what to do with the file - this will choose the default action
+                        L"notepad.exe", 
+                        f.c_str(), // the file to open
+                        nullptr, // working directory - leave the same as us for now
+                        SW_SHOWDEFAULT // whatever is the action for the associated program
+                    );
+                    // if successful, return, otherwise report the error
+                    if ((int)result > 32)
+                        return;
+                } 
+            } 
+            // show the error and offer to copy the file path into clipboard
+            utf16_string text = UTF8toUTF16(STR("Cannot open file " << filename << ". Do you want to copy its path to clipboard so that you can do that manually?"));
+            if (MessageBox(nullptr, text.c_str(), L"Unable to determine proper viewer", MB_ICONEXCLAMATION | MB_TASKMODAL | MB_YESNOCANCEL) == IDYES) 
+                setClipboard(filename);
         } 
         #pragma warning(pop)
     }

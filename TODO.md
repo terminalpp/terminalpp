@@ -21,7 +21,11 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- check username on macOS
+- switch to json5?
+- ignore docker WSL 
+- check Lucida Console, size 9? (line spacing)
+- see if msys can be added to bypass
+
 
 Documentation:
 

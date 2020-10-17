@@ -54,7 +54,10 @@ namespace tpp {
 
     void QtApplication::openLocalFile(std::string const & filename, bool edit) {
         MARK_AS_UNUSED(edit);
-        QDesktopServices::openUrl(QUrl::fromLocalFile(filename.c_str()));
+        if (! QDesktopServices::openUrl(QUrl::fromLocalFile(filename.c_str()))) {
+            if (query("Unable to open file with default viewer", STR("Cannot open file " << filename << ". Do you want to copy its path to clipboard so that you can do that manually?")))
+                setClipboard(filename);
+        }
     }
 
     void QtApplication::openUrl(std::string const & url) {

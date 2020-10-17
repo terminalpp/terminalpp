@@ -87,12 +87,14 @@ namespace tpp {
 
     void X11Application::openLocalFile(std::string const & filename, bool edit) {
 		if (edit) {
-			if (system(STR("x-terminal-emulator -e editor \"" << filename << "\" &").c_str()) != EXIT_SUCCESS)
-				alert(STR("unable to open file " << filename << " with default editor"));
+			if (system(STR("x-terminal-emulator -e editor \"" << filename << "\" &").c_str()) == EXIT_SUCCESS)
+                return;
 		} else {
-			if (system(STR("xdg-open \"" << filename << "\" &").c_str()) != EXIT_SUCCESS)
-				alert(STR("xdg-open not found or unable to open file:\n" << filename));
+			if (system(STR("xdg-open \"" << filename << "\" &").c_str()) == EXIT_SUCCESS)
+                return;
 		}
+        if (query("Unable to open file with default viewer/editor", STR("Cannot open file " << filename << ". Do you want to copy its path to clipboard so that you can do that manually?")))
+            setClipboard(filename);
     }
 
     void X11Application::openUrl(std::string const & url) {
