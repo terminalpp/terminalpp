@@ -249,6 +249,19 @@ namespace tpp {
                     JSON{18},
                     unsigned
                 );
+                CONFIG_PROPERTY(
+                    cellWidthPct,
+                    "Width of the cell (100% is the width determined by used font)",
+                    JSON{150},
+                    unsigned
+                );
+                CONFIG_PROPERTY(
+                    cellHeightPct,
+                    "Height of the cell (100% is the height determined by used font)",
+                    JSON{150},
+                    unsigned
+                );
+
             );
             CONFIG_OBJECT(
                 window,

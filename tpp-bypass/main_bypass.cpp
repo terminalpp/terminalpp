@@ -83,8 +83,7 @@ public:
 			// child process
 			case 0: {
 			    setsid();
-				if (ioctl(1, TIOCSCTTY, nullptr) < 0)
-				    throw std::runtime_error("Unable to reach terminal in child");
+                OSCHECK(ioctl(1, TIOCSCTTY, nullptr) >= 0) << "Unable to reach terminal in child";
 			    setTargetEnvironment();
 				clearTargetSignals(); 
 				char ** argv = commandToArgv();

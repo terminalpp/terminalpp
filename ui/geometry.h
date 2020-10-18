@@ -151,6 +151,10 @@ namespace ui {
             return Point{p.x() + s.width(), p.y() + s.height()};
         }
 
+        friend Size operator * (Size const & size, double by) {
+            return Size{static_cast<int>(size.width_ * by), static_cast<int>(size.height_ * by)};
+        }
+
     private:
         friend class Rect;
 
