@@ -16,6 +16,8 @@
 - profiles added to jumplist on Windows 
 - per session working directory specification
 - `--session`, `--pty` and `-e` command line arguments can be used together
+- more robust opening of local files (including settings.json)
+- ability to update character and line spacing (`renderer.font.(char|line)Spacing`)
 
 ### TODO
 
@@ -23,9 +25,8 @@
 
 - switch to json5?
 - ignore docker WSL 
-- check Lucida Console, size 9? (line spacing)
 - see if msys can be added to bypass
-
+- focusIn assertion in WSL x server actually reappears
 
 Documentation:
 

@@ -176,7 +176,7 @@ namespace tpp {
         /** Updates the current font.
          */
         void changeFont(ui::Font font) {
-            font_ = QtFont::Get(font, cellSize_.height(), cellSize_.width());
+            font_ = QtFont::Get(font, cellSize_);
             painter_.setFont(font_->qFont());
         }
 

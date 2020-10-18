@@ -250,16 +250,16 @@ namespace tpp {
                     unsigned
                 );
                 CONFIG_PROPERTY(
-                    cellWidthPct,
-                    "Width of the cell (100% is the width determined by used font)",
-                    JSON{150},
-                    unsigned
+                    charSpacing,
+                    "Spacing between characters.",
+                    JSON{1.0},
+                    double
                 );
                 CONFIG_PROPERTY(
-                    cellHeightPct,
-                    "Height of the cell (100% is the height determined by used font)",
-                    JSON{150},
-                    unsigned
+                    lineSpacing,
+                    "Spacing between lines.",
+                    JSON{1.0},
+                    double
                 );
 
             );

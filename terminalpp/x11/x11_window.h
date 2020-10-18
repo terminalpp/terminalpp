@@ -149,7 +149,7 @@ namespace tpp {
         /** Updates the current font.
          */
         void changeFont(ui::Font font) {
-			font_ = X11Font::Get(font, cellSize_.height(), cellSize_.width());
+			font_ = X11Font::Get(font, cellSize_);
         }
 
         /** Updates the foreground color.

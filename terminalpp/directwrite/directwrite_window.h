@@ -227,7 +227,7 @@ namespace tpp {
         /** Updates the current font.
          */
         void changeFont(ui::Font font) {
-			font_ = DirectWriteFont::Get(font, cellSize_.height(), cellSize_.width());
+			font_ = DirectWriteFont::Get(font, cellSize_);
 			glyphRun_.fontFace = font_->fontFace();
 			glyphRun_.fontEmSize = font_->sizeEm();
         }

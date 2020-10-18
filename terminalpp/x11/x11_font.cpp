@@ -16,17 +16,17 @@ namespace tpp {
         FcPatternAddString(pattern_, FC_FAMILY, pointer_cast<FcChar8 const *>(font.doubleWidth() ? tpp::Config::Instance().renderer.font.doubleWidthFamily().c_str() : tpp::Config::Instance().renderer.font.family().c_str()));
         FcPatternAddInteger(pattern_, FC_WEIGHT, font.bold() ? FC_WEIGHT_BOLD : FC_WEIGHT_NORMAL);
         FcPatternAddInteger(pattern_, FC_SLANT, font.italic() ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
-        FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, cellSize_.height());
+        FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, fontSize_.height());
         initializeFromPattern();
     } 
 
     X11Font::X11Font(X11Font const & base, char32_t codepoint):
-        Font<X11Font>{base.font_, base.cellSize()} {
+        Font<X11Font>{base.font_, base.fontSize_} {
         // get the font pattern 
         pattern_ = FcPatternDuplicate(base.pattern_);
         FcPatternRemove(pattern_, FC_FAMILY, 0);
         FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);
-        FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, cellSize_.height());
+        FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, fontSize_.height());
         FcCharSet * charSet = FcCharSetCreate();
         FcCharSetAddChar(charSet, codepoint);
         FcPatternAddCharSet(pattern_, FC_CHARSET, charSet);
@@ -36,7 +36,7 @@ namespace tpp {
 
     void X11Font::initializeFromPattern() {
         X11Application * app = X11Application::Instance();
-        double fontHeight = cellSize_.height();
+        double fontHeight = fontSize_.height();
         xftFont_ = MatchFont(pattern_);
         if (xftFont_ == nullptr) {
             FcValue fontName;
@@ -48,7 +48,7 @@ namespace tpp {
             OSCHECK(xftFont_ != nullptr) << "Unable to initialize fallback font.";
         }
         // if the font height is not the cellHeight, update the pixel size accordingly and get the font again
-        if (static_cast<int>(xftFont_->ascent + xftFont_->descent) != cellSize_.height()) {
+        if (static_cast<int>(xftFont_->ascent + xftFont_->descent) != fontSize_.height()) {
             fontHeight = std::floor(fontHeight * fontHeight / (xftFont_->ascent + xftFont_->descent));
             CloseFont(xftFont_);
             FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);
@@ -59,25 +59,25 @@ namespace tpp {
         XGlyphInfo gi;
         XftTextExtentsUtf8(app->xDisplay_, xftFont_, (FcChar8*)"M", 1, &gi);
         // update the font width and height accordingly
-        int h = cellSize_.height();
+        int h = fontSize_.height();
         int w = gi.xOff; 
         // if cellWidth is 0, then the font is constructed to later determine the width of the cell and therefore no width adjustments are needed
-        if (cellSize_.width() == 0) {
-            cellSize_.setWidth(w);
+        if (fontSize_.width() == 0) {
+            fontSize_.setWidth(w);
             offset_ = ui::Point{0,0};
         // if the width is smaller, center the glyph horizontally
-        } else if (w < cellSize_.width()) {
-            offset_.setX((cellSize_.width() - w) / 2);
+        } else if (w < fontSize_.width()) {
+            offset_.setX((fontSize_.width() - w) / 2);
         // if the width is greater than the cell width, we need smaller font
         } else {
-            double x = static_cast<double>(cellSize_.width()) / w;
+            double x = static_cast<double>(fontSize_.width()) / w;
             fontHeight *=  x;
             h = static_cast<unsigned>(h * x);
             CloseFont(xftFont_);
             FcPatternRemove(pattern_, FC_PIXEL_SIZE, 0);
             FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, fontHeight);
             xftFont_ = MatchFont(pattern_);
-            offset_.setY((cellSize_.height() - h) / 2);
+            offset_.setY((fontSize_.height() - h) / 2);
         }
         // now that we have correct font, initialize the rest of the properties
         ascent_ = xftFont_->ascent;

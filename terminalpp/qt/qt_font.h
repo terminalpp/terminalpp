@@ -28,12 +28,12 @@ namespace tpp {
                 qFont_.setBold(true);
             if (font.italic())
                 qFont_.setItalic(true);
-            qFont_.setPixelSize(cellSize_.height());
+            qFont_.setPixelSize(fontSize_.height());
             QFontMetrics metrics{qFont_};
             // scale the font if the ascent and descent are 
             int h = static_cast<int>(metrics.ascent() + metrics.descent());
-            if (h != cellSize_.height()) {
-                h = static_cast<int>(cellSize_.height() * (cellSize_.height() / static_cast<double>(h)));
+            if (h != fontSize_.height()) {
+                h = static_cast<int>(fontSize_.height() * (fontSize_.height() / static_cast<double>(h)));
                 qFont_.setPixelSize(h);
                 metrics = QFontMetrics{qFont_};
             }
@@ -44,17 +44,17 @@ namespace tpp {
 #else
             int w = metrics.width('M');
 #endif
-            if (cellSize_.width() == 0) {
-                cellSize_.setWidth(w);
+            if (fontSize_.width() == 0) {
+                fontSize_.setWidth(w);
                 offset_ = ui::Point{0,0};
-            } else if (w <= cellSize_.width()) {
-                offset_.setX((cellSize_.width() - w) / 2);
+            } else if (w <= fontSize_.width()) {
+                offset_.setX((fontSize_.width() - w) / 2);
             } else {
-                float x = static_cast<float>(cellSize_.width()) / w;
+                float x = static_cast<float>(fontSize_.width()) / w;
                 h = static_cast<int>(h * x);
                 qFont_.setPixelSize(h);
                 metrics = QFontMetrics{qFont_};
-                offset_.setY((cellSize_.height() - h) / 2);
+                offset_.setY((fontSize_.height() - h) / 2);
             }
             ascent_ = metrics.ascent();
             underlineOffset_ = ascent_ + 1;
