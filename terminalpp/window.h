@@ -137,12 +137,11 @@ namespace tpp {
             title_{"terminal++"},
             icon_{Icon::Default},
             zoom_{1.0},
-            fullscreen_{false}
-            /*mouseButtonsDown_{0} */ {
+            fullscreen_{false} {
             // calculate the width and height in pixels and the cell dimensions from the font at given zoom level
-            baseCellSize_ = Size{font.cellWidth(), font.cellHeight()};
+            baseFontSize_ = font.cellSize(); 
             // TODO do I want round, or float instead? 
-            cellSize_ = Size{static_cast<int>(baseCellSize_.width() * zoom_),static_cast<int>(baseCellSize_.height() * zoom_)};
+            cellSize_ = baseFontSize_ * zoom_; //Size{static_cast<int>(baseFontSize_.width() * zoom_),static_cast<int>(baseFontSize_.height() * zoom_)};
             sizePx_ = Size{cellSize_.width() * width, cellSize_.height() * height};
             // set the desired fps for the renderer
             setFps(Config::Instance().renderer.fps());
@@ -194,10 +193,16 @@ namespace tpp {
         std::string title_;
         Icon icon_;
 
+        /** Size of the client area of the window in pixels. 
+         */
         Size sizePx_;
 
-        Size baseCellSize_;
+        /** Base font size, i.e. the cell size of a font with zoom equal to 1.0.
+         */ 
+        Size baseFontSize_;
 
+        /** The size actual cell in the window (i.e. with current zoom settings)
+         */
         Size cellSize_;
 
         double zoom_;
@@ -219,8 +224,8 @@ namespace tpp {
             if (value != zoom_) {
                 Window::setZoom(value);
                 // get the font dimensions 
-                typename IMPLEMENTATION::Font * f = IMPLEMENTATION::Font::Get(ui::Font(), static_cast<int>(baseCellSize_.height() * zoom_));
-                cellSize_ = Size{f->cellWidth(), f->cellHeight()};
+                typename IMPLEMENTATION::Font * f = IMPLEMENTATION::Font::Get(ui::Font(), static_cast<int>(baseFontSize_.height() * zoom_));
+                cellSize_ = f->cellSize();
                 // tell the renderer to resize
                 resize(Size{sizePx_.width() / cellSize_.width(), sizePx_.height() / cellSize_.height()});
             }

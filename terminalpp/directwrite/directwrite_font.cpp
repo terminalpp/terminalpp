@@ -63,7 +63,7 @@ namespace tpp {
     }; // DirectWriteFont::TextAnalysis
 
     DirectWriteFont::DirectWriteFont(ui::Font font, int cellHeight, int cellWidth):
-        Font<DirectWriteFont>{font, cellHeight, cellWidth} {
+        Font<DirectWriteFont>{font, ui::Size{cellWidth, cellHeight}} {
         DirectWriteApplication * app = DirectWriteApplication::Instance();
         // find the required font family - first get the index then obtain the family by the index
         UINT32 findex;
@@ -91,7 +91,7 @@ namespace tpp {
     }
 
     DirectWriteFont::DirectWriteFont(DirectWriteFont const & base, char32_t codepoint):
-        Font<DirectWriteFont>{base.font_, base.cellHeight_, base.cellWidth_} {
+        Font<DirectWriteFont>{base.font_, base.cellSize()} {
         DirectWriteApplication * app = DirectWriteApplication::Instance();
         TextAnalysis ta(codepoint);
         UINT32 mappedLength;
@@ -133,7 +133,7 @@ namespace tpp {
         // https://docs.microsoft.com/en-us/windows/desktop/LearnWin32/dpi-and-device-independent-pixels
         // determine the font height in pixels, which is the cell height times the height of the font
         // increase the cell height and width by the font size
-        sizeEm_ = cellHeight_ / (dpiY / 96);
+        sizeEm_ = cellSize_.height() / (dpiY / 96);
         // we have to adjust this number for the actual font metrics
         sizeEm_ = sizeEm_ * metrics.designUnitsPerEm / (metrics.ascent + metrics.descent + metrics.lineGap);
         // now we have to determine the height of a character, which we can do via glyph metrics
@@ -143,22 +143,21 @@ namespace tpp {
         fontFace_->GetGlyphIndices(&codepoint, 1, &glyph);
         fontFace_->GetDesignGlyphMetrics(&glyph, 1, &glyphMetrics);
         // get the character dimensions and adjust the font size if necessary so that the characters are centered in their cell area as specified by the ui::Font
-        offsetLeft_ = 0;
-        offsetTop_ = 0;
-        int h = cellHeight_;
+        offset_ = ui::Point{0,0};
+        int h = cellSize_.height();
         int w = static_cast<unsigned>(std::round(static_cast<float>(glyphMetrics.advanceWidth) * sizeEm_ / metrics.designUnitsPerEm));
         // if cell width is not specified (0), then the font determines the cell width and no centering is required
-        if (cellWidth_ == 0) {
-            cellWidth_ = w;
+        if (cellSize_.width() == 0) {
+            cellSize_.setWidth(w);
         // if the cell is fully specified, and the font's width is smaller than the width of the cell, the font has to be centered horizontally
-        } else if (w <= cellWidth_) {
-            offsetLeft_ = (cellWidth_ - w) / 2;
+        } else if (w <= cellSize_.width()) {
+            offset_.setX((cellSize_.width() - w) / 2);
         // otherwise the current size would overflow the cell width so the font has to be scaled down and then centered horizontally
         } else {
-            float x = static_cast<float>(cellWidth_) / w;
+            float x = static_cast<float>(cellSize_.width()) / w;
             sizeEm_ *= x;
             h = static_cast<int>(h * x);
-            offsetTop_ = (cellHeight_ - h) / 2;
+            offset_.setY((cellSize_.height() - h) / 2);
         }
         // set remaining font properties
         ascent_ = (sizeEm_ * metrics.ascent / metrics.designUnitsPerEm);

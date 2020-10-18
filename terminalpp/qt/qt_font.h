@@ -21,19 +21,19 @@ namespace tpp {
         friend class Font<QtFont>;
 
         QtFont(ui::Font font, int cellHeight, int cellWidth = 0):
-            Font<QtFont>{font, cellHeight, cellWidth} {
+            Font<QtFont>{font, ui::Size{cellWidth, cellHeight}} {
             tpp::Config const & config{tpp::Config::Instance()};
             qFont_.setFamily(font.doubleWidth() ? config.renderer.font.doubleWidthFamily().c_str() : config.renderer.font.family().c_str());
             if (font.bold())
                 qFont_.setBold(true);
             if (font.italic())
                 qFont_.setItalic(true);
-            qFont_.setPixelSize(cellHeight_);
+            qFont_.setPixelSize(cellSize_.height());
             QFontMetrics metrics{qFont_};
             // scale the font if the ascent and descent are 
             int h = static_cast<int>(metrics.ascent() + metrics.descent());
-            if (h != cellHeight_) {
-                h = static_cast<int>(cellHeight_ * (cellHeight_ / static_cast<double>(h)));
+            if (h != cellSize_.height()) {
+                h = static_cast<int>(cellSize_.height() * (cellSize_.height() / static_cast<double>(h)));
                 qFont_.setPixelSize(h);
                 metrics = QFontMetrics{qFont_};
             }
@@ -44,18 +44,17 @@ namespace tpp {
 #else
             int w = metrics.width('M');
 #endif
-            if (cellWidth_ == 0) {
-                cellWidth_ = w;
-                offsetLeft_ = 0;
-                offsetTop_ = 0;
-            } else if (w <= cellWidth_) {
-                offsetLeft_ = (cellWidth_ - w) / 2;
+            if (cellSize_.width() == 0) {
+                cellSize_.setWidth(w);
+                offset_ = ui::Point{0,0};
+            } else if (w <= cellSize_.width()) {
+                offset_.setX((cellSize_.width() - w) / 2);
             } else {
-                float x = static_cast<float>(cellWidth_) / w;
+                float x = static_cast<float>(cellSize_.width()) / w;
                 h = static_cast<int>(h * x);
                 qFont_.setPixelSize(h);
                 metrics = QFontMetrics{qFont_};
-                offsetTop_ = (cellHeight_ - h) / 2;
+                offset_.setY((cellSize_.height() - h) / 2);
             }
             ascent_ = metrics.ascent();
             underlineOffset_ = ascent_ + 1;

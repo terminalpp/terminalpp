@@ -21,21 +21,12 @@ namespace tpp {
             return font_;
         }
 
-        int cellWidth() const {
-            return cellWidth_;
+        ui::Size cellSize() const {
+            return cellSize_;
         }
 
-        int cellHeight() const {
-            return cellHeight_;
-        }
-
-        // TODO offset should be point
-        int offsetTop() const {
-            return offsetTop_;
-        }
-
-        int offsetLeft() const {
-            return offsetLeft_;
+        ui::Point offset() const {
+            return offset_;
         }
 
         float ascent() const {
@@ -68,21 +59,19 @@ namespace tpp {
 
     protected:
 
-        FontMetrics(ui::Font const & font, int cellHeight, int cellWidth = 0):
+        FontMetrics(ui::Font const & font, ui::Size cellSize):
             font_{Strip(font)},
-            cellWidth_{cellWidth * font_.width()},
-            cellHeight_{cellHeight * font_.height()},
-            offsetLeft_{0},
-            offsetTop_{0} {
+            cellSize_{cellSize.width() * font_.width(), cellSize.height() * font_.height()} {
         }
 
         ui::Font font_;
 
-        int cellWidth_;
-        int cellHeight_;
+        ui::Size cellSize_;
+
         // offset of the character in the cell if the characters need to be centered (for fallback fonts)
-        int offsetLeft_;
-        int offsetTop_;
+        ui::Point offset_;
+//        int offsetLeft_;
+//        int offsetTop_;
 
         float ascent_;
         float underlineOffset_;
@@ -106,7 +95,7 @@ namespace tpp {
         }
 
         T * fallbackFor(char32_t codepoint) {
-			std::vector<T*> & fallbackCache = FallbackFonts_[CreateIdFrom(font_, cellHeight_)];
+			std::vector<T*> & fallbackCache = FallbackFonts_[CreateIdFrom(font_, cellSize_.height())];
             for (auto i : fallbackCache) {
 				if (i != this && i->supportsCodepoint(codepoint))
                     return i;
@@ -120,8 +109,8 @@ namespace tpp {
 
     protected:
 
-        Font(ui::Font font, int cellHeight, int cellWidth):
-            FontMetrics(font, cellHeight, cellWidth) {
+        Font(ui::Font font, ui::Size cellSize):
+            FontMetrics(font, cellSize) {
         }
 
         static size_t CreateIdFrom(ui::Font font, int cellHeight) {

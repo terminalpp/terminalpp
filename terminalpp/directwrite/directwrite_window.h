@@ -268,8 +268,8 @@ namespace tpp {
 			rt_->FillRectangle(rect, bg_.Get());
             // determine the originl and draw the glyph run
             D2D1_POINT_2F origin = D2D1::Point2F(
-                static_cast<float>(glyphRunCol_* cellSize_.width() + font_->offsetLeft()),
-                ((glyphRunRow_ + 1 - state_.font().height()) * cellSize_.height() + font_->ascent()) + font_->offsetTop());
+                static_cast<float>(glyphRunCol_* cellSize_.width() + font_->offset().x()),
+                ((glyphRunRow_ + 1 - state_.font().height()) * cellSize_.height() + font_->ascent()) + font_->offset().y());
             if (!state_.font().blink() || BlinkVisible()) {
                 rt_->DrawGlyphRun(origin, &glyphRun_, fg_.Get());
                 // see if there are any attributes to be drawn 

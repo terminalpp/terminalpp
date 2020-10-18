@@ -127,16 +127,16 @@ namespace tpp {
                 X11Font * oldFont = font_;
                 font_ = font_->fallbackFor(cell.codepoint());
                 text_[0].glyph = XftCharIndex(display_, font_->xftFont(), cell.codepoint());
-                text_[0].x = textCol_ * cellSize_.width() + font_->offsetLeft();
-                text_[0].y = (textRow_ + 1 - font_->font().height()) * cellSize_.height() + font_->ascent() + font_->offsetTop();
+                text_[0].x = textCol_ * cellSize_.width() + font_->offset().x();
+                text_[0].y = (textRow_ + 1 - font_->font().height()) * cellSize_.height() + font_->ascent() + font_->offset().y();
                 ++textSize_;
                 drawGlyphRun();
                 initializeGlyphRun(col + font_->font().width(), row);
                 font_ = oldFont;
             } else {
                 if (textSize_ == 0) {
-                    text_[0].x = textCol_ * cellSize_.width() + font_->offsetLeft();
-                    text_[0].y = (textRow_ + 1 - state_.font().height()) * cellSize_.height() + font_->ascent() + font_->offsetTop();
+                    text_[0].x = textCol_ * cellSize_.width() + font_->offset().x();
+                    text_[0].y = (textRow_ + 1 - state_.font().height()) * cellSize_.height() + font_->ascent() + font_->offset().y();
                 } else {
                     text_[textSize_].x = text_[textSize_ - 1].x + cellSize_.width() * state_.font().width();
                     text_[textSize_].y = text_[textSize_ - 1].y;
