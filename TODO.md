@@ -24,7 +24,6 @@
 > These are items I currently work on towards the next version. When they are done, they die.  
 
 - switch to json5?
-- ignore docker WSL 
 - see if msys can be added to bypass
 - focusIn assertion in WSL x server actually reappears
 
