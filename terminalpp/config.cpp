@@ -260,12 +260,14 @@ namespace tpp {
             }
             // update the default session name at last only if the wsl installation process was without errors
             defaultSessionName = defaultSession;
-        } catch (OSError const & e) {
+        } catch (OSError const &) {
             // do nothing, when we get os error from calling WSL just don't include any sessions
         }
     }
 
     void Config::Win32AddMsys2(JSON & sessions, std::string & defaultSessionName) {
+        // MSYS is not automatically selected as default session name, hence unused
+        MARK_AS_UNUSED(defaultSessionName);
         try {
             ExitCode ec; // to silence errors
             Exec(Command{"C:\\msys64\\msys2_shell.cmd", {"--help"}}, &ec);
@@ -290,7 +292,7 @@ namespace tpp {
             msys.add("workingDirectory", JSON{STR("C:\\msys64\\home\\" << GetUsername())});
             msys.add("command", JSON::Parse("[\"C:\\\\msys64\\\\msys2_shell.cmd\",\"-defterm\",\"-here\",\"-no-start\",\"-msys\"]"));
             sessions.add(msys);
-        } catch (OSError const & e) {
+        } catch (OSError const &) {
             // do nothing, when we get os error from calling WSL just don't include any sessions
         }
     }

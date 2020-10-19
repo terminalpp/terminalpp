@@ -44,6 +44,7 @@ namespace tpp {
         }
 
         virtual HRESULT STDMETHODCALLTYPE GetLocaleName(UINT32 textPosition, UINT32* textLength, WCHAR const** localeName) override {
+            MARK_AS_UNUSED(textPosition);
             ASSERT(textPosition == 0);
             *localeName = DirectWriteApplication::Instance()->localeName_;
             *textLength = 0;
@@ -51,6 +52,7 @@ namespace tpp {
         }
 
         virtual HRESULT STDMETHODCALLTYPE GetNumberSubstitution(UINT32 textPosition, UINT32* textLength, IDWriteNumberSubstitution ** numberSubstitution) override {
+            MARK_AS_UNUSED(textPosition);
             ASSERT(textPosition == 0);
             *numberSubstitution = nullptr;
             *textLength = 0;

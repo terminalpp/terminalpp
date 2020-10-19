@@ -23,7 +23,7 @@ namespace tpp {
             #if (defined RENDERER_QT)
                 result << "    platform:   " << ARCH << "(Qt) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
             #else
-                result << "    platform:  " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
+                result << "    platform:   " << ARCH << "(native) " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
             #endif
             result << "    build time: " << stamp::build_time << std::endl;
             return result.str();

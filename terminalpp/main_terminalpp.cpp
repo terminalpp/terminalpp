@@ -1,9 +1,6 @@
 ﻿#include <iostream>
 #include <thread>
 
-
-
-
 #include "helpers/char.h"
 #include "helpers/time.h"
 #include "helpers/filesystem.h"
@@ -57,6 +54,10 @@ void reportError(std::string const & message) {
 }
 
 void PrintVersion() {
+#if (defined ARCH_WINDOWS && defined RENDERER_NATIVE)
+    // Make sure there is either a terminal, to which the stdout goes
+    tpp::AttachConsole();
+#endif
     std::cout << tpp::Application::Stamp();
     exit(EXIT_SUCCESS);
 }

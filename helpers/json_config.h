@@ -419,6 +419,7 @@ HELPERS_NAMESPACE_BEGIN
         }
 
         void addChildProperty(std::string const & name, JSONConfig * child) override {
+            MARK_AS_UNUSED(name);
             ASSERT(name == "");
             elements_.push_back(child);
             child->json_ = & json_->add(JSON::Object());
@@ -463,6 +464,7 @@ HELPERS_NAMESPACE_BEGIN
         }
 
         JSON toJSON(bool updatedOnly = true) const override {
+            MARK_AS_UNUSED(updatedOnly);
             ASSERT(updated_ || ! updatedOnly);
             ASSERT(json_ != nullptr);
             return *json_;
