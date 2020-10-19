@@ -64,6 +64,23 @@ namespace tpp {
             MARK_AS_UNUSED(rect);
             emit tppRequestUpdate();
         }
+#if (defined ARCH_MACOS)
+        /** \name Filters spurious mouse focus changes. 
+         
+            On macOS when application goes fullscreen, mouse enter and leave events are not reported properly, therefore the QT version makes sure that the events are ignored unless they are going to change the renderer's mouse capture state. 
+         */
+        //@{
+        void mouseIn() override {
+            if (! rendererMouseCaptured())
+                RendererWindow::mouseIn();
+        }
+
+        void mouseOut() override {
+            if (rendererMouseCaptured())
+                RendererWindow::mouseOut();
+        }
+        //@}
+#endif
 
         void requestClipboard(Widget * sender) override;
 
