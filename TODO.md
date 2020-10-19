@@ -25,7 +25,6 @@
 
 - switch to json5?
 - see if msys can be added to bypass
-- focusIn assertion in WSL x server actually reappears
 
 Documentation:
 

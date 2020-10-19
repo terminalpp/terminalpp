@@ -62,6 +62,24 @@ namespace tpp {
             RendererWindow::windowResized(width, height);
         }
 
+        /** Handles FocusIn message sent to the window. 
+         
+            On certain x servers (such as vcxsrv) a newly created window get FocusOut message before having been focused first, which causes asserts in renderer to fail. The X11Window therefore keep a check whether the window has really been focused and only propagates the rendererFocusIn if the state is consistent. 
+         */
+        void focusIn() override {
+            if (! rendererFocused())
+                RendererWindow::focusIn();
+        }
+
+        /** Handles FocusOut message sent to the window. 
+         
+            On certain x servers (such as vcxsrv) a newly created window get FocusOut message before having been focused first, which causes asserts in renderer to fail. The X11Window therefore keep a check whether the window has really been focused and only propagates the rendererFocusIn if the state is consistent. 
+         */
+        void focusOut() override {
+            if (rendererFocused())
+                RendererWindow::focusOut();
+        }
+
         void requestClipboard(Widget * sender) override;
 
         void requestSelection(Widget * sender) override;
