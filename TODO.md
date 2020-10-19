@@ -23,7 +23,6 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- switch to json5?
 - see if msys can be added to bypass
 
 Documentation:
