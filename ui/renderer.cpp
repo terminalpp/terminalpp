@@ -244,6 +244,8 @@ namespace ui {
             keyboardFocus_->focusOut(p);
         }
         {
+            // when renderer is focused out, reset the modifiers so that new focus starts with clean state
+            modifiers_ = Key::None;
             VoidEvent::Payload p{};
             onFocusOut(p, this);
         }

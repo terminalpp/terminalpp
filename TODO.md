@@ -23,6 +23,10 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- add `--here` cmd arg that overwrites the default directory for launched session
+
+- add option to re-check sessions at startup and update the jumplist
+
 - see if msys can be added to bypass
 
 Documentation:
