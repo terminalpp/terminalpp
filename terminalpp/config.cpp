@@ -26,7 +26,10 @@ namespace tpp {
 						saveSettings = config.update(settings, [& saveSettings, & filename](JSONError && e){
 							Application::Instance()->alert(STR(e.what() << " while parsing terminalpp settings at " << filename));
 							saveSettings = true;
-						});
+						}) || saveSettings;
+                        // fill in missing values
+                        saveSettings = config.fillMissingValues() || saveSettings;
+                        saveSettings = config.patchSessions() || saveSettings;
 					} catch (JSONError & e) {
 						e.setMessage(STR(e.what() << " while parsing terminalpp settings at " << filename));
 						throw;
@@ -45,8 +48,12 @@ namespace tpp {
             } else {
                 saveSettings = true;
 				Application::Instance()->alert(STR("No settings file found, default settings will be calculated and stored in " << filename));
+                // patch the settings with autodetected sessions if applicable
+                JSON settings = JSON::Object();
                 // update with empty object, which means that all default values will be calculated
-                config.update(JSON::Object());
+                config.update(settings);
+                config.fillMissingValues();
+                config.patchSessions();
             }
         }
         // if the settings should be saved, save them now 
@@ -87,6 +94,53 @@ namespace tpp {
 		Application::Instance()->alert(STR("Settings version differs from current terminal version (" << PROJECT_VERSION << "). The configuration will be updated to the new version."));
 	}
 
+    /** First determine if session list should be checked at all times (application.detectSessionsAtStartup), or sessions not present in the JSON (in which case we add them as an empty list). 
+     
+        If above true, then update the list with autodetected sessions. 
+     */
+    bool Config::patchSessions() {
+
+        if (sessions.updated() && defaultSession.updated() && ! application.detectSessionsAtStartup())
+            return false;
+        std::string defaultSessionName;
+        bool updated = false;
+#if (defined ARCH_MACOS)
+        defaultSessionName = "Default login shell";
+        JSON shell{JSON::Object()};
+        shell.setComment(defaultSessionName);
+        shell.add("name", JSON{"Default login shell"});
+        shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\", \"--login\"]")));
+        shell.add("workingDirectory", JSON{HomeDir()});
+        updated = addSession(shell);
+#elif (defined ARCH_UNIX)
+        defaultSessionName = "Default login shell";
+        JSON shell{JSON::Object()};
+        shell.setComment(defaultSessionName);
+        shell.add("name", JSON{defaultSessionName});
+        shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\"]")));
+        shell.add("workingDirectory", JSON{HomeDir()});
+        updated = addSession(shell);
+#elif (defined ARCH_WINDOWS)
+        win32AddCmdExe(defaultSessionName, updated);
+        win32AddPowershell(defaultSessionName, updated);
+        win32AddWSL(defaultSessionName, updated);
+        win32AddMsys2(defaultSessionName, updated);
+#endif
+        if (! defaultSession.updated()) {
+            updateOther(& defaultSession, JSON{defaultSessionName}.setComment(defaultSession.description()));
+            updated = true;
+        }
+        return updated;
+    }
+    
+    bool Config::addSession(JSON const & session) {
+        for (auto existing : sessions)
+            if (existing.name() == session["name"].toString())
+                return false;
+        sessions.addElement(session);
+        return true;
+    }
+
 	JSON Config::DefaultTelemetryDir() {
 		return JSON{JoinPath(JoinPath(TempDir(), "terminalpp"),"telemetry")};
 	}
@@ -117,37 +171,6 @@ namespace tpp {
 	JSON Config::DefaultDoubleWidthFontFamily() {
 		return DefaultFontFamily();
 	}
-
-    JSON Config::DefaultSessions() {
-        JSON result{JSON::Array()};
-        std::string defaultSessionName = "default_shell";
-    #if (defined ARCH_MACOS)
-        defaultSessionName = "Default login shell";
-        JSON shell{JSON::Object()};
-        shell.setComment("Default login shell");
-        shell.add("name", JSON{defaultSessionName});
-        shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\", \"--login\"]")));
-        shell.add("workingDirectory", JSON{HomeDir()});
-        result.add(shell);        
-    #elif (defined ARCH_UNIX)
-        JSON shell{JSON::Object()};
-        shell.setComment("Default login shell");
-        shell.add("name", JSON{defaultSessionName});
-        shell.add("command", JSON::Parse(STR("[\"" << getpwuid(getuid())->pw_shell << "\"]")));
-        shell.add("workingDirectory", JSON{HomeDir()});
-        result.add(shell);        
-    #elif (defined ARCH_WINDOWS)
-        Win32AddCmdExe(result, defaultSessionName);
-        Win32AddPowershell(result, defaultSessionName);
-        Win32AddWSL(result, defaultSessionName);
-        Win32AddMsys2(result, defaultSessionName);
-    #endif
-        // update the default session name
-        JSON ds{defaultSessionName};
-        ds.setComment(Instance().defaultSession.description());
-        Instance().defaultSession.set(ds);
-        return result;
-    }
 
     #if (defined ARCH_WINDOWS)
 
@@ -185,17 +208,17 @@ namespace tpp {
         }
     }
 
-    void Config::Win32AddCmdExe(JSON & sessions, std::string & defaultSessionName) {
-        defaultSessionName = "cmd.exe";
+    void Config::win32AddCmdExe(std::string & defaultSessionName, bool & updated) {
         JSON session{JSON::Kind::Object};
+        defaultSessionName = "cmd.exe";
         session.setComment("cmd.exe");
         session.add("name", JSON{defaultSessionName});
         session.add("command", JSON::Parse(STR("[\"cmd.exe\"]")));
         session.add("workingDirectory", JSON{HomeDir()});
-        sessions.add(session);        
+        updated = addSession(session) || updated;
     }
 
-    void Config::Win32AddPowershell(JSON & sessions, std::string & defaultSessionName) {
+    void Config::win32AddPowershell(std::string & defaultSessionName, bool & updated) {
         defaultSessionName = "powershell";
         JSON session{JSON::Kind::Object};
         session.setComment("Powershell - with the default blue background and white text");
@@ -203,10 +226,10 @@ namespace tpp {
         session.add("command", JSON::Parse(STR("[\"powershell.exe\"]")));
         session.add("palette", JSON::Parse("{\"defaultForeground\" : \"ffffff\", \"defaultBackground\" : \"#0000ff\" }"));
         session.add("workingDirectory", JSON{HomeDir()});
-        sessions.add(session);        
+        updated = addSession(session) || updated;
     }
 
-    void Config::Win32AddWSL(JSON & sessions, std::string & defaultSessionName) {
+    void Config::win32AddWSL(std::string & defaultSessionName, bool & updated) {
         try {
             std::string defaultSession = defaultSessionName;
             ExitCode ec; // to silence errors
@@ -256,7 +279,7 @@ namespace tpp {
                     session.add("command", JSON::Parse(STR("[\"wsl.exe\", \"--distribution\", \"" << distribution << "\"]")));
                 else
                     session.add("command", JSON::Parse(STR("[\"wsl.exe\", \"--distribution\", \"" << distribution << "\", \"--\", \"" << BYPASS_PATH << "\"]")));
-                sessions.add(session);
+                updated = addSession(session) || updated;
             }
             // update the default session name at last only if the wsl installation process was without errors
             defaultSessionName = defaultSession;
@@ -265,7 +288,7 @@ namespace tpp {
         }
     }
 
-    void Config::Win32AddMsys2(JSON & sessions, std::string & defaultSessionName) {
+    void Config::win32AddMsys2(std::string & defaultSessionName, bool & updated) {
         // MSYS is not automatically selected as default session name, hence unused
         MARK_AS_UNUSED(defaultSessionName);
         try {
@@ -279,19 +302,19 @@ namespace tpp {
             mingw64.add("name", JSON{"mingw64 (msys2)"});
             mingw64.add("workingDirectory", JSON{STR("C:\\msys64\\home\\" << GetUsername())});
             mingw64.add("command", JSON::Parse("[\"C:\\\\msys64\\\\msys2_shell.cmd\",\"-defterm\",\"-here\",\"-no-start\",\"-mingw64\"]"));
-            sessions.add(mingw64);
+            updated = addSession(mingw64) || updated;
             JSON mingw32{JSON::Kind::Object};
             mingw32.setComment("msys2 - mingw32");
             mingw32.add("name", JSON{"mingw32 (msys2)"});
             mingw32.add("workingDirectory", JSON{STR("C:\\msys64\\home\\" << GetUsername())});
             mingw32.add("command", JSON::Parse("[\"C:\\\\msys64\\\\msys2_shell.cmd\",\"-defterm\",\"-here\",\"-no-start\",\"-mingw32\"]"));
-            sessions.add(mingw32);
+            updated = addSession(mingw32) || updated;
             JSON msys{JSON::Kind::Object};
             msys.setComment("msys2 - msys");
             msys.add("name", JSON{"msys (msys2)"});
             msys.add("workingDirectory", JSON{STR("C:\\msys64\\home\\" << GetUsername())});
             msys.add("command", JSON::Parse("[\"C:\\\\msys64\\\\msys2_shell.cmd\",\"-defterm\",\"-here\",\"-no-start\",\"-msys\"]"));
-            sessions.add(msys);
+            updated = addSession(msys) || updated;
         } catch (OSError const &) {
             // do nothing, when we get os error from calling WSL just don't include any sessions
         }

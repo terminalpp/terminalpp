@@ -532,6 +532,10 @@ HELPERS_NAMESPACE_BEGIN
             return kind_ == Kind::Null;
         }
 
+        bool isBool() const {
+            return kind_ == Kind::Boolean;
+        }
+
         bool hasKey(std::string const & key) const {
             if (kind_ != Kind::Object)
                 THROW(JSONError()) << "Cannot look for key in JSON element of type " << kind_;
@@ -572,8 +576,9 @@ HELPERS_NAMESPACE_BEGIN
             return comment_;
         }
 
-        void setComment(std::string const & value) {
+        JSON & setComment(std::string const & value) {
             comment_ = value;
+            return *this;
         }
 
         bool toBool() const {
@@ -773,6 +778,10 @@ HELPERS_NAMESPACE_BEGIN
             }
         }
 
+        JSON * get(std::initializer_list<std::string> path) {
+            return get(path.begin(), path.end());
+        }
+
         Iterator begin() {
             switch(kind_) {
                 case Kind::Array:
@@ -792,6 +801,80 @@ HELPERS_NAMESPACE_BEGIN
                     return Iterator(*this,valueObject_.end());
                 default:
                     THROW(JSONError()) << "Iterator only available for arrays and objects, not for " << kind_;
+            }
+        }
+
+        bool operator == (JSON const & other) const {
+            if (kind_ != other.kind_)
+                return false;
+            switch (kind_) {
+                case Kind::Null:
+                    return true;
+                case Kind::Boolean:
+                    return valueBool_ == other.valueBool_;
+                case Kind::Integer:
+                    return valueInt_ == other.valueInt_;
+                case Kind::Double:
+                    return valueDouble_ == other.valueDouble_;
+                case Kind::String:
+                    return valueStr_ == other.valueStr_;
+                case Kind::Array:
+                    if (valueArray_.size() != other.valueArray_.size())
+                        return false;
+                    for (size_t i = 0, e = valueArray_.size(); i != e; ++i)
+                        if (*valueArray_[i] != *other.valueArray_[i])
+                            return false;
+                    return true;
+                case Kind::Object:
+                    if (valueObject_.size() != other.valueObject_.size())
+                        return false;
+                    for (auto i : valueObject_) {
+                        auto j = other.valueObject_.find(i.first);
+                        if (j == other.valueObject_.end())
+                            return false;
+                        if (*i.second != *j->second)
+                            return false;
+                    }
+                    return true;
+                default:
+                    UNREACHABLE;
+            }
+        }
+
+        bool operator != (JSON const & other) const {
+            if (kind_ != other.kind_)
+                return true;
+            switch (kind_) {
+                case Kind::Null:
+                    return false;
+                case Kind::Boolean:
+                    return valueBool_ != other.valueBool_;
+                case Kind::Integer:
+                    return valueInt_ != other.valueInt_;
+                case Kind::Double:
+                    return valueDouble_ != other.valueDouble_;
+                case Kind::String:
+                    return valueStr_ != other.valueStr_;
+                case Kind::Array:
+                    if (valueArray_.size() != other.valueArray_.size())
+                        return true;
+                    for (size_t i = 0, e = valueArray_.size(); i != e; ++i)
+                        if (*valueArray_[i] != *other.valueArray_[i])
+                            return true;
+                    return false;
+                case Kind::Object:
+                    if (valueObject_.size() != other.valueObject_.size())
+                        return true;
+                    for (auto i : valueObject_) {
+                        auto j = other.valueObject_.find(i.first);
+                        if (j == other.valueObject_.end())
+                            return true;
+                        if (*i.second != *j->second)
+                            return true;
+                    }
+                    return false;
+                default:
+                    UNREACHABLE;
             }
         }
 
@@ -944,6 +1027,17 @@ HELPERS_NAMESPACE_BEGIN
                     s << std::setw(offset) << "" << "}";
                     break;
             }
+        }
+
+        JSON * get(std::string const * begin, std::string const * end) {
+            if (begin == end)
+                return this;
+            if (kind_ != Kind::Object)
+                return nullptr;
+            auto i = valueObject_.find(*begin);
+            if (i == valueObject_.end())
+                return nullptr;
+            return i->second->get(begin + 1, end);
         }
 
         Kind kind_;

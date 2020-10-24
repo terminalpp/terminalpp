@@ -129,6 +129,9 @@ namespace tpp {
         OSCHECK(SUCCEEDED(tasks.CoCreateInstance(CLSID_EnumerableObjectCollection)));
         // create task for each session 
         for (auto & session : config.sessions) {
+            // ignore hidden sessions, either by user, or such as command-line override
+            if (session.hidden())
+                return;
             utf16_string args = UTF8toUTF16(STR("--session \"" << session.name() << "\""));
             CComPtr<IShellLink> task;
             OSCHECK(SUCCEEDED(task.CoCreateInstance(CLSID_ShellLink)));

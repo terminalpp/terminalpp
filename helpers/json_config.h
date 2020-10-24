@@ -62,6 +62,14 @@ HELPERS_NAMESPACE_BEGIN
                 delete json_;
         }
 
+        JSON::Kind kind() const {
+            return json_->kind();
+        }
+
+        bool isBool() const {
+            return json_->kind() == JSON::Kind::Boolean;
+        }
+
         /** Returns the full name of the configuration option. 
          
             The name consists of the name of the property preceded by names of its parents separated by `.`.  
@@ -91,10 +99,11 @@ HELPERS_NAMESPACE_BEGIN
             return updated_;
         }
 
-        /** Sets the value of the property from given JSON. 
+        /** Sets the value of the property from given JSON.
          */
-        void set(JSON const & value) {
-            update(value);
+        void set(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw std::move(e); }) {
+            update(value, errorHandler);
+            fillMissingValues();
         }
 
         /** Stores the value of the property (and subfields, if any) into a JSON. 
@@ -109,10 +118,8 @@ HELPERS_NAMESPACE_BEGIN
 
         JSONConfig(JSONConfig * parent, std::string const & name, std::string const & description, JSON const & defaultValue):
             parent_{parent},
-            json_{nullptr},
             description_{description},
-            defaultValue_{defaultValue},
-            updated_{false} {
+            defaultValue_{defaultValue}{
             if (parent_ != nullptr)
                 parent_->addChildProperty(name, this);
             // if parent is null, then we are root and should create the root object 
@@ -122,10 +129,8 @@ HELPERS_NAMESPACE_BEGIN
 
         JSONConfig(JSONConfig * parent, std::string const & name, std::string const & description, std::function<JSON()> defaultValue):
             parent_{parent},
-            json_{nullptr},
             description_{description},
-            defaultValue_{defaultValue},
-            updated_{false} {
+            defaultValue_{defaultValue} {
             if (parent_ != nullptr)
                 parent_->addChildProperty(name, this);
             // if parent is null, then we are root and should create the root object 
@@ -142,9 +147,15 @@ HELPERS_NAMESPACE_BEGIN
 
         /** Updates the value of the property with given JSON. 
 
-            Returns whether any of the child properties (if any) were updated to user specified, or calculated default values.  
+            Returns whether any of the child properties (if any) were updated to user specified values from the JSON value provided.
          */
         virtual bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw std::move(e); }) = 0;
+
+        /** Updated unspecified values with defaults. 
+         
+            Returns true if default value was calculated. 
+         */
+        virtual bool fillMissingValues() = 0;
 
         /** Returns the default value for the property. 
          
@@ -184,12 +195,6 @@ HELPERS_NAMESPACE_BEGIN
          */
         //@{
 
-        /** Determines if the configuration explicitly requires value when used on commandline.
-         */
-        virtual bool cmdArgRequiresValue() const {
-            return true;
-        }
-
         /** Called when the value is updated from command line argument. 
          
             The index argument determines now many times the value has been set already so that array values can be implemented and errors can be raised for multiple values of non-array options. 
@@ -205,15 +210,20 @@ HELPERS_NAMESPACE_BEGIN
         //@}
 
         /** Parent configuration object. */
-        JSONConfig * parent_;
+        JSONConfig * parent_ = nullptr;
         /* The JSON object holding the configuration. */
-        JSON * json_;
+        JSON * json_ = nullptr;
 
         std::string description_;
 
         std::variant<JSON, std::function<JSON()>> defaultValue_;
 
-        bool updated_;
+        bool updated_ = false;
+#ifndef NDEBUG
+        /* Indicates that the element has been initialized, either with default value, or with a provided configfuration. 
+         */
+        bool initialized_ = false;
+#endif
 
     }; 
 
@@ -239,6 +249,9 @@ HELPERS_NAMESPACE_BEGIN
     protected:
 
         bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw std::move(e); }) override {
+#ifndef NDEBUG
+            initialized_ = true;
+#endif
             ASSERT(json_ != nullptr);
             if (value.kind() != JSON::Kind::Object) {
                 errorHandler(CREATE_EXCEPTION(JSONError())  << "Initializing " << name() << " with " << value << ", but object expected");
@@ -255,21 +268,19 @@ HELPERS_NAMESPACE_BEGIN
                 else
                     result = x->second->update(*i, errorHandler) || result;
             }
-            // if there are any properties that were not updated yet, update them with their default values and clear the updated_ flag
+            return result;
+        }
+
+        /** Filling missing values for the object. 
+         
+            Objects themselves do not have default values so the object just recursively fill its children's defaults where necessary. 
+         */
+        bool fillMissingValues() override {
+            bool result = false;
             for (auto i : properties_) {
-                JSONConfig * child = i.second;
-                if (! child->updated_) {
-                    if (child->update(child->defaultValue()) || std::holds_alternative<std::function<JSON()>>(child->defaultValue_)) {
-                        result = true;
-                        // if the default value is to be stored, we must propagate the updated flag to parent objects since they do not have currently to be flagged as updated
-                        JSONConfig * x = this;
-                        while (x != nullptr && x->updated_ == false) {
-                            x->updated_ = true;
-                            x = x->parent_;
-                        }
-                    } else {
-                        child->updated_ = false;
-                    }
+                if (i.second->fillMissingValues()) {
+                    result = true;
+                    updated_ = true;
                 }
             }
             return result;
@@ -379,8 +390,10 @@ HELPERS_NAMESPACE_BEGIN
             return result;
         }
 
-        T & addElement() {
+        T & addElement(JSON const & value) {
             T * element = new T{this};
+            element->set(value);
+            updated_ = true;
             return * element;
         }
 
@@ -398,6 +411,9 @@ HELPERS_NAMESPACE_BEGIN
 
         bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw std::move(e); }) override {
             ASSERT(json_ != nullptr);
+#ifndef NDEBUG
+            initialized_ = true;
+#endif
             *json_ = JSON::Array();
             if (value.kind() != JSON::Kind::Array) {
                 errorHandler(CREATE_EXCEPTION(JSONError())  << "Initializing " << name() << " with " << value << ", but array expected");
@@ -414,6 +430,32 @@ HELPERS_NAMESPACE_BEGIN
             for (auto i = value.begin(), e = value.end(); i != e; ++i) {
                 T * element = new T{this};
                 result = JSONConfig::updateOther(element, *i, errorHandler) || result;
+            }
+            return result;
+        }
+
+        /** Array default value update. 
+         
+            First update the array with its own default value. Then try fillMissingValues recursively on each of its elements. 
+         */
+        bool fillMissingValues() override {
+            bool result = false;
+            // get default value JSON and update with it 
+            if (!updated_) {
+                update(defaultValue());
+                // if the default value was calculated, return true as the value should be saved and keep the updated_ flag to true so that it is, 
+                // otherwise clear update_ flag and return false
+                if (std::holds_alternative<std::function<JSON()>>(defaultValue_))
+                    result = true;
+                else
+                    updated_ = false;
+            }
+            // fill missing values recursively for the newly added elements
+            for (auto i : elements_) {
+                if (i->fillMissingValues()) {
+                    updated_ = true;
+                    result = true;
+                }
             }
             return result;
         }
@@ -442,24 +484,19 @@ HELPERS_NAMESPACE_BEGIN
     public:
 
         Property(JSONConfig * parent, std::string name, std::string description, JSON const & defaultValue):
-            JSONConfig{parent, name, description, defaultValue},
-            initialized_{false} {
+            JSONConfig{parent, name, description, defaultValue} {
         }
 
         Property(JSONConfig * parent, std::string name, std::string description, std::function<JSON()> defaultValue):
-            JSONConfig{parent, name, description, defaultValue},
-            initialized_{false} {
+            JSONConfig{parent, name, description, defaultValue} {
         }
             
         /** Typecasts the configuration property to the property value type. 
+         
+            Can only be called on settings that were initialized. 
          */
         T const & operator () () const {
-            if (!initialized_) {
-                if (std::holds_alternative<JSON>(defaultValue_))
-                    const_cast<Property<T>*>(this)->update(std::get<JSON>(defaultValue_));
-                else
-                    const_cast<Property<T>*>(this)->update(std::get<std::function<JSON()>>(defaultValue_)());
-            }
+            ASSERT(initialized_);
             return value_;
         }
 
@@ -474,23 +511,36 @@ HELPERS_NAMESPACE_BEGIN
 
         bool update(JSON const & value, std::function<void(JSONError &&)> errorHandler = [](JSONError && e) { throw std::move(e); }) override {
             ASSERT(json_ != nullptr);
+#ifndef NDEBUG
+            initialized_ = true;
+#endif
             try {
                 value_ = JSONConfig::FromJSON<T>(value);
                 *json_ = value;
                 updated_ = true;
-                initialized_ = true;
             } catch (std::exception const & e) {
                 errorHandler(CREATE_EXCEPTION(JSONError()) << "Error when parsing JSON value for " << name() << ": " << e.what());
             }
             return false;
         }
 
-        void cmdArgUpdate(char const * value, size_t index) override {
-            JSONConfig::cmdArgUpdate(value, index);
+        bool fillMissingValues() override {
+            if (updated_)
+                return false;
+            // get default value JSON and update with it 
+            update(defaultValue());
+            // if the default value was calculated, return true as the value should be saved and keep the updated_ flag to true so that it is, 
+            // otherwise clear update_ flag and return false
+            if (std::holds_alternative<std::function<JSON()>>(defaultValue_)) {
+                return true;
+            } else {
+                updated_ = false;
+                return false;
+            }
         }
 
-        bool cmdArgRequiresValue() const override {
-            return JSONConfig::cmdArgRequiresValue();
+        void cmdArgUpdate(char const * value, size_t index) override {
+            JSONConfig::cmdArgUpdate(value, index);
         }
 
         void addChildProperty(std::string const & name, JSONConfig * child) override {
@@ -506,7 +556,6 @@ HELPERS_NAMESPACE_BEGIN
 
         T value_;
 
-        bool initialized_;
     }; 
 
     /** The root element of the JSON backed configuration. 
@@ -523,14 +572,6 @@ HELPERS_NAMESPACE_BEGIN
         }
 
     protected:
-
-        /** Initializes the configuration with default values. 
-         
-            Because default values support lazy initialization, they are only filled in when a configuration is read. For cases where configuration is not read 
-         */
-        void fillDefaultValues() {
-            update(JSON::Object());
-        }
 
     }; // JSONConfig::Root
 
@@ -561,8 +602,16 @@ HELPERS_NAMESPACE_BEGIN
         void addArgument(JSONConfig & config, std::initializer_list<char const *> aliases) {
             for (auto i : aliases) {
                 std::string alias{i};
-                if (! keywordArguments_.insert(std::make_pair(alias, & config)).second)
-                    ASSERT(false) << "Alias " << alias << " already bound to " << keywordArguments_[alias]->name();
+                if (! keywordArguments_.insert(std::make_pair(alias, std::make_pair(& config, nullptr))).second)
+                    ASSERT(false) << "Alias " << alias << " already bound to " << keywordArguments_[alias].first->name();
+            }
+        }
+
+        void addArgument(JSONConfig & config, std::initializer_list<char const *> aliases, std::string_view defaultValue) {
+            for (auto i : aliases) {
+                std::string alias{i};
+                if (! keywordArguments_.insert(std::make_pair(alias, std::make_pair(& config, new std::string{defaultValue}))).second)
+                    ASSERT(false) << "Alias " << alias << " already bound to " << keywordArguments_[alias].first->name();
             }
         }
 
@@ -582,7 +631,7 @@ HELPERS_NAMESPACE_BEGIN
          */
         void parseCommandLine(int argc, char * argv[]) {
             for (auto i : keywordArguments_)
-                i.second->updated_ = false;
+                i.second.first->updated_ = false;
             for (auto i : positionalArguments_)
                 i->updated_ = false;
             try {
@@ -649,23 +698,28 @@ HELPERS_NAMESPACE_BEGIN
                         }
                     }
                 }
-                if (argValue == nullptr && arg->second->cmdArgRequiresValue()) {
-                    if (++i == argc)
-                        THROW(ArgumentError()) << "Argument " << arg->second->name() << " value not provided";
-                    argValue = argv[i];
+                // If there is no value provided as part of the argument after `=` then if the argument has default value, its default value is used, otherwise the following argument is used as the value in its entirety. If there is no following argument, an error is thrown that a value is required.
+                if (argValue == nullptr) {
+                    if (arg->second.second != nullptr) {
+                        argValue = arg->second.second->c_str();
+                    } else {
+                        if (++i == argc)
+                            THROW(ArgumentError()) << "Argument " << arg->second.first->name() << " value not provided";
+                        argValue = argv[i];
+                    }
                 }
                 // parse the value
-                updateArgument(arg->second, argValue, occurences);
+                updateArgument(arg->second.first, argValue, occurences);
                 ++i;
-                if (lastArgument_ == arg->second) {
+                if (lastArgument_ == arg->second.first) {
                     while (i < argc) 
-                        updateArgument(arg->second, argv[i++], occurences);
+                        updateArgument(arg->second.first, argv[i++], occurences);
                 }
             }
         }
 
-        /* registered command line arguments */
-        std::unordered_map<std::string, JSONConfig *> keywordArguments_;
+        /* registered command line arguments (name -> (arg, default value))*/
+        std::unordered_map<std::string, std::pair<JSONConfig *, std::string *>> keywordArguments_;
 
         std::vector<JSONConfig*> positionalArguments_;
 
@@ -704,11 +758,6 @@ HELPERS_NAMESPACE_BEGIN
             update(JSON{true});
         else
             update(JSON{value});
-    }
-
-    template<>
-    inline bool JSONConfig::Property<bool>::cmdArgRequiresValue() const {
-        return false;
     }
 
     template<>

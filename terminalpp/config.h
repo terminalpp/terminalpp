@@ -185,15 +185,9 @@ namespace tpp {
             application,
             "Application specific settings",
             CONFIG_PROPERTY(
-                checkProfileShortcuts,
+                detectSessionsAtStartup,
                 "If true, checks that profile shortcuts (if supported on given platform) will be updated at every startup",
                 JSON{true},
-                bool
-            );
-            CONFIG_PROPERTY(
-                useCwdForSessions,
-                "If true, session's working directories are ignored and the current working directory is used instead",
-                JSON{false},
                 bool
             );
         );
@@ -420,12 +414,18 @@ namespace tpp {
         CONFIG_ARRAY(
             sessions, 
             "List of known sessions",
-            DefaultSessions,
+            JSON::Array(),
             CONFIG_PROPERTY(
                 name,
                 "Name of the session",
                 JSON{""},
                 std::string
+            );
+            CONFIG_PROPERTY(
+                hidden,
+                "Can hide the session from menus, such as the jumplist. Hidden session can still be explicitly started via the --session argument",
+                JSON{false},
+                bool
             );
 			CONFIG_PROPERTY(
 				pty,
@@ -560,30 +560,34 @@ namespace tpp {
             addArgument(renderer.font.size, {"--font-size"});
             addArgument(renderer.window.cols, {"--cols", "-c"});
             addArgument(renderer.window.rows, {"--rows", "-r"});
-            addArgument(application.useCwdForSessions, {"-cwd"});
+            //addArgument(application.useCwdForSessions, {"-cwd"}, "true");
             addArgument(defaultSession, {"--session"});
             // create new empty session that we use to store the pty and command arguments so that they are matched the same way
-            sessions_entry & cmdSession = sessions.addElement();
+            sessions_entry & cmdSession = sessions.addElement(JSON::Object());
             addArgument(cmdSession.command, {"-e"});
             setLastArgument(cmdSession.command);
             addArgument(cmdSession.pty, {"--pty"});
+            addArgument(cmdSession.workingDirectory, {"--here"}, "");
             // parse the arguments
             CmdArgsRoot::parseCommandLine(argc, argv);
             // if any of the session arguments are overriden, create proper session this time, initialize it with default session (now reflecting the --session argument value, if any)
             // this is by no means efficient, but since its done only once at startup, we don't really care
-            if (cmdSession.pty.updated() || cmdSession.command.updated()) {
+            if (cmdSession.pty.updated() || cmdSession.command.updated() || cmdSession.workingDirectory.updated()) {
                 sessions_entry & base = sessionByName(defaultSession());
-                sessions_entry & session = sessions.addElement();
-                // copy base to the session 
-                session.set(base.toJSON());
+                sessions_entry & session = sessions.addElement(base.toJSON());
+                // copy base to the session and make sure it won't appear menus
+                session.hidden.set(JSON{true});
                 // if the pty was explicitly updated, propagate to the new session, otherwise reset whatever pty was there to local
                 if (cmdSession.pty.updated())
                     session.pty.set(cmdSession.pty.toJSON());
-                else
+                else if (cmdSession.command.updated())
                     session.pty.set(JSON{"local"});
                 // copy the changed command line values
                 if (cmdSession.command.updated())
                     session.command.set(cmdSession.command.toJSON());
+                // copy the working directory
+                if (cmdSession.workingDirectory.updated())
+                    session.workingDirectory.set(cmdSession.workingDirectory.toJSON());
                 // set the session name and set it as default session 
                 JSON name{"command-line-override"};
                 defaultSession.set(name);
@@ -595,6 +599,12 @@ namespace tpp {
     private:
 
         static void VerifyConfigurationVersion(JSON & userConfig);
+
+        /** Patches the sessions list with autodetected sessions.
+         */
+        bool patchSessions();
+
+        bool addSession(JSON const & session);
 
 		/** \name Default value providers
 		 
@@ -611,7 +621,7 @@ namespace tpp {
 
 		static JSON DefaultDoubleWidthFontFamily();
 
-        static JSON DefaultSessions();
+        //static JSON DefaultSessions();
 
         //@}
 
@@ -626,25 +636,25 @@ namespace tpp {
          
             `cmd.exe` is expected to be installed on every Windows computer so is added without check. 
          */
-        static void Win32AddCmdExe(JSON & sessions, std::string & defaultSessionName);
+        void win32AddCmdExe(std::string & defaultSessionName, bool & updated);
 
         /** Adds the powershell session to the list of sessions and sets it as default. 
          
             `powershell` is expected to be installed on every Windows computer so is added without check. 
          */
-        static void Win32AddPowershell(JSON & sessions, std::string & defaultSessionName);
+        void win32AddPowershell(std::string & defaultSessionName, bool & updated);
 
         /** Adds sessions for WSL distributions and sets the default WSL distro as default session. 
          
             The presence of WSL and its distributions and their names is checked as it's an optional feature. 
          */
-        static void Win32AddWSL(JSON & sessions, std::string & defaultSessionName);
+        void win32AddWSL(std::string & defaultSessionName, bool & updated);
 
         /** Adds sessions for msys2, if found.
          
             Does not set msys2 as the default session. The msys2 session specifications are taken from  https://www.msys2.org/docs/terminals/.
          */
-        static void Win32AddMsys2(JSON & sessions, std::string & defaultSessionName);
+        void win32AddMsys2(std::string & defaultSessionName, bool & updated);
 
     #endif
 

@@ -5,6 +5,7 @@
 - MSIX installer as default distribution channel on Windows, Windows Store listing
 - proper single-thread UI - complete rewrite, simpler & more robust UI
 - multiple sessions can be specified in the configuration and switched with `--session` command-line argument
+- common session types can be autodetected & updated on each startup
 - improved Qt support (QWidget instead of QWindow-based renderer) (issue #10)
 - alternate zoom shortcuts (`C-S--` and `C-S-=`)
 - ropen can be interrupted gracefully
@@ -22,10 +23,6 @@
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
-
-- add `--here` cmd arg that overwrites the default directory for launched session
-
-- add option to re-check sessions at startup and update the jumplist
 
 - see if msys can be added to bypass
 
