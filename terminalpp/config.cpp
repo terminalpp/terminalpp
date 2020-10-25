@@ -5,8 +5,6 @@
 #include "application.h"
 #include "config.h"
 
-
-
 namespace tpp { 
 
     Config & Config::Setup(int argc, char * argv[]) {

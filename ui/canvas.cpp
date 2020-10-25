@@ -82,7 +82,7 @@ namespace ui {
                     c.setFg(color.blendOver(c.fg()));
                     c.setBg(color.blendOver(c.bg()));
                     c.setDecor(color.blendOver(c.decor()));
-                    c.setBorder(c.border().clear());
+                    c.border().setColor(color.blendOver(c.border().color()));
                 }
             }
         }

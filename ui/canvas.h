@@ -395,7 +395,11 @@ namespace ui {
         /** \name Border. 
          */
         //@{
-        Border border() const {
+        Border const & border() const {
+            return border_;
+        }
+
+        Border & border() {
             return border_;
         }
 
