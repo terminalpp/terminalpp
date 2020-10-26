@@ -466,8 +466,6 @@ namespace ui {
         }
     }
 
-
-
     // Input Processing
 
     size_t AnsiTerminal::received(char * buffer, char const * bufferEnd) {
@@ -1068,7 +1066,7 @@ namespace ui {
                      */
                     case 'r':
                         seq.setDefault(0, 1); // inclusive
-                        seq.setDefault(1, cursorPosition().y()); // inclusive
+                        seq.setDefault(1, state_->buffer.height()); // inclusive
                         if (seq.numArgs() != 2)
                             break;
                         // This is not proper 
