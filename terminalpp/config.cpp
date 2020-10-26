@@ -239,16 +239,19 @@ namespace tpp {
             std::vector<std::string> distributions;
             //size_t defaultIndex = 0;
             for (size_t i = 1, e = lines.size(); i != e; ++i) {
-                if (EndsWith(lines[i], "(Default)")) {
-                    std::string sessionName = Split(lines[i], " ")[0];
-                    // skip docker distributions
-                    if (sessionName == "docker-desktop" || sessionName == "docker-desktop-data")
-                        continue;
-                    defaultSession = sessionName;
-                    distributions.push_back(sessionName);
-                } else {
-                    distributions.push_back(lines[i]);
+                bool isDefault = false;
+                std::string sessionName = lines[i];
+                if (EndsWith(sessionName, "(Default)")) {
+                    sessionName = Split(sessionName, " ")[0];
+                    isDefault = true;
                 }
+                // skip docker distributions
+                if (sessionName == "docker-desktop" || sessionName == "docker-desktop-data")
+                    continue;
+                // set the session as default if appropriate
+                if (isDefault)
+                    defaultSession = sessionName;
+                distributions.push_back(sessionName);
             }
             // if we found no distributions, return
             if (distributions.empty())
