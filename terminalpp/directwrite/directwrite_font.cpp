@@ -70,7 +70,7 @@ namespace tpp {
         // find the required font family - first get the index then obtain the family by the index
         UINT32 findex;
         BOOL fexists;
-        std::string fnameUTF8{font.doubleWidth() ? tpp::Config::Instance().renderer.font.doubleWidthFamily() : tpp::Config::Instance().renderer.font.family()};
+        std::string fnameUTF8{tpp::Config::Instance().familyForFont(font)};
         utf16_string fname{UTF8toUTF16(fnameUTF8)};
         app->systemFontCollection_->FindFamilyName(fname.c_str(), &findex, &fexists);
         if (! fexists) {

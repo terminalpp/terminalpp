@@ -165,11 +165,24 @@ namespace ui {
             return boldIsBright_;
         }
 
+        /** Sets whether bold text is rendered with bright colors automatically. 
+         
+            The update does not have an immediate effect and the buffer has to be reloaded for the setting to take effect. 
+         */
         virtual void setBoldIsBright(bool value = true) {
-            if (boldIsBright_ != value) {
-                boldIsBright_ = value;
-                repaint();
-            }
+            boldIsBright_ = value;
+        }
+
+        bool displayBold() const {
+            return displayBold_;
+        }
+
+        /** Determines whether bold text is rendered with bold or normal font. 
+         
+            The update does not have an immediate effect and the buffer has to be reloaded for the setting to take effect. 
+         */
+        virtual void setDisplayBold(bool value = true) {
+            displayBold_ = value;
         }
 
         Color inactiveCursorColor() const {
@@ -300,6 +313,9 @@ namespace ui {
 
         /** If true, bold font means bright colors too. */
         bool boldIsBright_ = false;
+
+        /** If true, bold font will be displayed. */
+        bool displayBold_ = true;
 
         /** Determines whether alternate mode is active or not. */
         bool alternateMode_ = false;
@@ -527,6 +543,11 @@ namespace ui {
         int scrollStart{0};
         int scrollEnd;
         bool inverseMode = false;
+
+        /** When bold is bright *and* bold is not displayed this is the only way to determine whether to use bright colors because the cell's font is not bold. 
+         */
+        bool bold = false;
+
 
     protected:
         Point lastCharacter_;

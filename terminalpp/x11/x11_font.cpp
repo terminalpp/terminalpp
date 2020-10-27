@@ -13,7 +13,7 @@ namespace tpp {
         // get the font pattern 
         pattern_ = FcPatternCreate();
         FcPatternAddBool(pattern_, FC_SCALABLE, FcTrue);
-        FcPatternAddString(pattern_, FC_FAMILY, pointer_cast<FcChar8 const *>(font.doubleWidth() ? tpp::Config::Instance().renderer.font.doubleWidthFamily().c_str() : tpp::Config::Instance().renderer.font.family().c_str()));
+        FcPatternAddString(pattern_, FC_FAMILY, pointer_cast<FcChar8 const *>(tpp::Config::Instance().familyForFont(font).c_str()));
         FcPatternAddInteger(pattern_, FC_WEIGHT, font.bold() ? FC_WEIGHT_BOLD : FC_WEIGHT_NORMAL);
         FcPatternAddInteger(pattern_, FC_SLANT, font.italic() ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
         FcPatternAddDouble(pattern_, FC_PIXEL_SIZE, fontSize_.height());

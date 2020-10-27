@@ -1268,12 +1268,15 @@ namespace ui {
                                .setDecor(palette_->defaultForeground()) 
                                .setBg(palette_->defaultBackground())
                                .setFont(Font{});
+                    state_->bold = false;
                     state_->inverseMode = false;
                     LOG(SEQ) << "font fg bg reset";
 					break;
 				/* Bold / bright foreground. */
 				case 1:
-					state_->cell.font().setBold();
+                    state_->bold = true;
+                    if (displayBold_)
+					    state_->cell.font().setBold();
 					LOG(SEQ) << "bold set";
 					break;
 				/* faint font (light) - won't support for now, though in theory we easily can. */
@@ -1313,11 +1316,13 @@ namespace ui {
 				/* Bold off */
 				case 21:
 					state_->cell.font().setBold(false);
+                    state_->bold = false;
 					LOG(SEQ) << "bold off";
 					break;
 				/* Normal - neither bold, nor faint. */
 				case 22:
 					state_->cell.font().setBold(false).setItalic(false);
+                    state_->bold = false;
 					LOG(SEQ) << "normal font set";
 					break;
 				/* Italic off. */
@@ -1382,7 +1387,7 @@ namespace ui {
 				default:
 					if (seq[i] >= 30 && seq[i] <= 37) {
                         int colorIndex = seq[i] - 30;
-                        if (boldIsBright_ && state_->cell.font().bold())
+                        if (boldIsBright_ && state_->bold)
                             colorIndex += 8;
 						state_->cell.setFg(palette_->at(colorIndex))
                                    .setDecor(palette_->at(colorIndex));

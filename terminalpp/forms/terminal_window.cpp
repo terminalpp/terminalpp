@@ -25,6 +25,7 @@ namespace tpp {
         si->terminal = new AnsiTerminal{pty, session.palette()};
         si->terminal->setMaxHistoryRows(config.renderer.window.historyLimit());
         si->terminal->setBoldIsBright(config.sequences.boldIsBright());
+        si->terminal->setDisplayBold(config.sequences.displayBold());
         si->terminal->setInactiveCursorColor(session.cursor.inactiveColor());
         /*
         si->terminal->setDefaultCursor(session.cursor());

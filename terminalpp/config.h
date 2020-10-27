@@ -92,7 +92,9 @@ inline ui::AnsiTerminal::Palette JSONConfig::FromJSON(JSON const & json) {
     for (auto c : json) {
         if (c.kind() != JSON::Kind::String) 
             THROW(JSONError()) << "Element items must be HTML colors, but " << c.kind() << " found";
-        result[i] = ui::Color::FromHTML(c.toString());
+        // empty colors are skipped in the color configuration, leaving their default values
+        if (! c.toString().empty())
+            result[i] = ui::Color::FromHTML(c.toString());
         ++i;
     }
     return result;
@@ -232,9 +234,21 @@ namespace tpp {
                     std::string
                 );
                 CONFIG_PROPERTY(
+                    boldFamily,
+                    "Font to render bold characters, if different from normal font",
+                    JSON{""},
+                    std::string
+                );
+                CONFIG_PROPERTY(
                     doubleWidthFamily,
                     "Font to render double width characters",
                     DefaultDoubleWidthFontFamily,
+                    std::string
+                );
+                CONFIG_PROPERTY(
+                    doubleWidthBoldFamily,
+                    "Font to render bold double width characters, if different from doubleWidth font",
+                    JSON{""},
                     std::string
                 );
                 CONFIG_PROPERTY(
@@ -312,6 +326,12 @@ namespace tpp {
                 "If true, bold text is rendered in bright colors.",
                 JSON{true},
                 bool
+            );
+            CONFIG_PROPERTY(
+                displayBold,
+                "If true bold font will be used when appropriate.",
+                JSON{true},
+                bool                
             );
         );
         CONFIG_OBJECT(
@@ -548,6 +568,20 @@ namespace tpp {
                 if (sessions[i].name() == sessionName)
                     return sessions[i];
             THROW(Exception()) << "Session " << sessionName << " not found";
+        }
+
+        std::string familyForFont(ui::Font font) const {
+            if (font.doubleWidth()) {
+                if (font.bold() && renderer.font.doubleWidthBoldFamily.updated())
+                    return renderer.font.doubleWidthBoldFamily();
+                else   
+                    return renderer.font.doubleWidthFamily();
+            } else {
+                if (font.bold() && renderer.font.boldFamily.updated())
+                    return renderer.font.boldFamily();
+                else   
+                    return renderer.font.family();
+            }
         }
 
     protected:

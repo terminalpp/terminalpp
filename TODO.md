@@ -19,6 +19,9 @@
 - `--session`, `--pty` and `-e` command line arguments can be used together
 - more robust opening of local files (including settings.json)
 - ability to update character and line spacing (`renderer.font.(char|line)Spacing`)
+- colors in palette settings can be left empty ("") for default values when skipping their definition
+- rendering bold fonts can be disabled 
+- bold font can be specified separately (renderer.font.boldFamily and renderer.font.doubleWidthBoldFamily)
 
 ### TODO
 
