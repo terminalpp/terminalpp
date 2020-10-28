@@ -157,7 +157,7 @@ HELPERS_NAMESPACE_BEGIN
 		void start() {
 			std::lock_guard<std::mutex> g(data_->m);
 			if (data_->running)
-			    ++data_->threadId;
+			    data_->threadId = data_->threadId + 1;
 			size_t tid = data_->threadId;
 			data_->attach();
 			Data * data = data_;
@@ -195,7 +195,7 @@ HELPERS_NAMESPACE_BEGIN
 		void stop() {
 			std::lock_guard<std::mutex> g(data_->m);
 			if (data_->running)
-			    ++data_->threadId;
+			    data_->threadId = data_->threadId + 1;
 		}
 
 	private:

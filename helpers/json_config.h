@@ -326,11 +326,11 @@ HELPERS_NAMESPACE_BEGIN
                 return *this;
             }
 
-            bool operator == (ConstIterator & other) const {
+            bool operator == (ConstIterator const & other) const {
                 return i_ == other.i_;
             }
 
-            bool operator != (ConstIterator & other) const {
+            bool operator != (ConstIterator const & other) const {
                 return i_ != other.i_;
             }
 
