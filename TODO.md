@@ -1,27 +1,7 @@
 ﻿The following is very short description of the versions planned and their main new features. There are no set release dates, a release will happen once the planned features are implemented and tested a bit.
 
-## Next version: 0.8
+## Next version:
 
-- MSIX installer as default distribution channel on Windows, Windows Store listing
-- proper single-thread UI - complete rewrite, simpler & more robust UI
-- multiple sessions can be specified in the configuration and switched with `--session` command-line argument
-- common session types can be autodetected & updated on each startup
-- improved Qt support (QWidget instead of QWindow-based renderer) (issue #10)
-- alternate zoom shortcuts (`C-S--` and `C-S-=`)
-- ropen can be interrupted gracefully
-- fixed issue #20, `--cols` and `--rows` arguments & settings work now
-- fixed issue #21, Device Status Report sequence support
-- added option to specifyu clipboard setting behavior (#23)
-- scrollbars in linux do not obscure text underneath (#11)
-- default foreground and background colors inserted directly and they do not have to be from the palette, as a side-effect, transparent background is supported on X11
-- profiles added to jumplist on Windows 
-- per session working directory specification
-- `--session`, `--pty` and `-e` command line arguments can be used together
-- more robust opening of local files (including settings.json)
-- ability to update character and line spacing (`renderer.font.(char|line)Spacing`)
-- colors in palette settings can be left empty ("") for default values when skipping their definition
-- rendering bold fonts can be disabled 
-- bold font can be specified separately (renderer.font.boldFamily and renderer.font.doubleWidthBoldFamily)
 
 ### TODO
 
