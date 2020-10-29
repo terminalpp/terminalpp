@@ -61,7 +61,20 @@ namespace tpp {
             ASSERT(rt_ != nullptr);
             D2D1_SIZE_U size = D2D1::SizeU(width, height);
             rt_->Resize(size);
-            RendererWindow::windowResized(width, height);
+
+            // redo the window's window resized here as we need to adjust the col & row size based on the dpiFactor
+            if (width != sizePx_.width() || height != sizePx_.height()) {
+                sizePx_ = Size{width, height};
+                // tell the renderer to resize 
+                resize(Size{
+                    static_cast<int>(width / dpiFactor_ / cellSize_.width()), 
+                    static_cast<int>(height / dpiFactor_ / cellSize_.height())
+                });
+            }
+        }
+
+        Point pixelsToCoords(Point xy) {
+            return RendererWindow::pixelsToCoords(xy / dpiFactor_);
         }
 
         /** Enable mouse tracking so that the mouseOut event is properly reported. 
@@ -331,6 +344,10 @@ namespace tpp {
 
         /* Window handle. */
         HWND hWnd_;
+
+        /** The DPI factor of the window so that different dpi levels can be used. (the base cell size has to be multipled by this to determine the real cell size. Real numbers are used to match for subpixel rendering)
+         */
+        double dpiFactor_;
 
         /* Window placement to which the window should be returned when fullscreen mode is toggled off. */
         WINDOWPLACEMENT wndPlacement_;

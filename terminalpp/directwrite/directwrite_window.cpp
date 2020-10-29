@@ -115,6 +115,9 @@ namespace tpp {
         glyphAdvances_{nullptr},
         glyphOffsets_{nullptr},
         mouseLeaveTracked_{false} {
+        // determine the system DPI and adjust the desired window size in pixels accordingly (larger text settings will increase the real window size in pixels)
+        dpiFactor_ = GetDpiForSystem() / 96.0;
+        sizePx_ = sizePx_ * dpiFactor_;
         // create the window with given title
         utf16_string t = UTF8toUTF16(title);
         hWnd_ = CreateWindowExW(
@@ -263,27 +266,30 @@ namespace tpp {
 				if (window != nullptr)
     				window->focusOut();
 				break;
-			/* Called when the window is resized interactively by the user. Makes sure that the window size snaps to discrete terminal sizes. */
+			/* Called when the window is resized interactively by the user. Makes sure that the window size snaps to discrete terminal sizes. 
+            
+            We must take into account the DPI current DPI system settings that may increase the real cell size. 
+            */
 			case WM_SIZING: {
 				RECT* winRect = reinterpret_cast<RECT*>(lParam);
 				switch (wParam) {
                     case WMSZ_BOTTOM:
                     case WMSZ_BOTTOMRIGHT:
                     case WMSZ_BOTTOMLEFT:
-                        winRect->bottom -= (winRect->bottom - winRect->top - window->frameHeight_) % window->cellSize_.height();
+                        winRect->bottom -= (winRect->bottom - winRect->top - window->frameHeight_) % static_cast<int>(window->cellSize_.height() * window->dpiFactor_);
                         break;
                     default:
-                        winRect->top += (winRect->bottom - winRect->top - window->frameHeight_) % window->cellSize_.height();
+                        winRect->top += (winRect->bottom - winRect->top - window->frameHeight_) % static_cast<int>(window->cellSize_.height() * window->dpiFactor_);
                         break;
 				}
 				switch (wParam) {
                     case WMSZ_RIGHT:
                     case WMSZ_TOPRIGHT:
                     case WMSZ_BOTTOMRIGHT:
-                        winRect->right -= (winRect->right - winRect->left - window->frameWidth_) % window->cellSize_.width();
+                        winRect->right -= (winRect->right - winRect->left - window->frameWidth_) % static_cast<int>(window->cellSize_.width() * window->dpiFactor_);
                         break;
                     default:
-                        winRect->left += (winRect->right - winRect->left - window->frameWidth_) % window->cellSize_.width();
+                        winRect->left += (winRect->right - winRect->left - window->frameWidth_) % static_cast<int>(window->cellSize_.width() * window->dpiFactor_);
                         break;
 				}
 				break;

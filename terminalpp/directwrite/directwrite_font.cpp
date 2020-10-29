@@ -128,14 +128,13 @@ namespace tpp {
 
     void DirectWriteFont::initializeFromFontFace() {
         // now we need to determine the dimensions of single character, which is relatively involved operation, so first we get the dpi and font metrics
-        FLOAT dpiY = static_cast<FLOAT>(GetDpiForSystem());
         DWRITE_FONT_METRICS metrics;
         fontFace_->GetMetrics(&metrics);
-        // the em size is size in pixels divided by (DPI / 96)
+        // keep the em size as is so that the terminal really scales the font size with the rest
         // https://docs.microsoft.com/en-us/windows/desktop/LearnWin32/dpi-and-device-independent-pixels
         // determine the font height in pixels, which is the cell height times the height of the font
         // increase the cell height and width by the font size
-        sizeEm_ = fontSize_.height() / (dpiY / 96);
+        sizeEm_ = static_cast<float>(fontSize_.height()); 
         // we have to adjust this number for the actual font metrics
         sizeEm_ = sizeEm_ * metrics.designUnitsPerEm / (metrics.ascent + metrics.descent + metrics.lineGap);
         // now we have to determine the height of a character, which we can do via glyph metrics

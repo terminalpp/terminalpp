@@ -61,6 +61,24 @@ namespace ui {
             return *this;
         }
 
+        Point operator * (int by) const {
+            return Point{x_ * by, y_ * by};
+        }
+
+        Point operator / (int by) const {
+            return Point{x_ / by, y_ / by};
+        }
+
+        Point operator * (double by) const {
+            return Point{static_cast<int>(x_ * by), static_cast<int>(y_ * by)};
+        }
+
+        Point operator / (double by) const {
+            return Point{static_cast<int>(x_ / by), static_cast<int>(y_ / by)};
+        }
+
+
+
         Point operator + (Point const & other) const {
             return Point{x_ + other.x_, y_ + other.y_};
         }
@@ -153,6 +171,10 @@ namespace ui {
 
         friend Size operator * (Size const & size, double by) {
             return Size{static_cast<int>(size.width_ * by), static_cast<int>(size.height_ * by)};
+        }
+
+        friend Size operator / (Size const & size, double by) {
+            return Size{static_cast<int>(size.width_ / by), static_cast<int>(size.height_ / by)};
         }
 
     private:
