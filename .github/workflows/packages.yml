@@ -223,113 +223,143 @@ jobs:
     # and upload the artifacts - first terminalpp windows
     - name: upload-terminalpp-msi
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/terminalpp.msi
+        asset_path: ./artifacts/terminalpp.msi/terminalpp.msi
         asset_name: terminalpp.msi
         asset_content_type: application/octet-stream
     - name: upload-terminalpp-msix
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/terminalpp.msix
+        asset_path: ./artifacts/terminalpp.msix/terminalpp.msix
         asset_name: terminalpp.msix
         asset_content_type: application/octet-stream
     # upload terminalpp linux binaries
     - name: upload-terminalpp-deb
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/terminalpp.deb
+        asset_path: ./artifacts/terminalpp.deb/terminalpp.deb
         asset_name: terminalpp.deb
         asset_content_type: application/octet-stream
     - name: upload-terminalpp-rpm
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/terminalpp.rpm
+        asset_path: ./artifacts/terminalpp.rpm/terminalpp.rpm
         asset_name: terminalpp.rpm
         asset_content_type: application/octet-stream
     - name: upload-terminalpp-snap
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/terminalpp.snap
+        asset_path: ./artifacts/terminalpp.snap/terminalpp.snap
         asset_name: terminalpp.snap
         asset_content_type: application/octet-stream
     # upload terminalpp linux source packages
     - name: upload-terminalpp-src-rpm
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/terminalpp.src.rpm
+        asset_path: ./artifacts/terminalpp.src.rpm/terminalpp.src.rpm
         asset_name: terminalpp.src.rpm
         asset_content_type: application/octet-stream
     # upload terminalpp macOS bundle
     - name: upload-terminalpp-macos-zip
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/terminalpp.zip
+        asset_path: ./artifacts/terminalpp-macos.zip/terminalpp.zip
         asset_name: terminalpp-macos.zip
         asset_content_type: application/zip
     # upload ropen linux binaries
     - name: upload-ropen-deb
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/ropen.deb
+        asset_path: ./artifacts/ropen.deb/ropen.deb
         asset_name: ropen.deb
         asset_content_type: application/octet-stream
     - name: upload-ropen-rpm
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/ropen.rpm
+        asset_path: ./artifacts/ropen.rpm/ropen.rpm
         asset_name: ropen.rpm
         asset_content_type: application/octet-stream
     - name: upload-ropen-snap
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/ropen.snap
+        asset_path: ./artifacts/ropen.snap/ropen.snap
         asset_name: ropen.snap
         asset_content_type: application/octet-stream
     # upload ropen linux source packages
     - name: upload-ropen-src-rpm
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/ropen.src.rpm
+        asset_path: ./artifacts/ropen.src.rpm/ropen.src.rpm
         asset_name: ropen.src.rpm
         asset_content_type: application/octet-stream
     # upload bypass WSL binaries
     - name: upload-bypass-ubuntu-18.04
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/tpp-bypass
+        asset_path: ./artifacts/tpp-bypass-ubuntu-18.04/tpp-bypass
         asset_name: tpp-bypass-ubuntu-18.04
         asset_content_type: application/octet-stream
     - name: upload-bypass-ubuntu-20.04
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/tpp-bypass
+        asset_path: ./artifacts/tpp-bypass-ubuntu-20.04/tpp-bypass
         asset_name: tpp-bypass-ubuntu-20.04
         asset_content_type: application/octet-stream
     - name: upload-bypass-debian
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/tpp-bypass
+        asset_path: ./artifacts/tpp-bypass-debian/tpp-bypass
         asset_name: tpp-bypass-debian
         asset_content_type: application/octet-stream
     - name: upload-bypass-openSUSE-Leap-15-1
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/tpp-bypass
+        asset_path: ./artifacts/tpp-bypass-openSUSE-Leap-15-1/tpp-bypass
         asset_name: tpp-bypass-openSUSE-Leap-15-1
         asset_content_type: application/octet-stream
 
