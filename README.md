@@ -12,7 +12,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/terminalpp/tpp/badge.svg?branch=master)](https://coveralls.io/github/terminalpp/terminalpp?branch=master)
 
 
-> Please note that `terminalpp` is in an alpha stage and there may (and will) be rough edges. That said, it has been used by a few people as their daily driver with only minor issues. If you encounter a problem, please file an issue!
+> Please note that `terminalpp` is in beta stage and there may (and will) be rough edges. That said, it has been used by a few people as their daily driver with only minor issues. If you encounter a problem, please file an issue!
 
 This is the main development repository for the `terminalpp` and its suppport repositories. For more details about how to install `terminalpp` on your machine please visit the [homepage](https://terminalpp.com). This readme provides information on how to build the repository from source only. 
 
