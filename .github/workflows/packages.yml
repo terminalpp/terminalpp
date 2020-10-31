@@ -94,6 +94,9 @@ jobs:
     - name: install-snapcraft
       run: |
         sudo snap install snapcraft --classic
+        echo "${{ secrets.SNAPCRAFT }}" > snapcraft-credentials
+        snapcraft login --with snapcraft-credentials
+        rm snapcraft-credentials
     - name: install-packages
       run: |
         sudo apt install cmake libx11-dev libxft-dev g++
@@ -418,9 +421,9 @@ jobs:
     - name: install-snapcraft
       run: |
         sudo snap install snapcraft --classic
-        echo "${{ secrets.SNAPCRAFT_EDGE }}" > snapcraft-edge-login
-        snapcraft login --with snapcraft-edge-login
-        rm snapcraft-edge-login
+        echo "${{ secrets.SNAPCRAFT }}" > snapcraft-credentials
+        snapcraft login --with snapcraft-credentials
+        rm snapcraft-credentials
     # release terminalpp
     - name: get-terminalpp-snap
       uses: actions/download-artifact@v2
@@ -436,4 +439,4 @@ jobs:
         name: ropen.snap
     - name: release-snap-ropen
       run: |
-        sudo snapcraft upload --release=edge ropen.snap
+        snapcraft upload --release=edge ropen.snap
