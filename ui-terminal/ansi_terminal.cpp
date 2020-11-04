@@ -341,7 +341,7 @@ namespace ui {
             ++row;
             col = 0;
         }
-        return result.str();
+        return Trim(result.str());
     }
 
     // Terminal State 
