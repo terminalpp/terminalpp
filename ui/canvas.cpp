@@ -5,9 +5,12 @@
 
 namespace ui {
 
+    std::unordered_map<Canvas::Cell const *, Canvas::SpecialObject *> Canvas::SpecialObject::Objects_;
+    std::mutex Canvas::SpecialObject::MObjects_;
+
     Canvas::Canvas(Buffer & buffer, VisibleArea const & visibleArea, Size const & size):
         visibleArea_{visibleArea},
-        buffer_{& buffer}, 
+        buffer_{& buffer},
         size_{size} {
     }
 
@@ -64,6 +67,19 @@ namespace ui {
         return *this;
     }
 
+    Canvas & Canvas::drawFallbackBuffer(Buffer const & buffer, Point at) {
+        // calculate the target rectangle in the canvas and its intersection with the visible rectangle and offset it to the backing buffer coordinates
+        Rect r = (Rect{at, buffer.size()} & visibleArea_.rect()) + visibleArea_.offset();
+        // calculate the buffer offset for the input buffer
+        Point bufferOffset = at + visibleArea_.offset();
+        for (int row = r.top(), re = r.bottom(); row < re; ++row) {
+            for (int col = r.left(), ce = r.right(); col < ce; ++col) {
+                buffer_->at(col, row).stripSpecialObjectAndAssign(buffer.at(col - bufferOffset.x(), row - bufferOffset.y()));
+            }
+        }
+        return *this;
+    }
+
     Canvas & Canvas::fill(Rect const & rect, Color color) {
         Rect r = (rect & visibleArea_.rect()) + visibleArea_.offset();
         if (color.opaque()) {
@@ -106,6 +122,7 @@ namespace ui {
         for (; begin != end; ++begin) {
             if (vr.contains(x)) {
                 Cell & c = buffer_->at(x);
+                c.detachSpecialObject();
                 c.setFg(fg_);
                 c.setDecor(decor_);
                 c.setBg(bg_.blendOver(c.bg()));

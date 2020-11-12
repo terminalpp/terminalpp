@@ -14,8 +14,13 @@ namespace ui {
             return num_;
         }
 
-        std::string const & value() const {
-            return value_;
+        size_t numArgs() const {
+            return values_.size();
+        }
+
+        std::string const & operator [] (size_t index) const {
+            ASSERT(index < values_.size());
+            return values_[index];
         }
 
         bool valid() const {
@@ -33,18 +38,21 @@ namespace ui {
     private:
 
         int num_;
-        std::string value_;
+        std::vector<std::string> values_;
 
         static constexpr int INVALID = -1;
         static constexpr int INCOMPLETE = -2;
 
         friend std::ostream & operator << (std::ostream & s, OSCSequence const & seq) {
-            if (!seq.valid()) 
+            if (!seq.valid()) {
                 s << "Invalid OSC Sequence";
-            else if (!seq.complete()) 
+            } else if (!seq.complete()) {
                 s << "Incomplete OSC Sequence";
-            else 
-                s << "\x1b]" << seq.num() << ';' << seq.value();
+            } else {
+                s << "\x1b]" << seq.num();
+                for (auto & arg : seq.values_)
+                    s << ';' << arg;
+            }
             return s;
         }
 

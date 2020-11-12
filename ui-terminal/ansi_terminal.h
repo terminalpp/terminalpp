@@ -6,6 +6,7 @@
 #include "ui/canvas.h"
 
 #include "ui/mixins/selection_owner.h"
+#include "ui/special_objects/hyperlink.h"
 
 #include "tpp-lib/pty.h"
 #include "tpp-lib/pty_buffer.h"
@@ -82,6 +83,7 @@ namespace ui {
 
     public:
         VoidEvent onNotification;
+        StringEvent onHyperlink;
         StringEvent onTitleChange;
         StringEvent onClipboardSetRequest;
         TppSequenceEvent onTppSequence;
@@ -135,6 +137,24 @@ namespace ui {
         void mouseUp(MouseButtonEvent::Payload & e) override;
 
         void mouseWheel(MouseWheelEvent::Payload & e) override;
+
+        void mouseClick(MouseButtonEvent::Payload & e) override {
+            Widget::mouseClick(e);
+            if (e.active()) {
+                if (activeHyperlink_ != nullptr) {
+                    StringEvent::Payload p{activeHyperlink_->url()};
+                    onHyperlink(p, this);
+                }
+            }
+        }
+
+        void mouseOut(VoidEvent::Payload & e) override {
+            Widget::mouseOut(e);
+            if (activeHyperlink_ != nullptr) {
+                activeHyperlink_->setActive(false);
+                activeHyperlink_ = nullptr;
+            }
+        }
 
         unsigned encodeMouseButton(MouseButton btn, Key modifiers);
 
@@ -266,6 +286,34 @@ namespace ui {
         void deleteCharacters(unsigned num);
         void insertCharacters(unsigned num);
 
+        /** Returns the top offset of the terminal buffer in the currently drawed. 
+         */
+        int terminalBufferTop() {
+            ASSERT(bufferLock_.locked());
+            return alternateMode_ ? 0 : static_cast<int>(historyRows_.size());            
+        }
+
+        /** Converts the given widget coordinates to terminal buffer coordinates. 
+         */
+        Point toBufferCoords(Point const & widgetCoordinates) {
+            ASSERT(bufferLock_.locked());
+            return widgetCoordinates + scrollOffset() - Point{0, terminalBufferTop()};
+        }
+
+        /** Returns the cell at given coordinates. 
+         
+            The coordinates are adjusted for the scroll buffer and then either a terminal buffer, or history cell is returned. In case of history cells, it is possible that no cell exists at the coordinates if the particular line was terminated before, in which case nullptr is returned. 
+         */
+        Cell const * cellAt(Point widgetCoords);
+
+        /** Returns hyperlink attached to cell at given coordinates. 
+         
+            If there are no cells, at given coordinates, or no hyperlink present, returns nullptr.
+         */
+        Hyperlink * hyperlinkAt(Point widgetCoords) {
+            Cell const * cell = cellAt(widgetCoords);
+            return cell == nullptr ? nullptr : dynamic_cast<Hyperlink*>(cell->specialObject());
+        }
 
         void updateCursorPosition();
 
@@ -333,6 +381,13 @@ namespace ui {
         int maxHistoryRows_;
         std::deque<std::pair<int, Cell*>> historyRows_;
 
+        /** When hyperlink is parsed, this holds the special object and the offset of the next cell. If the hyperlink in progress is nullptr, then there is no hyperlink in progress and hyperlink offset has no meaning. 
+         */
+        Hyperlink::Ptr inProgressHyperlink_ = nullptr;
+
+        /** Hyperlink activated by mouse hover. 
+         */
+        Hyperlink::Ptr activeHyperlink_ = nullptr;
 
     //@}
 
@@ -447,10 +502,10 @@ namespace ui {
         /** Fills the entire terminal withe the given cell. 
          */
         void fill(Cell const& defaultCell) {
-            fillRow(0, defaultCell, 0, width());
-            for (int i = 1, e = height(); i < e; ++i)
-                memcpy(rows_[i], rows_[0], sizeof(Cell) * width());
+            for (int i = 0, e = height(); i < e; ++i)
+                fillRow(i, defaultCell, 0, width());
         }
+        
 
         void resize(Size size, Cell const & fill, std::function<void(Cell*, int)> addToHistory);
 

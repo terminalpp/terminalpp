@@ -1,4 +1,7 @@
 #include <functional>
+
+#include "helpers/memory.h"
+
 #include "ansi_terminal.h"
 
 /** Inside debug builds, end of line is highlighted by red border.
@@ -72,14 +75,14 @@ namespace ui {
 #endif
         Rect visibleRect{ccanvas.visibleRect()};
         std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-        int top = alternateMode_ ? 0 : static_cast<int>(historyRows_.size());
+        int top = terminalBufferTop();
         ccanvas.setBg(palette_->defaultBackground());
         // see if there are any history lines that need to be drawn
         for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); ; ++row) {
             if (row >= re)
                 break;
             for (int col = 0, ce = historyRows_[row].first; col < ce; ++col) {
-                ccanvas.at(Point{col, row}) = historyRows_[row].second[col];
+                ccanvas.at(Point{col, row}).stripSpecialObjectAndAssign(historyRows_[row].second[col]);
 #ifdef SHOW_LINE_ENDINGS
                 if (Buffer::IsLineEnd(historyRows_[row].second[col]))
                     ccanvas.setBorder(Point{col, row}, endOfLine);
@@ -87,15 +90,15 @@ namespace ui {
             }
             ccanvas.fill(Rect{Point{historyRows_[row].first, row}, Point{width(), row + 1}});
         }
-        // now draw the actual buffer
-        ccanvas.drawBuffer(state_->buffer, Point{0, top});
+        // TODO once we support sixels or other shared objects that might survive to the drawing stage, this function will likely change. 
+        ccanvas.drawFallbackBuffer(state_->buffer, Point{0, top});
 #ifdef  SHOW_LINE_ENDINGS
         // now add borders to the cells that are marked as end of line
-        for (int row = std::max(top, visibleRect.top()), re = visibleRect.bottom(); ; ++row) {
+        for (int row = std::max(top, visibleRect.top()), rs = row, re = visibleRect.bottom(); ; ++row) {
             if (row >= re)
                 break;
             for (int col = 0; col < width(); ++col) {
-                if (Buffer::IsLineEnd(const_cast<Buffer const &>(state_->buffer).at(Point{col, row - top})))
+                if (Buffer::IsLineEnd(const_cast<Buffer const &>(state_->buffer).at(Point{col, row - rs})))
                     ccanvas.setBorder(Point{col, row}, endOfLine);
             }
         }
@@ -176,13 +179,31 @@ namespace ui {
     void AnsiTerminal::mouseMove(MouseMoveEvent::Payload & e) {
         onMouseMove(e, this);
         if (e.active()) {
+            Point bufferCoords;
+            {
+                std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
+                bufferCoords = toBufferCoords(e->coords);
+                Hyperlink * a = hyperlinkAt(e->coords);
+                // if there is active hyperlink that is different from current special object, deactive it
+                if (activeHyperlink_ != nullptr && activeHyperlink_ != a) {
+                    activeHyperlink_->setActive(false);
+                    activeHyperlink_ = nullptr;
+                    repaint();
+                }
+                if (activeHyperlink_ == nullptr && a != nullptr) {
+                    activeHyperlink_ = a;
+                    activeHyperlink_->setActive(true);
+                    repaint();
+                }
+            }
             if (// the mouse movement should actually be reported
                 (mouseMode_ == MouseMode::All || (mouseMode_ == MouseMode::ButtonEvent && mouseButtonsDown_ > 0)) && 
                 // only send the mouse information if the mouse is in the range of the window
+                bufferCoords.y() >= 0 && 
                 Rect{size()}.contains(e->coords)) {
                     // mouse move adds 32 to the last known button press
-                    sendMouseEvent(mouseLastButton_ + 32, e->coords, 'M');
-                    LOG(SEQ) << "Mouse moved to " << e->coords;
+                    sendMouseEvent(mouseLastButton_ + 32, bufferCoords, 'M');
+                    LOG(SEQ) << "Mouse moved to " << e->coords << "(buffer coords " << bufferCoords << ")";
             } else {
                 SelectionOwner::mouseMove(e);
             }
@@ -194,9 +215,16 @@ namespace ui {
         onMouseDown(e, this);
         if (e.active()) {
             if (mouseMode_ != MouseMode::Off) {
-                mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
-                sendMouseEvent(mouseLastButton_, e->coords, 'M');
-                LOG(SEQ) << "Button " << e->button << " down at " << e->coords;
+                Point bufferCoords;
+                {
+                    std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
+                    bufferCoords = toBufferCoords(e->coords);
+                }
+                if (bufferCoords.y() >= 0) {
+                    mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
+                    sendMouseEvent(mouseLastButton_, bufferCoords, 'M');
+                    LOG(SEQ) << "Button " << e->button << " down at " << e->coords << "(buffer coords " << bufferCoords << ")";
+                }
             } else {
                 SelectionOwner::mouseDown(e);
             }
@@ -210,9 +238,16 @@ namespace ui {
             if (mouseButtonsDown_ > 0) {
                 --mouseButtonsDown_;
                 if (mouseMode_ != MouseMode::Off) {
-                    mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
-                    sendMouseEvent(mouseLastButton_, e->coords, 'm');
-                    LOG(SEQ) << "Button " << e->button << " up at " << e->coords;
+                    Point bufferCoords;
+                    {
+                        std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
+                        bufferCoords = toBufferCoords(e->coords);
+                    }
+                    if (bufferCoords.y() >= 0) {
+                        mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
+                        sendMouseEvent(mouseLastButton_, bufferCoords, 'm');
+                        LOG(SEQ) << "Button " << e->button << " up at " << e->coords << "(buffer coords " << bufferCoords << ")";
+                    }
                 } else {
                     SelectionOwner::mouseUp(e);
                 }
@@ -230,10 +265,17 @@ namespace ui {
                     scrollBy(Point{0, 1});
             } else {
                 if (mouseMode_ != MouseMode::Off) {
-                    // mouse wheel adds 64 to the value
-                    mouseLastButton_ = encodeMouseButton((e->by > 0) ? MouseButton::Left : MouseButton::Right, e->modifiers) + 64;
-                    sendMouseEvent(mouseLastButton_, e->coords, 'M');
-                    LOG(SEQ) << "Wheel offset " << e->by << " at " << e->coords;
+                    Point bufferCoords;
+                    {
+                        std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
+                        bufferCoords = toBufferCoords(e->coords);
+                    }
+                    if (bufferCoords.y() >= 0) {
+                        // mouse wheel adds 64 to the value
+                        mouseLastButton_ = encodeMouseButton((e->by > 0) ? MouseButton::Left : MouseButton::Right, e->modifiers) + 64;
+                        sendMouseEvent(mouseLastButton_, bufferCoords, 'M');
+                        LOG(SEQ) << "Wheel offset " << e->by << " at " << e->coords << "(buffer coords " << bufferCoords << ")";
+                    }
                 }
             }
         }
@@ -411,7 +453,8 @@ namespace ui {
             while (cols != 0) {
                 int xSize = std::min(width(), cols);
                 Cell * x = new Cell[xSize];
-                memcpy(x, i, sizeof(Cell) * xSize); 
+                // copy the cells one by one as they are PODs
+                MemCopy(x, i, xSize);
                 i += xSize;
                 cols -= xSize;
                 historyRows_.push_back(std::make_pair(xSize, x));
@@ -438,8 +481,8 @@ namespace ui {
                 rowSize = i.first;
             } else {
                 Cell * newRow = new Cell[rowSize + i.first];
-                memcpy(newRow, row, sizeof(Cell) * rowSize);
-                memcpy(newRow + rowSize, i.second, sizeof(Cell) * i.first);
+                MemCopy(newRow, row, rowSize);
+                MemCopy(newRow + rowSize, i.second, i.first);
                 rowSize += i.first;
                 delete [] i.second;
                 delete [] row;
@@ -463,6 +506,21 @@ namespace ui {
         } else {
             state_->resize(size, std::bind(&AnsiTerminal::addHistoryRow, this, std::placeholders::_1, std::placeholders::_2));
             stateBackup_->resize(size, nullptr);
+        }
+    }
+
+    AnsiTerminal::Cell const * AnsiTerminal::cellAt(Point widgetCoords) {
+        ASSERT(bufferLock_.locked());
+        Point coords = widgetCoords + scrollOffset();
+        int bufferTop = terminalBufferTop();
+        if (bufferTop <= coords.y()) {
+            coords -= Point{0, bufferTop};
+            return & const_cast<Buffer const &>(state_->buffer).at(coords);
+        } else {
+            auto const & row = historyRows_[coords.y()];
+            if (coords.x() >= row.first)
+                return nullptr;
+            return row.second + coords.x();
         }
     }
 
@@ -545,22 +603,24 @@ namespace ui {
             codepoint = LineDrawingChars_[codepoint-0x6a];
         LOG(SEQ) << "codepoint " << codepoint << " " << static_cast<char>(codepoint & 0xff);
         updateCursorPosition();
-        // set the cell state
-        //Cell & cell = state_->buffer.set(cursorPosition(), state_->cell, codepoint);
+        // set the cell according to the codepoint and current settings. If there is an active hyperlink, the hyperlink is first attached to the cell and then new cell is added to the hyperlink fallback 
         Cell & cell = state_->buffer.at(cursorPosition());
         cell = state_->cell;
+        // attach hyperlink special object, of one is active
+        if (inProgressHyperlink_ != nullptr)
+            cell.attachSpecialObject(inProgressHyperlink_);
         cell.setCodepoint(codepoint);
-        // advance cursor's column
-        setCursorPosition(cursorPosition() + Point{1, 0});
-
         // what's left is to deal with corner cases, such as larger fonts & double width characters
         int columnWidth = Char::ColumnWidth(codepoint);
-
         // if the character's column width is 2 and current font is not double width, update to double width font
         if (columnWidth == 2 && ! cell.font().doubleWidth()) {
             //columnWidth = 1;
             cell.font().setDoubleWidth(true);
         }
+
+        // advance cursor's column
+        setCursorPosition(cursorPosition() + Point{1, 0});
+
 
         // TODO do double width & height characters properly for the per-line 
 
@@ -1216,6 +1276,9 @@ namespace ui {
 				 */
 				case 47:
 				case 1049: 
+                    // TODO or should the hyperlink be per buffer so that we can resume when we get back? My thinking is that the app should ensure that buffer does not chsnge while hyperlink is in progress
+                    // clear any active hyperlinks
+                    inProgressHyperlink_ = nullptr;
                     if (alternateMode_ != value) {
                         // if the selection update was in progress, cancel it. If the selection is not empty, clear it - this has to be an UI event as clearSelection is UI action
                         schedule([this](){
@@ -1445,9 +1508,11 @@ namespace ui {
              */
             case 0:
             case 2: {
-    			LOG(SEQ) << "Title change to " << seq.value();
-                schedule([this, title = seq.value()](){
-                    StringEvent::Payload p(title);
+                if (seq.numArgs() != 1)
+                    break;
+    			LOG(SEQ) << "Title change to " << seq[0];
+                schedule([this, title = seq[0]](){
+                    StringEvent::Payload p{title};
                     onTitleChange(p, this);
                 });
                 return;
@@ -1460,11 +1525,36 @@ namespace ui {
                 // TODO do we want to support this? Not ATM...
                 return;
             }
+            /** OSC 8 - Hyperlink
+             
+                The supported format is `OSC 8 ; params ; url ST`, however we can safely ignore the id as that functionality is provided via the special object created and associated with the cells. 
+
+                When url is non-empty, new hyperlink is created and opened. Empty url (and empty params) then close the link and returns to normal mode. 
+
+                For more details, see: https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda or similar
+             */
+            case 8: {
+                if (seq.numArgs() == 2) {
+                    if (! seq[1].empty()) {
+                        if (inProgressHyperlink_ != nullptr)
+                            LOG(SEQ_ERROR) << "Unterminaled hyperlink to url " << inProgressHyperlink_->url();
+                        LOG(SEQ) << "hyperlink to " << seq[1];
+                        inProgressHyperlink_ = new Hyperlink(seq[1]);
+                    } else {
+                        if (inProgressHyperlink_ == nullptr)
+                           LOG(SEQ_ERROR) << "Hyperlink terminated wiothout active one";
+                        inProgressHyperlink_ = nullptr;
+                    }
+                    return;
+                }
+                // hyperlinks with different number of arguments are invalid sequences
+                break;
+            }
             /* OSC 52 - set clipboard to given value. 
              */
             case 52: {
-                if (StartsWith(seq.value(), "c;")) {
-                    std::string text = seq.value().substr(2);
+                if (seq.numArgs() == 2 && seq[0] == "c") {
+                    std::string text = seq[1];
                     LOG(SEQ) << "Clipboard set to " << text;
                     schedule([this, contents = text]() {
                         StringEvent::Payload p{contents};
@@ -1518,7 +1608,8 @@ namespace ui {
             lastCol = width();
         // make the copy and return it
         Cell * result = new Cell[lastCol];
-        memcpy(result, x, sizeof(Cell) * lastCol);
+        // we cannot use memcopy here because the cells can be special
+        MemCopy(result, x, lastCol);
         return std::make_pair(result, lastCol);
     }
 
@@ -1590,7 +1681,7 @@ namespace ui {
                             lastCol = width();
                         // make the copy and add it to the history line
                         Cell * rowCopy = new Cell[lastCol];
-                        memcpy(rowCopy, row, sizeof(Cell) * lastCol);
+                        MemCopy(rowCopy, row, lastCol);
                         addToHistory(rowCopy, lastCol);
                     }
                     deleteLine(0, height(), fill);

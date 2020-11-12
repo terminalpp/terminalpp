@@ -43,6 +43,7 @@ namespace tpp {
         t->onNotification.setHandler(&TerminalWindow::sessionNotification, this);
         t->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
         t->onKeyDown.setHandler(&TerminalWindow::terminalKeyDown, this);
+        t->onHyperlink.setHandler(&TerminalWindow::hyperlinkActivated, this);
     }
 
 } // namespace tpp

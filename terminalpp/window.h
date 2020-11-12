@@ -434,7 +434,6 @@ namespace tpp {
                         drawBorder(col, row, b, wThin, wThick);
                 }
             }
-
             finalizeDraw();
         }
 

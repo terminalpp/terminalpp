@@ -31,18 +31,30 @@ namespace ui {
                 return result;
             }
             // BEL
-            if (*x == Char::BEL)
-                break;
-            // ST
-            if (*x == Char::ESC && x + 1 != end && x[1] == '\\') {
+            if (*x == Char::BEL) {
+                result.values_.push_back(std::string(valueStart, x - valueStart));
                 ++x;
                 break;
             }
-            // next
-            ++x;
+            // ST
+            if (*x == Char::ESC && x + 1 != end && x[1] == '\\') {
+                result.values_.push_back(std::string(valueStart, x - valueStart));
+                x += 2;
+                break;
+            }
+            switch (*x) {
+                // TODO should we do escape for the semicolon? 
+                // semicolon
+                case ';': {
+                    result.values_.push_back(std::string(valueStart, x - valueStart));
+                    ++x;
+                    valueStart = x;
+                    break;
+                }
+                default:
+                    ++x;
+            }
         }
-        result.value_ = std::string(valueStart, x - valueStart);
-        ++x; // past the terminating character
         start = x;
         return result;
     }

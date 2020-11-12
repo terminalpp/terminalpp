@@ -16,6 +16,7 @@ namespace ui {
     public:
 
         class Cursor;
+        class SpecialObject;
         class Cell;
         class Buffer;
 
@@ -117,6 +118,12 @@ namespace ui {
         /** Draws the buffer starting from given top left corner. 
          */
         Canvas & drawBuffer(Buffer const & buffer, Point at);
+
+        /** Draws the fallback buffer, starting from given top left corner. 
+         
+            Works identically to drawBuffer(), if a cell in the source buffer has special object attached, it is not copied, but the cell is decorated using the special object's fallback.
+         */
+        Canvas & drawFallbackBuffer(Buffer const & buffer, Point at);
 
         Canvas & fill(Rect const & rect) {
             return fill(rect, bg_);
@@ -306,6 +313,143 @@ namespace ui {
         Color color_;
     }; // ui::Canvas::Cursor
 
+    /** Base for objects carrying special cell information. 
+     
+        Canvas cells can be attached to the special objects, which may contain arbitrary extra information about the cells. The special objects are references counted based on the number of cells that point to them. The Ptr<T> pointer can also be used to hold smart objects safely outside of a cell. 
+
+        When cells are copied from buffer to buffer, the special object's attachment may either be preserved (default) or stripped, in which case the special object is given a chance to alter the copied cell *after* the copy via the updateFallbackCell() method. 
+
+        Special object manipulation (i.e. attaching and detaching from cells and pointers) is thread safe as long as the cell or pointer access is thread safe (the pointer or the cell cannot be accessed concurrently, but two unrelated cells or pointers can attach and detach to the same special object).
+
+        Internally, the SpecialObject holds a map from cell addresses to special objects for the cells that have special object attached. Each cell then has a bit flag that determines whether an attachment to special object exists, or not. 
+     */
+    class Canvas::SpecialObject {
+        friend class Cell;
+    public:
+
+        /** Reference counted pointer to a special object of given type. 
+
+            It is assumed that special object implementations will use the specialized version of the pointer as their Ptr typedef, i.e.:
+
+                class SOImpl : public Canvas::SpecialObject {
+                public:
+                    using Ptr = Canvas::SpecialObject::Ptr<SOImpl>;
+                };
+         */
+        template<typename T> 
+        class Ptr {
+        public:
+            static_assert(std::is_base_of<SpecialObject, T>::value, "Only SpecialObjects can be used in SpecialObject::Ptr");
+
+            Ptr(T * so) {
+                attach(so);
+            }
+
+            Ptr(Ptr const & from) {
+                attach(from.ptr_);
+            }
+
+            ~Ptr() {
+                detach();
+            }
+
+            Ptr & operator = (Ptr const & other) {
+                if (ptr_ != other.ptr_) {
+                    std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+                    if (ptr_ != nullptr && --ptr_->refCount_ == 0)
+                        delete ptr_;
+                    ptr_ = other.ptr_;
+                    if (ptr_ != nullptr)
+                        ++ptr_->refCount_;
+                }
+                return *this;
+            }
+
+            Ptr & operator = (T * other) {
+                if (ptr_ != other) {
+                    std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+                    if (ptr_ != nullptr && --(ptr_->refCount_) == 0)
+                        delete ptr_;
+                    ptr_ = other;
+                    if (ptr_ != nullptr)
+                        ++ptr_->refCount_;
+                }
+                return *this;
+            }
+
+            T & operator * () {
+                return *ptr_;
+            }
+
+            T * operator -> () {
+                return ptr_;
+            }
+
+            operator T * () {
+                return ptr_;
+            }
+
+        private:
+
+            void attach(T * so) {
+                if (so != nullptr) {
+                    std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+                    ++(so->refCount_);
+                }
+                ptr_ = so;
+            }
+
+            void detach() {
+                if (ptr_ == nullptr)
+                    return;
+                std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+                if (--(ptr_->refCount_) == 0)
+                    delete ptr_;
+            }
+
+            T * ptr_;
+
+        }; // ui::Canvas::SpecialObject::Ptr
+
+        /** Virtual destructor so that special objects do not leak when destroyed. 
+         */
+        virtual ~SpecialObject() {
+            LOG() << "deleting";
+        }
+
+    protected:
+
+        /** Updates the fallback cell for the special object. 
+         
+            When a cell is copied and the attached special object is stripped from the copy, this function is called giving the fallback cell to be modified and the original cell as a reference. 
+
+            Special object implementations may decide to implement this feature to change the appearance of the cells. This is also useful for renderers that do not know how to render the particular special object. 
+         */
+        virtual void updateFallbackCell(Cell & fallback, Cell const & original) {
+            MARK_AS_UNUSED(fallback);
+            MARK_AS_UNUSED(original);
+        }
+
+    private:
+
+        /** Number of references (cells and Ptr's) that point to the special object. 
+         */
+        size_t refCount_ = 0;
+
+        /** Map of reachable special objects. 
+         */
+        static std::unordered_map<Cell const *, SpecialObject *> Objects_;
+
+        /** Guard for multi-threaded access to the special object. 
+         */
+        static std::mutex MObjects_;
+
+    }; // ui::Canvas::SpecialObject
+
+    /** Canvas cell. 
+     
+        Each cell contains all drawable information about a single character, i.e. its codepoints, colors, effects, font, borders, etc. Additionally a cell can be attached to a special object, which may provide further information abouty the cell's visual appearance, or behavior. For more details see ui::Canvas::SpecialObject. 
+     */
     class Canvas::Cell {
         friend class Canvas::Buffer;
     public:
@@ -319,6 +463,142 @@ namespace ui {
             decor_{Color::White},
             font_{},
             border_{} {
+        }
+
+        /** Destroys the cell. 
+         
+            While nothing has to be done for normal cell, a special cell must detach and possibly delete the special object it contains.
+         */
+        ~Cell() {
+            if (hasSpecialObject())
+                detachSpecialObject();
+        }
+
+        /** Assignment between cells. 
+         
+            If the other cell has a special object attached to it, copies the attachment as well, which makes the assignment operator slightly more complex than a simple memory copy. 
+
+            The code is more complex than necessary so that the whole assignment can be done on a single mutex lock. 
+         */
+        Cell & operator = (Cell const & other) {
+            // don't do anything for autoassign
+            if (this == & other)
+                return *this;
+            bool hadSo = hasSpecialObject();
+            // casting to void * so that compiler won't give warnings that non POD object is copied, since we deal with the special object later
+            memcpy(static_cast<void*>(this), & other, sizeof(Cell));
+            bool hasSo = hasSpecialObject();
+            if (hadSo) {
+                std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+                auto i = SpecialObject::Objects_.find(this);
+                if (--(i->second->refCount_) == 0)
+                    delete i->second;
+                if (hasSo) {
+                    // had & has
+                    auto j = SpecialObject::Objects_.find(& other);
+                    i->second = j->second;
+                    ++(i->second->refCount_);
+                } else {
+                    // had, but does not - detach
+                    SpecialObject::Objects_.erase(i);
+                }
+            } else if (hasSo) {
+                // did not have special object, but now we do have it
+                std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+                auto j = SpecialObject::Objects_.find(& other);
+                SpecialObject::Objects_.insert(std::pair<Cell const *, SpecialObject*>{this, j->second});
+                ++j->second->refCount_;
+            }
+            return *this;
+        };
+
+        /** Assigns the contents of the argument to itself, stripping any attached special objects. 
+
+            The cell is considered a fallback cell and once the attributes of the original cell are copied, modulo the special object binding, the special object can modify the cell contents via the updateFallbackCell method. 
+
+            If the argument does not have a special object attached, behaves like a normal assignment operator. 
+         */
+        Cell & stripSpecialObjectAndAssign(Cell const & from) {
+            if (& from == this)
+                return *this;
+            bool hadSo = hasSpecialObject();
+            // casting to void * so that compiler won't give warnings that non POD object is copied, since we deal with the special object later
+            memcpy(static_cast<void*>(this), & from, sizeof(Cell));
+            {
+                std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+                if (hadSo) {
+                    auto i = SpecialObject::Objects_.find(this);
+                    if (--(i->second->refCount_) == 0)
+                        delete i->second;
+                    SpecialObject::Objects_.erase(i);
+                }
+                auto j = SpecialObject::Objects_.find(& from);
+                if (j != SpecialObject::Objects_.end()) {
+                    j->second->updateFallbackCell(*this, from);
+                    codepoint_ &= ~ SPECIAL_OBJECT;
+                }
+            }
+            return *this;
+        }
+
+        /** Detaches special object attached to the cell, if any. 
+         
+            Since special objects are reference counted, if this is the last cell to point at the object, the special object itself is deleted. 
+         */
+        Cell & detachSpecialObject() {
+            if (hasSpecialObject()) {
+                codepoint_ &= ~ SPECIAL_OBJECT;
+                std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+                auto i = SpecialObject::Objects_.find(this);
+                ASSERT(i != SpecialObject::Objects_.end());
+                if (--(i->second->refCount_) == 0)
+                    delete i->second;
+                SpecialObject::Objects_.erase(i);
+            }
+            return *this;
+        }
+
+        /** Attaches given special object to the cell. 
+         
+            If the cell already has a special object attached to it, the old object is detached first. 
+         */
+        Cell & attachSpecialObject(SpecialObject * so) {
+            ASSERT(so != nullptr);
+            std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+            if (hasSpecialObject()) {
+                auto i = SpecialObject::Objects_.find(this);
+                ASSERT(i != SpecialObject::Objects_.end());
+                if (i->second != so) {
+                    if (--(i->second->refCount_) == 0)
+                        delete i->second;
+                    i->second = so;
+                    ++(i->second->refCount_);
+                }
+            } else {
+                SpecialObject::Objects_.insert(std::pair<Cell const *, SpecialObject*>{this, so});
+                codepoint_ |= SPECIAL_OBJECT;
+                ++so->refCount_;
+            }
+            return *this;
+        }
+
+        /** Returns true if the cell has a special object attached to it. 
+         */
+        bool hasSpecialObject() const {
+            return (codepoint_ & SPECIAL_OBJECT) != 0;
+        }
+
+        /** Returns the special object attached to the cell, or nullptr if there is none. 
+         */
+        SpecialObject * specialObject() const {
+            if (!hasSpecialObject()) {
+                return nullptr;
+            } else {
+                std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+                auto i = SpecialObject::Objects_.find(this);
+                ASSERT(i != SpecialObject::Objects_.end());
+                return i->second;
+            }
         }
 
         /** \name Codepoint of the cell. 
@@ -409,16 +689,23 @@ namespace ui {
         }
         //@}
 
-        Cell & operator = (Cell const & other) = default;
 
     private:
 
+        /** Marker indicating that special object is attached to the cell. 
+         */
+        static const char32_t SPECIAL_OBJECT = 0x80000000;
+
+        /** Codepoint and discriminator between normal and special cell type. 
+         */
         char32_t codepoint_;
+
         Color fg_;
         Color bg_;
         Color decor_;
         Font font_;
         Border border_;
+
     }; // ui::Canvas::Cell
 
     class Canvas::Buffer {
@@ -525,6 +812,9 @@ namespace ui {
          */
         void fillRow(int row, Cell const & fill, int from, int cols) {
             Cell * r = rows_[row];
+            for (int e = from + cols; from < e; ++from)
+                r[from] = fill;
+            /*
             r[from] = fill;
             int i = 1;
             int next = 2;
@@ -534,6 +824,7 @@ namespace ui {
                 next *= 2;
             }
             memcpy(r + from + i, r + from, sizeof(Cell) * (cols - i));
+            */
         }
 
     protected:
@@ -557,13 +848,13 @@ namespace ui {
         /** Returns the value of the unused bits in the given cell's codepoint so that the buffer can store extra information for each cell. 
          */
         static char32_t GetUnusedBits(Cell const & cell) {
-            return cell.codepoint_ & 0xffe00000;
+            return cell.codepoint_ & 0x7fe00000;
         }
 
         /** Sets the unused bytes value for the given cell to store extra information by the buffer. 
          */
         static void SetUnusedBits(Cell & cell, char32_t value) {
-            cell.codepoint_ = (cell.codepoint_ & 0x1fffff) + (value & 0xffe00000);
+            cell.codepoint_ = (cell.codepoint_ & 0x801fffff) + (value & 0x7fe00000);
         }
 
         /** Unused bits flag that confirms that the cell has a visible cursor in it. 

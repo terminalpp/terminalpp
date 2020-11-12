@@ -231,6 +231,10 @@ namespace tpp {
                 window_->setTitle(*e);
         }
 
+        void hyperlinkActivated(ui::StringEvent::Payload & e) {
+            Application::Instance()->openUrl(*e);
+        }
+
         /** Changes the icon when terminal sends notification. 
          
             Changes the icon, marks the notification flag for the terminal's session and increments the window notifications counter. 

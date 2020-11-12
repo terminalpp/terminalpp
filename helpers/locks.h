@@ -23,6 +23,9 @@ HELPERS_NAMESPACE_BEGIN
             while (priorityRequests_ > 0)
                 cv_.wait(g);
             g.release();
+#ifndef NDEBUG
+            locked_ = std::this_thread::get_id();
+#endif
             return *this;
         }
 
@@ -32,6 +35,9 @@ HELPERS_NAMESPACE_BEGIN
             ++priorityRequests_;
             m_.lock();
             --priorityRequests_;
+#ifndef NDEBUG
+            locked_ = std::this_thread::get_id();
+#endif
             return *this;
         }
 
@@ -39,13 +45,25 @@ HELPERS_NAMESPACE_BEGIN
          */
         void unlock() {
             cv_.notify_all();
+#ifndef NDEBUG
+            locked_ = std::thread::id{};
+#endif
             m_.unlock();
         }
+
+#ifndef NDEBUG
+        bool locked() const {
+            return locked_ == std::this_thread::get_id();
+        }
+#endif
 
     private:
         std::atomic<unsigned> priorityRequests_;
         std::mutex m_;
         std::condition_variable cv_;
+#ifndef NDEBUG
+        std::atomic<std::thread::id> locked_;
+#endif          
     }; 
 
     /** Reentrant variant of the priority lock. 
