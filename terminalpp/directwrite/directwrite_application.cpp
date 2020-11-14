@@ -208,6 +208,13 @@ namespace tpp {
             hInstance_, // module handle
             this // lParam for WM_CREATE message
         );
+
+        // create dahsed stroke
+        D2D1_STROKE_STYLE_PROPERTIES dashedProps = { };
+        dashedProps.lineJoin = D2D1_LINE_JOIN_ROUND;
+        dashedProps.dashStyle = D2D1_DASH_STYLE_DASH;
+        dashedProps.dashCap = D2D1_CAP_STYLE_ROUND;
+        OSCHECK(SUCCEEDED(d2dFactory_->CreateStrokeStyle(& dashedProps, nullptr, 0, & DirectWriteWindow::DashedStroke_)));
     }
 
     void DirectWriteApplication::registerWindowClass() {

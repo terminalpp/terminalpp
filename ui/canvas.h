@@ -414,7 +414,6 @@ namespace ui {
         /** Virtual destructor so that special objects do not leak when destroyed. 
          */
         virtual ~SpecialObject() {
-            LOG() << "deleting";
         }
 
         /** Detaches the object from all its cells. 

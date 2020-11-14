@@ -291,14 +291,14 @@ namespace tpp {
                     start.y -= font_->underlineOffset();
                     D2D1_POINT_2F end = start;
                     end.x += glyphRun_.glyphCount * cellSize_.width();
-                    rt_->DrawLine(start, end, decor_.Get(), font_->underlineThickness());
+                    rt_->DrawLine(start, end, decor_.Get(), font_->underlineThickness(), state_.font().dashed() ? DashedStroke_ : nullptr);
                 }
                 if (state_.font().strikethrough()) {
                     D2D1_POINT_2F start = origin;
                     start.y -= font_->strikethroughOffset();
                     D2D1_POINT_2F end = start;
                     end.x += glyphRun_.glyphCount * cellSize_.width();
-                    rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness());
+                    rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness(), state_.font().dashed() ? DashedStroke_ : nullptr);
                 }
             }
         }
@@ -375,6 +375,8 @@ namespace tpp {
         bool mouseLeaveTracked_;
 
 	    static Key GetKey(unsigned vk);
+
+        static ID2D1StrokeStyle * DashedStroke_;
 
         static LRESULT CALLBACK EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

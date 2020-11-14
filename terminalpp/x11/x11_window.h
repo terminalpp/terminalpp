@@ -204,10 +204,24 @@ namespace tpp {
             if (!state_.font().blink() || BlinkVisible()) {
                 XftDrawGlyphSpec(draw_, &fg_, font_->xftFont(), text_, textSize_);
                 // deal with the attributes
-                if (state_.font().underline())
-					XftDrawRect(draw_, &decor_, textCol_ * cellSize_.width(), textRow_ * cellSize_.height() + font_->underlineOffset(), cellSize_.width() * textSize_, font_->underlineThickness());
-                if (state_.font().strikethrough())
-					XftDrawRect(draw_, &decor_, textCol_ * cellSize_.width(), textRow_ * cellSize_.height() + font_->strikethroughOffset(), cellSize_.width() * textSize_, font_->strikethroughThickness());
+                if (state_.font().underline()) {
+                    if (state_.font().dashed()) {
+                        for (size_t i = 0; i < textSize_; ++i) {
+                            XftDrawRect(draw_, &decor_, (textCol_ + i) * cellSize_.width(), textRow_ * cellSize_.height() + font_->underlineOffset(), cellSize_.width() / 2, font_->underlineThickness());
+                        }
+                    } else {
+					    XftDrawRect(draw_, &decor_, textCol_ * cellSize_.width(), textRow_ * cellSize_.height() + font_->underlineOffset(), cellSize_.width() * textSize_, font_->underlineThickness());
+                    }
+                }
+                if (state_.font().strikethrough()) {
+                    if (state_.font().dashed()) {
+                        for (size_t i = 0; i < textSize_; ++i) {
+                            XftDrawRect(draw_, &decor_, (textCol_ + i) * cellSize_.width(), textRow_ * cellSize_.height() + font_->strikethroughOffset(), cellSize_.width() / 2, font_->strikethroughThickness());
+                        }
+                    } else {
+					    XftDrawRect(draw_, &decor_, textCol_ * cellSize_.width(), textRow_ * cellSize_.height() + font_->strikethroughOffset(), cellSize_.width() * textSize_, font_->strikethroughThickness());
+                    }
+                } 
             }
         }
 

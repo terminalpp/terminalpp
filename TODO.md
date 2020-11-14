@@ -10,7 +10,7 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- add dotted undeline (useful for hyperlinks), add settings for active/normal/autodetect,
+- add settings for active/normal/autodetect,
 - add settings to disable hyperlinks at all
 
 - check that terminal properties are read only under the buffer lock

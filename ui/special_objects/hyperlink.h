@@ -35,8 +35,9 @@ namespace ui {
 
         void updateFallbackCell(Canvas::Cell & fallback, Canvas::Cell const & original) override {
             MARK_AS_UNUSED(original);
+            fallback.font().setUnderline().setDashed();
             if (active())
-                fallback.setBg(Color::Blue);
+                fallback.setFg(Color::Blue);
         }
 
     private:

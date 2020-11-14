@@ -43,6 +43,19 @@ namespace ui {
             return *this;
         }
 
+        /** If true, underline and strikethrough are drawn dashed, otherwise the line is solid. 
+         */
+        bool dashed() const {
+            return font_ & DASHED;
+        }
+
+        /** If true, underline and strikethrough are drawn dashed, otherwise the line is solid. 
+         */
+        Font & setDashed(bool value = true) {
+            font_ = SetBit(font_, DASHED, value);
+            return *this;
+        }
+
         bool strikethrough() const {
             return font_ & STRIKETHROUGH;
         }
@@ -104,6 +117,7 @@ namespace ui {
         static constexpr uint16_t STRIKETHROUGH = 1 << 12;
         static constexpr uint16_t BLINK = 1 << 11;
         static constexpr uint16_t DOUBLE_WIDTH = 1 << 10;
+        static constexpr uint16_t DASHED = 1 << 9;
 
 
         static constexpr uint16_t SIZE_MASK = 7;

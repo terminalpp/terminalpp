@@ -223,10 +223,24 @@ namespace tpp {
             if (glyphRunSize_ == 0)
                 return;
             if (!state_.font().blink() || BlinkVisible()) {
-                if (state_.font().underline())
-                    painter_.fillRect(glyphRunStart_.x() * cellSize_.width(), glyphRunStart_.y() * cellSize_.height() + font_->underlineOffset(), cellSize_.width() * glyphRunSize_, font_->underlineThickness(), decorationBrush_);
-                if (state_.font().strikethrough())
-                    painter_.fillRect(glyphRunStart_.x() * cellSize_.width(), glyphRunStart_.y() * cellSize_.height() + font_->strikethroughOffset(), cellSize_.width() * glyphRunSize_, font_->strikethroughThickness(), decorationBrush_);
+                if (state_.font().underline()) {
+                    if (state_.font().dashed()) {
+                        for (int i = 0; i < glyphRunSize_; ++i) {
+                            painter_.fillRect((glyphRunStart_.x() + i) * cellSize_.width(), glyphRunStart_.y() * cellSize_.height() + font_->underlineOffset(), cellSize_.width() / 2 , font_->underlineThickness(), decorationBrush_);
+                        }
+                    } else {
+                        painter_.fillRect(glyphRunStart_.x() * cellSize_.width(), glyphRunStart_.y() * cellSize_.height() + font_->underlineOffset(), cellSize_.width() * glyphRunSize_, font_->underlineThickness(), decorationBrush_);
+                    }
+                }
+                if (state_.font().strikethrough()) {
+                    if (state_.font().dashed()) {
+                        for (int i = 0; i < glyphRunSize_; ++i) {
+                            painter_.fillRect((glyphRunStart_.x() + i) * cellSize_.width(), glyphRunStart_.y() * cellSize_.height() + font_->strikethroughOffset(), cellSize_.width() / 2, font_->strikethroughThickness(), decorationBrush_);
+                        }
+                    } else {
+                        painter_.fillRect(glyphRunStart_.x() * cellSize_.width(), glyphRunStart_.y() * cellSize_.height() + font_->strikethroughOffset(), cellSize_.width() * glyphRunSize_, font_->strikethroughThickness(), decorationBrush_);
+                    }
+                }
             }
         }
 

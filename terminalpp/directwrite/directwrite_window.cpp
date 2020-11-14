@@ -5,6 +5,8 @@
 
 namespace tpp {
 
+    ID2D1StrokeStyle * DirectWriteWindow::DashedStroke_ = nullptr;
+
     void DirectWriteWindow::setTitle(std::string const & value) {
         RendererWindow::setTitle(value);
         // actually change the title since we are in the UI thread now
