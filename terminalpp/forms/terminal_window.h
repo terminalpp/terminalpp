@@ -231,8 +231,12 @@ namespace tpp {
                 window_->setTitle(*e);
         }
 
-        void hyperlinkActivated(ui::StringEvent::Payload & e) {
+        void hyperlinkOpen(ui::StringEvent::Payload & e) {
             Application::Instance()->openUrl(*e);
+        }
+
+        void hyperlinkCopy(ui::StringEvent::Payload & e) {
+            Application::Instance()->setClipboard(*e);
         }
 
         /** Changes the icon when terminal sends notification. 

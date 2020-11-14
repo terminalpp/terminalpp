@@ -6,13 +6,14 @@ cmake_minimum_required (VERSION 3.5)
 
 file(GLOB_RECURSE TESTS_HELPERS "../helpers/tests/*.h" "../helpers/tests/*.cpp")
 file(GLOB_RECURSE TESTS_UI "../ui/tests/*.h" "../ui/tests/*.cpp")
+file(GLOB_RECURSE TESTS_UI_TERM "../ui-terminal/tests/*.h" "../ui-terminal/tests/*.cpp")
 
 if(UNIX)
     SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
     SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif()
 
-add_executable(tests "main-tests.cpp" ${TESTS_HELPERS} ${TESTS_UI})
+add_executable(tests "main-tests.cpp" ${TESTS_HELPERS} ${TESTS_UI} ${TESTS_UI_TERM})
 target_link_libraries(tests libui)
 
 if(UNIX)

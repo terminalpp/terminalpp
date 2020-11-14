@@ -386,6 +386,35 @@ namespace ui {
         return Trim(result.str());
     }
 
+    void AnsiTerminal::detectHyperlink(char32_t next) {
+        // don't do any mathing if we are inside hyperlink command
+        if (inProgressHyperlink_ != nullptr)
+            return;
+        size_t matchSize = urlMatcher_.next(next);
+        if (matchSize == 0)
+            return;
+        // we have found a hyperlink, construct its address and determine which cells to use, which we do by retracting
+        Hyperlink::Ptr link = new Hyperlink{""};
+        std::string url{};
+        Point pos = cursorPosition();
+        do {
+            // the url is too long and disappeared, do not match
+            if (pos == Point{0,0}) {
+                link->detachFromAllCells();
+                return;
+            }
+            if (pos.x() == 0)
+                pos = Point{state_->buffer.width() - 1, pos.y() - 1};
+            else 
+                pos -= Point{1, 0};
+            Cell & cell = state_->buffer.at(pos);
+            url = Char{cell.codepoint()} + url;
+            cell.attachSpecialObject(link);
+        } while (--matchSize != 0);
+        // set the url we calculated
+        link->setUrl(url);
+    }
+
     // Terminal State 
 
     void AnsiTerminal::deleteCharacters(unsigned num) {
@@ -404,7 +433,7 @@ namespace ui {
 		for (unsigned c = cursorPosition().x(), e = cursorPosition().x() + num; c < e; ++c)
 			state_->buffer.at(c, r) = state_->cell;
     }
-
+    
     void AnsiTerminal::updateCursorPosition() {
         while (cursorPosition().x() >= state_->buffer.width()) {
             ASSERT(state_->buffer.width() > 0);
@@ -602,6 +631,7 @@ namespace ui {
         if (lineDrawingSet_ && codepoint >= 0x6a && codepoint < 0x79)
             codepoint = LineDrawingChars_[codepoint-0x6a];
         LOG(SEQ) << "codepoint " << codepoint << " " << static_cast<char>(codepoint & 0xff);
+        detectHyperlink(codepoint);
         updateCursorPosition();
         // set the cell according to the codepoint and current settings. If there is an active hyperlink, the hyperlink is first attached to the cell and then new cell is added to the hyperlink fallback 
         Cell & cell = state_->buffer.at(cursorPosition());
@@ -657,6 +687,7 @@ namespace ui {
     }
 
     void AnsiTerminal::parseTab() {
+        resetHyperlinkDetection();
         updateCursorPosition();
         if (cursorPosition().x() % 8 == 0)
             setCursorPosition(cursorPosition() + Point{8, 0});
@@ -667,6 +698,7 @@ namespace ui {
 
     void AnsiTerminal::parseLF() {
         LOG(SEQ) << "LF";
+        resetHyperlinkDetection();
         state_->markLineEnd();
         // disable double width and height chars
         state_->cell.font().setSize(1).setDoubleWidth(false);
@@ -682,6 +714,7 @@ namespace ui {
 
     void AnsiTerminal::parseCR() {
         LOG(SEQ) << "CR";
+        resetHyperlinkDetection();
         // mark the last character as line end? 
         // TODO
         setCursorPosition(Point{0, cursorPosition().y()});
@@ -689,6 +722,7 @@ namespace ui {
 
     void AnsiTerminal::parseBackspace() {
         LOG(SEQ) << "BACKSPACE";
+        resetHyperlinkDetection();
         if (cursorPosition().x() == 0) {
             if (cursorPosition().y() > 0)
                 setCursorPosition(cursorPosition() - Point{0, 1});
@@ -735,17 +769,20 @@ namespace ui {
 			/* Save Cursor. */
 			case '7':
 				LOG(SEQ) << "DECSC: Cursor position saved";
+                resetHyperlinkDetection();
                 state_->saveCursor();
 				break;
 			/* Restore Cursor. */
 			case '8':
                 LOG(SEQ) << "DECRC: Cursor position restored";
+                resetHyperlinkDetection();
                 state_->restoreCursor();
 				break;
 			/* Reverse line feed - move up 1 row, same column.
 			 */
 			case 'M':
 				LOG(SEQ) << "RI: move cursor 1 line up";
+                resetHyperlinkDetection();
 				if (cursorPosition().y() == state_->scrollStart) 
 					insertLines(1, state_->scrollStart, state_->scrollEnd, state_->cell);
 				else
@@ -754,6 +791,7 @@ namespace ui {
             /* Device Control String (DCS). 
              */
             case 'P':
+                resetHyperlinkDetection();
                 if (x == bufferEnd)
                     return false;
                 if (*x == '+') {
@@ -769,6 +807,7 @@ namespace ui {
     		/* Character set specification - most cases are ignored, with the exception of the box drawing and reset to english (0 and B) respectively. 
              */
 			case '(':
+                resetHyperlinkDetection();
                 if (x != bufferEnd) {
                     if (*x == '0') {
                         ++x;
@@ -787,6 +826,7 @@ namespace ui {
 			case '*':
 			case '+':
 				// missing character set specification
+                resetHyperlinkDetection();
 				if (x == bufferEnd)
 					return false;
 				if (*x == 'B') { // US
@@ -799,11 +839,13 @@ namespace ui {
 			/* ESC = -- Application keypad */
 			case '=':
 				LOG(SEQ) << "Application keypad mode enabled";
+                resetHyperlinkDetection();
                 keypadMode_ = KeypadMode::Application;
 				break;
 			/* ESC > -- Normal keypad */
 			case '>':
 				LOG(SEQ) << "Normal keypad mode enabled";
+                resetHyperlinkDetection();
                 keypadMode_ = KeypadMode::Normal;
 				break;
             /* ESC # number -- font size changes */
@@ -816,6 +858,7 @@ namespace ui {
                 break;
                 */
             default:
+                resetHyperlinkDetection();
 				LOG(SEQ_UNKNOWN) << "Unknown escape sequence \x1b" << *(x-1);
 				break;
         }
@@ -823,6 +866,7 @@ namespace ui {
     }
 
     size_t AnsiTerminal::parseTppSequence(char const * buffer, char const * bufferEnd) {
+        resetHyperlinkDetection();
         // we know that we have at least \033P+   
         char const * i = buffer + 3;
         char const * tppEnd = tpp::Sequence::FindSequenceEnd(i, bufferEnd);
@@ -839,6 +883,10 @@ namespace ui {
     }
 
     void AnsiTerminal::parseCSISequence(CSISequence & seq) {
+        // reset hyperlink detection for all but SGR commands
+        if (seq.firstByte() != 0 || seq.finalByte() != 'm')
+            resetHyperlinkDetection();
+        // process the sequence
         switch (seq.firstByte()) {
             // the "normal" CSI sequences
             case 0: 

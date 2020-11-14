@@ -13,6 +13,7 @@
 
 #include "csi_sequence.h"
 #include "osc_sequence.h"
+#include "url_matcher.h"
 
 namespace ui {
 
@@ -83,7 +84,18 @@ namespace ui {
 
     public:
         VoidEvent onNotification;
-        StringEvent onHyperlink;
+        
+        /** Triggered when user clicks on a hyperlink with left mouse button. 
+         
+            The default action should be opening the hyperlink. 
+         */
+        StringEvent onHyperlinkOpen;
+
+        /** Triggered when user clicks on a hyperlink with right mouse button. 
+         
+            The default action should be copying the url to clipboard.
+         */
+        StringEvent onHyperlinkCopy;
         StringEvent onTitleChange;
         StringEvent onClipboardSetRequest;
         TppSequenceEvent onTppSequence;
@@ -143,7 +155,10 @@ namespace ui {
             if (e.active()) {
                 if (activeHyperlink_ != nullptr) {
                     StringEvent::Payload p{activeHyperlink_->url()};
-                    onHyperlink(p, this);
+                    if (e->button == MouseButton::Left)
+                        onHyperlinkOpen(p, this);
+                    else if (e->button == MouseButton::Right)
+                        onHyperlinkCopy(p, this);
                 }
             }
         }
@@ -173,6 +188,59 @@ namespace ui {
         static std::unordered_set<Key> PrintableKeys_;
 
     //}
+
+    /** \name Hyperlinks
+     
+        Terminal supports hyperlinks either via the OSC 8 sequence, or by automatic detection based on the UrlMatcher class. Cell special objects are used to store the information about a hyperlink. 
+
+        The sequence creates the hyperlink, which is then attached to each next cell untiln the closing empty sequence is found. The size of the parameters or the link itself is not limited in any way on the terminal, but the maximum input buffer size will limit this in practice as the whole OSC sequence must fit in the buffer. 
+
+        When codepoints are sent to the terminal, they are matched continuously whether they match against an url, in which case a hyperlink is created and attached to the cells as well. 
+
+        When mouse hovers over the cells with attached hyperlink, the link is highighted. When clicked, the onHyperlinkOpen event is triggered, which should open the link in a browser. On right button clicik, the onHyperlinkCopy event is triggered, which should copy the url to clipboard instead of opening. 
+     */
+    //@{
+    protected:
+        /** Returns hyperlink attached to cell at given coordinates. 
+         
+            If there are no cells, at given coordinates, or no hyperlink present, returns nullptr.
+         */
+        Hyperlink * hyperlinkAt(Point widgetCoords) {
+            Cell const * cell = cellAt(widgetCoords);
+            return cell == nullptr ? nullptr : dynamic_cast<Hyperlink*>(cell->specialObject());
+        }
+
+        /** Resets the hyperlink detection matching. 
+         
+            If the matching is in valid state, creates the hyperlink. The reset is done by adding an url separator character, which terminates the url scheme.
+
+            Any sequence other than SGR ones should reset the hyperlink matching.
+         */
+        void resetHyperlinkDetection() {
+            detectHyperlink(' ');
+        }
+
+        /** Adds given character to the url matcher. 
+         
+            If adding the character makes a previously valid match invalid, creates the hyperlink and attaches it to its respective cells.
+         */
+        void detectHyperlink(char32_t next);
+
+    private:
+
+        /** When hyperlink is parsed, this holds the special object and the offset of the next cell. If the hyperlink in progress is nullptr, then there is no hyperlink in progress and hyperlink offset has no meaning. 
+         */
+        Hyperlink::Ptr inProgressHyperlink_ = nullptr;
+
+        /** Hyperlink activated by mouse hover. 
+         */
+        Hyperlink::Ptr activeHyperlink_ = nullptr;
+
+        /** Url matcher to detect hyperlinks in the terminal output automatically. 
+         */
+        UrlMatcher urlMatcher_;
+
+    //@}
 
 
     /** \name Terminal State and scrollback buffer
@@ -306,15 +374,6 @@ namespace ui {
          */
         Cell const * cellAt(Point widgetCoords);
 
-        /** Returns hyperlink attached to cell at given coordinates. 
-         
-            If there are no cells, at given coordinates, or no hyperlink present, returns nullptr.
-         */
-        Hyperlink * hyperlinkAt(Point widgetCoords) {
-            Cell const * cell = cellAt(widgetCoords);
-            return cell == nullptr ? nullptr : dynamic_cast<Hyperlink*>(cell->specialObject());
-        }
-
         void updateCursorPosition();
 
         enum class MouseMode {
@@ -380,14 +439,6 @@ namespace ui {
 
         int maxHistoryRows_;
         std::deque<std::pair<int, Cell*>> historyRows_;
-
-        /** When hyperlink is parsed, this holds the special object and the offset of the next cell. If the hyperlink in progress is nullptr, then there is no hyperlink in progress and hyperlink offset has no meaning. 
-         */
-        Hyperlink::Ptr inProgressHyperlink_ = nullptr;
-
-        /** Hyperlink activated by mouse hover. 
-         */
-        Hyperlink::Ptr activeHyperlink_ = nullptr;
 
     //@}
 

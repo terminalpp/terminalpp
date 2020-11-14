@@ -5,7 +5,7 @@
 
 namespace ui {
 
-    std::unordered_map<Canvas::Cell const *, Canvas::SpecialObject *> Canvas::SpecialObject::Objects_;
+    std::unordered_map<Canvas::Cell *, Canvas::SpecialObject *> Canvas::SpecialObject::Objects_;
     std::mutex Canvas::SpecialObject::MObjects_;
 
     Canvas::Canvas(Buffer & buffer, VisibleArea const & visibleArea, Size const & size):
@@ -207,6 +207,26 @@ namespace ui {
         return *this;
     }
 
+    // Canvas::SpecialObject
 
+    void Canvas::SpecialObject::detachFromAllCells() {
+        {
+            std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+            for (auto i = Objects_.begin(), e = Objects_.end(); i != e; ++i) {
+                if (i->second == this) {
+                    --refCount_;
+                    i->first->codepoint_ &= ~ Cell::SPECIAL_OBJECT;
+                    auto tmp = i;
+                    ++i;
+                    Objects_.erase(tmp);
+                } else {
+                    ++i;
+                }
+            }
+
+        }
+        if (refCount_ == 0)
+            delete this;
+    }
 
 } // namespace ui

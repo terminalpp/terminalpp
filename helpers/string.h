@@ -193,7 +193,6 @@ HELPERS_NAMESPACE_BEGIN
 		return Length(Char::BeginOf(str), Char::EndOf(str));
 	}
 
-
 	// Conversions ------------------------------------------------------------------------------------
 
 	/** Converts a null terminated wide string in UTF-16 encoding into an std::string encoded in UTF-8.

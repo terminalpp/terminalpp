@@ -4,20 +4,16 @@
 
 - selection contents is trimmed
 - proper mouse coordinates are reported when history is used together with buffer
+- hyperlinks (TODO more info)
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- comment hyperlink handling in ansi terminal
-
-- check that terminal properties are read only under the buffer lock
-
-- add hyperlink capability (first via OSC 8 and then detect them automatically in new text)
-
 - add dotted undeline (useful for hyperlinks), add settings for active/normal/autodetect,
 - add settings to disable hyperlinks at all
 
+- check that terminal properties are read only under the buffer lock
 
 - see if msys can be added to bypass
 

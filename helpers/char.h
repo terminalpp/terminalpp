@@ -478,6 +478,12 @@ HELPERS_NAMESPACE_BEGIN
 			return s;
 		}
 
+        /** Prepends the character to UTF8 string. 
+         */
+        friend std::string operator + (Char const & c, std::string const & str) {
+            return STR(c << str);
+        }
+
 // macOS does not really support the C++ standard wrt char16_t. Fportunately we only need it on Windows for now
 #ifndef ARCH_MACOS
 		friend utf16_stringstream & operator << (utf16_stringstream & s, Char const & c) {

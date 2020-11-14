@@ -417,6 +417,12 @@ namespace ui {
             LOG() << "deleting";
         }
 
+        /** Detaches the object from all its cells. 
+         
+            If the object is not referenced from anywhere else, deletes the object at the end. 
+         */
+        void detachFromAllCells();
+
     protected:
 
         /** Updates the fallback cell for the special object. 
@@ -438,7 +444,7 @@ namespace ui {
 
         /** Map of reachable special objects. 
          */
-        static std::unordered_map<Cell const *, SpecialObject *> Objects_;
+        static std::unordered_map<Cell *, SpecialObject *> Objects_;
 
         /** Guard for multi-threaded access to the special object. 
          */
@@ -452,6 +458,7 @@ namespace ui {
      */
     class Canvas::Cell {
         friend class Canvas::Buffer;
+        friend class Canvas::SpecialObject;
     public:
 
         /** Default constructor.
@@ -495,7 +502,7 @@ namespace ui {
                     delete i->second;
                 if (hasSo) {
                     // had & has
-                    auto j = SpecialObject::Objects_.find(& other);
+                    auto j = SpecialObject::Objects_.find(const_cast<Cell*>(& other));
                     i->second = j->second;
                     ++(i->second->refCount_);
                 } else {
@@ -505,8 +512,8 @@ namespace ui {
             } else if (hasSo) {
                 // did not have special object, but now we do have it
                 std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
-                auto j = SpecialObject::Objects_.find(& other);
-                SpecialObject::Objects_.insert(std::pair<Cell const *, SpecialObject*>{this, j->second});
+                auto j = SpecialObject::Objects_.find(const_cast<Cell*>(& other));
+                SpecialObject::Objects_.insert(std::pair<Cell*, SpecialObject*>{this, j->second});
                 ++j->second->refCount_;
             }
             return *this;
@@ -532,7 +539,7 @@ namespace ui {
                         delete i->second;
                     SpecialObject::Objects_.erase(i);
                 }
-                auto j = SpecialObject::Objects_.find(& from);
+                auto j = SpecialObject::Objects_.find(const_cast<Cell*>(& from));
                 if (j != SpecialObject::Objects_.end()) {
                     j->second->updateFallbackCell(*this, from);
                     codepoint_ &= ~ SPECIAL_OBJECT;
@@ -575,7 +582,7 @@ namespace ui {
                     ++(i->second->refCount_);
                 }
             } else {
-                SpecialObject::Objects_.insert(std::pair<Cell const *, SpecialObject*>{this, so});
+                SpecialObject::Objects_.insert(std::pair<Cell *, SpecialObject*>{this, so});
                 codepoint_ |= SPECIAL_OBJECT;
                 ++so->refCount_;
             }
@@ -595,7 +602,7 @@ namespace ui {
                 return nullptr;
             } else {
                 std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
-                auto i = SpecialObject::Objects_.find(this);
+                auto i = SpecialObject::Objects_.find(const_cast<Cell*>(this));
                 ASSERT(i != SpecialObject::Objects_.end());
                 return i->second;
             }
