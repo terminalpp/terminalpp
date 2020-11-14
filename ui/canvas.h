@@ -492,7 +492,7 @@ namespace ui {
                 return *this;
             bool hadSo = hasSpecialObject();
             // casting to void * so that compiler won't give warnings that non POD object is copied, since we deal with the special object later
-            memcpy(static_cast<void*>(this), & other, sizeof(Cell));
+            memcpy(static_cast<void*>(this), static_cast<void const *>(& other), sizeof(Cell));
             bool hasSo = hasSpecialObject();
             if (hadSo) {
                 std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
@@ -529,7 +529,7 @@ namespace ui {
                 return *this;
             bool hadSo = hasSpecialObject();
             // casting to void * so that compiler won't give warnings that non POD object is copied, since we deal with the special object later
-            memcpy(static_cast<void*>(this), & from, sizeof(Cell));
+            memcpy(static_cast<void*>(this), static_cast<void const *>(& from), sizeof(Cell));
             {
                 std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
                 if (hadSo) {
