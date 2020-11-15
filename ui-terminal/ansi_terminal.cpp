@@ -189,11 +189,13 @@ namespace ui {
                     activeHyperlink_->setActive(false);
                     activeHyperlink_ = nullptr;
                     repaint();
+                    setMouseCursor(MouseCursor::Default);
                 }
                 if (activeHyperlink_ == nullptr && a != nullptr) {
                     activeHyperlink_ = a;
                     activeHyperlink_->setActive(true);
                     repaint();
+                    setMouseCursor(MouseCursor::Hand);
                 }
             }
             if (// the mouse movement should actually be reported

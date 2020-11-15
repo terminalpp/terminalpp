@@ -4,6 +4,7 @@
 
 - selection contents is trimmed
 - proper mouse coordinates are reported when history is used together with buffer
+- renderer can use different mouse cursors
 - hyperlinks (TODO more info)
 
 ### TODO
@@ -16,6 +17,8 @@
 - check that terminal properties are read only under the buffer lock
 
 - see if msys can be added to bypass
+
+- double click selects word in terminal
 
 Documentation:
 

@@ -34,6 +34,43 @@ namespace ui {
 		return s;
 	}
 
+    /** Mouse cursor. 
+     
+        A predefined set of mouse cursors is supported for the widgets to choose. These widgets will look different on different platforms and some platforms may not support all of the options available. If a particular mouse cursor is not supported by given renderer on the platform, the nearest possible match should be used and no warnings are expected to be given. 
+     */
+    enum class MouseCursor {
+        /** Default cursor, based on the application. 
+         */
+        Default,
+        /** Standard mouse arrow.
+         */
+        Arrow,
+        /** Mouse cursor for actionable items such as buttons, usually in the shape of a hand. 
+         */
+        Hand,
+        /** Text caret cursor. 
+         */
+        Beam,
+        /** Vertical (height) size update cursor.
+         */
+        VerticalSize,
+        /** Horizontal (width) size update cursor.
+         */
+        HorizontalSize,
+        /** Vertical (top/bottom) split. 
+         */
+        VerticalSplit,
+        /** Horizontal (left/right) split.
+         */
+        HorizontalSplit,
+        /** Cursor indicating task in progress, usually a hourglass or a spinner.
+         */
+        Wait,
+        /** Forbidden action, ghostbusters sign. 
+         */
+        Forbidden,
+    };
+
     // Keyboard
 
     class Key {

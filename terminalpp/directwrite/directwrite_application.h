@@ -92,6 +92,20 @@ namespace tpp {
         HICON iconDefault_;
         HICON iconNotification_;
 
+        /* Mouse cursors. 
+         */
+        HCURSOR cursorArrow_;
+        HCURSOR cursorHand_;
+        HCURSOR cursorBeam_;
+        HCURSOR cursorVerticalSize_;
+        HCURSOR cursorHorizontalSize_;
+        HCURSOR cursorWait_;
+        HCURSOR cursorForbidden_;
+
+        /** Strokes. 
+         */
+        ID2D1StrokeStyle * dashedStroke_;
+
         /* Dummy window for scheduling user messages. */
         HWND dummy_;
 

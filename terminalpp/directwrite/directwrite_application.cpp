@@ -214,7 +214,17 @@ namespace tpp {
         dashedProps.lineJoin = D2D1_LINE_JOIN_ROUND;
         dashedProps.dashStyle = D2D1_DASH_STYLE_DASH;
         dashedProps.dashCap = D2D1_CAP_STYLE_ROUND;
-        OSCHECK(SUCCEEDED(d2dFactory_->CreateStrokeStyle(& dashedProps, nullptr, 0, & DirectWriteWindow::DashedStroke_)));
+        OSCHECK(SUCCEEDED(d2dFactory_->CreateStrokeStyle(& dashedProps, nullptr, 0, & dashedStroke_)));
+
+        // create mouse cursors
+        OSCHECK((cursorArrow_ = LoadCursor(nullptr, IDC_ARROW)) != nullptr); 
+        OSCHECK((cursorHand_ = LoadCursor(nullptr, IDC_HAND)) != nullptr); 
+        OSCHECK((cursorBeam_ = LoadCursor(nullptr, IDC_IBEAM)) != nullptr); 
+        OSCHECK((cursorVerticalSize_ = LoadCursor(nullptr, IDC_SIZENS)) != nullptr); 
+        OSCHECK((cursorHorizontalSize_ = LoadCursor(nullptr, IDC_SIZEWE)) != nullptr); 
+        OSCHECK((cursorWait_ = LoadCursor(nullptr, IDC_WAIT)) != nullptr); 
+        OSCHECK((cursorForbidden_ = LoadCursor(nullptr, IDC_NO)) != nullptr); 
+
     }
 
     void DirectWriteApplication::registerWindowClass() {

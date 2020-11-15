@@ -77,6 +77,41 @@ namespace tpp {
             return RendererWindow::pixelsToCoords(xy / dpiFactor_);
         }
 
+        /** Sets the cursor. 
+         
+            Win32 does not support distinction between splitter and resizer. 
+         */
+        void setMouseCursor(MouseCursor cursor) override {
+            switch (cursor)  {
+                case MouseCursor::Default:
+                case MouseCursor::Beam:
+                default:
+                    mouseCursor_ = DirectWriteApplication::Instance()->cursorBeam_;
+                    break;
+                case MouseCursor::Arrow:
+                    mouseCursor_ = DirectWriteApplication::Instance()->cursorArrow_;
+                    break;
+                case MouseCursor::Hand:
+                    mouseCursor_ = DirectWriteApplication::Instance()->cursorHand_;
+                    break;
+                case MouseCursor::VerticalSize:
+                case MouseCursor::VerticalSplit:
+                    mouseCursor_ = DirectWriteApplication::Instance()->cursorVerticalSize_;
+                    break;
+                case MouseCursor::HorizontalSize:
+                case MouseCursor::HorizontalSplit:
+                    mouseCursor_ = DirectWriteApplication::Instance()->cursorHorizontalSize_;
+                    break;
+                case MouseCursor::Wait:
+                    mouseCursor_ = DirectWriteApplication::Instance()->cursorWait_;
+                    break;
+                case MouseCursor::Forbidden:
+                    mouseCursor_ = DirectWriteApplication::Instance()->cursorForbidden_;
+                    break;
+            }
+            SetCursor(mouseCursor_);
+        }
+
         /** Enable mouse tracking so that the mouseOut event is properly reported. 
          */
         void mouseIn() override {
@@ -291,14 +326,14 @@ namespace tpp {
                     start.y -= font_->underlineOffset();
                     D2D1_POINT_2F end = start;
                     end.x += glyphRun_.glyphCount * cellSize_.width();
-                    rt_->DrawLine(start, end, decor_.Get(), font_->underlineThickness(), state_.font().dashed() ? DashedStroke_ : nullptr);
+                    rt_->DrawLine(start, end, decor_.Get(), font_->underlineThickness(), state_.font().dashed() ? DirectWriteApplication::Instance()->dashedStroke_ : nullptr);
                 }
                 if (state_.font().strikethrough()) {
                     D2D1_POINT_2F start = origin;
                     start.y -= font_->strikethroughOffset();
                     D2D1_POINT_2F end = start;
                     end.x += glyphRun_.glyphCount * cellSize_.width();
-                    rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness(), state_.font().dashed() ? DashedStroke_ : nullptr);
+                    rt_->DrawLine(start, end, decor_.Get(), font_->strikethroughThickness(), state_.font().dashed() ? DirectWriteApplication::Instance()->dashedStroke_ : nullptr);
                 }
             }
         }
@@ -374,9 +409,11 @@ namespace tpp {
         /** Determines if the mouse leaving the window are tracked, since there is no WM_MOUSEENTER message in Win32. */
         bool mouseLeaveTracked_;
 
-	    static Key GetKey(unsigned vk);
+        /** Currently set mouse cursor so that it can be updated on each mouse move as required by Win32. 
+         */
+        HCURSOR mouseCursor_;
 
-        static ID2D1StrokeStyle * DashedStroke_;
+	    static Key GetKey(unsigned vk);
 
         static LRESULT CALLBACK EventHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

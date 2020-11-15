@@ -106,6 +106,16 @@ namespace tpp {
          */
         FcConfig * fcConfig_;
 
+        /* Mouse cursors. 
+         */
+        Cursor cursorArrow_;
+        Cursor cursorHand_;
+        Cursor cursorBeam_;
+        Cursor cursorVerticalSize_;
+        Cursor cursorHorizontalSize_;
+        Cursor cursorWait_;
+        Cursor cursorForbidden_;
+
         std::string clipboard_;
         std::string selection_;
         X11Window * selectionOwner_;

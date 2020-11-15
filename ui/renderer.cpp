@@ -309,6 +309,8 @@ namespace ui {
         mouseIn_ = true;
         mouseButtons_ = 0;
         mouseFocus_ = nullptr;
+        // reset mouse cursor
+        setMouseCursor(MouseCursor::Default);
         // trigger mouseIn event
         VoidEvent::Payload p{};
         onMouseIn(p, this);

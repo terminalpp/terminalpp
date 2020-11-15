@@ -5,8 +5,6 @@
 
 namespace tpp {
 
-    ID2D1StrokeStyle * DirectWriteWindow::DashedStroke_ = nullptr;
-
     void DirectWriteWindow::setTitle(std::string const & value) {
         RendererWindow::setTitle(value);
         // actually change the title since we are in the UI thread now
@@ -403,7 +401,14 @@ namespace tpp {
 			case WM_MOUSELEAVE:
                 window->mouseOut();
 				break;
-
+            /** When mouse is moved, the cursor is always reset to the window's default cursor, so to keep the cursor set by the application, we must make sure to set it each time the setcursor message is received. 
+             */
+            case WM_SETCURSOR: 
+                if (LOWORD(lParam) == HTCLIENT) {
+                    SetCursor(window->mouseCursor_);
+                    return TRUE;
+                }
+                break;            
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);
     }

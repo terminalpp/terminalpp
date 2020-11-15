@@ -381,7 +381,19 @@ namespace ui {
             return mouseIn_;
         }
 
+        /** Returns the widget that has active mouse capture. 
+         */
+        Widget * mouseFocus() const {
+            return mouseIn_ ? mouseFocus_ : nullptr;
+        }
+
     protected:
+
+        /** Sets mouse cursor for the renderer.
+         
+            Called by widget's mouseIn and mouse cursor setters.
+         */
+        virtual void setMouseCursor(MouseCursor cursor) = 0;
 
         /** Mouse enters the renderer's area.
 
@@ -414,6 +426,7 @@ namespace ui {
         bool mouseIn_ = false;
 
         Widget * mouseFocus_ = nullptr;
+
         /** Mouse buttons that are currently down. */
         unsigned mouseButtons_ = 0;
 

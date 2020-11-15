@@ -27,6 +27,11 @@ namespace ui {
             pushEvent(Event::User());
         }
 
+        void setMouseCursor(MouseCursor cursor) override {
+            MARK_AS_UNUSED(cursor);
+            // do nothing, ANSI escape sequences do not support mouse cursor changes
+        }
+
         void render(Rect const & rect) override;
 
         void resized(ResizeEvent::Payload & e) override {

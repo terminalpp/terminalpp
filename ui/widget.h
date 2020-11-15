@@ -567,11 +567,27 @@ namespace ui {
         MouseButtonEvent onMouseClick;
         MouseButtonEvent onMouseDoubleClick;
 
+        bool mouseFocused() const;
+
+        /** Returns the mouse cursor that should be used for the widget. 
+         */
+        MouseCursor mouseCursor() const {
+            return mouseCursor_;
+        }
+
     protected:
 
-        virtual void mouseIn(VoidEvent::Payload & e) {
-            onMouseIn(e, this);
-        }
+        /** Sets the mouse cursor of the widget.
+         
+            If the widget has mouse focus, updates the cursor immediately with the renderer. 
+         */
+        virtual void setMouseCursor(MouseCursor cursor);
+
+        /** Called when mouse enters the widget's visible area. 
+         
+            Sets the renderer's mouse cursor to the widget's mouse cursor and triggers the event. 
+         */
+        virtual void mouseIn(VoidEvent::Payload & e);
 
         virtual void mouseOut(VoidEvent::Payload & e) {
             onMouseOut(e, this);
@@ -624,6 +640,12 @@ namespace ui {
                 parent_->mouseDoubleClick(e);
             }
         }
+
+    private:
+        
+        /** Mouse cursor to be displayed over the widget. 
+         */
+        MouseCursor mouseCursor_ = MouseCursor::Default;
 
     //}
 

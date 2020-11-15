@@ -15,7 +15,7 @@ jobs:
     - name: install-packages
       run: |
         sudo apt update
-        sudo apt install cmake libx11-dev libxft-dev g++
+        sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++
     - name: configure-debug
       run: |
         mkdir -p build/debug

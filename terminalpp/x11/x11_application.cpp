@@ -68,6 +68,15 @@ namespace tpp {
 
         fcConfig_ = FcInitLoadConfigAndFonts();
 
+        // create mouse cursors
+        cursorArrow_ = XcursorLibraryLoadCursor(xDisplay_, "top_left_arrow");        
+        cursorHand_ = XcursorLibraryLoadCursor(xDisplay_, "hand2");        
+        cursorBeam_ = XcursorLibraryLoadCursor(xDisplay_, "xterm");        
+        cursorVerticalSize_ = XcursorLibraryLoadCursor(xDisplay_, "sb_v_double_arrow");        
+        cursorHorizontalSize_ = XcursorLibraryLoadCursor(xDisplay_, "sb_h_double_arrow");        
+        cursorWait_ = XcursorLibraryLoadCursor(xDisplay_, "watch");        
+        cursorForbidden_ = XcursorLibraryLoadCursor(xDisplay_, "X_cursor");        
+
 		X11Window::StartBlinkerThread();
     }
 

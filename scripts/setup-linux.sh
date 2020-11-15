@@ -2,7 +2,7 @@
 sudo apt update
 
 # install the prerequisite packages
-sudo apt install cmake libx11-dev libxft-dev g++
+sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++
 
 # install qt
 sudo apt install qt5-default

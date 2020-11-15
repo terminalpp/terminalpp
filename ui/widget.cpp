@@ -379,6 +379,26 @@ namespace ui {
         }
     }
 
+    // Mouse
+
+    bool Widget::mouseFocused() const {
+        return renderer() != nullptr && renderer()->mouseFocus() == this;
+    }
+
+    void Widget::setMouseCursor(MouseCursor cursor) {
+        if (mouseCursor_ != cursor) {
+            mouseCursor_ = cursor;
+            if (mouseFocused())
+                renderer_->setMouseCursor(mouseCursor_);
+        }
+    }
+
+    void Widget::mouseIn(VoidEvent::Payload & e) {
+        renderer_->setMouseCursor(mouseCursor_);
+        onMouseIn(e, this);
+    }
+
+
     // Keyboard
 
     bool Widget::focused() const {

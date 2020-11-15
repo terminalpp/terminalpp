@@ -41,6 +41,40 @@ namespace tpp {
 
     protected:
 
+        /** Sets window cursor.
+         
+            X11 does not make distinction between splitter and resize cursors. 
+         */
+        void setMouseCursor(MouseCursor cursor) override {
+            switch (cursor)  {
+                case MouseCursor::Default:
+                case MouseCursor::Beam:
+                default:
+                    XDefineCursor(display_, window_, X11Application::Instance()->cursorBeam_);
+                    break;
+                case MouseCursor::Arrow:
+                    XDefineCursor(display_, window_, X11Application::Instance()->cursorArrow_);
+                    break;
+                case MouseCursor::Hand:
+                    XDefineCursor(display_, window_, X11Application::Instance()->cursorHand_);
+                    break;
+                case MouseCursor::VerticalSize:
+                case MouseCursor::VerticalSplit:
+                    XDefineCursor(display_, window_, X11Application::Instance()->cursorVerticalSize_);
+                    break;
+                case MouseCursor::HorizontalSize:
+                case MouseCursor::HorizontalSplit:
+                    XDefineCursor(display_, window_, X11Application::Instance()->cursorHorizontalSize_);
+                    break;
+                case MouseCursor::Wait:
+                    XDefineCursor(display_, window_, X11Application::Instance()->cursorWait_);
+                    break;
+                case MouseCursor::Forbidden:
+                    XDefineCursor(display_, window_, X11Application::Instance()->cursorForbidden_);
+                    break;
+            }
+        }
+
         void render(Rect const & rect) override {
             MARK_AS_UNUSED(rect);
             // trigger a refresh

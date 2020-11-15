@@ -6,6 +6,7 @@
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include <X11/Xft/Xft.h>
+#include <X11/Xcursor/Xcursor.h>
 #include <X11/extensions/Xrender.h>
 #include <fontconfig/fontconfig.h>
 

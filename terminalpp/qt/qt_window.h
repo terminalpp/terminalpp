@@ -56,6 +56,40 @@ namespace tpp {
 
     protected:
 
+        void setMouseCursor(MouseCursor cursor) {
+            switch (cursor)  {
+                case MouseCursor::Default:
+                case MouseCursor::Beam:
+                default:
+                    setCursor(Qt::IBeamCursor);
+                    break;
+                case MouseCursor::Arrow:
+                    setCursor(Qt::ArrowCursor);
+                    break;
+                case MouseCursor::Hand:
+                    setCursor(Qt::PointingHandCursor);
+                    break;
+                case MouseCursor::VerticalSize:
+                    setCursor(Qt::SizeVerCursor);
+                    break;
+                case MouseCursor::VerticalSplit:
+                    setCursor(Qt::SplitVCursor);
+                    break;
+                case MouseCursor::HorizontalSize:
+                    setCursor(Qt::SizeHorCursor);
+                    break;
+                case MouseCursor::HorizontalSplit:
+                    setCursor(Qt::SplitHCursor);
+                    break;
+                case MouseCursor::Wait:
+                    setCursor(Qt::WaitCursor);
+                    break;
+                case MouseCursor::Forbidden:
+                    setCursor(Qt::ForbiddenCursor);
+                    break;
+            }
+        }
+
         /** Renders the window. 
          
             Instead of renderring immediately the method simply emits the update() event, which will in turn call the paintEvent() method which does the actual rendering on Qt. 
