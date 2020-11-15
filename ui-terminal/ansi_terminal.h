@@ -200,6 +200,37 @@ namespace ui {
         When mouse hovers over the cells with attached hyperlink, the link is highighted. When clicked, the onHyperlinkOpen event is triggered, which should open the link in a browser. On right button clicik, the onHyperlinkCopy event is triggered, which should copy the url to clipboard instead of opening. 
      */
     //@{
+    public:
+
+        /** Returns whether the OSC hyperlink extension (OSC 8) is enabled. 
+         */
+        bool allowOSCHyperlinks() const {
+            return allowOSCHyperlinks_;
+        }
+
+        /** Enables, or disables the OSC hyperlink extension. 
+         
+            Note that disabling OSC hyperlinks has no effect on the automatic hyperlink detection.
+         */
+        void setAllowOSCHyperlinks(bool value = true) {
+            allowOSCHyperlinks_ = value;
+        }
+
+        /** Returns true if hyperlinks are detected within normal text in the terminal. 
+         */
+        bool detectHyperlinks() const {
+            return detectHyperlinks_;
+        }
+
+        /** Istructs the terminal to turn automatic hyperlink detection on or off.
+         
+            Note that disabling automatic hyperlink detection has no effect on OSC explicit hyperlinks.
+         */
+        void setDetectHyperlinks(bool value = true) {
+            detectHyperlinks_ = value;
+            urlMatcher_.reset();
+        }
+
     protected:
         /** Returns hyperlink attached to cell at given coordinates. 
          
@@ -239,6 +270,14 @@ namespace ui {
         /** Url matcher to detect hyperlinks in the terminal output automatically. 
          */
         UrlMatcher urlMatcher_;
+
+        /** If true, OSC hyperlinks are supported. 
+         */
+        bool allowOSCHyperlinks_ = false;
+
+        /** If true, hyperlinks are autodetected. 
+         */
+        bool detectHyperlinks_ = false;
 
     //@}
 
@@ -283,6 +322,12 @@ namespace ui {
                 repaint();
             }
         }
+
+        /** Sets the cursor appearance.
+         
+            The cursor is set for both normal and alternate buffers. If the application in the terminal chooses to rewrite the cursor settings, it can do so. 
+         */
+        void setCursor(Canvas::Cursor const & value);
 
         /** Returns the number of current history rows. 
          

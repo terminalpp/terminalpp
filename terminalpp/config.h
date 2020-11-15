@@ -333,6 +333,18 @@ namespace tpp {
                 JSON{true},
                 bool                
             );
+            CONFIG_PROPERTY(
+                allowOSCHyperlinks,
+                "If true, explicit hyperlink commands (OSC 8) will be displayed as hyperlinks.",
+                JSON{true},
+                bool
+            );
+            CONFIG_PROPERTY(
+                detectHyperlinks,
+                "If true, hyperlinks (http and https) contained within the terminal will be detected and displayed as hyperlinks.",
+                JSON{true},
+                bool
+            );
         );
         CONFIG_OBJECT(
             remoteFiles,

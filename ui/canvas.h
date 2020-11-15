@@ -260,6 +260,10 @@ namespace ui {
 
     }; // ui::Canvas
 
+    /** Cursor appearance.
+     
+        Specifies the appearance of the cursor, such as codepoint and cursor color and whether the cursor is blinking or visible. 
+     */
     class Canvas::Cursor {
     public:
 

@@ -27,9 +27,9 @@ namespace tpp {
         si->terminal->setBoldIsBright(config.sequences.boldIsBright());
         si->terminal->setDisplayBold(config.sequences.displayBold());
         si->terminal->setInactiveCursorColor(session.cursor.inactiveColor());
-        /*
-        si->terminal->setDefaultCursor(session.cursor());
-        */
+        si->terminal->setAllowOSCHyperlinks(config.sequences.allowOSCHyperlinks());
+        si->terminal->setDetectHyperlinks(config.sequences.detectHyperlinks());
+        si->terminal->setCursor(session.cursor());
         // register the session and set it as active page
         AnsiTerminal * t = si->terminal;
         sessions_.insert(std::make_pair(t, si.release()));

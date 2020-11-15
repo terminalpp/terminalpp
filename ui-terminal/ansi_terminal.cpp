@@ -453,6 +453,11 @@ namespace ui {
         state_->setLastCharacter(cursorPosition());
     }
 
+    void AnsiTerminal::setCursor(Canvas::Cursor const & value) {
+        state_->buffer.cursor() = value;
+        stateBackup_->buffer.cursor() = value;
+    }
+
     // Scrollback buffer
 
     void AnsiTerminal::insertLines(int lines, int top, int bottom, Cell const & fill) {
@@ -633,7 +638,9 @@ namespace ui {
         if (lineDrawingSet_ && codepoint >= 0x6a && codepoint < 0x79)
             codepoint = LineDrawingChars_[codepoint-0x6a];
         LOG(SEQ) << "codepoint " << codepoint << " " << static_cast<char>(codepoint & 0xff);
-        detectHyperlink(codepoint);
+        // detect the hyperlinks if enabled, before updating the cursor position
+        if (detectHyperlinks_)
+            detectHyperlink(codepoint);
         updateCursorPosition();
         // set the cell according to the codepoint and current settings. If there is an active hyperlink, the hyperlink is first attached to the cell and then new cell is added to the hyperlink fallback 
         Cell & cell = state_->buffer.at(cursorPosition());
@@ -1585,15 +1592,17 @@ namespace ui {
              */
             case 8: {
                 if (seq.numArgs() == 2) {
-                    if (! seq[1].empty()) {
-                        if (inProgressHyperlink_ != nullptr)
-                            LOG(SEQ_ERROR) << "Unterminaled hyperlink to url " << inProgressHyperlink_->url();
-                        LOG(SEQ) << "hyperlink to " << seq[1];
-                        inProgressHyperlink_ = new Hyperlink(seq[1]);
-                    } else {
-                        if (inProgressHyperlink_ == nullptr)
-                           LOG(SEQ_ERROR) << "Hyperlink terminated wiothout active one";
-                        inProgressHyperlink_ = nullptr;
+                    if (allowOSCHyperlinks_) {
+                        if (! seq[1].empty()) {
+                            if (inProgressHyperlink_ != nullptr)
+                                LOG(SEQ_ERROR) << "Unterminaled hyperlink to url " << inProgressHyperlink_->url();
+                            LOG(SEQ) << "hyperlink to " << seq[1];
+                            inProgressHyperlink_ = new Hyperlink(seq[1]);
+                        } else {
+                            if (inProgressHyperlink_ == nullptr)
+                            LOG(SEQ_ERROR) << "Hyperlink terminated wiothout active one";
+                            inProgressHyperlink_ = nullptr;
+                        }
                     }
                     return;
                 }
