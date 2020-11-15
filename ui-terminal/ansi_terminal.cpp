@@ -88,7 +88,8 @@ namespace ui {
                     ccanvas.setBorder(Point{col, row}, endOfLine);
 #endif
             }
-            ccanvas.fill(Rect{Point{historyRows_[row].first, row}, Point{width(), row + 1}});
+            ccanvas.fill(Rect{Point{historyRows_[row].first, row}, Point{width(), row + 1}},
+            Cell{}.setBg(ccanvas.bg()));
         }
         // TODO once we support sixels or other shared objects that might survive to the drawing stage, this function will likely change. 
         ccanvas.drawFallbackBuffer(state_->buffer, Point{0, top});
