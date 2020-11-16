@@ -231,6 +231,30 @@ namespace ui {
             urlMatcher_.reset();
         }
 
+        /** Returns the style used for new hyperlinks. 
+         */
+        Hyperlink::Style const & normalHyperlinkStyle() const {
+            return normalHyperlinkStyle_;
+        }
+
+        /** Sets the style for new hyperlinks.
+         */
+        void setNormalHyperlinkStyle(Hyperlink::Style const & value) {
+            normalHyperlinkStyle_ = value;
+        }
+
+        /** Returns the active (mouse over) style for new hyperlinks. 
+         */
+        Hyperlink::Style const & activeHyperlinkStyle() const {
+            return activeHyperlinkStyle_;
+        }
+
+        /** Sets the active (mouse over) style for new hyperlinks.
+         */
+        void setActiveHyperlinkStyle(Hyperlink::Style const & value) {
+            activeHyperlinkStyle_ = value;
+        }
+
     protected:
         /** Returns hyperlink attached to cell at given coordinates. 
          
@@ -278,6 +302,14 @@ namespace ui {
         /** If true, hyperlinks are autodetected. 
          */
         bool detectHyperlinks_ = false;
+
+        /** Default hyperlink style (for both autodetected and explicit OSC 8 links).
+         */
+        Hyperlink::Style normalHyperlinkStyle_;
+
+        /** Active hyperlink style (for both autodetected and explicit OSC 8 links), used when mouse is over the link.
+         */
+        Hyperlink::Style activeHyperlinkStyle_;
 
     //@}
 

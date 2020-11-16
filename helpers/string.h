@@ -102,6 +102,21 @@ HELPERS_NAMESPACE_BEGIN
         return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
     }
 
+    /** Transforms the given ASCII string to lowercase.
+     */
+    inline std::string ToLower(std::string const & what) {
+        std::string result{what};
+        for (char & c : result)
+            c = static_cast<char>(std::tolower(c));
+        return result;
+    }
+
+    inline std::string ToLower(std::string && what) {
+        for (char & c : what)
+            c = static_cast<char>(std::tolower(c));
+        return what;
+    }
+
 	/** Splits the given string by given delimiter. 
 	 */
 	inline std::vector<std::string> Split(std::string const& what, std::string const& delimiter) {

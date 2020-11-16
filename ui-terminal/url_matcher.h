@@ -91,7 +91,7 @@ namespace ui {
         }; 
 
         bool isStateValid() const {
-            return static_cast<int>(state_) >= static_cast<int>(State::valid);
+            return state_ >= State::valid;
         }
 
         /** \name Character Groups

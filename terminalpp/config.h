@@ -9,6 +9,7 @@
 #include "ui/color.h"
 #include "ui/canvas.h"
 #include "ui-terminal/ansi_terminal.h"
+#include "ui/special_objects/hyperlink.h"
 
 /** \page tppconfig Configuration
  
@@ -46,6 +47,11 @@
 #define SHORTCUT_COPY (Key::C + Key::Ctrl)
 
 namespace config {
+
+    /** Typedef for font attributes specification only. 
+     */
+    typedef ui::Font FontAttributes;
+
     enum class ConfirmPaste {
         Never,
         Always,
@@ -61,6 +67,33 @@ namespace config {
         Deny,
         Ask
     };
+
+}
+
+
+template<>
+inline config::FontAttributes JSONConfig::FromJSON(JSON const & json) {
+    if (json.kind() != JSON::Kind::String)
+        THROW(JSONError()) << "Element must be a string";
+    config::FontAttributes result;
+    for (std::string const & item : SplitAndTrim(ToLower(json.toString()), " ")) {
+        if (item == "bold") {
+            result.setBold();
+        } else if (item == "italic") {
+            result.setItalic();
+        } else if (item == "underline") {
+            result.setUnderline();
+        } else if (item == "strikethrough") {
+            result.setStrikethrough();
+        } else if (item == "dashed") {
+            result.setDashed();
+        } else if (item == "blink") {
+            result.setBlink();
+        } else {
+            THROW(JSONError()) << "Unknown font attribute " << item << " found";
+        }
+    }
+    return result;
 }
 
 template<>
@@ -224,6 +257,64 @@ namespace tpp {
 				JSON{60},
 			    unsigned
 			);
+            CONFIG_OBJECT(
+                hyperlinks,
+                "Settings for displaying hyperlinks",
+                CONFIG_OBJECT(
+                    normal,
+                    "Inactive hyperlink (detected or explicit)",
+                    CONFIG_PROPERTY(
+                        foreground,
+                        "Foreground color of the hyperlink (blended over existing)",
+                        JSON{"#00000000"},
+                        ui::Color
+                    );
+                    CONFIG_PROPERTY(
+                        background,
+                        "Foreground color of the hyperlink (blended over existing)",
+                        JSON{"#00000000"},
+                        ui::Color
+                    );
+                    CONFIG_PROPERTY(
+                        font,
+                        "Font attributes of the hyperlink, space separated 'underline', 'dashed', 'italic' and 'bold' are supported",
+                        JSON{"underline dashed"},
+                        config::FontAttributes
+                    );
+                    /** Returns the actual hyperlink style in single object.
+                     */
+                    ui::Hyperlink::Style operator () () const {
+                        return ui::Hyperlink::Style{foreground(), background(), font()};
+                    }
+                );
+                CONFIG_OBJECT(
+                    active,
+                    "Active (mouse over) hyperlink (detected or explicit)",
+                    CONFIG_PROPERTY(
+                        foreground,
+                        "Foreground color of the hyperlink (blended over existing)",
+                        JSON{"#0000ff"},
+                        ui::Color
+                    );
+                    CONFIG_PROPERTY(
+                        background,
+                        "Foreground color of the hyperlink (blended over existing)",
+                        JSON{"#00000000"},
+                        ui::Color
+                    );
+                    CONFIG_PROPERTY(
+                        font,
+                        "Font attributes of the hyperlink, space separated 'underline', 'dashed', 'italic' and 'bold' are supported",
+                        JSON{"underline dashed"},
+                        config::FontAttributes
+                    );
+                    /** Returns the actual hyperlink style in single object.
+                     */
+                    ui::Hyperlink::Style operator () () const {
+                        return ui::Hyperlink::Style{foreground(), background(), font()};
+                    }
+                );
+            );
             CONFIG_OBJECT(
                 font,
                 "Font used to render the terminal",

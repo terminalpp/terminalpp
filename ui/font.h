@@ -110,6 +110,20 @@ namespace ui {
             return font_ != other.font_;
         }
 
+        /** Adds any attributes specified for the other cell, leaving everything else inact. 
+         */
+        Font & orAttributesFrom(Font const & from) {
+            font_ = font_ | (from.font_ & (BOLD | ITALIC | UNDERLINE | STRIKETHROUGH | BLINK | DASHED));
+            return *this;
+        }
+
+        /** Keeps only those attributes defined for the other cell as well. 
+         */
+        Font & andAttributesFrom(Font const & from) {
+            font_ = font_ & (from.font_ & ~(BOLD | ITALIC | UNDERLINE | STRIKETHROUGH | BLINK | DASHED));
+            return *this;
+        }
+
     private:
         static constexpr uint16_t BOLD = 1 << 15;
         static constexpr uint16_t ITALIC = 1 << 14;

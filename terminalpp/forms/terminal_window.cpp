@@ -26,10 +26,12 @@ namespace tpp {
         si->terminal->setMaxHistoryRows(config.renderer.window.historyLimit());
         si->terminal->setBoldIsBright(config.sequences.boldIsBright());
         si->terminal->setDisplayBold(config.sequences.displayBold());
+        si->terminal->setCursor(session.cursor());
         si->terminal->setInactiveCursorColor(session.cursor.inactiveColor());
         si->terminal->setAllowOSCHyperlinks(config.sequences.allowOSCHyperlinks());
         si->terminal->setDetectHyperlinks(config.sequences.detectHyperlinks());
-        si->terminal->setCursor(session.cursor());
+        si->terminal->setNormalHyperlinkStyle(config.renderer.hyperlinks.normal());
+        si->terminal->setActiveHyperlinkStyle(config.renderer.hyperlinks.active());
         // register the session and set it as active page
         AnsiTerminal * t = si->terminal;
         sessions_.insert(std::make_pair(t, si.release()));

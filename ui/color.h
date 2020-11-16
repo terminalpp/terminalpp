@@ -7,6 +7,10 @@ namespace ui {
 
     class Color {
     public:
+
+        static constexpr uint8_t OPAQUE = 255;
+        static constexpr uint8_t FULLY_TRANSPARENT = 0;
+
 		uint8_t a;
 		uint8_t b;
 		uint8_t g;

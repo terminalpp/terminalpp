@@ -5,14 +5,11 @@
 - selection contents is trimmed
 - proper mouse coordinates are reported when history is used together with buffer
 - renderer can use different mouse cursors
-- hyperlinks (TODO more info)
+- hyperlinks (`http` and `https` links can be autodetected, `OSC 8` escape sequence supported as well, configurable styles)
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
-
-- add settings for active/normal/autodetect,
-- add settings to disable hyperlinks at all
 
 - check that terminal properties are read only under the buffer lock
 

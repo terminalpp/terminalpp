@@ -397,7 +397,7 @@ namespace ui {
         if (matchSize == 0)
             return;
         // we have found a hyperlink, construct its address and determine which cells to use, which we do by retracting
-        Hyperlink::Ptr link = new Hyperlink{""};
+        Hyperlink::Ptr link = new Hyperlink{"", normalHyperlinkStyle_, activeHyperlinkStyle_};
         std::string url{};
         Point pos = cursorPosition();
         do {
@@ -1598,7 +1598,7 @@ namespace ui {
                             if (inProgressHyperlink_ != nullptr)
                                 LOG(SEQ_ERROR) << "Unterminaled hyperlink to url " << inProgressHyperlink_->url();
                             LOG(SEQ) << "hyperlink to " << seq[1];
-                            inProgressHyperlink_ = new Hyperlink(seq[1]);
+                            inProgressHyperlink_ = new Hyperlink(seq[1], normalHyperlinkStyle_, activeHyperlinkStyle_);
                         } else {
                             if (inProgressHyperlink_ == nullptr)
                             LOG(SEQ_ERROR) << "Hyperlink terminated wiothout active one";
