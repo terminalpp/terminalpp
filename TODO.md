@@ -2,10 +2,11 @@
 
 ## Next version:
 
-- selection contents is trimmed
-- proper mouse coordinates are reported when history is used together with buffer
-- renderer can use different mouse cursors
 - hyperlinks (`http` and `https` links can be autodetected, `OSC 8` escape sequence supported as well, configurable styles)
+- option to disable cursor style changes from terminal apps
+- selection contents is trimmed
+- renderer can use different mouse cursors
+- proper mouse coordinates are reported when history is used together with buffer
 
 ### TODO
 

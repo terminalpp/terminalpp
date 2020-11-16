@@ -28,6 +28,7 @@ namespace tpp {
         si->terminal->setDisplayBold(config.sequences.displayBold());
         si->terminal->setCursor(session.cursor());
         si->terminal->setInactiveCursorColor(session.cursor.inactiveColor());
+        si->terminal->setAllowCursorChanges(config.sequences.allowCursorChanges());
         si->terminal->setAllowOSCHyperlinks(config.sequences.allowOSCHyperlinks());
         si->terminal->setDetectHyperlinks(config.sequences.detectHyperlinks());
         si->terminal->setNormalHyperlinkStyle(config.renderer.hyperlinks.normal());

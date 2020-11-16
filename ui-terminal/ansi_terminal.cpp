@@ -1283,8 +1283,9 @@ namespace ui {
 					continue;
 				// cursor blinking
 				case 12:
-                    cursor().setBlink(value);
 					LOG(SEQ) << "cursor blinking: " << value;
+                    if (allowCursorChanges_)
+                        cursor().setBlink(value);
 					continue;
 				// cursor show/hide
 				case 25:
@@ -1628,7 +1629,8 @@ namespace ui {
              */
             case 112:
                 LOG(SEQ) << "Cursor color reset";
-                cursor().setColor(defaultCursor_.color());
+                if (allowCursorChanges_)
+                    cursor().setColor(defaultCursor_.color());
                 return;
             default:
                 break;

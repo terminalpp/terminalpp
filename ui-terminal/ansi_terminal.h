@@ -212,7 +212,7 @@ namespace ui {
          
             Note that disabling OSC hyperlinks has no effect on the automatic hyperlink detection.
          */
-        void setAllowOSCHyperlinks(bool value = true) {
+        virtual void setAllowOSCHyperlinks(bool value = true) {
             allowOSCHyperlinks_ = value;
         }
 
@@ -226,7 +226,7 @@ namespace ui {
          
             Note that disabling automatic hyperlink detection has no effect on OSC explicit hyperlinks.
          */
-        void setDetectHyperlinks(bool value = true) {
+        virtual void setDetectHyperlinks(bool value = true) {
             detectHyperlinks_ = value;
             urlMatcher_.reset();
         }
@@ -239,7 +239,7 @@ namespace ui {
 
         /** Sets the style for new hyperlinks.
          */
-        void setNormalHyperlinkStyle(Hyperlink::Style const & value) {
+        virtual void setNormalHyperlinkStyle(Hyperlink::Style const & value) {
             normalHyperlinkStyle_ = value;
         }
 
@@ -251,7 +251,7 @@ namespace ui {
 
         /** Sets the active (mouse over) style for new hyperlinks.
          */
-        void setActiveHyperlinkStyle(Hyperlink::Style const & value) {
+        virtual void setActiveHyperlinkStyle(Hyperlink::Style const & value) {
             activeHyperlinkStyle_ = value;
         }
 
@@ -342,6 +342,22 @@ namespace ui {
          */
         virtual void setDisplayBold(bool value = true) {
             displayBold_ = value;
+        }
+
+        /** Returns true if terminal applications can change cursor behavior. 
+         
+            Note that the terminal apps can always set cursor visibility. 
+         */
+        bool allowCursorChanges() const {
+            return allowCursorChanges_;
+        }
+
+        /** Updates whether terminal applications can change cursor behavior.
+         
+            Note that the terminal apps can always set cursor visibility. 
+         */
+        virtual void setAllowCursorChanges(bool value) {
+            allowCursorChanges_ = value;
         }
 
         Color inactiveCursorColor() const {
@@ -500,6 +516,10 @@ namespace ui {
 
         /** If true, bold font will be displayed. */
         bool displayBold_ = true;
+
+        /** If true, terminal apps can change cursor behavior.
+         */
+        bool allowCursorChanges_ = true;
 
         /** Determines whether alternate mode is active or not. */
         bool alternateMode_ = false;

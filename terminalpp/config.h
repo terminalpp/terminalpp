@@ -436,6 +436,12 @@ namespace tpp {
                 JSON{true},
                 bool
             );
+            CONFIG_PROPERTY(
+                allowCursorChanges,
+                "If true, terminal applications can change the cursor properties (color, character, etc.)",
+                JSON{true},
+                bool
+            );
         );
         CONFIG_OBJECT(
             remoteFiles,
