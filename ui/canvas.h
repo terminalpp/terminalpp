@@ -475,6 +475,22 @@ namespace ui {
             border_{} {
         }
 
+        Cell(Cell const & from):
+            codepoint_{from.codepoint_},
+            fg_{from.fg_},
+            bg_{from.bg_},
+            decor_{from.decor_},
+            font_{from.font_},
+            border_{from.border_} {
+            SpecialObject * so = from.specialObject();
+            if (so != nullptr) {
+                std::lock_guard<std::mutex> g{SpecialObject::MObjects_};
+                SpecialObject::Objects_.insert(std::pair<Cell *, SpecialObject*>{this, so});
+                ASSERT(codepoint_ & SPECIAL_OBJECT);
+                ++so->refCount_;
+            }
+        }
+
         /** Destroys the cell. 
          
             While nothing has to be done for normal cell, a special cell must detach and possibly delete the special object it contains.
