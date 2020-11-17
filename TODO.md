@@ -12,8 +12,6 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- check that terminal properties are read only under the buffer lock
-
 - see if msys can be added to bypass
 
 - double click selects word in terminal

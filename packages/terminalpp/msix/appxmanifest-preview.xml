@@ -10,7 +10,7 @@
     xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
     <Identity 
         Name="57918Zduka.terminalpp-preview" 
-        Version="@PROJECT_VERSION@" 
+        Version="@PROJECT_VERSION@.0" 
         Publisher="CN=333F5A3D-D64B-4F2D-A47C-2EA258D1B12E" 
         ProcessorArchitecture="x64"
     />

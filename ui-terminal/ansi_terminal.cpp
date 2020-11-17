@@ -390,6 +390,7 @@ namespace ui {
     }
 
     void AnsiTerminal::detectHyperlink(char32_t next) {
+        ASSERT(bufferLock_.locked());
         // don't do any mathing if we are inside hyperlink command
         if (inProgressHyperlink_ != nullptr)
             return;

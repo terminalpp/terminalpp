@@ -13,7 +13,9 @@ endif()
 # ==============================
 #
 # For releasing simplicity, all of the packages follow the terminalpp's version numbering. This is the only place where the version should be changed. It will get updated to the subprojects automatically. 
-set(TPP_VERSION 0.8.0.1)
+#
+# Due to Windows store limitation, only first three parts of version can be used. 
+set(TPP_VERSION 0.8.1)
 # The pseudoproject for the tools defined in this cmake. 
 project(tpp VERSION ${TPP_VERSION})
 

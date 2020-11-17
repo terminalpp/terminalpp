@@ -109,10 +109,12 @@ namespace ui {
     protected:
 
         Size contentsSize() const override {
-            if (alternateMode_)
+            if (alternateMode_) {
                 return Widget::contentsSize();
-            else 
+            } else {
+                std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
                 return Size{width(), height() + static_cast<int>(historyRows_.size())};
+            }
         }
 
         void paint(Canvas & canvas) override;
@@ -261,6 +263,7 @@ namespace ui {
             If there are no cells, at given coordinates, or no hyperlink present, returns nullptr.
          */
         Hyperlink * hyperlinkAt(Point widgetCoords) {
+            ASSERT(bufferLock_.locked());
             Cell const * cell = cellAt(widgetCoords);
             return cell == nullptr ? nullptr : dynamic_cast<Hyperlink*>(cell->specialObject());
         }
@@ -532,7 +535,7 @@ namespace ui {
          */
         State * state_;
         State * stateBackup_;
-        PriorityLock bufferLock_;
+        mutable PriorityLock bufferLock_;
 
         int maxHistoryRows_;
         std::deque<std::pair<int, Cell*>> historyRows_;
