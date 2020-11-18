@@ -19,3 +19,11 @@ TEST(url_matcher, withAddress) {
     EXPECT(UrlMatcher::IsValid("https://terminalpp.com/~term"));
     EXPECT(UrlMatcher::IsValid("https://terminalpp.com/~term/foo/bar/"));
 }
+
+TEST(url_matcher, withArguments) {
+    EXPECT(UrlMatcher::IsValid("http://terminalpp.com?foo=bar"));
+    EXPECT(UrlMatcher::IsValid("https://terminalpp.com/~term?foo=bar"));
+    EXPECT(UrlMatcher::IsValid("http://terminalpp.com/?foo=bar"));
+    EXPECT(UrlMatcher::IsValid("https://terminalpp.com/~term/?foo=bar"));
+    EXPECT(UrlMatcher::IsValid("https://terminalpp.com/~term/?foo=bar.xy.3&q=7"));
+}

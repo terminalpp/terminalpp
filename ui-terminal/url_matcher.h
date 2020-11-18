@@ -133,7 +133,7 @@ namespace ui {
                 return c;
             else if (c >= '0' && c <= '9')
                 return c;
-            else if (c == '-' || c == '~' || c == '_')
+            else if (c == '-' || c == '~' || c == '_' || c == '.')
                 return c;
             else 
                 return c + 1;
@@ -146,7 +146,7 @@ namespace ui {
                 return c;
             else if (c >= '0' && c <= '9')
                 return c;
-            else if (c == '-' || c == '~' || c == '+' || c == '_' || c == '!' || c == '*' || c == '\'' || c == '(' || c == ')' || c == '=')
+            else if (c == '-' || c == '~' || c == '+' || c == '_' || c == '!' || c == '*' || c == '\'' || c == '(' || c == ')' || c == '=' || c == '&' || c == '.')
                 return c;
             else 
                 return c + 1;
@@ -265,6 +265,7 @@ namespace ui {
                 }
                 case State::validAddress: {
                     TRANSITION(addressLetter(c), State::validAddress);
+                    TRANSITION('?', State::validArguments);
                     TRANSITION('/', State::validAddress);
                     break;
                 }
