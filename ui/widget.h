@@ -131,6 +131,12 @@ namespace ui {
             return widgetCoords + visibleArea_.offset();
         }
 
+        /** Converts the widget coordinates to the coordinates of the widget contents. 
+         */
+        Point toContentsCoords(Point widgetCoords) {
+            return widgetCoords + scrollOffset();
+        }
+
         /** Returns the widget that is directly under the given coordinates, or itself. 
          */
         Widget * getMouseTarget(Point coords) {
@@ -566,6 +572,7 @@ namespace ui {
         MouseButtonEvent onMouseUp;
         MouseButtonEvent onMouseClick;
         MouseButtonEvent onMouseDoubleClick;
+        MouseButtonEvent onMouseTripleClick;
 
         bool mouseFocused() const;
 
@@ -638,6 +645,14 @@ namespace ui {
             if (e.active() && parent_ != nullptr) {
                 e->coords = parent_->toWidgetCoordinates(toRendererCoordinates(e->coords));
                 parent_->mouseDoubleClick(e);
+            }
+        }
+
+        virtual void mouseTripleClick(MouseButtonEvent::Payload & e) {
+            onMouseTripleClick(e, this);
+            if (e.active() && parent_ != nullptr) {
+                e->coords = parent_->toWidgetCoordinates(toRendererCoordinates(e->coords));
+                parent_->mouseTripleClick(e);
             }
         }
 

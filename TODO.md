@@ -7,6 +7,7 @@
 - selection contents is trimmed
 - renderer can use different mouse cursors
 - proper mouse coordinates are reported when history is used together with buffer
+- double click selects word, triple click selects line
 
 ### TODO
 
@@ -14,7 +15,6 @@
 
 - see if msys can be added to bypass
 
-- double click selects word in terminal
 
 Documentation:
 

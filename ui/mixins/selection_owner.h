@@ -200,6 +200,18 @@ namespace ui {
             }
         }
 
+        /** Sets selection directly. 
+         
+            Clears any preexisting selection (if any), updates the selection, informs the renderer about selection owner & contents change and repaints the widget. 
+         */
+        void setSelection(Selection const & selection) {
+            if (! selection_.empty())
+                clearSelection();
+            selection_ = selection;
+            endSelectionUpdate();
+            repaint();
+        }
+
     //@}      
 
     /** \name Autoscrolling.

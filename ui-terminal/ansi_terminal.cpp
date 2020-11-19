@@ -389,6 +389,63 @@ namespace ui {
         return Trim(result.str());
     }
 
+    void AnsiTerminal::selectWord(Point pos) {
+        Point start = pos;
+        Point end = pos;
+        {
+            std::lock_guard<PriorityLock> g(bufferLock_);
+            Cell const * c = cellAt(pos);
+            // if there is nothing at the coordinates, or we are not inside a word, do nothing
+            if (c == nullptr || IsWordSeparator(c->codepoint()))
+                return;
+            // find beginning and end of the word
+            while (true) {
+                Point prev = prevCell(start);
+                c = cellAt(prev);
+                if (c == nullptr || IsWordSeparator(c->codepoint()))
+                    break;
+                start = prev;
+            }
+            while(true) {
+                Point next = nextCell(end);
+                c = cellAt(next);
+                if (c == nullptr || IsWordSeparator(c->codepoint()))
+                    break;
+                end = next;
+            }
+        }
+        // do the selection
+        setSelection(Selection::Create(start, end));
+    }
+
+    void AnsiTerminal::selectLine(Point pos) {
+        Point start = Point{0, pos.y()};
+        Point end = start;
+        {
+            std::lock_guard<PriorityLock> g(bufferLock_);
+            // see if the above line ends with a line end character
+            while (start != Point{0,0}) {
+                start = prevCell(start);
+                Cell const * c = cellAt(start);
+                if (c != nullptr && Buffer::IsLineEnd(*c)) {
+                    start = Point{0, start.y() + 1};
+                    break;
+                }
+            }
+            // now find end of the line at cursor
+            Point bottomRight = Point{state_->buffer.width() - 1, state_->buffer.height() - 1 + terminalBufferTop()};
+            while (end != bottomRight) {
+                Cell const * c = cellAt(end);
+                if (c != nullptr && Buffer::IsLineEnd(*c))
+                    break;
+                end = nextCell(end);
+            }
+        }
+        // do the selection
+        setSelection(Selection::Create(start, end));
+    }
+
+
     void AnsiTerminal::detectHyperlink(char32_t next) {
         ASSERT(bufferLock_.locked());
         // don't do any mathing if we are inside hyperlink command
@@ -547,9 +604,8 @@ namespace ui {
         }
     }
 
-    AnsiTerminal::Cell const * AnsiTerminal::cellAt(Point widgetCoords) {
+    AnsiTerminal::Cell const * AnsiTerminal::cellAt(Point coords) {
         ASSERT(bufferLock_.locked());
-        Point coords = widgetCoords + scrollOffset();
         int bufferTop = terminalBufferTop();
         if (bufferTop <= coords.y()) {
             coords -= Point{0, bufferTop};
@@ -560,6 +616,22 @@ namespace ui {
                 return nullptr;
             return row.second + coords.x();
         }
+    }
+
+    Point AnsiTerminal::prevCell(Point coords) const {
+        ASSERT(bufferLock_.locked());
+        coords -= Point{1,0};
+        if (coords.x() < 0)
+            coords += Point{state_->buffer.width(), -1};
+        return coords;
+    }
+
+    Point AnsiTerminal::nextCell(Point coords) const {
+        ASSERT(bufferLock_.locked());
+        coords += Point{1,0};
+        if (coords.x() >= state_->buffer.width())
+            coords -= Point{state_->buffer.width(), -1};
+        return coords;
     }
 
     // Input Processing

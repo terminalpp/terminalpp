@@ -326,12 +326,16 @@ namespace ui {
         mouseIn_ = false;
         mouseButtons_ = 0;
         mouseFocus_ = nullptr;
+        mouseCoords_ = Point{-1, -1};
         VoidEvent::Payload p{};
         onMouseOut(p, this);
     }
 
     void Renderer::mouseMove(Point coords) {
         ASSERT(mouseIn_);
+        if (coords == mouseCoords_)
+            return;
+        mouseCoords_ = coords;
         updateMouseFocus(coords);
         if (onMouseMove.attached()) {
             MouseMoveEvent::Payload p{coords, modifiers_};
@@ -348,6 +352,7 @@ namespace ui {
 
     void Renderer::mouseWheel(Point coords, int by) {
         ASSERT(mouseIn_);
+        mouseCoords_ = coords;
         updateMouseFocus(coords);
         if (onMouseWheel.attached()) {
             MouseWheelEvent::Payload p{coords, by, modifiers_};
@@ -364,6 +369,7 @@ namespace ui {
 
     void Renderer::mouseDown(Point coords, MouseButton button) {
         ASSERT(mouseIn_);
+        mouseCoords_ = coords;
         updateMouseFocus(coords);
         // if this is first button to be held down, set the click start time and click button, otherwise invalidate the click info (multiple pressed buttons don't register as click)
         if (mouseButtons_ == 0) {
@@ -392,6 +398,7 @@ namespace ui {
         ASSERT(mouseIn_ && mouseButtons_ != 0);
         // first emit the mouse up event, first by the renderer and then by the mouse target
         ASSERT(mouseFocus_ != nullptr);
+        mouseCoords_ = coords;
         if (onMouseUp.attached()) {
             MouseButtonEvent::Payload p{coords, button, modifiers_};
             onMouseUp(p, this);
@@ -408,38 +415,8 @@ namespace ui {
             p.updateSender(mouseFocus_);
             mouseFocus_->mouseUp(p);
         }
-        // determine if we are dealing with a click, or a double click
-        if (mouseButtons_ == static_cast<unsigned>(button)) {
-            size_t now = SteadyClockMillis();
-            if (now - mouseClickStart_ <= mouseClickMaxDuration_) {
-                if (
-                    (lastMouseClickTarget_ == mouseFocus_) &&
-                    (lastMouseClickButton_ == static_cast<unsigned>(button)) &&
-                    (mouseClickStart_ - lastMouseClickEnd_ < mouseDoubleClickMaxDistance_)
-                ) {
-                    // emit the double click event
-                    mouseDoubleClick(coords, button);
-                    // reset the double click state by clearing the widget and button
-                    lastMouseClickTarget_ = nullptr;
-                    lastMouseClickButton_ = 0;
-                // not a double click, emit single click
-                } else {
-                    mouseClick(coords, button);
-                    // update the double click state
-                    lastMouseClickEnd_ = now;
-                    lastMouseClickButton_ = static_cast<unsigned>(button);
-                    lastMouseClickTarget_ = mouseFocus_;
-                }
-            }
-            mouseButtons_ = 0;
-            mouseClickButton_ = 0;
-            lastMouseClickTarget_ = nullptr;
-        // if not click or double click, update the mouse buttons and clear the click and double click state
-        } else {
-            mouseButtons_ &= static_cast<unsigned>(button);
-            mouseClickButton_ = 0;
-            lastMouseClickTarget_ = nullptr;
-        }
+        emitMouseClicks(coords, button);
+        mouseClickButton_ = 0;
     }
 
     void Renderer::mouseClick(Point coords, MouseButton button) {
@@ -469,6 +446,58 @@ namespace ui {
             ui::MouseButtonEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), button, modifiers_};
             p.updateSender(mouseFocus_);
             mouseFocus_->mouseDoubleClick(p);
+        }
+    }
+
+    void Renderer::mouseTripleClick(Point coords, MouseButton button) {
+        ASSERT(mouseIn_);
+        if (onMouseTripleClick.attached()) {
+            MouseButtonEvent::Payload p{coords, button, modifiers_};
+            onMouseTripleClick(p, this);
+            if (!p.active())
+                return;
+        }
+        if (mouseFocus_ != nullptr) {
+            ui::MouseButtonEvent::Payload p{mouseFocus_->toWidgetCoordinates(coords), button, modifiers_};
+            p.updateSender(mouseFocus_);
+            mouseFocus_->mouseTripleClick(p);
+        }
+    }
+
+    void Renderer::emitMouseClicks(Point coords, MouseButton button) {
+        if (mouseButtons_ == static_cast<unsigned>(button)) {
+            mouseButtons_ = 0;
+            size_t now = SteadyClockMillis();
+            if (now - mouseClickStart_ <= mouseClickMaxDuration_) {
+                // if the last mouse click target is identical to current mouse target and the button is the same as well, we might have double or triple click
+                if (lastMouseClickTarget_ != nullptr && 
+                    lastMouseClickTarget_ == mouseFocus_ &&
+                    lastMouseClickButton_ == static_cast<unsigned>(button)
+                ) {
+                    if (mouseClickStart_ - lastMouseDoubleClickEnd_ < mouseDoubleClickMaxDistance_) {
+                        mouseTripleClick(coords, button);
+                        // reset the counters by setting mouse click target to nullptr and double click end outside of the range
+                        lastMouseClickTarget_ = nullptr;
+                        lastMouseClickButton_ = 0;
+                        lastMouseDoubleClickEnd_ = now - mouseDoubleClickMaxDistance_ - 1;
+                        return;
+                    } else if (mouseClickStart_ - lastMouseClickEnd_ < mouseDoubleClickMaxDistance_) {
+                        mouseDoubleClick(coords, button);
+                        lastMouseDoubleClickEnd_ = now;
+                        lastMouseClickEnd_ = now - mouseDoubleClickMaxDistance_ - 1;
+                        return;
+                    } 
+                } 
+                // otherwise we are dealing with a single click
+                mouseClick(coords, button);
+                // update the double click state
+                lastMouseClickEnd_ = now;
+                lastMouseClickButton_ = static_cast<unsigned>(button);
+                lastMouseClickTarget_ = mouseFocus_;
+            }
+        } else {
+            mouseButtons_ &= ~ static_cast<unsigned>(button);
+            lastMouseClickTarget_ = nullptr;
         }
     }
 

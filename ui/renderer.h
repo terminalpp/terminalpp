@@ -372,6 +372,7 @@ namespace ui {
         MouseButtonEvent onMouseUp;
         MouseButtonEvent onMouseClick;
         MouseButtonEvent onMouseDoubleClick;
+        MouseButtonEvent onMouseTripleClick;
 
         /** Returns true if the mouse is captured by the renderer from the UI's point of view. 
          
@@ -419,7 +420,11 @@ namespace ui {
 
         virtual void mouseDoubleClick(Point coords, MouseButton button);
 
+        virtual void mouseTripleClick(Point coords, MouseButton button);
+
     private:
+
+        void emitMouseClicks(Point coords, MouseButton button);
 
         void updateMouseFocus(Point coords);
 
@@ -430,10 +435,15 @@ namespace ui {
         /** Mouse buttons that are currently down. */
         unsigned mouseButtons_ = 0;
 
+        /** Last mouse coordinates in cells so that mouse move is only reported if the actual cell changes, not pixels. 
+         */
+        Point mouseCoords_ = Point{-1, -1};
+
         unsigned mouseClickButton_ = 0;
         unsigned lastMouseClickButton_ = 0;
         size_t mouseClickStart_ = 0;
         size_t lastMouseClickEnd_ = 0;
+        size_t lastMouseDoubleClickEnd_ = 0;
         Widget * lastMouseClickTarget_ = nullptr;
 
         size_t mouseClickMaxDuration_ = 200;

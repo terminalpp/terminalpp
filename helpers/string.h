@@ -70,7 +70,7 @@ HELPERS_NAMESPACE_BEGIN
 			return "";
 		// otherwise there is at least one non-whitespace character in the string
 		size_t end = from.size() - 1;
-		while (IsWhitespace(from[end]))
+		while (end > start && IsWhitespace(from[end]))
 			--end;
 		return from.substr(start, end - start + 1);
 	}

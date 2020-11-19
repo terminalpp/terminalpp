@@ -132,6 +132,13 @@ namespace ui {
 
         using Widget::requestSelectionPaste;
 
+        /** Returns true if the application running in the terminal captures mouse events.
+         */
+        bool mouseCaptured() const {
+            std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
+            return mouseMode_ != MouseMode::Off;
+        }
+
         /** Sends the specified text as clipboard to the PTY. 
          */
         void pasteContents(std::string const & contents);
@@ -152,9 +159,13 @@ namespace ui {
 
         void mouseWheel(MouseWheelEvent::Payload & e) override;
 
+        /** Mouse click. 
+         
+            Left button open active hyperlink, right button copies the hyperlink's url to clipboard. Both work only if the app in the terminal does not capture mouse. 
+         */
         void mouseClick(MouseButtonEvent::Payload & e) override {
             Widget::mouseClick(e);
-            if (e.active()) {
+            if (! mouseCaptured() && e.active()) {
                 if (activeHyperlink_ != nullptr) {
                     StringEvent::Payload p{activeHyperlink_->url()};
                     if (e->button == MouseButton::Left)
@@ -162,6 +173,28 @@ namespace ui {
                     else if (e->button == MouseButton::Right)
                         onHyperlinkCopy(p, this);
                 }
+            }
+        }
+
+        /** Double click selects word under caret. 
+         
+            Works only if the terminal does not capture mouse. 
+         */
+        void mouseDoubleClick(MouseButtonEvent::Payload & e) override {
+            Widget::mouseDoubleClick(e);
+            if (! mouseCaptured() && e.active()) {
+                selectWord(toContentsCoords(e->coords));
+            }
+        }
+
+        /** Triple click selects line under caret. 
+         
+            Works only if the terminal does not capture mouse. 
+         */
+        void mouseTripleClick(MouseButtonEvent::Payload & e) override {
+            Widget::mouseTripleClick(e);
+            if (! mouseCaptured() && e.active()) {
+                selectLine(toContentsCoords(e->coords));
             }
         }
 
@@ -178,6 +211,18 @@ namespace ui {
         void sendMouseEvent(unsigned button, Point coords, char end);
 
         std::string getSelectionContents() override;
+
+        /** Selects the word under given coordinates, if any. 
+         
+            Words may be split across lines. 
+         */
+        void selectWord(Point pos);
+
+        /** Selects the current line of test under given coordinates. 
+         
+            Uses the line ending marks to determine the extent of the line. 
+         */
+        void selectLine(Point pos);
 
     private:
 
@@ -261,10 +306,12 @@ namespace ui {
         /** Returns hyperlink attached to cell at given coordinates. 
          
             If there are no cells, at given coordinates, or no hyperlink present, returns nullptr.
+
+            The coordinates are given in widget's contents coordinates.  
          */
         Hyperlink * hyperlinkAt(Point widgetCoords) {
             ASSERT(bufferLock_.locked());
-            Cell const * cell = cellAt(widgetCoords);
+            Cell const * cell = cellAt(toContentsCoords(widgetCoords));
             return cell == nullptr ? nullptr : dynamic_cast<Hyperlink*>(cell->specialObject());
         }
 
@@ -458,6 +505,7 @@ namespace ui {
         }
 
         /** Converts the given widget coordinates to terminal buffer coordinates. 
+         
          */
         Point toBufferCoords(Point const & widgetCoordinates) {
             ASSERT(bufferLock_.locked());
@@ -468,7 +516,15 @@ namespace ui {
          
             The coordinates are adjusted for the scroll buffer and then either a terminal buffer, or history cell is returned. In case of history cells, it is possible that no cell exists at the coordinates if the particular line was terminated before, in which case nullptr is returned. 
          */
-        Cell const * cellAt(Point widgetCoords);
+        Cell const * cellAt(Point coords);
+
+        /** Returns previous cell coordinates in contents coords. (that left of current one)
+         */
+        Point prevCell(Point coords) const;
+
+        /** Returns next cell coordinates in contents coords. (that right of current one)
+         */
+        Point nextCell(Point coords) const;
 
         void updateCursorPosition();
 

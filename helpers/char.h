@@ -530,11 +530,11 @@ HELPERS_NAMESPACE_BEGIN
 		unsigned char bytes_[4];
 	}; // Char
 
-	inline bool IsDecimalDigit(char what) {
+	inline bool IsDecimalDigit(char32_t what) {
         return (what >= '0') && (what <= '9');
 	}
 
-    inline bool IsASCIILetter(char what) {
+    inline bool IsASCIILetter(char32_t what) {
         return (what >= 'a' && what <= 'z') || (what >= 'A' && what <= 'Z');
     }
 
@@ -542,7 +542,7 @@ HELPERS_NAMESPACE_BEGIN
 	 
 	    Numbers and letters `a`-`f` and `A`-`F` are recognized as hexadecimal digits. 
 	 */
-	inline bool IsHexadecimalDigit(char what) {
+	inline bool IsHexadecimalDigit(char32_t what) {
 		return ((what >= '0') && (what <= '9')) || ((what >= 'a') && (what <= 'f')) || ((what >= 'A') && (what <= 'F'));
 	}
 
@@ -550,9 +550,44 @@ HELPERS_NAMESPACE_BEGIN
 
 	    New line, carriage return, space and tab are considered whitespace characters. 
 	 */
-	inline bool IsWhitespace(char what) {
+	inline bool IsWhitespace(char32_t what) {
 		return what == ' ' || what == '\t' || what == '\r' || what == '\n';
 	}
+
+    /** Returns true if the given character is a word separator. 
+     */
+    inline bool IsWordSeparator(char32_t c) {
+        switch (c) {
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\r':
+            case '.':
+            case ',':
+            case ':':
+            case ';':
+            case '?':
+            case '!':
+            case '"':
+            case '\'':
+            case '/':
+            case '(':
+            case ')':
+            case '[':
+            case ']':
+            case '{':
+            case '}':
+            case '|':
+            case '*':
+            case '~':
+            case '<':
+            case '>':
+            case '`':
+                return true;
+            default:
+                return false;
+        }
+    }
 
 	/** Converts given character containing a decimal digit to its value.
 	 */
