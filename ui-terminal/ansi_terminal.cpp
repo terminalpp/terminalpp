@@ -711,7 +711,7 @@ namespace ui {
     void AnsiTerminal::parseCodepoint(char32_t codepoint) {
         if (lineDrawingSet_ && codepoint >= 0x6a && codepoint < 0x79)
             codepoint = LineDrawingChars_[codepoint-0x6a];
-        LOG(SEQ) << "codepoint " << codepoint << " " << static_cast<char>(codepoint & 0xff);
+        LOG(SEQ) << "codepoint " << Char{codepoint} << " " << static_cast<char>(codepoint & 0xff);
         // detect the hyperlinks if enabled, before updating the cursor position
         if (detectHyperlinks_)
             detectHyperlink(codepoint);

@@ -2,7 +2,13 @@
 #if (defined ARCH_WINDOWS) 
 
 #include <iostream>
-#include <windows.h>
+
+#pragma warning(push)
+    #pragma warning(disable: 5105)
+    #pragma warning(disable: 5104)
+    #include <windows.h>
+#pragma warning(pop)
+#undef OPAQUE
 
 #include "helpers/helpers.h"
 

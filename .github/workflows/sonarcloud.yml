@@ -18,7 +18,7 @@ jobs:
       - name: install-packages
         run: |
           sudo apt update
-          sudo apt install cmake libx11-dev libxft-dev g++
+          sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++-10
       - name: get-build-wrapper
         run: |
           curl -sSLo build-wrapper-linux-x86.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip

@@ -64,14 +64,16 @@ add_definitions(-DPROJECT_VERSION=\"${PROJECT_VERSION}\")
 
 # Global C++ settings
 #
-# This is a bit complex, C++20 would be best candidate, but it is not supported much and g++ does not even recognized it yet. On msvc and g++ we are therefore happy with c++17.
+# This is a bit complex, C++20 is the best candidate, but the features used are not supported everywhere (namely all but latest version of Windows gives trouble with the SDK), so for now Windows uses C++17 and everyone else C++20. 
 #
-# On clang, the C++20 standard must be used because the __VA_OPT__ usage and the corresponding warning for empty varargs list is disabled.
-if(ARCH_MACOS)
+# C++20 should be enabled in Windows as soon as possible, see https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/ for more details 
+if(ARCH_WINDOWS)
+    set(CMAKE_CXX_STANDARD 17)
+    #set(CMAKE_CXX_STANDARD 20)
+    #add_compile_options(/Zc:preprocessor)
+else()
     set(CMAKE_CXX_STANDARD 20)
     add_compile_options(-Wno-gnu-zero-variadic-macro-arguments)
-else()
-    set(CMAKE_CXX_STANDARD 17)
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

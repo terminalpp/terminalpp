@@ -84,7 +84,7 @@ HELPERS_NAMESPACE_BEGIN
     inline std::string GetFilename(std::string const & path) {
 #if (defined ARCH_WINDOWS)
         std::filesystem::path p(UTF8toUTF16(path));
-        return p.filename().u8string();
+        return p.filename().string();
 #else
         std::filesystem::path p(path);
         return p.filename();
@@ -95,11 +95,11 @@ HELPERS_NAMESPACE_BEGIN
 #if (defined ARCH_WINDOWS)
         std::filesystem::path p(UTF8toUTF16(first));
         p.append(UTF8toUTF16(second));
-        return p.u8string();
+        return p.string();
 #else
         std::filesystem::path p(first);
         p.append(second);
-        return p.u8string();
+        return p.string();
 #endif
     }
 
@@ -116,7 +116,7 @@ HELPERS_NAMESPACE_BEGIN
         while (++i != e)
             p.append(*i);
 #endif
-        return p.u8string();
+        return p.string();
     }
 
     inline bool PathExists(std::string const path) {

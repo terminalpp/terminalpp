@@ -12,8 +12,6 @@
 #include "helpers/raii.h"
 #include "helpers/string.h"
 
-#include "windows.h"
-
 #include "directwrite_application.h"
 #include "directwrite_window.h"
 

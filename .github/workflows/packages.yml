@@ -104,7 +104,7 @@ jobs:
       run: |
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DSNAP_EXTRA_ARGS=--destructive-mode -DINSTALL=terminalpp
+        cmake .. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10 -DSNAP_EXTRA_ARGS=--destructive-mode -DINSTALL=terminalpp
         cmake --build . --target terminalpp-snap
     - name: artifact-terminalpp-snap
       uses: actions/upload-artifact@master
@@ -140,12 +140,12 @@ jobs:
         sudo snap install snapcraft --classic
     - name: install-packages
       run: |
-        sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++
+        sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++-10
     - name: build
       run: |
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -DSNAP_EXTRA_ARGS=--destructive-mode -DINSTALL=ropen
+        cmake .. -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10 -DSNAP_EXTRA_ARGS=--destructive-mode -DINSTALL=ropen
         cmake --build . --target ropen-snap
     - name: artifact-ropen-snap
       uses: actions/upload-artifact@master
