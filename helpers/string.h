@@ -75,11 +75,13 @@ HELPERS_NAMESPACE_BEGIN
 		return from.substr(start, end - start + 1);
 	}
 
+    /** Trims whitespace characters from the right end of the string only. 
+     */
 	inline std::string TrimRight(std::string const & from) {
 		if (from.empty())
 		    return from;
 		int end = static_cast<int>(from.size() - 1);
-		while (end > 0) {
+		while (end >= 0) {
 		    if (! IsWhitespace(from[end]))
 			    break;
 			--end;
