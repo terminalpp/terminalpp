@@ -1,5 +1,6 @@
 name: sonarcloud
 on:
+#  workflow_dispatch
   push:
     branches:
 #      - master
@@ -9,34 +10,63 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: windows-latest
+    
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: install-packages
-        run: |
-          sudo apt update
-          sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++-10
-      - name: get-build-wrapper
-        run: |
-          curl -sSLo build-wrapper-linux-x86.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
-          unzip -o build-wrapper-linux-x86.zip -d .
-      - name: get-sonar-scanner
-        run: |
-          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-linux.zip 
-          unzip -o sonar-scanner.zip -d .            
-      - name: configure
-        run: |
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-10
-      - name: build
-        run: |
-          ./build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw_output cmake --build build/
-      - name: analyze
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ./sonar-scanner-4.4.0.2170-linux/bin/sonar-scanner -Dsonar.organization=terminalpp -Dsonar.projectKey=terminalpp_terminalpp -Dsonar.sources=. -Dsonar.cfamily.build-wrapper-output=bw_output -Dsonar.host.url=https://sonarcloud.io
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+    - name: get-build-wrapper
+      run: |
+        Invoke-WebRequest -Uri "https://sonarcloud.io/static/cpp/build-wrapper-win-x86.zip" -OutFile build-wrapper.zip
+        Expand-Archive -LiteralPath build-wrapper.zip -DestinationPath .
+    - name: get-sonar-scanner
+      run: |
+        Invoke-WebRequest -Uri https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-windows.zip -OutFile sonar-scanner.zip
+        Expand-Archive -LiteralPath sonar-scanner.zip -DestinationPath .
+    - name: configure
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+    - name: build
+      run: |
+        build-wrapper-win-x86/build-wrapper-win-x86-64.exe --out-dir bw_output cmake --build build --clean-first --config Release
+    - name: analyze
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        sonar-scanner-4.4.0.2170-windows/bin/sonar-scanner.bat -D sonar.organization=terminalpp -D sonar.projectKey=terminalpp_terminalpp -D sonar.sources=. -D sonar.cfamily.build-wrapper-output=bw_output -D sonar.host.url=https://sonarcloud.io
+
+#    runs-on: ubuntu-20.04
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+#      - name: install-packages
+#        run: |
+#          sudo apt update
+#          sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++-10
+#      - name: get-build-wrapper
+#        run: |
+#          curl -sSLo build-wrapper-linux-x86.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
+#          unzip -o build-wrapper-linux-x86.zip -d .
+#      - name: get-sonar-scanner
+#        run: |
+#          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-linux.zip 
+#          unzip -o sonar-scanner.zip -d .            
+#      - name: configure
+#        run: |
+#          mkdir build
+#          cd build
+#          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-10
+#      - name: build
+#        run: |
+#          ./build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw_output cmake --build build/
+#      - name: analyze
+#        env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          ./sonar-scanner-4.4.0.2170-linux/bin/sonar-scanner -Dsonar.organization=terminalpp -Dsonar.projectKey=terminalpp_terminalpp -Dsonar.sources=. -Dsonar.cfamily.build-wrapper-output=bw_output -Dsonar.host.url=https://sonarcloud.io

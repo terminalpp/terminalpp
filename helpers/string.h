@@ -114,7 +114,7 @@ HELPERS_NAMESPACE_BEGIN
     inline std::string ToLower(std::string && what) {
         for (char & c : what)
             c = static_cast<char>(std::tolower(c));
-        return what;
+        return std::move(what);
     }
 
 	/** Splits the given string by given delimiter. 

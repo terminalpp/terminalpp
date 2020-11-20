@@ -66,7 +66,9 @@ add_definitions(-DPROJECT_VERSION=\"${PROJECT_VERSION}\")
 #
 # This is a bit complex, C++20 is the best candidate, but the features used are not supported everywhere (namely all but latest version of Windows gives trouble with the SDK), so for now Windows uses C++17 and everyone else C++20. 
 #
-# C++20 should be enabled in Windows as soon as possible, see https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/ for more details 
+# C++20 should be enabled in Windows as soon as possible, see https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/ for more details. 
+#
+# C++20 is also not supported by sonar cloud
 if(ARCH_WINDOWS)
     set(CMAKE_CXX_STANDARD 17)
     #set(CMAKE_CXX_STANDARD 20)
