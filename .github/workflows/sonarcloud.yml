@@ -1,10 +1,9 @@
 name: sonarcloud
 on:
-  workflow_dispatch
-#  push:
-#    branches:
+  push:
+    branches:
 #      - master
-#      - devel
+      - devel
 #  pull_request:
 #    types: [opened, synchronize, reopened]
 
@@ -31,7 +30,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-10
       - name: build
         run: |
           ./build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw_output cmake --build build/
