@@ -12,6 +12,7 @@ namespace tpp {
         MARK_AS_UNUSED(argv);
         Config & config = Instance();
         bool saveSettings = false;
+        bool backupSettings = false;
         std::string filename = GetSettingsFile();
         {
             std::ifstream f{filename};
@@ -35,9 +36,10 @@ namespace tpp {
 				} catch (std::exception const & e) {
 					Application::Instance()->alert(e.what());
 					saveSettings = true;
+                    backupSettings = true;
 				}
 				// if there were any errors with the settings, create backup of the old settings as new settings will be stored. 
-				if (saveSettings) {
+				if (backupSettings) {
 					std::string backup{MakeUnique(filename)};
 					Application::Instance()->alert(STR("New settings file will be saved, backup stored in " << backup));
 					f.close();
@@ -82,14 +84,17 @@ namespace tpp {
 
 	void Config::VerifyConfigurationVersion(JSON & userConfig) {
         try {
-            if (userConfig["version"]["version"].toString() == PROJECT_VERSION)
+            Version vCurrent{PROJECT_VERSION};
+            Version vConfig{JSONConfig::FromJSON<Version>(userConfig["version"]["version"])};
+            if (vCurrent == vConfig)
                 return;
-            userConfig["version"].erase("version");
+            Version vMin{MIN_COMPATIBLE_VERSION};
+            if (vCurrent < vMin)
+        		Application::Instance()->alert(STR("Settings version differs from current terminal version (" << PROJECT_VERSION << "). The configuration will be updated to the new version."));
         } catch (...) {
-            // if there was an error parsing version, erase entire version
-            userConfig.erase("version");
-        }
-		Application::Instance()->alert(STR("Settings version differs from current terminal version (" << PROJECT_VERSION << "). The configuration will be updated to the new version."));
+            // if there is an error parsing the version act as if the version is too old    
+        }        
+        userConfig.erase("version");
 	}
 
     /** First determine if session list should be checked at all times (application.detectSessionsAtStartup), or sessions not present in the JSON (in which case we add them as an empty list). 

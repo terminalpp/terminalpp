@@ -966,7 +966,7 @@ HELPERS_NAMESPACE_BEGIN
         void writeComment(std::ostream & s, unsigned tabWidth, unsigned offset) const {
             if (comment_.empty())
                 return;
-            std::vector<std::string> lines(Split(comment_, "\n"));
+            std::vector<std::string_view> lines(Split(comment_, "\n"));
             auto i = lines.begin();
             s << std::setw(offset) << "" << "/* " << *i << std::endl;
             ++i;

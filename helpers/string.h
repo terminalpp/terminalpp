@@ -121,8 +121,8 @@ HELPERS_NAMESPACE_BEGIN
 
 	/** Splits the given string by given delimiter. 
 	 */
-	inline std::vector<std::string> Split(std::string const& what, std::string const& delimiter) {
-		std::vector<std::string> result;
+	inline std::vector<std::string_view> Split(std::string_view what, std::string const& delimiter) {
+		std::vector<std::string_view> result;
 		for (size_t start = 0, e = what.size(); start < e; ) {
 			size_t next = what.find(delimiter, start);
 			if (next == std::string::npos)

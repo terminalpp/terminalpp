@@ -8,13 +8,13 @@
 - renderer can use different mouse cursors
 - proper mouse coordinates are reported when history is used together with buffer
 - double click selects word, triple click selects line
+- easier transition to newer compatible versions
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
 - see if msys can be added to bypass
-
 
 Documentation:
 

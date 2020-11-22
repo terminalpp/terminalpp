@@ -5,6 +5,7 @@
 #include "helpers/process.h"
 #include "helpers/json_config.h"
 #include "helpers/telemetry.h"
+#include "helpers/version.h"
 
 #include "ui/color.h"
 #include "ui/canvas.h"
@@ -22,6 +23,13 @@
 	- one place to define the options and their defaults
  */
 
+/** The oldest compatible settings version. 
+ 
+    If upgrading terminal from version above or equal to the one set here, the upgrade is silent because the configuration files should be almost identical (i.e. new version should have only additions).
+
+    In other cases a version upgrade dialog is displayed and a copy of the settings should be made before terminal updates to new version. 
+    */
+#define MIN_COMPATIBLE_VERSION "0.8.0"
 
 #define BYPASS_FOLDER "~/.local/bin"
 #define BYPASS_PATH "~/.local/bin/tpp-bypass"
@@ -45,6 +53,7 @@
 
 #define SHORTCUT_PASTE (Key::V + Key::Ctrl + Key::Shift)
 #define SHORTCUT_COPY (Key::C + Key::Ctrl)
+
 
 namespace config {
 
@@ -70,6 +79,12 @@ namespace config {
 
 }
 
+template<>
+inline Version JSONConfig::FromJSON(JSON const & json) {
+    if (json.kind() != JSON::Kind::String)
+        THROW(JSONError()) << "Element must be a string";
+    return Version{json.toString()};
+}
 
 template<>
 inline config::FontAttributes JSONConfig::FromJSON(JSON const & json) {
@@ -207,7 +222,7 @@ namespace tpp {
                 version,
                 "Version of tpp the settings are intended for, to make sure the settings are useful and to detect version changes",
                 TerminalVersion,
-                std::string
+                Version
             );
             CONFIG_PROPERTY(
                 checkChannel,
@@ -644,6 +659,12 @@ namespace tpp {
 			);
         );
 
+        /** Initializes the configuration. 
+         
+            Reads the configuration if one exists. Then fills in missing values and updates the stored settings if necessary. If there are any errors with reading the settings, creates a backup of the old settings before creating new ones. 
+
+            Also checks the stored version and current version and informs the user if there is a possibility of any breaking change. 
+         */
         static Config & Setup(int argc, char* argv[]);
 
         static Config & Instance() {
@@ -741,6 +762,10 @@ namespace tpp {
 
     private:
 
+        /** Verifies the configuration version stored in the settings. 
+         
+            If the version is different than current version of the program, clears the version info so that it gets regenerated. If the old version is lower than the MIN_COMPATIBLE_VERSION, displays a warning that settings will be updated. 
+         */
         static void VerifyConfigurationVersion(JSON & userConfig);
 
         /** Patches the sessions list with autodetected sessions.
