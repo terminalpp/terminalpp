@@ -16,11 +16,11 @@ namespace tpp {
             setHeightHint(SizeHint::Manual());
             //setSemanticStyle(SemanticStyle::Primary);
             resize(Size{65,8});
-            btnNewIssue_->onMouseClick.setHandler([](MouseButtonEvent::Payload & e) {
+            btnNewIssue_->onExecuted.setHandler([](VoidEvent::Payload & e) {
                 Application::Instance()->createNewIssue("", "Please check that a similar bug has not been already filed. If not, fill in the description and titke of the bug, keeping the version information below. Thank you!");
                 e.stop();
             });
-            btnWWW_->onMouseClick.setHandler([](MouseButtonEvent::Payload & e){
+            btnWWW_->onExecuted.setHandler([](VoidEvent::Payload & e){
                 Application::Instance()->openUrl("https://terminalpp.com");
                 e.stop();
             });

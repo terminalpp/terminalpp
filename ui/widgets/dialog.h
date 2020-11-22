@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../mixins/dismissable.h"
+#include "../mixins/actionable.h"
 
 #include "panel.h"
 #include "label.h"
@@ -60,22 +61,18 @@ namespace ui {
 
     protected:
 
+        /** Adds a button to the header. 
+         
+            The button can really be any widget, but if the widget is actionable and its executed event is not attached, a dialog dismissal will automatically be attached to it. 
+
+            TODO when proper actions, detecting whether the action is attached or not will change.
+         */
         void addHeaderButton(Widget * widget) {
             header_->attachBack(widget);
             header_->attachBack(title_);
-        }
-
-        /** Dismisses the dialog if its buttons were clicked and the event propageted. 
-         
-            Since the header buttons do not have registered handlers their click events will propagate to their parent dialog. 
-            
-            If a button is not to be used for dismissal, its click event should be stopped. 
-         */
-        void mouseClick(MouseButtonEvent::Payload & e) override {
-            if (dynamic_cast<Button*>(e.sender())) {
-                dismiss(e.sender());
-            } else {
-                Widget::mouseClick(e);
+            if (Actionable * a = dynamic_cast<Actionable*>(widget)) {
+                if (! a->onExecuted.attached())
+                    a->onExecuted.setHandler([this](VoidEvent::Payload & e){ dismiss(e.sender()); });
             }
         }
 
@@ -162,11 +159,11 @@ namespace ui {
 
     protected:
 
-        void keyDown(KeyEvent::Payload & event) override {
-            if (*event == Key::Esc) {
+        void keyDown(KeyEvent::Payload & e) override {
+            if (*e == Key::Esc) {
                 dismiss(btnCancel_);
             } else {
-                Dialog::keyDown(event);
+                Dialog::keyDown(e);
             }
         }
 

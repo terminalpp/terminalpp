@@ -46,7 +46,7 @@ HELPERS_NAMESPACE_BEGIN
 
 		/** Returns list of tags pointing to the current commit (head). 
 		 */
-		std::vector<std::string_view> currentTags() {
+		std::vector<std::string_view> currentTags() const {
 			try {
 				return Split(Trim(Exec(Command("git", { "tag", "--points-at", "HEAD" }, path_))), "\n");
 			} catch (Exception &) {

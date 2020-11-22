@@ -3,12 +3,13 @@
 ## Next version:
 
 - hyperlinks (`http` and `https` links can be autodetected, `OSC 8` escape sequence supported as well, configurable styles)
+- double click selects word, triple click selects line
 - option to disable cursor style changes from terminal apps
 - selection contents is trimmed
 - renderer can use different mouse cursors
 - proper mouse coordinates are reported when history is used together with buffer
-- double click selects word, triple click selects line
 - easier transition to newer compatible versions
+- enter acts on buttons and other minor UI improvements
 
 ### TODO
 
@@ -40,11 +41,13 @@ Issues to be raised:
 - add a way to copy from mouse capturing terminal
 - how to & when invalidate selection when there are changes in the terminal's contents
 
-UI version 3
+UI 
 
 - when scrolling with selection update nothing gets updated (when widget gets scrolled, mouse move should be reissued because the mouse effectively moved - think this through)
 
 - some simpler accesses to state-ish properties in the terminal? 
+
+- how to deal with dialogs being deleted after dismiss. Have something like a forced schedule, which associates with renderer, but actually executes all the actions when the renderer dies, or actually execute all renderer actions when renderer dies? 
 
 tpp-server
 
