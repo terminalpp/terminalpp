@@ -29,16 +29,17 @@
 
     In other cases a version upgrade dialog is displayed and a copy of the settings should be made before terminal updates to new version. 
     */
-#define MIN_COMPATIBLE_VERSION "0.8.0"
+constexpr char const * const MIN_COMPATIBLE_VERSION = "0.8.0";
+//#define MIN_COMPATIBLE_VERSION "0.8.0"
 
-#define BYPASS_FOLDER "~/.local/bin"
-#define BYPASS_PATH "~/.local/bin/tpp-bypass"
+constexpr char const * const BYPASS_FOLDER = "~/.local/bin";
+constexpr char const * const BYPASS_PATH = "~/.local/bin/tpp-bypass";
 
-#define DEFAULT_WINDOW_TITLE "t++"
+constexpr char const * const DEFAULT_WINDOW_TITLE = "t++";
 
 /** Determines the default blink speed of the cursor or blinking text. 
  */ 
-#define DEFAULT_BLINK_SPEED 500
+constexpr size_t DEFAULT_BLINK_SPEED = 500;
 
 /** Keyboard shortcuts for various actions.
  */

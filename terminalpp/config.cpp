@@ -92,7 +92,7 @@ namespace tpp {
             if (vCurrent < vMin)
         		Application::Instance()->alert(STR("Settings version differs from current terminal version (" << PROJECT_VERSION << "). The configuration will be updated to the new version."));
         } catch (...) {
-            // if there is an error parsing the version act as if the version is too old    
+            Application::Instance()->alert("Invalid settings version detected. The configuration will be updated to the current version");        
         }        
         userConfig.erase("version");
 	}

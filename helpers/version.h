@@ -13,17 +13,13 @@ HELPERS_NAMESPACE_BEGIN
      */
     class Version {
     public:
-        unsigned major;
-        unsigned minor;
-        unsigned build;
+        unsigned major = 0;
+        unsigned minor = 0;
+        unsigned build = 0;
 
         /** Creates version 0.0.0. 
          */
-        Version():
-            major{0},
-            minor{0},
-            build{0} {
-        } 
+        Version() = default;
 
         /** Creates version from given major, minor and build version. 
          */
@@ -49,12 +45,7 @@ HELPERS_NAMESPACE_BEGIN
             }
         }
 
-        Version & operator = (Version const & other) {
-            major = other.major;
-            minor = other.minor;
-            build = other.build;
-            return *this;
-        }
+        Version & operator = (Version const & other) = default;
 
         Version & operator = (std::string_view from) {
             *this = Version{from};
