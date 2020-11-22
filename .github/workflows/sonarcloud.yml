@@ -1,9 +1,8 @@
 name: sonarcloud
 on:
-#  workflow_dispatch
   push:
     branches:
-#      - master
+      - master
       - devel
 #  pull_request:
 #    types: [opened, synchronize, reopened]
