@@ -88,6 +88,7 @@ namespace ui {
                     Cell & c = buffer_->at(x,y);
                     c.setBg(color);
                     c.setCodepoint(' ');
+                    c.font().andAttributesFrom(Font{});
                     c.setBorder(c.border().clear());
                 }
             }
