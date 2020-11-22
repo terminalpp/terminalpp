@@ -171,7 +171,7 @@ HELPERS_NAMESPACE_BEGIN
         friend T && operator & (T && e, Builder const & binfo) {
             static_assert(std::is_base_of<Exception, T>::value, "Must be derived from ::Exception");
             e.updateWith(binfo);
-            return std::move(e);
+            return std::forward<T>(e);
         }
 
 		friend std::ostream & operator << (std::ostream & o, Exception const & e) {
@@ -386,7 +386,7 @@ HELPERS_NAMESPACE_BEGIN
             static_assert(std::is_base_of<HELPERS_NAMESPACE_DECL::Exception, T>::value, "Must be derived from ::Exception");
             if (enabled())
                 createMessage(e.file(), e.line()) << e.exception() << ": " << e.what();
-            return std::move(e);
+            return std::forward<T>(e);
         }
 
 		static Log & Default() {

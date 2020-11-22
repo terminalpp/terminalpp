@@ -6,7 +6,7 @@ namespace {
     class EventSender {
     public:
         size_t triggers = 0;
-        EventSender * sender;
+        EventSender * sender = nullptr;
         void voidHandler(Event<void, EventSender>::Payload & e) {
             ++triggers;
             sender = e.sender();
