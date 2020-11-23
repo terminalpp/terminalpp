@@ -878,7 +878,8 @@ namespace ui {
                 if (x == bufferEnd)
                     return false;
                 if (*x == '+') {
-                    // free the UI threadee
+                    resetHyperlinkDetection();
+                    // frees the UI thread to draw the buffer while we are dealing with the tpp sequence
                     bufferLock_.unlock();
                     size_t p = parseTppSequence(buffer, bufferEnd);
                     bufferLock_.lock();
@@ -949,7 +950,6 @@ namespace ui {
     }
 
     size_t AnsiTerminal::parseTppSequence(char const * buffer, char const * bufferEnd) {
-        resetHyperlinkDetection();
         // we know that we have at least \033P+   
         char const * i = buffer + 3;
         char const * tppEnd = tpp::Sequence::FindSequenceEnd(i, bufferEnd);

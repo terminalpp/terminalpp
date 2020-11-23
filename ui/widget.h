@@ -776,7 +776,7 @@ namespace ui {
             This is a static function that can be conveniently used as an argument to nextWidget() and prevWidget() methods. 
          */
         static bool IsAvailable(Widget * w) {
-            return w->enabled() && w->enabled();
+            return w->visible() && w->enabled();
         }
 
 

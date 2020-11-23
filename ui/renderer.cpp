@@ -27,11 +27,14 @@ namespace ui {
 
     void Renderer::yieldToUIThread() {
         std::unique_lock<std::mutex> g{yieldGuard_};
-        schedule([this](){
+        bool yielded = false;
+        schedule([this, & yielded](){
             std::lock_guard<std::mutex> g{yieldGuard_};
+            yielded = true;
             yieldCv_.notify_all();
         });
-        yieldCv_.wait(g);
+        while (!yielded)
+            yieldCv_.wait(g);
     }
 
     // Widget Tree
