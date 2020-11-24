@@ -23,7 +23,7 @@
 #include <unordered_map>
 
 #if (defined ARCH_WINDOWS)
-    #include <windows.h>
+    #include <Windows.h>
     #undef OPAQUE
 #elif (defined ARCH_UNIX)
 	#include <cstring>
@@ -123,15 +123,11 @@ HELPERS_NAMESPACE_BEGIN
          */
         class Panic {
         public:
-            void operator <<= (Exception const & e) {
+            [[noreturn]] void operator <<= (Exception const & e) {
                 std::cerr << "PANIC: " << e;
                 exit(EXIT_FAILURE);
             }
         }; 
-
-        Exception():
-            exception_{nullptr} {
-        }
 
         char const * what() const noexcept override {
             return what_.c_str();
@@ -159,7 +155,7 @@ HELPERS_NAMESPACE_BEGIN
 
     protected:
 
-        char const * exception_;
+        char const * exception_ = nullptr;
 
         std::string what_;
 
@@ -242,7 +238,7 @@ HELPERS_NAMESPACE_BEGIN
 
 	class AssertionError : public Exception {
 	public:
-		AssertionError(char const * code):
+		explicit AssertionError(char const * code):
 			Exception() {
             what_ = STR("Assertion failure: (" << code << ") "); 
 		}
@@ -334,14 +330,14 @@ HELPERS_NAMESPACE_BEGIN
 		    Log * log_;
 			char const * const file_;
 			size_t const line_;
-			std::time_t time_;
-			std::ostream * s_;
+			std::time_t time_ = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+			std::ostream * s_ = nullptr;
 
 		}; // Log::Message
 
 		/** Creates new log. 
 		 */
-		Log(std::string const & name);
+		explicit Log(std::string const & name);
 
 		~Log();
 
@@ -412,7 +408,7 @@ HELPERS_NAMESPACE_BEGIN
         static OStreamWriter & StdOutWriter();
 
 		static void EnableAll(Log::Writer & writer, bool update = false) {
-			std::unordered_map<std::string, Log *> & logs = RegisteredLogs();
+			std::unordered_map<std::string, Log *> const & logs = RegisteredLogs();
 			for (auto i : logs) {
 				if (update || ! i.second->enabled())
 				    i.second->enable(writer);
@@ -432,7 +428,7 @@ HELPERS_NAMESPACE_BEGIN
 			return log;
 		}
 
-        static Log & GetLog(Log & (*log)()) {
+        static Log & GetLog(std::function<Log &()> log) {
             return log();
         }
 
@@ -448,7 +444,7 @@ HELPERS_NAMESPACE_BEGIN
 
 	    std::string name_;
 
-		Writer * writer_;
+		Writer * writer_ = nullptr;
 
 		static std::unordered_map<std::string, Log *> & RegisteredLogs() {
 			static std::unordered_map<std::string, Log *> logs;
@@ -465,7 +461,7 @@ HELPERS_NAMESPACE_BEGIN
     class Log::OStreamWriter : public Log::Writer {
     public:
 
-        OStreamWriter(std::ostream & s, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string eol = "\n"):
+        OStreamWriter(std::ostream & s, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string const & eol = "\n"):
             s_{s},
             displayLocation_{displayLocation},
             displayTime_{displayTime},
@@ -534,7 +530,7 @@ HELPERS_NAMESPACE_BEGIN
         */
     class Log::FileWriter : public Log::OStreamWriter {
     public:
-        FileWriter(std::string const & filename, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string eol = "\n"):
+        FileWriter(std::string const & filename, bool displayLocation = true, bool displayTime = true, bool displayName = true, std::string const & eol = "\n"):
             OStreamWriter{* new std::ofstream(filename, std::ofstream::app), displayLocation, displayTime, displayName, eol} {
             if (! s_.good())
                 THROW(IOError()) << "Unable to open log file " << filename;
@@ -556,11 +552,9 @@ HELPERS_NAMESPACE_BEGIN
     }
 
 	inline Log::Message::Message(Log * log, char const * file, size_t line):
-	    log_(log),
-		file_(file),
-		line_(line),
-		time_(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())),
-		s_(nullptr) {
+	    log_{log},
+		file_{file},
+		line_{line} {
 			s_ = & log_->writer_->beginMessage(*this);
 	}
 
@@ -572,8 +566,7 @@ HELPERS_NAMESPACE_BEGIN
 	/** Creates new log. 
 	 */
 	inline Log::Log(std::string const & name):
-		name_(name),
-		writer_(nullptr) {
+		name_{name} {
 		std::unordered_map<std::string, Log *> & logs = RegisteredLogs();
 		ASSERT(logs.find(name_) == logs.end()) << "Log " << name_ << " already exists";
 		logs.insert(std::make_pair(name_, this));
