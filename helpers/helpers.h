@@ -129,6 +129,12 @@ HELPERS_NAMESPACE_BEGIN
             }
         }; 
 
+        Exception() = default;
+
+        explicit Exception(std::string_view what):
+            what_{what} {
+        }
+
         char const * what() const noexcept override {
             return what_.c_str();
         }
@@ -153,7 +159,7 @@ HELPERS_NAMESPACE_BEGIN
             return file_;
         }
 
-    protected:
+    private:
 
         char const * exception_ = nullptr;
 
@@ -197,13 +203,13 @@ HELPERS_NAMESPACE_BEGIN
 
     class OSError : public Exception {
     public:
-        OSError() {
+        OSError():
 #if (defined ARCH_WINDOWS)
-            what_ = STR("ErrorCode: " << GetLastError());
+            Exception{STR("ErrorCode: " << GetLastError())} {
 #elif (defined ARCH_UNIX)
-            what_ = STR(strerror(errno) << ": ");
+            Exception{STR(strerror(errno) << ": ")} {
 #else
-    	    what_ = "OS Error";
+    	    Exception{"OS Error"} {
 #endif
         }
     }; // OSError
@@ -239,8 +245,8 @@ HELPERS_NAMESPACE_BEGIN
 	class AssertionError : public Exception {
 	public:
 		explicit AssertionError(char const * code):
-			Exception() {
-            what_ = STR("Assertion failure: (" << code << ") "); 
+            // perhaps a bit ugly, but allows us to use STR in the call inside the initializers
+			Exception{STR("Assertion failure: (" << code << ") ")} {
 		}
 	};
 

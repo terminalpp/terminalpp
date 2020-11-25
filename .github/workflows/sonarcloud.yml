@@ -30,7 +30,18 @@ jobs:
         cmake ..
     - name: build
       run: |
-        build-wrapper-win-x86/build-wrapper-win-x86-64.exe --out-dir bw_output cmake --build build --clean-first --config Release
+        build-wrapper-win-x86/build-wrapper-win-x86-64.exe --out-dir bw_output cmake --build build --clean-first --config Debug
+    - name: coverage
+      run: |
+        $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Team Tools\Performance Tools"
+        $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Team Tools\Dynamic Code Coverage Tools"
+        $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\Shared\Common\VSPerfCollectionTools\vs2019"
+        cd build/tests/Debug
+        vsinstr /coverage tests.exe
+        vsperfcmd /start:coverage /output:tpp.coverage
+        ./tests.exe
+        vsperfcmd /shutdown   
+        codecoverage.exe analyze /output:tpp.coverage.xml tpp.coverage
     - name: analyze
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

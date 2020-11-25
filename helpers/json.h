@@ -14,8 +14,8 @@ HELPERS_NAMESPACE_BEGIN
     public:
         JSONError() = default;
 
-        JSONError(unsigned line, unsigned col) {
-            what_ = STR("Parser error at [" << line << "," << col << "]:");
+        JSONError(unsigned line, unsigned col):
+            Exception{STR("Parser error at [" << line << "," << col << "]:")} {
         }
     }; // JSONError
 

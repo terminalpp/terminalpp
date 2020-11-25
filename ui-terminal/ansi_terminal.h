@@ -499,7 +499,7 @@ namespace ui {
 
         /** Returns the top offset of the terminal buffer in the currently drawed. 
          */
-        int terminalBufferTop() {
+        int terminalBufferTop() const {
             ASSERT(bufferLock_.locked());
             return alternateMode_ ? 0 : static_cast<int>(historyRows_.size());            
         }
@@ -693,6 +693,10 @@ namespace ui {
             return GetUnusedBits(c) & END_OF_LINE;
         }
 
+        /** Overrides canvas cursor position to disable the check whether the cell has the cursor flag. 
+         
+            The cursor in terminal is only one and always valid at the coordinates specified in the buffer. 
+         */
         Point cursorPosition() const {
             return cursorPosition_;
         }
@@ -756,15 +760,14 @@ namespace ui {
     class AnsiTerminal::State {
     public:
 
-        State(Color defaultBackground):
+        explicit State(Color defaultBackground):
             State{Size{80,25}, defaultBackground} {
         }
 
         State(Size size, Color defaultBackground):
             buffer{ size, Cell{}.setBg(defaultBackground) },
             canvas{buffer},
-            scrollEnd{size.height()},  
-            lastCharacter_{-1,-1} {
+            scrollEnd{size.height()} {
         }
 
         void reset(Color fg, Color bg) {
@@ -833,7 +836,7 @@ namespace ui {
 
 
     protected:
-        Point lastCharacter_;
+        Point lastCharacter_ = Point{-1,-1};
         std::vector<Point> cursorStack_;
         
     }; // ui::AnsiTerminal::State
