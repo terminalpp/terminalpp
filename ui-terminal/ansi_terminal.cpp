@@ -1758,81 +1758,79 @@ namespace ui {
     void AnsiTerminal::Buffer::resize(Size size, Cell const & fill, std::function<void(Cell*, int)> addToHistory) {
         if (size_ == size)
             return;
-        // create backup of the cells and new cells
+        // determine the line at which the cursor is, which can span multiple terminal lines if it is wrapped. This is important because the contents of the cursor line and all lines below is not being copied to the resized buffer as it should be rewritten by the terminal app
+        int stopRow = getCursorRowWrappedStart();
+        // first keep the old rows and size so that we can copy the data from it
         Cell ** oldRows = rows_;
-        int oldWidth = this->width();
-        int oldHeight = this->height();
+        int oldWidth = width();
+        int oldHeight = height();
+        // move the old rows out and call basic buffer resize to adjust width and height, fill the buffer with given cell so that we do not have to deal with uninitialized cells later. 
         rows_ = nullptr;
-        // resize the contents (create new ones) and fill it with the specified cell
         Canvas::Buffer::resize(size);
         this->fill(fill);
-		// now determine the row at which we should stop - this is done by going back from cursor's position until we hit end of line, that would be the last line we will use
-		int stopRow = cursorPosition_.y() - 1;
-		while (stopRow >= 0) {
-			Cell* row = oldRows[stopRow];
-			int i = 0;
-			for (; i < oldWidth; ++i)
-                if (IsLineEnd(row[i]))
-					break;
-			// we have found the line end
-			if (i < oldWidth) {
-				++stopRow; // stop after current row
-				break;
-			}
-			// otherwise try the above line
-			--stopRow;
-		}
-        if (stopRow < 0)
-            stopRow = 0;
-        // now transfer the contents, moving any lines that won't fit into the terminal will be moved to the history 
-		int oldCursorRow = cursorPosition_.y();
-		cursorPosition_ = Point{0,0};
-		for (int y = 0; y < stopRow; ++y) {
-			for (int x = 0; x < oldWidth; ++x) {
-				Cell& cell = oldRows[y][x];
-				rows_[cursorPosition_.y()][cursorPosition_.x()] = cell;
-				// if the copied cell is end of line, or if we are at the end of new line, increase the cursor row
-				if (IsLineEnd(cell) || (cursorPosition_ += Point{1,0}).x() == width())
-                    cursorPosition_ += Point{-cursorPosition_.x(),1};
-				// scroll the new lines if necessary
-				if (cursorPosition_.y() == height()) {
-                    // add the line to history, first determine the last column, then create a copy and call the inserter
-                    if (addToHistory) {
-                        Cell * row = rows_[0];
-                        int lastCol = width();
-                        while (lastCol-- > 0) {
-                            Cell & c = row[lastCol];
-                            // if we have found end of line character, good
-                            if (IsLineEnd(c))
-                                break;
-                            // if we have found a visible character, we must remember the whole line, break the search - any end of line characters left of it will make no difference
-                            if (c.codepoint() != ' ' || c.bg() != fill.bg() || c.font().underline() || c.font().strikethrough()) 
-                                break;
-                        }
-                        // if we are not at the end of line, we must remember the whole line
-                        if (IsLineEnd(row[lastCol])) 
-                            lastCol += 1;
-                        else
-                            lastCol = width();
-                        // make the copy and add it to the history line
-                        Cell * rowCopy = new Cell[lastCol];
-                        MemCopy(rowCopy, row, lastCol);
-                        addToHistory(rowCopy, lastCol);
-                    }
-                    deleteLine(0, height(), fill);
-                    cursorPosition_ -= Point{0,1};
-				}
-				// if it was new line, skip whatever was afterwards
-                if (IsLineEnd(cell))
-					break;
-			}
-		}
-		// the contents was transferred, delete the old cells
+        // now copy the contents from the old buffer to the new buffer, line by line, char by char
+        // this is where we will be writing to
+        cursorPosition_ = Point{0,0};
+        for (int row = 0; row < stopRow; ++row) {
+            Cell * old = oldRows[row];
+            for (int col = 0; col < oldWidth; ++col) {
+                adjustCursorPosition(fill, addToHistory);
+                // append the character from the old buffer
+                rows_[cursorPosition_.y()][cursorPosition_.x()] = old[col];
+                // if the cell is marked as end of line and the rest of the line are just whitespace characters then set position to new line and ignore the whitespace
+                if (IsLineEnd(old[col]) && hasOnlyWhitespace(old, col + 1, oldWidth)) {
+                    cursorPosition_ = Point{0, cursorPosition_.y() + 1};
+                    break;
+                }
+                // otherwise update the position to point to next column
+                cursorPosition_ += Point{1,0};
+            }
+        }
+        // adjust the cursor position after the last character
+        adjustCursorPosition(fill, addToHistory);
+        // and delete the old rows
         for (int i = 0; i < oldHeight; ++i)
             delete [] oldRows[i];
         delete [] oldRows;
-		// because the first thing the app will do after resize is to adjust the cursor position if the current line span more than 1 terminal line, we must account for this and update cursor position
-		cursorPosition_ += Point{0, oldCursorRow - stopRow};
+    }
+
+    /** The algorithm is simple. Start at the row one above current cursor position. Then if we find an end of line character on that row, we know the next row was the first line of the cursor. If there is no end of line character, then the line is wordwrapped to the line after it so we check the line above, or if we get all the way to the top of the buffer its the first line by definition.  
+     */
+    int AnsiTerminal::Buffer::getCursorRowWrappedStart() const {
+        int row = cursorPosition_.y() - 1;
+        ASSERT(row < height() && row >= -1);
+        while (row >= 0) {
+            Cell * cells = rows_[row];
+            for (int col = width(); col >= 0; --col) {
+                if (IsLineEnd(cells[col]))
+                    return row + 1;
+            }
+            --row;
+        }
+        return row + 1;
+    }
+
+    void AnsiTerminal::Buffer::adjustCursorPosition(Cell const & fill, std::function<void(Cell*, int)> addToHistory) {
+        // first make sure that the position where we enter the cell is valid
+        if (cursorPosition_.x() >= width())
+            cursorPosition_ = Point{0, cursorPosition_.y() + 1};
+        // if the y coordinate is outside the buffer, we will be scrolling one line up
+        if (cursorPosition_.y() >= height()) {
+            if (addToHistory) {
+                Cell * rowCopy = new Cell[width()];
+                MemCopy(rowCopy, rows_[0], width());
+                addToHistory(rowCopy, width());
+            }
+            deleteLine(0, height(), fill);
+            cursorPosition_ -= Point{0,1};
+        }
+    }
+
+    bool AnsiTerminal::Buffer::hasOnlyWhitespace(Cell * row, int from, int width) {
+        for (; from < width; ++from)
+            if (!Char::IsWhitespace(row[from].codepoint()))
+                return false;
+        return true;
     }
 
     // ============================================================================================

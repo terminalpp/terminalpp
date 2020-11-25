@@ -15,6 +15,9 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- terminal resize has issues, see if it can be rewritten
+- tpp-bypass built in Github Runners, simplify building for per-platform 
+
 - see if msys can be added to bypass
 
 Documentation:
@@ -48,6 +51,12 @@ UI
 - some simpler accesses to state-ish properties in the terminal? 
 
 - how to deal with dialogs being deleted after dismiss. Have something like a forced schedule, which associates with renderer, but actually executes all the actions when the renderer dies, or actually execute all renderer actions when renderer dies? 
+
+Better Terminal 
+
+- adjustCursorPosition in buffer should be reused by terminal
+- terminal has no history, that is done by its subclasses, i.e. `HistoryTerminal<AnsiTerminal>` and so on
+- and so does the scrolling...
 
 tpp-server
 

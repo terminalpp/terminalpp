@@ -723,6 +723,27 @@ namespace ui {
             return rows_[row];
         }
 
+        /** Returns the start of the line that contains the cursor including any word wrap. 
+         
+            I.e. if the cursor is on line that started 3 lines above and was word-wrapped to the width of the terminal returns the current cursor row minus three. 
+         */
+        int getCursorRowWrappedStart() const;
+
+        /** Adjusts the cursor position to remain within the buffer and shifts the buffer if necessary. 
+         
+            Makes sure that cursor position is within the buffer bounds. If the cursor is too far left, it is reset on next line, first column. If the cursor is below the buffer the buffer is scrolled appropriately. 
+
+            TODO can this be used by the terminal cursor positioning, perhaps by making sure it works on more than + 1 offsets outside the valid bounds? And also scroll region and so on...
+         */
+        void adjustCursorPosition(Cell const & fill, std::function<void(Cell*, int)> addToHistory);
+        
+        /** Returns true if the given line contains only whitespace characters from given column to its width. 
+         
+            If the column start is greater or equal to the width, returns true. 
+         */
+        bool hasOnlyWhitespace(Cell * row, int from, int width);
+
+
         /** Flag designating the end of line in the buffer. 
          */
         static constexpr char32_t END_OF_LINE = 0x200000;
