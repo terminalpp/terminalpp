@@ -78,9 +78,7 @@ namespace ui {
         int top = terminalBufferTop();
         ccanvas.setBg(palette_->defaultBackground());
         // see if there are any history lines that need to be drawn
-        for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); ; ++row) {
-            if (row >= re)
-                break;
+        for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); row < re ; ++row) {
             for (int col = 0, ce = historyRows_[row].first; col < ce; ++col) {
                 ccanvas.at(Point{col, row}).stripSpecialObjectAndAssign(historyRows_[row].second[col]);
 #ifdef SHOW_LINE_ENDINGS

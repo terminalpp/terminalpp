@@ -4,6 +4,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_definitions(-DARCH_WINDOWS)
     add_definitions(-DARCH=\"Windows\")
     set(ARCH_WINDOWS true)
+    add_compile_definitions(NOMINMAX)
+    add_compile_definitions(_UNICODE)
+    add_compile_definitions(UNICODE)
 # https://stackoverflow.com/questions/21995777/cygwins-cmake-does-not-match-for-cmake-system-name
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "MSYS")
     message(STATUS "MSYS platform detected")
@@ -47,16 +50,14 @@ endif()
 add_definitions(-DARCH_COMPILER=\"${CMAKE_CXX_COMPILER_ID}\")
 add_definitions(-DARCH_COMPILER_VERSION=\"${CMAKE_CXX_COMPILER_VERSION}\")
 
-if(MSVC)
-  add_compile_options(/W4)
-  add_compile_definitions(NOMINMAX)
-  add_compile_definitions(_UNICODE)
-  add_compile_definitions(UNICODE)
-  add_definitions(-DARCH_WINDOWS)
-  add_definitions(-DARCH=\"Windows\")
-else()
-  add_compile_options(-std=c++17 -Wall -Wextra -pedantic)
-endif()
+
+
+#if(MSVC)
+#  add_definitions(-DARCH_WINDOWS)
+#  add_definitions(-DARCH=\"Windows\")
+#else()
+#  add_compile_options(-std=c++17 -Wall -Wextra -pedantic)
+#endif()
 
 # add project name and version as set by cmake to macros as well
 add_definitions(-DPROJECT_NAME=\"${PROJECT_NAME}\")
@@ -69,12 +70,18 @@ add_definitions(-DPROJECT_VERSION=\"${PROJECT_VERSION}\")
 # C++20 should be enabled in Windows as soon as possible, see https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/ for more details. 
 #
 # C++20 is also not supported by sonar cloud
-if(ARCH_WINDOWS)
-    set(CMAKE_CXX_STANDARD 17)
+if(ARCH_WINDOWS AND MSVC)
+  add_compile_options(/W4)
+  set(CMAKE_CXX_STANDARD 17)
     #set(CMAKE_CXX_STANDARD 20)
     #add_compile_options(/Zc:preprocessor)
+elseif(ARCH_WINDOWS)
+    set(CMAKE_CXX_STANDARD 17)
+    add_compile_options(-Wall -Wextra -pedantic)
+    add_compile_options(-Wno-gnu-zero-variadic-macro-arguments)
 else()
     set(CMAKE_CXX_STANDARD 20)
+    add_compile_options(-Wall -Wextra -pedantic)
     add_compile_options(-Wno-gnu-zero-variadic-macro-arguments)
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -109,3 +116,10 @@ add_custom_command(
 add_custom_target(stamp
     DEPENDS ${ALL_SOURCES} ${CMAKE_SOURCE_DIR}/stamp.h
 )
+
+# Code Coverage
+if(COVERAGE STREQUAL LLVM) 
+    message(STATUS "Code coverage instrumentation enabled for LLVM")
+    add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+endif()
+

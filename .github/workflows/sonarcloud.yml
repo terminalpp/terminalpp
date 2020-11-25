@@ -1,3 +1,18 @@
+# Since Windows is the main platform for terminalpp (and lgtm already does analysis on the linux build), I want a Windows build to be the source for sonarcloud. And because I tried and failed in a short time to make code coverage work with cmake and g++ reasonably (versions mismatch amongst other things) I was hoping that Visual Studio will be better at giving me code coverage as well. 
+#
+# That was a mistake. Turns out that code coverage is only supported in Enterprise versions of MSVS. that is available on the CI runners, so after trying that, via the following commands:
+#
+#        cd build/Debug/tests/
+#        vsinstr.exe -coverage tests.exe
+#        codecoverage.exe collect -output:tpp.coverage tests.exe
+#        codecoverage.exe analyze -output:tpp.coverage.xml tpp.coverage
+#
+# (an alternative is to use vsperfcmd to start and shutdown the monitor, tried both), the coverage file was empty. No errors or warnings given. I then found out that codecoverage.exe which transforms the binary coverage to something that is readable is available in a nuget package so I could test locally. However that did nothing at all and no error or warning was given. 
+#
+# I then thought that I could use llvm, which has decent coverage tools these days *and* is available in visual studio. That worked, modulo the pain of selecting the compilers and the enabling the paths in vs developer prompt and so on. But then sonarcloud failed to analyze the results. 
+#
+# So in the end this does two builds. First the llvm build is used to generate coverage, and then the msvc build is used to generate analysis. This is painful and can break in a thousand ways if there are conditionally compiled versions for different compilers, but for now is better than nothing and I can't really spent another day on this.  
+
 name: sonarcloud
 on:
   push:
@@ -15,28 +30,52 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+    - uses: ilammy/msvc-dev-cmd@v1        
     - name: get-build-wrapper
       run: |
         Invoke-WebRequest -Uri "https://sonarcloud.io/static/cpp/build-wrapper-win-x86.zip" -OutFile build-wrapper.zip
         Expand-Archive -LiteralPath build-wrapper.zip -DestinationPath .
     - name: get-sonar-scanner
       run: |
-        Invoke-WebRequest -Uri https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-windows.zip -OutFile sonar-scanner.zip
+        Invoke-WebRequest -Uri https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.5.0.2216-windows.zip -OutFile sonar-scanner.zip
         Expand-Archive -LiteralPath sonar-scanner.zip -DestinationPath .
+    - name: configure-coverage
+      run: |
+        mkdir build
+        cd build
+        cmake.exe .. -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_C_COMPILER=C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin/clang.exe" "-DCMAKE_CXX_COMPILER=C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin/clang++.exe" -DCOVERAGE=LLVM -G Ninja
+    - name: build-coverage
+      run: |
+        build-wrapper-win-x86/build-wrapper-win-x86-64.exe --out-dir bw-output cmake --build build
+    - name: coverage
+      shell: cmd
+      run: |
+        cd build/tests
+        tests.exe
+        llvm-profdata merge -sparse default.profraw -o tpp.profdata  
+        llvm-cov show tests.exe -instr-profile=tpp.profdata > ../../tpp.coverage.txt      
     - name: configure
       run: |
+        rm build -r -fo
         mkdir build
         cd build
         cmake ..
     - name: build
       run: |
-        build-wrapper-win-x86/build-wrapper-win-x86-64.exe --out-dir bw_output cmake --build build --clean-first --config Release
+        build-wrapper-win-x86/build-wrapper-win-x86-64.exe --out-dir bw-output cmake --build build --config Debug
     - name: analyze
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        sonar-scanner-4.4.0.2170-windows/bin/sonar-scanner.bat -D sonar.organization=terminalpp -D sonar.projectKey=terminalpp_terminalpp -D sonar.sources=. -D sonar.cfamily.build-wrapper-output=bw_output -D sonar.host.url=https://sonarcloud.io
+        sonar-scanner-4.5.0.2216-windows/bin/sonar-scanner.bat
+    - name: upload-coverage
+      uses: actions/upload-artifact@master
+      with:
+        name: coverage.xml
+        path: tpp.coverage.txt
+
+# in the past, sonarcloud was used from linux:
 
 #    runs-on: ubuntu-20.04
 #    steps:

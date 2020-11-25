@@ -1,7 +1,6 @@
 #pragma once
 #if (defined ARCH_WINDOWS && defined RENDERER_NATIVE)
 
-
 #include <windows.h>
 #include <windowsx.h>
 #include <dwrite_2.h> 

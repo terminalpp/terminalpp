@@ -56,7 +56,6 @@ file(GLOB_RECURSE ALL_SOURCES
 # and stamp generation macros
 include(${CMAKE_CURRENT_SOURCE_DIR}/helpers/helpers.cmake)
 
-
 # Renderer
 # ========
 #

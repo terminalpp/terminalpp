@@ -21,7 +21,7 @@
 
     TODO The definition uses the __VA_OPT__ feature from C++20 when compiled with Clang, the default behavior on msvc and the GNU extension of ## __VA_ARGS__ if compiled with gcc. This is a mess, and as soon as __VA_OPT__ is supported on all three compilers that version should be used exclusively. 
  */
-#ifdef __clang__
+#if (defined ARCH_MACOS) && (defined __clang__)
 #define TEST(SUITE_NAME, TEST_NAME, ...) \
     class Test_ ## SUITE_NAME ## _ ## TEST_NAME : public HELPERS_NAMESPACE_DECL::Test __VA_OPT__(,) __VA_ARGS__ { \
     private: \
@@ -187,7 +187,7 @@ HELPERS_NAMESPACE_BEGIN
         bool run(std::ostream & s) {
             s << "==== Suite " << name_ << " (" << tests_.size() << " tests):" << std::endl;
             size_t failed = 0;
-            for (auto i : tests_) {
+            for (auto & i : tests_) {
                 Test * t = i.second;
                 if (! t->run(s))
                   ++failed;
@@ -221,7 +221,7 @@ HELPERS_NAMESPACE_BEGIN
             MARK_AS_UNUSED(argv);
             std::ostream & s = std::cout;
             size_t failed = 0;
-            for (auto i : TestSuites_()) {
+            for (auto & i : TestSuites_()) {
                 TestSuite * suite = i.second;
                 if (!suite->run(s))
                     ++failed;

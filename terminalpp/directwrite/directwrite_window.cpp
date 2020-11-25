@@ -365,8 +365,8 @@ namespace tpp {
 			}
 			/* Mouse events which simply obtain the mouse coordinates, convert the buttons and wheel values to vterm standards and then calls the DirectWriteTerminalWindow's events, which perform the pixels to cols & rows translation and then call the terminal itself.
 			 */
-#define MOUSE_X static_cast<unsigned>(lParam & 0xffff)
-#define MOUSE_Y static_cast<unsigned>((lParam >> 16) & 0xffff)
+#define MOUSE_X static_cast<int>(lParam & 0xffff)
+#define MOUSE_Y static_cast<int>((lParam >> 16) & 0xffff)
 			case WM_LBUTTONDOWN:
 				window->mouseDown(window->pixelsToCoords(Point{MOUSE_X, MOUSE_Y}), MouseButton::Left);
 				break;
