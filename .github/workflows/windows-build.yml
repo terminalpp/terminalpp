@@ -33,3 +33,28 @@ jobs:
       run: |
         cd build\tests\Release
         .\tests.exe        
+    - name: install-qt
+      run: |
+        pip install -Iv aqtinstall==0.7
+        python -m aqt install --outputdir c:\\Qt 5.14.1 windows desktop win64_msvc2017_64
+    - name: configure-qt
+      run: |
+        mkdir build-qt
+        cd build-qt
+        cmake .. -DRENDERER=QT
+    - name: build-debug-qt
+      run: |
+        cd build-qt
+        cmake --build . --clean-first --config Debug
+    - name: run-tests-debug-qt
+      run: |
+        cd build-qt\tests\Debug
+        .\tests.exe        
+    - name: build-release-qt
+      run: |
+        cd build-qt
+        cmake --build . --clean-first --config Release
+    - name: run-tests-release-qt
+      run: |
+        cd build-qt\tests\Release
+        .\tests.exe        

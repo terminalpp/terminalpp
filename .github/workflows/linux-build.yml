@@ -15,7 +15,7 @@ jobs:
     - name: install-packages
       run: |
         sudo apt update
-        sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++-10
+        sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++-10 qt5-default
     - name: configure-debug
       run: |
         mkdir -p build/debug
@@ -41,4 +41,30 @@ jobs:
     - name: run-tests-release
       run: |
         cd build/release
+        tests/tests        
+    - name: configure-debug-qt
+      run: |
+        mkdir -p build-qt/debug
+        cd build-qt/debug
+        cmake ../.. -DRENDERER=QT
+    - name: build-debug-qt
+      run: |
+        cd build-qt/debug
+        cmake --build . 
+    - name: run-tests-debug-qt
+      run: |
+        cd build-qt/debug
+        tests/tests        
+    - name: configure-release-qt
+      run: |
+        mkdir -p build-qt/release
+        cd build-qt/release
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DRENDERER=QT
+    - name: build-release-qt
+      run: |
+        cd build-qt/release
+        cmake --build . 
+    - name: run-tests-release-qt
+      run: |
+        cd build-qt/release
         tests/tests        
