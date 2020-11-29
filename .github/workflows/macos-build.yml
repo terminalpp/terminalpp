@@ -1,4 +1,4 @@
-name: linux-build-qt
+name: macos-build
 
 on:
   push:
@@ -8,19 +8,18 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-20.04
+    runs-on: macos-latest
     
     steps:
     - uses: actions/checkout@v1
     - name: install-packages
       run: |
-        sudo apt update
-        sudo apt install cmake libx11-dev libxft-dev g++-10 qt5-default
+        bash scripts/setup-macos.sh
     - name: configure-debug
       run: |
         mkdir -p build/debug
         cd build/debug
-        cmake ../.. -DRENDERER=QT
+        cmake ../..  -DCMAKE_BUILD_TYPE=Debug
     - name: build-debug
       run: |
         cd build/debug
@@ -33,7 +32,7 @@ jobs:
       run: |
         mkdir -p build/release
         cd build/release
-        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DRENDERER=QT
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release
     - name: build-release
       run: |
         cd build/release

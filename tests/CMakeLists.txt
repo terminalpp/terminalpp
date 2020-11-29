@@ -8,11 +8,6 @@ file(GLOB_RECURSE TESTS_HELPERS "../helpers/tests/*.h" "../helpers/tests/*.cpp")
 file(GLOB_RECURSE TESTS_UI "../ui/tests/*.h" "../ui/tests/*.cpp")
 file(GLOB_RECURSE TESTS_UI_TERM "../ui-terminal/tests/*.h" "../ui-terminal/tests/*.cpp")
 
-#if(ARCH_WINDOWS)
-#    add_link_options("/Profile")
-#endif()
-
-
 #if(UNIX)
 #    SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
 #    SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} --coverage")
