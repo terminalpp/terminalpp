@@ -903,7 +903,7 @@ namespace ui {
                         break;
                     }
                 }
-                // fallthrough
+                [[fallthtough]]; // fallthrough
 			case ')':
 			case '*':
 			case '+':

@@ -313,7 +313,7 @@ namespace tpp {
                         si->terminal->pasteContents(*e);
                         return;
                     }
-                    // fallthrough to always
+                    [[fallthrough]]; // fallthrough to always
                 case config::ConfirmPaste::Always:
                     break;
             }

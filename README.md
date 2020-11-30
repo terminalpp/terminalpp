@@ -7,8 +7,8 @@
 
 [![Codacy grade](https://img.shields.io/codacy/grade/fd4f07b095634b9d90bbb9edb11fc12c?logo=codacy&style=flat-square)](https://app.codacy.com/manual/zduka/terminalpp)
 [![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/terminalpp/terminalpp?logo=LGTM&style=flat-square)](https://lgtm.com/projects/g/terminalpp/terminalpp?mode=list)
-[![Coverage Status](https://coveralls.io/repos/github/terminalpp/tpp/badge.svg?branch=master)](https://coveralls.io/github/terminalpp/terminalpp?branch=master)
-
+![Sonar Coverage](https://img.shields.io/sonar/coverage/terminalpp_terminalpp?logo=sonarcloud&server=http%3A%2F%2Fsonarcloud.io&style=flat-square)
+![Sonar Quality Gate](https://img.shields.io/sonar/quality_gate/terminalpp_terminalpp?logo=sonarcloud&server=https%3A%2F%2Fsonarcloud.io&style=flat-square)
 
 > Please note that `terminalpp` is in beta stage and there may (and will) be rough edges. That said, it has been used by a few people as their daily driver with only minor issues. If you encounter a problem, please file an issue!
 
