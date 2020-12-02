@@ -799,6 +799,10 @@ namespace tpp {
 
         static bool WSLIsBypassPresent(std::string const & distro);
 
+        /** Installs the bypass from the latest release. 
+         
+            Since 0.8.3 a single executable is used for all WSL distributions. 
+         */
         static bool WSLInstallBypass(std::string const & distro);
 
         /** Adds the cmd.exe session to the list of sessions and sets it as default. 

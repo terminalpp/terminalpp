@@ -5,6 +5,7 @@
 #include <filesystem>
 
 #include "helpers/helpers.h"
+#include "helpers/version.h"
 #include "helpers/filesystem.h"
 #include "helpers/json_config.h"
 

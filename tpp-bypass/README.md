@@ -1,6 +1,6 @@
 # ConPTY Bypass
 
-Because the Windows `conpty` pseudoterminal swallows some escape sequences (notably mouse), the `tpp-bypass` is a very simple application intended to be executed inside `wsl` locally, which creates a linux pseudoconsole directy. It then translates the input and output to normal non-console standard in and out stream, which are not subject to the `conpty` processing.
+Because the Windows `conpty` pseudoterminal swallows some escape sequences (notably mouse), the `tpp-bypass` is a very simple application intended to be executed inside `wsl` locally, which creates a linux pseudoconsole directly. It then translates the input and output to normal non-console standard in and out stream, which are not subject to the `conpty` processing.
 
 The only thing needed to build the program is the `tpp-bypass.cpp` file in this folder so that it can be easily embedded in the terminal and installed when appropriate. 
 

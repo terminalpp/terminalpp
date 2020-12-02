@@ -589,17 +589,3 @@ HELPERS_NAMESPACE_BEGIN
     }
 
 HELPERS_NAMESPACE_END
-
-
-HELPERS_NAMESPACE_BEGIN
-
-    inline bool CheckVersion(int argc, char ** argv, std::function<void()> versionPrinter) {
-        if (argc == 2 && strcmp("--version", argv[1]) == 0) {
-            versionPrinter();
-            return true;
-        }
-        return false;
-    }
-
-HELPERS_NAMESPACE_END
-

@@ -54,5 +54,5 @@ set_target_properties(packages PROPERTIES EXCLUDE_FROM_ALL true)
 
 # After the global configuration, include the subprojects for respective packages
 add_subdirectory(terminalpp)
-#add_subdirectory(tpp-bypass)
+add_subdirectory(tpp-bypass)
 add_subdirectory(ropen)

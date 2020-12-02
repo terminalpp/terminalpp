@@ -115,4 +115,12 @@ HELPERS_NAMESPACE_BEGIN
 
     }; 
 
+    inline bool CheckVersion(int argc, char ** argv, std::function<void()> versionPrinter) {
+        if (argc == 2 && strncmp(argv[1], "--version", 10) == 0) {
+            versionPrinter();
+            return true;
+        }
+        return false;
+    }
+
 HELPERS_NAMESPACE_END

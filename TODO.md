@@ -10,13 +10,13 @@
 - proper mouse coordinates are reported when history is used together with buffer
 - easier transition to newer compatible versions
 - enter acts on buttons and other minor UI improvements
+- single tpp-bypass for all WSL distributions
 
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- terminal resize has issues, see if it can be rewritten
-- tpp-bypass built in Github Runners, simplify building for per-platform 
+- add Visul Studio Dev Prompt to sessions
 
 - see if msys can be added to bypass
 

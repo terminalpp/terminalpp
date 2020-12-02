@@ -5,6 +5,7 @@
 #include <filesystem>
 
 #include "helpers/helpers.h"
+#include "helpers/version.h"
 
 #include "stamp.h"
 

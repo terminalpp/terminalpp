@@ -185,22 +185,7 @@ namespace tpp {
 
     bool Config::WSLInstallBypass(std::string const & distro) {
         try {
-            std::string url = STR("https://github.com/terminalpp/terminalpp/releases/latest/download/tpp-bypass-" << distro);
-            // disambiguate the ubuntu distribution if not part of the distro name
-            if (distro == "Ubuntu") {
-                ExitCode ec;
-                std::vector<std::string> lines = SplitAndTrim(
-                    Exec(Command("wsl.exe", {"--distribution", distro, "--", "lsb_release", "-a"}), &ec),
-                    "\n"
-                );
-                for (std::string const & line : lines) {
-                    if (StartsWith(line, "Release:")) {
-                        std::string ver = Trim(line.substr(9));
-                        url = url + "-" + ver;
-                        break;
-                    }
-                }
-            }
+            std::string url = STR("https://github.com/terminalpp/terminalpp/releases/latest/download/tpp-bypass");
             Exec(Command("wsl.exe", {"--distribution", distro, "--", "mkdir", "-p", BYPASS_FOLDER}));
             Exec(Command("wsl.exe", {"--distribution", distro, "--", "wget", "-O", BYPASS_PATH, url}));
             Exec(Command("wsl.exe", {"--distribution", distro, "--", "chmod", "+x", BYPASS_PATH}));
@@ -324,6 +309,19 @@ namespace tpp {
         } catch (OSError const &) {
             // do nothing, when we get os error from calling WSL just don't include any sessions
         }
+    }
+
+    void Config::win32AddVSDev(std::string & defaultSessionName, bool & updated) {
+        // Visual Studio Prompt & Powershell are not automatically selected as default sessions
+        MARK_AS_UNUSED(defaultSessionName);
+        std::string devcmd{"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat"}
+        if (PathExists("C:\Program F`"))
+
+//%comspec% /k "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat"
+
+// C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -noe -c "&{Import-Module """C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"""; Enter-VsDevShell f77c1a05}"
+
+
     }
 
     #endif

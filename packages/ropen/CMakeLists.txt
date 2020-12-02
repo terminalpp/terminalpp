@@ -1,4 +1,4 @@
-set(PROEJCT_VENDOR "zduka")
+set(PROJECT_VENDOR "zduka")
 
 #
 if(PACKAGE_SNAP AND INSTALL STREQUAL ropen)

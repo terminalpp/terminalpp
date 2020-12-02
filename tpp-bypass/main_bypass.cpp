@@ -20,8 +20,6 @@
 #include <vector>
 #include <unordered_map>
 
-#include "helpers/helpers.h"
-#include "helpers/filesystem.h"
 #include "stamp.h"
 
 /** The Windows ConPTY bypass via WSL
@@ -83,7 +81,8 @@ public:
 			// child process
 			case 0: {
 			    setsid();
-                OSCHECK(ioctl(1, TIOCSCTTY, nullptr) >= 0) << "Unable to reach terminal in child";
+                if (ioctl(1, TIOCSCTTY, nullptr) < 0)
+                    throw std::runtime_error("Unable to reach terminal in child");
 			    setTargetEnvironment();
 				clearTargetSignals(); 
 				char ** argv = commandToArgv();
@@ -271,26 +270,15 @@ private:
 	int pipe_;
 }; // Bypass
 
-void PrintVersion() {
-    std::cout << "ConPTY bypass for terminal++, version " << stamp::version << std::endl;
-    std::cout << "    commit:   " << stamp::commit << (stamp::dirty ? "*" : "") << std::endl;
-    std::cout << "              " << stamp::build_time << std::endl;
-    std::cout << "    platform: " << ARCH << " " << ARCH_SIZE << " " << ARCH_COMPILER << " " << ARCH_COMPILER_VERSION << " " << stamp::build << std::endl;
-    exit(EXIT_SUCCESS);
-}
-
 int main(int argc, char * argv[]) {
-    CheckVersion(argc, argv, PrintVersion);
 	if (argc == 2 && strncmp(argv[1], "--version", 10) == 0) {
-		std::cout << "Terminal++ Bypass, version 1.0" << std::endl;
+        std::cout << "ConPTY bypass for terminal++, version " << stamp::version << std::endl;
+        std::cout << "    commit:   " << stamp::commit << (stamp::dirty ? "*" : "") << std::endl;
+        std::cout << "              " << stamp::build_time << std::endl;
+        std::cout << "    platform: " << stamp::arch << " " << stamp::arch_size << " " << stamp::arch_compiler << " " << stamp::arch_compiler_version << " " << stamp::build << std::endl;
 		return EXIT_SUCCESS;
 	}
 	try {
-#ifndef NDEBUG
-		Log::Enable(Log::StdOutWriter(), { 
-			Log::Default(),
-		});
-#endif
 		Bypass bypass(argc, argv);
 		try {
 			bypass.run();

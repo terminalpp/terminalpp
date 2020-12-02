@@ -86,6 +86,34 @@ jobs:
         name: ropen.src.rpm
         path: build/packages/ropen.src.rpm
 
+  linux-tpp-bypass:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: install-packages
+      run: |
+        sudo apt install cmake g++-10
+    - name: build
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10 -DRENDERER=NONE -DCMAKE_BUILD_TYPE=release
+        cmake --build . --target tpp-bypass-source
+    - name: artifact-tpp-bypass-source
+      uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass-source
+        path: build/packages/tpp-bypass/tpp-bypass-source
+    - name: build-tpp-bypass
+      run: |
+        cd build/packages/tpp-bypass/tpp-bypass-source
+        bash install.sh
+    - name: artifact-tpp-bypass
+      uses: actions/upload-artifact@master
+      with:
+        name: tpp-bypass
+        path: ~/.local/bin/tpp-bypass
+
   linux-terminalpp-snap:
     runs-on: ubuntu-20.04
     steps:
@@ -151,51 +179,6 @@ jobs:
       with:
         name: ropen.snap
         path: build/packages/ropen.snap
-  
-  wsl-tpp-bypass:
-    runs-on: [self-hosted, windows]
-    steps:
-    - uses: actions/checkout@v2
-    - name: check-wsl
-      run: |
-        wsl.exe --list
-      shell: powershell
-    # Ubuntu 18.04
-    - name: build-bypass-ubuntu-18.04
-      run: |
-        wsl.exe -d Ubuntu bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh ubuntu-18-04"
-    - name: artifact-tpp-bypass-ubuntu-18.04
-      uses: actions/upload-artifact@master
-      with:
-        name: tpp-bypass-ubuntu-18.04
-        path: build-ubuntu-18-04/tpp-bypass/tpp-bypass
-    # bypass - Ubuntu 20.04
-    - name: build-bypass-ubuntu-20.04
-      run: |
-        wsl.exe -d Ubuntu-20.04 bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh ubuntu-20-04"
-    - name: artifact-tpp-bypass-ubuntu-20.04
-      uses: actions/upload-artifact@master
-      with:
-        name: tpp-bypass-ubuntu-20.04
-        path: build-ubuntu-20-04/tpp-bypass/tpp-bypass
-    # Debian
-    - name: build-bypass-debian
-      run: |
-        wsl.exe -d Debian bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh debian"
-    - name: artifact-tpp-bypass-debian
-      uses: actions/upload-artifact@master
-      with:
-        name: tpp-bypass-debian
-        path: build-Debian/tpp-bypass/tpp-bypass
-    # openSUSE-Leap
-    - name: build-bypass-suse-Leap-15-1
-      run: |
-        wsl.exe -d openSUSE-Leap-15-1 bash -c "cd ${{ env.ROOT }} && bash scripts/build-bypass.sh leap-15-1"
-    - name: artifact-tpp-bypass-openSUSE-Leap-15-1
-      uses: actions/upload-artifact@master
-      with:
-        name: tpp-bypass-openSUSE-Leap-15-1
-        path: build-leap-15-1/tpp-bypass/tpp-bypass
 
 # Create the github release
 #
@@ -203,9 +186,12 @@ jobs:
   create-release:
     if: ${{ github.ref == 'refs/heads/release' }}
     runs-on: ubuntu-20.04
-    needs: [windows-terminalpp, linux-deb-rpm, linux-terminalpp-snap, linux-ropen-snap, macos-terminalpp, wsl-tpp-bypass]
+    needs: [windows-terminalpp, linux-deb-rpm, linux-terminalpp-snap, linux-ropen-snap, macos-terminalpp, linux-tpp-bypass]
     steps:
     - uses: actions/checkout@v2
+    - name: install-packages
+      run: |
+        sudo apt install zip
     # download terminalpp windows installers
     - name: get-artifacts
       uses: actions/download-artifact@v2
@@ -327,43 +313,29 @@ jobs:
         asset_path: ./artifacts/ropen.src.rpm/ropen.src.rpm
         asset_name: ropen.src.rpm
         asset_content_type: application/octet-stream
-    # upload bypass WSL binaries
-    - name: upload-bypass-ubuntu-18.04
+    # upload bypass source and binary
+    - name: upload-tpp-bypass
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/tpp-bypass-ubuntu-18.04/tpp-bypass
-        asset_name: tpp-bypass-ubuntu-18.04
+        asset_path: ./artifacts/tpp-bypass/tpp-bypass
+        asset_name: tpp-bypass
         asset_content_type: application/octet-stream
-    - name: upload-bypass-ubuntu-20.04
+    - name: compress-tpp-bypass-source
+      run: |
+        cd artifacts
+        zip -r tpp-bypass-source.zip tpp-bypass-source
+    - name: upload-tpp-bypass-source
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/tpp-bypass-ubuntu-20.04/tpp-bypass
-        asset_name: tpp-bypass-ubuntu-20.04
-        asset_content_type: application/octet-stream
-    - name: upload-bypass-debian
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/tpp-bypass-debian/tpp-bypass
-        asset_name: tpp-bypass-debian
-        asset_content_type: application/octet-stream
-    - name: upload-bypass-openSUSE-Leap-15-1
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./artifacts/tpp-bypass-openSUSE-Leap-15-1/tpp-bypass
-        asset_name: tpp-bypass-openSUSE-Leap-15-1
-        asset_content_type: application/octet-stream
+        asset_path: ./artifacts/tpp-bypass-source.zip
+        asset_name: tpp-bypass-source.zip
+        asset_content_type: application/zip
 
 # Automated release to Windows Store
 #
