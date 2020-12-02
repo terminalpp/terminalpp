@@ -128,6 +128,7 @@ namespace tpp {
         win32AddPowershell(defaultSessionName, updated);
         win32AddWSL(defaultSessionName, updated);
         win32AddMsys2(defaultSessionName, updated);
+        win32AddVSDev(defaultSessionName, updated);
 #endif
         if (! defaultSession.updated()) {
             updateOther(& defaultSession, JSON{defaultSessionName}.setComment(defaultSession.description()));
@@ -311,18 +312,45 @@ namespace tpp {
         }
     }
 
+
     void Config::win32AddVSDev(std::string & defaultSessionName, bool & updated) {
         // Visual Studio Prompt & Powershell are not automatically selected as default sessions
         MARK_AS_UNUSED(defaultSessionName);
-        std::string devcmd{"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat"}
-        if (PathExists("C:\Program F`"))
-
-//%comspec% /k "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat"
-
-// C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -noe -c "&{Import-Module """C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"""; Enter-VsDevShell f77c1a05}"
-
-
+        win32AddVSDevCmd("2019","Community", updated);
+        win32AddVSDevCmd("2019","Enterprise", updated);
+        //win32AddVSDevPs("2019","Community", updated);
+        //win32AddVSDevPs("2019","Enterprise", updated);
     }
+
+    //%comspec% /k "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat"
+    void Config::win32AddVSDevCmd(std::string_view vsver, std::string_view edition, bool & updated) {
+        std::string devcmd{STR("C:\\Program Files (x86)\\Microsoft Visual Studio\\" << vsver << "\\" << edition << "\\Common7\\Tools\\VsDevCmd.bat")};
+        if (PathExists(devcmd)) {
+            JSON session{JSON::Kind::Object};
+            session.setComment(STR("Developer Command Prompt for VS " << vsver << " " << edition));
+            session.add("name", JSON{STR("Dev Cmd VS " << vsver << " " << edition)});
+            session.add("workingDirectory", JSON{HomeDir()});
+            session.add("command", JSON::Parse(STR("[\"cmd.exe\",\"/k\", " << Quote(devcmd) << "]")));
+            updated = addSession(session) || updated;
+        }
+    }
+
+    // C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -noe -c "&{Import-Module """C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"""; Enter-VsDevShell f77c1a05}"
+    /* The issue is that the last argument (f77c1a05) might be computer dependent and so it's not trivial to detect & reproduce here. Also the escaping for the import module path is off. 
+     */
+    /*
+    void Config::win32AddVSDevPs(std::string_view vsver, std::string_view edition, bool & updated) {
+        std::string devcmd{STR("C:\\Program Files (x86)\\Microsoft Visual Studio\\" << vsver << "\\" << edition << "\\Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll")};
+        if (PathExists(devcmd)) {
+            JSON session{JSON::Kind::Object};
+            session.setComment(STR("Developer Powershell Prompt for VS " << vsver << " " << edition));
+            session.add("name", JSON{STR("Dev Ps VS " << vsver << " " << edition)});
+            session.add("workingDirectory", JSON{HomeDir()});
+            session.add("command", JSON::Parse(STR("[\"powershell.exe\",\"-noe\", \"-c\", \"&{Import-Module " << Quote(devcmd, '\'') << "; Enter-VsDevShell}\"]")));
+            updated = addSession(session) || updated;
+        }
+    }
+    */
 
     #endif
 

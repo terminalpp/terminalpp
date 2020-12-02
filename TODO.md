@@ -3,6 +3,7 @@
 ## Next version:
 
 - hyperlinks (`http` and `https` links can be autodetected, `OSC 8` escape sequence supported as well, configurable styles)
+- Visual Studio Development Prompt (cmd.exe) added to autodetected sessions (VS 2019, Community & Enterprise)
 - double click selects word, triple click selects line
 - option to disable cursor style changes from terminal apps
 - selection contents is trimmed
@@ -16,9 +17,7 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- add Visul Studio Dev Prompt to sessions
-
-- see if msys can be added to bypass
+- see if msys can be added to bypass (perhaps sth to do with forkpty?)
 
 Documentation:
 

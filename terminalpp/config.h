@@ -829,6 +829,14 @@ namespace tpp {
          */
         void win32AddMsys2(std::string & defaultSessionName, bool & updated);
 
+        /** Adds sessions for visual studio development command prompt. 
+
+            At the moment, only the dev cmd.exe is supported as setting up the powershell seems to require install dir argument which is machine specific and therefore has to be loaded from the shortcut, which is non-trivial.
+         */
+        void win32AddVSDev(std::string & defaultSessionName, bool & updated);
+        void win32AddVSDevCmd(std::string_view version, std::string_view edition, bool & updated);
+        //void win32AddVSDevPs(std::string_view version, std::string_view edition, bool & updated);
+
     #endif
 
     }; // tpp::Config
