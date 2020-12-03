@@ -142,18 +142,9 @@ HELPERS_NAMESPACE_BEGIN
             workingDirectory_ = workingDirectory; 
     	}
 
-		Command(Command const & from):
-		    command_{from.command_},
-			args_{from.args_},
-            workingDirectory_{from.workingDirectory_} {
-		}
+		Command(Command const & from) = default;
 
-		Command& operator = (Command const& other) {
-			command_ = other.command_;
-			args_ = other.args_;
-            workingDirectory_ = other.workingDirectory_;
-			return *this;
-		}
+		Command& operator = (Command const& other) = default;
 
 		/** Quotes the given string for shell purposes. 
 
@@ -252,7 +243,7 @@ HELPERS_NAMESPACE_BEGIN
 
 		/** Creates an environment from given string map. 
 		 */
-		Environment(std::unordered_map<std::string, std::string> const& from) {
+		explicit Environment(std::unordered_map<std::string, std::string> const& from) {
 			for (auto i : from)
 				map_[i.first] = i.second;
 		}
@@ -322,7 +313,7 @@ HELPERS_NAMESPACE_BEGIN
             SECURITY_ATTRIBUTES attrs;
             attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
             attrs.bInheritHandle = TRUE;
-            attrs.lpSecurityDescriptor = NULL;
+            attrs.lpSecurityDescriptor = nullptr;
             // create the pipes
             if (!CreatePipe(& pipeIn, & pipeTheirOut, &attrs, 0) || !CreatePipe(& pipeTheirIn, & pipeOut, & attrs, 0))
                 THROW(Exception()) << "Unable to open pipes for " << command;
@@ -338,13 +329,13 @@ HELPERS_NAMESPACE_BEGIN
             sInfo.hStdInput = pipeTheirIn;
             sInfo.dwFlags |= STARTF_USESTDHANDLES;
             std::string cmd = command.toString();
-            OSCHECK(CreateProcessA(NULL,
+            OSCHECK(CreateProcessA(nullptr,
                 &cmd[0], // the command to execute
-                NULL, // process security attributes 
-                NULL, // primary thread security attributes 
+                nullptr, // process security attributes 
+                nullptr, // primary thread security attributes 
                 true, // handles are inherited 
                 0, // creation flags 
-                NULL, // use parent's environment 
+                nullptr, // use parent's environment 
                 command.workingDirectory().empty() ? nullptr : command.workingDirectory().c_str(), // current directory
                 &sInfo,  // startup info
                 &pi)  // info about the process

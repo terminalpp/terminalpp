@@ -47,17 +47,21 @@ HELPERS_NAMESPACE_BEGIN
 
 			/** Creates the UTF8 iterator from an std::string iterator. 
 			 */
-		    iterator_utf8(std::string::const_iterator const & i):
+		    explicit iterator_utf8(std::string::const_iterator const & i):
 			    i_{pointer_cast<unsigned char const *>(&*i)} {
 			}
 
-			iterator_utf8(char const * from):
+			explicit iterator_utf8(char const * from):
     			i_{pointer_cast<unsigned char const *>(from)} {
 			}
 
 			iterator_utf8(iterator_utf8 const & from):
 			    i_{from.i_} {
 			}
+
+            iterator_utf8(iterator_utf8 && from) noexcept: 
+                i_{from.i_} {
+            }
 
 			iterator_utf8 & operator = (iterator_utf8 const & from) {
 				i_ = from.i_;

@@ -40,7 +40,7 @@ HELPERS_NAMESPACE_BEGIN
                     next_.insert(std::make_pair(i.first, new Node(*i->second)));
             }
 
-            Node(Node && other):
+            Node(Node && other) noexcept:
                 next_{std::move(other.next_)},
                 final_{other.final_},
                 result_{std::move(other.result_)} {

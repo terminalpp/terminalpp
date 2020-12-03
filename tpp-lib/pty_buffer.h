@@ -29,7 +29,7 @@ namespace tpp {
 
     protected:
 
-        PTYBuffer(T * pty):
+        explicit PTYBuffer(T * pty):
             pty_{pty} {
         }
 

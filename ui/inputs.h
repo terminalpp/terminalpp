@@ -161,7 +161,7 @@ namespace ui {
     private:
         static constexpr unsigned InvalidCode = 0;
 
-        Key(unsigned raw):
+        explicit Key(unsigned raw):
             raw_{raw} {
         }
 

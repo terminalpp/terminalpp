@@ -13,7 +13,7 @@ HELPERS_NAMESPACE_BEGIN
 	class GitRepo {
 	public:
 
-		GitRepo(std::string const& path) :
+		explicit GitRepo(std::string const& path) :
 			path_(path) {
 		}
 

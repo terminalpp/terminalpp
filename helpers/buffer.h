@@ -7,14 +7,13 @@ HELPERS_NAMESPACE_BEGIN
     class Buffer {
     public:
 
-        Buffer(size_t capacity = 8):
+        explicit Buffer(size_t capacity = 8):
             data_{new char[capacity]},
-            size_{0},
             capacity_{capacity} {
             ASSERT(capacity > 0);
         }
 
-        Buffer(Buffer && from):
+        Buffer(Buffer && from) noexcept:
             data_{from.data_},
             size_{from.size_},
             capacity_{from.capacity_} {
@@ -89,8 +88,8 @@ HELPERS_NAMESPACE_BEGIN
         }
 
 
-        char * data_;
-        size_t size_;
+        char * data_ = nullptr;
+        size_t size_ = 0;
         size_t capacity_;
 
     }; // Buffer

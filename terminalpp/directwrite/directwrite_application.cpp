@@ -73,7 +73,7 @@ namespace tpp {
 
     void DirectWriteApplication::openUrl(std::string const & url) {
         utf16_string u{UTF8toUTF16(url)};
-        ShellExecute(0, nullptr, u.c_str(), 0, 0, SW_SHOW);            
+        ShellExecute(nullptr, nullptr, u.c_str(), nullptr, nullptr, SW_SHOW);            
     }
 
     void DirectWriteApplication::setClipboard(std::string const & contents) {

@@ -48,7 +48,7 @@ public:
 				if (cmd_.empty())
 					throw std::runtime_error("No command to execute specified after -e argument");
 				return;
-			} else if (arg.find("--buffer-size") == 0) {
+			} else if (arg.starts_with("--buffer-size")) {
 				if (arg[13] == '=') {
 					bufferSize_ = std::stoul(arg.substr(14));
 				} else {

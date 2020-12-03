@@ -54,7 +54,7 @@ namespace tpp {
         friend class DirectWriteWindow;
         friend class DirectWriteFont;
 
-        DirectWriteApplication(HINSTANCE hInstance);
+        explicit DirectWriteApplication(HINSTANCE hInstance);
 
 		/** Attaches a console to the GDIApplication for debugging purposes.
 

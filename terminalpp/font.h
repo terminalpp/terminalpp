@@ -57,9 +57,8 @@ namespace tpp {
             return strikethroughThickness_;
         }
 
-        virtual ~FontMetrics() {
-            // subclasses should free their native resources here
-        }
+        // subclasses should free their native resources here
+        virtual ~FontMetrics()  = default;
 
         static ui::Font Strip(ui::Font f) {
             return f.setUnderline(false).setStrikethrough(false).setBlink(false);

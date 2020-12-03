@@ -33,9 +33,8 @@ namespace tpp {
             return Singleton_();
         }
 
-        virtual ~Application() {
-        }
-
+        virtual ~Application() = default;
+        
         /** Displays an alert box with single button to dismiss. 
          */
         virtual void alert(std::string const & message) = 0;

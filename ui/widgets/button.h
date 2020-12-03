@@ -8,7 +8,7 @@ namespace ui {
     class Button : public virtual Widget, public Actionable {
     public:
 
-        Button(std::string const & text):
+        explicit Button(std::string const & text):
             text_{text} {
             setHeightHint(SizeHint::AutoSize());
             setWidthHint(SizeHint::AutoSize());

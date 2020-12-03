@@ -14,7 +14,7 @@ namespace tpp {
 
     class BypassPTYMaster : public PTYMaster {
     public:
-        BypassPTYMaster(Command const & command);
+        explicit BypassPTYMaster(Command const & command);
         ~BypassPTYMaster() override;
 
         void terminate() override;

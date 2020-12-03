@@ -16,7 +16,7 @@ namespace tpp {
     class LocalPTYMaster : public PTYMaster {
     public:
 
-        LocalPTYMaster(Command const & command);
+        explicit LocalPTYMaster(Command const & command);
         LocalPTYMaster(Command const & command, Environment const & env);
         ~LocalPTYMaster() override;
 

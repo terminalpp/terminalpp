@@ -37,9 +37,8 @@ namespace ui {
         friend class Dismissable;
     public:
 
-        Widget() {
-        }
-
+        Widget() = default;
+        
         virtual ~Widget() {
             for (Widget * child : children_)
                 delete child;
@@ -452,7 +451,7 @@ namespace ui {
          */
         class Lock {
         public:
-            Lock(Widget * widget):
+            explicit Lock(Widget * widget):
                 widget_{widget} {
                 ++widget_->lock_;
             }

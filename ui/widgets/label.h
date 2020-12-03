@@ -10,7 +10,7 @@ namespace ui {
 
         Label() = default;
 
-        Label(std::string const & text):
+        explicit Label(std::string const & text):
             text_{text} {
             setHeightHint(SizeHint::AutoSize());
         }

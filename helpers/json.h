@@ -377,7 +377,7 @@ HELPERS_NAMESPACE_BEGIN
             }
         }
 
-        JSON(JSON && other):
+        JSON(JSON && other) noexcept:
             kind_(other.kind_),
             comment_(std::move(other.comment_)),
             valueInt_(other.valueInt_) {
@@ -443,7 +443,7 @@ HELPERS_NAMESPACE_BEGIN
             return *this;
         }
 
-        JSON & operator = (JSON && other) {
+        JSON & operator = (JSON && other) noexcept {
             if (this == &other)
                 return *this;
             if (kind_ != other.kind_) {
@@ -1060,7 +1060,7 @@ HELPERS_NAMESPACE_BEGIN
     class JSON::Parser {
     public:
 
-        Parser(std::istream & s):
+        explicit Parser(std::istream & s):
             line_(1),
             col_(1),
             input_(s) {

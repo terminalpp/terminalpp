@@ -12,7 +12,7 @@ namespace ui {
 
         Panel() = default;
 
-        Panel(Layout * layout) {
+        explicit Panel(Layout * layout) {
             setLayout(layout);
         }
 

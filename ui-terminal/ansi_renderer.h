@@ -105,41 +105,41 @@ namespace ui {
                 Key k;
                 std::pair<int, int> size;
 
-                U(int i):
+                explicit U(int i):
                     i{i} {
                 }
 
-                U(Char c):
+                explicit U(Char c):
                     c{c} {
                 }
 
-                U(Key k):
+                explicit U(Key k):
                     k{k} {
                 }
 
-                U(std::pair<int, int> const & size):
+                explicit U(std::pair<int, int> const & size):
                     size{size} {
                 }
             } payload;
 
             static Event User() {
-                return Event{Kind::User, 0};
+                return Event{Kind::User, U{0}};
             }
 
             static Event Resize(int cols, int rows) {
-                return Event{Kind::Resize, std::make_pair(cols, rows)};
+                return Event{Kind::Resize, U{std::make_pair(cols, rows)}};
             }
 
             static Event KeyChar(Char c) {
-                return Event{Kind::KeyChar, c};
+                return Event{Kind::KeyChar, U{c}};
             }
 
             static Event KeyDown(Key k) {
-                return Event{Kind::KeyDown, k};
+                return Event{Kind::KeyDown, U{k}};
             }
 
             static Event KeyUp(Key k) {
-                return Event{Kind::KeyUp, k};
+                return Event{Kind::KeyUp, U{k}};
             }
 
         private:

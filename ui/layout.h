@@ -63,7 +63,7 @@ namespace ui {
         static constexpr unsigned int const AUTOLAYOUT = 102;
         static constexpr unsigned int const AUTOSIZE = 103;
 
-        constexpr SizeHint(unsigned char raw):
+        explicit constexpr SizeHint(unsigned char raw):
             raw_{raw} {
         }
 
@@ -81,8 +81,7 @@ namespace ui {
         class Row;
         class Column;
 
-        virtual ~Layout() {
-        }
+        virtual ~Layout() = default;
 
         /** Does the layout, can call move & resize only
          */
@@ -163,12 +162,12 @@ namespace ui {
      */
     class Layout::Column : public Layout {
     public:
-        Column(HorizontalAlign hAlign, VerticalAlign vAlign = VerticalAlign::Top):
+        explicit Column(HorizontalAlign hAlign, VerticalAlign vAlign = VerticalAlign::Top):
             hAlign_{hAlign},
             vAlign_{vAlign} {
         }
 
-        Column(VerticalAlign vAlign = VerticalAlign::Top):
+        explicit Column(VerticalAlign vAlign = VerticalAlign::Top):
             hAlign_{HorizontalAlign::Center},
             vAlign_{vAlign} {
         }

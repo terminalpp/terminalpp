@@ -31,7 +31,7 @@ namespace tpp {
 
     protected:
 
-        TerminalClient(PTYSlave * pty);
+        explicit TerminalClient(PTYSlave * pty);
 
         /** Called when normal input is received from the terminal. 
          
@@ -84,7 +84,7 @@ namespace tpp {
     class TerminalClient::Sync : public TerminalClient {
     public:
 
-        Sync(PTYSlave * pty):
+        explicit Sync(PTYSlave * pty):
             TerminalClient{pty},
             timeout_{1000},
             attempts_{10},

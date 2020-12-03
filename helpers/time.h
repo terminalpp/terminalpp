@@ -74,14 +74,11 @@ HELPERS_NAMESPACE_BEGIN
 	 */
 	class Stopwatch {
 	public:
-		Stopwatch(bool start = false):
+		explicit Stopwatch(bool start = false):
 		    started_(false),
 		    value_(0) {
             if (start)
                 this->start();
-		}
-
-		~Stopwatch() {
 		}
 
 		void start() {

@@ -18,7 +18,7 @@ namespace ui {
         
 		/** Creates a color of given properties. 
 		 */
-		constexpr Color(unsigned char red = 0, unsigned char green = 0, unsigned char blue = 0, unsigned char alpha = 255) :
+		explicit constexpr Color(unsigned char red = 0, unsigned char green = 0, unsigned char blue = 0, unsigned char alpha = 255) :
 		    a(alpha),
 			b(blue),
 			g(green),

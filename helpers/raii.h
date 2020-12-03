@@ -19,7 +19,7 @@ HELPERS_NAMESPACE_BEGIN
 
         /** Creates the cleaner and adds a handler. 
          */
-        RAIICleaner(std::function<void()> task) {
+        explicit RAIICleaner(std::function<void()> task) {
             add(task);
         }
 

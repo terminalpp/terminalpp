@@ -192,7 +192,7 @@ namespace ui {
             size_{0,0} {
         }
 
-        Rect(Size const & size):
+        explicit Rect(Size const & size):
             topLeft_{0,0},
             size_{size} {
         }

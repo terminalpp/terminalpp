@@ -12,9 +12,7 @@ namespace ui {
     class Font {
     public:
 
-        Font():
-            font_{0} {
-        }
+        Font() = default;
 
         bool bold() const {
             return font_ & BOLD;
@@ -140,7 +138,7 @@ namespace ui {
             font_{raw} {
         }
 
-        uint16_t font_;
+        uint16_t font_ = 0;
 
     }; // ui::Font
 

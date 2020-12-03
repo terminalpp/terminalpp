@@ -314,7 +314,7 @@ HELPERS_NAMESPACE_BEGIN
 
 			Message(Message const &) = delete;
 
-			Message(Message && from):
+			Message(Message && from) noexcept:
 			    log_(from.log_),
 				file_(from.file_),
 				line_(from.line_),

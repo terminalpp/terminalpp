@@ -13,7 +13,7 @@ namespace ansi {
     constexpr char const * const CSI = "\033[";
 
     struct AlternateMode {
-        AlternateMode(bool value = true): value{value} { };
+        explicit AlternateMode(bool value = true): value{value} { };
     private:
         bool const value;
         friend std::ostream & operator << (std::ostream & s, AlternateMode const & x) {
@@ -37,7 +37,7 @@ namespace ansi {
     };
 
     struct SGRReset {
-        SGRReset() { }
+        SGRReset() = default;
     private:
         friend std::ostream & operator << (std::ostream & s, SGRReset const & x) {
             MARK_AS_UNUSED(x);
@@ -68,7 +68,7 @@ namespace ansi {
     };
 
     struct Bold {
-        Bold(bool value = true): value{value} { }
+        explicit Bold(bool value = true): value{value} { }
     private:
         bool const value;
         friend std::ostream & operator << (std::ostream & s, Bold const & x) {
@@ -78,7 +78,7 @@ namespace ansi {
     };
 
     struct Italic {
-        Italic(bool value = true): value{value} { }
+        explicit Italic(bool value = true): value{value} { }
     private:
         bool const value;
         friend std::ostream & operator << (std::ostream & s, Italic const & x) {
@@ -88,7 +88,7 @@ namespace ansi {
     };
 
     struct Underline {
-        Underline(bool value = true): value{value} { }
+        explicit Underline(bool value = true): value{value} { }
     private:
         bool const value;
         friend std::ostream & operator << (std::ostream & s, Underline const & x) {
@@ -98,7 +98,7 @@ namespace ansi {
     };
 
     struct Strikethrough {
-        Strikethrough(bool value = true): value{value} { }
+        explicit Strikethrough(bool value = true): value{value} { }
     private:
         bool const value;
         friend std::ostream & operator << (std::ostream & s, Strikethrough const & x) {
@@ -108,7 +108,7 @@ namespace ansi {
     };
 
     struct Blink {
-        Blink(bool value = true): value{value} { }
+        explicit Blink(bool value = true): value{value} { }
     private:
         bool const value;
         friend std::ostream & operator << (std::ostream & s, Blink const & x) {

@@ -21,7 +21,7 @@ HELPERS_NAMESPACE_BEGIN
          
             The telemetry uses RAII to make sure that 
          */
-        Telemetry(std::function<void(Telemetry &)> handler):
+        explicit Telemetry(std::function<void(Telemetry &)> handler):
             handler_{handler},
             writer_{nullptr},
             keepAfterClosing_{false} {

@@ -338,7 +338,7 @@ HELPERS_NAMESPACE_BEGIN
 
             friend class Array;
 
-            ConstIterator(std::vector<JSONConfig*>::const_iterator i):
+            explicit ConstIterator(std::vector<JSONConfig*>::const_iterator i):
                 i_{i} {
             }
             
@@ -567,7 +567,7 @@ HELPERS_NAMESPACE_BEGIN
             Object{nullptr, "", "Configuration"} {
         }
 
-        Root(std::string description):
+        explicit Root(std::string description):
             Object{ nullptr, "", description } {
         }
 

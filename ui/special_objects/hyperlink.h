@@ -66,7 +66,7 @@ namespace ui {
 
         /** Creates a hyperlink to given url. 
          */
-        Hyperlink(std::string const & url):
+        explicit Hyperlink(std::string const & url):
             url_{url} {
         } 
 

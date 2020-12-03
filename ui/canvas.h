@@ -20,7 +20,7 @@ namespace ui {
         class Cell;
         class Buffer;
 
-        Canvas(Buffer & buffer);
+        explicit Canvas(Buffer & buffer);
 
         Rect rect() const {
             return Rect{size()};
@@ -67,6 +67,8 @@ namespace ui {
             /** End of the line (exclusive). 
              */
             Char::iterator_utf8 end;
+
+
         }; // Canvas::TextLine
 
         static constexpr int NoWordWrap = -1;
@@ -345,7 +347,7 @@ namespace ui {
         public:
             static_assert(std::is_base_of<SpecialObject, T>::value, "Only SpecialObjects can be used in SpecialObject::Ptr");
 
-            Ptr(T * so) {
+            explicit Ptr(T * so = nullptr) {
                 attach(so);
             }
 
@@ -417,8 +419,7 @@ namespace ui {
 
         /** Virtual destructor so that special objects do not leak when destroyed. 
          */
-        virtual ~SpecialObject() {
-        }
+        virtual ~SpecialObject() = default;
 
         /** Detaches the object from all its cells. 
          
@@ -737,19 +738,19 @@ namespace ui {
     class Canvas::Buffer {
     public:
 
-        Buffer(Size const & size):
+        explicit Buffer(Size const & size):
             size_{size} {
             create(size);
         }
 
-        Buffer(Buffer && from):
+        Buffer(Buffer && from) noexcept:
             size_{from.size_},
             rows_{from.rows_} {
             from.size_ = Size{0,0};
             from.rows_ = nullptr;
         }
 
-        Buffer & operator = (Buffer && from) {
+        Buffer & operator = (Buffer && from) noexcept {
             clear();
             size_ = from.size_;
             rows_ = from.rows_;
@@ -915,7 +916,7 @@ namespace ui {
     }; // ui::Canvas::Buffer
 
     inline Canvas::Canvas(Canvas::Buffer & buffer):
-        Canvas(buffer, VisibleArea{Point{0,0}, buffer.size()}, buffer.size()) {
+        Canvas(buffer, VisibleArea{Point{0,0}, Rect{buffer.size()}}, buffer.size()) {
     }
 
     inline Canvas::Cursor Canvas::cursor() const {

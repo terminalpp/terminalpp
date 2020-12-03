@@ -17,7 +17,7 @@ namespace ui {
 
         class Error;
 
-        Dialog(std::string const & title):
+        explicit Dialog(std::string const & title):
             title_{new Label(title)},
             header_{new Panel{new Layout::Row{HorizontalAlign::Left}}} {
             setLayout(new Layout::Column{});
@@ -99,7 +99,7 @@ namespace ui {
 
     class Dialog::Cancel : public Dialog {
     public:
-        Cancel(std::string const & title):
+        explicit Cancel(std::string const & title):
             Dialog{title},
             btnCancel_{new Button{" X "}} {
             addHeaderButton(btnCancel_);
@@ -131,7 +131,7 @@ namespace ui {
 
     class Dialog::YesNoCancel : public Dialog {
     public:
-        YesNoCancel(std::string const & title):
+        explicit YesNoCancel(std::string const & title):
             Dialog{title},
             btnYes_{new Button{" Yes "}},
             btnNo_{new Button{" No "}},
@@ -179,7 +179,7 @@ namespace ui {
      */
     class Dialog::Error : public Dialog::Cancel {
     public:
-        Error(std::string const & message):
+        explicit Error(std::string const & message):
             Dialog::Cancel{"Error"},
             contents_{new Label{message}} {
             setBody(contents_);

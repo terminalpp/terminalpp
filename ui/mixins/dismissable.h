@@ -25,7 +25,7 @@ namespace ui {
 
     protected:
 
-        Dismissable(bool deleteOnDismiss = true):
+        explicit Dismissable(bool deleteOnDismiss = true):
             deleteOnDismiss_{deleteOnDismiss} {
         }
 

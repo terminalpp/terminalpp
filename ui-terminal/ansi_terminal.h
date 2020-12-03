@@ -335,11 +335,11 @@ namespace ui {
 
         /** When hyperlink is parsed, this holds the special object and the offset of the next cell. If the hyperlink in progress is nullptr, then there is no hyperlink in progress and hyperlink offset has no meaning. 
          */
-        Hyperlink::Ptr inProgressHyperlink_ = nullptr;
+        Hyperlink::Ptr inProgressHyperlink_;
 
         /** Hyperlink activated by mouse hover. 
          */
-        Hyperlink::Ptr activeHyperlink_ = nullptr;
+        Hyperlink::Ptr activeHyperlink_;
 
         /** Url matcher to detect hyperlinks in the terminal output automatically. 
          */
@@ -593,7 +593,7 @@ namespace ui {
         State * stateBackup_;
         mutable PriorityLock bufferLock_;
 
-        int maxHistoryRows_;
+        int maxHistoryRows_ = 0;
         std::deque<std::pair<int, Cell*>> historyRows_;
 
     //@}
@@ -871,7 +871,7 @@ namespace ui {
 
         Palette(Palette const & from);
 
-        Palette(Palette && from);
+        Palette(Palette && from) noexcept;
 
         ~Palette() {
             delete [] colors_;

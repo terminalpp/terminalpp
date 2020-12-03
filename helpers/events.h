@@ -24,13 +24,13 @@ HELPERS_NAMESPACE_BEGIN
 		    typedef PAYLOAD payload_type;
     		typedef SENDER sender_type;
 
-            Payload(PAYLOAD const & payload):
+            explicit Payload(PAYLOAD const & payload):
                 payload_{payload},
                 sender_{nullptr} {
             } 
 
             template<typename... ARGS>
-            Payload(ARGS... args):
+            explicit Payload(ARGS... args):
                 payload_{PAYLOAD{args...}},
                 sender_{nullptr} {
             }
@@ -107,9 +107,7 @@ HELPERS_NAMESPACE_BEGIN
 		    typedef void payload_type;
     		typedef SENDER sender_type;
 
-            Payload():
-                sender_{nullptr} {
-            }
+            Payload() = default;
 
 		    SENDER * sender() const {
 				return sender_;
@@ -121,7 +119,7 @@ HELPERS_NAMESPACE_BEGIN
 
 		private:
 
-			Payload(SENDER * sender):
+			explicit Payload(SENDER * sender):
 				sender_(sender) {
 			}
 

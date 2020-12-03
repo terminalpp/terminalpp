@@ -199,7 +199,7 @@ HELPERS_NAMESPACE_BEGIN
         friend class Test;
         friend class Tests;
 
-        TestSuite(std::string const & name):
+        explicit TestSuite(std::string const & name):
             name_(name) {
         }
 

@@ -453,7 +453,7 @@ namespace ui {
         if (matchSize == 0)
             return;
         // we have found a hyperlink, construct its address and determine which cells to use, which we do by retracting
-        Hyperlink::Ptr link = new Hyperlink{"", normalHyperlinkStyle_, activeHyperlinkStyle_};
+        Hyperlink::Ptr link{new Hyperlink{"", normalHyperlinkStyle_, activeHyperlinkStyle_}};
         std::string url{};
         Point pos = cursorPosition();
         do {
@@ -903,7 +903,7 @@ namespace ui {
                         break;
                     }
                 }
-                [[fallthtough]]; // fallthrough
+                [[fallthrough]]; // fallthrough
 			case ')':
 			case '*':
 			case '+':
@@ -1920,7 +1920,7 @@ namespace ui {
 		memcpy(colors_, from.colors_, sizeof(Color) * size_);
     }
 
-    AnsiTerminal::Palette::Palette(Palette && from):
+    AnsiTerminal::Palette::Palette(Palette && from) noexcept:
         size_(from.size_),
         defaultFg_(from.defaultFg_),
         defaultBg_(from.defaultBg_),

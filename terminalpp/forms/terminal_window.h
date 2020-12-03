@@ -21,7 +21,7 @@ namespace tpp {
      */
     class NewVersionDialog : public ui::Dialog::Cancel {
     public:
-        NewVersionDialog(std::string const & message):
+        explicit NewVersionDialog(std::string const & message):
             ui::Dialog::Cancel{"New Version"},
             contents_{new ui::Label{message}} {
             setBody(contents_);
@@ -36,7 +36,7 @@ namespace tpp {
     class PasteDialog : public ui::Dialog::YesNoCancel {
     public:
 
-        PasteDialog(std::string const & contents):
+        explicit PasteDialog(std::string const & contents):
             ui::Dialog::YesNoCancel{"Are you sure you want to paste?"},
             contents_{new ui::Label{contents}} {
             setBody(contents_);
@@ -64,7 +64,7 @@ namespace tpp {
      */
     class CopyDialog : public ui::Dialog::YesNoCancel {
     public:
-        CopyDialog(std::string const & contents):
+        explicit CopyDialog(std::string const & contents):
             ui::Dialog::YesNoCancel{"Do you want to set clipboard to the following?"},
             contents_{new ui::Label{contents}} {
             setBody(contents_);
@@ -95,7 +95,7 @@ namespace tpp {
     class TerminalWindow : public ui::Window {
     public:
 
-        TerminalWindow(tpp::Window * window):
+        explicit TerminalWindow(tpp::Window * window):
             window_{window}, 
             main_{new Panel{}},
             pager_{new Pager{}} {
@@ -152,7 +152,7 @@ namespace tpp {
             bool notification = false;
             PasteDialog * pendingPaste = nullptr;
 
-            SessionInfo(Config::sessions_entry const & session):
+            explicit SessionInfo(Config::sessions_entry const & session):
                 name{session.name()},
                 title{session.name()} {
             }

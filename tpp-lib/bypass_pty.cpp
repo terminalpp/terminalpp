@@ -39,7 +39,7 @@ namespace tpp {
             CreateProcessGuard g;
             attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
             attrs.bInheritHandle = TRUE;
-            attrs.lpSecurityDescriptor = NULL;
+            attrs.lpSecurityDescriptor = nullptr;
             // first create the pipes we need, no security arguments and we use default buffer size for now
             OSCHECK(
                 CreatePipe(&pipePTYIn, &pipeOut_, &attrs, 0) && CreatePipe(&pipeIn_, &pipePTYOut, &attrs, 0)

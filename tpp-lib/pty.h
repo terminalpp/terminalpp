@@ -11,7 +11,7 @@ namespace tpp {
 
     class PTYBase {
     public:
-        virtual ~PTYBase() { }
+        virtual ~PTYBase() = default;
 
         /** Sends data. 
          */

@@ -61,7 +61,7 @@ namespace tpp {
             size_t id_;
         }; // RemoteFiles::File
 
-        RemoteFiles(std::string const & localRoot):
+        explicit RemoteFiles(std::string const & localRoot):
             localRoot_{localRoot} {
         }
 

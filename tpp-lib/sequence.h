@@ -35,8 +35,7 @@ namespace tpp {
             Invalid,
         };
 
-        virtual ~Sequence() {
-        }
+        virtual ~Sequence() = default;
 
         Kind kind() const {
             return kind_;
@@ -72,7 +71,7 @@ namespace tpp {
 
     protected:
 
-        Sequence(Kind kind):
+        explicit Sequence(Kind kind):
             kind_{kind} {
         }
 
@@ -372,7 +371,7 @@ namespace tpp {
     class Sequence::GetTransferStatus : public Sequence {
     public:
 
-        GetTransferStatus(size_t id):
+        explicit GetTransferStatus(size_t id):
             Sequence{Kind::GetTransferStatus},
             id_{id} {
         }
@@ -442,7 +441,7 @@ namespace tpp {
     class Sequence::ViewRemoteFile : public Sequence {
     public:
 
-        ViewRemoteFile(size_t id):
+        explicit ViewRemoteFile(size_t id):
             Sequence{Kind::ViewRemoteFile},
             id_{id} {
         }
@@ -477,7 +476,7 @@ namespace tpp {
             return Response(value);
         }
 
-        Response(T const & value):
+        explicit Response(T const & value):
             response_{value} {
         }
 
