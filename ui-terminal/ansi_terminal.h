@@ -32,7 +32,7 @@ namespace ui {
      
         The simplest interface to the rerminal, no history, selection, etc?
      */
-    class AnsiTerminal : public virtual Widget, public tpp::PTYBuffer<tpp::PTYMaster>, SelectionOwner {
+    class AnsiTerminal : public virtual Widget, public tpp::PTYBuffer<tpp::PTYMaster> {
     public:
         using Cell = Canvas::Cell;
         using Cursor = Canvas::Cursor;
@@ -51,6 +51,26 @@ namespace ui {
         static Log SEQ_SENT;
     //@}
 
+    protected:
+      
+        /** Triggered when the terminal enables, or disables an alternate mode. 
+         
+            Can be called from any thread, expects the terminal buffer lock.
+         */
+        virtual void alternateMode(bool enabled) { 
+            MARK_AS_UNUSED(enabled);
+            ASSERT(bufferLock_.locked());
+        };
+
+        /** Triggered when new row is evicted from the terminal's scroll region. 
+         
+            Can be triggered from any thread, expects the terminal buffer lock. The cells will be reused by the terminal after the call returns. 
+         */
+        virtual void newHistoryRow(Cell const * row) {
+            MARK_AS_UNUSED(row);
+            ASSERT(bufferLock_.locked());
+        }
+
     public:
         AnsiTerminal(tpp::PTYMaster * pty, Palette * palette);
 
@@ -65,12 +85,14 @@ namespace ui {
             {
                 std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
                 Widget::resize(size);
-                resizeHistory();
+                //resizeHistory();
                 resizeBuffers(size);
                 pty_->resize(size.width(), size.height());
             }
+/*            
             if (scrollToTerminal_)
                 setScrollOffset(Point{0, historyRows()});
+                */
         }
 
         /** Returns the palette of the terminal. 
@@ -107,15 +129,6 @@ namespace ui {
     //@{
 
     protected:
-
-        Size contentsSize() const override {
-            if (alternateMode_) {
-                return Widget::contentsSize();
-            } else {
-                std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-                return Size{width(), height() + static_cast<int>(historyRows_.size())};
-            }
-        }
 
         void paint(Canvas & canvas) override;
 
@@ -176,27 +189,6 @@ namespace ui {
             }
         }
 
-        /** Double click selects word under caret. 
-         
-            Works only if the terminal does not capture mouse. 
-         */
-        void mouseDoubleClick(MouseButtonEvent::Payload & e) override {
-            Widget::mouseDoubleClick(e);
-            if (! mouseCaptured() && e.active()) {
-                selectWord(toContentsCoords(e->coords));
-            }
-        }
-
-        /** Triple click selects line under caret. 
-         
-            Works only if the terminal does not capture mouse. 
-         */
-        void mouseTripleClick(MouseButtonEvent::Payload & e) override {
-            Widget::mouseTripleClick(e);
-            if (! mouseCaptured() && e.active()) {
-                selectLine(toContentsCoords(e->coords));
-            }
-        }
 
         void mouseOut(VoidEvent::Payload & e) override {
             Widget::mouseOut(e);
@@ -210,19 +202,6 @@ namespace ui {
 
         void sendMouseEvent(unsigned button, Point coords, char end);
 
-        std::string getSelectionContents() override;
-
-        /** Selects the word under given coordinates, if any. 
-         
-            Words may be split across lines. 
-         */
-        void selectWord(Point pos);
-
-        /** Selects the current line of test under given coordinates. 
-         
-            Uses the line ending marks to determine the extent of the line. 
-         */
-        void selectLine(Point pos);
 
     private:
 
@@ -234,7 +213,7 @@ namespace ui {
         static std::unordered_map<Key, std::string> KeyMap_;
         static std::unordered_set<Key> PrintableKeys_;
 
-    //}
+    //@}
 
     /** \name Hyperlinks
      
@@ -303,17 +282,6 @@ namespace ui {
         }
 
     protected:
-        /** Returns hyperlink attached to cell at given coordinates. 
-         
-            If there are no cells, at given coordinates, or no hyperlink present, returns nullptr.
-
-            The coordinates are given in widget's contents coordinates.  
-         */
-        Hyperlink * hyperlinkAt(Point widgetCoords) {
-            ASSERT(bufferLock_.locked());
-            Cell const * cell = cellAt(toContentsCoords(widgetCoords));
-            return cell == nullptr ? nullptr : dynamic_cast<Hyperlink*>(cell->specialObject());
-        }
 
         /** Resets the hyperlink detection matching. 
          
@@ -427,36 +395,9 @@ namespace ui {
          */
         void setCursor(Canvas::Cursor const & value);
 
-        /** Returns the number of current history rows. 
-         
-            Note that to do so, the buffer must be locked as history rows are protected by its mutex so this function is not as cheap as getting a size of a vector. 
-         */
-        int historyRows() {
-            std::lock_guard<PriorityLock> g{bufferLock_};
-            return static_cast<int>(historyRows_.size());
-        }
-
-        int maxHistoryRows() const {
-            return maxHistoryRows_;
-        }
-
-        void setMaxHistoryRows(int value) {
-            if (value != maxHistoryRows_) {
-                maxHistoryRows_ = std::max(value, 0);
-                std::lock_guard<PriorityLock> g{bufferLock_};
-                while (historyRows_.size() > static_cast<size_t>(maxHistoryRows_)) {
-                    delete [] historyRows_.front().second;
-                    historyRows_.pop_front();
-                }
-            }
-        }
 
     protected:
 
-        void setScrollOffset(Point const & value) override {
-            Widget::setScrollOffset(value);
-            scrollToTerminal_ = value.y() == historyRows();
-        }
 
         /** Returns current cursor position. 
          */
@@ -480,7 +421,6 @@ namespace ui {
             */
         void deleteLines(int lines, int top, int bottom, Cell const & fill);
 
-        void addHistoryRow(Cell * row, int cols);
 
         void ptyTerminated(ExitCode exitCode) override {
             schedule([this, exitCode](){
@@ -489,44 +429,12 @@ namespace ui {
             });
         }
 
-        void resizeHistory();
         void resizeBuffers(Size size);
 
 
         // TODO change to int
         void deleteCharacters(unsigned num);
         void insertCharacters(unsigned num);
-
-        /** Returns the top offset of the terminal buffer in the currently drawed. 
-         */
-        int terminalBufferTop() const {
-            ASSERT(bufferLock_.locked());
-            return alternateMode_ ? 0 : static_cast<int>(historyRows_.size());            
-        }
-
-        /** Converts the given widget coordinates to terminal buffer coordinates. 
-         
-         */
-        Point toBufferCoords(Point const & widgetCoordinates) {
-            ASSERT(bufferLock_.locked());
-            return widgetCoordinates + scrollOffset() - Point{0, terminalBufferTop()};
-        }
-
-        /** Returns the cell at given coordinates. 
-         
-            The coordinates are adjusted for the scroll buffer and then either a terminal buffer, or history cell is returned. In case of history cells, it is possible that no cell exists at the coordinates if the particular line was terminated before, in which case nullptr is returned. 
-
-            Furthermore, if the coordinates are outside of valid range, nullptr is returned as well. 
-         */
-        Cell const * cellAt(Point coords);
-
-        /** Returns previous cell coordinates in contents coords. (that left of current one)
-         */
-        Point prevCell(Point coords) const;
-
-        /** Returns next cell coordinates in contents coords. (that right of current one)
-         */
-        Point nextCell(Point coords) const;
 
         void updateCursorPosition();
 
@@ -585,18 +493,12 @@ namespace ui {
         /** Determines whether alternate mode is active or not. */
         bool alternateMode_ = false;
 
-        /** On when the terminal is scrolled completely in view (i.e. past all history rows) and any history rows added will automatically scroll the terminal as well. 
-         */
-        bool scrollToTerminal_ = true;
-
         /** Current state and its backup. The states are swapped and current state kind is determined by the alternateMode(). 
          */
         State * state_;
         State * stateBackup_;
         mutable PriorityLock bufferLock_;
 
-        int maxHistoryRows_ = 0;
-        std::deque<std::pair<int, Cell*>> historyRows_;
 
     //@}
 

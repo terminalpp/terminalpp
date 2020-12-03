@@ -6,6 +6,9 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- refactor the simple ansi terminal, namely buffers, state & resize
+- port history, scrollbars and selection to ui_terminal
+
 - see if msys can be added to bypass (perhaps sth to do with forkpty?)
 
 Documentation:
@@ -17,7 +20,6 @@ Documentation:
 Builds & Releases
 
 - source package artifact for deb
-- release ropen package to snap 
 - upload to ppa ? 
 - update the website ? 
 - add benchmarking

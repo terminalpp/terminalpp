@@ -75,25 +75,12 @@ namespace ui {
 #endif
         Rect visibleRect{ccanvas.visibleRect()};
         std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-        int top = terminalBufferTop();
         ccanvas.setBg(palette_->defaultBackground());
-        // see if there are any history lines that need to be drawn
-        for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); row < re ; ++row) {
-            for (int col = 0, ce = historyRows_[row].first; col < ce; ++col) {
-                ccanvas.at(Point{col, row}).stripSpecialObjectAndAssign(historyRows_[row].second[col]);
-#ifdef SHOW_LINE_ENDINGS
-                if (Buffer::IsLineEnd(historyRows_[row].second[col]))
-                    ccanvas.setBorder(Point{col, row}, endOfLine);
-#endif
-            }
-            ccanvas.fill(Rect{Point{historyRows_[row].first, row}, Point{width(), row + 1}},
-            Cell{}.setBg(ccanvas.bg()));
-        }
         // TODO once we support sixels or other shared objects that might survive to the drawing stage, this function will likely change. 
-        ccanvas.drawFallbackBuffer(state_->buffer, Point{0, top});
+        ccanvas.drawFallbackBuffer(state_->buffer, Point{0, 0});
 #ifdef  SHOW_LINE_ENDINGS
         // now add borders to the cells that are marked as end of line
-        for (int row = std::max(top, visibleRect.top()), rs = row, re = visibleRect.bottom(); ; ++row) {
+        for (int row = std::max(0, visibleRect.top()), rs = row, re = visibleRect.bottom(); ; ++row) {
             if (row >= re)
                 break;
             for (int col = 0; col < width(); ++col) {
@@ -102,17 +89,13 @@ namespace ui {
             }
         }
 #endif
-        // draw the selection, if any 
-        SelectionOwner::paint(ccanvas);
-        // display scrollbars
-        canvas.verticalScrollbar(top + height(), scrollOffset().y());
         // draw the cursor 
         if (focused()) {
             // set the cursor via the canvas
-            ccanvas.setCursor(cursor(), cursorPosition() + Point{0, top});
+            ccanvas.setCursor(cursor(), cursorPosition());
         } else if (cursor().visible()) {
             // TODO the color of this should be configurable
-            ccanvas.setBorder(cursorPosition() + Point{0, top}, Border::All(inactiveCursorColor_, Border::Kind::Thin));
+            ccanvas.setBorder(cursorPosition(), Border::All(inactiveCursorColor_, Border::Kind::Thin));
         }
     }
 
@@ -131,13 +114,6 @@ namespace ui {
     void AnsiTerminal::keyDown(KeyEvent::Payload & e) {
         onKeyDown(e, this);
         if (e.active()) {
-            // only scroll to prompt if the key down is not a simple modifier key, but don't do this in alternate mode when scrolling is disabled
-            if (! alternateMode_ 
-                && *e != Key::ShiftKey + Key::Shift 
-                && *e != Key::AltKey + Key::Alt
-                && *e != Key::CtrlKey + Key::Ctrl
-                && *e != Key::WinKey + Key::Win)
-                setScrollOffset(Point{0, historyRows()});
             auto i = KeyMap_.find(*e);
             // only emit keyDown for non-printable keys as printable keys will go through the keyCHar event
             if (i != KeyMap_.end() && PrintableKeys_.find(*e) == PrintableKeys_.end()) {
@@ -178,11 +154,9 @@ namespace ui {
     void AnsiTerminal::mouseMove(MouseMoveEvent::Payload & e) {
         onMouseMove(e, this);
         if (e.active()) {
-            Point bufferCoords;
             {
                 std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-                bufferCoords = toBufferCoords(e->coords);
-                Hyperlink * a = hyperlinkAt(e->coords);
+                Hyperlink * a = dynamic_cast<Hyperlink*>(state_->buffer.cellAt(e->coords).specialObject());
                 // if there is active hyperlink that is different from current special object, deactive it
                 if (activeHyperlink_ != nullptr && activeHyperlink_ != a) {
                     activeHyperlink_->setActive(false);
@@ -199,14 +173,10 @@ namespace ui {
             }
             if (// the mouse movement should actually be reported
                 (mouseMode_ == MouseMode::All || (mouseMode_ == MouseMode::ButtonEvent && mouseButtonsDown_ > 0)) && 
-                // only send the mouse information if the mouse is in the range of the window
-                bufferCoords.y() >= 0 && 
                 Rect{size()}.contains(e->coords)) {
                     // mouse move adds 32 to the last known button press
-                    sendMouseEvent(mouseLastButton_ + 32, bufferCoords, 'M');
-                    LOG(SEQ) << "Mouse moved to " << e->coords << "(buffer coords " << bufferCoords << ")";
-            } else {
-                SelectionOwner::mouseMove(e);
+                    sendMouseEvent(mouseLastButton_ + 32, e->coords, 'M');
+                    LOG(SEQ) << "Mouse moved to " << e->coords;
             }
         }
     }
@@ -214,71 +184,33 @@ namespace ui {
     void AnsiTerminal::mouseDown(MouseButtonEvent::Payload & e) {
         ++mouseButtonsDown_;
         onMouseDown(e, this);
-        if (e.active()) {
-            if (mouseMode_ != MouseMode::Off) {
-                Point bufferCoords;
-                {
-                    std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-                    bufferCoords = toBufferCoords(e->coords);
-                }
-                if (bufferCoords.y() >= 0) {
-                    mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
-                    sendMouseEvent(mouseLastButton_, bufferCoords, 'M');
-                    LOG(SEQ) << "Button " << e->button << " down at " << e->coords << "(buffer coords " << bufferCoords << ")";
-                }
-            } else {
-                SelectionOwner::mouseDown(e);
-            }
+        if (e.active() && mouseMode_ != MouseMode::Off) {
+            mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
+            sendMouseEvent(mouseLastButton_, e->coords, 'M');
+            LOG(SEQ) << "Button " << e->button << " down at " << e->coords;;
         }
     }
 
     void AnsiTerminal::mouseUp(MouseButtonEvent::Payload & e) {
         onMouseUp(e, this);
-        if (e.active()) {
-            // a bit of defensive programming
-            if (mouseButtonsDown_ > 0) {
-                --mouseButtonsDown_;
-                if (mouseMode_ != MouseMode::Off) {
-                    Point bufferCoords;
-                    {
-                        std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-                        bufferCoords = toBufferCoords(e->coords);
-                    }
-                    if (bufferCoords.y() >= 0) {
-                        mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
-                        sendMouseEvent(mouseLastButton_, bufferCoords, 'm');
-                        LOG(SEQ) << "Button " << e->button << " up at " << e->coords << "(buffer coords " << bufferCoords << ")";
-                    }
-                } else {
-                    SelectionOwner::mouseUp(e);
-                }
+        // a bit of defensive programming, only report mouse up if we have matching mouse down
+        if (e.active() && mouseButtonsDown_ > 0) {
+            --mouseButtonsDown_;
+            if (mouseMode_ != MouseMode::Off) {
+                mouseLastButton_ = encodeMouseButton(e->button, e->modifiers);
+                sendMouseEvent(mouseLastButton_, e->coords, 'm');
+                LOG(SEQ) << "Button " << e->button << " up at " << e->coords;
             }
         }
     }
 
     void AnsiTerminal::mouseWheel(MouseWheelEvent::Payload & e) {
         onMouseWheel(e, this);
-        if (e.active()) {
-            if (! alternateMode_ && historyRows_.size() > 0) {
-                if (e->by > 0)
-                    scrollBy(Point{0, -1});
-                else 
-                    scrollBy(Point{0, 1});
-            } else {
-                if (mouseMode_ != MouseMode::Off) {
-                    Point bufferCoords;
-                    {
-                        std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-                        bufferCoords = toBufferCoords(e->coords);
-                    }
-                    if (bufferCoords.y() >= 0) {
-                        // mouse wheel adds 64 to the value
-                        mouseLastButton_ = encodeMouseButton((e->by > 0) ? MouseButton::Left : MouseButton::Right, e->modifiers) + 64;
-                        sendMouseEvent(mouseLastButton_, bufferCoords, 'M');
-                        LOG(SEQ) << "Wheel offset " << e->by << " at " << e->coords << "(buffer coords " << bufferCoords << ")";
-                    }
-                }
-            }
+        if (e.active() && mouseMode_ != MouseMode::Off) {
+            // mouse wheel adds 64 to the value
+            mouseLastButton_ = encodeMouseButton((e->by > 0) ? MouseButton::Left : MouseButton::Right, e->modifiers) + 64;
+            sendMouseEvent(mouseLastButton_, e->coords, 'M');
+            LOG(SEQ) << "Wheel offset " << e->by << " at " << e->coords;
         }
     }
 
@@ -336,117 +268,9 @@ namespace ui {
 		}
     }
 
-    std::string AnsiTerminal::getSelectionContents() {
-        std::stringstream result;
-        Selection sel = selection();
-        int row = sel.start().y();
-        int endRow = sel.end().y();
-        int col = sel.start().x();
-        std::lock_guard<PriorityLock> g(bufferLock_);
-        int terminalTop =  alternateMode_ ? 0 : static_cast<int>(historyRows_.size());
-        while (row < endRow) {
-            int endCol = (row < endRow - 1) ? width() : sel.end().x();
-            Cell * rowCells;
-            // if the current row comes from the history, get the appropriate cells
-            if (row < terminalTop) {
-                rowCells = historyRows_[row].second;
-                // if the stored row is shorter than the start of the selection, adjust the endCol so that no processing will be involved
-                if (endCol > historyRows_[row].first)
-                    endCol = historyRows_[row].first;
-            } else {
-                rowCells = state_->buffer.row(row - terminalTop);
-            }
-            // analyze the line and add it to the selection now
-            std::stringstream line;
-            for (; col < endCol; ) {
-                line << Char{rowCells[col].codepoint()};
-                if (Buffer::IsLineEnd(rowCells[col]))
-                    line << std::endl;
-                col += rowCells[col].font().width();
-            }
-            // remove whitespace at the end of the line if the line ends with enter
-            std::string l{line.str()};
-            if (! l.empty()) {
-                size_t lineEnd = l.size();
-                while (lineEnd > 0) {
-                    --lineEnd;
-                    if (l[lineEnd] == '\n')
-                        break;
-                    if (l[lineEnd] != ' ' && l[lineEnd] != '\t')
-                        break;
-                }
-                if (l[lineEnd] == '\n')
-                    result << l.substr(0, lineEnd + 1);
-                else
-                    result << l;
-            }
-            // do next row, all next rows start from 0
-            ++row;
-            col = 0;
-        }
-        return Trim(result.str());
-    }
-
-    void AnsiTerminal::selectWord(Point pos) {
-        Point start = pos;
-        Point end = pos;
-        {
-            std::lock_guard<PriorityLock> g(bufferLock_);
-            Cell const * c = cellAt(pos);
-            // if there is nothing at the coordinates, or we are not inside a word, do nothing
-            if (c == nullptr || IsWordSeparator(c->codepoint()))
-                return;
-            // find beginning and end of the word
-            while (true) {
-                Point prev = prevCell(start);
-                c = cellAt(prev);
-                if (c == nullptr || IsWordSeparator(c->codepoint()))
-                    break;
-                start = prev;
-            }
-            while(true) {
-                Point next = nextCell(end);
-                c = cellAt(next);
-                if (c == nullptr || IsWordSeparator(c->codepoint()))
-                    break;
-                end = next;
-            }
-        }
-        // do the selection
-        setSelection(Selection::Create(start, end));
-    }
-
-    void AnsiTerminal::selectLine(Point pos) {
-        Point start = Point{0, pos.y()};
-        Point end = start;
-        {
-            std::lock_guard<PriorityLock> g(bufferLock_);
-            // see if the above line ends with a line end character
-            while (start != Point{0,0}) {
-                start = prevCell(start);
-                Cell const * c = cellAt(start);
-                if (c != nullptr && Buffer::IsLineEnd(*c)) {
-                    start = Point{0, start.y() + 1};
-                    break;
-                }
-            }
-            // now find end of the line at cursor
-            Point bottomRight = Point{state_->buffer.width() - 1, state_->buffer.height() - 1 + terminalBufferTop()};
-            while (end != bottomRight) {
-                Cell const * c = cellAt(end);
-                if (c != nullptr && Buffer::IsLineEnd(*c))
-                    break;
-                end = nextCell(end);
-            }
-        }
-        // do the selection
-        setSelection(Selection::Create(start, end));
-    }
-
-
     void AnsiTerminal::detectHyperlink(char32_t next) {
         ASSERT(bufferLock_.locked());
-        // don't do any mathing if we are inside hyperlink command
+        // don't do any matching if we are inside hyperlink command
         if (inProgressHyperlink_ != nullptr)
             return;
         size_t matchSize = urlMatcher_.next(next);
@@ -527,114 +351,24 @@ namespace ui {
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         // scroll the lines
         while (lines-- > 0) {
-            if (! alternateMode_ && maxHistoryRows_ != 0) {
-                auto removedRow = state_->buffer.copyRow(top, palette_->defaultBackground());
-                addHistoryRow(removedRow.first, removedRow.second);
-            }
+            newHistoryRow(state_->buffer.rows_[top]);
             state_->buffer.deleteLine(top, bottom, fill);
         }
     }
 
-    /** If the terminal is scrolled into view, scrolls the terminal into view after the history line has been added as well. 
-     */
-    void AnsiTerminal::addHistoryRow(Cell * row, int cols) {
-        if (cols <= width()) {
-            historyRows_.push_back(std::make_pair(cols, row));
-        // if the line is too long, simply chop it in pieces of maximal length
-        } else {
-            Cell * i = row;
-            while (cols != 0) {
-                int xSize = std::min(width(), cols);
-                Cell * x = new Cell[xSize];
-                // copy the cells one by one as they are PODs
-                MemCopy(x, i, xSize);
-                i += xSize;
-                cols -= xSize;
-                historyRows_.push_back(std::make_pair(xSize, x));
-            }
-            delete [] row;
-        }
-        while (historyRows_.size() > static_cast<size_t>(maxHistoryRows_)) {
-            delete [] historyRows_.front().second;
-            historyRows_.pop_front();
-        }
-        if (scrollToTerminal_)
-            schedule([this](){
-                setScrollOffset(Point{0, static_cast<int>(historyRows_.size())});
-            });
-    }
-
-    void AnsiTerminal::resizeHistory() {
-        std::deque<std::pair<int, Cell*>> oldRows{std::move(historyRows_)};
-        Cell * row = nullptr;
-        int rowSize = 0;
-        for (auto & i : oldRows) {
-            if (row == nullptr) {
-                row = i.second;
-                rowSize = i.first;
-            } else {
-                Cell * newRow = new Cell[rowSize + i.first];
-                MemCopy(newRow, row, rowSize);
-                MemCopy(newRow + rowSize, i.second, i.first);
-                rowSize += i.first;
-                delete [] i.second;
-                delete [] row;
-                row = newRow;
-            }
-            ASSERT(row != nullptr);
-            if (Buffer::IsLineEnd(row[rowSize - 1])) {
-                addHistoryRow(row, rowSize);
-                row = nullptr;
-                rowSize = 0;
-            }
-        }
-        if (row != nullptr)
-            addHistoryRow(row, rowSize);
-    }
 
     void AnsiTerminal::resizeBuffers(Size size) {
         if (alternateMode_) {
             state_->resize(size, nullptr);
-            stateBackup_->resize(size, std::bind(&AnsiTerminal::addHistoryRow, this, std::placeholders::_1, std::placeholders::_2));
+            //stateBackup_->resize(size, std::bind(&AnsiTerminal::addHistoryRow, this, std::placeholders::_1, std::placeholders::_2));
+            stateBackup_->resize(size,nullptr);
         } else {
-            state_->resize(size, std::bind(&AnsiTerminal::addHistoryRow, this, std::placeholders::_1, std::placeholders::_2));
+            //state_->resize(size, std::bind(&AnsiTerminal::addHistoryRow, this, std::placeholders::_1, std::placeholders::_2));
+            state_->resize(size, nullptr);
             stateBackup_->resize(size, nullptr);
         }
     }
 
-    AnsiTerminal::Cell const * AnsiTerminal::cellAt(Point coords) {
-        ASSERT(bufferLock_.locked());
-        int bufferTop = terminalBufferTop();
-        if (bufferTop <= coords.y()) {
-            coords -= Point{0, bufferTop};
-            if (! state_->buffer.contains(coords))
-                return nullptr;
-            return & const_cast<Buffer const &>(state_->buffer).at(coords);
-        } else {
-            if (coords.y() < 0)
-                return nullptr;
-            auto const & row = historyRows_[coords.y()];
-            if (coords.x() >= row.first)
-                return nullptr;
-            return row.second + coords.x();
-        }
-    }
-
-    Point AnsiTerminal::prevCell(Point coords) const {
-        ASSERT(bufferLock_.locked());
-        coords -= Point{1,0};
-        if (coords.x() < 0)
-            coords += Point{state_->buffer.width(), -1};
-        return coords;
-    }
-
-    Point AnsiTerminal::nextCell(Point coords) const {
-        ASSERT(bufferLock_.locked());
-        coords += Point{1,0};
-        if (coords.x() >= state_->buffer.width())
-            coords -= Point{state_->buffer.width(), -1};
-        return coords;
-    }
 
     // Input Processing
 
@@ -1414,20 +1148,9 @@ namespace ui {
                     // clear any active hyperlinks
                     inProgressHyperlink_ = nullptr;
                     if (alternateMode_ != value) {
-                        // if the selection update was in progress, cancel it. If the selection is not empty, clear it - this has to be an UI event as clearSelection is UI action
-                        schedule([this](){
-                            cancelSelectionUpdate();
-                            clearSelection();
-                        });
                         // perform the mode change
                         std::swap(state_, stateBackup_);
                         alternateMode_ = value;
-                        schedule([this](){
-                            if (alternateMode_)
-                                setScrollOffset(Point{0, 0});
-                            else
-                                setScrollOffset(Point{0, static_cast<int>(historyRows_.size())});
-                        });
                         // if we are entering the alternate mode, reset the state to default values
                         if (value) {
                             state_->reset(palette_->defaultForeground(), palette_->defaultBackground());
@@ -1436,6 +1159,8 @@ namespace ui {
                         } else {
                             LOG(SEQ) << "Alternate mode off";
                         }
+                        // perform any extra bookkeeping that might need to be done
+                        alternateMode(alternateMode_);
                     }
 					continue;
 				/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. 

@@ -23,7 +23,7 @@ namespace tpp {
 #endif
         // and the terminal
         si->terminal = new AnsiTerminal{pty, session.palette()};
-        si->terminal->setMaxHistoryRows(config.renderer.window.historyLimit());
+        //si->terminal->setMaxHistoryRows(config.renderer.window.historyLimit());
         si->terminal->setBoldIsBright(config.sequences.boldIsBright());
         si->terminal->setDisplayBold(config.sequences.displayBold());
         si->terminal->setCursor(session.cursor());
