@@ -48,7 +48,8 @@ public:
 				if (cmd_.empty())
 					throw std::runtime_error("No command to execute specified after -e argument");
 				return;
-			} else if (arg.starts_with("--buffer-size")) {
+            // TODO can't use starts_with because the bypass is C++17 compatible and starts_with does not appear until C++20
+			} else if (arg.find("--buffer-size") == 0) {
 				if (arg[13] == '=') {
 					bufferSize_ = std::stoul(arg.substr(14));
 				} else {
