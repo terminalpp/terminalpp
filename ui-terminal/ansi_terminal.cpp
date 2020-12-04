@@ -42,17 +42,17 @@ namespace ui {
 
     char32_t AnsiTerminal::LineDrawingChars_[15] = {0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0, 0, 0x2500, 0, 0, 0x251c, 0x2524, 0x2534, 0x252c, 0x2502};
 
-    AnsiTerminal::AnsiTerminal(tpp::PTYMaster * pty, Palette * palette):
+    AnsiTerminal::AnsiTerminal(tpp::PTYMaster * pty, Palette && palette):
         PTYBuffer{pty},
-        palette_{palette},
-        state_{new State{palette->defaultBackground()}},
-        stateBackup_{new State{palette->defaultBackground()}} {
+        palette_{std::move(palette)},
+        state_{new State{palette_.defaultBackground()}},
+        stateBackup_{new State{palette_.defaultBackground()}} {
         if (KeyMap_.empty()) {
             InitializeKeyMap(KeyMap_);
             InitializePrintableKeys(PrintableKeys_);
         }
-        state_->reset(palette_->defaultForeground(), palette_->defaultBackground());
-        stateBackup_->reset(palette_->defaultForeground(), palette_->defaultBackground());
+        state_->reset(palette_.defaultForeground(), palette_.defaultBackground());
+        stateBackup_->reset(palette_.defaultForeground(), palette_.defaultBackground());
         setFocusable(true);
         
         startPTYReader();
@@ -61,7 +61,6 @@ namespace ui {
 
     AnsiTerminal::~AnsiTerminal() {
         terminatePty();
-        delete palette_;
         delete state_;
         delete stateBackup_;
     }
@@ -75,7 +74,7 @@ namespace ui {
 #endif
         Rect visibleRect{ccanvas.visibleRect()};
         std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-        ccanvas.setBg(palette_->defaultBackground());
+        ccanvas.setBg(palette_.defaultBackground());
         // TODO once we support sixels or other shared objects that might survive to the drawing stage, this function will likely change. 
         ccanvas.drawFallbackBuffer(state_->buffer, Point{0, 0});
 #ifdef  SHOW_LINE_ENDINGS
@@ -351,7 +350,7 @@ namespace ui {
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         // scroll the lines
         while (lines-- > 0) {
-            newHistoryRow(state_->buffer.rows_[top]);
+            onNewHistoryRow(NewHistoryRowEvent::Payload{width(), state_->buffer.rows_[top]}, this);
             state_->buffer.deleteLine(top, bottom, fill);
         }
     }
@@ -1153,14 +1152,14 @@ namespace ui {
                         alternateMode_ = value;
                         // if we are entering the alternate mode, reset the state to default values
                         if (value) {
-                            state_->reset(palette_->defaultForeground(), palette_->defaultBackground());
+                            state_->reset(palette_.defaultForeground(), palette_.defaultBackground());
                             state_->invalidateLastCharacter();
                             LOG(SEQ) << "Alternate mode on";
                         } else {
                             LOG(SEQ) << "Alternate mode off";
                         }
                         // perform any extra bookkeeping that might need to be done
-                        alternateMode(alternateMode_);
+                        onModeChange(ModeChangeEvent::Payload{alternateMode_ ? Mode::Alternate : Mode::Normal}, this);
                     }
 					continue;
 				/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. 
@@ -1186,9 +1185,9 @@ namespace ui {
 			switch (seq[i]) {
 				/* Resets all attributes. */
 				case 0:
-                    state_->cell.setFg(palette_->defaultForeground()) 
-                               .setDecor(palette_->defaultForeground()) 
-                               .setBg(palette_->defaultBackground())
+                    state_->cell.setFg(palette_.defaultForeground()) 
+                               .setDecor(palette_.defaultForeground()) 
+                               .setBg(palette_.defaultBackground())
                                .setFont(Font{});
                     state_->bold = false;
                     state_->inverseMode = false;
@@ -1287,8 +1286,8 @@ namespace ui {
                 }
 				/* Foreground default. */
 				case 39:
-                    state_->cell.setFg(palette_->defaultForeground())
-                               .setDecor(palette_->defaultForeground());
+                    state_->cell.setFg(palette_.defaultForeground())
+                               .setDecor(palette_.defaultForeground());
 					LOG(SEQ) << "fg reset";
 					break;
 				/* 40 - 47 are dark background color, handled in the default case. */
@@ -1301,7 +1300,7 @@ namespace ui {
                 }
 				/* Background default */
 				case 49:
-					state_->cell.setBg(palette_->defaultBackground());
+					state_->cell.setBg(palette_.defaultBackground());
 					LOG(SEQ) << "bg reset";
 					break;
 				/* 90 - 97 are bright foreground colors, handled in the default case. */
@@ -1311,19 +1310,19 @@ namespace ui {
                         int colorIndex = seq[i] - 30;
                         if (boldIsBright_ && state_->bold)
                             colorIndex += 8;
-						state_->cell.setFg(palette_->at(colorIndex))
-                                   .setDecor(palette_->at(colorIndex));
-						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 30);
+						state_->cell.setFg(palette_.at(colorIndex))
+                                   .setDecor(palette_.at(colorIndex));
+						LOG(SEQ) << "fg set to " << palette_.at(seq[i] - 30);
 					} else if (seq[i] >= 40 && seq[i] <= 47) {
-						state_->cell.setBg(palette_->at(seq[i] - 40));
-						LOG(SEQ) << "bg set to " << palette_->at(seq[i] - 40);
+						state_->cell.setBg(palette_.at(seq[i] - 40));
+						LOG(SEQ) << "bg set to " << palette_.at(seq[i] - 40);
 					} else if (seq[i] >= 90 && seq[i] <= 97) {
-						state_->cell.setFg(palette_->at(seq[i] - 82))
-                                   .setDecor(palette_->at(seq[i] - 82));
-						LOG(SEQ) << "fg set to " << palette_->at(seq[i] - 82);
+						state_->cell.setFg(palette_.at(seq[i] - 82))
+                                   .setDecor(palette_.at(seq[i] - 82));
+						LOG(SEQ) << "fg set to " << palette_.at(seq[i] - 82);
 					} else if (seq[i] >= 100 && seq[i] <= 107) {
-						state_->cell.setBg(palette_->at(seq[i] - 92));
-						LOG(SEQ) << "bg set to " << palette_->at(seq[i] - 92);
+						state_->cell.setBg(palette_.at(seq[i] - 92));
+						LOG(SEQ) << "bg set to " << palette_.at(seq[i] - 92);
 					} else {
 						LOG(SEQ_UNKNOWN) << "Invalid SGR code: " << seq;
 					}
@@ -1342,7 +1341,7 @@ namespace ui {
 						break;
 					if (seq[i] > 255) // invalid color spec
 						break;
-                    return palette_->at(seq[i]);
+                    return palette_.at(seq[i]);
 				/* true color rgb */
 				case 2:
 					i += 2;
@@ -1632,15 +1631,13 @@ namespace ui {
     }
 
     AnsiTerminal::Palette::Palette(std::initializer_list<Color> colors, Color defaultFg, Color defaultBg):
-        size_(colors.size()),
         defaultFg_(defaultFg),
-        defaultBg_(defaultBg),
-        colors_(new Color[colors.size()]) {
-		unsigned i = 0;
+        defaultBg_(defaultBg) {
 		for (Color c : colors)
-			colors_[i++] = c;
+            colors_.push_back(c);
     }
 
+/*
     AnsiTerminal::Palette::Palette(Palette const & from):
         size_(from.size_),
         defaultFg_(from.defaultFg_),
@@ -1682,5 +1679,7 @@ namespace ui {
         }
         return *this;
     }
+
+    */
 
 } // namespace ui

@@ -9,6 +9,8 @@
 - refactor the simple ansi terminal, namely buffers, state & resize
 - port history, scrollbars and selection to ui_terminal
 
+
+
 - see if msys can be added to bypass (perhaps sth to do with forkpty?)
 
 Documentation:

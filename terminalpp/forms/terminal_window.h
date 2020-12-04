@@ -264,7 +264,7 @@ namespace tpp {
             activeSession_ = *e == nullptr ? nullptr : sessionInfo(*e);
             // set own background to the session's terminal background so that it propagates to the window's background
             if (activeSession_ != nullptr) {
-                setBackground(activeSession_->terminal->palette()->defaultBackground());
+                setBackground(activeSession_->terminal->palette().defaultBackground());
             }
         }
 
