@@ -51,8 +51,6 @@ namespace ui {
             InitializeKeyMap(KeyMap_);
             InitializePrintableKeys(PrintableKeys_);
         }
-        //backup_->reset(palette_.defaultForeground(), palette_.defaultBackground());
-        //bufferBackup_->reset(palette_.defaultForeground(), palette_.defaultBackground());
         setFocusable(true);
         
         startPTYReader();
@@ -418,8 +416,6 @@ namespace ui {
         if (pos.x() == 0) {
             if (pos.y() > 0)
                 buffer_.setCursorPosition(Point{buffer_.width() - 1, pos.y() - 1});
-//            else 
-//                buffer_.setCursorPosition(Point{buffer_.width() - 1, cursorPosition().y()});
         } else {
             buffer_.setCursorPosition(pos - Point{1, 0});
         }
