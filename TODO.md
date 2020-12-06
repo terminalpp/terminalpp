@@ -6,10 +6,7 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- refactor the simple ansi terminal, namely buffers, state & resize
 - port history, scrollbars and selection to ui_terminal
-
-
 
 - see if msys can be added to bypass (perhaps sth to do with forkpty?)
 

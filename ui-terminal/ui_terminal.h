@@ -532,4 +532,33 @@ namespace ui {
 
 
 
+    /*
+    std::pair<AnsiTerminal::Cell *, int> AnsiTerminal::Buffer::copyRow(int row, Color defaultBg) {
+        int lastCol = width();
+        Cell * x = rows_[row];
+        while (lastCol-- > 0) {
+            Cell & c = x[lastCol];
+            // if we have found end of line character, good
+            if (IsLineEnd(c))
+                break;
+            // if we have found a visible character, we must remember the whole line, break the search - any end of line characters left of it will make no difference
+            if (c.codepoint() != ' ' || c.bg() != defaultBg || c.font().underline() || c.font().strikethrough()) {
+                break;
+            }
+        }   
+        // if we are not at the end of line, we must remember the whole line
+        if (IsLineEnd(x[lastCol])) 
+            lastCol += 1;
+        else
+            lastCol = width();
+        // make the copy and return it
+        Cell * result = new Cell[lastCol];
+        // we cannot use memcopy here because the cells can be special
+        MemCopy(result, x, lastCol);
+        return std::make_pair(result, lastCol);
+    }
+    */
+
+
+
 } // namespace ui

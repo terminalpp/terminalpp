@@ -123,5 +123,50 @@ HELPERS_NAMESPACE_BEGIN
         std::condition_variable cv_;
     }; 
 
+    /** A simple smart pointer that keeps a lock open as long as it exists. 
+     */
+    template<typename T, typename LOCK = PriorityLock>
+    class Locked {
+    public:
+        Locked(T * value, LOCK & lock):
+            value_{value},
+            lock_{lock} {
+            lock_.lock();
+        }
+
+        Locked(T & value, LOCK & lock):
+            value_{& value},
+            lock_{lock} {
+            lock_.lock();
+        }
+
+        Locked(T * value, LOCK & lock, std::adopt_lock_t):
+            value_{value},
+            lock_{lock} {
+        }
+
+        Locked(T & value, LOCK & lock, std::adopt_lock_t):
+            value_{& value},
+            lock_{lock} {
+        }
+
+        T & operator * () {
+            return *value_;
+        }
+
+        T * operator -> () {
+            return value_;
+        }
+
+        ~Locked() {
+            lock_.unlock();
+        }
+    private:
+        T * value_;
+        LOCK & lock_;
+    }; // helpers::Locked
+
+
+
 
 HELPERS_NAMESPACE_END

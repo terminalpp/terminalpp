@@ -45,14 +45,14 @@ namespace ui {
     AnsiTerminal::AnsiTerminal(tpp::PTYMaster * pty, Palette && palette):
         PTYBuffer{pty},
         palette_{std::move(palette)},
-        state_{new State{palette_.defaultBackground()}},
-        stateBackup_{new State{palette_.defaultBackground()}} {
+        buffer_{BufferKind::Normal, this, defaultCell()},
+        bufferBackup_{BufferKind::Alternate, this, defaultCell()} {
         if (KeyMap_.empty()) {
             InitializeKeyMap(KeyMap_);
             InitializePrintableKeys(PrintableKeys_);
         }
-        state_->reset(palette_.defaultForeground(), palette_.defaultBackground());
-        stateBackup_->reset(palette_.defaultForeground(), palette_.defaultBackground());
+        //backup_->reset(palette_.defaultForeground(), palette_.defaultBackground());
+        //bufferBackup_->reset(palette_.defaultForeground(), palette_.defaultBackground());
         setFocusable(true);
         
         startPTYReader();
@@ -61,8 +61,6 @@ namespace ui {
 
     AnsiTerminal::~AnsiTerminal() {
         terminatePty();
-        delete state_;
-        delete stateBackup_;
     }
 
     // Widget
@@ -76,14 +74,14 @@ namespace ui {
         std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
         ccanvas.setBg(palette_.defaultBackground());
         // TODO once we support sixels or other shared objects that might survive to the drawing stage, this function will likely change. 
-        ccanvas.drawFallbackBuffer(state_->buffer, Point{0, 0});
+        ccanvas.drawFallbackBuffer(buffer_, Point{0, 0});
 #ifdef  SHOW_LINE_ENDINGS
         // now add borders to the cells that are marked as end of line
         for (int row = std::max(0, visibleRect.top()), rs = row, re = visibleRect.bottom(); ; ++row) {
             if (row >= re)
                 break;
             for (int col = 0; col < width(); ++col) {
-                if (Buffer::IsLineEnd(const_cast<Buffer const &>(state_->buffer).at(Point{col, row - rs})))
+                if (Buffer::IsLineEnd(const_cast<Buffer const &>(buffer_).at(Point{col, row - rs})))
                     ccanvas.setBorder(Point{col, row}, endOfLine);
             }
         }
@@ -91,10 +89,10 @@ namespace ui {
         // draw the cursor 
         if (focused()) {
             // set the cursor via the canvas
-            ccanvas.setCursor(cursor(), cursorPosition());
-        } else if (cursor().visible()) {
+            ccanvas.setCursor(buffer_.cursor(), buffer_.cursorPosition());
+        } else if (buffer_.cursor().visible()) {
             // TODO the color of this should be configurable
-            ccanvas.setBorder(cursorPosition(), Border::All(inactiveCursorColor_, Border::Kind::Thin));
+            ccanvas.setBorder(buffer_.cursorPosition(), Border::All(inactiveCursorColor_, Border::Kind::Thin));
         }
     }
 
@@ -155,7 +153,7 @@ namespace ui {
         if (e.active()) {
             {
                 std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-                Hyperlink * a = dynamic_cast<Hyperlink*>(state_->buffer.cellAt(e->coords).specialObject());
+                Hyperlink * a = dynamic_cast<Hyperlink*>(buffer_.cellAt(e->coords).specialObject());
                 // if there is active hyperlink that is different from current special object, deactive it
                 if (activeHyperlink_ != nullptr && activeHyperlink_ != a) {
                     activeHyperlink_->setActive(false);
@@ -278,7 +276,7 @@ namespace ui {
         // we have found a hyperlink, construct its address and determine which cells to use, which we do by retracting
         Hyperlink::Ptr link{new Hyperlink{"", normalHyperlinkStyle_, activeHyperlinkStyle_}};
         std::string url{};
-        Point pos = cursorPosition();
+        Point pos = buffer_.cursorPosition();
         do {
             // the url is too long and disappeared, do not match
             if (pos == Point{0,0}) {
@@ -286,88 +284,16 @@ namespace ui {
                 return;
             }
             if (pos.x() == 0)
-                pos = Point{state_->buffer.width() - 1, pos.y() - 1};
+                pos = Point{buffer_.width() - 1, pos.y() - 1};
             else 
                 pos -= Point{1, 0};
-            Cell & cell = state_->buffer.at(pos);
+            Cell & cell = buffer_.at(pos);
             url = Char{cell.codepoint()} + url;
             cell.attachSpecialObject(link);
         } while (--matchSize != 0);
         // set the url we calculated
         link->setUrl(url);
     }
-
-    // Terminal State 
-
-    void AnsiTerminal::deleteCharacters(unsigned num) {
-		int r = cursorPosition().y();
-		for (unsigned c = cursorPosition().x(), e = state_->buffer.width() - num; c < e; ++c) 
-			state_->buffer.at(c, r) = state_->buffer.at(c + num, r);
-		for (unsigned c = state_->buffer.width() - num, e = state_->buffer.width(); c < e; ++c)
-			state_->buffer.at(c, r) = state_->cell;
-    }
-
-    void AnsiTerminal::insertCharacters(unsigned num) {
-		unsigned r = cursorPosition().y();
-		// first copy the characters
-		for (unsigned c = state_->buffer.width() - 1, e = cursorPosition().x() + num; c >= e; --c)
-			state_->buffer.at(c, r) = state_->buffer.at(c - num, r);
-		for (unsigned c = cursorPosition().x(), e = cursorPosition().x() + num; c < e; ++c)
-			state_->buffer.at(c, r) = state_->cell;
-    }
-    
-    void AnsiTerminal::updateCursorPosition() {
-        while (cursorPosition().x() >= state_->buffer.width()) {
-            ASSERT(state_->buffer.width() > 0);
-            setCursorPosition(cursorPosition() - Point{state_->buffer.width(), -1});
-            // if the cursor is on the last line, evict the lines above
-            if (cursorPosition().y() == state_->scrollEnd) 
-                deleteLines(1, state_->scrollStart, state_->scrollEnd, state_->cell);
-        }
-        if (cursorPosition().y() >= state_->buffer.height())
-            setCursorPosition(Point{cursorPosition().x(), state_->buffer.height() - 1 });
-        // the cursor position must be valid now
-        ASSERT(cursorPosition().x() < state_->buffer.width());
-        ASSERT(cursorPosition().y() < state_->buffer.height());
-        // set last character position to the now definitely valid cursor coordinates
-        state_->setLastCharacter(cursorPosition());
-    }
-
-    void AnsiTerminal::setCursor(Canvas::Cursor const & value) {
-        state_->buffer.cursor() = value;
-        stateBackup_->buffer.cursor() = value;
-    }
-
-    // Scrollback buffer
-
-    void AnsiTerminal::insertLines(int lines, int top, int bottom, Cell const & fill) {
-        while (lines-- > 0)
-            state_->buffer.insertLine(top, bottom, fill);
-    }
-
-    /** If history is enabled, i.e. when history limit is greater than 0 and the terminal is not in alternate mode, the deleted line is added to the history. 
-     */
-    void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
-        // scroll the lines
-        while (lines-- > 0) {
-            onNewHistoryRow(NewHistoryRowEvent::Payload{width(), state_->buffer.rows_[top]}, this);
-            state_->buffer.deleteLine(top, bottom, fill);
-        }
-    }
-
-
-    void AnsiTerminal::resizeBuffers(Size size) {
-        if (alternateMode_) {
-            state_->resize(size, nullptr);
-            //stateBackup_->resize(size, std::bind(&AnsiTerminal::addHistoryRow, this, std::placeholders::_1, std::placeholders::_2));
-            stateBackup_->resize(size,nullptr);
-        } else {
-            //state_->resize(size, std::bind(&AnsiTerminal::addHistoryRow, this, std::placeholders::_1, std::placeholders::_2));
-            state_->resize(size, nullptr);
-            stateBackup_->resize(size, nullptr);
-        }
-    }
-
 
     // Input Processing
 
@@ -442,7 +368,6 @@ namespace ui {
         return bufferEnd - buffer;
     }
 
-
     void AnsiTerminal::parseCodepoint(char32_t codepoint) {
         if (lineDrawingSet_ && codepoint >= 0x6a && codepoint < 0x79)
             codepoint = LineDrawingChars_[codepoint-0x6a];
@@ -450,51 +375,11 @@ namespace ui {
         // detect the hyperlinks if enabled, before updating the cursor position
         if (detectHyperlinks_)
             detectHyperlink(codepoint);
-        updateCursorPosition();
         // set the cell according to the codepoint and current settings. If there is an active hyperlink, the hyperlink is first attached to the cell and then new cell is added to the hyperlink fallback 
-        Cell & cell = state_->buffer.at(cursorPosition());
-        cell = state_->cell;
+        Cell & cell = buffer_.addCharacter(codepoint);
         // attach hyperlink special object, of one is active
         if (inProgressHyperlink_ != nullptr)
             cell.attachSpecialObject(inProgressHyperlink_);
-        cell.setCodepoint(codepoint);
-        // what's left is to deal with corner cases, such as larger fonts & double width characters
-        int columnWidth = Char::ColumnWidth(codepoint);
-        // if the character's column width is 2 and current font is not double width, update to double width font
-        if (columnWidth == 2 && ! cell.font().doubleWidth()) {
-            //columnWidth = 1;
-            cell.font().setDoubleWidth(true);
-        }
-
-        // advance cursor's column
-        setCursorPosition(cursorPosition() + Point{1, 0});
-
-
-        // TODO do double width & height characters properly for the per-line 
-
-        /*
-        // if the character's column width is 2 and current font is not double width, update to double width font
-        // if the font's size is greater than 1, copy the character as required (if we are at the top row of double height characters, increase the size artificially)
-        int charWidth = state_->doubleHeightTopLine ? cell.font().width() * 2 : cell.font().width();
-
-        while (columnWidth > 0 && cursorPosition().x() < state_->buffer.width()) {
-            for (int i = 1; (i < charWidth) && cursorPosition().x() < state_->buffer.width(); ++i) {
-                Cell& cell2 = buffer_.at(buffer_.cursor().pos);
-                // copy current cell properties
-                cell2 = cell;
-                // make sure the cell's font is normal size and width and display a space
-                cell2.setCodepoint(' ').setFont(cell.font().setSize(1).setDoubleWidth(false));
-                ++cursorPosition().x();
-            } 
-            if (--columnWidth > 0 && cursorPosition().x() < state_->buffer.width()) {
-                Cell& cell2 = buffer_.at(buffer_.cursor().pos);
-                // copy current cell properties
-                cell2 = cell;
-                cell2.setCodepoint(' ');
-                ++cursorPosition().x();
-            } 
-        }
-        */
     }
 
     void AnsiTerminal::parseNotification() {
@@ -506,47 +391,37 @@ namespace ui {
 
     void AnsiTerminal::parseTab() {
         resetHyperlinkDetection();
-        updateCursorPosition();
-        if (cursorPosition().x() % 8 == 0)
-            setCursorPosition(cursorPosition() + Point{8, 0});
+        Point pos = buffer_.adjustedCursorPosition();
+        if (pos.x() % 8 == 0)
+            buffer_.setCursorPosition(pos + Point{8, 0});
         else
-            setCursorPosition(cursorPosition() + Point{8 - cursorPosition().x() % 8, 0});
-        LOG(SEQ) << "Tab: cursor col is " << cursorPosition().x();
+            buffer_.setCursorPosition(pos + Point{8 - pos.x() % 8, 0});
+        LOG(SEQ) << "Tab: cursor col is " << buffer_.cursorPosition().x();
     }
 
     void AnsiTerminal::parseLF() {
         LOG(SEQ) << "LF";
         resetHyperlinkDetection();
-        state_->markLineEnd();
-        // disable double width and height chars
-        state_->cell.font().setSize(1).setDoubleWidth(false);
-        setCursorPosition(cursorPosition() + Point{0, 1});
-        // determine if region should be scrolled
-        if (cursorPosition().y() == state_->scrollEnd) {
-            deleteLines(1, state_->scrollStart, state_->scrollEnd, state_->cell);
-            setCursorPosition(cursorPosition() - Point{0, 1});
-        }
-        // update the cursor position as LF takes immediate effect
-        updateCursorPosition();
+        buffer_.newLine();
     }
 
     void AnsiTerminal::parseCR() {
         LOG(SEQ) << "CR";
         resetHyperlinkDetection();
-        // mark the last character as line end? 
-        // TODO
-        setCursorPosition(Point{0, cursorPosition().y()});
+        buffer_.carriageReturn();
     }
 
     void AnsiTerminal::parseBackspace() {
         LOG(SEQ) << "BACKSPACE";
         resetHyperlinkDetection();
-        if (cursorPosition().x() == 0) {
-            if (cursorPosition().y() > 0)
-                setCursorPosition(cursorPosition() - Point{0, 1});
-            setCursorPosition(Point{state_->buffer.width() - 1, cursorPosition().y()});
+        Point pos = buffer_.cursorPosition();
+        if (pos.x() == 0) {
+            if (pos.y() > 0)
+                buffer_.setCursorPosition(Point{buffer_.width() - 1, pos.y() - 1});
+//            else 
+//                buffer_.setCursorPosition(Point{buffer_.width() - 1, cursorPosition().y()});
         } else {
-            setCursorPosition(cursorPosition() - Point{1, 0});
+            buffer_.setCursorPosition(pos - Point{1, 0});
         }
     }
 
@@ -588,23 +463,23 @@ namespace ui {
 			case '7':
 				LOG(SEQ) << "DECSC: Cursor position saved";
                 resetHyperlinkDetection();
-                state_->saveCursor();
+                buffer_.saveCursor();
 				break;
 			/* Restore Cursor. */
 			case '8':
                 LOG(SEQ) << "DECRC: Cursor position restored";
                 resetHyperlinkDetection();
-                state_->restoreCursor();
+                buffer_.restoreCursor();
 				break;
 			/* Reverse line feed - move up 1 row, same column.
 			 */
 			case 'M':
 				LOG(SEQ) << "RI: move cursor 1 line up";
                 resetHyperlinkDetection();
-				if (cursorPosition().y() == state_->scrollStart) 
-					insertLines(1, state_->scrollStart, state_->scrollEnd, state_->cell);
+				if (buffer_.cursorPosition().y() == buffer_.scrollStart()) 
+					buffer_.insertLines(1, buffer_.scrollStart(), buffer_.scrollEnd(), buffer_.currentCell());
 				else
-                    setCursorPosition(cursorPosition() - Point{0, 1});
+                    buffer_.setCursorPosition(buffer_.cursorPosition() - Point{0, 1});
 				break;
             /* Device Control String (DCS). 
              */
@@ -712,17 +587,17 @@ namespace ui {
                     // CSI <n> @ -- insert blank characters (ICH)
                     case '@':
                         seq.setDefault(0, 1);
-                        LOG(SEQ) << "ICH: deleteCharacter " << seq[0];
-                        insertCharacters(seq[0]);
+                        LOG(SEQ) << "ICH: insertCharacter " << seq[0];
+                        buffer_.insertCharacters(buffer_.cursorPosition(), seq[0]);
                         return;
                     // CSI <n> A -- moves cursor n rows up (CUU)
                     case 'A': {
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        int r = cursorPosition().y() >= seq[0] ? cursorPosition().y() - seq[0] : 0;
-                        LOG(SEQ) << "CUU: setCursor " << cursorPosition().x() << ", " << r;
-                        setCursorPosition(Point{cursorPosition().x(), r});
+                        int r = buffer_.cursorPosition().y() >= seq[0] ? buffer_.cursorPosition().y() - seq[0] : 0;
+                        LOG(SEQ) << "CUU: setCursor " << buffer_.cursorPosition().x() << ", " << r;
+                        buffer_.setCursorPosition(Point{buffer_.cursorPosition().x(), r});
                         return;
                     }
                     // CSI <n> B -- moves cursor n rows down (CUD)
@@ -730,25 +605,25 @@ namespace ui {
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        LOG(SEQ) << "CUD: setCursor " << cursorPosition().x() << ", " << cursorPosition().y() + seq[0];
-                        setCursorPosition(cursorPosition() + Point{0, seq[0]});
+                        LOG(SEQ) << "CUD: setCursor " << buffer_.cursorPosition().x() << ", " << buffer_.cursorPosition().y() + seq[0];
+                        buffer_.setCursorPosition(buffer_.cursorPosition() + Point{0, seq[0]});
                         return;
                     // CSI <n> C -- moves cursor n columns forward (right) (CUF)
                     case 'C':
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        LOG(SEQ) << "CUF: setCursor " << cursorPosition().x() + seq[0] << ", " << cursorPosition().y();
-                        setCursorPosition(cursorPosition() + Point{seq[0], 0});
+                        LOG(SEQ) << "CUF: setCursor " << buffer_.cursorPosition().x() + seq[0] << ", " << buffer_.cursorPosition().y();
+                        buffer_.setCursorPosition(buffer_.cursorPosition() + Point{seq[0], 0});
                         return;
                     // CSI <n> D -- moves cursor n columns back (left) (CUB)
                     case 'D': {// cursor backward
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        int c = cursorPosition().x() >= seq[0] ? cursorPosition().x() - seq[0] : 0;
-                        LOG(SEQ) << "CUB: setCursor " << c << ", " << cursorPosition().y();
-                        setCursorPosition(Point{c, cursorPosition().y()});
+                        int c = buffer_.cursorPosition().x() >= seq[0] ? buffer_.cursorPosition().x() - seq[0] : 0;
+                        LOG(SEQ) << "CUB: setCursor " << c << ", " << buffer_.cursorPosition().y();
+                        buffer_.setCursorPosition(Point{c, buffer_.cursorPosition().y()});
                         return;
                     }
                     /* CSI <n> G -- set cursor character absolute (CHA)
@@ -756,7 +631,7 @@ namespace ui {
                     case 'G':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "CHA: set column " << seq[0] - 1;
-                        setCursorPosition(Point{seq[0] - 1, cursorPosition().y()});
+                        buffer_.setCursorPosition(Point{seq[0] - 1, buffer_.cursorPosition().y()});
                         return;
                     /* set cursor position (CUP) */
                     case 'H': // CUP
@@ -767,117 +642,118 @@ namespace ui {
                         seq.conditionalReplace(0, 0, 1);
                         seq.conditionalReplace(1, 0, 1);
                         LOG(SEQ) << "CUP: setCursor " << seq[1] - 1 << ", " << seq[0] - 1;
-                        setCursorPosition(Point{seq[1] - 1, seq[0] - 1});
+                        buffer_.setCursorPosition(Point{seq[1] - 1, seq[0] - 1});
                         return;
                     /* CSI <n> J -- erase display, depending on <n>:
                         0 = erase from the current position (inclusive) to the end of display
                         1 = erase from the beginning to the current position(inclusive)
                         2 = erase entire display
                     */
-                    case 'J':
+                    case 'J': {
                         if (seq.numArgs() > 1)
                             break;
+                        Canvas canvas{buffer_.canvas()};
+                        Point cursorPosition{buffer_.adjustedCursorPosition()};
                         switch (seq[0]) {
                             case 0:
-                                updateCursorPosition();
-                                state_->canvas.fill(
-                                    Rect{cursorPosition(), Point{state_->buffer.width(), cursorPosition().y() + 1}},
-                                    state_->cell
+                                canvas.fill(
+                                    Rect{cursorPosition, Point{buffer_.width(), cursorPosition.y() + 1}},
+                                    buffer_.currentCell()
                                 );
-                                state_->canvas.fill(
-                                    Rect{Point{0, cursorPosition().y() + 1}, Point{state_->buffer.width(), state_->buffer.height()}},                                
-                                    state_->cell
+                                canvas.fill(
+                                    Rect{Point{0, cursorPosition.y() + 1}, Point{buffer_.width(), buffer_.height()}},                                
+                                    buffer_.currentCell()
                                 );
                                 return;
                             case 1:
-                                updateCursorPosition();
-                                state_->canvas.fill(
-                                    Rect{Point{}, Point{state_->buffer.width(), cursorPosition().y()}},
-                                    state_->cell
+                                canvas.fill(
+                                    Rect{Point{}, Point{buffer_.width(), cursorPosition.y()}},
+                                    buffer_.currentCell()
                                 );
-                                state_->canvas.fill(
-                                    Rect{Point{0, cursorPosition().y()}, cursorPosition() + Point{1,1}},
-                                    state_->cell
+                                canvas.fill(
+                                    Rect{Point{0, cursorPosition.y()}, cursorPosition + Point{1,1}},
+                                    buffer_.currentCell()
                                 );
                                 return;
                             case 2:
-                                state_->canvas.fill(
-                                    Rect{state_->buffer.size()},
-                                    state_->cell
+                                canvas.fill(
+                                    Rect{buffer_.size()},
+                                    buffer_.currentCell()
                                 );
                                 return;
                             default:
                                 break;
                         }
                         break;
+                    }
                     /* CSI <n> K -- erase in line, depending on <n>
                         0 = Erase to Right
                         1 = Erase to Left
                         2 = Erase entire line
                     */
-                    case 'K':
+                    case 'K': {
                         if (seq.numArgs() > 1)
                             break;
+                        Canvas canvas{buffer_.canvas()};
+                        Point cursorPosition{buffer_.adjustedCursorPosition()};
                         switch (seq[0]) {
                             case 0:
-                                updateCursorPosition();
-                                state_->canvas.fill(
-                                    Rect{cursorPosition(), Point{state_->buffer.width(), cursorPosition().y() + 1}},
-                                    state_->cell
+                                canvas.fill(
+                                    Rect{cursorPosition, Point{buffer_.width(), cursorPosition.y() + 1}},
+                                    buffer_.currentCell()
                                 );
                                 return;
                             case 1:
-                                updateCursorPosition();
-                                state_->canvas.fill(
-                                    Rect{Point{0, cursorPosition().y()}, Point{cursorPosition().x() + 1, cursorPosition().y() + 1}},
-                                    state_->cell
+                                canvas.fill(
+                                    Rect{Point{0, cursorPosition.y()}, Point{cursorPosition.x() + 1, cursorPosition.y() + 1}},
+                                    buffer_.currentCell()
                                 );
                                 return;
                             case 2:
-                                updateCursorPosition();
-                                state_->canvas.fill(
-                                    Rect{Point{0, cursorPosition().y()}, Size{state_->buffer.width(),1}},
-                                    state_->cell
+                                canvas.fill(
+                                    Rect{Point{0, cursorPosition.y()}, Size{buffer_.width(),1}},
+                                    buffer_.currentCell()
                                 );
                                 return;
                             default:
                                 break;
                         }
-					break;
+					    break;
+                    }
                     /* CSI <n> L -- Insert n lines. (IL)
                      */
                     case 'L':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "IL: scrollUp " << seq[0];
-                        insertLines(seq[0], cursorPosition().y(), state_->scrollEnd, state_->cell);
+                        buffer_.insertLines(seq[0], buffer_.cursorPosition().y(), buffer_.scrollEnd(), buffer_.currentCell());
                         return;
                     /* CSI <n> M -- Remove n lines. (DL)
                      */
                     case 'M':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "DL: scrollDown " << seq[0];
-                        deleteLines(seq[0], cursorPosition().y(), state_->scrollEnd, state_->cell);
+                        buffer_.deleteLines(seq[0], buffer_.cursorPosition().y(), buffer_.scrollEnd(), buffer_.currentCell());
                         return;
                     /* CSI <n> P -- Delete n charcters. (DCH) 
                      */
                     case 'P':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "DCH: deleteCharacter " << seq[0];
-                        deleteCharacters(seq[0]);
+                        buffer_.deleteCharacters(buffer_.cursorPosition(), seq[0]);
                         return;
                     /* CSI <n> S -- Scroll up n lines
                      */
                     case 'S':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "SU: scrollUp " << seq[0];
-                        deleteLines(seq[0], state_->scrollStart, state_->scrollEnd, state_->cell);
+                        buffer_.deleteLines(seq[0], buffer_.scrollStart(), buffer_.scrollEnd(), buffer_.currentCell());
                         return;
                     /* CSI <n> T -- Scroll down n lines
                      */
                     case 'T':
                         seq.setDefault(0, 1);
                         LOG(SEQ) << "SD: scrollDown " << seq[0];
-                        insertLines(seq[0], cursorPosition().y(), state_->scrollEnd, state_->cell);
+                        buffer_.insertLines(seq[0], buffer_.cursorPosition().y(), buffer_.scrollEnd(), buffer_.currentCell());
                         return;
                     /* CSI <n> X -- erase <n> characters from the current position
                      */
@@ -885,30 +761,31 @@ namespace ui {
                         seq.setDefault(0, 1);
                         if (seq.numArgs() != 1)
                             break;
-                        updateCursorPosition();
                         // erase from first line
+                        Canvas canvas{buffer_.canvas()};
+                        Point cursorPosition{buffer_.adjustedCursorPosition()};
                         int n = static_cast<unsigned>(seq[0]);
-                        int l = std::min(state_->buffer.width() - cursorPosition().x(), n);
-                        state_->canvas.fill(
-                            Rect{cursorPosition(), Size{l, 1}},
-                            state_->cell
+                        int l = std::min(buffer_.width() - cursorPosition.x(), n);
+                        canvas.fill(
+                            Rect{cursorPosition, Size{l, 1}},
+                            buffer_.currentCell()
                         );
                         n -= l;
                         // while there is enough stuff left to be larger than a line, erase entire line
-                        l = cursorPosition().y() + 1;
-                        while (n >= state_->buffer.width() && l < state_->buffer.height()) {
-                            state_->canvas.fill(
-                                Rect{Point{0,l}, Size{state_->buffer.width(), 1}},
-                                state_->cell    
+                        l = cursorPosition.y() + 1;
+                        while (n >= buffer_.width() && l < buffer_.height()) {
+                            canvas.fill(
+                                Rect{Point{0,l}, Size{buffer_.width(), 1}},
+                                buffer_.currentCell()    
                             );
                             ++l;
-                            n -= state_->buffer.width();
+                            n -= buffer_.width();
                         }
                         // if there is still something to erase, erase from the beginning
-                        if (n != 0 && l < state_->buffer.height())
-                            state_->canvas.fill(
+                        if (n != 0 && l < buffer_.height())
+                            canvas.fill(
                                 Rect{Point{0, l}, Size{n, 1}},
-                                state_->cell
+                                buffer_.currentCell()
                             );
                         return;
                     }
@@ -916,14 +793,14 @@ namespace ui {
                      */
                     case 'b': {
                         seq.setDefault(0, 1);
-                        if (cursorPosition().x() == 0 || cursorPosition().x() + seq[0] >= state_->buffer.width()) {
+                        if (buffer_.cursorPosition().x() == 0 || buffer_.cursorPosition().x() + seq[0] >= buffer_.width()) {
                             LOG(SEQ_ERROR) << "Repeat previous character out of bounds";
                         } else {
                             LOG(SEQ) << "Repeat previous character " << seq[0] << " times";
-                            Cell const & prev = state_->buffer.at(cursorPosition() - Point{1, 0});
+                            Cell const & prev = buffer_.at(buffer_.cursorPosition() - Point{1, 0});
                             for (size_t i = 0, e = seq[0]; i < e; ++i) {
-                                state_->buffer.at(cursorPosition()) = prev;
-                                setCursorPosition(cursorPosition() + Point{1,0});
+                                buffer_.at(buffer_.cursorPosition()) = prev;
+                                buffer_.setCursorPosition(buffer_.cursorPosition() + Point{1,0});
                             }
                         }
                         return;
@@ -946,10 +823,10 @@ namespace ui {
                         int r = seq[0];
                         if (r < 1)
                             r = 1;
-                        else if (r > state_->buffer.height())
-                            r = state_->buffer.height();
-                        LOG(SEQ) << "VPA: setCursor " << cursorPosition().x() << ", " << r - 1;
-                        setCursorPosition(Point{cursorPosition().x(), r - 1});
+                        else if (r > buffer_.height())
+                            r = buffer_.height();
+                        LOG(SEQ) << "VPA: setCursor " << buffer_.cursorPosition().x() << ", " << r - 1;
+                        buffer_.setCursorPosition(Point{buffer_.cursorPosition().x(), r - 1});
                         return;
                     }
                     /* CSI <n> h -- Reset mode enable
@@ -981,7 +858,7 @@ namespace ui {
                             send("\033[0n", 4);
                         // cursor position, send CSI row ; col R
                         } else if (seq[0] == 6) {
-                            std::string cpos = STR("\033[" << (cursorPosition().y() + 1) << ";" << (cursorPosition().x() + 1) << "R");
+                            std::string cpos = STR("\033[" << (buffer_.cursorPosition().y() + 1) << ";" << (buffer_.cursorPosition().x() + 1) << "R");
                             send(cpos.c_str(), cpos.size());
                         // invalid DSR code
                         } else {
@@ -992,20 +869,22 @@ namespace ui {
                      */
                     case 'r':
                         seq.setDefault(0, 1); // inclusive
-                        seq.setDefault(1, state_->buffer.height()); // inclusive
+                        seq.setDefault(1, buffer_.height()); // inclusive
                         if (seq.numArgs() != 2)
                             break;
                         // This is not proper 
                         seq.conditionalReplace(0, 0, 1);
                         seq.conditionalReplace(1, 0, 1);
-                        if (seq[0] > state_->buffer.height())
+                        if (seq[0] > buffer_.height())
                             break;
-                        if (seq[1] > state_->buffer.height())
+                        if (seq[1] > buffer_.height())
                             break;
-                        state_->scrollStart = std::min(seq[0] - 1, state_->buffer.height() - 1); // inclusive
-                        state_->scrollEnd = std::min(seq[1], state_->buffer.height()); // exclusive 
-                        setCursorPosition(Point{0,0});
-                        LOG(SEQ) << "Scroll region set to " << state_->scrollStart << " - " << state_->scrollEnd;
+                        buffer_.setScrollRegion(
+                            std::min(seq[0] - 1, buffer_.height() - 1), // inclusive
+                            std::min(seq[1], buffer_.height()) // exclusive 
+                        );
+                        buffer_.setCursorPosition(Point{0,0});
+                        LOG(SEQ) << "Scroll region set to " << buffer_.scrollStart() << " - " << buffer_.scrollEnd();
                         return;
                     /* CSI <n> : <n> : <n> t -- window manipulation (xterm)
 
@@ -1093,11 +972,11 @@ namespace ui {
 				case 12:
 					LOG(SEQ) << "cursor blinking: " << value;
                     if (allowCursorChanges_)
-                        cursor().setBlink(value);
+                        buffer_.cursor().setBlink(value);
 					continue;
 				// cursor show/hide
 				case 25:
-                    cursor().setVisible(value);
+                    buffer_.cursor().setVisible(value);
 					LOG(SEQ) << "cursor visible: " << value;
 					continue;
 				/* Mouse tracking movement & buttons.
@@ -1146,20 +1025,18 @@ namespace ui {
                     // TODO or should the hyperlink be per buffer so that we can resume when we get back? My thinking is that the app should ensure that buffer does not chsnge while hyperlink is in progress
                     // clear any active hyperlinks
                     inProgressHyperlink_ = nullptr;
-                    if (alternateMode_ != value) {
+                    if ((buffer_.bufferKind_ == BufferKind::Alternate) != value) {
                         // perform the mode change
-                        std::swap(state_, stateBackup_);
-                        alternateMode_ = value;
+                        std::swap(buffer_, bufferBackup_);
                         // if we are entering the alternate mode, reset the state to default values
                         if (value) {
-                            state_->reset(palette_.defaultForeground(), palette_.defaultBackground());
-                            state_->invalidateLastCharacter();
+                            buffer_.reset(palette_.defaultForeground(), palette_.defaultBackground());
                             LOG(SEQ) << "Alternate mode on";
                         } else {
                             LOG(SEQ) << "Alternate mode off";
                         }
                         // perform any extra bookkeeping that might need to be done
-                        onModeChange(ModeChangeEvent::Payload{alternateMode_ ? Mode::Alternate : Mode::Normal}, this);
+                        onBufferChange(BufferChangeEvent::Payload{buffer_.bufferKind_}, this);
                     }
 					continue;
 				/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. 
@@ -1185,19 +1062,12 @@ namespace ui {
 			switch (seq[i]) {
 				/* Resets all attributes. */
 				case 0:
-                    state_->cell.setFg(palette_.defaultForeground()) 
-                               .setDecor(palette_.defaultForeground()) 
-                               .setBg(palette_.defaultBackground())
-                               .setFont(Font{});
-                    state_->bold = false;
-                    state_->inverseMode = false;
+                    buffer_.resetAttributes();
                     LOG(SEQ) << "font fg bg reset";
 					break;
 				/* Bold / bright foreground. */
 				case 1:
-                    state_->bold = true;
-                    if (displayBold_)
-					    state_->cell.font().setBold();
+                    buffer_.setBold(true);
 					LOG(SEQ) << "bold set";
 					break;
 				/* faint font (light) - won't support for now, though in theory we easily can. */
@@ -1206,87 +1076,76 @@ namespace ui {
 					break;
 				/* Italic */
 				case 3:
-					state_->cell.font().setItalic();
+					buffer_.currentCell().font().setItalic();
 					LOG(SEQ) << "italics set";
 					break;
 				/* Underline */
 				case 4:
-                    state_->cell.font().setUnderline();
+                    buffer_.currentCell().font().setUnderline();
 					LOG(SEQ) << "underline set";
 					break;
 				/* Blinking text */
 				case 5:
-                    state_->cell.font().setBlink();
+                    buffer_.currentCell().font().setBlink();
 					LOG(SEQ) << "blink set";
 					break;
 				/* Inverse on */
 				case 7:
-                    if (! state_->inverseMode) {
-                        state_->inverseMode = true;
-                        Color fg = state_->cell.fg();
-                        Color bg = state_->cell.bg();
-                        state_->cell.setFg(bg).setDecor(bg).setBg(fg);
-    					LOG(SEQ) << "inverse mode on";
-                    }
+                    buffer_.setInverseMode(true);
+  					LOG(SEQ) << "inverse mode on";
                     break;
 				/* Strikethrough */
 				case 9:
-                    state_->cell.font().setStrikethrough();
+                    buffer_.currentCell().font().setStrikethrough();
 					LOG(SEQ) << "strikethrough";
 					break;
 				/* Bold off */
 				case 21:
-					state_->cell.font().setBold(false);
-                    state_->bold = false;
+                    buffer_.setBold(false);
 					LOG(SEQ) << "bold off";
 					break;
 				/* Normal - neither bold, nor faint. */
 				case 22:
-					state_->cell.font().setBold(false).setItalic(false);
-                    state_->bold = false;
+                    buffer_.setBold(false);
+					buffer_.currentCell().font().setItalic(false);
 					LOG(SEQ) << "normal font set";
 					break;
 				/* Italic off. */
 				case 23:
-					state_->cell.font().setItalic(false);
+					buffer_.currentCell().font().setItalic(false);
 					LOG(SEQ) << "italic off";
 					break;
 				/* Disable underline. */
 				case 24:
-                    state_->cell.font().setUnderline(false);
+                    buffer_.currentCell().font().setUnderline(false);
 					LOG(SEQ) << "undeline off";
 					break;
 				/* Disable blinking. */
 				case 25:
-                    state_->cell.font().setBlink(false);
+                    buffer_.currentCell().font().setBlink(false);
 					LOG(SEQ) << "blink off";
 					break;
                 /* Inverse off */
 				case 27: 
-                    if (state_->inverseMode) {
-                        state_->inverseMode = false;
-                        Color fg = state_->cell.fg();
-                        Color bg = state_->cell.bg();
-                        state_->cell.setFg(bg).setDecor(bg).setBg(fg);
-    					LOG(SEQ) << "inverse mode off";
-                    }
+                    buffer_.setInverseMode(false);
+                    LOG(SEQ) << "inverse mode off";
                     break;
 				/* Disable strikethrough. */
 				case 29:
-                    state_->cell.font().setStrikethrough(false);
+                    buffer_.currentCell().font().setStrikethrough(false);
 					LOG(SEQ) << "Strikethrough off";
 					break;
 				/* 30 - 37 are dark foreground colors, handled in the default case. */
 				/* 38 - extended foreground color */
 				case 38: {
                     Color fg = parseSGRExtendedColor(seq, i);
-                    state_->cell.setFg(fg).setDecor(fg);    
+                    buffer_.currentCell().setFg(fg).setDecor(fg);    
 					LOG(SEQ) << "fg set to " << fg;
 					break;
                 }
 				/* Foreground default. */
 				case 39:
-                    state_->cell.setFg(palette_.defaultForeground())
+                    buffer_.currentCell().setFg(palette_.defaultForeground())
                                .setDecor(palette_.defaultForeground());
 					LOG(SEQ) << "fg reset";
 					break;
@@ -1294,13 +1153,13 @@ namespace ui {
 				/* 48 - extended background color */
 				case 48: {
                     Color bg = parseSGRExtendedColor(seq, i);
-                    state_->cell.setBg(bg);    
+                    buffer_.currentCell().setBg(bg);    
 					LOG(SEQ) << "bg set to " << bg;
 					break;
                 }
 				/* Background default */
 				case 49:
-					state_->cell.setBg(palette_.defaultBackground());
+					buffer_.currentCell().setBg(palette_.defaultBackground());
 					LOG(SEQ) << "bg reset";
 					break;
 				/* 90 - 97 are bright foreground colors, handled in the default case. */
@@ -1308,21 +1167,21 @@ namespace ui {
 				default:
 					if (seq[i] >= 30 && seq[i] <= 37) {
                         int colorIndex = seq[i] - 30;
-                        if (boldIsBright_ && state_->bold)
+                        if (boldIsBright_ && buffer_.isBold())
                             colorIndex += 8;
-						state_->cell.setFg(palette_.at(colorIndex))
-                                   .setDecor(palette_.at(colorIndex));
-						LOG(SEQ) << "fg set to " << palette_.at(seq[i] - 30);
+						buffer_.currentCell().setFg(palette_[colorIndex])
+                                   .setDecor(palette_[colorIndex]);
+						LOG(SEQ) << "fg set to " << palette_[seq[i] - 30];
 					} else if (seq[i] >= 40 && seq[i] <= 47) {
-						state_->cell.setBg(palette_.at(seq[i] - 40));
-						LOG(SEQ) << "bg set to " << palette_.at(seq[i] - 40);
+						buffer_.currentCell().setBg(palette_[seq[i] - 40]);
+						LOG(SEQ) << "bg set to " << palette_[seq[i] - 40];
 					} else if (seq[i] >= 90 && seq[i] <= 97) {
-						state_->cell.setFg(palette_.at(seq[i] - 82))
-                                   .setDecor(palette_.at(seq[i] - 82));
-						LOG(SEQ) << "fg set to " << palette_.at(seq[i] - 82);
+						buffer_.currentCell().setFg(palette_[seq[i] - 82])
+                                   .setDecor(palette_[seq[i] - 82]);
+						LOG(SEQ) << "fg set to " << palette_[seq[i] - 82];
 					} else if (seq[i] >= 100 && seq[i] <= 107) {
-						state_->cell.setBg(palette_.at(seq[i] - 92));
-						LOG(SEQ) << "bg set to " << palette_.at(seq[i] - 92);
+						buffer_.currentCell().setBg(palette_[seq[i] - 92]);
+						LOG(SEQ) << "bg set to " << palette_[seq[i] - 92];
 					} else {
 						LOG(SEQ_UNKNOWN) << "Invalid SGR code: " << seq;
 					}
@@ -1341,7 +1200,7 @@ namespace ui {
 						break;
 					if (seq[i] > 255) // invalid color spec
 						break;
-                    return palette_.at(seq[i]);
+                    return palette_[seq[i]];
 				/* true color rgb */
 				case 2:
 					i += 2;
@@ -1429,7 +1288,7 @@ namespace ui {
             case 112:
                 LOG(SEQ) << "Cursor color reset";
                 if (allowCursorChanges_)
-                    cursor().setColor(defaultCursor_.color());
+                    buffer_.cursor().setColor(defaultCursor_.color());
                 return;
             default:
                 break;
@@ -1449,40 +1308,18 @@ namespace ui {
         fillRow(top, fill, 0, width());
     }
 
-    std::pair<AnsiTerminal::Cell *, int> AnsiTerminal::Buffer::copyRow(int row, Color defaultBg) {
-        int lastCol = width();
-        Cell * x = rows_[row];
-        while (lastCol-- > 0) {
-            Cell & c = x[lastCol];
-            // if we have found end of line character, good
-            if (IsLineEnd(c))
-                break;
-            // if we have found a visible character, we must remember the whole line, break the search - any end of line characters left of it will make no difference
-            if (c.codepoint() != ' ' || c.bg() != defaultBg || c.font().underline() || c.font().strikethrough()) {
-                break;
-            }
-        }   
-        // if we are not at the end of line, we must remember the whole line
-        if (IsLineEnd(x[lastCol])) 
-            lastCol += 1;
-        else
-            lastCol = width();
-        // make the copy and return it
-        Cell * result = new Cell[lastCol];
-        // we cannot use memcopy here because the cells can be special
-        MemCopy(result, x, lastCol);
-        return std::make_pair(result, lastCol);
-    }
-
     void AnsiTerminal::Buffer::deleteLine(int top, int bottom, Cell const & fill) {
         Cell * x = rows_[top];
+        terminal_->onNewHistoryRow(NewHistoryRowEvent::Payload{bufferKind_, width(), x}, terminal_);
         memmove(rows_ + top, rows_ + top + 1, sizeof(Cell*) * (bottom - top - 1));
         rows_[bottom - 1] = x;
         fillRow(bottom - 1, fill, 0, width());
     }
 
-    void AnsiTerminal::Buffer::resize(Size size, Cell const & fill, std::function<void(Cell*, int)> addToHistory) {
-        if (size_ == size)
+    void AnsiTerminal::Buffer::resize() {
+        Size newSize = MinSize(terminal_->size());
+        // don't do anything if the terminal size is identical to own
+        if (newSize == size())
             return;
         // determine the line at which the cursor is, which can span multiple terminal lines if it is wrapped. This is important because the contents of the cursor line and all lines below is not being copied to the resized buffer as it should be rewritten by the terminal app
         int stopRow = getCursorRowWrappedStart();
@@ -1492,15 +1329,19 @@ namespace ui {
         int oldHeight = height();
         // move the old rows out and call basic buffer resize to adjust width and height, fill the buffer with given cell so that we do not have to deal with uninitialized cells later. 
         rows_ = nullptr;
-        Canvas::Buffer::resize(size);
-        this->fill(fill);
+        Canvas::Buffer::resize(newSize);
+        // reset the scroll region
+        scrollStart_ = 0;
+        scrollEnd_ = height();
+        // fill the entire buffer with the default cell
+        this->fill(terminal_->defaultCell());
         // now copy the contents from the old buffer to the new buffer, line by line, char by char
         // this is where we will be writing to
         cursorPosition_ = Point{0,0};
         for (int row = 0; row < stopRow; ++row) {
             Cell * old = oldRows[row];
             for (int col = 0; col < oldWidth; ++col) {
-                adjustCursorPosition(fill, addToHistory);
+                adjustedCursorPosition();
                 // append the character from the old buffer
                 rows_[cursorPosition_.y()][cursorPosition_.x()] = old[col];
                 // if the cell is marked as end of line and the rest of the line are just whitespace characters then set position to new line and ignore the whitespace
@@ -1513,11 +1354,70 @@ namespace ui {
             }
         }
         // adjust the cursor position after the last character
-        adjustCursorPosition(fill, addToHistory);
+        adjustedCursorPosition();
         // and delete the old rows
         for (int i = 0; i < oldHeight; ++i)
             delete [] oldRows[i];
         delete [] oldRows;
+    }
+
+    AnsiTerminal::Cell & AnsiTerminal::Buffer::addCharacter(char32_t codepoint) {
+        Cell & cell = at(adjustedCursorPosition());
+        lastCharacter_ = cursorPosition_;
+        cell = currentCell_;
+        cell.setCodepoint(codepoint);
+        // what's left is to deal with corner cases, such as larger fonts & double width characters
+        int columnWidth = Char::ColumnWidth(codepoint);
+        // if the character's column width is 2 and current font is not double width, update to double width font
+        if (columnWidth == 2 && ! cell.font().doubleWidth()) {
+            //columnWidth = 1;
+            cell.font().setDoubleWidth(true);
+        }
+        // advance the cursor position
+        // TODO should this be 1;0 or column width 0?
+        cursorPosition_ += Point{1, 0};
+        // return the cell
+        return cell;
+
+
+        // TODO do double width & height characters properly for the per-line 
+
+        /*
+        // if the character's column width is 2 and current font is not double width, update to double width font
+        // if the font's size is greater than 1, copy the character as required (if we are at the top row of double height characters, increase the size artificially)
+        int charWidth = state_->doubleHeightTopLine ? cell.font().width() * 2 : cell.font().width();
+
+        while (columnWidth > 0 && cursorPosition().x() < buffer_.width()) {
+            for (int i = 1; (i < charWidth) && cursorPosition().x() < buffer_.width(); ++i) {
+                Cell& cell2 = buffer_.at(buffer_.cursor().pos);
+                // copy current cell properties
+                cell2 = cell;
+                // make sure the cell's font is normal size and width and display a space
+                cell2.setCodepoint(' ').setFont(cell.font().setSize(1).setDoubleWidth(false));
+                ++cursorPosition().x();
+            } 
+            if (--columnWidth > 0 && cursorPosition().x() < buffer_.width()) {
+                Cell& cell2 = buffer_.at(buffer_.cursor().pos);
+                // copy current cell properties
+                cell2 = cell;
+                cell2.setCodepoint(' ');
+                ++cursorPosition().x();
+            } 
+        }
+        */
+    }
+
+    void AnsiTerminal::Buffer::newLine() {
+        // mark the last character as line end, if any
+        if (lastCharacter_.x() >= 0)
+            markAsLineEnd(lastCharacter_);
+        // disable double width and height chars
+        currentCell_.font().setSize(1).setDoubleWidth(false);
+        // if the cursor is inside the buffer increase its row, otherwise the extra columns after the buffer edge will give us the new line effect when cursor position is adjusted
+        if (cursorPosition_.x() < width())
+            cursorPosition_ += Point{0, 1};
+        adjustedCursorPosition();
+        // update the cursor position as LF takes immediate effect
     }
 
     /** The algorithm is simple. Start at the row one above current cursor position. Then if we find an end of line character on that row, we know the next row was the first line of the cursor. If there is no end of line character, then the line is wordwrapped to the line after it so we check the line above, or if we get all the way to the top of the buffer its the first line by definition.  
@@ -1536,20 +1436,25 @@ namespace ui {
         return row + 1;
     }
 
-    void AnsiTerminal::Buffer::adjustCursorPosition(Cell const & fill, std::function<void(Cell*, int)> addToHistory) {
-        // first make sure that the position where we enter the cell is valid
-        if (cursorPosition_.x() >= width())
-            cursorPosition_ = Point{0, cursorPosition_.y() + 1};
-        // if the y coordinate is outside the buffer, we will be scrolling one line up
-        if (cursorPosition_.y() >= height()) {
-            if (addToHistory) {
-                Cell * rowCopy = new Cell[width()];
-                MemCopy(rowCopy, rows_[0], width());
-                addToHistory(rowCopy, width());
+    Point AnsiTerminal::Buffer::adjustedCursorPosition() {
+        ASSERT(width() > 0);
+        // first make sure that the X coordinate is properly withing the buffer, incrementing the y coordinate accordingly. If this happens at scroll region boundary, delete & add lines to history appropriately
+        while (cursorPosition_.x() >= width()) {
+            cursorPosition_ += Point{-width(), 1};
+            if (cursorPosition_.y() == scrollEnd_) {
+                deleteLine(scrollStart_, scrollEnd_, currentCell_);
+                cursorPosition_ -= Point{0, 1};
             }
-            deleteLine(0, height(), fill);
-            cursorPosition_ -= Point{0,1};
         }
+        // if we are at scroll end, delete the line
+        if (cursorPosition_.y() == scrollEnd_) {
+            deleteLine(scrollStart_, scrollEnd_, currentCell_);
+            cursorPosition_ -= Point{0, 1};
+        }
+        // make sure that the cursor position is within the buffer and if not, update its row to the bottom one (this could be if the scroll region is not set to the entire buffer, or if the cursor position was really wrong to begin with)
+        if (cursorPosition_.y() >= height())
+            cursorPosition_.setY(height() - 1);
+        return cursorPosition_;
     }
 
     bool AnsiTerminal::Buffer::hasOnlyWhitespace(Cell * row, int from, int width) {
@@ -1636,50 +1541,5 @@ namespace ui {
 		for (Color c : colors)
             colors_.push_back(c);
     }
-
-/*
-    AnsiTerminal::Palette::Palette(Palette const & from):
-        size_(from.size_),
-        defaultFg_(from.defaultFg_),
-        defaultBg_(from.defaultBg_),
-        colors_(new Color[from.size_]) {
-		memcpy(colors_, from.colors_, sizeof(Color) * size_);
-    }
-
-    AnsiTerminal::Palette::Palette(Palette && from) noexcept:
-        size_(from.size_),
-        defaultFg_(from.defaultFg_),
-        defaultBg_(from.defaultBg_),
-        colors_(from.colors_) {
-        from.colors_ = nullptr;
-        from.size_ = 0;
-    }
-
-    AnsiTerminal::Palette & AnsiTerminal::Palette::operator = (AnsiTerminal::Palette const & other) {
-        if (&other != this) {
-            delete [] colors_;
-            size_ = other.size_;
-            defaultFg_ = other.defaultFg_;
-            defaultBg_ = other.defaultBg_;
-            colors_ = new Color[size_];
-    		memcpy(colors_, other.colors_, sizeof(Color) * size_);
-        }
-        return *this;
-    }
-
-    AnsiTerminal::Palette & AnsiTerminal::Palette::operator == (AnsiTerminal::Palette && other) {
-        if (&other != this) {
-            delete [] colors_;
-            size_ = other.size_;
-            defaultFg_ = other.defaultFg_;
-            defaultBg_ = other.defaultBg_;
-            colors_ = other.colors_;
-            other.colors_ = nullptr;
-            other.size_ = 0;
-        }
-        return *this;
-    }
-
-    */
 
 } // namespace ui

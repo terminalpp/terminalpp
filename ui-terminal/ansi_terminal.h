@@ -35,6 +35,9 @@ namespace ui {
     class AnsiTerminal : public virtual Widget, public tpp::PTYBuffer<tpp::PTYMaster> {
     public:
 
+        using Cell = Canvas::Cell;
+        using Cursor = Canvas::Cursor;
+
         /** Palette
          */
         class Palette {
@@ -92,11 +95,6 @@ namespace ui {
                 defaultBg_ = color;
             }
 
-            void setColor(size_t index, Color color) {
-                ASSERT(index < size());
-                colors_[index] = color;
-            }
-
             Color operator [] (size_t index) const {
                 ASSERT(index < size());
                 return colors_[index];
@@ -107,13 +105,6 @@ namespace ui {
                 return colors_[index];
             } 
 
-            Color at(size_t index) const {
-                return (*this)[index];
-            }
-            Color & at(size_t index) {
-                return (*this)[index];
-            }
-
         private:
 
             Color defaultFg_;
@@ -122,20 +113,256 @@ namespace ui {
 
         }; // ui::AnsiTerminal::Palette
 
-        using Cell = Canvas::Cell;
-        using Cursor = Canvas::Cursor;
-        class Buffer;
-        class State;
-
-        enum class Mode {
+        enum class BufferKind {
             Normal,
             Alternate,
         };
 
-        using ModeChangeEvent = Event<Mode>;
+        /** The terminal buffer is a canvas buffer augmented with terminal specific properties such as the scroll window. 
+         
+            The buffer is tightly coupled with its terminal. 
+         */
+        class Buffer : public Canvas::Buffer {
+            friend class AnsiTerminal;
+        public:
+            Buffer(BufferKind bufferKind, AnsiTerminal * terminal, Cell const & defaultCell):
+                Canvas::Buffer{MinSize(terminal->size())},
+                bufferKind_{bufferKind},
+                terminal_{terminal},
+                currentCell_{defaultCell},
+                scrollEnd_{height()} {
+                fill(currentCell_);
+            }
+
+            void reset(Color fg, Color bg) {
+                currentCell_ = Cell{}.setFg(fg).setDecor(fg).setBg(bg);
+                scrollStart_ = 0;
+                scrollEnd_ = height();
+                inverseMode_ = false;
+                setCursorPosition(Point{0,0});
+                fill(currentCell_);
+            }
+
+            Cell const & currentCell() const {
+                return currentCell_;
+            }
+
+            Cell & currentCell() {
+                return currentCell_;
+            }
+
+            int scrollStart() const {
+                return scrollStart_;
+            }
+
+            int scrollEnd() const {
+                return scrollEnd_;
+            }
+
+            void setScrollRegion(int start, int end) {
+                scrollStart_ = start;
+                scrollEnd_ = end;
+            }
+
+            /** Resizes the buffer and updates the state accordingly. 
+             
+                When called, the terminal must already be resized. 
+             */
+            void resize();
+
+            /** Writes given character at the cursor position using the current cell attributes and returns the cell itself. 
+             */
+            Cell & addCharacter(char32_t codepoint);
+
+            /** Adds new line. 
+             
+                Does not add any visible character, but marks the last character position, if valid as line end and updates the cursor position accordingly. 
+             */
+            void newLine();
+
+            void carriageReturn() {
+                cursorPosition_.setX(0);
+            }
+
+            /** Inserts N characters right of the position, shifting the rest of the line appropriately to the right. 
+             
+                Characters that would end up right of the end of the buffer are discarded. 
+             */
+            void insertCharacters(Point from, int num) {
+                ASSERT(from.x() + num <= width() && num >= 0);
+                // first copy the characters
+                for (int c = width() - 1, e = from.x() + num; c >= e; --c)
+                    at(c, from.y()) = at(c - num, from.y());
+                for (int c = from.x(), e = from.x() + num; c < e; ++c)
+                    at(c, from.y()) = currentCell_;
+            }
+
+            /** Deletes N characters right of the position, shifts the line to the left accordingly and fills the rightmost cells with given current cell. 
+             */
+            void deleteCharacters(Point from, int num) {
+                for (int c = from.x(), e = width() - num; c < e; ++c) 
+                    at(c, from.y()) = at(c + num, from.y());
+                for (int c = width() - num, e = width(); c < e; ++c)
+                    at(c, from.y()) = currentCell_;
+            }
+
+            void insertLine(int top, int bottom, Cell const & fill);
+
+            /** TODO this can be made faster and the lines can be moved only once. 
+             */
+            void insertLines(int lines, int top, int bottom, Cell const & fill) {
+                while (lines-- > 0)
+                    insertLine(top, bottom, fill);
+            }
+
+            /** Deletes given line and scrolls all lines in the given range (top-bottom) one line up, filling the new line at the bottom with the given cell. 
+             
+                Triggers the terminal's onNewHistoryLine event. 
+             */
+            void deleteLine(int top, int bottom, Cell const & fill);
+
+            void deleteLines(int lines, int top, int bottom, Cell const & fill) {
+                while (lines-- > 0)
+                    deleteLine(top, bottom, fill);
+            }
+
+            /** Adjusts the cursor position to remain within the buffer and shifts the buffer if necessary. 
+             
+                Makes sure that cursor position is within the buffer bounds. If the cursor is too far left, it is reset on next line, first column. If the cursor is below the buffer the buffer is scrolled appropriately. 
+
+                Returns the cursor position after the adjustment, which is guaranteed to be always valid and within the buffer bounds.
+            */
+            Point adjustedCursorPosition();
+
+            /** Overrides canvas cursor position to disable the check whether the cell has the cursor flag. 
+             
+                The cursor in terminal is only one and always valid at the coordinates specified in the buffer. 
+                
+                Note that the cursor position may *not* be valid within the buffer (cursor after text can be advanced beyond the buffer itself). To obtain a valid cursor position, which may shift the buffer contents, use the adjustCursorPosition function instead. 
+            */
+            Point cursorPosition() const {
+                return cursorPosition_;
+            }
+
+            void setCursorPosition(Point pos) {
+                cursorPosition_ = pos;
+                invalidateLastCharacter();
+            }
+
+            // TODO advance cursor that is faster that setCursorPosition
+
+            void setCursor(Canvas::Cursor const & value, Point position) {
+                cursor_ = value;
+                setCursorPosition(position);
+            }
+
+            void saveCursor() {
+                cursorStack_.push_back(cursorPosition());
+            }
+
+            void restoreCursor() {
+                if (cursorStack_.empty())
+                    return;
+                Point pos = cursorStack_.back();
+                ASSERT(pos.x() >= 0 && pos.y() >= 0);
+                cursorStack_.pop_back();
+                if (pos.x() >= width())
+                    pos.setX(width() - 1);
+                if (pos.y() >= height())
+                    pos.setX(height() - 1);
+                setCursorPosition(pos);
+            }
+
+            void resetAttributes();
+
+            bool isBold() const {
+                return bold_;
+            }
+
+            void setBold(bool value);
+
+            void setInverseMode(bool value) {
+                if (inverseMode_ == value)
+                    return;
+                inverseMode_ = value;
+                Color fg = currentCell_.fg();
+                Color bg = currentCell_.bg();
+                currentCell_.setFg(bg).setDecor(bg).setBg(fg);
+            }
+
+            Canvas canvas() {
+                return Canvas{*this};
+            }
+
+        private:
+
+            /** Returns the start of the line that contains the cursor including any word wrap. 
+             
+                I.e. if the cursor is on line that started 3 lines above and was word-wrapped to the width of the terminal returns the current cursor row minus three. 
+            */
+            int getCursorRowWrappedStart() const;
+
+            /** Returns true if the given line contains only whitespace characters from given column to its width. 
+             
+                If the column start is greater or equal to the width, returns true. 
+            */
+            bool hasOnlyWhitespace(Cell * row, int from, int width);
+
+            void markAsLineEnd(Point p) {
+                if (p.x() >= 0)
+                    SetUnusedBits(at(p), END_OF_LINE);
+            }
+
+            /** Invalidates the cached location of last printable character for end of line detection in the terminal. 
+             
+                Typically occurs during forceful cursor position updates, etc. 
+             */
+            void invalidateLastCharacter() {
+                lastCharacter_ = Point{-1, -1};
+            }
+
+            static bool IsLineEnd(Cell const & c) {
+                return GetUnusedBits(c) & END_OF_LINE;
+            }
+
+            /** Prevents terminal buffer of size 0 to be instantiated. 
+             
+                TODO should this move to Canvas::Buffer? 
+             */
+            static Size MinSize(Size request) {
+                if (request.width() <= 0)
+                    request.setWidth(1);
+                if (request.height() <= 0)
+                    request.setHeight(1);
+                return request;
+            }
+
+            BufferKind bufferKind_;
+            AnsiTerminal * terminal_;
+
+            Cell currentCell_;
+            int scrollStart_ = 0;
+            int scrollEnd_;
+            bool inverseMode_ = false;
+
+            /** When bold is bright *and* bold is not displayed this is the only way to determine whether to use bright colors because the cell's font is not bold. 
+             */
+            bool bold_ = false;
+
+            Point lastCharacter_ = Point{-1, -1};
+            std::vector<Point> cursorStack_;
+
+            /** Flag designating the end of line in the buffer. 
+             */
+            static constexpr char32_t END_OF_LINE = 0x200000;
+
+        }; // ui::AnsiTerminal::Buffer
+
+        using BufferChangeEvent = Event<BufferKind>;
 
         struct HistoryRow {
         public:
+            BufferKind buffer;
             int width;
             Cell const * cells;
         };
@@ -162,7 +389,7 @@ namespace ui {
          
             Can be called from any thread, expects the terminal buffer lock.
          */
-        ModeChangeEvent onModeChange;
+        BufferChangeEvent onBufferChange;
 
         /** Triggered when new row is evicted from the terminal's scroll region. 
          
@@ -184,8 +411,8 @@ namespace ui {
             {
                 std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
                 Widget::resize(size);
-                //resizeHistory();
-                resizeBuffers(size);
+                buffer_.resize();
+                bufferBackup_.resize();
                 pty_->resize(size.width(), size.height());
             }
 /*            
@@ -437,6 +664,12 @@ namespace ui {
     
     public:
 
+        /** Returns the default empty cell of the terminal. 
+         */
+        Cell defaultCell() const {
+            return Cell{}.setFg(palette_.defaultForeground()).setDecor(palette_.defaultForeground()).setBg(palette_.defaultBackground());
+        }
+
         bool boldIsBright() const {
             return boldIsBright_;
         }
@@ -492,34 +725,21 @@ namespace ui {
          
             The cursor is set for both normal and alternate buffers. If the application in the terminal chooses to rewrite the cursor settings, it can do so. 
          */
-        void setCursor(Canvas::Cursor const & value);
+        void setCursor(Canvas::Cursor const & value) {
+            buffer_.cursor() = value;
+            bufferBackup_.cursor() = value;
+        }
 
 
     protected:
 
+        Locked<Buffer const> buffer() const {
+            return Locked{buffer_, bufferLock_.priorityLock(), std::adopt_lock};
+        }
 
-        /** Returns current cursor position. 
-         */
-        Point cursorPosition() const;
-
-        void setCursorPosition(Point position);
-
-        /** Returns the current cursor. 
-         */
-        Cursor & cursor();
-
-        /** Inserts given number of lines at given top row.
-            
-            Scrolls down all lines between top and bottom accordingly. Fills the new lines with the provided cell.
-        */
-        void insertLines(int lines, int top, int bottom, Cell const & fill);    
-
-        /** Deletes lines and triggers the onLineScrolledOut event if appropriate. 
-         
-            The event is triggered only if the terminal is in normal mode and if the scroll region starts at the top of the window. 
-            */
-        void deleteLines(int lines, int top, int bottom, Cell const & fill);
-
+        Locked<Buffer> buffer() {
+            return Locked{buffer_, bufferLock_.priorityLock(), std::adopt_lock};
+        }
 
         void ptyTerminated(ExitCode exitCode) override {
             schedule([this, exitCode](){
@@ -527,15 +747,6 @@ namespace ui {
                 onPTYTerminated(p, this);
             });
         }
-
-        void resizeBuffers(Size size);
-
-
-        // TODO change to int
-        void deleteCharacters(unsigned num);
-        void insertCharacters(unsigned num);
-
-        void updateCursorPosition();
 
         enum class MouseMode {
             Off,
@@ -589,13 +800,12 @@ namespace ui {
          */
         bool allowCursorChanges_ = true;
 
-        /** Determines whether alternate mode is active or not. */
-        bool alternateMode_ = false;
-
-        /** Current state and its backup. The states are swapped and current state kind is determined by the alternateMode(). 
+        /** Current buffer and its backup. 
+         
+            The states are swapped and current state kind is determined by the alternateMode(). The alternate buffer is not supposed to be accessed at all and the normal buffer is protected by the bufferLock_. 
          */
-        State * state_;
-        State * stateBackup_;
+        Buffer buffer_;
+        Buffer bufferBackup_;
         mutable PriorityLock bufferLock_;
 
 
@@ -667,6 +877,20 @@ namespace ui {
 
     }; // ui::AnsiTerminal
 
+    inline void AnsiTerminal::Buffer::resetAttributes() {
+        currentCell_ = terminal_->defaultCell();
+        bold_ = false;
+        inverseMode_ = false;
+    }
+
+    inline void AnsiTerminal::Buffer::setBold(bool value) {
+        bold_ = value;
+        if (!value || terminal_->displayBold_)
+            currentCell_.font().setBold(value);
+    }
+
+#ifdef FOOBAR
+
     // ============================================================================================
 
     /** Terminal's own buffer. 
@@ -696,30 +920,6 @@ namespace ui {
             return GetUnusedBits(c) & END_OF_LINE;
         }
 
-        /** Overrides canvas cursor position to disable the check whether the cell has the cursor flag. 
-         
-            The cursor in terminal is only one and always valid at the coordinates specified in the buffer. 
-         */
-        Point cursorPosition() const {
-            return cursorPosition_;
-        }
-
-        void setCursorPosition(Point pos) {
-            cursorPosition_ = pos;
-        }
-
-        void setCursor(Canvas::Cursor const & value, Point position) {
-            cursor_ = value;
-            cursorPosition_ = position;
-        }
-
-        /** Fills the entire terminal withe the given cell. 
-         */
-        void fill(Cell const& defaultCell) {
-            for (int i = 0, e = height(); i < e; ++i)
-                fillRow(i, defaultCell, 0, width());
-        }
-        
 
         void resize(Size size, Cell const & fill, std::function<void(Cell*, int)> addToHistory);
 
@@ -751,9 +951,6 @@ namespace ui {
         bool hasOnlyWhitespace(Cell * row, int from, int width);
 
 
-        /** Flag designating the end of line in the buffer. 
-         */
-        static constexpr char32_t END_OF_LINE = 0x200000;
     }; // ui::AnsiTerminal::Buffer
 
     // ============================================================================================
@@ -802,17 +999,6 @@ namespace ui {
             cursorStack_.push_back(buffer.cursorPosition());
         }
 
-        void restoreCursor() {
-            if (cursorStack_.empty())
-                return;
-            Point pos = cursorStack_.back();
-            cursorStack_.pop_back();
-            if (pos.x() >= buffer.width())
-                pos.setX(buffer.width() - 1);
-            if (pos.y() >= buffer.height())
-                pos.setX(buffer.height() - 1);
-            buffer.setCursorPosition(pos);
-        }
 
         void markLineEnd() {
             buffer.markAsLineEnd(lastCharacter_);
@@ -844,10 +1030,13 @@ namespace ui {
         
     }; // ui::AnsiTerminal::State
 
+#endif
+
     // ============================================================================================
 
+    /*
     inline Point AnsiTerminal::cursorPosition() const {
-        return state_->buffer.cursorPosition();
+        return buffer_.cursorPosition();
     }
 
     inline void AnsiTerminal::setCursorPosition(Point position) {
@@ -857,5 +1046,6 @@ namespace ui {
     inline AnsiTerminal::Cursor & AnsiTerminal::cursor() {
         return state_->buffer.cursor();
     }
+    */
 
 } // namespace ui

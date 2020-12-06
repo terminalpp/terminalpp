@@ -745,15 +745,20 @@ namespace ui {
 
         Buffer(Buffer && from) noexcept:
             size_{from.size_},
-            rows_{from.rows_} {
+            rows_{from.rows_},
+            cursor_{from.cursor_},
+            cursorPosition_{from.cursorPosition_} {
             from.size_ = Size{0,0};
             from.rows_ = nullptr;
+
         }
 
         Buffer & operator = (Buffer && from) noexcept {
             clear();
             size_ = from.size_;
             rows_ = from.rows_;
+            cursor_ = from.cursor_;
+            cursorPosition_ = from.cursorPosition_;
             from.size_ = Size{0,0};
             from.rows_ = nullptr;
             return *this;
@@ -841,17 +846,13 @@ namespace ui {
             Cell * r = rows_[row];
             for (int e = from + cols; from < e; ++from)
                 r[from] = fill;
-            /*
-            r[from] = fill;
-            int i = 1;
-            int next = 2;
-            while (next < cols) {
-                memcpy(r + from + i, r + from, sizeof(Cell) * i);
-                i = next;
-                next *= 2;
-            }
-            memcpy(r + from + i, r + from, sizeof(Cell) * (cols - i));
-            */
+        }
+
+        /** Fills the entire buffer with given cell. 
+         */
+        void fill(Cell const & fill) {
+            for (int i = 0, e = height(); i < e; ++i)
+                fillRow(i, fill, 0, width());
         }
 
     protected:
