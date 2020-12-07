@@ -6,6 +6,7 @@
 #include "ui/widgets/label.h"
 #include "ui/widgets/dialog.h"
 #include "ui-terminal/ansi_terminal.h"
+#include "ui-terminal/ui_terminal.h"
 #include "tpp-lib/local_pty.h"
 #include "tpp-lib/bypass_pty.h"
 #include "tpp-lib/remote_files.h"
@@ -146,6 +147,7 @@ namespace tpp {
             std::string name;
             std::string title;
             AnsiTerminal * terminal = nullptr;
+            UITerminal<AnsiTerminal> * terminalUi = nullptr;
             bool terminateOnKeyPress = false;
             /** If true, the current session has an active notification. 
              */
@@ -201,9 +203,12 @@ namespace tpp {
         }
 
         SessionInfo * sessionInfo(Widget * terminal) {
-            AnsiTerminal * t = dynamic_cast<AnsiTerminal*>(terminal);
-            ASSERT(t != nullptr);
-            auto i = sessions_.find(t);
+            return sessionInfo(dynamic_cast<AnsiTerminal*>(terminal));
+        }
+
+        SessionInfo * sessionInfo(AnsiTerminal * terminal) {
+            ASSERT(terminal != nullptr);
+            auto i = sessions_.find(terminal);
             ASSERT(i != sessions_.end());
             return (i->second);
         }
@@ -261,7 +266,8 @@ namespace tpp {
         }
 
         void activeSessionChanged(ui::Event<Widget*>::Payload & e) {
-            activeSession_ = *e == nullptr ? nullptr : sessionInfo(*e);
+            activeSession_ = *e == nullptr ? 
+                nullptr : sessionInfo(dynamic_cast<UITerminal<AnsiTerminal>*>(*e)->terminal());
             // set own background to the session's terminal background so that it propagates to the window's background
             if (activeSession_ != nullptr) {
                 setBackground(activeSession_->terminal->palette().defaultBackground());

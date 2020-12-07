@@ -33,21 +33,23 @@ namespace tpp {
         si->terminal->setDetectHyperlinks(config.sequences.detectHyperlinks());
         si->terminal->setNormalHyperlinkStyle(config.renderer.hyperlinks.normal());
         si->terminal->setActiveHyperlinkStyle(config.renderer.hyperlinks.active());
+        // wrap the terminal in ui widget
+        si->terminalUi = new UITerminal{si->terminal};
         // register the session and set it as active page
-        AnsiTerminal * t = si->terminal;
-        sessions_.insert(std::make_pair(t, si.release()));
+        UITerminal<AnsiTerminal> * t = si->terminalUi;
+        sessions_.insert(std::make_pair(t->terminal(), si.release()));
         pager_->setActivePage(t);
-        window_->setKeyboardFocus(t);
+        window_->setKeyboardFocus(t->terminal());
         // add terminal events (so that they are called only *after* the session is registered)
-        t->onPTYTerminated.setHandler(&TerminalWindow::sessionPTYTerminated, this);
-        t->onTitleChange.setHandler(&TerminalWindow::sessionTitleChanged, this);
-        t->onClipboardSetRequest.setHandler(&TerminalWindow::terminalSetClipboard, this);
-        t->onPaste.setHandler(&TerminalWindow::terminalPaste, this);
-        t->onNotification.setHandler(&TerminalWindow::sessionNotification, this);
-        t->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
-        t->onKeyDown.setHandler(&TerminalWindow::terminalKeyDown, this);
-        t->onHyperlinkOpen.setHandler(&TerminalWindow::hyperlinkOpen, this);
-        t->onHyperlinkCopy.setHandler(&TerminalWindow::hyperlinkCopy, this);
+        t->terminal()->onPTYTerminated.setHandler(&TerminalWindow::sessionPTYTerminated, this);
+        t->terminal()->onTitleChange.setHandler(&TerminalWindow::sessionTitleChanged, this);
+        t->terminal()->onClipboardSetRequest.setHandler(&TerminalWindow::terminalSetClipboard, this);
+        t->terminal()->onPaste.setHandler(&TerminalWindow::terminalPaste, this);
+        t->terminal()->onNotification.setHandler(&TerminalWindow::sessionNotification, this);
+        t->terminal()->onTppSequence.setHandler(&TerminalWindow::terminalTppSequence, this);
+        t->terminal()->onKeyDown.setHandler(&TerminalWindow::terminalKeyDown, this);
+        t->terminal()->onHyperlinkOpen.setHandler(&TerminalWindow::hyperlinkOpen, this);
+        t->terminal()->onHyperlinkCopy.setHandler(&TerminalWindow::hyperlinkCopy, this);
     }
 
 } // namespace tpp

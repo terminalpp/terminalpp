@@ -11,6 +11,7 @@
 #include "tpp-lib/pty.h"
 #include "tpp-lib/pty_buffer.h"
 
+#include "terminal.h"
 #include "csi_sequence.h"
 #include "osc_sequence.h"
 #include "url_matcher.h"
@@ -32,11 +33,8 @@ namespace ui {
      
         The simplest interface to the rerminal, no history, selection, etc?
      */
-    class AnsiTerminal : public virtual Widget, public tpp::PTYBuffer<tpp::PTYMaster> {
+    class AnsiTerminal : public Terminal, public tpp::PTYBuffer<tpp::PTYMaster> {
     public:
-
-        using Cell = Canvas::Cell;
-        using Cursor = Canvas::Cursor;
 
         /** Palette
          */
@@ -112,11 +110,6 @@ namespace ui {
             std::vector<Color> colors_;
 
         }; // ui::AnsiTerminal::Palette
-
-        enum class BufferKind {
-            Normal,
-            Alternate,
-        };
 
         /** The terminal buffer is a canvas buffer augmented with terminal specific properties such as the scroll window. 
          
@@ -358,16 +351,6 @@ namespace ui {
 
         }; // ui::AnsiTerminal::Buffer
 
-        using BufferChangeEvent = Event<BufferKind>;
-
-        struct HistoryRow {
-        public:
-            BufferKind buffer;
-            int width;
-            Cell const * cells;
-        };
-
-        using NewHistoryRowEvent = Event<HistoryRow>;
 
     /**\name Log Levels.
      */
@@ -380,22 +363,6 @@ namespace ui {
         static Log SEQ_SENT;
     //@}
 
-    protected:
-
-
-
-      
-        /** Triggered when the terminal enables, or disables an alternate mode. 
-         
-            Can be called from any thread, expects the terminal buffer lock.
-         */
-        BufferChangeEvent onBufferChange;
-
-        /** Triggered when new row is evicted from the terminal's scroll region. 
-         
-            Can be triggered from any thread, expects the terminal buffer lock. The cells will be reused by the terminal after the call returns. 
-         */
-        NewHistoryRowEvent onNewHistoryRow;
 
     public:
         AnsiTerminal(tpp::PTYMaster * pty, Palette && palette);

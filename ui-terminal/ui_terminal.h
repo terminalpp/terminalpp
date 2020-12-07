@@ -1,9 +1,68 @@
 #pragma once
 
+#include "terminal.h"
+
 namespace ui {
 
+    /** Terminal widget with user interface support. 
+     
+        Contains terminal as a child and provides history and UI features, such as scrollbars, selection, etc. 
+     
+     */
+    template<typename T = Terminal>
+    class UITerminal : public virtual Widget {
+    public:
+
+        UITerminal(T * terminal):
+            terminal_{terminal} {
+            setLayout(new Layout::Maximized{});
+            // attach the terminal
+            attach(terminal);
+        }
+            
+
+        /** \name Returns the actual terminal. 
+         */
+        //@{
+        T const * terminal() const {
+            return terminal_;
+        }
+
+        T * terminal() {
+            return terminal_;
+        }
+        //@}
+
+    protected:
+
+    private:
+
+        /** Single history row. 
+         
+            Contains the valid cells of the history row and their width. Contrary to the actual terminal buffer, the history only keeps valid cells, i.e. trims the row from right. 
+         */
+        struct HistoryRow {
+            int width;
+            Canvas::Cell * row;
+
+            ~HistoryRow() {
+                delete [] row;
+            }
+        }; // ui::UITerminal::HistoryRow
+
+        T * terminal_;
+
+        size_t maxHistoryRows_ = 0;
+        std::deque<HistoryRow> historyRows_;
+
+    }; // ui::UiTerminal<T>
+
+
+
+#ifdef FOO
+
     template<typename T>
-    class UITerminal : public T {
+    class UIXTerminal : public T {
 
 
 
@@ -560,5 +619,7 @@ namespace ui {
     */
 
 
+
+#endif
 
 } // namespace ui
