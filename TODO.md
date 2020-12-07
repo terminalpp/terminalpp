@@ -2,17 +2,6 @@
 
 ## Next version:
 
-- hyperlinks (`http` and `https` links can be autodetected, `OSC 8` escape sequence supported as well, configurable styles)
-- Visual Studio Development Prompt (cmd.exe) added to autodetected sessions (VS 2019, Community & Enterprise)
-- double click selects word, triple click selects line
-- option to disable cursor style changes from terminal apps
-- selection contents is trimmed
-- renderer can use different mouse cursors
-- proper mouse coordinates are reported when history is used together with buffer
-- easier transition to newer compatible versions
-- enter acts on buttons and other minor UI improvements
-- single tpp-bypass for all WSL distributions
-
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  

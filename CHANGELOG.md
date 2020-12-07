@@ -5,6 +5,19 @@ layout: titled
 
 Lists the most important improvements for recent `terminalpp` versions.
 
+### 0.8.3
+
+- hyperlinks (`http` and `https` links can be autodetected, `OSC 8` escape sequence supported as well, configurable styles)
+- Visual Studio Development Prompt (cmd.exe) added to autodetected sessions (VS 2019, Community & Enterprise)
+- double click selects word, triple click selects line
+- option to disable cursor style changes from terminal apps
+- selection contents is trimmed
+- renderer can use different mouse cursors
+- proper mouse coordinates are reported when history is used together with buffer
+- easier transition to newer compatible versions
+- enter acts on buttons and other minor UI improvements
+- single tpp-bypass for all WSL distributions
+
 ### 0.8
 
 - MSIX installer as default distribution channel on Windows, Windows Store listing
