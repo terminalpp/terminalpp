@@ -1,8 +1,103 @@
 #pragma once
+#include <algorithm>
+
+#include "helpers/helpers.h"
 
 #include "terminal.h"
 
 namespace ui {
+
+    /** Displays terminal history. 
+     
+     */
+    class TerminalHistory : public virtual Widget {
+    public:
+
+        TerminalHistory(Terminal * terminal):
+            terminal_{terminal} {
+            setHeightHint(SizeHint::AutoSize());
+            ASSERT(! terminal->onNewHistoryRow.attached());
+            terminal->onNewHistoryRow.setHandler(& TerminalHistory::addHistoryRow, this);
+        }
+
+        int rows() const {
+            return static_cast<int>(rows_.size());
+        }
+
+        int maxRows() const {
+            return maxRows_;
+        }
+
+        void setMaxRows(int value) {
+            if (value != maxRows_) {
+                maxRows_ = std::max(value, 0);
+                // TODO lock
+                while (rows_.size() > static_cast<size_t>(maxRows_)) {
+                    rows_.pop_front();
+                }
+            }
+        }
+
+    protected:
+        /** Called when new line should be added to the history. 
+         
+            The terminal buffer must be locked when the function is called. 
+         */
+        void addHistoryRow(Terminal::NewHistoryRowEvent::Payload & e);
+
+        void addHistoryRow(int width, Terminal::Cell * cells) {
+            rows_.emplace_back(width, cells);
+            if (rows_.size() > maxRows_)
+                rows_.pop_front();
+        }
+
+    public:
+
+        void resize(Size const & size) override;
+
+    protected:
+
+        /** Paints the history. 
+         */
+        void paint(Canvas & canvas) override;
+
+
+    private:
+        /** Single history row. 
+         
+            Contains the valid cells of the history row and their width. Contrary to the actual terminal buffer, the history only keeps valid cells, i.e. trims the row from right. 
+         */
+        struct Row {
+            int width;
+            Canvas::Cell * cells;
+
+            ~Row() {
+                delete [] cells;
+            }
+
+            Row(int width, Canvas::Cell * cells):
+                width{width},
+                cells{cells} {
+            }
+
+            Row(Row const &) = delete;
+
+        }; // ui::TerminalHistory::Row
+
+        Size getAutosizeHint() override {
+            Size result = rect().size();
+            result.setHeight(static_cast<int>(rows_.size()));
+            return result;
+        }
+
+        /** The terminal whose history we display. 
+         */
+        Terminal const * terminal_;
+
+        int maxRows_ = 0;
+        std::deque<Row> rows_;
+
+    }; // ui::TerminalHistory
 
     /** Terminal widget with user interface support. 
      
@@ -10,14 +105,16 @@ namespace ui {
      
      */
     template<typename T = Terminal>
-    class UITerminal : public virtual Widget {
+    class TerminalUI : public virtual Widget {
     public:
 
-        UITerminal(T * terminal):
+        TerminalUI(T * terminal):
+            history_{new TerminalHistory{terminal}},
             terminal_{terminal} {
-            setLayout(new Layout::Maximized{});
-            // attach the terminal
-            attach(terminal);
+            setLayout(new Layout::Column{});
+            // attch the history and terminal widgets
+            attach(history_);
+            attach(terminal_);
         }
             
 
@@ -33,29 +130,28 @@ namespace ui {
         }
         //@}
 
+        /** \name Maximum number of history rows. 
+         */
+        //@{
+
+        int maxHistoryRows() const {
+            return history_->maxRows();
+        }
+
+        void setMaxHistoryRows(int value) {
+            history_->setMaxRows(value);
+        }
+        //@}
+
     protected:
 
     private:
 
-        /** Single history row. 
-         
-            Contains the valid cells of the history row and their width. Contrary to the actual terminal buffer, the history only keeps valid cells, i.e. trims the row from right. 
-         */
-        struct HistoryRow {
-            int width;
-            Canvas::Cell * row;
-
-            ~HistoryRow() {
-                delete [] row;
-            }
-        }; // ui::UITerminal::HistoryRow
+        TerminalHistory * history_;
 
         T * terminal_;
 
-        size_t maxHistoryRows_ = 0;
-        std::deque<HistoryRow> historyRows_;
-
-    }; // ui::UiTerminal<T>
+    }; // ui::TerminalUI<T>
 
 
 
@@ -256,34 +352,6 @@ namespace ui {
             schedule([this](){
                 setScrollOffset(Point{0, static_cast<int>(historyRows_.size())});
             });
-    }
-
-    void AnsiTerminal::resizeHistory() {
-        std::deque<std::pair<int, Cell*>> oldRows{std::move(historyRows_)};
-        Cell * row = nullptr;
-        int rowSize = 0;
-        for (auto & i : oldRows) {
-            if (row == nullptr) {
-                row = i.second;
-                rowSize = i.first;
-            } else {
-                Cell * newRow = new Cell[rowSize + i.first];
-                MemCopy(newRow, row, rowSize);
-                MemCopy(newRow + rowSize, i.second, i.first);
-                rowSize += i.first;
-                delete [] i.second;
-                delete [] row;
-                row = newRow;
-            }
-            ASSERT(row != nullptr);
-            if (Buffer::IsLineEnd(row[rowSize - 1])) {
-                addHistoryRow(row, rowSize);
-                row = nullptr;
-                rowSize = 0;
-            }
-        }
-        if (row != nullptr)
-            addHistoryRow(row, rowSize);
     }
 
     void AnsiTerminal::selectWord(Point pos) {
@@ -533,49 +601,6 @@ namespace ui {
         // don't propagate to parent as the terminal handles keyboard input itself
     }
 
-    void AnsiTerminal::paint(Canvas & canvas) {
-        Canvas ccanvas{contentsCanvas(canvas)};
-#ifdef SHOW_LINE_ENDINGS
-        Border endOfLine{Border::All(Color::Red, Border::Kind::Thin)};
-#endif
-        Rect visibleRect{ccanvas.visibleRect()};
-        std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-        int top = terminalBufferTop();
-        ccanvas.setBg(palette_->defaultBackground());
-        // see if there are any history lines that need to be drawn
-        for (int row = std::max(0, visibleRect.top()), re = std::min(top, visibleRect.bottom()); row < re ; ++row) {
-            for (int col = 0, ce = historyRows_[row].first; col < ce; ++col) {
-                ccanvas.at(Point{col, row}).stripSpecialObjectAndAssign(historyRows_[row].second[col]);
-#ifdef SHOW_LINE_ENDINGS
-                if (Buffer::IsLineEnd(historyRows_[row].second[col]))
-                    ccanvas.setBorder(Point{col, row}, endOfLine);
-#endif
-            }
-            ccanvas.fill(Rect{Point{historyRows_[row].first, row}, Point{width(), row + 1}},
-            Cell{}.setBg(ccanvas.bg()));
-        }
-        // TODO once we support sixels or other shared objects that might survive to the drawing stage, this function will likely change. 
-        ccanvas.drawFallbackBuffer(state_->buffer, Point{0, top});
-#ifdef  SHOW_LINE_ENDINGS
-        // now add borders to the cells that are marked as end of line
-        for (int row = std::max(top, visibleRect.top()), rs = row, re = visibleRect.bottom(); ; ++row) {
-            if (row >= re)
-                break;
-            for (int col = 0; col < width(); ++col) {
-                if (Buffer::IsLineEnd(const_cast<Buffer const &>(state_->buffer).at(Point{col, row - rs})))
-                    ccanvas.setBorder(Point{col, row}, endOfLine);
-            }
-        }
-#endif
-        // draw the cursor 
-        if (focused()) {
-            // set the cursor via the canvas
-            ccanvas.setCursor(cursor(), cursorPosition() + Point{0, top});
-        } else if (cursor().visible()) {
-            // TODO the color of this should be configurable
-            ccanvas.setBorder(cursorPosition() + Point{0, top}, Border::All(inactiveCursorColor_, Border::Kind::Thin));
-        }
-    }
 
         /** Returns hyperlink attached to cell at given coordinates. 
          
@@ -588,35 +613,6 @@ namespace ui {
             Cell const * cell = cellAt(toContentsCoords(widgetCoords));
             return cell == nullptr ? nullptr : dynamic_cast<Hyperlink*>(cell->specialObject());
         }
-
-
-
-    /*
-    std::pair<AnsiTerminal::Cell *, int> AnsiTerminal::Buffer::copyRow(int row, Color defaultBg) {
-        int lastCol = width();
-        Cell * x = rows_[row];
-        while (lastCol-- > 0) {
-            Cell & c = x[lastCol];
-            // if we have found end of line character, good
-            if (IsLineEnd(c))
-                break;
-            // if we have found a visible character, we must remember the whole line, break the search - any end of line characters left of it will make no difference
-            if (c.codepoint() != ' ' || c.bg() != defaultBg || c.font().underline() || c.font().strikethrough()) {
-                break;
-            }
-        }   
-        // if we are not at the end of line, we must remember the whole line
-        if (IsLineEnd(x[lastCol])) 
-            lastCol += 1;
-        else
-            lastCol = width();
-        // make the copy and return it
-        Cell * result = new Cell[lastCol];
-        // we cannot use memcopy here because the cells can be special
-        MemCopy(result, x, lastCol);
-        return std::make_pair(result, lastCol);
-    }
-    */
 
 
 

@@ -12,10 +12,4 @@ HELPERS_NAMESPACE_BEGIN
             target[i] = source[i];
     }
 
-    template<typename T>
-    void MemMove(T * target, T * source, size_t size) {
-        for (size_t i = 0; i < size; ++i)
-            target[i] = std::move(source[i]);
-    }
-
 HELPERS_NAMESPACE_END

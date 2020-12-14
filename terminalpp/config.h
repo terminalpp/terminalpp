@@ -133,10 +133,10 @@ inline void JSONConfig::Property<Command>::cmdArgUpdate(char const * value, size
 }
 
 template<>
-inline ui::AnsiTerminal::Palette JSONConfig::FromJSON(JSON const & json) {
+inline ui::Terminal::Palette JSONConfig::FromJSON(JSON const & json) {
     if (json.kind() != JSON::Kind::Array)
         THROW(JSONError()) << "Element must be an array";
-    ui::AnsiTerminal::Palette result{ui::AnsiTerminal::Palette::XTerm256()};
+    ui::Terminal::Palette result{ui::Terminal::Palette::XTerm256()};
     size_t i = 0;
     for (auto c : json) {
         if (c.kind() != JSON::Kind::String) 
@@ -485,7 +485,7 @@ namespace tpp {
 					colors, 
 					"Overrides the predefined palette. Up to 256 colors can be specified in HTML format. These colors will override the default xterm palette used.",
 					JSON::Array(),
-				    ui::AnsiTerminal::Palette
+				    ui::Terminal::Palette
 				);
 				CONFIG_PROPERTY(
 				    defaultForeground,
@@ -501,8 +501,8 @@ namespace tpp {
 				);
 				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
 				 */
-				ui::AnsiTerminal::Palette * operator () () const {
-					auto result = new ui::AnsiTerminal::Palette{colors()};
+				ui::Terminal::Palette * operator () () const {
+					auto result = new ui::Terminal::Palette{colors()};
 					result->setDefaultForeground(defaultForeground());
 					result->setDefaultBackground(defaultBackground());
 					return result;
@@ -597,7 +597,7 @@ namespace tpp {
 					colors, 
 					"Overrides the predefined palette. Up to 256 colors can be specified in HTML format. These colors will override the default xterm palette used.",
 					JSON::Array(),
-				    ui::AnsiTerminal::Palette
+				    ui::Terminal::Palette
 				);
 				CONFIG_PROPERTY(
 				    defaultForeground,
@@ -613,8 +613,8 @@ namespace tpp {
 				);
 				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
 				 */
-				ui::AnsiTerminal::Palette operator () () const {
-                    ui::AnsiTerminal::Palette result{colors()};
+				ui::Terminal::Palette operator () () const {
+                    ui::Terminal::Palette result{colors()};
 					result.setDefaultForeground(defaultForeground());
 					result.setDefaultBackground(defaultBackground());
 					return result;

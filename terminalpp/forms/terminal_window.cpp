@@ -23,7 +23,6 @@ namespace tpp {
 #endif
         // and the terminal
         si->terminal = new AnsiTerminal{pty, session.palette()};
-        //si->terminal->setMaxHistoryRows(config.renderer.window.historyLimit());
         si->terminal->setBoldIsBright(config.sequences.boldIsBright());
         si->terminal->setDisplayBold(config.sequences.displayBold());
         si->terminal->setCursor(session.cursor());
@@ -34,9 +33,10 @@ namespace tpp {
         si->terminal->setNormalHyperlinkStyle(config.renderer.hyperlinks.normal());
         si->terminal->setActiveHyperlinkStyle(config.renderer.hyperlinks.active());
         // wrap the terminal in ui widget
-        si->terminalUi = new UITerminal{si->terminal};
+        si->terminalUi = new TerminalUI{si->terminal};
+        si->terminalUi->setMaxHistoryRows(config.renderer.window.historyLimit());
         // register the session and set it as active page
-        UITerminal<AnsiTerminal> * t = si->terminalUi;
+        TerminalUI<AnsiTerminal> * t = si->terminalUi;
         sessions_.insert(std::make_pair(t->terminal(), si.release()));
         pager_->setActivePage(t);
         window_->setKeyboardFocus(t->terminal());

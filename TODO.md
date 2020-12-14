@@ -7,9 +7,8 @@
 > These are items I currently work on towards the next version. When they are done, they die.  
 
 - ui::Terminal should also do mouse capturing information
-- should history be own widget? most likely yes...
 
-- port history, scrollbars and selection to ui_terminal
+- port history, scrollbars and selection to terminal_ui
 
 - see if msys can be added to bypass (perhaps sth to do with forkpty?)
 
