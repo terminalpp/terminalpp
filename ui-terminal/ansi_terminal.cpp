@@ -156,13 +156,13 @@ namespace ui {
                 if (activeHyperlink_ != nullptr && activeHyperlink_ != a) {
                     activeHyperlink_->setActive(false);
                     activeHyperlink_ = nullptr;
-                    repaint();
+                    requestRepaint();
                     setMouseCursor(MouseCursor::Default);
                 }
                 if (activeHyperlink_ == nullptr && a != nullptr) {
                     activeHyperlink_ = a;
                     activeHyperlink_->setActive(true);
-                    repaint();
+                    requestRepaint();
                     setMouseCursor(MouseCursor::Hand);
                 }
             }
@@ -362,7 +362,7 @@ namespace ui {
                 }
             }
         }
-        scheduleRepaint();
+        requestRepaint();
         return bufferEnd - buffer;
     }
 

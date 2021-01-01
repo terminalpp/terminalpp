@@ -36,7 +36,7 @@ namespace ui {
         // also determine if we should scroll the terminal in view or not
     }
 
-    void TerminalHistory::resize(Size const & size) {
+    void TerminalHistory::resize(Size size) {
         if (rect().width() != size.width()) {
             std::deque<Row> oldRows{std::move(rows_)};
             Terminal::Cell * row = nullptr;

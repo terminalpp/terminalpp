@@ -4,72 +4,128 @@ namespace ui {
 
     class Widget;
 
-    // auto == autosize
-    // layout == leave size to be set by layout completely
-    // fixed == specified by the user, cannot be changed by layout
-    // percentage == specified by percentage of size available by the layout
+    /** Represents a size hint for a widget. 
+     
+        Size hint implementations are responsible for determining the widget's dimensions. A size hint class must provide two methods, the calculateWidth() and calculateHeight() which are called by the layout engines to determine proper sizes of the child widgets. 
+
+        The size hints can be categorized into three broad categories, `Manual`, which ignore the layout and contents of the widget and only use the current widget dimension, `Layout`, whose value is calculated from the layout properties (i.e. available client size, parent size, etc.).
+
+     */
     class SizeHint {
     public:
-
-        /** The size of the widget is left to be determined by the widget itself and parent's layout will not change it at all. 
+        /** Basic size hints. 
          */
-        static constexpr SizeHint Manual() {
-            return SizeHint{MANUAL};
-        }
+        class Manual;
+        class Percentage;
+        class AutoLayout;
+        class AutoSize;
 
-        /** The size hint is calculated as a percentage of parent's appropriate contents dimension. 
+        /** Size hint reference kind. 
          
-            Allowed values are from 0 to 100 inclusive. 
+            Specifies what properties is the returned size based on. For Kind::Manual, the widget's actual size is used. For Kind::Auto, the widget's contents is used and for Kind::Layout the parent properties (size, contents size, etc.) and the layout itself are used. 
          */
-        static constexpr SizeHint Percentage(unsigned pct) {
-            ASSERT(pct <= 100);
-            return SizeHint{static_cast<unsigned char>(pct)};
-        }
+        enum class Kind {
+            Manual,
+            Layout,
+            Auto,
+        };
 
-        /** The size is determined by the layout of its parent. 
+        virtual ~SizeHint() = default;
+
+        /** Calculates the width of the given widget. 
+         
+            Takes the default width for the widget calculated by the layout and the total available width within the layout. 
          */
-        static constexpr SizeHint AutoLayout() {
-            return SizeHint{AUTOLAYOUT};
+        virtual int calculateWidth(Widget const * widget, int layoutSize, int availableLayoutSize) const = 0;
+        virtual int calculateHeight(Widget const * widget, int layoutSize, int availableLayoutSize) const = 0;
+
+        Kind kind() const {
+            return kind_;
         }
 
-        /** The size of the widget is determined by the size of its own contents.
-
-            Parent's relayout should have no effect on it.  
-         */
-        static constexpr SizeHint AutoSize() {
-            return SizeHint{AUTOSIZE};
+        bool isManual() const {
+            return kind_ == Kind::Manual;
         }
 
-        SizeHint():
-            raw_{AUTOLAYOUT} {
+        bool isLayout() const {
+            return kind_ == Kind::Layout;
         }
 
-        unsigned percentage() const {
-            ASSERT(raw_ <= 100);
-            return raw_;
+        bool isAuto() const {
+            return kind_ == Kind::Auto;
         }
 
-        constexpr bool operator == (SizeHint const & other) const {
-            return raw_ == other.raw_;
-        }
+    protected:
 
-        constexpr bool operator != (SizeHint const & other) const {
-            return raw_ != other.raw_;
+        SizeHint(Kind kind): 
+            kind_{kind} {
         }
 
     private:
-        static constexpr unsigned int const PERCENTAGE = 100;
-        static constexpr unsigned int const MANUAL = 101;
-        static constexpr unsigned int const AUTOLAYOUT = 102;
-        static constexpr unsigned int const AUTOSIZE = 103;
 
-        explicit constexpr SizeHint(unsigned char raw):
-            raw_{raw} {
-        }
-
-        unsigned char raw_;
+        Kind const kind_;
 
     }; 
+
+    class SizeHint::Manual : public SizeHint {
+    public:
+        Manual():
+            SizeHint{Kind::Manual} {
+        }
+
+        int calculateWidth(Widget const * widget, int autoSize, int availableSize) const override;
+        int calculateHeight(Widget const * widget, int autoSize, int availableSize) const override;
+    };
+
+    class SizeHint::Percentage : public SizeHint {
+    public:
+        Percentage(int value):
+            SizeHint{Kind::Layout},
+            value_{value} {
+        }
+
+        int calculateWidth(Widget const * widget, int autoSize, int availableSize) const override {
+            MARK_AS_UNUSED(widget);
+            MARK_AS_UNUSED(autoSize);
+            return availableSize * value_ / 100;
+        }
+
+        int calculateHeight(Widget const * widget, int autoSize, int availableSize) const override {
+            MARK_AS_UNUSED(widget);
+            MARK_AS_UNUSED(autoSize);
+            return availableSize * value_ / 100;
+        }
+
+        int value_;
+    };
+
+    class SizeHint::AutoLayout : public SizeHint {
+    public:
+        AutoLayout():
+            SizeHint{Kind::Layout} {
+        }
+
+        int calculateWidth(Widget const * widget, int autoSize, int availableSize) const override {
+            MARK_AS_UNUSED(widget);
+            MARK_AS_UNUSED(availableSize);
+            return autoSize;
+        }
+
+        int calculateHeight(Widget const * widget, int autoSize, int availableSize) const override {
+            MARK_AS_UNUSED(widget);
+            MARK_AS_UNUSED(availableSize);
+            return autoSize;
+        }
+    };
+
+    class SizeHint::AutoSize : public SizeHint {
+    public:
+        AutoSize():
+            SizeHint{Kind::Auto} {
+        }
+        int calculateWidth(Widget const * widget, int autoSize, int availableSize) const override;
+        int calculateHeight(Widget const * widget, int autoSize, int availableSize) const override;
+    };
 
     /** Layout implementation. 
      */
@@ -106,18 +162,6 @@ namespace ui {
         void move(Widget * widget, Point const & topLeft) const;
 
         void setOverlaid(Widget * widget, bool value) const;
-
-        /** Calculates one dimension of the widget given the size hint, current size, autosize and available size. 
-         */
-        int calculateDimension(SizeHint hint, int currentSize, int autoSize, int availableSize) const {
-            if (hint == SizeHint::Manual() || hint == SizeHint::AutoSize()) {
-                return currentSize;
-            } else if (hint == SizeHint::AutoLayout()) {
-                return autoSize;
-            } else {
-                return availableSize * hint.percentage() / 100;
-            }
-        }
 
     };
 

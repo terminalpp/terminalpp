@@ -6,6 +6,18 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- requestRepaint should be renamed to repaint and repaint should go to sth like repaintImmediate, or so
+- implement commented out move and resize in widget not implemented
+- last relayout should repaint
+- getAutoWidth & height in interested widgets (label & friends)
+- getautosizehint should not check the size hints at all but should only get called when autosize
+- possible rewrite of the layouts to accomodate for this
+
+
+- make sure that even if manual, the calculateWidth & height and their setting is applied in case they have changed (such as min/max etc).
+- autosize for widget should have extra functions for width and height so that sizehints can call them separately
+
+
 - ui::Terminal should also do mouse capturing information
 
 - port history, scrollbars and selection to terminal_ui

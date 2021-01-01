@@ -56,12 +56,9 @@ namespace ui {
 
         ~AnsiTerminal() override;
 
-        void resize(Size const & size) override {
+        void resize(Size size) override {
             if (rect().size() == size)
                 return;
-            // lock the widget for repainting
-            Lock l(this);
-            // under lock, update history and buffers
             {
                 std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
                 Widget::resize(size);
@@ -360,7 +357,7 @@ namespace ui {
         virtual void setInactiveCursorColor(Color value) {
             if (inactiveCursorColor_ != value) {
                 inactiveCursorColor_ = value;
-                repaint();
+                requestRepaint();
             }
         }
 

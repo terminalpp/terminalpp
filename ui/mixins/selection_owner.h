@@ -118,7 +118,7 @@ namespace ui {
             if (r != nullptr && r->selectionOwner_ == this) {
                 r->clearSelection(this);
             }
-            repaint();
+            requestRepaint();
         }
 
         bool updatingSelection() {
@@ -177,7 +177,7 @@ namespace ui {
             end.setY(std::min(clientSize.height() - 1, end.y()));
             // update the selection and call for repaint
             selection_ = Selection::Create(selectionStart_, end);
-            repaint();
+            requestRepaint();
         }
 
         /** Finishes the selection update, obtains its contents and registers itself as the selection owner. 
@@ -195,7 +195,7 @@ namespace ui {
                 selectionStart_ = Point{-1, -1};
                 if (!selection_.empty()) {
                     selection_.clear();
-                    repaint();
+                    requestRepaint();
                 }
             }
         }
@@ -209,7 +209,7 @@ namespace ui {
                 clearSelection();
             selection_ = selection;
             endSelectionUpdate();
-            repaint();
+            requestRepaint();
         }
 
     //@}      

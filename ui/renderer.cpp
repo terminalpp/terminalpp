@@ -40,15 +40,14 @@ namespace ui {
     // Widget Tree
 
     void Renderer::setRoot(Widget * value) {
+        UI_THREAD_ONLY;
         if (root_ != value) {
             if (root_ != nullptr)
                 detachTree(root_);
             root_ = value;
             if (value != nullptr) {
                 root_->renderer_ = this;
-                // once attached, we can clear the repaint flag
-                root_->pendingRepaint_ = false;
-                // and either resize, or just relayout, which triggers repaint and propagates the visible area update to all children
+                // either resize, or just relayout, which triggers repaint and propagates the visible area update to all children
                 if (root_->rect().size() != size())
                     root_->resize(size());
                 else
@@ -101,7 +100,7 @@ namespace ui {
 
     void Renderer::detachWidget(Widget * widget) {
         // block repainting of detached widgets - will be repainted again after being reattached
-        widget->pendingRepaint_ = true;
+        widget->requests_.fetch_or(Widget::REQUEST_REPAINT);
         // do the bookkeeping for widget detachment before we actually touch the widget
         widgetDetached(widget);
         // detach the children 

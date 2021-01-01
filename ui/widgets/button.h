@@ -10,8 +10,8 @@ namespace ui {
 
         explicit Button(std::string const & text):
             text_{text} {
-            setHeightHint(SizeHint::AutoSize());
-            setWidthHint(SizeHint::AutoSize());
+            setHeightHint(new SizeHint::AutoSize{});
+            setWidthHint(new SizeHint::AutoSize{});
             setFocusable(true);
             setBackground(Color::Blue);
         }
@@ -26,7 +26,7 @@ namespace ui {
         virtual void setText(std::string const & value) {
             if (text_ != value) {
                 text_ = value;
-                repaint();
+                requestRepaint();
             }
         }
         //@}
@@ -59,8 +59,12 @@ namespace ui {
             }
         }
 
-        Size getAutosizeHint() override {
-            return Size{static_cast<int>(text_.size()), 1};
+        int getAutoWidth() const override {
+            return static_cast<int>(text_.size());
+        }
+
+        int getAutoHeight() const override {
+            return 1;
         }
 
     private:

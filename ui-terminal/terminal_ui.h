@@ -15,7 +15,7 @@ namespace ui {
 
         TerminalHistory(Terminal * terminal):
             terminal_{terminal} {
-            setHeightHint(SizeHint::AutoSize());
+            setHeightHint(new SizeHint::AutoSize());
             ASSERT(! terminal->onNewHistoryRow.attached());
             terminal->onNewHistoryRow.setHandler(& TerminalHistory::addHistoryRow, this);
         }
@@ -53,7 +53,7 @@ namespace ui {
 
     public:
 
-        void resize(Size const & size) override;
+        void resize(Size size) override;
 
     protected:
 
@@ -84,11 +84,13 @@ namespace ui {
 
         }; // ui::TerminalHistory::Row
 
-        Size getAutosizeHint() override {
+        /*
+        Size getAutoSizeHint() override {
             Size result = rect().size();
             result.setHeight(static_cast<int>(rows_.size()));
             return result;
         }
+        */
 
         /** The terminal whose history we display. 
          */

@@ -12,7 +12,7 @@ namespace ui {
 
         explicit Label(std::string const & text):
             text_{text} {
-            setHeightHint(SizeHint::AutoSize());
+            setHeightHint(new SizeHint::AutoSize());
         }
 
         using Widget::setWidthHint;
@@ -36,7 +36,7 @@ namespace ui {
         virtual void setColor(Color value) {
             if (color_ != value) {
                 color_ = value;
-                repaint();
+                requestRepaint();
             }
         }
 
@@ -58,7 +58,7 @@ namespace ui {
         virtual void setHAlign(HorizontalAlign value) {
             if (hAlign_ != value) {
                 hAlign_ = value;
-                repaint();
+                requestRepaint();
             }
         }
 
@@ -69,7 +69,7 @@ namespace ui {
         virtual void setVAlign(VerticalAlign value) {
             if (vAlign_ != value) {
                 vAlign_ = value;
-                repaint();
+                requestRepaint();
             }
         }
 
@@ -84,25 +84,28 @@ namespace ui {
             }
         }
 
-    private:
+    protected:
 
-        Size getAutosizeHint() override {
-            if (widthHint() == SizeHint::AutoSize()) 
+        /** Recalculates the cached format of the stored text and then relayouts.
+         */
+        bool relayout() override {
+            if (widthHint()->isAuto()) 
                 format_ = Canvas::GetTextMetrics(text_, Canvas::NoWordWrap);
             else
                 format_ = Canvas::GetTextMetrics(text_, wordWrap_ ? std::max(1, rect().width()) : Canvas::NoWordWrap);
-            Size result = rect().size();
-            if (widthHint() == SizeHint::AutoSize()) {
-                result.setWidth(format_[0].width);
-                for (size_t i = 1, e = format_.size(); i != e; ++i)
-                    if (format_[i].width > result.width())
-                        result.setWidth(format_[i].width);
-            }            
-            if (heightHint() == SizeHint::AutoSize()) 
-                result.setHeight(static_cast<int>(format_.size()));
-            return result;
+            return Widget::relayout();
         }
 
+    private:
+
+        int getAutoHeight() const override {
+            return static_cast<int>(format_.size());
+        }
+
+        int getAutoWidth() const override {
+            return std::max_element(format_.begin(), format_.end(), [](Canvas::TextLine const & a, Canvas::TextLine const & b){ return a.width < b.width; })->width;
+        }
+    
         void paint(Canvas & canvas) override {
             Point x{0,0};
             canvas.setFg(color_);

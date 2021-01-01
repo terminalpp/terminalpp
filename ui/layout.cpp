@@ -5,6 +5,29 @@
 
 namespace ui {
 
+    int SizeHint::Manual::calculateWidth(Widget const * widget, int autoSize, int availableSize) const {
+        MARK_AS_UNUSED(autoSize);
+        MARK_AS_UNUSED(availableSize);
+        return widget->width();
+    }
+    int SizeHint::Manual::calculateHeight(Widget const * widget, int autoSize, int availableSize) const {
+        MARK_AS_UNUSED(autoSize);
+        MARK_AS_UNUSED(availableSize);
+        return widget->height();
+    }
+
+    int SizeHint::AutoSize::calculateWidth(Widget const * widget, int autoSize, int availableSize) const {
+        MARK_AS_UNUSED(autoSize);
+        MARK_AS_UNUSED(availableSize);
+        return widget->getAutoWidth();
+    }
+
+    int SizeHint::AutoSize::calculateHeight(Widget const * widget, int autoSize, int availableSize) const {
+        MARK_AS_UNUSED(autoSize);
+        MARK_AS_UNUSED(availableSize);
+        return widget->getAutoHeight();
+    }
+
     void Layout::calculateOverlay(Widget * widget) const {
         Rect r;
         auto kids = children(widget);
@@ -26,7 +49,7 @@ namespace ui {
 
     void Layout::resize(Widget * widget, Size const & size) const {
         if (widget->rect().size() == size) {
-            if (widget->widthHint() == SizeHint::AutoSize() || widget->heightHint() == SizeHint::AutoSize())
+            if (widget->widthHint()->isAuto() || widget->heightHint()->isAuto())
                 widget->relayout();
         } else {
             widget->resize(size);
@@ -49,8 +72,8 @@ namespace ui {
             if (!child->visible())
                 continue;
             // calculate the desired width and height of the child
-            int w = calculateDimension(child->widthHint(), child->rect().width(), rect.width(), rect.width());
-            int h = calculateDimension(child->heightHint(), child->rect().height(), rect.height(), rect.height());
+            int w = child->widthHint()->calculateWidth(child, rect.width(), rect.width());
+            int h = child->heightHint()->calculateHeight(child, rect.height(), rect.height());
             // resize the child, which triggers its relayout and potentially updates the size too
             resize(child, w, h);
             // if the size has been updated, center the widget if needs be
@@ -82,14 +105,14 @@ namespace ui {
             if (! child->visible())
                 continue;
             // if autolayouted, increase number of widgets and continue
-            if (child->widthHint() == SizeHint::AutoLayout()) {
+            if (child->widthHint()->isLayout()) {
                 ++autoWidgets;
                 continue;
             }
             // otherwise update the size already
             // calculate the desired width and height of the child
-            int w = calculateDimension(child->widthHint(), child->rect().width(), 0, rect.width());
-            int h = calculateDimension(child->heightHint(), child->rect().height(), rect.height(), rect.height());
+            int w = child->widthHint()->calculateWidth(child, 0, rect.width());
+            int h = child->heightHint()->calculateHeight(child, rect.height(), rect.height());
             // resize the child, which triggers its relayout and potentially updates the size too
             resize(child, w, h);
             // update the available height
@@ -101,9 +124,8 @@ namespace ui {
             int autoWidth = availWidth / autoWidgets;
             for (Widget * child : children(widget)) {
                 // ignore invisible and non-layout sized widgets
-                if (!child->visible() || child->widthHint() != SizeHint::AutoLayout())
-                    continue;
-                int h = calculateDimension(child->heightHint(), child->rect().height(), rect.height(), rect.height());
+                if (!child->visible() || ! child->widthHint()->isLayout())    continue;
+                int h = child->heightHint()->calculateHeight(child, rect.height(), rect.height());
                 resize(child, autoWidgets > 1 ? autoWidth : availWidth, h);
                 availWidth -= autoWidth;
                 --autoWidgets;
@@ -146,14 +168,14 @@ namespace ui {
             if (! child->visible())
                 continue;
             // if autolayouted, increase number of widgets and continue
-            if (child->heightHint() == SizeHint::AutoLayout()) {
+            if (child->heightHint()->isLayout()) {
                 ++autoWidgets;
                 continue;
             }
             // otherwise update the size already
             // calculate the desired width and height of the child
-            int w = calculateDimension(child->widthHint(), child->rect().width(), rect.width(), rect.width());
-            int h = calculateDimension(child->heightHint(), child->rect().height(), 0, rect.height());
+            int w = child->widthHint()->calculateWidth(child, rect.width(), rect.width());
+            int h = child->heightHint()->calculateHeight(child, 0, rect.height());
             // resize the child, which triggers its relayout and potentially updates the size too
             resize(child, w, h);
             // update the available height
@@ -165,9 +187,8 @@ namespace ui {
             int autoHeight = availHeight / autoWidgets;
             for (Widget * child : children(widget)) {
                 // ignore invisible and non-layout sized widgets
-                if (!child->visible() || child->heightHint() != SizeHint::AutoLayout())
-                    continue;
-                int w = calculateDimension(child->widthHint(), child->rect().width(), rect.width(), rect.width());
+                if (!child->visible() || ! child->heightHint()->isLayout())    continue;
+                int w = child->widthHint()->calculateWidth(child, rect.width(), rect.width());
                 resize(child, w, autoWidgets > 1 ? autoHeight : availHeight);
                 availHeight -= autoHeight;
                 --autoWidgets;

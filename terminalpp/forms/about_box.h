@@ -12,8 +12,8 @@ namespace tpp {
             Cancel{"Terminal++"},
             btnNewIssue_{new Button{" new issue "}},
             btnWWW_{new Button{" www "}} {
-            setWidthHint(SizeHint::Manual());
-            setHeightHint(SizeHint::Manual());
+            setWidthHint(new SizeHint::Manual{});
+            setHeightHint(new SizeHint::Manual{});
             //setSemanticStyle(SemanticStyle::Primary);
             resize(Size{65,8});
             btnNewIssue_->onExecuted.setHandler([](VoidEvent::Payload & e) {
@@ -27,7 +27,6 @@ namespace tpp {
             addHeaderButton(btnNewIssue_);
             addHeaderButton(btnWWW_);
         }
-
 
     protected:
 

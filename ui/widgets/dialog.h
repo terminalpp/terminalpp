@@ -21,12 +21,12 @@ namespace ui {
             title_{new Label(title)},
             header_{new Panel{new Layout::Row{HorizontalAlign::Left}}} {
             setLayout(new Layout::Column{});
-            header_->setHeightHint(SizeHint::AutoSize());
+            header_->setHeightHint(new SizeHint::AutoSize{});
             header_->setBackground(Color::Blue);
             attach(header_);
-            setHeightHint(SizeHint::AutoSize());
+            setHeightHint(new SizeHint::AutoSize{});
             setBackground(Color::Blue);
-            title_->setHeightHint(SizeHint::AutoLayout());
+            title_->setHeightHint(new SizeHint::AutoLayout{});
             header_->attach(title_);
         }
 
