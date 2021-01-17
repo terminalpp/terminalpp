@@ -167,14 +167,14 @@ namespace ui {
             selectionStart_ = start;
         }
 
-        void updateSelection(Point end, Size clientSize) {
+        void updateSelection(Point end, Rect contentsRect) {
             // don't do anything if we are not updating the selection
             if (! updatingSelection())
                 return;
-            end.setX(std::max(0, end.x()));
-            end.setX(std::min(clientSize.width() - 1, end.x()));
-            end.setY(std::max(0, end.y()));
-            end.setY(std::min(clientSize.height() - 1, end.y()));
+            end.setX(std::max(contentsRect.left(), end.x()));
+            end.setX(std::min(contentsRect.right() - 1, end.x()));
+            end.setY(std::max(contentsRect.top(), end.y()));
+            end.setY(std::min(contentsRect.bottom() - 1, end.y()));
             // update the selection and call for repaint
             selection_ = Selection::Create(selectionStart_, end);
             requestRepaint();
@@ -255,7 +255,7 @@ namespace ui {
 
         void mouseMove(MouseMoveEvent::Payload & e) override {
             if (updatingSelection()) {
-                updateSelection(e->coords + scrollOffset(), contentsSize());
+                updateSelection(e->coords + scrollOffset(), contentsRect());
                 // if the coordinates are outside the widget, do autoscrolling
                 if (!Rect{size()}.contains(e->coords)) {
                     startAutoScroll(Point{

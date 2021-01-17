@@ -148,10 +148,6 @@ namespace ui {
 
         /** Actual line information for fast rendering and positioning, takes word wrap into account. */
         std::vector<Canvas::TextLine> format_;
-
-
     };
-
-
 
 } // namespace ui

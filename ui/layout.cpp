@@ -39,10 +39,6 @@ namespace ui {
         }        
     }
 
-    Size Layout::contentsSize(Widget * widget) const {
-        return widget->contentsSize();
-    }
-
     std::deque<Widget *> const & Layout::children(Widget * widget) const {
         return widget->children_;
     }
@@ -67,7 +63,7 @@ namespace ui {
     // Maximized
 
     void Layout::Maximized::layout(Widget * widget) const {
-        Rect rect{contentsSize(widget)};
+        Rect rect{widget->size()};
         for (Widget * child : children(widget)) {
             if (!child->visible())
                 continue;
@@ -97,7 +93,7 @@ namespace ui {
     // Row
 
     void Layout::Row::layout(Widget * widget) const {
-        Rect rect{contentsSize(widget)};
+        Rect rect{widget->size()};
         // iterate over the children, determine how many autosized widgets there are and what is the auto width budget
         int availWidth = rect.width();
         int autoWidgets = 0;
@@ -160,7 +156,7 @@ namespace ui {
     // Column
 
     void Layout::Column::layout(Widget * widget) const {
-        Rect rect{contentsSize(widget)};
+        Rect rect{widget->size()};
         // iterate over the children, determine how many autosized widgets there are and what is the auto height budget
         int availHeight = rect.height();
         int autoWidgets = 0;

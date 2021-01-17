@@ -133,7 +133,7 @@ namespace ui {
      */
     Canvas Widget::contentsCanvas(Canvas & from) const {
         MARK_AS_UNUSED(from);
-        return Canvas{renderer_->buffer_, visibleArea_.offset(scrollOffset_), contentsSize()};
+        return Canvas{renderer_->buffer_, visibleArea_.offset(scrollOffset_), contentsCanvasSize()};
     }
 
     /** If the widget has normal parent, its contents visible area is used. If the parent is not attached, or non-existent, no visible areas are updated. If the widget is root widget, then renderer's visible area is used. 

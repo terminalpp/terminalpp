@@ -149,8 +149,6 @@ namespace ui {
 
     protected:
 
-        Size contentsSize(Widget * widget) const;
-
         std::deque<Widget *> const & children(Widget * widget) const;
 
         void resize(Widget * widget, Size const & size) const;

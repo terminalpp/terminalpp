@@ -300,6 +300,11 @@ namespace ui {
                 return false;
             // layout the children widgets
             layout_->layout(this);
+            // calculate contentsRect
+            contentsRect_ = Rect{};
+            for (Widget * child : children_)
+                if (child->visible())
+                    contentsRect_ = contentsRect_ | child->rect();
             // after the position and size of child widgets is calculated, we have to check if the widget itself should be resized in case its size hints are autosized, after which the layouting can finish in two different ways:
             Size size = getAutoSizeHint();
             if (relayoutDepth_ <= 2 && rect_.size() != size) {
@@ -454,6 +459,26 @@ namespace ui {
             }
         }
 
+        /** Returns the contents rectangle.
+         
+            The rectangle is in client coordinates and encompasses all of the widget's children fully. It is useful to determine if scrolling is necessary or not (i.e. if clientSize < contentsRect.size())
+         */
+        Rect contentsRect() const {
+            return contentsRect_;
+        }
+
+        /** Returns the size of the content's canvas. 
+         
+            Contents canvas is at least as big as the parent widget itself union with the positive part of the contentsRect(). 
+         */
+        Size contentsCanvasSize() const {
+            Rect crect = contentsRect();
+            return Size{
+                std::max(width(), crect.right()),
+                std::max(height(), crect.bottom())
+            };
+        }
+
     protected:
 
         Layout * layout() const {
@@ -468,15 +493,9 @@ namespace ui {
             }
         }
 
-        /** Returns the contents size. 
-         */
-        virtual Size contentsSize() const {
-            return rect_.size();
-        }
-
         /** Returns the canvas used for the contents of the widget. 
-         
-            The canvas has the contentsSize() size and is scrolled according to the scrollOffset().
+
+            The canvas has the size of the contentsRect()'s positive part or the widget's size, whatever is greater and is scrolled according to the widget's scrollOffset()
          */
         Canvas contentsCanvas(Canvas & from) const;
 
@@ -500,7 +519,7 @@ namespace ui {
 
         virtual void scrollBy(Point delta) {
             Point p = scrollOffset_ + delta;
-            Size csize = contentsSize();
+            Size csize = contentsCanvasSize();
             if (p.x() < 0)
                 p.setX(0);
             if (p.x() > csize.width() - width())
@@ -510,16 +529,10 @@ namespace ui {
             if (p.y() > csize.height() - height())
                 p.setY(csize.height() - height());
             setScrollOffset(p);
-        }
+        } 
 
         virtual int getAutoWidth() const {
-            int min = 0;
-            int max = 0;
-            for (Widget * child : children_) {
-                min = std::min(min, child->rect().left());
-                max = std::max(max, child->rect().right());
-            }
-            return max - min;
+            return contentsRect_.width();
         }
 
         /** Given current width of the widget, calculates the desired height to fit all of its contents. 
@@ -527,13 +540,7 @@ namespace ui {
             This function is used by the SizeHint::AutoSize to determine proper widget size. 
          */
         virtual int getAutoHeight() const {
-            int min = 0;
-            int max = 0;
-            for (Widget * child : children_) {
-                min = std::min(min, child->rect().top());
-                max = std::max(max, child->rect().bottom());
-            }
-            return max - min;
+            return contentsRect_.height();
         }
 
     private:
@@ -560,6 +567,10 @@ namespace ui {
          */
         Rect rect_;
 
+        /** The rectangle occupied by child widgets. 
+         */
+        Rect contentsRect_;
+
         /** The offset of the visible area in the contents rectangle. 
          */
         Point scrollOffset_;
@@ -567,14 +578,6 @@ namespace ui {
         /** Visibility of the widget. 
          */
         bool visible_ = true;
-
-        /** If true, the widget's relayout should be called after its parent relayout happens. Calling resize 
-         */
-        //bool pendingRelayout_ = false;
-
-        /** True if the widget is currently being relayouted. 
-         */
-        bool relayouting_ = false;
 
         /** True if parts of the widget can be covered by other widgets that will be painted after it.
          */
