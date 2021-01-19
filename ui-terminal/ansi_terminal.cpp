@@ -64,15 +64,14 @@ namespace ui {
     // Widget
 
     void AnsiTerminal::paint(Canvas & canvas) {
-        Canvas ccanvas{contentsCanvas(canvas)};
 #ifdef SHOW_LINE_ENDINGS
         Border endOfLine{Border::All(Color::Red, Border::Kind::Thin)};
 #endif
-        Rect visibleRect{ccanvas.visibleRect()};
+        Rect visibleRect{canvas.visibleRect()};
         std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
-        ccanvas.setBg(palette().defaultBackground());
+        canvas.setBg(palette().defaultBackground());
         // TODO once we support sixels or other shared objects that might survive to the drawing stage, this function will likely change. 
-        ccanvas.drawFallbackBuffer(buffer_, Point{0, 0});
+        canvas.drawFallbackBuffer(buffer_, Point{0, 0});
 #ifdef  SHOW_LINE_ENDINGS
         // now add borders to the cells that are marked as end of line
         for (int row = std::max(0, visibleRect.top()), rs = row, re = visibleRect.bottom(); ; ++row) {
@@ -80,17 +79,17 @@ namespace ui {
                 break;
             for (int col = 0; col < width(); ++col) {
                 if (Buffer::IsLineEnd(const_cast<Buffer const &>(buffer_).at(Point{col, row - rs})))
-                    ccanvas.setBorder(Point{col, row}, endOfLine);
+                    canvas.setBorder(Point{col, row}, endOfLine);
             }
         }
 #endif
         // draw the cursor 
         if (focused()) {
             // set the cursor via the canvas
-            ccanvas.setCursor(buffer_.cursor(), buffer_.cursorPosition());
+            canvas.setCursor(buffer_.cursor(), buffer_.cursorPosition());
         } else if (buffer_.cursor().visible()) {
             // TODO the color of this should be configurable
-            ccanvas.setBorder(buffer_.cursorPosition(), Border::All(inactiveCursorColor_, Border::Kind::Thin));
+            canvas.setBorder(buffer_.cursorPosition(), Border::All(inactiveCursorColor_, Border::Kind::Thin));
         }
     }
 

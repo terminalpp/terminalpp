@@ -133,7 +133,7 @@ HELPERS_NAMESPACE_BEGIN
         }
 
         template<typename T, typename W> 
-        typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value, bool>::type expectEq(char const * file, size_t line, char const * expr, T const & x, W const & y) {
+        typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value && ! std::is_same<T, bool>::value, bool>::type expectEq(char const * file, size_t line, char const * expr, T const & x, W const & y) {
             ++report_->checks;
             if (x == static_cast<typename std::make_unsigned<W>::type>(y))
                 return true;
@@ -143,7 +143,7 @@ HELPERS_NAMESPACE_BEGIN
         }
 
         template<typename T, typename W> 
-        typename std::enable_if<! std::is_integral<T>::value, bool>::type expectEq(char const * file, size_t line, char const * expr, T const & x, W const & y) {
+        typename std::enable_if<! std::is_integral<T>::value || std::is_same<T, bool>::value, bool>::type expectEq(char const * file, size_t line, char const * expr, T const & x, W const & y) {
             ++report_->checks;
             if (x == y)
                 return true;

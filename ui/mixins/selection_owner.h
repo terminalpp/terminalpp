@@ -3,6 +3,8 @@
 #include "../widget.h"
 #include "../renderer.h"
 
+#ifdef HAHA
+
 namespace ui {
 
 
@@ -295,3 +297,5 @@ namespace ui {
     }; // ui::SelectionOwner
 
 } // namespace ui
+
+#endif

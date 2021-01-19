@@ -21,12 +21,12 @@ namespace ui {
     class Point {
     public:
 
-        Point(): 
+        constexpr Point(): 
             x_{0},
             y_{0} {
         }
 
-        Point(int x, int y):
+        constexpr Point(int x, int y):
             x_{x},
             y_{y} {
         }
@@ -118,7 +118,7 @@ namespace ui {
         int y_;
 
         friend std::ostream & operator << (std::ostream & s, Point const & p) {
-            s << "[" << p.x_ << ", " << p.y_ << "]";
+            s << "(" << p.x_ << "," << p.y_ << ")";
             return s;
         }
 
@@ -179,6 +179,11 @@ namespace ui {
 
     private:
         friend class Rect;
+
+        friend std::ostream & operator << (std::ostream & s, Size const & value) {
+            s << "(w:" << value.width() << ",h:" << value.height() << ")";
+            return s;
+        }
 
         int width_;
         int height_;
@@ -300,7 +305,6 @@ namespace ui {
             };
         }
 
-
         Rect operator + (Point const & p) const {
             return Rect{topLeft_ + p, size_};
         }
@@ -339,6 +343,14 @@ namespace ui {
                 /* noSwap */ true);
         }
 
+        bool operator == (Rect const & other) const {
+            return topLeft_ == other.topLeft_ && size_ == other.size_;
+        }
+
+        bool operator != (Rect const & other) const {
+            return topLeft_ != other.topLeft_ || size_ != other.size_;
+        }
+
     private:
 
         int align(int childWidth, HorizontalAlign align) const {
@@ -365,6 +377,10 @@ namespace ui {
             }
         }
 
+        friend std::ostream & operator << (std::ostream & s, Rect const & rect) {
+            s << "[" << rect.topLeft() << "," << rect.bottomRight() << "]";
+            return s;
+        }
 
         Point topLeft_;
         Size size_;

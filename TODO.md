@@ -6,6 +6,9 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- selection owner is commented out, figure out how that one works w/o scrolling
+    - Renderer::clearSelection
+
 - requestRepaint should be renamed to repaint and repaint should go to sth like repaintImmediate, or so
 - implement commented out move and resize in widget not implemented
 - last relayout should repaint

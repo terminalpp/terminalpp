@@ -8,6 +8,10 @@ namespace ui {
     std::unordered_map<Canvas::Cell *, Canvas::SpecialObject *> Canvas::SpecialObject::Objects_;
     std::mutex Canvas::SpecialObject::MObjects_;
 
+    Canvas::Canvas(Widget * widget):
+        Canvas{widget->renderer_->buffer_, widget->visibleArea_, widget->size()} {
+    }
+
     Canvas::Canvas(Buffer & buffer, VisibleArea const & visibleArea, Size const & size):
         visibleArea_{visibleArea},
         buffer_{& buffer},

@@ -131,30 +131,36 @@ namespace ui {
     
     /** The argument is not used, but is kept to signify that the method should only be called from contexts where the widget's canvas exists. 
      */
-    Canvas Widget::contentsCanvas(Canvas & from) const {
-        MARK_AS_UNUSED(from);
-        return Canvas{renderer_->buffer_, visibleArea_.offset(scrollOffset_), contentsCanvasSize()};
+    Canvas Widget::getContentsCanvas(Canvas & widgetCanvas) const {
+        return widgetCanvas.resize(contentsCanvasSize());
     }
 
     /** If the widget has normal parent, its contents visible area is used. If the parent is not attached, or non-existent, no visible areas are updated. If the widget is root widget, then renderer's visible area is used. 
      */
     void Widget::updateVisibleArea() {
-        if (isRootWidget()) 
-            updateVisibleArea(renderer()->visibleArea(), renderer_);
-        else if (parent_ != nullptr && parent_->renderer_ != nullptr) 
-            updateVisibleArea(parent_->visibleArea_.offset(parent_->scrollOffset_), renderer_);
-        else 
-            // otherwise do nothing (the widget is not attached and neither is its parent)
-            ASSERT(renderer_ == nullptr);
+        // don't do anything if the renderer is not set 
+        if (renderer_ == nullptr)
+            return;
+        ASSERT(isRootWidget() || (parent_ != nullptr && parent_->renderer_ != nullptr));
+        if (isRootWidget())
+            visibleArea_ = Canvas::VisibleArea{Point{0,0}, Rect{size()}};
+        Canvas ownCanvas{this};
+        Canvas contentsCanvas{getContentsCanvas(ownCanvas)};
+        updateVisibleArea(contentsCanvas);
     }
 
-    void Widget::updateVisibleArea(VisibleArea const & parentArea, Renderer * renderer) {
-        renderer_ = renderer;
-        visibleArea_ = parentArea.clip(rect_);
-        for (Widget * child : children_)
-            child->updateVisibleArea(visibleArea_.offset(scrollOffset_), renderer);
+    void Widget::updateVisibleArea(Canvas & parentContentsCanvas) {
+        ASSERT(renderer_ != nullptr);
+        // create own canvas
+        Canvas ownCanvas{parentContentsCanvas.clip(rect_)};
+        visibleArea_ = ownCanvas.visibleArea_;
+        Canvas contentsCanvas{getContentsCanvas(ownCanvas)};
+        // for each child, set its renderer and then update visible area
+        for (Widget * child : children_) {
+            child->renderer_ = renderer_;
+            child->updateVisibleArea(contentsCanvas);
+        }
     }
-
 
     // ============================================================================================
     // Painting
@@ -173,7 +179,7 @@ namespace ui {
         UI_THREAD_ONLY;
         // invalidate the repaint request
         requests_.fetch_and(~REQUEST_REPAINT);
-        Canvas canvas{renderer_->buffer_, visibleArea_, size()};
+        Canvas canvas{this};
         // paint the background first
         canvas.setBg(background_);
         canvas.fill(canvas.rect());

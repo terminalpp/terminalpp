@@ -36,6 +36,7 @@ namespace ui {
         friend class EventQueue;
         friend class Dismissable;
         friend class SizeHint::AutoSize;
+        friend class Canvas;
     public:
 
         Widget() = default;
@@ -134,11 +135,6 @@ namespace ui {
             return widgetCoords + visibleArea_.offset();
         }
 
-        /** Converts the widget coordinates to the coordinates of the widget contents. 
-         */
-        Point toContentsCoords(Point widgetCoords) {
-            return widgetCoords + scrollOffset();
-        }
 
         /** Returns the widget that is directly under the given coordinates, or itself. 
          */
@@ -497,39 +493,7 @@ namespace ui {
 
             The canvas has the size of the contentsRect()'s positive part or the widget's size, whatever is greater and is scrolled according to the widget's scrollOffset()
          */
-        Canvas contentsCanvas(Canvas & from) const;
-
-        /** Returns the scroll offset of the contents. 
-         */
-        Point scrollOffset() const {
-            return scrollOffset_;
-        }
-
-        /** Updates the scroll offset of the widget. 
-         
-            When offset changes, the visible area must be recalculated and the widget repainted. 
-         */
-        virtual void setScrollOffset(Point const & value) {
-            if (value != scrollOffset_) {
-                scrollOffset_ = value;
-                updateVisibleArea();
-                repaint();
-            } 
-        }
-
-        virtual void scrollBy(Point delta) {
-            Point p = scrollOffset_ + delta;
-            Size csize = contentsCanvasSize();
-            if (p.x() < 0)
-                p.setX(0);
-            if (p.x() > csize.width() - width())
-                p.setX(csize.width() - width());
-            if (p.y() < 0)
-                p.setY(0);
-            if (p.y() > csize.height() - height())
-                p.setY(csize.height() - height());
-            setScrollOffset(p);
-        } 
+        virtual Canvas getContentsCanvas(Canvas & widgetCanvas) const;
 
         virtual int getAutoWidth() const {
             return contentsRect_.width();
@@ -553,7 +517,7 @@ namespace ui {
          */
         void updateVisibleArea();
 
-        void updateVisibleArea(VisibleArea const & parentArea, Renderer * renderer);
+        void updateVisibleArea(Canvas & parentContentsCanvas);
 
         /** Renderer to which the widget is attached. 
          */
@@ -573,7 +537,7 @@ namespace ui {
 
         /** The offset of the visible area in the contents rectangle. 
          */
-        Point scrollOffset_;
+        //Point scrollOffset_;
 
         /** Visibility of the widget. 
          */

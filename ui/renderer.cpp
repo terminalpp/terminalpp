@@ -557,8 +557,9 @@ namespace ui {
             Widget * owner = selectionOwner_;
             selectionOwner_ = nullptr;
             // inform the sender if the request is coming from elsewhere
-            if (owner != sender)
-                dynamic_cast<SelectionOwner*>(owner)->clearSelection();
+            if (owner != sender) 
+                NOT_IMPLEMENTED;
+                //dynamic_cast<SelectionOwner*>(owner)->clearSelection();
         }
     }
 

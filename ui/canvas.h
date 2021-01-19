@@ -19,8 +19,28 @@ namespace ui {
         class SpecialObject;
         class Cell;
         class Buffer;
+        class TestAdapter;
+
+        explicit Canvas(Widget * widget);
 
         explicit Canvas(Buffer & buffer);
+
+        /** Returns new canvas that is identical to the current canvas, but with new size. 
+         */
+        Canvas resize(Size const & newSize) {
+            return Canvas{*buffer_, visibleArea_.clip(Rect{newSize}), newSize};
+        }
+
+        /** Returns new canvas that is a clip of given rectangle. 
+         
+            The rectangle does not have to fully fit in the parent canvas. 
+         */
+        Canvas clip(Rect const & clip) {
+            return Canvas(*buffer_, 
+                visibleArea_.clip(clip),
+                clip.size()
+            );
+        }
 
         Rect rect() const {
             return Rect{size()};
@@ -237,10 +257,6 @@ namespace ui {
 
             VisibleArea clip(Rect const & rect) const {
                 return VisibleArea{offset_ + rect.topLeft(), (rect_ & rect) - rect.topLeft()};
-            }
-
-            VisibleArea offset(Point const & by) const {
-                return VisibleArea{offset_ - by, rect_ + by};
             }
 
         private:
@@ -738,6 +754,10 @@ namespace ui {
     class Canvas::Buffer {
     public:
 
+        /** An invalid cursor position used when no cursor position is set, or the cursor is obscured. 
+         */
+        static constexpr Point NoCursorPosition = Point{1,1};
+
         explicit Buffer(Size const & size):
             size_{size} {
             create(size);
@@ -824,7 +844,7 @@ namespace ui {
 
         Point cursorPosition() const {
             if (contains(cursorPosition_) && (GetUnusedBits(at(cursorPosition_)) & CURSOR_POSITION) == 0)
-                return Point{-1,-1};
+                return NoCursorPosition;
             else 
                 return cursorPosition_;
         }
@@ -925,7 +945,8 @@ namespace ui {
     }
 
     inline void Canvas::setCursor(Cursor const & cursor, Point position) {
-        buffer_->setCursor(cursor, position + visibleArea_.offset());
+        if (visibleArea_.rect().contains(position))
+            buffer_->setCursor(cursor, position + visibleArea_.offset());
     }
 
     inline Point Canvas::cursorPosition() const {
