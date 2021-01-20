@@ -1,6 +1,7 @@
 
 #include <utility>
 #include "../widget.h"
+#include "../layout.h"
 #include "../geometry.h"
 
 namespace ui {
@@ -63,14 +64,14 @@ namespace ui {
         }
 
         void paintHorizontal(Canvas & canvas, int row, Border & b, Border & slider) {
-            std::pair<int, int> dim = sliderDimensions(size().height());
+            std::pair<int, int> dim = sliderDimensions(width());
             canvas.setBorder(Point{0,row}, Point{dim.first, row}, b);
-            canvas.setBorder(Point{dim.second, row}, Point{height(), row}, b);
+            canvas.setBorder(Point{dim.second, row}, Point{width(), row}, b);
             canvas.setBorder(Point{dim.first, row}, Point{dim.second, row}, slider);
         }
 
         void paintVertical(Canvas & canvas, int col, Border & b, Border & slider) {
-            std::pair<int, int> dim = sliderDimensions(size().height());
+            std::pair<int, int> dim = sliderDimensions(height());
             canvas.setBorder(Point{col, 0}, Point{col, dim.first}, b);
             canvas.setBorder(Point{col, dim.second}, Point{col, height()}, b);
             canvas.setBorder(Point{col, dim.first}, Point{col, dim.second}, slider);
@@ -120,22 +121,32 @@ namespace ui {
     class ScrollBox : public virtual Widget {
     public:
 
+        ScrollBox():
+            horizontal_{new ScrollBar{}},
+            vertical_{new ScrollBar{}} {
+            horizontal_->setPosition(ScrollBar::Position::Right);
+            vertical_->setPosition(ScrollBar::Position::Bottom);
+            attach(horizontal_);
+            attach(vertical_);
+            setLayout(new Layout::Maximized{});    
+        }
+
         /** Returns the horizontal scroolbar. 
          */
         ScrollBar * scrollBarHorizontal() const {
-            return dynamic_cast<ScrollBar*>(children()[0]);
+            return horizontal_;
         }
 
         /** Returns the vertical scrollbar. 
          */
         ScrollBar * scrollBarVertical() const {
-            return dynamic_cast<ScrollBar*>(children()[1]);
+            return vertical_;
         }
 
         /** Returns the scrolled contents widget. 
          */
         Widget * contents() const {
-            return children().size() == 2 ? nullptr : children()[2];
+            return children().size() == 2 ? nullptr : children()[0];
         }
 
         /** Sets the scrolled widget. 
@@ -143,10 +154,10 @@ namespace ui {
             The widget is immediate child of the scrollbox. 
          */
         virtual void setContents(Widget * contents) {
-            if (children().size() == 3 && children()[2] != contents)
-                detach(children()[2]);
+            if (children().size() == 3 && children()[0] != contents)
+                detach(children()[0]);
             if (contents != nullptr)
-                attach(contents);
+                attachBack(contents);
         }
 
     protected:
@@ -160,6 +171,9 @@ namespace ui {
         }
 
     private:
+
+        ScrollBar * vertical_;
+        ScrollBar * horizontal_;
 
 
         Point scrollOffset_;

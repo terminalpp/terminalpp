@@ -109,16 +109,17 @@ namespace ui {
      
      */
     template<typename T = Terminal>
-    class TerminalUI : public virtual Widget {
+    class TerminalUI : public ScrollBox {
     public:
 
         TerminalUI(T * terminal):
             history_{new TerminalHistory{terminal}},
             terminal_{terminal} {
-            setLayout(new Layout::Column{});
+            //setLayout(new Layout::Column{});
             // attch the history and terminal widgets
-            attach(history_);
-            attach(terminal_);
+            // attach(history_);
+            setContents(terminal_);
+            //attach(terminal_);
         }
             
 
