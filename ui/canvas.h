@@ -27,7 +27,7 @@ namespace ui {
 
         /** Returns new canvas that is identical to the current canvas, but with new size. 
          */
-        Canvas resize(Size const & newSize) {
+        Canvas resize(Size const & newSize) const {
             return Canvas{*buffer_, visibleArea_.clip(Rect{newSize}), newSize};
         }
 
@@ -35,11 +35,17 @@ namespace ui {
          
             The rectangle does not have to fully fit in the parent canvas. 
          */
-        Canvas clip(Rect const & clip) {
+        Canvas clip(Rect const & clip) const {
             return Canvas(*buffer_, 
                 visibleArea_.clip(clip),
                 clip.size()
             );
+        }
+
+        /** Creates a canvas of the same size, but moves the visible rectangle by given offset. 
+         */ 
+        Canvas offsetBy(Point offset) const {
+            return Canvas{*buffer_, VisibleArea{visibleArea_.offset() - offset, (visibleArea_.rect() + offset) & Rect{size()}}, size()};
         }
 
         Rect rect() const {
@@ -170,10 +176,6 @@ namespace ui {
         Canvas & setBorder(Point from, Point to, Border const & border);
         Canvas & setBorder(Rect const & rect, Border const & border);
 
-
-        Canvas & verticalScrollbar(int size, int offset);
-        Canvas & horizontalScrollbar(int size, int offset);
-
         //@}
 
         /** \name Single cell access. 
@@ -185,29 +187,7 @@ namespace ui {
 
         //@}
 
-        /** \name Helpers
-         
-            Don't really know where to put these...
-         */
-        //@{
-
-        static std::pair<int, int> ScrollBarDimensions(int length, int max, int offset) {
-            int sliderSize = std::max(1, length * length / max);
-            int sliderStart = (offset + length == max) ? (length - sliderSize) : (offset * length / max);
-            // make sure that slider starts at the top only if we are really at the top
-            if (sliderStart == 0 && offset != 0)
-                sliderStart = 1;
-            // if the slider would go beyond the length, adjust the slider start
-            if (sliderStart + sliderSize > length)
-                sliderStart = length - sliderSize;
-            return std::make_pair(sliderStart, sliderStart + sliderSize);
-        }	
-        //@}
-
-
-
     private:
-
 
         Color fg_;
         Color bg_;

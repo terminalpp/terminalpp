@@ -85,6 +85,22 @@ TEST(canvas,clip_outside) {
     EXPECT_EQ(cc.visibleRect().empty(), true);
 }
 
+TEST(canvas, offset) {
+    Canvas::Buffer b{Size{100,100}};
+    Canvas c{b};
+    Canvas cc{c.resize(Size{1000,1000}).offsetBy(Point{100,50})};
+    EXPECT_EQ(cc.visibleRect(), Rect{Point{100, 50},Size{100,100}});
+    EXPECT_EQ(Canvas::TestAdapter::VisibleAreaOffset(cc), Point{-100,-50});
+}
+
+TEST(canvas, offset_clip) {
+    Canvas::Buffer b{Size{100,100}};
+    Canvas c{b};
+    Canvas cc{c.offsetBy(Point{60,50})};
+    EXPECT_EQ(cc.visibleRect(), Rect{Point{60, 50},Size{40,50}});
+    EXPECT_EQ(Canvas::TestAdapter::VisibleAreaOffset(cc), Point{-60,-50});
+}
+
 
 
 

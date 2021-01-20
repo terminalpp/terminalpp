@@ -1,6 +1,8 @@
 #pragma once
 #include <algorithm>
 
+#include "ui/widgets/scrollbox.h"
+
 #include "helpers/helpers.h"
 
 #include "terminal.h"

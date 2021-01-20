@@ -186,32 +186,6 @@ namespace ui {
         return *this;
     }
 
-    Canvas & Canvas::verticalScrollbar(int size, int offset) {
-        if (size > height()) {
-            std::pair<int, int> dim = ScrollBarDimensions(height(), size, offset);
-            Border b = Border::Empty(Color::Gray.withAlpha(128)).setRight(Border::Kind::Thin);
-            int x = width() - 1;
-            setBorder(Point{x, 0}, Point{x, dim.first}, b);
-            setBorder(Point{x, dim.second}, Point{x, height()}, b);
-            b.setRight(Border::Kind::Thick);
-            setBorder(Point{x, dim.first}, Point{x, dim.second}, b);
-        }
-        return *this;
-    }
-
-    Canvas & Canvas::horizontalScrollbar(int size, int offset) {
-        if (size > width()) {
-            std::pair<int, int> dim = ScrollBarDimensions(width(), size, offset);
-            Border b = Border::Empty(Color::White.withAlpha(64)).setRight(Border::Kind::Thin);
-            int y = height() - 1;
-            setBorder(Point{0,y}, Point{dim.first, y}, b);
-            setBorder(Point{dim.second, y}, Point{height(), y}, b);
-            b.setRight(Border::Kind::Thick);
-            setBorder(Point{dim.first, y}, Point{dim.second, y}, b);
-        }
-        return *this;
-    }
-
     // Canvas::SpecialObject
 
     void Canvas::SpecialObject::detachFromAllCells() {
