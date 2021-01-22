@@ -5,6 +5,8 @@
 #include <atomic>
 #include <condition_variable>
 
+#include "helpers.h"
+
 HELPERS_NAMESPACE_BEGIN
 
     /** A simple lock that allows locking in normal and priority modes, guaranteeing that a priority lock request will be serviced before any waiting normal locks. 

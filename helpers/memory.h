@@ -1,3 +1,4 @@
+#pragma once
 #include "helpers.h"
 
 HELPERS_NAMESPACE_BEGIN

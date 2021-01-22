@@ -1,107 +1,201 @@
 #pragma once
 #include <algorithm>
 
-#include "ui/widgets/scrollbox.h"
-
 #include "helpers/helpers.h"
+#include "helpers/memory.h"
+
+#include "ui/widgets/scrollbox.h"
 
 #include "terminal.h"
 
 namespace ui {
 
-    /** Displays terminal history. 
-     
-     */
-    class TerminalHistory : public virtual Widget {
+    template<typename TERMINAL>
+    class TerminalUI : public TERMINAL {
     public:
-
-        TerminalHistory(Terminal * terminal):
-            terminal_{terminal} {
-            setHeightHint(new SizeHint::AutoSize());
-            ASSERT(! terminal->onNewHistoryRow.attached());
-            terminal->onNewHistoryRow.setHandler(& TerminalHistory::addHistoryRow, this);
+        TerminalUI(tpp::PTYMaster * pty, Terminal::Palette && palette):
+            TERMINAL{pty, std::move(palette)},
+            scrollBar_{new ScrollBar{ScrollBar::Position::Right}} {
+            attach(scrollBar_);
+            setLayout(new Layout::Maximized{});
         }
 
-        int rows() const {
-            return static_cast<int>(rows_.size());
+        int historyRows() const {
+            std::lock_guard<PriorityLock> g(lock_.priorityLock(), std::adopt_lock);
+            return static_cast<int>(historyRows_.size());
         }
 
-        int maxRows() const {
-            return maxRows_;
+        /** \name Maximum number of history rows. 
+         */
+        //@{
+
+        int maxHistoryRows() const {
+            UI_THREAD_ONLY;
+            return maxHistoryRows_;
         }
 
-        void setMaxRows(int value) {
-            if (value != maxRows_) {
-                maxRows_ = std::max(value, 0);
-                // TODO lock
-                while (rows_.size() > static_cast<size_t>(maxRows_)) {
-                    rows_.pop_front();
-                }
+        virtual void setMaxHistoryRows(int value) {
+            UI_THREAD_ONLY;
+            if (maxHistoryRows_ != value) {
+                maxHistoryRows_ = value;
+                std::lock_guard<PriorityLock> g(lock_.priorityLock(), std::adopt_lock);
+                while (static_cast<int>(historyRows_.size()) > maxHistoryRows_)
+                    historyRows_.pop_front();
             }
         }
+        //@}
 
     protected:
-        /** Called when new line should be added to the history. 
-         
-            The terminal buffer must be locked when the function is called. 
-         */
-        void addHistoryRow(Terminal::NewHistoryRowEvent::Payload & e);
-
-        void addHistoryRow(int width, Terminal::Cell * cells) {
-            rows_.emplace_back(width, cells);
-            if (rows_.size() > maxRows_)
-                rows_.pop_front();
-        }
-
-    public:
-
-        void resize(Size size) override;
-
-    protected:
-
-        /** Paints the history. 
-         */
-        void paint(Canvas & canvas) override;
-
-
-    private:
         /** Single history row. 
          
             Contains the valid cells of the history row and their width. Contrary to the actual terminal buffer, the history only keeps valid cells, i.e. trims the row from right. 
          */
-        struct Row {
+        struct HistoryRow {
             int width;
             Canvas::Cell * cells;
 
-            ~Row() {
-                delete [] cells;
-            }
-
-            Row(int width, Canvas::Cell * cells):
+            HistoryRow(int width, Canvas::Cell * cells):
                 width{width},
                 cells{cells} {
             }
 
-            Row(Row const &) = delete;
+            HistoryRow(HistoryRow const &) = delete;
 
-        }; // ui::TerminalHistory::Row
+            ~HistoryRow() {
+                delete [] cells;
+            }
 
-        /*
-        Size getAutoSizeHint() override {
-            Size result = rect().size();
-            result.setHeight(static_cast<int>(rows_.size()));
-            return result;
+        }; // ui::TerminalUI::HistoryRow
+
+        void paint(Canvas & canvas) override {
+            {
+                std::lock_guard<PriorityLock> g(lock_.priorityLock(), std::adopt_lock);
+                paintHistoryLocked(canvas);
+                // paint the terminal now on its own canvas
+                Canvas terminalCanvas{canvas.offsetBy(Point{0, static_cast<int>(historyRows_.size())})};
+                paintLocked(terminalCanvas);
+            }
+                // and finally call widget's paint method which paints the scrollbar
+            Widget::paint(canvas);
         }
-        */
 
-        /** The terminal whose history we display. 
+        void newHistoryRow(Terminal::NewHistoryRowEvent::Payload & e) override {
+            ASSERT(lock_.locked());
+            if (maxHistoryRows_ == 0 || e->buffer != BufferKind::Normal)
+                return;
+            Cell const * start = e->cells;
+            Cell const * end = e->cells + e->width - 1;
+            // if we don't find end of line character, we must remember the whole line
+            size_t lineWidth = e->width;
+            Color defaultBg = palette().defaultBackground();
+            while (end > start) {
+                // if we have found end of line character, good
+                if (Terminal::Buffer::IsLineEnd(*end)) {
+                    lineWidth = end - start + 1;
+                    break;
+                }
+                // if we have found a visible character, we must remember the whole line, break the search - any end of line characters left of it will make no difference
+                if (end->codepoint() != ' ' || end->font().underline() || end->font().strikethrough() || end->bg() != defaultBg)
+                    break;
+                // otherwise move to previous column
+                --end;
+            }
+            ASSERT(lineWidth <= e->width);
+            Cell * row = new Cell[lineWidth];
+            // we cannot use memcopy here because the cells can be special
+            MemCopy(row, start, lineWidth);
+            addHistoryRow(static_cast<int>(lineWidth), row);
+            // trigger the user event, if any
+            TERMINAL::newHistoryRow(e);
+            // TODO repaint & relayout
+            // also determine if we should scroll the terminal in view or not
+        }
+
+
+        void resize(Size size) override {
+            resizeHistory(size.width());
+            TERMINAL::resize(size);
+        }
+
+
+    private:
+
+        /** Actually adds the a row to the history. 
+         
+            Does not run in UI thread. 
          */
-        Terminal const * terminal_;
+        void addHistoryRow(int width, Cell * cells) {
+            ASSERT(lock_.locked());
+            historyRows_.emplace_back(width, cells);
+            if (historyRows_.size() > maxHistoryRows_)
+                historyRows_.pop_front();
+        }
 
-        int maxRows_ = 0;
-        std::deque<Row> rows_;
+        /** Resizes the history to new width. 
+         */
+        void resizeHistory(int width) {
+            std::lock_guard<PriorityLock> g(lock_.priorityLock(), std::adopt_lock);
+            // don't do anything if the width is the same
+            if (this->width() == width)
+                return;
+            std::deque<HistoryRow> oldRows{std::move(historyRows_)};
+            Terminal::Cell * row = nullptr;
+            int rowWidth = 0;
+            for (HistoryRow & oldRow : oldRows) {
+                if (row == nullptr) {
+                    row = oldRow.cells;
+                    oldRow.cells = nullptr;
+                    rowWidth = oldRow.width;
+                } else {
+                    Terminal::Cell * newRow = new Terminal::Cell[rowWidth + oldRow.width];
+                    MemCopy(newRow, row, rowWidth);
+                    MemCopy(newRow + rowWidth, oldRow.cells, oldRow.width);
+                    rowWidth += oldRow.width;
+                    delete [] row;
+                    row = newRow;
+                }
+                ASSERT(row != nullptr);
+                if (Terminal::Buffer::IsLineEnd(row[rowWidth - 1])) {
+                    addHistoryRow(rowWidth, row);
+                    row = nullptr;
+                    rowWidth = 0;
+                }
+            }
+            if (row != nullptr)
+                addHistoryRow(rowWidth, row);
+        }
 
-    }; // ui::TerminalHistory
+        void paintHistoryLocked(Canvas & canvas) {
+            ASSERT(lock_.locked());
+    #ifdef SHOW_LINE_ENDINGS
+            Border endOfLine{Border::All(Color::Red, Border::Kind::Thin)};
+    #endif
+            Rect visibleRect{canvas.visibleRect()};
+            // only display the rows that are in the visible rectangle
+            for (int ri = visibleRect.top(), re = std::min(static_cast<int>(historyRows_.size()), visibleRect.bottom()); ri < re; ++ri) {
+                HistoryRow & row = historyRows_[ri];
+                for (int ci = 0, ce = row.width; ci < ce; ++ci) {
+                    canvas.at(Point{ci, ri}).stripSpecialObjectAndAssign(row.cells[ci]);
+    #ifdef SHOW_LINE_ENDINGS
+                    if (Terminal::Buffer::IsLineEnd(row.cells[ci]))
+                        canvas.setBorder(Point{ci, ri}, endOfLine);
+    #endif
+                }
+                // TODO should the rest of the line be drawn here?
+            }
+        }
+
+        /** The vertical scrollbar. */
+        ScrollBar * scrollBar_;
+
+        int maxHistoryRows_ = 0;
+        /** History rows, protected by the terminal buffer lock, as the buffer. */
+        std::deque<HistoryRow> historyRows_;
+
+    }; // ui::TerminalUi
+
+
+#ifdef HAHA
 
     /** Terminal widget with user interface support. 
      
@@ -118,7 +212,12 @@ namespace ui {
             //setLayout(new Layout::Column{});
             // attch the history and terminal widgets
             // attach(history_);
-            setContents(terminal_);
+            Panel * contents = new Panel();
+            // TODO column layout works but maybe is too slow when large history is processed?
+            contents->setLayout(new Layout::Column{});
+            contents->attach(history_);
+            contents->attach(terminal_);
+            setContents(contents);
             //attach(terminal_);
         }
             
@@ -158,7 +257,7 @@ namespace ui {
 
     }; // ui::TerminalUI<T>
 
-
+#endif
 
 #ifdef FOO
 

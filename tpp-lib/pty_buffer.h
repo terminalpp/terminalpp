@@ -86,9 +86,7 @@ namespace tpp {
 
         T * pty_;
 
-
     private:
-
 
         std::thread reader_;
 

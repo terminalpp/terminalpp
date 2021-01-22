@@ -43,8 +43,7 @@ namespace ui {
     char32_t AnsiTerminal::LineDrawingChars_[15] = {0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0, 0, 0x2500, 0, 0, 0x251c, 0x2524, 0x2534, 0x252c, 0x2502};
 
     AnsiTerminal::AnsiTerminal(tpp::PTYMaster * pty, Palette && palette):
-        Terminal{std::move(palette)},
-        PTYBuffer{pty},
+        Terminal{pty, std::move(palette)},
         buffer_{BufferKind::Normal, this, defaultCell()},
         bufferBackup_{BufferKind::Alternate, this, defaultCell()} {
         if (KeyMap_.empty()) {
@@ -63,12 +62,12 @@ namespace ui {
 
     // Widget
 
-    void AnsiTerminal::paint(Canvas & canvas) {
+    void AnsiTerminal::paintLocked(Canvas & canvas) {
+        ASSERT(lock_.locked());
 #ifdef SHOW_LINE_ENDINGS
         Border endOfLine{Border::All(Color::Red, Border::Kind::Thin)};
 #endif
         Rect visibleRect{canvas.visibleRect()};
-        std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
         canvas.setBg(palette().defaultBackground());
         // TODO once we support sixels or other shared objects that might survive to the drawing stage, this function will likely change. 
         canvas.drawFallbackBuffer(buffer_, Point{0, 0});
@@ -149,7 +148,7 @@ namespace ui {
         onMouseMove(e, this);
         if (e.active()) {
             {
-                std::lock_guard<PriorityLock> g(bufferLock_.priorityLock(), std::adopt_lock);
+                std::lock_guard<PriorityLock> g(lock_.priorityLock(), std::adopt_lock);
                 Hyperlink * a = dynamic_cast<Hyperlink*>(const_cast<Buffer const &>(buffer_).at(e->coords).specialObject());
                 // if there is active hyperlink that is different from current special object, deactive it
                 if (activeHyperlink_ != nullptr && activeHyperlink_ != a) {
@@ -263,7 +262,7 @@ namespace ui {
     }
 
     void AnsiTerminal::detectHyperlink(char32_t next) {
-        ASSERT(bufferLock_.locked());
+        ASSERT(lock_.locked());
         // don't do any matching if we are inside hyperlink command
         if (inProgressHyperlink_ != nullptr)
             return;
@@ -296,7 +295,7 @@ namespace ui {
 
     size_t AnsiTerminal::received(char * buffer, char const * bufferEnd) {
         {
-            std::lock_guard<PriorityLock> g(bufferLock_);
+            std::lock_guard<PriorityLock> g(lock_);
             // then process the input
             char const * x = buffer;
             while (x != bufferEnd) {
@@ -485,9 +484,9 @@ namespace ui {
                 if (*x == '+') {
                     resetHyperlinkDetection();
                     // frees the UI thread to draw the buffer while we are dealing with the tpp sequence
-                    bufferLock_.unlock();
+                    lock_.unlock();
                     size_t p = parseTppSequence(buffer, bufferEnd);
-                    bufferLock_.lock();
+                    lock_.lock();
                     return p;
                 } else {
                     LOG(SEQ_UNKNOWN) << "Unknown DCS sequence";

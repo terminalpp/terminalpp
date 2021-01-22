@@ -146,8 +146,7 @@ namespace tpp {
         public:
             std::string name;
             std::string title;
-            AnsiTerminal * terminal = nullptr;
-            TerminalUI<AnsiTerminal> * terminalUi = nullptr;
+            TerminalUI<AnsiTerminal> * terminal = nullptr;
             bool terminateOnKeyPress = false;
             /** If true, the current session has an active notification. 
              */
@@ -218,7 +217,7 @@ namespace tpp {
             if (session->pendingPaste != nullptr)
                 session->pendingPaste->dismiss(session->pendingPaste->btnCancel());
             sessions_.erase(session->terminal);
-            pager_->removePage(session->terminalUi);
+            pager_->removePage(session->terminal);
             delete session;
             // if this was the last session, close the window
             if (sessions_.empty())
@@ -267,7 +266,7 @@ namespace tpp {
 
         void activeSessionChanged(ui::Event<Widget*>::Payload & e) {
             activeSession_ = *e == nullptr ? 
-                nullptr : sessionInfo(dynamic_cast<TerminalUI<AnsiTerminal>*>(*e)->terminal());
+                nullptr : sessionInfo(dynamic_cast<TerminalUI<AnsiTerminal>*>(*e));
             // set own background to the session's terminal background so that it propagates to the window's background
             if (activeSession_ != nullptr) {
                 setBackground(activeSession_->terminal->palette().defaultBackground());

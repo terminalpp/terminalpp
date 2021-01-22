@@ -8,9 +8,6 @@
 #include "ui/mixins/selection_owner.h"
 #include "ui/special_objects/hyperlink.h"
 
-#include "tpp-lib/pty.h"
-#include "tpp-lib/pty_buffer.h"
-
 #include "terminal.h"
 #include "csi_sequence.h"
 #include "osc_sequence.h"
@@ -33,12 +30,7 @@ namespace ui {
      
         The simplest interface to the rerminal, no history, selection, etc?
      */
-    class AnsiTerminal : public Terminal, public tpp::PTYBuffer<tpp::PTYMaster> {
-    public:
-
-
-
-
+    class AnsiTerminal : public Terminal {
     /**\name Log Levels.
      */
     //@{
@@ -60,7 +52,7 @@ namespace ui {
             if (rect().size() == size)
                 return;
             {
-                std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
+                std::lock_guard<PriorityLock> g{lock_.priorityLock(), std::adopt_lock};
                 Widget::resize(size);
                 buffer_.resize();
                 bufferBackup_.resize();
@@ -102,7 +94,9 @@ namespace ui {
 
     protected:
 
-        void paint(Canvas & canvas) override;
+        /** Paints the already locked terminal on given canvas. 
+         */
+        void paintLocked(Canvas & canvas) override;
 
     //@}
 
@@ -120,7 +114,7 @@ namespace ui {
         /** Returns true if the application running in the terminal captures mouse events.
          */
         bool mouseCaptured() const {
-            std::lock_guard<PriorityLock> g{bufferLock_.priorityLock(), std::adopt_lock};
+            std::lock_guard<PriorityLock> g{lock_.priorityLock(), std::adopt_lock};
             return mouseMode_ != MouseMode::Off;
         }
 
@@ -374,11 +368,11 @@ namespace ui {
     protected:
 
         Locked<Buffer const> buffer() const {
-            return Locked{buffer_, bufferLock_.priorityLock(), std::adopt_lock};
+            return Locked{buffer_, lock_.priorityLock(), std::adopt_lock};
         }
 
         Locked<Buffer> buffer() {
-            return Locked{buffer_, bufferLock_.priorityLock(), std::adopt_lock};
+            return Locked{buffer_, lock_.priorityLock(), std::adopt_lock};
         }
 
         void ptyTerminated(ExitCode exitCode) override {
@@ -440,11 +434,10 @@ namespace ui {
 
         /** Current buffer and its backup. 
          
-            The states are swapped and current state kind is determined by the alternateMode(). The alternate buffer is not supposed to be accessed at all and the normal buffer is protected by the bufferLock_. 
+            The states are swapped and current state kind is determined by the alternateMode(). The alternate buffer is not supposed to be accessed at all and the normal buffer is protected by the lock_. 
          */
         Buffer buffer_;
         Buffer bufferBackup_;
-        mutable PriorityLock bufferLock_;
 
 
     //@}

@@ -19,6 +19,12 @@ namespace ui {
             Bottom,
         }; // ui::ScrollBar::Position
 
+        ScrollBar() = default;
+
+        ScrollBar(Position pos): 
+            position_{pos} {
+        }
+
         Position position() const {
             return position_;
         }

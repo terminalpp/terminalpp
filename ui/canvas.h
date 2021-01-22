@@ -633,6 +633,7 @@ namespace ui {
 
         Cell & setCodepoint(char32_t value) {
             codepoint_ = (codepoint_ & 0xffe00000) + (value & 0x1fffff);
+            markCursorPosition(false);
             return *this;
         }
         //@}
@@ -659,6 +660,8 @@ namespace ui {
 
         Cell & setBg(Color value) {
             bg_ = value;
+            if (bg_.opaque())
+                markCursorPosition(false);
             return *this;
         }
 
@@ -712,14 +715,43 @@ namespace ui {
         }
         //@}
 
+        static constexpr char32_t FIRST_UNUSED_BIT = 0x00200000;
+        static constexpr char32_t LAST_UNUSED_BIT  = 0x20000000;
 
     private:
 
         /** Marker indicating that special object is attached to the cell. 
          */
-        static const char32_t SPECIAL_OBJECT = 0x80000000;
+        static constexpr char32_t SPECIAL_OBJECT = 0x80000000;
+        static constexpr char32_t CURSOR = 0x40000000;
+        static constexpr char32_t UNUSED_BITS = 0x3fe00000;
 
-        /** Codepoint and discriminator between normal and special cell type. 
+        char32_t getUnusedBits() const {
+            return codepoint_ & UNUSED_BITS;
+        }
+
+        void setUnusedBits(char32_t bits) {
+            codepoint_ = (codepoint_ & ~UNUSED_BITS) | (bits & UNUSED_BITS);
+        }
+
+        void markCursorPosition(bool value) {
+            if (value)
+                codepoint_ |= CURSOR;
+            else
+                codepoint_ &= ~CURSOR;
+        }
+
+        bool hasCursorPositionMark() const {
+            return codepoint_ & CURSOR;
+        }
+
+        /** Codepoint and extra information. 
+         
+            Since UTF codepoints do not require all 32 bits the rest of cell's information is stored here as well, namely:
+
+            - special object flag 
+            - cursor flag
+            - unused bits that buffer implementations can use for whatever they need. 
          */
         char32_t codepoint_;
 
@@ -731,6 +763,12 @@ namespace ui {
 
     }; // ui::Canvas::Cell
 
+    /** Buffer composed of cells. 
+     
+        The buffer is a backing for a canvas. 
+        
+        Apart from the actual cells provides also information about cursor. Cursor information is kept separate, but when a cell is set to contain cursor position and is overwritten later (opaque background or character), the cursor will not be displeyed. 
+     */
     class Canvas::Buffer {
     public:
 
@@ -807,8 +845,6 @@ namespace ui {
 
         Cell & at(Point p) {
             Cell & result = cellAt(p);
-            // clear the unused bits because of non-const access
-            SetUnusedBits(result, 0);
             return result;
         }
 
@@ -823,7 +859,7 @@ namespace ui {
         }
 
         Point cursorPosition() const {
-            if (contains(cursorPosition_) && (GetUnusedBits(at(cursorPosition_)) & CURSOR_POSITION) == 0)
+            if (contains(cursorPosition_) && HasCursorPositionMark(at(cursorPosition_)))
                 return NoCursorPosition;
             else 
                 return cursorPosition_;
@@ -835,7 +871,7 @@ namespace ui {
             cursor_ = value;
             cursorPosition_ = position;
             if (contains(cursorPosition_))
-                SetUnusedBits(at(cursorPosition_), CURSOR_POSITION);
+                MarkCursorPosition(at(cursorPosition_));
         }
 
         /** Fills portion of given row with the specified cell. 
@@ -857,12 +893,6 @@ namespace ui {
 
     protected:
 
-        /*
-        Cell ** rows() {
-            return rows_;
-        }
-        */
-
         Cell const & cellAt(Point const & p) const {
             ASSERT(Rect{size_}.contains(p));
             return rows_[p.y()][p.x()];
@@ -876,18 +906,22 @@ namespace ui {
         /** Returns the value of the unused bits in the given cell's codepoint so that the buffer can store extra information for each cell. 
          */
         static char32_t GetUnusedBits(Cell const & cell) {
-            return cell.codepoint_ & 0x7fe00000;
+            return cell.getUnusedBits();
         }
 
         /** Sets the unused bytes value for the given cell to store extra information by the buffer. 
          */
         static void SetUnusedBits(Cell & cell, char32_t value) {
-            cell.codepoint_ = (cell.codepoint_ & 0x801fffff) + (value & 0x7fe00000);
+            return cell.setUnusedBits(value);
         }
 
-        /** Unused bits flag that confirms that the cell has a visible cursor in it. 
-         */
-        static char32_t constexpr CURSOR_POSITION = 0x200000;
+        static void MarkCursorPosition(Cell & cell) {
+            cell.markCursorPosition(true);
+        }
+
+        static bool HasCursorPositionMark(Cell const & cell) {
+            return cell.hasCursorPositionMark();
+        }
 
     protected:
 

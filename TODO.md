@@ -6,6 +6,15 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- and how to relay the events to the terminal 
+
+- layout getter should be only visible to those who can attach & detach (Panel)
+
+- terminalHistory should paint the terminal as well
+- determine how to propagate the fact that processing has ended to determine the size of the history and the scrollbars
+- or maybe inherit from terminal really... 
+
+
 - selection owner is commented out, figure out how that one works w/o scrolling
     - Renderer::clearSelection
 

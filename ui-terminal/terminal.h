@@ -1,5 +1,11 @@
 #pragma once
 
+#include "helpers/locks.h"
+
+#include "tpp-lib/pty.h"
+#include "tpp-lib/pty_buffer.h"
+
+
 #include "ui/widget.h"
 
 namespace ui {
@@ -8,7 +14,7 @@ namespace ui {
      
         Provides minimal interface of a terminal. On top of being a widget, provides the events for adding new history line and changing the active buffer. 
      */
-    class Terminal : public virtual Widget {
+    class Terminal : public virtual Widget, public tpp::PTYBuffer<tpp::PTYMaster> {
     public:
         using Cell = Canvas::Cell;
         using Cursor = Canvas::Cursor;
@@ -343,7 +349,7 @@ namespace ui {
 
             /** Flag designating the end of line in the buffer. 
              */
-            static constexpr char32_t END_OF_LINE = 0x200000;
+            static constexpr char32_t END_OF_LINE = Cell::FIRST_UNUSED_BIT;
 
         }; // ui::Terminal::Buffer
 
@@ -379,6 +385,12 @@ namespace ui {
             return palette_;
         }
 
+        /** Returns the priority lock of the terminal's buffer so that it can be locked by 3rd parties for updates.
+         */
+        PriorityLock & lock() {
+            return lock_;
+        }
+
     protected:
         /** Returns the default empty cell of the terminal. 
          */
@@ -386,9 +398,30 @@ namespace ui {
             return Cell{}.setFg(palette_.defaultForeground()).setDecor(palette_.defaultForeground()).setBg(palette_.defaultBackground());
         }
 
-        Terminal(Palette && palette):
+        Terminal(tpp::PTYMaster * pty, Palette && palette):
+            PTYBuffer{pty},
             palette_{std::move(palette)} {
         }
+
+        void paint(Canvas & canvas) override {
+            {
+                std::lock_guard<PriorityLock> g(lock_.priorityLock(), std::adopt_lock);
+                paintLocked(canvas);
+            }
+            Widget::paint(canvas);
+        }
+
+        virtual void paintLocked(Canvas & canvas) = 0;
+
+        /** Called when new row is evicted from the terminal and can be added to the history. 
+         */
+        virtual void newHistoryRow(NewHistoryRowEvent::Payload & row) {
+            if (row.active()) {
+                onNewHistoryRow(row, this);
+            }
+        }
+
+        mutable PriorityLock lock_;
 
     private:
 

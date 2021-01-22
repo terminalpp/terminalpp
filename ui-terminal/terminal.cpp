@@ -90,7 +90,8 @@ namespace ui {
 
     void Terminal::Buffer::deleteLine(int top, int bottom, Cell const & fill) {
         Cell * x = rows_[top];
-        terminal_->onNewHistoryRow(NewHistoryRowEvent::Payload{bufferKind_, width(), x}, terminal_);
+        NewHistoryRowEvent::Payload p{bufferKind_, width(), x};
+        terminal_->newHistoryRow(p);
         memmove(rows_ + top, rows_ + top + 1, sizeof(Cell*) * (bottom - top - 1));
         rows_[bottom - 1] = x;
         fillRow(bottom - 1, fill, 0, width());
