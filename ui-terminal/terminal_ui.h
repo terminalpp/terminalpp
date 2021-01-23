@@ -70,9 +70,20 @@ namespace ui {
         void paint(Canvas & canvas) override {
             {
                 std::lock_guard<PriorityLock> g(lock_.priorityLock(), std::adopt_lock);
-                paintHistoryLocked(canvas);
+                // now that we are locked, determine if the scrollbar has to be updated and update accordingly
+                int historySize = static_cast<int>(historyRows_.size());
+                int fullHeight = historySize + height();
+                if (scrollBar_->max() != fullHeight) {
+                    bool autoscroll = scrollBar_->value() == scrollBar_->max() - scrollBar_->sliderSize();
+                    scrollBar_->setMax(fullHeight);
+                    if (autoscroll) 
+                        scrollBar_->setValue(scrollBar_->max() - scrollBar_->sliderSize());
+                } 
+                // resize the canvas to history and the offset it by the scrollbar value
+                Canvas historyCanvas{canvas.resize(Size{width(), historySize}).offsetBy(Point{0, scrollBar_->value()})};
+                paintHistoryLocked(historyCanvas);
                 // paint the terminal now on its own canvas
-                Canvas terminalCanvas{canvas.offsetBy(Point{0, static_cast<int>(historyRows_.size())})};
+                Canvas terminalCanvas{canvas.offsetBy(Point{0, - (historySize - scrollBar_->value())})};
                 paintLocked(terminalCanvas);
             }
                 // and finally call widget's paint method which paints the scrollbar
@@ -115,8 +126,9 @@ namespace ui {
         void resize(Size size) override {
             resizeHistory(size.width());
             TERMINAL::resize(size);
+            // make sure the slider's size will be the the height of the terminal widget
+            scrollBar_->setSliderSize(size.height());
         }
-
 
     private:
 

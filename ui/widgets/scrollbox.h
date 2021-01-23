@@ -36,6 +36,49 @@ namespace ui {
             }
         }
 
+        int min() const {
+            return min_;
+        }
+
+        int max() const {
+            return max_;
+        }
+
+        virtual void setMax(int value) {
+            if (max_ != value) {
+                max_ = value;
+                if (value_ > max_)
+                    value_ = max_;
+                requestRepaint();
+            }
+        }
+
+        int value() const {
+            return value_;
+        }
+
+        virtual void setValue(int value) {
+            if (value_ < min_)
+                value_ = min_;
+            else if (value_ > max_)
+                value_ = max_;
+            if (value_ != value) {
+                value_ = value;
+                requestRepaint();
+            }
+        }
+
+        int sliderSize() const {
+            return sliderSize_;
+        }
+
+        virtual void setSliderSize(int value) {
+            if (sliderSize_ != value) {
+                sliderSize_ = value;
+                requestRepaint();
+            }
+        }
+
     protected:
 
         /** Paints the scrollbar.

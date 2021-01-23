@@ -6,6 +6,9 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- scrollbar does not show the very end
+- cursor appears if it should not?
+
 - and how to relay the events to the terminal 
 
 - layout getter should be only visible to those who can attach & detach (Panel)

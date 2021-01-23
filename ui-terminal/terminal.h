@@ -375,14 +375,15 @@ namespace ui {
          */
         NewHistoryRowEvent onNewHistoryRow;
 
-
-
         Palette const & palette() const {
             return palette_;
         }
 
-        Palette & palette() {
-            return palette_;
+        virtual void setPalette(Palette && value) {
+            if (& palette_ != & value) {
+                palette_ = std::move(value);
+                setBackground(palette_.defaultBackground());
+            }
         }
 
         /** Returns the priority lock of the terminal's buffer so that it can be locked by 3rd parties for updates.
@@ -401,6 +402,7 @@ namespace ui {
         Terminal(tpp::PTYMaster * pty, Palette && palette):
             PTYBuffer{pty},
             palette_{std::move(palette)} {
+            setBackground(palette_.defaultBackground());
         }
 
         void paint(Canvas & canvas) override {
