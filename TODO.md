@@ -6,10 +6,12 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
-- scrollbar does not show the very end
+- do not show scrollbar if no history or if in alternate mode
+- do not capture mouse when mouse is used
+- changing visibility should clear mouse focus (and keyboard focus). Same for enabled
 - cursor appears if it should not?
 
-- and how to relay the events to the terminal 
+- and how to relay the events to the terminal (and update the event coordinates in terminal);lk 
 
 - layout getter should be only visible to those who can attach & detach (Panel)
 

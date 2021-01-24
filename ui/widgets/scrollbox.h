@@ -57,14 +57,19 @@ namespace ui {
             return value_;
         }
 
+        /** Sets the value of the scrollbar. 
+         
+            If the desired value is outside of the bounds, i.e. the minimal value and the maximal value minus the slider size, it is cropped. If the scrollbar's value changes, triggers the onScroll event.
+         */
         virtual void setValue(int value) {
-            if (value_ < min_)
-                value_ = min_;
-            else if (value_ > max_)
-                value_ = max_;
+            if (value < min_)
+                value = min_;
+            else if (value > max_ - sliderSize_)
+                value = max_ - sliderSize_;
             if (value_ != value) {
                 value_ = value;
                 requestRepaint();
+                onScroll(VoidEvent::Payload{}, this);
             }
         }
 
@@ -79,7 +84,24 @@ namespace ui {
             }
         }
 
+        /** Triggered when the scrollbar's value changes. 
+         */
+        VoidEvent onScroll;
+
     protected:
+
+        /** When mouse wheel is detected, scroll the bar. 
+         */
+        void mouseWheel(MouseWheelEvent::Payload & e) override {
+            if (e->modifiers == Key::None) {
+                int oldValue = value_;
+                setValue(value_ - e->by);
+                // if the value changes, the event was consumed we stop the propagation. 
+                if (oldValue != value_)
+                    e.stop();
+            }
+            Widget::mouseWheel(e);
+        }
 
         /** Paints the scrollbar.
          */
@@ -140,7 +162,7 @@ namespace ui {
             int sliderStart = adjustedValue * scrollBarSize / adjustedSize;
             if (sliderStart == 0 && adjustedValue != 0)
                 sliderStart = 1;
-            if (sliderStart + sliderSize > scrollBarSize)
+            if (value_ + sliderSize_ >= max_)
                 sliderStart = scrollBarSize - sliderSize;
             // and return 
             return std::make_pair(sliderStart, sliderStart + sliderSize);
