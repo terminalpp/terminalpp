@@ -50,12 +50,12 @@
             "name": "(linux) ropen",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build-GCC for x86_64-linux-gnu 9.3.0/ropen/ropen",
-            "args": [],
+            "program": "${workspaceFolder}/build-GCC 10.2.0/ropen/ropen",
+            "args": ["--verbose", "/mnt/c/devel/main.pdf"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "externalConsole": true,
+            "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
                 {

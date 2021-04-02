@@ -62,7 +62,7 @@ namespace tpp {
 
         static Config & Setup(int argc, char * argv[]) {
             Config & config = Instance();
-            //config.fillDefaultValues();
+            config.fillMissingValues();
             config.parseCommandLine(argc, argv);
             if (! config.filename.updated())
                 THROW(ArgumentError()) << "Input file must be specified";
@@ -74,7 +74,7 @@ namespace tpp {
         Config() {
             addArgument(timeout, {"--timeout", "-t"});
             addArgument(packetSize, {"--packet-size"});
-            addArgument(verbose, {"--verbose", "-v"});
+            addArgument(verbose, {"--verbose", "-v"}, "true");
             addArgument(adaptiveSpeed, {"--adaptive"});
             addArgument(filename, {"--file", "-f"});
             setDefaultArgument(filename);

@@ -318,18 +318,18 @@ HELPERS_NAMESPACE_BEGIN
         }
 
         explicit JSON(bool value):
-            kind_(Kind::Boolean),
-            valueBool_(value ? 1 : 0) {
+            kind_{Kind::Boolean},
+            valueBool_{value} {
         }
 
         explicit JSON(int value):
-            kind_(Kind::Integer),
-            valueInt_(value) {
+            kind_{Kind::Integer},
+            valueInt_{value} {
         }
 
         explicit JSON(unsigned value):
-            kind_(Kind::Integer),
-            valueInt_(static_cast<int>(value)) {
+            kind_{Kind::Integer},
+            valueInt_{static_cast<int>(value)} {
         }
 
         explicit JSON(double value):
@@ -1091,16 +1091,16 @@ HELPERS_NAMESPACE_BEGIN
             switch (top()) {
                 case 'n':
                     pop("null");
-                    return JSON(Kind::Null);
+                    return JSON{Kind::Null};
                     break;
                 case 't':
                     pop("true");
-                    return JSON(true);
+                    return JSON{true};
                 case 'f':
                     pop("false");
-                    return JSON(false);
+                    return JSON{false};
                 case '\"':
-                    return JSON(parseStr());
+                    return JSON{parseStr()};
                 case '[':
                     return parseArray();
                 case '{':

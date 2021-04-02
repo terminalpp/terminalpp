@@ -757,7 +757,7 @@ HELPERS_NAMESPACE_BEGIN
         if (value == nullptr)
             update(JSON{true});
         else
-            update(JSON{value});
+            update(JSON::Parse(value));
     }
 
     template<>

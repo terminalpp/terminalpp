@@ -28,3 +28,13 @@ TEST(helpers_json, integer) {
     i = j;
     EXPECT(i == 67);
 }
+
+TEST(helpers_json, boolean) {
+    JSON j{true};
+    EXPECT(j.kind() == JSON::Kind::Boolean);
+    bool i = j;
+    EXPECT(i == true);
+    j = false;
+    i = j;
+    EXPECT(i == false);
+}
