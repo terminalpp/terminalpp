@@ -6,6 +6,8 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+- `ls -la` the third wrapped line has green border all the way to the end of the line, which it should not
+
 - do not show scrollbar if no history or if in alternate mode
 - do not capture mouse when mouse is used
 - changing visibility should clear mouse focus (and keyboard focus). Same for enabled

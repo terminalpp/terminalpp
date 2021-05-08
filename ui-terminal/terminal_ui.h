@@ -8,6 +8,12 @@
 
 #include "terminal.h"
 
+/** Inside debug builds, end of line is highlighted by red border.
+ */
+#ifndef NDEBUG
+#define SHOW_LINE_ENDINGS
+#endif
+
 namespace ui {
 
     template<typename TERMINAL>
@@ -146,6 +152,7 @@ namespace ui {
         /** Resizes the history to new width. 
          */
         void resizeHistory(int width) {
+            ASSERT(width > 0);
             std::lock_guard<PriorityLock> g(lock_.priorityLock(), std::adopt_lock);
             // don't do anything if the width is the same
             if (this->width() == width)
@@ -154,6 +161,7 @@ namespace ui {
             Terminal::Cell * row = nullptr;
             int rowWidth = 0;
             for (HistoryRow & oldRow : oldRows) {
+                // make sure that we have some history to play with, either move, or copy & append
                 if (row == nullptr) {
                     row = oldRow.cells;
                     oldRow.cells = nullptr;
@@ -167,6 +175,18 @@ namespace ui {
                     row = newRow;
                 }
                 ASSERT(row != nullptr);
+                // if the row is longer that current width, we must split it and add the maximum width part as a row
+                while (rowWidth > width) {
+                    Terminal::Cell * first = new Terminal::Cell[width];
+                    Terminal::Cell * second = new Terminal::Cell[rowWidth - width];
+                    MemCopy(first, row, width);
+                    MemCopy(second, row + width, rowWidth - width);
+                    rowWidth -= width;
+                    delete [] row;
+                    row = second;
+                    addHistoryRow(width, first);
+                }
+                // if the row ends with end of line, we add what we have
                 if (Terminal::Buffer::IsLineEnd(row[rowWidth - 1])) {
                     addHistoryRow(rowWidth, row);
                     row = nullptr;

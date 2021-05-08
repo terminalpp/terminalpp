@@ -80,6 +80,8 @@
         "numeric": "cpp",
         "random": "cpp",
         "compare": "cpp",
-        "*.rh": "cpp"
+        "*.rh": "cpp",
+        "bit": "cpp",
+        "stop_token": "cpp"
     }
 }
