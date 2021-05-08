@@ -515,6 +515,8 @@ namespace ui {
         /** Returns the cell at given coordinates. 
          
             The coordinates are adjusted for the scroll buffer and then either a terminal buffer, or history cell is returned. In case of history cells, it is possible that no cell exists at the coordinates if the particular line was terminated before, in which case nullptr is returned. 
+
+            Furthermore, if the coordinates are outside of valid range, nullptr is returned as well. 
          */
         Cell const * cellAt(Point coords);
 

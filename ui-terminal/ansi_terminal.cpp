@@ -607,8 +607,12 @@ namespace ui {
         int bufferTop = terminalBufferTop();
         if (bufferTop <= coords.y()) {
             coords -= Point{0, bufferTop};
+            if (! state_->buffer.contains(coords))
+                return nullptr;
             return & const_cast<Buffer const &>(state_->buffer).at(coords);
         } else {
+            if (coords.y() < 0)
+                return nullptr;
             auto const & row = historyRows_[coords.y()];
             if (coords.x() >= row.first)
                 return nullptr;

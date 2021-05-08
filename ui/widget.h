@@ -302,7 +302,7 @@ namespace ui {
         /** Updates the scroll offset of the widget. 
          
             When offset changes, the visible area must be recalculated and the widget repainted. 
-            */
+         */
         virtual void setScrollOffset(Point const & value) {
             if (value != scrollOffset_) {
                 scrollOffset_ = value;
