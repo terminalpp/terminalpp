@@ -51,7 +51,7 @@ Then build the application using the following commands:
 
     mkdir -p build/release
     cd build/release
-    cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
+    cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9
     cmake --build .
 
 ## macOS

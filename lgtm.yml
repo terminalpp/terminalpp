@@ -2,14 +2,14 @@ extraction:
   cpp:
     prepare:
       packages:
-        - g++-8 
+        - g++-9 
         - libx11-dev
         - libxft-dev
     configure:
       command: |
         mkdir build
         cd build
-        cmake .. -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
+        cmake .. -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9
     index:
       build_command:
         - cd build && make -j2 -s        

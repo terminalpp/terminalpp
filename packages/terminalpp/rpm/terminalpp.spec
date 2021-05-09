@@ -17,7 +17,7 @@ tar -xvf $RPM_SOURCE_DIR/terminalpp.tar.gz -C $RPM_BUILD_DIR
 mkdir -p $RPM_BUILD_DIR/build
 
 %build
-cd $RPM_BUILD_DIR/build && cmake ../terminalpp -DCMAKE_BUILD_TYPE=Release -DSTAMP_ARGS=--no-override -DCMAKE_CXX_COMPILER=g++-8 -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/usr -DINSTALL=terminalpp
+cd $RPM_BUILD_DIR/build && cmake ../terminalpp -DCMAKE_BUILD_TYPE=Release -DSTAMP_ARGS=--no-override -DCMAKE_CXX_COMPILER=g++-9 -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/usr -DINSTALL=terminalpp
 cd $RPM_BUILD_DIR/build && make terminalpp
 
 %install
