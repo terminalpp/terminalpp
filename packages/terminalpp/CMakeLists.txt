@@ -1,31 +1,6 @@
 set(PROJECT_EXECUTABLE "$<TARGET_FILE:terminalpp>")
 
 # Windows
-#
-# on windows, the WIX toolset is used to produce the msi installer package. The package-msi target is defined here which runs WIX for terminalpp
-if(PACKAGE_MSI AND RENDERER_NATIVE)
-    # create the build directory and configure the WiX configuration in it
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msi/terminalpp.wxs ${CMAKE_CURRENT_BINARY_DIR}/msi/terminalpp.wxs @ONLY)
-    add_custom_target(terminalpp-msi
-        COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/msi/terminalpp.exe
-        COMMAND ${PACKAGE_MSI}/candle.exe
-            -nologo 
-            -arch "x64" 
-            -ext WixUIExtension -ext WixUtilExtension 
-            -out "terminalpp.wixobj" 
-            "terminalpp.wxs"
-        COMMAND ${PACKAGE_MSI}/light.exe 
-            -nologo
-            -ext WixUIExtension
-            -ext WixUtilExtension 
-            -out "${CMAKE_BINARY_DIR}/packages/terminalpp.msi" 
-            -sice:ICE61 -sice:ICE91 
-            "terminalpp.wixobj"
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/msi
-        DEPENDS terminalpp
-    )        
-    add_dependencies(packages terminalpp-msi)
-endif()
 
 # generate the MSIX package
 # https://www.advancedinstaller.com/msix-introduction.html
@@ -93,11 +68,60 @@ if(PACKAGE_MSIX AND RENDERER_NATIVE)
         COMMAND MakeAppx.exe pack /d . /p ${CMAKE_BINARY_DIR}/packages/terminalpp-preview.msix /o
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/msix-preview
         DEPENDS terminalpp
-                
     )
     # don't build by default
     #add_dependencies(packages terminalpp-msix-preview)
 endif()
+
+# on windows, the WIX toolset is used to produce the msi installer package. The package-msi target is defined here which runs WIX for terminalpp
+if(PACKAGE_MSI AND RENDERER_NATIVE)
+    # create the build directory and configure the WiX configuration in it
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msi/terminalpp.wxs ${CMAKE_CURRENT_BINARY_DIR}/msi/terminalpp.wxs @ONLY)
+    add_custom_target(terminalpp-msi
+        COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/msi/terminalpp.exe
+        COMMAND ${PACKAGE_MSI}/candle.exe
+            -nologo 
+            -arch "x64" 
+            -ext WixUIExtension -ext WixUtilExtension 
+            -out "terminalpp.wixobj" 
+            "terminalpp.wxs"
+        COMMAND ${PACKAGE_MSI}/light.exe 
+            -nologo
+            -ext WixUIExtension
+            -ext WixUtilExtension 
+            -out "${CMAKE_BINARY_DIR}/packages/terminalpp.msi" 
+            -sice:ICE61 -sice:ICE91 
+            "terminalpp.wixobj"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/msi
+        DEPENDS terminalpp
+    )        
+    add_dependencies(packages terminalpp-msi)
+endif()
+
+# On windows, always create the also create the portable application.
+if (ARCH_WINDOWS AND RENDERER_NATIVE)
+    # create the portable executable (for now this is just a rename of the buil terminal as we have no dependencies)
+    add_custom_target(terminalpp-portable
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${PROJECT_EXECUTABLE}
+            terminalpp-portable.exe
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/packages
+        DEPENDS terminalpp
+    )
+    add_dependencies(packages terminalpp-portable)
+endif()
+
+# generate the scoop manifest. First the manifest file is generated replacing the name, version and summary information. A simple powershell script is then used to replace the hash. 
+if (ARCH_WINDOWS AND RENDERER_NATIVE)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scoop/terminalpp.json ${CMAKE_BINARY_DIR}/packages/terminalpp-scoop.json @ONLY)
+    add_custom_target(terminalpp-scoop
+        COMMAND powershell -File ${CMAKE_SOURCE_DIR}/packages/terminalpp/scoop/update_hash.ps1
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/packages
+        DEPENDS terminalpp-portable
+    )
+    add_dependencies(packages terminalpp-scoop)
+endif()
+
 
 # Linux
 # =====

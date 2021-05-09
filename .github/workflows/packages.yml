@@ -39,6 +39,16 @@ jobs:
       with:
         name: terminalpp.msix
         path: build/packages/terminalpp.msix
+    - name: artifact-terminalpp-portable
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp-portable.exe
+        path: build/packages/terminalpp-portable.exe
+    - name: artifact-terminalpp-scoop
+      uses: actions/upload-artifact@master
+      with:
+        name: terminalpp-scoop.json
+        path: build/packages/terminalpp-scoop.json
 
   # Source and Binary packages for Linux 
   #

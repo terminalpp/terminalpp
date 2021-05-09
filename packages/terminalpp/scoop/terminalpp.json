@@ -1,0 +1,20 @@
+{
+    "version": "@TPP_VERSION@",
+    "description": "@TERMINALPP_SUMMARY@",
+    "homepage": "https://terminalpp.com",
+    "license": "MIT",
+    "url": "https://github.com/terminalpp/terminalpp/releases/download/v0.8.3/terminalpp-portable.exe#/terminalpp.exe",
+    "hash": "fill_in_the_hash_of_terminalpp_portable_exe",
+    "bin": "terminalpp.exe",
+    "shortcuts": [
+        [
+            "terminalpp.exe",
+            "Terminalpp",
+            ""
+        ]
+    ],
+    "checkver": "github",
+    "autoupdate": {
+        "url": "https://github.com/terminalpp/terminalpp/releases/download/v$version/terminalpp-portable.exe#/terminalpp.exe"
+    }
+}
