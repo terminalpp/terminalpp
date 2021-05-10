@@ -160,7 +160,7 @@ jobs:
       run: |
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
+        PATH="/usr/local/opt/qt@5/bin:$PATH" && cmake .. -DCMAKE_BUILD_TYPE=Release
         cmake --build . --target packages
     - name: artifact-terminalpp-zip
       uses: actions/upload-artifact@master
