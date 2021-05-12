@@ -3,7 +3,7 @@
     "description": "@TERMINALPP_SUMMARY@",
     "homepage": "https://terminalpp.com",
     "license": "MIT",
-    "url": "https://github.com/terminalpp/terminalpp/releases/download/v0.8.3/terminalpp-portable.exe#/terminalpp.exe",
+    "url": "https://github.com/terminalpp/terminalpp/releases/download/v0.8.4/terminalpp-portable.exe#/terminalpp.exe",
     "hash": "fill_in_the_hash_of_terminalpp_portable_exe",
     "bin": "terminalpp.exe",
     "shortcuts": [

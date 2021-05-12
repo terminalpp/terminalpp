@@ -237,6 +237,15 @@ jobs:
         asset_path: ./artifacts/terminalpp.msix/terminalpp.msix
         asset_name: terminalpp.msix
         asset_content_type: application/octet-stream
+    - name: upload-terminalpp-portable
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./artifacts/terminalpp-portable.exe/terminalpp-portable.exe
+        asset_name: terminalpp-portable.exe
+        asset_content_type: application/octet-stream
     # upload terminalpp linux binaries
     - name: upload-terminalpp-deb
       uses: actions/upload-release-asset@v1

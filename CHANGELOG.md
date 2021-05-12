@@ -5,6 +5,12 @@ layout: titled
 
 Lists the most important improvements for recent `terminalpp` versions.
 
+### 0.8.4
+
+- fixed ropen command line interface
+- fixed selection while scrolling outside of window bug
+- added support for scoop
+
 ### 0.8.3
 
 - hyperlinks (`http` and `https` links can be autodetected, `OSC 8` escape sequence supported as well, configurable styles)
