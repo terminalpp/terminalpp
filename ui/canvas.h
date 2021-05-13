@@ -860,9 +860,9 @@ namespace ui {
 
         Point cursorPosition() const {
             if (contains(cursorPosition_) && HasCursorPositionMark(at(cursorPosition_)))
-                return NoCursorPosition;
-            else 
                 return cursorPosition_;
+            else 
+                return NoCursorPosition;
         }
 
         /** Sets the cursor and position. 
