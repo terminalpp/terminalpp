@@ -613,10 +613,10 @@ namespace tpp {
 				);
 				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
 				 */
-				ui::AnsiTerminal::Palette * operator () () const {
-					auto result = new ui::AnsiTerminal::Palette{colors()};
-					result->setDefaultForeground(defaultForeground());
-					result->setDefaultBackground(defaultBackground());
+				ui::AnsiTerminal::Palette operator () () const {
+                    ui::AnsiTerminal::Palette result{colors()};
+					result.setDefaultForeground(defaultForeground());
+					result.setDefaultBackground(defaultBackground());                    
 					return result;
 				}
 			);

@@ -38,7 +38,102 @@ namespace ui {
         using Cursor = Canvas::Cursor;
         class Buffer;
         class State;
-        class Palette;
+
+        /** Palette
+         */
+        class Palette {
+        public:
+
+            static Palette Colors16();
+            static Palette XTerm256(); 
+
+            Palette():
+                size_{2},
+                defaultFg_{Color::White},
+                defaultBg_{Color::Black},
+                colors_{new Color[2]} {
+                colors_[0] = Color::Black;
+                colors_[1] = Color::White;
+            }
+
+            Palette(size_t size, Color defaultFg = Color::White, Color defaultBg = Color::Black):
+                size_(size),
+                defaultFg_(defaultFg),
+                defaultBg_(defaultBg),
+                colors_(new Color[size]) {
+            }
+
+            Palette(std::initializer_list<Color> colors, Color defaultFg = Color::White, Color defaultBg = Color::Black);
+
+            Palette(Palette const & from);
+
+            Palette(Palette && from) noexcept;
+
+            ~Palette() {
+                delete [] colors_;
+            }
+
+            Palette & operator = (Palette const & other);
+            Palette & operator == (Palette && other);
+
+            size_t size() const {
+                return size_;
+            }
+
+            Color defaultForeground() const {
+                return defaultFg_;
+            }
+
+            Color defaultBackground() const {
+                return defaultBg_;
+            }
+
+            void setDefaultForeground(size_t index) {
+                defaultFg_ = colors_[index];
+            }
+
+            void setDefaultForeground(Color color) {
+                defaultFg_ = color;
+            }
+
+            void setDefaultBackground(size_t index) {
+                defaultBg_ = colors_[index];
+            }
+
+            void setDefaultBackground(Color color) {
+                defaultBg_ = color;
+            }
+
+            void setColor(size_t index, Color color) {
+                ASSERT(index < size_);
+                colors_[index] = color;
+            }
+
+            Color operator [] (size_t index) const {
+                ASSERT(index < size_);
+                return colors_[index];
+            } 
+
+            Color & operator [] (size_t index) {
+                ASSERT(index < size_);
+                return colors_[index];
+            } 
+
+            Color at(size_t index) const {
+                return (*this)[index];
+            }
+            Color & at(size_t index) {
+                return (*this)[index];
+            }
+
+        private:
+
+            size_t size_;
+            Color defaultFg_;
+            Color defaultBg_;
+            Color * colors_;
+
+        }; // AnsiTerminal::Palette
 
     /**\name Log Levels.
      */
@@ -52,7 +147,7 @@ namespace ui {
     //@}
 
     public:
-        AnsiTerminal(tpp::PTYMaster * pty, Palette * palette);
+        AnsiTerminal(tpp::PTYMaster * pty, Palette && palette);
 
         ~AnsiTerminal() override;
 
@@ -75,7 +170,7 @@ namespace ui {
 
         /** Returns the palette of the terminal. 
          */
-        Palette const * palette() const {
+        Palette const & palette() const {
             return palette_;
         }
 
@@ -553,7 +648,7 @@ namespace ui {
             Application
         }; // AnsiTerminal::KeypadMode
 
-        Palette * palette_;
+        Palette palette_;
 
         CursorMode cursorMode_ = CursorMode::Normal;
         /** The default cursor as specified by the configuration. */
@@ -844,102 +939,6 @@ namespace ui {
     }; // ui::AnsiTerminal::State
 
     // ============================================================================================
-
-    /** Palette
-     */
-    class AnsiTerminal::Palette {
-    public:
-
-        static Palette Colors16();
-        static Palette XTerm256(); 
-
-        Palette():
-            size_{2},
-            defaultFg_{Color::White},
-            defaultBg_{Color::Black},
-            colors_{new Color[2]} {
-            colors_[0] = Color::Black;
-            colors_[1] = Color::White;
-        }
-
-        Palette(size_t size, Color defaultFg = Color::White, Color defaultBg = Color::Black):
-            size_(size),
-            defaultFg_(defaultFg),
-            defaultBg_(defaultBg),
-            colors_(new Color[size]) {
-        }
-
-        Palette(std::initializer_list<Color> colors, Color defaultFg = Color::White, Color defaultBg = Color::Black);
-
-        Palette(Palette const & from);
-
-        Palette(Palette && from) noexcept;
-
-        ~Palette() {
-            delete [] colors_;
-        }
-
-        Palette & operator = (Palette const & other);
-        Palette & operator == (Palette && other);
-
-        size_t size() const {
-            return size_;
-        }
-
-        Color defaultForeground() const {
-            return defaultFg_;
-        }
-
-        Color defaultBackground() const {
-            return defaultBg_;
-        }
-
-        void setDefaultForeground(size_t index) {
-            defaultFg_ = colors_[index];
-        }
-
-        void setDefaultForeground(Color color) {
-            defaultFg_ = color;
-        }
-
-        void setDefaultBackground(size_t index) {
-            defaultBg_ = colors_[index];
-        }
-
-        void setDefaultBackground(Color color) {
-            defaultBg_ = color;
-        }
-
-        void setColor(size_t index, Color color) {
-            ASSERT(index < size_);
-            colors_[index] = color;
-        }
-
-        Color operator [] (size_t index) const {
-            ASSERT(index < size_);
-            return colors_[index];
-        } 
-
-        Color & operator [] (size_t index) {
-            ASSERT(index < size_);
-            return colors_[index];
-        } 
-
-        Color at(size_t index) const {
-            return (*this)[index];
-        }
-        Color & at(size_t index) {
-            return (*this)[index];
-        }
-
-    private:
-
-        size_t size_;
-        Color defaultFg_;
-        Color defaultBg_;
-        Color * colors_;
-
-    }; // AnsiTerminal::Palette
 
     inline Point AnsiTerminal::cursorPosition() const {
         return state_->buffer.cursorPosition();
