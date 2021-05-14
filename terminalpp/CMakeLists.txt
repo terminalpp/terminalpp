@@ -29,18 +29,21 @@ if(RENDERER_NATIVE)
 # For the QT renderer, the Qt Installation must be found. This works out of the box on Linux, but Windows and macOS need some extra information. For windows, the version 5.14.1 and location C:\Qt is hardcoded, which macOS assumes that Qt was installed using brew. 
 # On Windows shared QT libraries must be deployed together with the executable so the windeployqt exacutable must be found. 
 elseif(RENDERER_QT)
-    if(ARCH_WINDOWS)
-        set(CMAKE_PREFIX_PATH "C:\\Qt\\5.14.1\\msvc2017_64;C:\\Qt\\5.14.2\\msvc2017_64")
-        message(STATUS "Qt will be looked for in c:\\Qt\\5.14.x\\msvc2017_64")
-    elseif(ARCH_MACOS)
-        set(CMAKE_PREFIX_PATH "/usr/local/opt/qt")
-        message(STATUS "Qt will be looked for in /usr/local/opt/qt")
-    endif()
+#    if(ARCH_WINDOWS)
+#        set(CMAKE_PREFIX_PATH "C:\\Qt\\6.1.0\\msvc2019_64")
+#        message(STATUS "Qt will be looked for also in c:\\Qt\\6.1.0\\msvc2019_64")
+#    elseif(ARCH_MACOS)
+#        set(CMAKE_PREFIX_PATH "/usr/local/opt/qt")
+#        message(STATUS "Qt will be looked for also in /usr/local/opt/qt")
+#    elseif(ARCH_LINUX)
+#        set(CMAKE_PREFIX_PATH "/opt/qt")
+#        message(STATUS "Qt will be looked for also in /opt/qt/6.1.0")
+#    endif()
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_AUTORCC ON)
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
     set_property(SOURCE build_stamp.h PROPERTY SKIP_AUTOMOC ON)
-    find_package(Qt5Widgets REQUIRED)
+    find_package(Qt6Widgets REQUIRED)
     if(ARCH_WINDOWS)
         # finds the windeployqt executable so that the binaries can be added
         find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
@@ -48,7 +51,7 @@ elseif(RENDERER_QT)
         find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}")
     endif()
     # link with the QT libraries
-    list(APPEND TPP_LINK_LIBRARIES Qt5::Widgets)
+    list(APPEND TPP_LINK_LIBRARIES Qt6::Widgets)
 endif()
 
 # Extra Dependencies Configuration
@@ -77,7 +80,7 @@ if(ARCH_WINDOWS)
         add_executable(terminalpp WIN32 ${SRC} "qt/terminalpp.qrc")
         # add QT dlls to the executable
         add_custom_command(TARGET terminalpp POST_BUILD
-            COMMAND ${WINDEPLOYQT_EXECUTABLE} "$<TARGET_FILE:terminalpp>"
+            COMMAND ${WINDEPLOYQT_EXECUTABLE} "$<TARGET_FILE:terminalpp>" "--release"
         )
     endif()
 elseif(ARCH_MACOS)

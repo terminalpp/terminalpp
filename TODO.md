@@ -2,6 +2,9 @@
 
 ## Next version:
 
+- simplified (non heap allocated) palette in terminal
+
+
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  

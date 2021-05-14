@@ -19,7 +19,7 @@ jobs:
       run: |
         mkdir -p build/debug
         cd build/debug
-        PATH="/usr/local/opt/qt@5/bin:$PATH" && cmake ../..  -DCMAKE_BUILD_TYPE=Debug
+        cmake ../..  -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
     - name: build-debug
       run: |
         cd build/debug
@@ -32,7 +32,7 @@ jobs:
       run: |
         mkdir -p build/release
         cd build/release
-        PATH="/usr/local/opt/qt@5/bin:$PATH" && cmake ../.. -DCMAKE_BUILD_TYPE=Release
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
     - name: build-release
       run: |
         cd build/release

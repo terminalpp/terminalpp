@@ -173,18 +173,18 @@ namespace tpp {
                 // TODO should we call super? 
                 return;
         }
-        mouseUp(pixelsToCoords(Point{ev->x(), ev->y()}), btn);
+        mouseUp(pixelsToCoords(Point{static_cast<int>(ev->position().x()), static_cast<int>(ev->position().y())}), btn);
     }
 
     void QtWindow::mouseMoveEvent(QMouseEvent * ev) {
         setModifiers(GetStateModifiers(ev->modifiers()));
-        mouseMove(pixelsToCoords(Point{ev->x(), ev->y()}));
+        mouseMove(pixelsToCoords(Point{static_cast<int>(ev->position().x()), static_cast<int>(ev->position().y())}));
     }
 
     void QtWindow::wheelEvent(QWheelEvent * ev) {
         setModifiers(GetStateModifiers(ev->modifiers()));
         // can't use pixelDelta as it is only high resolution scrolling information not available for regular mouse
-        mouseWheel(pixelsToCoords(Point{ev->x(), ev->y()}), (ev->angleDelta().y() > 0) ? 1 : -1);
+        mouseWheel(pixelsToCoords(Point{static_cast<int>(ev->position().x()), static_cast<int>(ev->position().y())}), (ev->angleDelta().y() > 0) ? 1 : -1);
     }
 
     void QtWindow::focusInEvent(QFocusEvent * ev) {
@@ -197,7 +197,7 @@ namespace tpp {
         focusOut();
     }
 
-    void QtWindow::enterEvent(QEvent * ev) {
+    void QtWindow::enterEvent(QEnterEvent * ev) {
         QWidget::enterEvent(ev);
         mouseIn();
     }

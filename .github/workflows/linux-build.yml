@@ -15,7 +15,10 @@ jobs:
     - name: install-packages
       run: |
         sudo apt update
-        sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++-10 qt5-default
+        sudo apt install cmake libx11-dev libxft-dev libxcursor-dev g++-10
+        sudo apt install libgl1-mesa-dev
+        sudo pip install -Iv aqtinstall==1.1.6
+        sudo python -m aqt install --outputdir /opt/qt 6.1.0 linux desktop
     - name: configure-debug
       run: |
         mkdir -p build/debug
@@ -46,7 +49,7 @@ jobs:
       run: |
         mkdir -p build-qt/debug
         cd build-qt/debug
-        cmake ../.. -DRENDERER=QT
+        cmake ../.. -DRENDERER=QT -DCMAKE_PREFIX_PATH=/opt/qt/6.1.0/gcc_64
     - name: build-debug-qt
       run: |
         cd build-qt/debug
@@ -59,7 +62,7 @@ jobs:
       run: |
         mkdir -p build-qt/release
         cd build-qt/release
-        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DRENDERER=QT
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DRENDERER=QT -DCMAKE_PREFIX_PATH=/opt/qt/6.1.0/gcc_64
     - name: build-release-qt
       run: |
         cd build-qt/release

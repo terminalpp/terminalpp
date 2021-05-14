@@ -35,13 +35,13 @@ jobs:
         .\tests.exe        
     - name: install-qt
       run: |
-        pip install -Iv aqtinstall==0.7
-        python -m aqt install --outputdir c:\\Qt 5.14.1 windows desktop win64_msvc2017_64
+        pip install -Iv aqtinstall==1.1.6
+        python -m aqt install --outputdir c:\\Qt 6.1.0 windows desktop win64_msvc2019_64
     - name: configure-qt
       run: |
         mkdir build-qt
         cd build-qt
-        cmake .. -DRENDERER=QT
+        cmake .. -DRENDERER=QT -DCMAKE_PREFIX_PATH=c:\Qt\6.1.0\msvc2019_64
     - name: build-debug-qt
       run: |
         cd build-qt

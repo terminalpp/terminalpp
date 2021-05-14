@@ -226,6 +226,12 @@ HELPERS_NAMESPACE_BEGIN
                 if (!suite->run(s))
                     ++failed;
             }
+            // Report the summary results of the tests
+            if (failed == 0) {
+                s << "==== All done: SUCCESS " << std::endl;
+            } else {
+                s << "==== All done: FAIL (" << failed << " failed tests)" << std::endl;
+            }
             return (failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
         }
 
@@ -290,7 +296,5 @@ HELPERS_NAMESPACE_BEGIN
         delete report_;
         return result;
     }
-
-
 
 HELPERS_NAMESPACE_END

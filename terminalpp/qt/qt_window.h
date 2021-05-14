@@ -177,7 +177,7 @@ namespace tpp {
 
         void focusOutEvent(QFocusEvent * ev) override;
 
-        void enterEvent(QEvent * ev) override;
+        void enterEvent(QEnterEvent * ev) override;
 
         void leaveEvent(QEvent * ev) override;
 

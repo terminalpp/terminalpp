@@ -14,7 +14,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "externalConsole": false
+            "console": "internalConsole"
         },
         {
             "name": "(win) tests",
@@ -25,7 +25,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "externalConsole": false
+            "console": "internalConsole"
         },
         {
             "name": "(linux) terminalpp",
