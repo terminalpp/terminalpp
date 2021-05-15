@@ -3,6 +3,7 @@
 ## Next version:
 
 - simplified (non heap allocated) palette in terminal
+- compiled with QT6
 
 
 ### TODO
