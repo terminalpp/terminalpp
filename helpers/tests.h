@@ -46,6 +46,11 @@
     Test_ ## SUITE_NAME ## _ ## TEST_NAME ::singleton_{# SUITE_NAME, # TEST_NAME }; \
     inline void Test_ ## SUITE_NAME ## _ ## TEST_NAME ::run_() 
 #endif
+
+/** Declares particular test as a friend. 
+ */
+#define FRIEND_TEST(SUITE_NAME, TEST_NAME) friend class Test_ ## SUITE_NAME ## _ ## TEST_NAME
+
 /** Checks that given assumption holds, and fails the test immediately if it does not.
  */
 
