@@ -61,11 +61,11 @@ namespace ui {
 
     void Widget::updateVisibleRectangle() {
         ASSERT(IN_UI_THREAD);
-        if (parent_ == nullptr || parent_->visibleRect_.empty()) {
+        // in theory we can also return empty immediately if the parent visible rect is empty, but this actually calculates the offset of the widget to the buffer, which might be beneficial
+        if (parent_ == nullptr)
             visibleRect_.rect = Rect::Empty();
-        } else {
-            //visibleRect_ = parent_.visibleRect_.offsetBy(parent_.scrollOffset_). 
-        }
+        else 
+            visibleRect_ = parent_->visibleRect_.offsetBy(parent_->scrollOffset_).clip(rect_); 
         for (auto i : *this)
             i->updateVisibleRectangle();
     }

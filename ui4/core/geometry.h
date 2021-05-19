@@ -345,6 +345,14 @@ namespace ui {
                 /* noSwap */ true);
         }
 
+        bool operator == (Rect const & other) const {
+            return topLeft_ == other.topLeft_ && size_ == other.size_;
+        }
+
+        bool operator != (Rect const & other) const {
+            return topLeft_ != other.topLeft_ || size_ != other.size_;
+        }
+
     private:
 
         int align(int childWidth, HorizontalAlign align) const {

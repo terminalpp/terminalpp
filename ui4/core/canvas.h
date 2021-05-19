@@ -30,8 +30,6 @@ namespace ui {
     /** Selection of basic drawing tools into a locked buffer. 
      */
     class Canvas {
-        FRIEND_TEST(VisibleRect, CoordTransformations);
-
         friend class Widget;
     public:
 
@@ -56,6 +54,28 @@ namespace ui {
 
             Point toLocal(Point buffer) const {
                 return buffer - offset;
+            }
+
+            /** Offsets the visible rectangle by given vector. 
+             
+                The offset visible rectangle is of the same size and buffer coordinates, but with local rectangle offset by the specified point. 
+             */
+            VisibleRect offsetBy(Point local) const {
+                return VisibleRect{
+                    rect + local, 
+                    offset - local
+                };
+            }
+
+            /** Creates a new visible rectangle by clipping the current one. 
+             
+                The clip is given in local coordinates. If the clipped rectangle and the actual visible rectangle have no intersection, returns an empty visible rectangle. 
+             */
+            VisibleRect clip(Rect localClip) const {
+                return VisibleRect{
+                    (rect & localClip) - localClip.topLeft(),
+                    offset + localClip.topLeft()
+                };
             }
             
             /** Visible rectangle of the canvas, in canvas coordinates. 
@@ -85,6 +105,11 @@ namespace ui {
         Size size_; // the size of the canvas
         VisibleRect visibleRect_; // visible part of the canvas
 
+
+    private:
+        FRIEND_TEST(VisibleRect, CoordTransformations);
+        FRIEND_TEST(VisibleRect, Offset);
+        FRIEND_TEST(VisibleRect, Clip);
     }; // ui::Canvas
 
 
