@@ -7,26 +7,42 @@
 
 #include "core/event.h"
 #include "core/canvas.h"
-
-
-#ifndef NDEBUG
-#define IN_UI_THREAD (Widget::UIThreadID() == std::this_thread::get_id())
-
-#endif
+#include "renderer.h"
 
 namespace ui {
 
 
 
     class Widget {
+        friend class Canvas;
+        friend class Renderer;
     public:
 
+        /** Creates a widget with empty name. 
+         */
         Widget() = default;
+
+        /** Creates a widget with given name. 
+         */
+        Widget(std::string_view name):
+            name_{name} {
+        }
 
         virtual ~Widget() {
             while (frontChild_ != nullptr)
                 delete removeChild(frontChild_);
         }
+
+        std::string const & name() const {
+            return name_;
+        }
+
+        virtual void setName(std::string const & name) {
+            name_ = name;
+        }
+
+    private:
+        std::string name_;
 
     /**\name Widget tree. 
      
@@ -234,7 +250,7 @@ namespace ui {
             return rect_;
         }
 
-        Size const & size() const {
+        Size size() const {
             ASSERT(IN_UI_THREAD);
             return rect_.size();
         }
@@ -302,22 +318,17 @@ namespace ui {
     //@{
     public:
 
-        void requestRepaint() {
-
-        }
-
-
-        /** Performs immediate repaint of the widget. 
+        /** Requests the repaint of the widget. 
          
-            This method 
+            Schedules a repaint of the widget in the UI thread. If a repaint has already been requested, does nothing. The UI thread then performs further checks, such as whether the parent widget should be repainted instead, and so on. 
+
+            For more details on this, see TODO TODO
          */
-        void repaint() {
-            ASSERT(IN_UI_THREAD);
-
+        void requestRepaint() {
+            if (repaintPending_.exchange(true) == false) {
+                // TODO reuest the repaint in the UI thread
+            }
         }
-
-        
-
 
         /** Returns true if the widget is visible. 
          
@@ -345,16 +356,32 @@ namespace ui {
             The default implementation simply pains the child widgets. 
          */
         virtual void paint(Canvas & canvas) {
+            MARK_AS_UNUSED(canvas);
+            ASSERT(IN_UI_THREAD);
             for (auto child : *this)
-                child->repaint();
+                paintChild(child);
         }
 
+        /** Performs immediate repaint of given child.
 
+            This method is intended to be called from the paint() method so that own children can be painted. Only visible children with non-empty visible rectangles are painted. 
+         */
+        void paintChild(Widget * child) {
+            ASSERT(IN_UI_THREAD);
+            ASSERT(child->parent_ == this);
+            if (!child->visible() || child->visibleRect_.empty())
+                return;
+            child->repaintPending_ = false;
+            Canvas canvas{child};
+            child->paint(canvas);
+        }
 
     private:
 
+        Renderer * renderer_ = nullptr;
 
         std::atomic<bool> repaintPending_ = false;
+
         bool visible_ = true;
 
     //@}
@@ -372,17 +399,6 @@ namespace ui {
 
 
     //@}
-
-#ifndef NDEBUG
-    public:
-        /** Returns the UI thread id.
-         */
-        static std::thread::id UIThreadID() {
-            static std::thread::id id{std::this_thread::get_id()};
-            return id;
-        }
-#endif
-
 
     }; // ui::Widget
 

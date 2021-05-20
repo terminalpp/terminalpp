@@ -5,9 +5,6 @@ namespace ui {
 
     class TestWidget : public Widget {
     protected:
-        void paint(Canvas & canvas) override {
-
-        }
     };
 
     TEST(ui_widget, default_constructor) {

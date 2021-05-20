@@ -198,6 +198,13 @@ namespace ui {
             return Rect{};
         }
 
+        static Rect CreateOrEmpty(Point topLeft, Point bottomRight) {
+            if (topLeft.x() <= bottomRight.x() && topLeft.y() <= bottomRight.y())
+                return Rect{topLeft, Size{bottomRight.x() - topLeft.x(), bottomRight.y() - topLeft.y()}};
+            else
+                return Empty();
+        }
+
         explicit Rect(Size const & size):
             topLeft_{0,0},
             size_{size} {
@@ -208,10 +215,16 @@ namespace ui {
             size_{size} {
         }
 
-        Rect(Point topLeft, Point bottomRight):
-            Rect{topLeft, bottomRight, false} {
+        Rect(Point topLeft, Point bottomRight) {
+            //Rect{topLeft, bottomRight, false} {
+            if (topLeft.x() > bottomRight.x())
+                std::swap(topLeft.x_, bottomRight.x_);
+            if (topLeft.y() > bottomRight.y())
+                std::swap(topLeft.y_, bottomRight.y_);
+            topLeft_ = topLeft;
+            size_ = Size{bottomRight.x() - topLeft.x(), bottomRight.y() - topLeft.y()};
         }
-
+/*
         Rect(Point topLeft, Point bottomRight, bool noSwap) {
             if (noSwap) {
                 topLeft_ = topLeft;
@@ -226,6 +239,7 @@ namespace ui {
                 size_ = Size{bottomRight.x() - topLeft.x(), bottomRight.y() - topLeft.y()};
             }
         }
+    */
 
         bool empty() const {
             return size_.empty();
@@ -318,7 +332,7 @@ namespace ui {
         /** Intersection of two rectangles. 
          */
         Rect operator & (Rect const & other) const {
-            return Rect(
+            return CreateOrEmpty(
                 Point{
                     std::max(topLeft_.x(), other.topLeft_.x()),
                     std::max(topLeft_.y(), other.topLeft_.y())
@@ -326,14 +340,14 @@ namespace ui {
                 Point{
                     std::min(bottomRight().x(), other.bottomRight().x()),
                     std::min(bottomRight().y(), other.bottomRight().y())
-                },
-                /* noSwap */ true);
+                }
+            );
         }
 
         /** Union of two rectangles. 
          */
         Rect operator | (Rect const & other) const {
-            return Rect(
+            return CreateOrEmpty(
                 Point{
                     std::min(topLeft_.x(), other.topLeft_.x()),
                     std::min(topLeft_.y(), other.topLeft_.y())
@@ -341,8 +355,8 @@ namespace ui {
                 Point{
                     std::max(bottomRight().x(), other.bottomRight().x()),
                     std::max(bottomRight().y(), other.bottomRight().y())
-                },
-                /* noSwap */ true);
+                }
+            );
         }
 
         bool operator == (Rect const & other) const {

@@ -6,6 +6,8 @@
 
 namespace ui {
 
+    class Widget;
+
     /** Single character cell of the ui's buffer. 
      */
     class Cell {
@@ -17,11 +19,11 @@ namespace ui {
     class Buffer {
     public:
         Cell const & operator [] (Point at) const {
-
+            MARK_AS_UNUSED(at);
         }
 
         Cell & operator [] (Point at) {
-
+            MARK_AS_UNUSED(at);
         }
 
 
@@ -32,6 +34,12 @@ namespace ui {
     class Canvas {
         friend class Widget;
     public:
+
+        /** Creates a canvas for given widget.
+         
+            The widget must have renderer attached. 
+         */
+        Canvas(Widget * forWidget);
 
     protected:
         class VisibleRect {
@@ -107,9 +115,9 @@ namespace ui {
 
 
     private:
-        FRIEND_TEST(VisibleRect, CoordTransformations);
-        FRIEND_TEST(VisibleRect, Offset);
-        FRIEND_TEST(VisibleRect, Clip);
+        FRIEND_TEST(Canvas, VisibleRectCoordTransformations);
+        FRIEND_TEST(Canvas, VisibleRectOffset);
+        FRIEND_TEST(Canvas, VisibleRectClip);
     }; // ui::Canvas
 
 

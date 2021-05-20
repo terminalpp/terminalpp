@@ -4,13 +4,13 @@
 
 namespace ui {
     
-    TEST(VisibleRect, CoordTransformations) {
+    TEST(Canvas, VisibleRectCoordTransformations) {
         Canvas::VisibleRect x{Rect{Point{10,10}, Size{100, 100}}, Point{-10, -10}};
         EXPECT(x.toBuffer(Point{10,10}) == Point{0,0});
         EXPECT(x.toLocal(Point{10,10}) == Point{20,20});
     }
 
-    TEST(VisibleRect, Offset) {
+    TEST(Canvas, VisibleRectOffset) {
         Canvas::VisibleRect x{Rect{Point{10,10}, Size{100, 100}}, Point{-10, -10}};
         Canvas::VisibleRect y{x.offsetBy(Point{20,15})};
         EXPECT(y.toBuffer(Point{30,25}) == Point{0,0});
@@ -21,7 +21,7 @@ namespace ui {
         EXPECT(y.offset == Point{-30, -25});
     }
 
-    TEST(VisibleRect, Clip) {
+    TEST(Canvas, VisibleRectClip) {
         Canvas::VisibleRect x{Rect{Point{10,10}, Size{100, 100}}, Point{-10, -10}};
         Canvas::VisibleRect y{x.clip(Rect{Point{20,20}, Size{10,10}})};
         EXPECT(y.rect == Rect{Point{0,0}, Point{10,10}});
