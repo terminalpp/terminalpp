@@ -74,10 +74,11 @@ namespace ui {
             if (widget->pendingEvents_ == 0)
                 return;
             for (auto & e : events_) {
-                if (e.second == widget)
+                if (e.second == widget) {
                     e.first = nullptr;
-                if (--(widget->pendingEvents_) == 0)
-                    break;
+                    if (--(widget->pendingEvents_) == 0)
+                        break;
+                }
             }
         }
 

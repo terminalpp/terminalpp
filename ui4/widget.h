@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <vector>
+#include <deque>
 
 #include "helpers/helpers.h"
 
@@ -29,6 +30,12 @@ namespace ui {
         }
 
         virtual ~Widget() {
+#pragma warning(push)
+#pragma warning(disable : 4297)
+            ASSERT(IN_UI_THREAD);
+#pragma warning(pop)
+            // make sure there are no pending events for the widget
+            cancelEvents();
             while (frontChild_ != nullptr)
                 delete removeChild(frontChild_);
         }
@@ -399,6 +406,53 @@ namespace ui {
 
 
     //@}
+
+    /**\name Event Scheduling
+     */
+    //@{
+    public:
+
+        /** Schedules the given function to be executed in the UI thread. 
+         
+            This function can be called from any thread and the event is associated with current widget as its sender. If the current widget is deleted before the function will get executed, the function will be forgotten. 
+         */
+        void schedule(std::function<void()> event) {
+            Schedule(event, this);
+        }
+
+        /** Schedules the given function to be executed in the UI thread. 
+         
+            The function is not bound to any widget. 
+         */
+        static void Schedule(std::function<void()> event) {
+            Schedule(event, GlobalEventDummy_);
+        }
+
+
+    private:
+
+        void cancelEvents();
+
+        // Pending events for a widget. The value is protected by the EventsGuard_ mutex as well as the global events queue. 
+        unsigned pendingEvents_ = 0;
+
+        static void Schedule(std::function<void()> event, Widget * sender);
+
+        static bool ProcessEvent();
+
+        // dummy widget used as sender for global events not attached to any widget
+        static Widget * GlobalEventDummy_;
+
+        // the events queue
+        static std::deque<std::pair<std::function<void()>, Widget *>> Events_;
+
+        // mutex guarding the event queue
+        static std::mutex EventsGuard_;
+
+    //}
+
+    private:
+        FRIEND_TEST(ui_widget, events);
 
     }; // ui::Widget
 

@@ -70,5 +70,55 @@ namespace ui {
             i->updateVisibleRectangle();
     }
 
+    // event scheduling
+
+    Widget * Widget::GlobalEventDummy_ = new Widget{};
+    std::deque<std::pair<std::function<void()>, Widget *>> Widget::Events_;
+    std::mutex Widget::EventsGuard_;
+
+    void Widget::cancelEvents() {
+        std::lock_guard<std::mutex> g{EventsGuard_};
+        if (pendingEvents_ == 0)
+            return;
+        for (auto & e : Events_) {
+            if (e.second == this) {
+                e.second = nullptr;
+                if (--pendingEvents_ == 0)
+                    break;
+            }
+        }
+    }
+
+    void Widget::Schedule(std::function<void()> event, Widget * sender) {
+        ASSERT(sender != nullptr);
+        std::lock_guard<std::mutex> g{EventsGuard_};
+        Events_.push_back(std::make_pair(event, sender));
+        ++(sender->pendingEvents_);
+    }
+
+    bool Widget::ProcessEvent() {
+        ASSERT(IN_UI_THREAD);
+        std::function<void()> handler;
+        {
+            std::lock_guard<std::mutex> g{EventsGuard_};
+            while (true) {
+                if (Events_.empty())
+                    return false;
+                    auto e = Events_.front();
+                    Events_.pop_front();
+                    // if the event has been cancelled, move to the next event, if any
+                    if (e.second == nullptr)
+                        continue;
+                    handler = e.first;
+                    ASSERT(e.second->pendingEvents_ > 0);
+                    --(e.second->pendingEvents_);
+                    break;
+            }
+        }
+        handler();
+        return true;
+    }
+
+
 
 } // namespace ui

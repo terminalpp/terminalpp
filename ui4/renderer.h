@@ -13,7 +13,6 @@ namespace ui {
 
     /** Class responsible for rendering the UI widgets. 
      
-        Multiple renderers may exist and each renderer deals with its own rendering and event queue mechanism. 
      */
     class Renderer {
         friend class Canvas;
