@@ -28,12 +28,12 @@ namespace ui {
         Widget(std::string_view name):
             name_{name} {
         }
-
+#if defined NDEBUG
         virtual ~Widget() {
-#pragma warning(push)
-#pragma warning(disable : 4297)
+#else
+        virtual ~Widget() noexcept(false) {
+#endif
             ASSERT(IN_UI_THREAD);
-#pragma warning(pop)
             // make sure there are no pending events for the widget
             cancelEvents();
             while (frontChild_ != nullptr)
@@ -333,7 +333,10 @@ namespace ui {
          */
         void requestRepaint() {
             if (repaintPending_.exchange(true) == false) {
-                // TODO reuest the repaint in the UI thread
+                schedule([this](){
+                    // now we are in the UI thread, determine the real target of the paint
+
+                });
             }
         }
 
@@ -408,6 +411,14 @@ namespace ui {
     //@}
 
     /**\name Event Scheduling
+     
+       The scheduling of events is supported by all widgets so that a non-UI thread can schedule code to be executed in the main thread. Each event is associated with its sender widget and a widget keeps track of how many events pending their execution already currently exist. When a widget dies, any remaining events associated with it are scrapped and will not be executed. This is useful as a very primitive form of resource management - an event can assume the widget exists and use it freely. 
+
+       For global events that do not need to rely on any widget, the Schedule() static method can be used instead. Under the hood, the global events are assigned with a Widget sentinel global object that never dies. 
+
+       While the scheduling of the events is provided by the widgets, it is the renderer who determines when to run the events via the loop function. 
+
+       TODO that the events system assumes single main loop for the entire application as all events share same queue. If this ever proves an issue, events can be associated with rendereres via their widgets and events belonging to a different renderer can be skipped when executed, but for now this seems as an unnecessary complication. 
      */
     //@{
     public:
@@ -422,22 +433,33 @@ namespace ui {
 
         /** Schedules the given function to be executed in the UI thread. 
          
-            The function is not bound to any widget. 
+            The function is not bound to any widget and so its execution will never be cancelled. The event must thus make sure in its own ways that any data it operates on still exist.
          */
         static void Schedule(std::function<void()> event) {
             Schedule(event, GlobalEventDummy_);
         }
 
-
     private:
 
+        /** Disables all events with current widget as sender. 
+         
+            This is automatically called when the widget is being deleted.
+         */
         void cancelEvents();
 
         // Pending events for a widget. The value is protected by the EventsGuard_ mutex as well as the global events queue. 
         unsigned pendingEvents_ = 0;
 
+        /** Schedules event with given widget as sender. 
+         
+            Sender widget must never be nullptr. 
+         */
         static void Schedule(std::function<void()> event, Widget * sender);
 
+        /** Processes single event from the event queue. 
+         
+            Returns true if an event was found, false if the event queue is empty. 
+         */
         static bool ProcessEvent();
 
         // dummy widget used as sender for global events not attached to any widget

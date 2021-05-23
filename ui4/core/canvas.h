@@ -3,37 +3,19 @@
 #include "helpers/tests.h"
 
 #include "geometry.h"
+#include "buffer.h"
 
 namespace ui {
 
     class Widget;
 
-    /** Single character cell of the ui's buffer. 
-     */
-    class Cell {
-
-    }; // ui::Cell
-
-    /** UI backing buffer, a 2D array of cells. 
-     */
-    class Buffer {
-    public:
-        Cell const & operator [] (Point at) const {
-            MARK_AS_UNUSED(at);
-        }
-
-        Cell & operator [] (Point at) {
-            MARK_AS_UNUSED(at);
-        }
-
-
-    }; // ui::Buffer
 
     /** Selection of basic drawing tools into a locked buffer. 
      */
     class Canvas {
         friend class Widget;
     public:
+        using Cell = Buffer::Cell;
 
         /** Creates a canvas for given widget.
          

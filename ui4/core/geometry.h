@@ -1,6 +1,7 @@
 #pragma once
 
 #include "helpers/helpers.h"
+#include "helpers/char.h"
 
 namespace ui {
 
@@ -16,7 +17,7 @@ namespace ui {
         Bottom
     }; // ui::VerticalAlign
 
-    class Point {
+    class Point final {
     public:
 
         Point(): 
@@ -120,7 +121,7 @@ namespace ui {
 
     }; 
 
-    class Size {
+    class Size final {
     public:
 
         Size():
@@ -180,7 +181,7 @@ namespace ui {
         int height_;
     }; 
 
-    class Rect {
+    class Rect final {
     public:
 
         /** Creates an empty rect. 
@@ -397,6 +398,181 @@ namespace ui {
         Point topLeft_;
         Size size_;
     };    
+
+
+    class Color final {
+    public:
+        uint8_t a;
+        uint8_t b;
+        uint8_t g;
+        uint8_t r;
+
+        static Color RGB(uint8_t r, uint8_t g, uint8_t b) {
+            return Color{r, g, b, 255};
+        }
+
+        static Color RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+            return Color{r, g, b , a};
+        }
+
+        static Color HTML(std::string const & colorCode) {
+			unsigned start = colorCode[0] == '#' ? 1 : 0;
+			if (colorCode.size() - start < 6)
+			    THROW(IOError()) << "Exepected at least RRGGBB color definition but " << colorCode << " found.";
+			unsigned char r = static_cast<unsigned char>(ParseHexNumber(colorCode.c_str() + start, 2));
+			unsigned char g = static_cast<unsigned char>(ParseHexNumber(colorCode.c_str() + start + 2, 2));
+			unsigned char b = static_cast<unsigned char>(ParseHexNumber(colorCode.c_str() + start + 4, 2));
+			unsigned char a = 0xff;
+			if (colorCode.size() - start == 8)
+				a = static_cast<unsigned char>(ParseHexNumber(colorCode.c_str() + start + 6, 2));
+			else if (colorCode.size() - start != 6)
+			    THROW(IOError()) << "Exepected at least RRGGBBAA color definition but " << colorCode << " found.";
+			return RGBA(r, g, b ,a);
+        }
+
+        uint32_t toRGB() const {
+            return (r << 16) + (g << 8) + b;
+        }
+
+        uint32_t toRGBA() const {
+            return * pointer_cast<uint32_t const*>(this);
+        }
+
+        float floatAlpha() const {
+            return static_cast<float>(a) / 255.0f;
+        }
+
+        bool opaque() const {
+            return a == 255;
+        }
+
+        /** Returns a color identical to the current one but with updated alpha value. 
+         */
+		Color withAlpha(uint8_t value) const {
+			return Color{r, g, b, value};
+		}
+
+        /** Returns a color obtained by blending the overlay color over the current one. 
+         
+            Expects the current color to be opaque. If the overlay color is transparent, new opaque color will be generated, if the overlay is opaque, returns simply the overlay color. 
+         */
+        Color overlayWith(Color overlay) const {
+            // overlaying an opaque color just returns the overlay color
+            if (overlay.opaque())
+                return overlay;
+            // if the overlay color is fully transparent, return itself
+            if (overlay.a == 0)
+                return *this;
+            // otherwise we need to calculate the result color
+            uint8_t aa = overlay.a + 1;
+            uint8_t aInv = static_cast<uint8_t>(256 - overlay.a);
+            uint8_t rr = static_cast<uint8_t>((aa * overlay.r + aInv * r) / 256);
+            uint8_t gg = static_cast<uint8_t>((aa * overlay.g + aInv * g) / 256);
+            uint8_t bb = static_cast<uint8_t>((aa * overlay.b + aInv * b) / 256);
+            // this is probably only correct when the other color is opaque,  
+            return Color::RGB(rr, gg, bb);
+        }
+
+		bool operator == (Color const & other) const {
+			return r == other.r && g == other.g && b == other.b && a == other.a;
+		}
+
+		bool operator != (Color const & other) const {
+			return r != other.r || g != other.g || b != other.b || a != other.a;
+		}
+
+    private:
+        Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a):
+            a{a},
+            b{b},
+            g{g},
+            r{r} {
+        }
+    }; // ui::Font::Color
+
+	inline std::ostream & operator << (std::ostream & s, Color const & c) {
+		s << static_cast<unsigned>(c.r) << ";" << static_cast<unsigned>(c.g) << ";" << static_cast<unsigned>(c.b) << ";" << static_cast<unsigned>(c.a);
+		return s;
+	}
+
+    class Font final {
+    public:
+        enum class Attribute : uint16_t {
+            Bold = (1 << 15),
+            Italic = (1 << 14),
+            Underline = (1 << 13),
+            Strikethrough = (1 << 12),
+            Blink = (1 << 11),
+            DoubleWidth = (1 << 10),
+            DashedUnderline = (1 << 9),
+            CurlyUnderline = (1 << 8),
+        }; // ui::Font::Attribute
+
+        int size() const {
+            return (raw_ & 7) + 1;
+        }
+
+        Font & setSize(int value) {
+            ASSERT(value > 0 && value <= 8);
+            raw_ = (raw_ & ~7) + static_cast<uint16_t>(value - 1);
+            return *this;
+        }
+
+        Font operator + (Attribute attr) const {
+            uint16_t x = raw_ | static_cast<uint16_t>(attr);
+            return Font{x};
+        } 
+
+        Font & operator += (Attribute attr) {
+            raw_ |= static_cast<uint16_t>(attr);
+            return *this;
+        }
+
+        Font operator - (Attribute attr) const {
+            uint16_t x = raw_ & ~(static_cast<uint16_t>(attr)); 
+            return Font{x};
+        }
+
+        Font & operator -= (Attribute attr) {
+            raw_ &= ~(static_cast<uint16_t>(attr));
+            return *this;
+        }
+
+        bool operator & (Attribute attr) const {
+            return raw_ & static_cast<uint16_t>(attr);
+        }
+
+        bool operator == (Font const & other) const {
+            return raw_ == other.raw_;
+        }
+
+        bool operator != (Font const & other) const {
+            return raw_ == other.raw_;
+        }
+
+        static constexpr Attribute Bold = Attribute::Bold;
+        static constexpr Attribute Italic = Attribute::Italic;
+        static constexpr Attribute Underline = Attribute::Underline;
+        static constexpr Attribute Strikethrough = Attribute::Strikethrough;
+        static constexpr Attribute Blink = Attribute::Blink;
+        static constexpr Attribute DoubleWidth = Attribute::DoubleWidth;
+        static constexpr Attribute DashedUnderline = Attribute::DashedUnderline;
+        static constexpr Attribute CurlyUnderline = Attribute::CurlyUnderline;
+    private:
+
+        Font(uint16_t raw): 
+            raw_{raw} {
+        }
+
+        uint16_t raw_ = 0;
+
+    };
+
+    class Border final {
+
+
+    }; 
+
 
 
 } // namespace ui

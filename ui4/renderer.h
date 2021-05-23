@@ -18,14 +18,18 @@ namespace ui {
         friend class Canvas;
         friend class Widget;
 
-
-
     /** \name Renderer Interface
      
         The following methods must be implemented by specific renderers. They deal with mouse 
      */
     //@{
     protected:
+
+        /** TODO Should be called periodically from the main loop. 
+         */
+        bool loop() {
+
+        }
 
 
     //@}

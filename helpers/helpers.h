@@ -25,6 +25,7 @@
 #if (defined ARCH_WINDOWS)
     #include <Windows.h>
     #undef OPAQUE
+    #undef RGB
 #elif (defined ARCH_UNIX)
 	#include <cstring>
 	#include <errno.h>
