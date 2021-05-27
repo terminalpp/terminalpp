@@ -20,10 +20,7 @@ namespace ui {
     class Point final {
     public:
 
-        Point(): 
-            x_{0},
-            y_{0} {
-        }
+        Point() = default;
 
         Point(int x, int y):
             x_{x},
@@ -111,8 +108,8 @@ namespace ui {
     private:
         friend class Rect;
 
-        int x_;
-        int y_;
+        int x_ = 0;
+        int y_ = 0;
 
         friend std::ostream & operator << (std::ostream & s, Point const & p) {
             s << "[" << p.x_ << ", " << p.y_ << "]";
@@ -124,10 +121,7 @@ namespace ui {
     class Size final {
     public:
 
-        Size():
-            width_{0},
-            height_{0} {
-        }
+        Size() = default;
 
         Size(int width, int height):
             width_{width},
@@ -177,8 +171,8 @@ namespace ui {
     private:
         friend class Rect;
 
-        int width_;
-        int height_;
+        int width_ = 0;
+        int height_ = 0;
     }; 
 
     class Rect final {
@@ -407,6 +401,10 @@ namespace ui {
         uint8_t g;
         uint8_t r;
 
+        Color():
+            Color{0,0,0,0} {
+        }
+
         static Color RGB(uint8_t r, uint8_t g, uint8_t b) {
             return Color{r, g, b, 255};
         }
@@ -481,6 +479,8 @@ namespace ui {
 			return r != other.r || g != other.g || b != other.b || a != other.a;
 		}
 
+        static Color const None;
+
     private:
         Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a):
             a{a},
@@ -508,8 +508,15 @@ namespace ui {
             CurlyUnderline = (1 << 8),
         }; // ui::Font::Attribute
 
+        Font() = default;
+
         int size() const {
             return (raw_ & 7) + 1;
+        }
+
+        Font withSize(int value) {
+            ASSERT(value > 0 && value <= 8);
+            return Font{static_cast<uint16_t>((raw_ & ~7) + (value - 1))};
         }
 
         Font & setSize(int value) {
@@ -566,12 +573,123 @@ namespace ui {
 
         uint16_t raw_ = 0;
 
-    };
+    }; // ui::Font
 
     class Border final {
+    public:
+        enum class Kind : uint8_t {
+            None = 0,
+            Thin = 1,
+            Thick = 2
+        }; // ui::Border::Kind
+
+        enum class Edge : uint8_t {
+            Top = 0,
+            Left = 2,
+            Right = 4,
+            Bottom = 6
+        }; // ui::Border::Edge
+
+        struct Partial final {
+            friend class Border;
+        private:
+            Partial(Kind kind, Edge edge):
+                kind{kind},
+                edge{edge} {
+            }
+
+            uint8_t addTo(uint8_t raw) const {
+                return removeFrom(raw) | (static_cast<uint8_t>(kind) << static_cast<uint8_t>(edge));
+            }
+
+            uint8_t removeFrom(uint8_t raw) const {
+                return raw & ~(3 << static_cast<uint8_t>(edge));
+            }
+
+            Kind kind;
+            Edge edge;
+        }; // ui::Border::Partial
+
+        static Kind constexpr None = Kind::None;
+        static Kind constexpr Thin = Kind::Thin;
+        static Kind constexpr Thick = Kind::Thick;
+
+        Border() = default;
+
+        static Border Empty(Color color = Color::None) {
+            return Border{color, 0};
+        }
+
+        static Border All(Color color, Kind kind = Kind::Thin) {
+            uint8_t x = static_cast<uint8_t>(kind);
+            return Border{color, static_cast<uint8_t>(x + (x << 2) + (x << 4) + (x << 6))};
+        }
+
+        static Partial Top(Kind kind = Kind::Thin) {
+            return Partial{kind, Edge::Top};
+        }
+
+        static Partial Left(Kind kind = Kind::Thin) {
+            return Partial{kind, Edge::Left};
+        }
+
+        static Partial Right(Kind kind = Kind::Thin) {
+            return Partial{kind, Edge::Right};
+        }
+
+        static Partial Bottom(Kind kind = Kind::Thin) {
+            return Partial{kind, Edge::Bottom};
+        }
+        
+        bool empty() const {
+            return border_ == 0;
+        }
+
+        Color const & color() const {
+            return color_;
+        }
+
+        Border & setColor(Color const & color) {
+            color_ = color;
+            return *this;
+        }
+
+        Border operator + (Partial p) const {
+            return Border{color_, p.addTo(border_)};
+        }
+
+        Border & operator += (Partial p) {
+            border_ = p.addTo(border_);
+        }
+
+        Border operator - (Partial p) const {
+            return Border{color_, p.removeFrom(border_)};
+        }
+
+        Border & operator -= (Partial p) {
+            border_ = p.removeFrom(border_);
+        }
+
+        bool operator == (Border const & other) const {
+            return color_ == other.color_ && border_ == other.border_;
+        }
+
+        bool operator != (Border const & other) const {
+            return color_ != other.color_ || border_ != other.border_;
+        }
+
+    private:
+
+        Border(Color const & color, uint8_t border):
+            color_{color},
+            border_{border} {
+        }
+
+        Color color_;
+        uint8_t border_ = 0;
 
 
-    }; 
+    }; // ui::Border
 
 
 
