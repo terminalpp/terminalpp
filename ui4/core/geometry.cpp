@@ -1,5 +1,3 @@
-#pragma once
-
 #include "geometry.h"
 
 namespace ui {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include "helpers/helpers.h"
 #include "geometry.h"
 

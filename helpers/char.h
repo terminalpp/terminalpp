@@ -307,6 +307,10 @@ HELPERS_NAMESPACE_BEGIN
 			}
 		}
 
+        static Char FromUTF32(char32_t x) {
+            return Char{x};
+        }
+
 		/** Returns the number of bytes required to encode the stored codepoint.
 		 */
 		size_t size() const {
@@ -634,5 +638,12 @@ HELPERS_NAMESPACE_BEGIN
 		else
 			return static_cast<char>('a' + what - 10);
 	}
+
+    /** Prettyprints UTF32 characters as UTF8. 
+     */
+    inline std::ostream & operator << (std::ostream & s, char32_t codepoint) {
+        s << Char::FromUTF32(codepoint);
+        return s;
+    }
 
 HELPERS_NAMESPACE_END

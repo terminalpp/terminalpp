@@ -660,6 +660,7 @@ namespace ui {
 
         Border & operator += (Partial p) {
             border_ = p.addTo(border_);
+            return *this;
         }
 
         Border operator - (Partial p) const {
@@ -668,6 +669,7 @@ namespace ui {
 
         Border & operator -= (Partial p) {
             border_ = p.removeFrom(border_);
+            return *this;
         }
 
         bool operator == (Border const & other) const {
