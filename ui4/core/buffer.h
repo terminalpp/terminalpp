@@ -103,8 +103,10 @@ namespace ui {
             }
 
             Ptr & operator = (Ptr && other) {
+                detach();
                 ptr_ = other.ptr_;
                 other.ptr_ = nullptr;
+                return *this;
             }
 
             T & operator * () {
@@ -130,7 +132,7 @@ namespace ui {
 
             void detach() {
                 if (ptr_ != nullptr) {
-                    if (--(ptr_->cells_))
+                    if (--(ptr_->cells_) == 0)
                         delete ptr_;
                     ptr_ = nullptr;
                 }
