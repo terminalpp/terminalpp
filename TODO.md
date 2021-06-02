@@ -9,6 +9,11 @@
 
 > These are items I currently work on towards the next version. When they are done, they die.  
 
+UI4:
+
+- how does layouting fit in the new UI? 
+
+
 - see if msys can be added to bypass (perhaps sth to do with forkpty?)
 
 Documentation:

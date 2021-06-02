@@ -1,6 +1,23 @@
+#include <unordered_set>
+
 #include "widget.h"
 
 namespace ui {
+
+    Widget * Widget::CommonParent(Widget * a, Widget * b) {
+        ASSERT(IN_UI_THREAD);
+        if (a == nullptr)
+            return b;
+        if (b == nullptr)
+            return a;
+        std::unordered_set<Widget *> parents;
+        for (; a != nullptr; a = a->parent_)
+            parents.insert(a);
+        for (; b != nullptr; b = b->parent_)
+            if (parents.find(b) != parents.end())
+                return b;
+        return nullptr; 
+    }
 
     Widget * Widget::appendChild(Widget * w) {
         ASSERT(IN_UI_THREAD);
@@ -68,6 +85,31 @@ namespace ui {
             visibleRect_ = parent_->visibleRect_.offsetBy(parent_->scrollOffset_).clip(rect_); 
         for (auto i : *this)
             i->updateVisibleRectangle();
+    }
+
+    // painting 
+
+    void Widget::update() {
+        ASSERT(IN_UI_THREAD);
+        Widget * target = this;
+        // if the widget is not attached, or the visible rectangle is empty, there is no need to repaint
+        if (renderer_ == nullptr || visibleRect_.empty())
+            return;
+        // otherwise see if we should delegate the repaint to one of the parents
+        while (true) {
+            if (! target->visible_)
+                return;
+            if (target->parent_ != nullptr && target->delegateRepaintTarget()) {
+                target = target->parent();
+                // mark the new target as repaint pending, if already marked, terminate as that widget's repaint will repaint us as well
+                if (target->repaintPending_.exchange(true))
+                    return;
+            } else {
+                break;
+            }
+        }
+        // tell renderer to repaint
+        renderer_->updateWidget(target);
     }
 
     // event scheduling

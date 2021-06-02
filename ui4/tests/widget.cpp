@@ -68,5 +68,22 @@ namespace ui {
         EXPECT(Widget::ProcessEvent() == false);
     }
 
+    TEST(ui_widget, CommonParent) {
+        std::unique_ptr<Widget> a{ new Widget{} };
+        std::unique_ptr<Widget> b{ new Widget{} };
+        EXPECT(Widget::CommonParent(a.get(), b.get()) == nullptr);
+        EXPECT(Widget::CommonParent(a.get(), nullptr) == a.get());
+        EXPECT(Widget::CommonParent(nullptr, b.get()) == b.get());
+        Widget * c1 = new Widget{};
+        a->appendChild(c1);
+        Widget * c2 = new Widget{};
+        c1->appendChild(c2);
+        Widget * c3 = new Widget{};
+        a->appendChild(c3);
+        EXPECT(Widget::CommonParent(c1, c2) == c1);
+        EXPECT(Widget::CommonParent(c2, c1) == c1);
+        EXPECT(Widget::CommonParent(c1, c3) == a.get());
+    }
+
 
 }

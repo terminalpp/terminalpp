@@ -59,6 +59,12 @@ namespace ui {
     //@{
     public:
 
+        /** Returns the closest common parent of the two widgets. 
+         
+            Nullptr if the widgets are not related at all. 
+         */
+        static Widget * CommonParent(Widget * a, Widget * b);
+
         /** Simple iterator into widget's children. 
          */
         class ChildIterator {
@@ -314,31 +320,41 @@ namespace ui {
         /** Scroll offset of the widget. 
          */
         Point scrollOffset_;
-
         
     //@}
 
-    /**\name Painting
-     
-       
+    /** \name Updating
+      
+        When a widget needs to be updated (repainted), the following should happen:
+
+        - Widget update is initiated by calling the requestUpdate() method that schedules the call to update() method in the main thread. Alternatively, the update method can be called immediately from the main thread. Unless immediate repaints are of concern, requestRepaint() is preffered as ignores any new update requests as long as a repaint is pending. 
+        - the update() method performs further checking and determines the actual update target by nested calls to delegateRepaintTarget() method, which can delegate the update of a widget to its parent. If a pending update is encountered during the check the current update is stopped (the scheduled update will show the same information). If a valid target is found, the method instructs the renderer to update the widget by calling the Renderer::updateWidget() method. 
+        - the renderer then decides, based on its fps settings, whether to immediately update the given widget, or whether buffer the request and wait for the fps trigger to do the repaint. If buffered, the renderer keeps the closest common parent of all widgets that requested update within the timeframe and then repaints it. Immediate or buffered repaints are doen by calling the Renderer::repaint() method.
+        - the Renderer::repaint() method takes the widget to repaint as an argument and simply calls the Widget::Repaint() method for the widget. The method in renderer exists only so that it can be overriden in specific renderers so that they can react on the update as the repaint only changes the renderer's buffer which then needs to be rendered. 
+        - Widget::Repaint() method clears the pending repaint flag for the widget (thus allowing further repaint requests to be scheduled), creates the canvas for the widget and calls its paint() method. 
+        - the paint() method is responsible for actually drawing the contents of the widget. The default implementation simply paints the widgets. This is done by calling the Widget::Repaint() method on the children.
+        
      */
     //@{
     public:
 
-        /** Requests the repaint of the widget. 
+        /** Requests the update (repaint) of the widget. 
          
-            Schedules a repaint of the widget in the UI thread. If a repaint has already been requested, does nothing. The UI thread then performs further checks, such as whether the parent widget should be repainted instead, and so on. 
-
-            For more details on this, see TODO TODO
+            Schedules an update of the widget in the UI thread. Can be called from any thread. If the widget has already a pending repaint request, returns immediately. Otherwise a repaint request is scheduled in the main thread. 
          */
-        void requestRepaint() {
+        void requestUpdate() {
             if (repaintPending_.exchange(true) == false) {
                 schedule([this](){
-                    // now we are in the UI thread, determine the real target of the paint
-
+                    update();
                 });
             }
         }
+
+        /** Updates the widget immediately-ish. 
+
+            First determines the actual update target (the current widget, or one of its parents). Then calls the renderer to repaint the widget. The renderer then decides whether to repaint immediately, or wait, depending on the fps settings. For more details see the Renderer::repaint() method.
+         */
+        void update();
 
         /** Returns true if the widget is visible. 
          
@@ -359,6 +375,18 @@ namespace ui {
 
     protected:
 
+        /** Immediately draws the given widget on the renderer's buffer. 
+         
+            NOTE This is a static function because calling protected methods is only allowed via this pointer, not on others. The static repaint function does not suffer from this limitation.
+         */
+        static void Repaint(Widget * widget) {
+            ASSERT(IN_UI_THREAD);
+            ASSERT(widget->renderer_ != nullptr);
+            widget->repaintPending_ = false;
+            Canvas canvas{widget};
+            widget->paint(canvas);
+        }
+
         /** The method responsible for actually painting the widget on given canvas. 
          
             This is always called in the UI thread with a valid canvas and the sole purpose of this method is to immediately draw the contents of the widget and exit. No other processing should happen here. 
@@ -369,30 +397,25 @@ namespace ui {
             MARK_AS_UNUSED(canvas);
             ASSERT(IN_UI_THREAD);
             for (auto child : *this)
-                paintChild(child);
+                Repaint(child);
         }
 
-        /** Performs immediate repaint of given child.
-
-            This method is intended to be called from the paint() method so that own children can be painted. Only visible children with non-empty visible rectangles are painted. 
+        /** Returns true if the widget's repaint should be delegated to its parent instead. 
          */
-        void paintChild(Widget * child) {
-            ASSERT(IN_UI_THREAD);
-            ASSERT(child->parent_ == this);
-            if (!child->visible() || child->visibleRect_.empty())
-                return;
-            child->repaintPending_ = false;
-            Canvas canvas{child};
-            child->paint(canvas);
+        virtual bool delegateRepaintTarget() const {
+            return false;
         }
 
     private:
 
-        Renderer * renderer_ = nullptr;
-
+        /** Determines whether there is a pending repaint in the main thread queue. 
+         */
         std::atomic<bool> repaintPending_ = false;
 
+        Renderer * renderer_ = nullptr;
+
         bool visible_ = true;
+
 
     //@}
 
