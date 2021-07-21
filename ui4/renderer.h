@@ -20,6 +20,11 @@ namespace ui {
 
     public:
 
+        /** \name Repaint Speed
+         
+            By default a renderer will immediately trigger repaint whenever a widget requests it. In most case this is rather wasteful and the renderer can buffer multiple update requests and only repaint itself in a defined intervals. This behavior is controlled via the frames per second (fps) setting. Fps of 0 (REPAINT_IMMEDIATE) will repaint immediately, otherwise the update requests will be buffered for the specified duration. 
+         */
+        //@{
         static constexpr size_t REPAINT_IMMEDIATE = 0;
 
         unsigned fps() const {
@@ -27,6 +32,7 @@ namespace ui {
         }
 
         void setFps(unsigned value);
+        //@}
 
 
 

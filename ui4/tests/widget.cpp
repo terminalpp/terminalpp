@@ -85,5 +85,100 @@ namespace ui {
         EXPECT(Widget::CommonParent(c1, c3) == a.get());
     }
 
+    TEST(ui_widget, Siblings) {
+        std::unique_ptr<Widget> a{ new Widget{} };
+        Widget * b = a->appendChild(new Widget{});
+        EXPECT(b->previousSibling() == nullptr);
+        EXPECT(b->nextSibling() == nullptr);
+        Widget * c = a->appendChild(new Widget{});
+        EXPECT(b->previousSibling() == nullptr);
+        EXPECT(b->nextSibling() == c);
+        EXPECT(c->previousSibling() == b);
+        EXPECT(c->nextSibling() == nullptr);
+        Widget * d = a->appendChild(new Widget{});
+        EXPECT(c->previousSibling() == b);
+        EXPECT(c->nextSibling() == d);
+    }
+
+    TEST(ui_widget, ChildIterator) {
+        std::unique_ptr<Widget> a{ new Widget{} };
+        Widget * b = a->appendChild(new Widget{});
+        Widget * c = a->appendChild(new Widget{});
+        Widget * d = a->appendChild(new Widget{});
+        auto i = a->begin();
+        EXPECT(*i == b);
+        ++i;
+        EXPECT(*i == c);
+        ++i;
+        EXPECT(*i == d);
+        ++i;
+        EXPECT(i == a->end());
+    }
+
+    TEST(ui_widget, ChildOrder) {
+        std::unique_ptr<Widget> a{ new Widget{} };
+        EXPECT(a->frontChild() == nullptr);
+        EXPECT(a->backChild() == nullptr);
+        Widget * b = a->appendChild(new Widget{});
+        EXPECT(a->frontChild() == b);
+        EXPECT(a->backChild() == b);
+        Widget * c = a->appendChild(new Widget{});
+        EXPECT(a->frontChild() == c);
+        EXPECT(a->backChild() == b);
+        Widget * d = a->appendChild(new Widget{});
+        EXPECT(a->frontChild() == d);
+        EXPECT(a->backChild() == b);
+    }
+
+    TEST(ui_widget, ChildMoves) {
+        std::unique_ptr<Widget> a{ new Widget{} };
+        Widget * b = a->appendChild(new Widget{});
+        Widget * c = a->appendChild(new Widget{});
+        Widget * d = a->appendChild(new Widget{});
+        d->moveToFront();
+        {
+            EXPECT(b->previousSibling() == nullptr);
+            EXPECT(b->nextSibling() == c);
+            EXPECT(c->previousSibling() == b);
+            EXPECT(c->nextSibling() == d);
+            EXPECT(d->previousSibling() == c);
+            EXPECT(d->nextSibling() == nullptr);
+        } 
+        b->moveToFront();
+        {
+            EXPECT(c->previousSibling() == nullptr);
+            EXPECT(c->nextSibling() == d);
+            EXPECT(d->previousSibling() == c);
+            EXPECT(d->nextSibling() == b);
+            EXPECT(b->previousSibling() == d);
+            EXPECT(b->nextSibling() == nullptr);
+        }
+        c->moveForward();
+        {
+            EXPECT(d->previousSibling() == nullptr);
+            EXPECT(d->nextSibling() == c);
+            EXPECT(c->previousSibling() == d);
+            EXPECT(c->nextSibling() == b);
+            EXPECT(b->previousSibling() == c);
+            EXPECT(b->nextSibling() == nullptr);
+        }
+        c->moveBackward();
+        {
+            auto i = a->begin();
+            EXPECT(*i++ == c);
+            EXPECT(*i++ == d);
+            EXPECT(*i++ == b);
+            EXPECT(i == a->end());
+        }
+        b->moveToBack();
+        {
+            auto i = a->begin();
+            EXPECT(*i++ == b);
+            EXPECT(*i++ == c);
+            EXPECT(*i++ == d);
+            EXPECT(i == a->end());
+        } 
+    }
+
 
 }

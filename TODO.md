@@ -14,6 +14,9 @@ UI4:
 - how does layouting fit in the new UI? 
 
 
+
+Other:
+
 - see if msys can be added to bypass (perhaps sth to do with forkpty?)
 
 Documentation:

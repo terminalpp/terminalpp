@@ -195,12 +195,16 @@ namespace ui {
 
         /** Moves the current widget to the front position within its parent. 
          
-            This means the widget will be painted last. Does nothing if already at front, or if the widget is not attached. 
+            This means the widget will be painted last and be visible over any of its siblings. Does nothing if already at front, or if the widget is not attached. 
          */
         void moveToFront() {
             ASSERT(IN_UI_THREAD);
-            if (parent_ != nullptr)
-                parent_->swapChildren(this, parent_->frontChild_);
+            if (parent_ != nullptr && parent_->frontChild_ != this) {
+                parent_->detach(this);
+                previousSibling_ = parent_->frontChild_;
+                previousSibling_->nextSibling_ = this;
+                parent_->frontChild_ = this;
+            }
         }
 
         /** Moves the current widget to back within its parent. 
@@ -209,39 +213,60 @@ namespace ui {
          */
         void moveToBack() {
             ASSERT(IN_UI_THREAD);
-            if (parent_ != nullptr)
-                parent_->swapChildren(this, parent_->backChild_);
+            if (parent_ != nullptr && parent_->backChild_ != this) {
+                parent_->detach(this);
+                nextSibling_ = parent_->backChild_;
+                nextSibling_->previousSibling_ = this;
+                parent_->backChild_ = this;
+            }
         }
 
-        /** Moves the widget one step later in the paint order. 
+        /** Moves the widget one step later in the paint order (therefore more visible)
          
             If the widget is already painted last (in the front position), or if the widget is not attached, does nothing. 
          */
         void moveForward() {
             ASSERT(IN_UI_THREAD);
-            if (parent_ != nullptr)
-                parent_->swapChildren(this, this->nextSibling_);
+            if (parent_ != nullptr && nextSibling_ != nullptr) {
+                Widget * after = nextSibling_;
+                parent_->detach(this);
+                nextSibling_ = after->nextSibling_;
+                if (after->nextSibling_ != nullptr)
+                    after->nextSibling_->previousSibling_ = this;
+                after->nextSibling_ = this;
+                this->previousSibling_ = after;
+                if (parent_->frontChild_ == after)
+                    parent_->frontChild_ = this;
+            }
         }
 
-        /** Moves the widget one step sooner in the paint order. 
+        /** Moves the widget one step sooner in the paint order.
          
             If the widget is already painted first (in the back position), or if the widget is not attached, does nothing.
          */
         void moveBackward() {
             ASSERT(IN_UI_THREAD);
-            if (parent_ != nullptr)
-                parent_->swapChildren(this, this->previousSibling_);
+            if (parent_ != nullptr && previousSibling_ != nullptr) {
+                Widget * before = previousSibling_;
+                parent_->detach(this);
+                previousSibling_ = before->previousSibling_;
+                if (before->previousSibling_ != nullptr)
+                    before->previousSibling_->nextSibling_ = this;
+                before->previousSibling_ = this;
+                this->nextSibling_ = before;
+                if (parent_->backChild_ == before)
+                    parent_->backChild_ = this;
+            }
         }
 
-    protected:
-
-        /** Swaps the paint order of given child widgets. 
-         
-            Both widgets must be children. The front and back widgets are updated when necessary. If one of the widgets is nullptr, of if they are the same, does nothing.
-         */
-        void swapChildren(Widget * a, Widget * b);
-
     private:
+
+        /** Detaches the given widget from the list, without actually detaching it. 
+         
+            Expects the widget will be reattached in a different position immediately afterwards.  
+         */
+        void detach(Widget * child);
+
         Widget * parent_ = nullptr;
         Widget * backChild_ = nullptr;
         Widget * frontChild_ = nullptr;
@@ -250,10 +275,29 @@ namespace ui {
 
     //@}
 
-    /**\name Position, size and layout. 
+    /**\name Layout
+     
+       - resize
+       - autosized elements
+
+       
+
+     */
+    //@{
+    public:
+
+    protected:
+
+
+    private:
+    //@}
+
+    /**\name Position and size. 
+     
+       A widget has its own canvas, which is indefinite and whose origin starts at the top-left corner of the widget. Generally, the usable area of the canvas has the size of the widget itself.  
      
        - simple: no contents size, this can be infinite in theory, only offset
-       
+
      */
     //@{
     public:
