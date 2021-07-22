@@ -60,9 +60,9 @@
 
 /** Check that the given assumption holds, but does not fail the test immediately if the assumption fails. 
  */
-#define EXPECT(...) if (expectTrue(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)) {} else {}
-#define EXPECT_EQ(...) if (expectEq(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)) {} else {}
-#define EXPECT_NULL(...) if (expectNull(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)) {} else {}
+#define EXPECT(...) expectTrue(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)
+#define EXPECT_EQ(...) expectEq(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)
+#define EXPECT_NULL(...) expectNull(__FILE__, __LINE__, # __VA_ARGS__, __VA_ARGS__)
 
 /** Checks that given expression throws an exception of given type, or its subtype
  */
