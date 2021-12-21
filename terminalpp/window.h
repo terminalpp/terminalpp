@@ -455,3 +455,5 @@ namespace tpp {
     typename tpp::RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::GlobalState * tpp::RendererWindow<IMPLEMENTATION, NATIVE_HANDLE>::GlobalState_ = nullptr;
 
 } // namespace tpp
+
+

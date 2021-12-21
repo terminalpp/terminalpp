@@ -733,7 +733,7 @@ namespace ui {
         }
 
         // advance cursor's column
-        setCursorPosition(cursorPosition() + Point{1, 0});
+        setCursorPosition(cursorPosition() + Point{columnWidth, 0});
 
 
         // TODO do double width & height characters properly for the per-line 

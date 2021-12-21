@@ -9,7 +9,7 @@
 ### TODO
 
 > These are items I currently work on towards the next version. When they are done, they die.  
-
+ コンニチハ
 - see if msys can be added to bypass (perhaps sth to do with forkpty?)
 
 Documentation:
