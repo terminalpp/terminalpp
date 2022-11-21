@@ -5,7 +5,7 @@
 #include "application.h"
 #include "config.h"
 
-namespace tpp { 
+namespace tpp {
 
     Config & Config::Setup(int argc, char * argv[]) {
         MARK_AS_UNUSED(argc);
@@ -13,7 +13,10 @@ namespace tpp {
         Config & config = Instance();
         bool saveSettings = false;
         bool backupSettings = false;
-        std::string filename = GetSettingsFile();
+        std::string filename = []{
+            if (access ("settings.json", R_OK) == 0) return std::string("settings.json");
+            else return GetSettingsFile();
+        }();
         {
             std::ifstream f{filename};
             if (f.good()) {
@@ -38,7 +41,7 @@ namespace tpp {
 					saveSettings = true;
                     backupSettings = true;
 				}
-				// if there were any errors with the settings, create backup of the old settings as new settings will be stored. 
+				// if there were any errors with the settings, create backup of the old settings as new settings will be stored.
 				if (backupSettings) {
 					std::string backup{MakeUnique(filename)};
 					Application::Instance()->alert(STR("New settings file will be saved, backup stored in " << backup));
@@ -56,7 +59,7 @@ namespace tpp {
                 config.patchSessions();
             }
         }
-        // if the settings should be saved, save them now 
+        // if the settings should be saved, save them now
         if (saveSettings) {
             CreatePath(GetSettingsFolder());
             std::ofstream f(filename);
@@ -92,14 +95,14 @@ namespace tpp {
             if (vCurrent < vMin)
         		Application::Instance()->alert(STR("Settings version differs from current terminal version (" << PROJECT_VERSION << "). The configuration will be updated to the new version."));
         } catch (...) {
-            Application::Instance()->alert("Invalid settings version detected. The configuration will be updated to the current version");        
-        }        
+            Application::Instance()->alert("Invalid settings version detected. The configuration will be updated to the current version");
+        }
         userConfig.erase("version");
 	}
 
-    /** First determine if session list should be checked at all times (application.detectSessionsAtStartup), or sessions not present in the JSON (in which case we add them as an empty list). 
-     
-        If above true, then update the list with autodetected sessions. 
+    /** First determine if session list should be checked at all times (application.detectSessionsAtStartup), or sessions not present in the JSON (in which case we add them as an empty list).
+
+        If above true, then update the list with autodetected sessions.
      */
     bool Config::patchSessions() {
 
@@ -136,7 +139,7 @@ namespace tpp {
         }
         return updated;
     }
-    
+
     bool Config::addSession(JSON const & session) {
         for (auto existing : sessions)
             if (existing.name() == session["name"].toString())
@@ -257,7 +260,7 @@ namespace tpp {
                 if (WSLIsBypassPresent(distribution)) {
                     pty = "bypass";
                 } else {
-                    if (Application::Instance()->query("ConPTY Bypass Installation", STR("Do you want to install the ConPTY bypass, which allows for faster I/O and has full support for ANSI escape sequences into WSL distribution " << distribution))) 
+                    if (Application::Instance()->query("ConPTY Bypass Installation", STR("Do you want to install the ConPTY bypass, which allows for faster I/O and has full support for ANSI escape sequences into WSL distribution " << distribution)))
                         if (WSLInstallBypass(distribution)) {
                             pty = "bypass";
                         } else {
@@ -336,7 +339,7 @@ namespace tpp {
     }
 
     // C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -noe -c "&{Import-Module """C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"""; Enter-VsDevShell f77c1a05}"
-    /* The issue is that the last argument (f77c1a05) might be computer dependent and so it's not trivial to detect & reproduce here. Also the escaping for the import module path is off. 
+    /* The issue is that the last argument (f77c1a05) might be computer dependent and so it's not trivial to detect & reproduce here. Also the escaping for the import module path is off.
      */
     /*
     void Config::win32AddVSDevPs(std::string_view vsver, std::string_view edition, bool & updated) {
