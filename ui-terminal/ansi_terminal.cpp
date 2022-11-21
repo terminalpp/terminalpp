@@ -54,7 +54,7 @@ namespace ui {
         state_->reset(palette_.defaultForeground(), palette_.defaultBackground());
         stateBackup_->reset(palette_.defaultForeground(), palette_.defaultBackground());
         setFocusable(true);
-        
+
         startPTYReader();
 
     }
@@ -88,7 +88,7 @@ namespace ui {
             ccanvas.fill(Rect{Point{historyRows_[row].first, row}, Point{width(), row + 1}},
             Cell{}.setBg(ccanvas.bg()));
         }
-        // TODO once we support sixels or other shared objects that might survive to the drawing stage, this function will likely change. 
+        // TODO once we support sixels or other shared objects that might survive to the drawing stage, this function will likely change.
         ccanvas.drawFallbackBuffer(state_->buffer, Point{0, top});
 #ifdef  SHOW_LINE_ENDINGS
         // now add borders to the cells that are marked as end of line
@@ -101,11 +101,11 @@ namespace ui {
             }
         }
 #endif
-        // draw the selection, if any 
+        // draw the selection, if any
         SelectionOwner::paint(ccanvas);
         // display scrollbars
         canvas.verticalScrollbar(top + height(), scrollOffset().y());
-        // draw the cursor 
+        // draw the cursor
         if (focused()) {
             // set the cursor via the canvas
             ccanvas.setCursor(cursor(), cursorPosition() + Point{0, top});
@@ -116,7 +116,7 @@ namespace ui {
     }
 
     // User Input
-    
+
     void AnsiTerminal::pasteContents(std::string const & contents) {
         if (bracketedPaste_) {
             send("\033[200~", 6);
@@ -124,15 +124,16 @@ namespace ui {
             send("\033[201~", 6);
         } else {
             send(contents.c_str(), contents.size());
-        }        
+        }
     }
 
     void AnsiTerminal::keyDown(KeyEvent::Payload & e) {
         onKeyDown(e, this);
+        SelectionOwner::keyDown(e);
         if (e.active()) {
             // only scroll to prompt if the key down is not a simple modifier key, but don't do this in alternate mode when scrolling is disabled
-            if (! alternateMode_ 
-                && *e != Key::ShiftKey + Key::Shift 
+            if (! alternateMode_
+                && *e != Key::ShiftKey + Key::Shift
                 && *e != Key::AltKey + Key::Alt
                 && *e != Key::CtrlKey + Key::Ctrl
                 && *e != Key::WinKey + Key::Win)
@@ -144,10 +145,10 @@ namespace ui {
                 if ((cursorMode_ == CursorMode::Application &&
                     e->modifiers() == Key::Invalid) && (
                     e->key() == Key::Up ||
-                    e->key() == Key::Down || 
-                    e->key() == Key::Left || 
-                    e->key() == Key::Right || 
-                    e->key() == Key::Home || 
+                    e->key() == Key::Down ||
+                    e->key() == Key::Left ||
+                    e->key() == Key::Right ||
+                    e->key() == Key::Home ||
                     e->key() == Key::End)) {
                         std::string sa(*seq);
                         sa[1] = 'O';
@@ -197,9 +198,9 @@ namespace ui {
                 }
             }
             if (// the mouse movement should actually be reported
-                (mouseMode_ == MouseMode::All || (mouseMode_ == MouseMode::ButtonEvent && mouseButtonsDown_ > 0)) && 
+                (mouseMode_ == MouseMode::All || (mouseMode_ == MouseMode::ButtonEvent && mouseButtonsDown_ > 0)) &&
                 // only send the mouse information if the mouse is in the range of the window
-                bufferCoords.y() >= 0 && 
+                bufferCoords.y() >= 0 &&
                 Rect{size()}.contains(e->coords)) {
                     // mouse move adds 32 to the last known button press
                     sendMouseEvent(mouseLastButton_ + 32, bufferCoords, 'M');
@@ -260,9 +261,9 @@ namespace ui {
         if (e.active()) {
             if (! alternateMode_ && historyRows_.size() > 0) {
                 if (e->by > 0)
-                    scrollBy(Point{0, -1});
-                else 
-                    scrollBy(Point{0, 1});
+                    scrollBy(Point{0, -3});
+                else
+                    scrollBy(Point{0, 3});
             } else {
                 if (mouseMode_ != MouseMode::Off) {
                     Point bufferCoords;
@@ -463,7 +464,7 @@ namespace ui {
             }
             if (pos.x() == 0)
                 pos = Point{state_->buffer.width() - 1, pos.y() - 1};
-            else 
+            else
                 pos -= Point{1, 0};
             Cell & cell = state_->buffer.at(pos);
             url = Char{cell.codepoint()} + url;
@@ -473,11 +474,11 @@ namespace ui {
         link->setUrl(url);
     }
 
-    // Terminal State 
+    // Terminal State
 
     void AnsiTerminal::deleteCharacters(unsigned num) {
 		int r = cursorPosition().y();
-		for (unsigned c = cursorPosition().x(), e = state_->buffer.width() - num; c < e; ++c) 
+		for (unsigned c = cursorPosition().x(), e = state_->buffer.width() - num; c < e; ++c)
 			state_->buffer.at(c, r) = state_->buffer.at(c + num, r);
 		for (unsigned c = state_->buffer.width() - num, e = state_->buffer.width(); c < e; ++c)
 			state_->buffer.at(c, r) = state_->cell;
@@ -491,13 +492,13 @@ namespace ui {
 		for (unsigned c = cursorPosition().x(), e = cursorPosition().x() + num; c < e; ++c)
 			state_->buffer.at(c, r) = state_->cell;
     }
-    
+
     void AnsiTerminal::updateCursorPosition() {
         while (cursorPosition().x() >= state_->buffer.width()) {
             ASSERT(state_->buffer.width() > 0);
             setCursorPosition(cursorPosition() - Point{state_->buffer.width(), -1});
             // if the cursor is on the last line, evict the lines above
-            if (cursorPosition().y() == state_->scrollEnd) 
+            if (cursorPosition().y() == state_->scrollEnd)
                 deleteLines(1, state_->scrollStart, state_->scrollEnd, state_->cell);
         }
         if (cursorPosition().y() >= state_->buffer.height())
@@ -521,7 +522,7 @@ namespace ui {
             state_->buffer.insertLine(top, bottom, fill);
     }
 
-    /** If history is enabled, i.e. when history limit is greater than 0 and the terminal is not in alternate mode, the deleted line is added to the history. 
+    /** If history is enabled, i.e. when history limit is greater than 0 and the terminal is not in alternate mode, the deleted line is added to the history.
      */
     void AnsiTerminal::deleteLines(int lines, int top, int bottom, Cell const & fill) {
         // scroll the lines
@@ -534,7 +535,7 @@ namespace ui {
         }
     }
 
-    /** If the terminal is scrolled into view, scrolls the terminal into view after the history line has been added as well. 
+    /** If the terminal is scrolled into view, scrolls the terminal into view after the history line has been added as well.
      */
     void AnsiTerminal::addHistoryRow(Cell * row, int cols) {
         if (cols <= width()) {
@@ -717,7 +718,7 @@ namespace ui {
         if (detectHyperlinks_)
             detectHyperlink(codepoint);
         updateCursorPosition();
-        // set the cell according to the codepoint and current settings. If there is an active hyperlink, the hyperlink is first attached to the cell and then new cell is added to the hyperlink fallback 
+        // set the cell according to the codepoint and current settings. If there is an active hyperlink, the hyperlink is first attached to the cell and then new cell is added to the hyperlink fallback
         Cell & cell = state_->buffer.at(cursorPosition());
         cell = state_->cell;
         // attach hyperlink special object, of one is active
@@ -736,7 +737,7 @@ namespace ui {
         setCursorPosition(cursorPosition() + Point{1, 0});
 
 
-        // TODO do double width & height characters properly for the per-line 
+        // TODO do double width & height characters properly for the per-line
 
         /*
         // if the character's column width is 2 and current font is not double width, update to double width font
@@ -751,14 +752,14 @@ namespace ui {
                 // make sure the cell's font is normal size and width and display a space
                 cell2.setCodepoint(' ').setFont(cell.font().setSize(1).setDoubleWidth(false));
                 ++cursorPosition().x();
-            } 
+            }
             if (--columnWidth > 0 && cursorPosition().x() < state_->buffer.width()) {
                 Cell& cell2 = buffer_.at(buffer_.cursor().pos);
                 // copy current cell properties
                 cell2 = cell;
                 cell2.setCodepoint(' ');
                 ++cursorPosition().x();
-            } 
+            }
         }
         */
     }
@@ -799,7 +800,7 @@ namespace ui {
     void AnsiTerminal::parseCR() {
         LOG(SEQ) << "CR";
         resetHyperlinkDetection();
-        // mark the last character as line end? 
+        // mark the last character as line end?
         // TODO
         setCursorPosition(Point{0, cursorPosition().y()});
     }
@@ -867,12 +868,12 @@ namespace ui {
 			case 'M':
 				LOG(SEQ) << "RI: move cursor 1 line up";
                 resetHyperlinkDetection();
-				if (cursorPosition().y() == state_->scrollStart) 
+				if (cursorPosition().y() == state_->scrollStart)
 					insertLines(1, state_->scrollStart, state_->scrollEnd, state_->cell);
 				else
                     setCursorPosition(cursorPosition() - Point{0, 1});
 				break;
-            /* Device Control String (DCS). 
+            /* Device Control String (DCS).
              */
             case 'P':
                 resetHyperlinkDetection();
@@ -889,7 +890,7 @@ namespace ui {
                     LOG(SEQ_UNKNOWN) << "Unknown DCS sequence";
                 }
                 break;
-    		/* Character set specification - most cases are ignored, with the exception of the box drawing and reset to english (0 and B) respectively. 
+    		/* Character set specification - most cases are ignored, with the exception of the box drawing and reset to english (0 and B) respectively.
              */
 			case '(':
                 resetHyperlinkDetection();
@@ -951,11 +952,11 @@ namespace ui {
     }
 
     size_t AnsiTerminal::parseTppSequence(char const * buffer, char const * bufferEnd) {
-        // we know that we have at least \033P+   
+        // we know that we have at least \033P+
         char const * i = buffer + 3;
         char const * tppEnd = tpp::Sequence::FindSequenceEnd(i, bufferEnd);
         // if not found, we need more data
-        if (tppEnd == bufferEnd) 
+        if (tppEnd == bufferEnd)
             return 0;
         tpp::Sequence::Kind kind = tpp::Sequence::ParseKind(i, bufferEnd);
         // now we have kind and beginning and end of the payload so we can process the sequence
@@ -973,7 +974,7 @@ namespace ui {
         // process the sequence
         switch (seq.firstByte()) {
             // the "normal" CSI sequences
-            case 0: 
+            case 0:
                 switch (seq.finalByte()) {
                     // CSI <n> @ -- insert blank characters (ICH)
                     case '@':
@@ -1051,7 +1052,7 @@ namespace ui {
                                     state_->cell
                                 );
                                 state_->canvas.fill(
-                                    Rect{Point{0, cursorPosition().y() + 1}, Point{state_->buffer.width(), state_->buffer.height()}},                                
+                                    Rect{Point{0, cursorPosition().y() + 1}, Point{state_->buffer.width(), state_->buffer.height()}},
                                     state_->cell
                                 );
                                 return;
@@ -1124,7 +1125,7 @@ namespace ui {
                         LOG(SEQ) << "DL: scrollDown " << seq[0];
                         deleteLines(seq[0], cursorPosition().y(), state_->scrollEnd, state_->cell);
                         return;
-                    /* CSI <n> P -- Delete n charcters. (DCH) 
+                    /* CSI <n> P -- Delete n charcters. (DCH)
                      */
                     case 'P':
                         seq.setDefault(0, 1);
@@ -1165,7 +1166,7 @@ namespace ui {
                         while (n >= state_->buffer.width() && l < state_->buffer.height()) {
                             state_->canvas.fill(
                                 Rect{Point{0,l}, Size{state_->buffer.width(), 1}},
-                                state_->cell    
+                                state_->cell
                             );
                             ++l;
                             n -= state_->buffer.width();
@@ -1200,7 +1201,7 @@ namespace ui {
                         if (seq[0] != 0)
                             break;
                         LOG(SEQ) << "Device Attributes - VT102 sent";
-                        send("\033[?6c", 5); // send VT-102 for now, go for VT-220? 
+                        send("\033[?6c", 5); // send VT-102 for now, go for VT-220?
                         return;
                     }
                     /* CSI <n> d -- Line position absolute (VPA)
@@ -1219,13 +1220,13 @@ namespace ui {
                         return;
                     }
                     /* CSI <n> h -- Reset mode enable
-                      
+
                        Depending on the argument, certain things are turned on. None of the RM settings are currently supported.
                      */
                     case 'h':
                         break;
                     /* CSI <n> l -- Reset mode disable
-                    
+
                        Depending on the argument, certain things are turned off. Turning the features on/off is not allowed, but if the client wishes to disable something that is disabled, it's happily ignored.
                      */
                     case 'l':
@@ -1233,7 +1234,7 @@ namespace ui {
                         // enable replace mode (IRM) since this is the only mode we allow, do nothing
                         if (seq[0] == 4)
                             return;
-                        // powershell is sending CSI 25 l which means nothing and likely is a bug, perhaps should be CSI ? 25 l to disable cursor? 
+                        // powershell is sending CSI 25 l which means nothing and likely is a bug, perhaps should be CSI ? 25 l to disable cursor?
                         break;
                     /* SGR
                      */
@@ -1261,7 +1262,7 @@ namespace ui {
                         seq.setDefault(1, state_->buffer.height()); // inclusive
                         if (seq.numArgs() != 2)
                             break;
-                        // This is not proper 
+                        // This is not proper
                         seq.conditionalReplace(0, 0, 1);
                         seq.conditionalReplace(1, 0, 1);
                         if (seq[0] > state_->buffer.height())
@@ -1269,7 +1270,7 @@ namespace ui {
                         if (seq[1] > state_->buffer.height())
                             break;
                         state_->scrollStart = std::min(seq[0] - 1, state_->buffer.height() - 1); // inclusive
-                        state_->scrollEnd = std::min(seq[1], state_->buffer.height()); // exclusive 
+                        state_->scrollEnd = std::min(seq[1], state_->buffer.height()); // exclusive
                         setCursorPosition(Point{0,0});
                         LOG(SEQ) << "Scroll region set to " << state_->scrollStart << " - " << state_->scrollEnd;
                         return;
@@ -1401,14 +1402,14 @@ namespace ui {
 					continue;
 				/* SGR mouse encoding.
 				 */
-				case 1006: // 
+				case 1006: //
 					mouseEncoding_ = value ? MouseEncoding::SGR : MouseEncoding::Default;
 					LOG(SEQ) << "UTF8 mouse encoding: " << value;
 					continue;
 				/* Enable or disable the alternate screen buffer.
 				 */
 				case 47:
-				case 1049: 
+				case 1049:
                     // TODO or should the hyperlink be per buffer so that we can resume when we get back? My thinking is that the app should ensure that buffer does not chsnge while hyperlink is in progress
                     // clear any active hyperlinks
                     inProgressHyperlink_ = nullptr;
@@ -1437,7 +1438,7 @@ namespace ui {
                         }
                     }
 					continue;
-				/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it. 
+				/* Enable/disable bracketed paste mode. When enabled, if user pastes code in the window, the contents should be enclosed with ESC [200~ and ESC[201~ so that the client app can determine it is contents of the clipboard (things like vi might otherwise want to interpret it.
 				 */
 				case 2004:
 					bracketedPaste_ = value;
@@ -1460,8 +1461,8 @@ namespace ui {
 			switch (seq[i]) {
 				/* Resets all attributes. */
 				case 0:
-                    state_->cell.setFg(palette_.defaultForeground()) 
-                               .setDecor(palette_.defaultForeground()) 
+                    state_->cell.setFg(palette_.defaultForeground())
+                               .setDecor(palette_.defaultForeground())
                                .setBg(palette_.defaultBackground())
                                .setFont(Font{});
                     state_->bold = false;
@@ -1537,7 +1538,7 @@ namespace ui {
 					LOG(SEQ) << "blink off";
 					break;
                 /* Inverse off */
-				case 27: 
+				case 27:
                     if (state_->inverseMode) {
                         state_->inverseMode = false;
                         Color fg = state_->cell.fg();
@@ -1555,7 +1556,7 @@ namespace ui {
 				/* 38 - extended foreground color */
 				case 38: {
                     Color fg = parseSGRExtendedColor(seq, i);
-                    state_->cell.setFg(fg).setDecor(fg);    
+                    state_->cell.setFg(fg).setDecor(fg);
 					LOG(SEQ) << "fg set to " << fg;
 					break;
                 }
@@ -1569,7 +1570,7 @@ namespace ui {
 				/* 48 - extended background color */
 				case 48: {
                     Color bg = parseSGRExtendedColor(seq, i);
-                    state_->cell.setBg(bg);    
+                    state_->cell.setBg(bg);
 					LOG(SEQ) << "bg set to " << bg;
 					break;
                 }
@@ -1612,7 +1613,7 @@ namespace ui {
 			switch (seq[i++]) {
 				/* index from 256 colors */
 				case 5:
-					if (i >= seq.numArgs()) // not enough args 
+					if (i >= seq.numArgs()) // not enough args
 						break;
 					if (seq[i] > 255) // invalid color spec
 						break;
@@ -1650,8 +1651,8 @@ namespace ui {
                 });
                 return;
             }
-            /* OSC 1 - change icon name 
-               
+            /* OSC 1 - change icon name
+
                The icon name is a shortened text that should be displayed next to the iconified window. From: https://unix.stackexchange.com/questions/265760/what-does-it-mean-to-set-a-terminals-icon-title
              */
             case 1: {
@@ -1659,10 +1660,10 @@ namespace ui {
                 return;
             }
             /** OSC 8 - Hyperlink
-             
-                The supported format is `OSC 8 ; params ; url ST`, however we can safely ignore the id as that functionality is provided via the special object created and associated with the cells. 
 
-                When url is non-empty, new hyperlink is created and opened. Empty url (and empty params) then close the link and returns to normal mode. 
+                The supported format is `OSC 8 ; params ; url ST`, however we can safely ignore the id as that functionality is provided via the special object created and associated with the cells.
+
+                When url is non-empty, new hyperlink is created and opened. Empty url (and empty params) then close the link and returns to normal mode.
 
                 For more details, see: https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda or similar
              */
@@ -1685,7 +1686,7 @@ namespace ui {
                 // hyperlinks with different number of arguments are invalid sequences
                 break;
             }
-            /* OSC 52 - set clipboard to given value. 
+            /* OSC 52 - set clipboard to given value.
              */
             case 52: {
                 if (seq.numArgs() == 2 && seq[0] == "c") {
@@ -1699,7 +1700,7 @@ namespace ui {
                 }
                 break;
             }
-            /* OSC 112 - reset cursor color. 
+            /* OSC 112 - reset cursor color.
              */
             case 112:
                 LOG(SEQ) << "Cursor color reset";
@@ -1736,9 +1737,9 @@ namespace ui {
             if (c.codepoint() != ' ' || c.bg() != defaultBg || c.font().underline() || c.font().strikethrough()) {
                 break;
             }
-        }   
+        }
         // if we are not at the end of line, we must remember the whole line
-        if (IsLineEnd(x[lastCol])) 
+        if (IsLineEnd(x[lastCol]))
             lastCol += 1;
         else
             lastCol = width();
@@ -1765,7 +1766,7 @@ namespace ui {
         Cell ** oldRows = rows_;
         int oldWidth = width();
         int oldHeight = height();
-        // move the old rows out and call basic buffer resize to adjust width and height, fill the buffer with given cell so that we do not have to deal with uninitialized cells later. 
+        // move the old rows out and call basic buffer resize to adjust width and height, fill the buffer with given cell so that we do not have to deal with uninitialized cells later.
         rows_ = nullptr;
         Canvas::Buffer::resize(size);
         this->fill(fill);
@@ -1795,7 +1796,7 @@ namespace ui {
         delete [] oldRows;
     }
 
-    /** The algorithm is simple. Start at the row one above current cursor position. Then if we find an end of line character on that row, we know the next row was the first line of the cursor. If there is no end of line character, then the line is wordwrapped to the line after it so we check the line above, or if we get all the way to the top of the buffer its the first line by definition.  
+    /** The algorithm is simple. Start at the row one above current cursor position. Then if we find an end of line character on that row, we know the next row was the first line of the cursor. If there is no end of line character, then the line is wordwrapped to the line after it so we check the line above, or if we get all the way to the top of the buffer its the first line by definition.
      */
     int AnsiTerminal::Buffer::getCursorRowWrappedStart() const {
         int row = cursorPosition_.y() - 1;

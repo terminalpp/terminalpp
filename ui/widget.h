@@ -23,12 +23,12 @@ namespace ui {
 
     class Widget;
 
-    /** Base class for all ui widgets. 
-     
-        
-     
-     
-     
+    /** Base class for all ui widgets.
+
+
+
+
+
      */
     class Widget {
         friend class Renderer;
@@ -38,7 +38,7 @@ namespace ui {
     public:
 
         Widget() = default;
-        
+
         virtual ~Widget() {
             for (Widget * child : children_)
                 delete child;
@@ -48,17 +48,17 @@ namespace ui {
 
     // ============================================================================================
     /** \name Event Scheduling
-     
-        The widget has a shorthand schedule() method which can be used to schedule a new event linked to the widget. 
 
-        Each widget also remembers the number of pending events, i.e. events that were scheduled, but not yet executed so that when the widget is detached, the events can be cancelled automatically. 
+        The widget has a shorthand schedule() method which can be used to schedule a new event linked to the widget.
+
+        Each widget also remembers the number of pending events, i.e. events that were scheduled, but not yet executed so that when the widget is detached, the events can be cancelled automatically.
      */
     //@{
-#ifndef NDEBUG 
-    public: 
-        /** Check to make sure that code is executed in main UI thread. 
-         
-            This is only enabled in debug builds. See the UI_THREAD_ONLY macro for more details. 
+#ifndef NDEBUG
+    public:
+        /** Check to make sure that code is executed in main UI thread.
+
+            This is only enabled in debug builds. See the UI_THREAD_ONLY macro for more details.
          */
         static std::thread::id UIThreadID() {
             static std::thread::id id{std::this_thread::get_id()};
@@ -67,16 +67,16 @@ namespace ui {
 #endif
 
     protected:
-        /** Schedules given event and links it to the current widget. 
-         
-            Does nothing if the widget is not attached to a renderer. 
+        /** Schedules given event and links it to the current widget.
+
+            Does nothing if the widget is not attached to a renderer.
          */
         void schedule(std::function<void()> event);
 
     private:
-        /** Number of pending events linked to the widget. 
-         
-            These are only accessed from the event queue and such are protected by the event queue access mutex. 
+        /** Number of pending events linked to the widget.
+
+            These are only accessed from the event queue and such are protected by the event queue access mutex.
          */
         size_t pendingEvents_{0};
 
@@ -85,61 +85,61 @@ namespace ui {
     // ============================================================================================
 
     /** \name Widget Tree
-     
-        The widgets are arranged in a tree. 
+
+        The widgets are arranged in a tree.
         */
     //@{
 
     public:
 
-        /** Returns the parent widget. 
-         
-            If the widget has no parent (is unattached, or is a root widget), returns false. 
+        /** Returns the parent widget.
+
+            If the widget has no parent (is unattached, or is a root widget), returns false.
         */
         Widget * parent() const {
             return parent_;
         }
 
-        /** Returns true if the widget dominates the current one in the widget tree. 
+        /** Returns true if the widget dominates the current one in the widget tree.
 
-            Widget is dominated by itself and by its own parents transitively. The root widget dominates *all* widgets. 
+            Widget is dominated by itself and by its own parents transitively. The root widget dominates *all* widgets.
             */
         bool isDominatedBy(Widget const * widget) const;
 
         /** Returns the closest common parent of itself and the widget in argument.
 
-            In graph theory, this is the Lowest Common Ancestor.  
+            In graph theory, this is the Lowest Common Ancestor.
             */
         Widget * commonParentWith(Widget const * other) const;
 
-        /** Given renderer (window) coordinates, returns those coordinates relative to the widget. 
-         
-            Can only be called for widgets which are attached to a renderer, translates the coordinates irrespectively of whether they belong to the target widget, or not. 
+        /** Given renderer (window) coordinates, returns those coordinates relative to the widget.
+
+            Can only be called for widgets which are attached to a renderer, translates the coordinates irrespectively of whether they belong to the target widget, or not.
             */
         Point toWidgetCoordinates(Point rendererCoords) const {
             ASSERT(renderer_ != nullptr);
             return rendererCoords - visibleArea_.offset();
         }
 
-        /** Given widget coordinates, returns those coordinates relative to the renderer's area (the window). 
-         
-            Can only be called for widgets which are attached to a renderer, translates the coordinates irrespectively of whether they are visible in the window, or not. 
+        /** Given widget coordinates, returns those coordinates relative to the renderer's area (the window).
+
+            Can only be called for widgets which are attached to a renderer, translates the coordinates irrespectively of whether they are visible in the window, or not.
             */
         Point toRendererCoordinates(Point widgetCoords) const {
             ASSERT(renderer_ != nullptr);
             return widgetCoords + visibleArea_.offset();
         }
 
-        /** Converts the widget coordinates to the coordinates of the widget contents. 
+        /** Converts the widget coordinates to the coordinates of the widget contents.
          */
         Point toContentsCoords(Point widgetCoords) {
             return widgetCoords + scrollOffset();
         }
 
-        /** Returns the widget that is directly under the given coordinates, or itself. 
+        /** Returns the widget that is directly under the given coordinates, or itself.
          */
         Widget * getMouseTarget(Point coords) {
-            for (Widget * child : children_) 
+            for (Widget * child : children_)
                 if (child->rect_.contains(coords))
                     return child->getMouseTarget(child->toWidgetCoordinates(toRendererCoordinates(coords)));
             return this;
@@ -152,11 +152,11 @@ namespace ui {
         Widget * prevWidget(std::function<bool(Widget*)> cond = nullptr) {
             return prevWidget(cond, this, true);
         }
-        
+
     protected:
 
         /** Adds given widget as a child so that it will be in front (painted after all its siblings).
-         * 
+         *
          */
         virtual void attach(Widget * child);
 
@@ -164,11 +164,11 @@ namespace ui {
          */
         virtual void attachBack(Widget * child);
 
-        /** Removes given widget from the child widgets. 
+        /** Removes given widget from the child widgets.
          */
         virtual void detach(Widget * child);
 
-        /** Returns true if the widget is a root widget, i.e. if it has no parent *and* is attached to a renderer. 
+        /** Returns true if the widget is a root widget, i.e. if it has no parent *and* is attached to a renderer.
          */
         bool isRootWidget() const {
             return (parent_ == nullptr) && (renderer_ != nullptr);
@@ -183,7 +183,7 @@ namespace ui {
         Widget * prevWidget(std::function<bool(Widget*)> cond, Widget * last, bool checkParent);
 
     private:
-        /** Mutex protecting the renderer pointer for the widget. 
+        /** Mutex protecting the renderer pointer for the widget.
          */
         std::mutex rendererGuard_;
 
@@ -201,9 +201,9 @@ namespace ui {
 
     public:
 
-        /** Returns whether the widget is visible or not. 
+        /** Returns whether the widget is visible or not.
 
-            Visible widget does not guarantee that the widget is actually visible for the end user, but merely means that the widget should be rendered when appropriate. Invisible widgets are never rendered and do not occupy any layout space.  
+            Visible widget does not guarantee that the widget is actually visible for the end user, but merely means that the widget should be rendered when appropriate. Invisible widgets are never rendered and do not occupy any layout space.
         */
         bool visible() const {
             return visible_;
@@ -217,7 +217,7 @@ namespace ui {
             }
         }
 
-        /** Returns the rectangle the widget occupies in its parent's contents area. 
+        /** Returns the rectangle the widget occupies in its parent's contents area.
          */
         Rect const & rect() const {
             return rect_;
@@ -259,57 +259,13 @@ namespace ui {
             }
         }
 
-        /** Moves the widget within its parent. 
+        /** Moves the widget within its parent.
          */
         virtual void move(Point const & topLeft);
 
-        /** Resizes the widget. 
+        /** Resizes the widget.
          */
         virtual void resize(Size const & size);
-
-    protected:
-
-        Layout * layout() const {
-            return layout_;
-        }
-
-        virtual void setLayout(Layout * value) {
-            if (layout_ != value) {
-                delete layout_;
-                layout_ = value;
-                relayout();
-            }
-        }
-
-        /** Returns the contents size. 
-         */
-        virtual Size contentsSize() const {
-            return rect_.size();
-        }
-
-        /** Returns the canvas used for the contents of the widget. 
-         
-            The canvas has the contentsSize() size and is scrolled according to the scrollOffset().
-         */
-        Canvas contentsCanvas(Canvas & from) const;
-
-        /** Returns the scroll offset of the contents. 
-         */
-        Point scrollOffset() const {
-            return scrollOffset_;
-        }
-
-        /** Updates the scroll offset of the widget. 
-         
-            When offset changes, the visible area must be recalculated and the widget repainted. 
-         */
-        virtual void setScrollOffset(Point const & value) {
-            if (value != scrollOffset_) {
-                scrollOffset_ = value;
-                updateVisibleArea();
-                repaint();
-            } 
-        }
 
         virtual void scrollBy(Point delta) {
             Point p = scrollOffset_ + delta;
@@ -325,9 +281,53 @@ namespace ui {
             setScrollOffset(p);
         }
 
-        /** Returns the hint about the contents size of the widget. 
-         
-            Depending on the widget's size hints returns the width and height the widget should have when autosized. 
+    protected:
+
+        Layout * layout() const {
+            return layout_;
+        }
+
+        virtual void setLayout(Layout * value) {
+            if (layout_ != value) {
+                delete layout_;
+                layout_ = value;
+                relayout();
+            }
+        }
+
+        /** Returns the contents size.
+         */
+        virtual Size contentsSize() const {
+            return rect_.size();
+        }
+
+        /** Returns the canvas used for the contents of the widget.
+
+            The canvas has the contentsSize() size and is scrolled according to the scrollOffset().
+         */
+        Canvas contentsCanvas(Canvas & from) const;
+
+        /** Returns the scroll offset of the contents.
+         */
+        Point scrollOffset() const {
+            return scrollOffset_;
+        }
+
+        /** Updates the scroll offset of the widget.
+
+            When offset changes, the visible area must be recalculated and the widget repainted.
+         */
+        virtual void setScrollOffset(Point const & value) {
+            if (value != scrollOffset_) {
+                scrollOffset_ = value;
+                updateVisibleArea();
+                repaint();
+            }
+        }
+
+        /** Returns the hint about the contents size of the widget.
+
+            Depending on the widget's size hints returns the width and height the widget should have when autosized.
 
             */
         virtual Size getAutosizeHint() {
@@ -351,41 +351,41 @@ namespace ui {
 
     private:
 
-        /** Bring canvas' visible area to own scope so that it can be used by children. 
+        /** Bring canvas' visible area to own scope so that it can be used by children.
          */
         using VisibleArea = Canvas::VisibleArea;
 
-        /** Obtains the contents visible area of the parent and then updates own and children's visible areas. 
+        /** Obtains the contents visible area of the parent and then updates own and children's visible areas.
          */
         void updateVisibleArea();
 
         void updateVisibleArea(VisibleArea const & parentArea, Renderer * renderer);
 
-        /** Renderer to which the widget is attached. 
+        /** Renderer to which the widget is attached.
          */
         Renderer * renderer_ = nullptr;
 
-        /** Visible area of the widget. 
+        /** Visible area of the widget.
          */
         Canvas::VisibleArea visibleArea_;
 
-        /** The rectangle of the widget within its parent's client area. 
+        /** The rectangle of the widget within its parent's client area.
          */
         Rect rect_;
 
-        /** The offset of the visible area in the contents rectangle. 
+        /** The offset of the visible area in the contents rectangle.
          */
         Point scrollOffset_;
 
-        /** Visibility of the widget. 
+        /** Visibility of the widget.
          */
         bool visible_ = true;
 
-        /** If true, the widget's relayout should be called after its parent relayout happens. Calling resize 
+        /** If true, the widget's relayout should be called after its parent relayout happens. Calling resize
          */
         //bool pendingRelayout_ = false;
 
-        /** True if the widget is currently being relayouted. 
+        /** True if the widget is currently being relayouted.
          */
         bool relayouting_ = false;
 
@@ -393,7 +393,7 @@ namespace ui {
          */
         bool overlaid_ = false;
 
-        /** The layout implementation for the widget. 
+        /** The layout implementation for the widget.
          */
         Layout * layout_ = new Layout::None{};
 
@@ -408,18 +408,18 @@ namespace ui {
 
      */
     //@{
-    
-    public: 
 
-        /** Repaints the widget. 
-         
-            Triggers the repaint of the widget. 
+    public:
+
+        /** Repaints the widget.
+
+            Triggers the repaint of the widget.
          */
         void repaint();
 
-        /** Schedules repaint. 
-         
-            This method can be called from a different thread. 
+        /** Schedules repaint.
+
+            This method can be called from a different thread.
          */
         void scheduleRepaint();
 
@@ -447,7 +447,7 @@ namespace ui {
 
     protected:
 
-        /** Simple RAII widget lock that when engaged prevents widget from repainting. 
+        /** Simple RAII widget lock that when engaged prevents widget from repainting.
          */
         class Lock {
         public:
@@ -463,56 +463,56 @@ namespace ui {
             }
         private:
             Widget * widget_;
-        }; 
+        };
 
-        /** Returns whether the widget is locked or not. 
-         
+        /** Returns whether the widget is locked or not.
+
             A locked widget will not repaint itself.
          */
         bool locked() const {
             return lock_ > 0;
         }
 
-        /** Called when repaint of the widget is requested. 
+        /** Called when repaint of the widget is requested.
 
-            Widget subclasses can override this method to delegate the repaint event to other widgets up the tree, such as in cases of transparent background widgets. 
+            Widget subclasses can override this method to delegate the repaint event to other widgets up the tree, such as in cases of transparent background widgets.
          */
         virtual void requestRepaint();
 
-        /** Paints given child. 
-         
-            This method is necessary because subclasses can't simply call paint() on the children because of C++ protection rules. 
+        /** Paints given child.
+
+            This method is necessary because subclasses can't simply call paint() on the children because of C++ protection rules.
             */
         void paintChild(Widget * child) {
             ASSERT(child->parent_ == this);
             child->paint();
         }
 
-        /** Immediately paints the widget. 
-         
-            This method is to be used when another widget is to be painted as part of its parent. It clears the pending repaint flag, unlocking future repaints of the widgets, creates the appropriate canvas and calls the paint(Canvas &) method to actually draw the widget. 
+        /** Immediately paints the widget.
 
-            To explicitly repaint the widget, the repaint() method should be called instead, which optimizes the number of repaints and tells the renderer to repaint the widget.                 
-            */        
+            This method is to be used when another widget is to be painted as part of its parent. It clears the pending repaint flag, unlocking future repaints of the widgets, creates the appropriate canvas and calls the paint(Canvas &) method to actually draw the widget.
+
+            To explicitly repaint the widget, the repaint() method should be called instead, which optimizes the number of repaints and tells the renderer to repaint the widget.
+            */
         void paint();
 
-        /** Returns the attached renderer. 
+        /** Returns the attached renderer.
          */
         Renderer * renderer() const {
             return renderer_;
         }
 
-        /** Determines whether a paint request in the given child's subtree is to be allowed or not. 
-         
-            Returns true if the request is to be allowed, false if the repaint is not necessary (such as the child will nevet be displayed, or parent has already scheduled its own repaint and so will repaint the child as well). 
-            
-            When blocking the child repaint, a parent has the option to perform its own repaint instead. 
+        /** Determines whether a paint request in the given child's subtree is to be allowed or not.
+
+            Returns true if the request is to be allowed, false if the repaint is not necessary (such as the child will nevet be displayed, or parent has already scheduled its own repaint and so will repaint the child as well).
+
+            When blocking the child repaint, a parent has the option to perform its own repaint instead.
             */
         virtual bool allowRepaintRequest(Widget * immediateChild);
 
-        /** Actual paint method. 
-         
-            Override this method in subclasses to actually paint the widget's contents using the provided canvas. The default implementation simply paints the widget's children. 
+        /** Actual paint method.
+
+            Override this method in subclasses to actually paint the widget's contents using the provided canvas. The default implementation simply paints the widget's children.
             */
         virtual void paint(Canvas & canvas) {
             MARK_AS_UNUSED(canvas);
@@ -526,7 +526,7 @@ namespace ui {
 
         friend class Lock;
 
-        /** Since widget's start detached, their paint is blocked by setting pending repaint to true. When attached, and repainted via its parent, the flag will be cleared. 
+        /** Since widget's start detached, their paint is blocked by setting pending repaint to true. When attached, and repainted via its parent, the flag will be cleared.
          */
         std::atomic<bool> pendingRepaint_ = true;
 
@@ -538,19 +538,19 @@ namespace ui {
     //@}
 
     // ============================================================================================
-    /** \name Generic Input 
+    /** \name Generic Input
      */
     public:
 
-        /** When a widget is enabled it responds to input. 
+        /** When a widget is enabled it responds to input.
          */
         bool enabled() const {
             return enabled_;
         }
 
         /** Enables or disables the widget
-         
-            Enabled widget is expected to respond to input events, while disabled widgets should ignore them. Disabled widget cannot be keyboard focused, but mouse & clipboard and selection events are still passed to the event and they should be ignored for other than visual purposes. 
+
+            Enabled widget is expected to respond to input events, while disabled widgets should ignore them. Disabled widget cannot be keyboard focused, but mouse & clipboard and selection events are still passed to the event and they should be ignored for other than visual purposes.
          */
         virtual void setEnabled(bool value = true);
 
@@ -575,7 +575,7 @@ namespace ui {
 
         bool mouseFocused() const;
 
-        /** Returns the mouse cursor that should be used for the widget. 
+        /** Returns the mouse cursor that should be used for the widget.
          */
         MouseCursor mouseCursor() const {
             return mouseCursor_;
@@ -584,14 +584,14 @@ namespace ui {
     protected:
 
         /** Sets the mouse cursor of the widget.
-         
-            If the widget has mouse focus, updates the cursor immediately with the renderer. 
+
+            If the widget has mouse focus, updates the cursor immediately with the renderer.
          */
         virtual void setMouseCursor(MouseCursor cursor);
 
-        /** Called when mouse enters the widget's visible area. 
-         
-            Sets the renderer's mouse cursor to the widget's mouse cursor and triggers the event. 
+        /** Called when mouse enters the widget's visible area.
+
+            Sets the renderer's mouse cursor to the widget's mouse cursor and triggers the event.
          */
         virtual void mouseIn(VoidEvent::Payload & e);
 
@@ -656,8 +656,8 @@ namespace ui {
         }
 
     private:
-        
-        /** Mouse cursor to be displayed over the widget. 
+
+        /** Mouse cursor to be displayed over the widget.
          */
         MouseCursor mouseCursor_ = MouseCursor::Default;
 
@@ -665,18 +665,18 @@ namespace ui {
 
     // ========================================================================================
     /** \name Keyboard Input
-     
+
      */
     //@{
     public:
 
-        /** Determines whether the widget supports obtaining keyboard focus, or not. 
+        /** Determines whether the widget supports obtaining keyboard focus, or not.
          */
         bool focusable() const {
             return focusable_;
         }
 
-        /** Returns true if the widget currently has keyboard focus. 
+        /** Returns true if the widget currently has keyboard focus.
          */
         bool focused() const;
 
@@ -688,26 +688,26 @@ namespace ui {
 
     protected:
 
-        /** Captures keyboard input for the current widget. 
+        /** Captures keyboard input for the current widget.
          */
         virtual void focus();
 
-        /** Releases the keyboard input capture. 
-         
-            Moves to the next focusable widget, or if there is no next widget simply releases the capture. 
+        /** Releases the keyboard input capture.
+
+            Moves to the next focusable widget, or if there is no next widget simply releases the capture.
          */
         virtual void defocus();
 
         virtual void setFocusable(bool value = true);
 
-        /** The widget has received keyboard focus. 
+        /** The widget has received keyboard focus.
          */
         virtual void focusIn(VoidEvent::Payload & e) {
             onFocusIn(e, this);
             repaint();
         }
 
-        /** The widget has lost keyboard focus. 
+        /** The widget has lost keyboard focus.
          */
         virtual void focusOut(VoidEvent::Payload & e) {
             onFocusOut(e, this);
@@ -735,7 +735,7 @@ namespace ui {
 
     private:
 
-        bool focusable_ = false; 
+        bool focusable_ = false;
 
     //@}
 
@@ -748,7 +748,7 @@ namespace ui {
 
     protected:
 
-        /** Triggered when previously received clipboard or selection contents are available. 
+        /** Triggered when previously received clipboard or selection contents are available.
          */
         virtual void paste(StringEvent::Payload & e) {
             onPaste(e, this);
@@ -769,10 +769,10 @@ namespace ui {
 
     public:
         /** Returns true if the widget is available to the user.
-          
-            I.e. if the widget is visible (so that it can be observed) and enabled (so that it can be interacted with).     
 
-            This is a static function that can be conveniently used as an argument to nextWidget() and prevWidget() methods. 
+            I.e. if the widget is visible (so that it can be observed) and enabled (so that it can be interacted with).
+
+            This is a static function that can be conveniently used as an argument to nextWidget() and prevWidget() methods.
          */
         static bool IsAvailable(Widget * w) {
             return w->visible() && w->enabled();

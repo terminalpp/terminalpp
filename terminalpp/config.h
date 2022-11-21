@@ -13,7 +13,7 @@
 #include "ui/special_objects/hyperlink.h"
 
 /** \page tppconfig Configuration
- 
+
     \brief Describes the confifuration of the terminal application.
 
 	What I want:
@@ -23,11 +23,11 @@
 	- one place to define the options and their defaults
  */
 
-/** The oldest compatible settings version. 
- 
+/** The oldest compatible settings version.
+
     If upgrading terminal from version above or equal to the one set here, the upgrade is silent because the configuration files should be almost identical (i.e. new version should have only additions).
 
-    In other cases a version upgrade dialog is displayed and a copy of the settings should be made before terminal updates to new version. 
+    In other cases a version upgrade dialog is displayed and a copy of the settings should be made before terminal updates to new version.
     */
 constexpr char const * const MIN_COMPATIBLE_VERSION = "0.8.0";
 //#define MIN_COMPATIBLE_VERSION "0.8.0"
@@ -37,8 +37,8 @@ constexpr char const * const BYPASS_PATH = "~/.local/bin/tpp-bypass";
 
 constexpr char const * const DEFAULT_WINDOW_TITLE = "t++";
 
-/** Determines the default blink speed of the cursor or blinking text. 
- */ 
+/** Determines the default blink speed of the cursor or blinking text.
+ */
 constexpr size_t DEFAULT_BLINK_SPEED = 500;
 
 /** Keyboard shortcuts for various actions.
@@ -52,13 +52,20 @@ constexpr size_t DEFAULT_BLINK_SPEED = 500;
 #define SHORTCUT_ZOOM_IN_ALT (Key::Equals + Key::Ctrl + Key::Shift)
 #define SHORTCUT_ZOOM_OUT_ALT (Key::Minus + Key::Ctrl + Key::Shift)
 
-#define SHORTCUT_PASTE (Key::V + Key::Ctrl + Key::Shift)
-#define SHORTCUT_COPY (Key::C + Key::Ctrl)
+#define SHORTCUT_PASTE (Key::V + Key::Ctrl)
+#define SHORTCUT_PASTE_ALT (Key::V + Key::Ctrl + Key::Shift)
+#define SHORTCUT_COPY (Key::C + Key::Ctrl + Key::Shift)
 
+#define SHORTCUT_SCROLL_UP (Key::Up + Key::Ctrl + Key::Shift)
+#define SHORTCUT_SCROLL_DOWN (Key::Down + Key::Ctrl + Key::Shift)
+#define SHORTCUT_SCROLL_PAGE_UP (Key::PageUp + Key::Ctrl + Key::Shift)
+#define SHORTCUT_SCROLL_PAGE_DOWN (Key::PageDown + Key::Ctrl + Key::Shift)
+#define SHORTCUT_SCROLL_TOP (Key::Home + Key::Ctrl + Key::Shift)
+#define SHORTCUT_SCROLL_BOTTOM (Key::End + Key::Ctrl + Key::Shift)
 
 namespace config {
 
-    /** Typedef for font attributes specification only. 
+    /** Typedef for font attributes specification only.
      */
     typedef ui::Font FontAttributes;
 
@@ -68,8 +75,8 @@ namespace config {
         Multiline
     };
 
-    /** Determines whether the terminal applications can set local clipboard. 
-     
+    /** Determines whether the terminal applications can set local clipboard.
+
         If allowed, all requests to set clipboard will be processed immediately. If denied, all will be silently ignored and when set to ask, each request will require confirmation.
      */
     enum class AllowClipboardUpdate {
@@ -118,7 +125,7 @@ inline Command JSONConfig::FromJSON(JSON const & json) {
         THROW(JSONError()) << "Element must be an array";
     std::vector<std::string> cmd;
     for (auto i : json) {
-        if (i.kind() != JSON::Kind::String) 
+        if (i.kind() != JSON::Kind::String)
             THROW(JSONError()) << "Element items must be strings, but " << i.kind() << " found";
         cmd.push_back(i.toString());
     }
@@ -139,7 +146,7 @@ inline ui::AnsiTerminal::Palette JSONConfig::FromJSON(JSON const & json) {
     ui::AnsiTerminal::Palette result{ui::AnsiTerminal::Palette::XTerm256()};
     size_t i = 0;
     for (auto c : json) {
-        if (c.kind() != JSON::Kind::String) 
+        if (c.kind() != JSON::Kind::String)
             THROW(JSONError()) << "Element items must be HTML colors, but " << c.kind() << " found";
         // empty colors are skipped in the color configuration, leaving their default values
         if (! c.toString().empty())
@@ -165,17 +172,17 @@ inline std::vector<std::reference_wrapper<Log>> JSONConfig::FromJSON(JSON const 
         if (item.kind() != JSON::Kind::String)
             THROW(JSONError()) << "Strings expected in the array, but  " << item << " found";
         std::string const & logName = item.toString();
-        if (logName == "FATAL_ERROR") 
+        if (logName == "FATAL_ERROR")
             result.push_back(Telemetry::FatalErrorLog());
-        else if (logName == "EXCEPTION") 
+        else if (logName == "EXCEPTION")
             result.push_back(Log::Exception());
-        else if (logName == "TELEMETRY") 
+        else if (logName == "TELEMETRY")
             result.push_back(Telemetry::TelemetryLog());
-        else if (logName == "SEQ_ERROR") 
+        else if (logName == "SEQ_ERROR")
             result.push_back(ui::AnsiTerminal::SEQ_ERROR);
-        else if (logName == "SEQ_UNKNOWN") 
+        else if (logName == "SEQ_UNKNOWN")
             result.push_back(ui::AnsiTerminal::SEQ_UNKNOWN);
-        else if (logName == "SEQ_WONT_SUPPORT") 
+        else if (logName == "SEQ_WONT_SUPPORT")
             result.push_back(ui::AnsiTerminal::SEQ_WONT_SUPPORT);
         else
             THROW(JSONError()) << "Invalid log name " << logName;
@@ -187,13 +194,13 @@ template<>
 inline config::ConfirmPaste JSONConfig::FromJSON(JSON const & json) {
     if (json.kind() != JSON::Kind::String)
         THROW(JSONError()) << "Element must be an array";
-    if (json.toString() == "never") 
+    if (json.toString() == "never")
         return config::ConfirmPaste::Never;
     else if (json.toString() == "always")
         return config::ConfirmPaste::Always;
     else if (json.toString() == "multiline")
         return config::ConfirmPaste::Multiline;
-    else 
+    else
         THROW(JSONError()) << "Only values 'never', 'always' or 'multiline' are permitted";
 }
 
@@ -201,17 +208,17 @@ template<>
 inline config::AllowClipboardUpdate JSONConfig::FromJSON(JSON const & json) {
     if (json.kind() != JSON::Kind::String)
         THROW(JSONError()) << "Element must be an array";
-    if (json.toString() == "allow") 
+    if (json.toString() == "allow")
         return config::AllowClipboardUpdate::Allow;
     else if (json.toString() == "deny")
         return config::AllowClipboardUpdate::Deny;
     else if (json.toString() == "ask")
         return config::AllowClipboardUpdate::Ask;
-    else 
+    else
         THROW(JSONError()) << "Only values 'allow', 'deny' or 'ask' are permitted";
 }
 
-namespace tpp {	
+namespace tpp {
 
     class Config : public JSONConfig::CmdArgsRoot {
     public:
@@ -268,8 +275,8 @@ namespace tpp {
             renderer,
             "Renderer settings",
 		    CONFIG_PROPERTY(
-				fps, 
-				"Maximum FPS", 
+				fps,
+				"Maximum FPS",
 				JSON{60},
 			    unsigned
 			);
@@ -438,7 +445,7 @@ namespace tpp {
                 displayBold,
                 "If true bold font will be used when appropriate.",
                 JSON{true},
-                bool                
+                bool
             );
             CONFIG_PROPERTY(
                 allowOSCHyperlinks,
@@ -482,7 +489,7 @@ namespace tpp {
 				palette,
 				"Definition of the palette used for the session.",
 				CONFIG_PROPERTY(
-					colors, 
+					colors,
 					"Overrides the predefined palette. Up to 256 colors can be specified in HTML format. These colors will override the default xterm palette used.",
 					JSON::Array(),
 				    ui::AnsiTerminal::Palette
@@ -499,7 +506,7 @@ namespace tpp {
 					JSON{"#000000"},
 				    ui::Color
 				);
-				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
+				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly.
 				 */
 				ui::AnsiTerminal::Palette * operator () () const {
 					auto result = new ui::AnsiTerminal::Palette{colors()};
@@ -554,10 +561,10 @@ namespace tpp {
             JSON{"default"},
             std::string
         );
-        /* The list of sessings and their override settings. 
+        /* The list of sessings and their override settings.
          */
         CONFIG_ARRAY(
-            sessions, 
+            sessions,
             "List of known sessions",
             JSON::Array(),
             CONFIG_PROPERTY(
@@ -579,7 +586,7 @@ namespace tpp {
 			    std::string
 			);
 			CONFIG_PROPERTY(
-				command, 
+				command,
 				"The command to be executed in the session",
 				JSON::Array(),
 			    Command
@@ -594,7 +601,7 @@ namespace tpp {
 				palette,
 				"Definition of the palette used for the session.",
 				CONFIG_PROPERTY(
-					colors, 
+					colors,
 					"Overrides the predefined palette. Up to 256 colors can be specified in HTML format. These colors will override the default xterm palette used.",
 					JSON::Array(),
 				    ui::AnsiTerminal::Palette
@@ -611,12 +618,12 @@ namespace tpp {
 					JSON{"#000000"},
 				    ui::Color
 				);
-				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly. 
+				/** Provides a value getter on the entire palette configuration group which returns the palette with the default colors set accordingly.
 				 */
 				ui::AnsiTerminal::Palette operator () () const {
                     ui::AnsiTerminal::Palette result{colors()};
 					result.setDefaultForeground(defaultForeground());
-					result.setDefaultBackground(defaultBackground());                    
+					result.setDefaultBackground(defaultBackground());
 					return result;
 				}
 			);
@@ -660,11 +667,11 @@ namespace tpp {
 			);
         );
 
-        /** Initializes the configuration. 
-         
-            Reads the configuration if one exists. Then fills in missing values and updates the stored settings if necessary. If there are any errors with reading the settings, creates a backup of the old settings before creating new ones. 
+        /** Initializes the configuration.
 
-            Also checks the stored version and current version and informs the user if there is a possibility of any breaking change. 
+            Reads the configuration if one exists. Then fills in missing values and updates the stored settings if necessary. If there are any errors with reading the settings, creates a backup of the old settings before creating new ones.
+
+            Also checks the stored version and current version and informs the user if there is a possibility of any breaking change.
          */
         static Config & Setup(int argc, char* argv[]);
 
@@ -673,16 +680,16 @@ namespace tpp {
             return instance;
         }
 
-		/** Returns the directory in which the configuration files should be located. 
+		/** Returns the directory in which the configuration files should be located.
 		 */
 	    static std::string GetSettingsFolder();
 
-		/** Returns the actual settings file, i.e. the `settings.json` file in the settings directory. 
+		/** Returns the actual settings file, i.e. the `settings.json` file in the settings directory.
 		 */
 	    static std::string GetSettingsFile();
 
-        /** Returns the version of the terminal++ binary. 
-		 
+        /** Returns the version of the terminal++ binary.
+
 		    This version is specified in the CMakeLists.txt and is watermarked to each binary.
 		 */
 	    static JSON TerminalVersion();
@@ -705,19 +712,19 @@ namespace tpp {
             if (font.doubleWidth()) {
                 if (font.bold() && renderer.font.doubleWidthBoldFamily.updated())
                     return renderer.font.doubleWidthBoldFamily();
-                else   
+                else
                     return renderer.font.doubleWidthFamily();
             } else {
                 if (font.bold() && renderer.font.boldFamily.updated())
                     return renderer.font.boldFamily();
-                else   
+                else
                     return renderer.font.family();
             }
         }
 
     protected:
-        /** Parses the command line arguments. 
-            
+        /** Parses the command line arguments.
+
          */
         void parseCommandLine(int argc, char * argv[]) {
             addArgument(renderer.fps, { "--fps"});
@@ -753,19 +760,19 @@ namespace tpp {
                 // copy the working directory
                 if (cmdSession.workingDirectory.updated())
                     session.workingDirectory.set(cmdSession.workingDirectory.toJSON());
-                // set the session name and set it as default session 
+                // set the session name and set it as default session
                 JSON name{"command-line-override"};
                 defaultSession.set(name);
                 session.name.set(name);
-            } 
+            }
             sessions.erase(cmdSession);
         }
 
     private:
 
-        /** Verifies the configuration version stored in the settings. 
-         
-            If the version is different than current version of the program, clears the version info so that it gets regenerated. If the old version is lower than the MIN_COMPATIBLE_VERSION, displays a warning that settings will be updated. 
+        /** Verifies the configuration version stored in the settings.
+
+            If the version is different than current version of the program, clears the version info so that it gets regenerated. If the old version is lower than the MIN_COMPATIBLE_VERSION, displays a warning that settings will be updated.
          */
         static void VerifyConfigurationVersion(JSON & userConfig);
 
@@ -776,15 +783,15 @@ namespace tpp {
         bool addSession(JSON const & session);
 
 		/** \name Default value providers
-		 
-		    These static methods calculate default values for the complex configuration properties. The idea is that these will be executed once the terminal is installed, they will analyze the system and calculate proper values to be stored in the configuration file. 
+
+		    These static methods calculate default values for the complex configuration properties. The idea is that these will be executed once the terminal is installed, they will analyze the system and calculate proper values to be stored in the configuration file.
 		 */
 		//@{
 
-		
+
 		static JSON DefaultTelemetryDir();
 
-		static JSON DefaultRemoteFilesDir();		
+		static JSON DefaultRemoteFilesDir();
 
 		static JSON DefaultFontFamily();
 
@@ -799,37 +806,37 @@ namespace tpp {
 
         static bool WSLIsBypassPresent(std::string const & distro);
 
-        /** Installs the bypass from the latest release. 
-         
-            Since 0.8.3 a single executable is used for all WSL distributions. 
+        /** Installs the bypass from the latest release.
+
+            Since 0.8.3 a single executable is used for all WSL distributions.
          */
         static bool WSLInstallBypass(std::string const & distro);
 
-        /** Adds the cmd.exe session to the list of sessions and sets it as default. 
-         
-            `cmd.exe` is expected to be installed on every Windows computer so is added without check. 
+        /** Adds the cmd.exe session to the list of sessions and sets it as default.
+
+            `cmd.exe` is expected to be installed on every Windows computer so is added without check.
          */
         void win32AddCmdExe(std::string & defaultSessionName, bool & updated);
 
-        /** Adds the powershell session to the list of sessions and sets it as default. 
-         
-            `powershell` is expected to be installed on every Windows computer so is added without check. 
+        /** Adds the powershell session to the list of sessions and sets it as default.
+
+            `powershell` is expected to be installed on every Windows computer so is added without check.
          */
         void win32AddPowershell(std::string & defaultSessionName, bool & updated);
 
-        /** Adds sessions for WSL distributions and sets the default WSL distro as default session. 
-         
-            The presence of WSL and its distributions and their names is checked as it's an optional feature. 
+        /** Adds sessions for WSL distributions and sets the default WSL distro as default session.
+
+            The presence of WSL and its distributions and their names is checked as it's an optional feature.
          */
         void win32AddWSL(std::string & defaultSessionName, bool & updated);
 
         /** Adds sessions for msys2, if found.
-         
+
             Does not set msys2 as the default session. The msys2 session specifications are taken from  https://www.msys2.org/docs/terminals/.
          */
         void win32AddMsys2(std::string & defaultSessionName, bool & updated);
 
-        /** Adds sessions for visual studio development command prompt. 
+        /** Adds sessions for visual studio development command prompt.
 
             At the moment, only the dev cmd.exe is supported as setting up the powershell seems to require install dir argument which is machine specific and therefore has to be loaded from the shortcut, which is non-trivial.
          */
