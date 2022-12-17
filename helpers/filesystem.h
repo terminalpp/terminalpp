@@ -4,6 +4,9 @@
 #include <fileapi.h>
 #include <ShlObj_core.h>
 #include <Lmcons.h>
+#include <io.h>
+#define access _access
+#define R_OK 4
 #else
 #include <limits.h>
 #include <unistd.h>
@@ -21,18 +24,18 @@
 
 /** Filesystem functions and helpful classes
 
-    Adds extra filesystem routines such as creation of unique folders, temporary folder, etc. and wraps around the std::filesystem with UTF8 strings instead of the platform specific paths, which are used under the hood. 
- 
+    Adds extra filesystem routines such as creation of unique folders, temporary folder, etc. and wraps around the std::filesystem with UTF8 strings instead of the platform specific paths, which are used under the hood.
+
     To include thsi header, the the `stdc++fs` library must be included, such as typing the following in CMakeLists:
 
-    target_link_libraries(PROJECT stdc++fs)    
+    target_link_libraries(PROJECT stdc++fs)
 
  */
 
 HELPERS_NAMESPACE_BEGIN
 
-    /** Reads the entire file. 
-     
+    /** Reads the entire file.
+
         Note that the file should be modestly sized as it is returned as a single string
      */
     inline std::string ReadEntireFile(std::string const & filename) {
@@ -45,7 +48,7 @@ HELPERS_NAMESPACE_BEGIN
         return std::string(&result[0], size);
     }
 
-    /** Returns the hostname of the current computer. 
+    /** Returns the hostname of the current computer.
      */
     inline std::string GetHostname() {
 #if (defined ARCH_WINDOWS)
@@ -65,7 +68,7 @@ HELPERS_NAMESPACE_BEGIN
 #endif
     }
 
-    /** Returns the name of the current user. 
+    /** Returns the name of the current user.
      */
     inline std::string GetUsername() {
 #if (defined ARCH_WINDOWS)
@@ -73,7 +76,7 @@ HELPERS_NAMESPACE_BEGIN
     DWORD bufSize = UNLEN + 1;
     OSCHECK(GetUserName(buffer, & bufSize));
     return UTF16toUTF8(buffer);
-#else 
+#else
     uid_t uid = geteuid();
     struct passwd * pw = getpwuid(uid);
     OSCHECK(pw != nullptr);
@@ -128,15 +131,15 @@ HELPERS_NAMESPACE_BEGIN
         return std::filesystem::exists(p);
     }
 
-    /** Creates the given path. 
-     
+    /** Creates the given path.
+
         Returns true if the path had to be created, false if it already exists.
      */
     inline bool CreatePath(std::string const & path) {
         return std::filesystem::create_directories(path);
     }
 
-    /** Copies given file or folder. 
+    /** Copies given file or folder.
      */
     inline void Copy(std::string const & from, std::string const & to) {
     #if (defined ARCH_WINDOWS)
@@ -149,7 +152,7 @@ HELPERS_NAMESPACE_BEGIN
         std::filesystem::copy(from, to);
     }
 
-    /** Renames given file or folder. 
+    /** Renames given file or folder.
      */
     inline void Rename(std::string const & from, std::string const & to) {
     #if (defined ARCH_WINDOWS)
@@ -162,7 +165,7 @@ HELPERS_NAMESPACE_BEGIN
         std::filesystem::rename(from, to);
     }
 
-    /** Returns the directory in which local application settings should be stored on given platform. 
+    /** Returns the directory in which local application settings should be stored on given platform.
      */
     inline std::string LocalSettingsFolder() {
 #if (defined ARCH_WINDOWS)
@@ -170,7 +173,7 @@ HELPERS_NAMESPACE_BEGIN
 		OSCHECK(SHGetKnownFolderPath(
 			FOLDERID_RoamingAppData,
             // this flag forces the redirection to real file paths in msix so that the settings file can be opened by other applications as well
-			KF_FLAG_FORCE_APP_DATA_REDIRECTION, 
+			KF_FLAG_FORCE_APP_DATA_REDIRECTION,
 			nullptr,
 			& wpath
 		) == S_OK) << "Unable to determine stetings folder location";
@@ -186,7 +189,7 @@ HELPERS_NAMESPACE_BEGIN
 #endif
     }
 
-    /** Returns the home directory for the current user. 
+    /** Returns the home directory for the current user.
      */
     inline std::string HomeDir() {
 #if (defined ARCH_WINDOWS)
@@ -194,7 +197,7 @@ HELPERS_NAMESPACE_BEGIN
 		OSCHECK(SHGetKnownFolderPath(
 			FOLDERID_Profile,
             // this flag forces the redirection to real file paths in msix so that the settings file can be opened by other applications as well
-			KF_FLAG_FORCE_APP_DATA_REDIRECTION, 
+			KF_FLAG_FORCE_APP_DATA_REDIRECTION,
 			nullptr,
 			& wpath
 		) == S_OK) << "Unable to determine home folder location";
@@ -206,9 +209,9 @@ HELPERS_NAMESPACE_BEGIN
 #endif
     }
 
-    /** Returns the directory where temporary files should be stored. 
-     
-        This usually goes to `%APP_DATA%/local/Temp` on Windows and `/tmp` on Linux and friends. 
+    /** Returns the directory where temporary files should be stored.
+
+        This usually goes to `%APP_DATA%/local/Temp` on Windows and `/tmp` on Linux and friends.
      */
     inline std::string TempDir() {
 #if (defined ARCH_WINDOWS)
@@ -216,7 +219,7 @@ HELPERS_NAMESPACE_BEGIN
 		OSCHECK(SHGetKnownFolderPath(
 			FOLDERID_LocalAppData,
             // this flag forces the redirection to real file paths in msix so that the settings file can be opened by other applications as well
-			KF_FLAG_FORCE_APP_DATA_REDIRECTION, 
+			KF_FLAG_FORCE_APP_DATA_REDIRECTION,
 			nullptr,
 			& wpath
 		) == S_OK) << "Unable to determine temp folder location";
@@ -228,9 +231,9 @@ HELPERS_NAMESPACE_BEGIN
 #endif
     }
 
-    /** Splits the given filename to file name and extension. 
-     
-        If the argument is a complete path, only the filename and the extension are returned. 
+    /** Splits the given filename to file name and extension.
+
+        If the argument is a complete path, only the filename and the extension are returned.
      */
     inline std::pair<std::string, std::string> SplitFilenameExt(std::filesystem::path const & path) {
         std::string ext = path.extension().string();
@@ -239,8 +242,8 @@ HELPERS_NAMESPACE_BEGIN
         return std::make_pair(filename, ext);
     }
 
-    /** Given an existing folder, creates a new path that is guaranteed not to exist in the folder. 
-     
+    /** Given an existing folder, creates a new path that is guaranteed not to exist in the folder.
+
         The path is a string with given prefix followed by the specified number of alphanumeric characters. Once created, the path is checked for existence and if not found is returned.
      */
     inline std::string UniqueNameIn(std::filesystem::path const & path, std::string const & prefix, std::string suffix = "", size_t length = 16) {
@@ -267,7 +270,7 @@ HELPERS_NAMESPACE_BEGIN
     }
     */
 
-    /** Makes the given filename unique by attaching random alphanumeric string of given size separated by the given separator. 
+    /** Makes the given filename unique by attaching random alphanumeric string of given size separated by the given separator.
      */
     inline std::string MakeUnique(std::string const & path, std::string const & separator = ".", size_t length = 16) {
         while (true) {
@@ -282,9 +285,9 @@ HELPERS_NAMESPACE_BEGIN
     }
 
     /** Makes sure that the given folder contains no more than maxFiles.
-     
+
         Erases the oldest files if the number of files exceeds the given number.
-     */ 
+     */
     inline void EraseOldestFiles(std::string const & folder, size_t maxFiles) {
         typedef std::pair<long long, std::filesystem::path> FileDesc;
         std::vector<FileDesc> files;
@@ -312,12 +315,12 @@ HELPERS_NAMESPACE_BEGIN
 #ifdef HAHA
     /** Temporary folder with optional cleanup.
 
-        Creates a temporary folder in the appropriate location for given platform. The folder may start with a selected prefix, which is not necessary but may help a human orient in the temp directories. The temporary folder and its contents are deleted when the object is destroyed, unless the `deleteWhenDestroyed` argument is set to false, in which case the folder and its files are never deleted by the object and their deletion is either up to the user, or more likely to the operating system. 
+        Creates a temporary folder in the appropriate location for given platform. The folder may start with a selected prefix, which is not necessary but may help a human orient in the temp directories. The temporary folder and its contents are deleted when the object is destroyed, unless the `deleteWhenDestroyed` argument is set to false, in which case the folder and its files are never deleted by the object and their deletion is either up to the user, or more likely to the operating system.
      */
     class TemporaryFolder {
     public:
 
-        /** Creates the temporary folder of given prefix and persistence. 
+        /** Creates the temporary folder of given prefix and persistence.
          */
         TemporaryFolder(std::string prefix = "", bool deleteWhenDestroyed = true):
             path_(UniqueNameIn(TempDir(), prefix)),
@@ -333,7 +336,7 @@ HELPERS_NAMESPACE_BEGIN
 
         TemporaryFolder(TemporaryFolder const &) = delete;
 
-        /** If not persistent, deletes the temporary folder and its contents. 
+        /** If not persistent, deletes the temporary folder and its contents.
          */
         ~TemporaryFolder() {
             if (deleteWhenDestroyed_)
@@ -353,7 +356,7 @@ HELPERS_NAMESPACE_BEGIN
 
         TemporaryFolder & operator = (TemporaryFolder const &) = delete;
 
-        /** Returns the path of the temporary object. 
+        /** Returns the path of the temporary object.
          */
         std::string const & path() const {
             return path_;

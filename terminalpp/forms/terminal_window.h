@@ -17,7 +17,7 @@
 
 namespace tpp {
 
-    /** New Version Dialog. 
+    /** New Version Dialog.
      */
     class NewVersionDialog : public ui::Dialog::Cancel {
     public:
@@ -31,7 +31,7 @@ namespace tpp {
         Label * contents_;
     };
 
-    /** Paste confirmation dialog. 
+    /** Paste confirmation dialog.
      */
     class PasteDialog : public ui::Dialog::YesNoCancel {
     public:
@@ -58,9 +58,9 @@ namespace tpp {
 
     private:
         Label * contents_;
-    };     
+    };
 
-    /** Clipboard copy confirmation dialog. 
+    /** Clipboard copy confirmation dialog.
      */
     class CopyDialog : public ui::Dialog::YesNoCancel {
     public:
@@ -88,15 +88,15 @@ namespace tpp {
         Label * contents_;
     };
 
-    /** The terminal window. 
-     
-        
+    /** The terminal window.
+
+
      */
     class TerminalWindow : public ui::Window {
     public:
 
         explicit TerminalWindow(tpp::Window * window):
-            window_{window}, 
+            window_{window},
             main_{new Panel{}},
             pager_{new Pager{}} {
 
@@ -147,7 +147,7 @@ namespace tpp {
             std::string title;
             AnsiTerminal * terminal = nullptr;
             bool terminateOnKeyPress = false;
-            /** If true, the current session has an active notification. 
+            /** If true, the current session has an active notification.
              */
             bool notification = false;
             PasteDialog * pendingPaste = nullptr;
@@ -160,17 +160,17 @@ namespace tpp {
             ~SessionInfo() {
                 delete terminal;
             }
-        }; 
+        };
 
-        /** The window has been requested to close. 
-         
-            TODO check that there are no active sessions and perhaps ask if there are whether really to exit. 
+        /** The window has been requested to close.
+
+            TODO check that there are no active sessions and perhaps ask if there are whether really to exit.
          */
         void windowCloseRequest(tpp::Window::CloseEvent::Payload & e) {
             MARK_AS_UNUSED(e);
         }
 
-        /** Global hotkeys handling. 
+        /** Global hotkeys handling.
          */
         void windowKeyDown(tpp::Window::KeyEvent::Payload & e) {
             // a keydown also clears any active notification in the current session, and if this is the last active notification, also the notification icon
@@ -219,7 +219,7 @@ namespace tpp {
             if (sessions_.empty())
                 window_->requestClose();
             // otherwise focus the active session instead
-            // TODO do we want this always, or should we actually check if the remove session was focused first? 
+            // TODO do we want this always, or should we actually check if the remove session was focused first?
             else
                 window_->setKeyboardFocus(pager_->activePage());
         }
@@ -239,9 +239,9 @@ namespace tpp {
             Application::Instance()->setClipboard(*e);
         }
 
-        /** Changes the icon when terminal sends notification. 
-         
-            Changes the icon, marks the notification flag for the terminal's session and increments the window notifications counter. 
+        /** Changes the icon when terminal sends notification.
+
+            Changes the icon, marks the notification flag for the terminal's session and increments the window notifications counter.
          */
         void sessionNotification(ui::VoidEvent::Payload & e) {
             SessionInfo * si = sessionInfo(e.sender());
@@ -254,9 +254,9 @@ namespace tpp {
         }
 
         void keyDown(KeyEvent::Payload & e) override {
-            if (activeSession_->terminateOnKeyPress && ! e->isModifierKey()) 
+            if (activeSession_->terminateOnKeyPress && ! e->isModifierKey())
                 closeSession(activeSession_);
-            else 
+            else
                 Widget::keyDown(e);
         }
 
@@ -330,8 +330,20 @@ namespace tpp {
 
         void terminalKeyDown(KeyEvent::Payload & e) {
             SessionInfo * si = sessionInfo(e.sender());
-            if (*e == SHORTCUT_PASTE) {
+            if (*e == SHORTCUT_PASTE || *e == SHORTCUT_PASTE_ALT) {
                 si->terminal->requestClipboardPaste();
+            } else if (*e == SHORTCUT_SCROLL_UP) {
+                si->terminal->scrollBy(Point{0, -3});
+            } else if (*e == SHORTCUT_SCROLL_DOWN) {
+                si->terminal->scrollBy(Point{0, 3});
+            } else if (*e == SHORTCUT_SCROLL_PAGE_UP) {
+                si->terminal->scrollBy(Point{0, -si->terminal->height()});
+            } else if (*e == SHORTCUT_SCROLL_PAGE_DOWN) {
+                si->terminal->scrollBy(Point{0, si->terminal->height()});
+            } else if (*e == SHORTCUT_SCROLL_TOP) {
+                si->terminal->scrollBy(Point{0, INT_MIN});
+            } else if (*e == SHORTCUT_SCROLL_BOTTOM) {
+                si->terminal->scrollBy(Point{0, INT_MAX});
             } else {
                 return;
             }
@@ -391,7 +403,7 @@ namespace tpp {
         ui::Panel * main_;
         ui::Pager * pager_;
 
-        std::unordered_map<AnsiTerminal *, SessionInfo *> sessions_; 
+        std::unordered_map<AnsiTerminal *, SessionInfo *> sessions_;
 
         SessionInfo * activeSession_ = nullptr;
         unsigned activeNotifications_ = 0;

@@ -3,28 +3,33 @@
 #include "../widget.h"
 #include "../renderer.h"
 
+// ubihazard: had to redeclare because of circular dependency
+// caused by including "config.h" here. Thus must stay in sync
+// with the original definition until the issue is resolved.
+#define SHORTCUT_COPY (Key::C + Key::Ctrl + Key::Shift)
+
 namespace ui {
 
 
-    /** Determines selection coordinates on a widget. 
+    /** Determines selection coordinates on a widget.
 
-        The selection is inclusive of start, but exclusive of the end cell in both column and row. 
+        The selection is inclusive of start, but exclusive of the end cell in both column and row.
 
         TODO for now, this is a simple from - to point selection, but in the future, the selection can actually be rectangular, or so or so...
      */
     class Selection {
     public:
 
-        /** Default constructor creates an empty selection. 
+        /** Default constructor creates an empty selection.
          */
         Selection():
             start_{Point{0, 0}},
             end_{Point{0, 0}} {
         }
 
-        /** Creates a selection between two *inclusive* cells. 
-         
-            Reorders the cells if necessary. 
+        /** Creates a selection between two *inclusive* cells.
+
+            Reorders the cells if necessary.
          */
         static Selection Create(Point start, Point end) {
             if (end.y() < start.y()) {
@@ -39,20 +44,20 @@ namespace ui {
             return Selection(start, end);
         }
 
-        /** Clears the selection. 
+        /** Clears the selection.
          */
         void clear() {
             start_ = Point{0,0};
             end_ = Point{0, 0};
         }
 
-        /** Returns true if the selection is empty. 
+        /** Returns true if the selection is empty.
          */
         bool empty() const {
             return start_.y() == end_.y();
         }
 
-        /** Returns the first cell of the selection (inclusive). 
+        /** Returns the first cell of the selection (inclusive).
          */
         Point start() const {
             return start_;
@@ -76,9 +81,9 @@ namespace ui {
 
     }; // ui::Selection
 
-    /** Extends widgets with selction ownership & management. 
-     
-         
+    /** Extends widgets with selction ownership & management.
+
+
      */
     class SelectionOwner : public virtual Widget {
         friend class Renderer;
@@ -105,11 +110,11 @@ namespace ui {
 
         virtual std::string getSelectionContents() = 0;
 
-        /** Clears the selection. 
-         
-            The method can be called either by the widget itself when it wishes to give up the selection ownership it has, or by the renderer if the selection ownership of the widget has been invalidated from outside. 
+        /** Clears the selection.
 
-            This function must be overriden in subclasses that support selection ownership and when called, must reset the selection cache (if any) and clear the visual indication of the selection ownership. Finally the base implementation must be called which informs the renderer about the selection clear if necessary. 
+            The method can be called either by the widget itself when it wishes to give up the selection ownership it has, or by the renderer if the selection ownership of the widget has been invalidated from outside.
+
+            This function must be overriden in subclasses that support selection ownership and when called, must reset the selection cache (if any) and clear the visual indication of the selection ownership. Finally the base implementation must be called which informs the renderer about the selection clear if necessary.
             */
         virtual void clearSelection() {
             Renderer * r = renderer();
@@ -131,7 +136,7 @@ namespace ui {
                 r->setSelection(contents, this);
         }
 
-        /** Marks the selection on the given canvas. 
+        /** Marks the selection on the given canvas.
          */
         void paintSelection(Canvas & canvas, Color background) {
             if (selection_.empty())
@@ -154,11 +159,11 @@ namespace ui {
     /** \name Selection Update
      */
     //@{
-    
+
     protected:
 
-        /** Starts the selection update. 
-         
+        /** Starts the selection update.
+
             If the widget already has a non-empty selection, clears the selection first and then resets the selection process.
          */
         void startSelectionUpdate(Point start) {
@@ -180,7 +185,7 @@ namespace ui {
             repaint();
         }
 
-        /** Finishes the selection update, obtains its contents and registers itself as the selection owner. 
+        /** Finishes the selection update, obtains its contents and registers itself as the selection owner.
          */
         void endSelectionUpdate() {
             selectionStart_ = Point{-1, -1};
@@ -200,9 +205,9 @@ namespace ui {
             }
         }
 
-        /** Sets selection directly. 
-         
-            Clears any preexisting selection (if any), updates the selection, informs the renderer about selection owner & contents change and repaints the widget. 
+        /** Sets selection directly.
+
+            Clears any preexisting selection (if any), updates the selection, informs the renderer about selection owner & contents change and repaints the widget.
          */
         void setSelection(Selection const & selection) {
             if (! selection_.empty())
@@ -212,7 +217,7 @@ namespace ui {
             repaint();
         }
 
-    //@}      
+    //@}
 
     /** \name Autoscrolling.
      */
@@ -241,7 +246,7 @@ namespace ui {
 
     //@}
 
-    /** \name Default selection behavior. 
+    /** \name Default selection behavior.
      */
     //@{
 
@@ -250,7 +255,15 @@ namespace ui {
         void paint(Canvas & canvas) override {
             // TODO get the selection color from style
             if (! selection_.empty())
-                paintSelection(canvas, Color::Blue.withAlpha(64));            
+                paintSelection(canvas, Color::Blue.withAlpha(64));
+        }
+
+        void keyDown(KeyEvent::Payload & e) override {
+            if (*e == SHORTCUT_COPY && ! selection_.empty()) {
+                setClipboard(getSelectionContents());
+                clearSelection();
+                e.stop();
+            }
         }
 
         void mouseMove(MouseMoveEvent::Payload & e) override {
@@ -291,7 +304,7 @@ namespace ui {
             }
         }
 
-    //@}  
+    //@}
     }; // ui::SelectionOwner
 
 } // namespace ui
