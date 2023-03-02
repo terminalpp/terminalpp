@@ -330,7 +330,7 @@ namespace tpp {
 
         void terminalKeyDown(KeyEvent::Payload & e) {
             SessionInfo * si = sessionInfo(e.sender());
-            if (*e == SHORTCUT_PASTE || *e == SHORTCUT_PASTE_ALT) {
+            if (*e == SHORTCUT_PASTE) {
                 si->terminal->requestClipboardPaste();
             } else if (*e == SHORTCUT_SCROLL_UP) {
                 si->terminal->scrollBy(Point{0, -3});

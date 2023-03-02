@@ -52,8 +52,7 @@ constexpr size_t DEFAULT_BLINK_SPEED = 500;
 #define SHORTCUT_ZOOM_IN_ALT (Key::Equals + Key::Ctrl + Key::Shift)
 #define SHORTCUT_ZOOM_OUT_ALT (Key::Minus + Key::Ctrl + Key::Shift)
 
-#define SHORTCUT_PASTE (Key::V + Key::Ctrl)
-#define SHORTCUT_PASTE_ALT (Key::V + Key::Ctrl + Key::Shift)
+#define SHORTCUT_PASTE (Key::V + Key::Ctrl + Key::Shift)
 #define SHORTCUT_COPY (Key::C + Key::Ctrl + Key::Shift)
 
 #define SHORTCUT_SCROLL_UP (Key::Up + Key::Ctrl + Key::Shift)
