@@ -75,7 +75,7 @@ namespace ui {
             protocol1, // http[s]:
             protocol2, // http[s]:/
             domain1, // http[s]:// domain_letters
-            domain2, // https[s]:// {valid_char}
+            //domain2, // https[s]:// {valid_char}
             domainSeparator, // https[s]:// {{valid_char} .} 
             port1, // hostname: 
             percentEscape1, // after %
@@ -222,15 +222,15 @@ namespace ui {
                 }
                 // this is the first domain state, at least one valid domain character required
                 case State::domain1: {
-                    TRANSITION(domainLetter(c), State::domain2);
+                    TRANSITION(domainLetter(c), State::validDomain);
                     break;
                 }
                 // first domain after first character, others may follow
-                case State::domain2: {
-                    TRANSITION(domainLetter(c), State::domain2);
-                    TRANSITION('.', State::domainSeparator);
-                    break;
-                }
+                //case State::domain2: {
+                //    TRANSITION(domainLetter(c), State::domain2);
+                //    TRANSITION('.', State::domainSeparator);
+                //    break;
+                // }
                 // domain separator was detected, valid domain character after it is validDomain
                 case State::domainSeparator: {
                     TRANSITION(domainLetter(c), State::validDomain);
@@ -267,12 +267,14 @@ namespace ui {
                     TRANSITION(addressLetter(c), State::validAddress);
                     TRANSITION('?', State::validArguments);
                     TRANSITION('/', State::validAddress);
+                    TRANSITION(':', State::port1);
                     break;
                 }
                 case State::validArguments: {
                     TRANSITION(argsLetter(c), State::validArguments);
                     TRANSITION('%', State::percentEscape1);
                     TRANSITION('&', State::validArguments); // there does not have to be anything after &
+                    TRANSITION(':', State::port1);
                     break;
                 }
                 default:
