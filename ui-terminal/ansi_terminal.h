@@ -260,7 +260,7 @@ namespace ui {
          */
         void mouseClick(MouseButtonEvent::Payload & e) override {
             Widget::mouseClick(e);
-            if (! mouseCaptured() && e.active()) {
+            if (/*! mouseCaptured() && */e.active()) {
                 if (activeHyperlink_ != nullptr) {
                     StringEvent::Payload p{activeHyperlink_->url()};
                     if (e->button == MouseButton::Left)
