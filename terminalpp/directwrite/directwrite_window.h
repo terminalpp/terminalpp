@@ -57,7 +57,7 @@ namespace tpp {
 
     protected:
 
-        void windowResized(int width, int height) override{
+        void windowResized(int width, int height) override {
             ASSERT(rt_ != nullptr);
             D2D1_SIZE_U size = D2D1::SizeU(width, height);
             rt_->Resize(size);
@@ -66,11 +66,15 @@ namespace tpp {
             if (width != sizePx_.width() || height != sizePx_.height()) {
                 sizePx_ = Size{width, height};
                 // tell the renderer to resize 
-                resize(Size{
-                    static_cast<int>(width / dpiFactor_ / cellSize_.width()), 
-                    static_cast<int>(height / dpiFactor_ / cellSize_.height())
-                });
+                resizePx(Size{width, height});
             }
+        }
+ 
+        void resizePx(Size sizePx) override {
+            resize(Size{
+                static_cast<int>(sizePx.width() / dpiFactor_ / cellSize_.width()),
+                static_cast<int>(sizePx.height() / dpiFactor_ / cellSize_.height())
+            });
         }
 
         Point pixelsToCoords(Point xy) {

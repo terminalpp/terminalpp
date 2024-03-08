@@ -9,7 +9,7 @@
             "name": "(win) terminalpp",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": " ${workspaceFolder}/build-Visual Studio Community 2019 Release - amd64/terminalpp/Debug/terminalpp.exe",
+            "program": " ${workspaceFolder}/build/terminalpp/Debug/terminalpp.exe",
             "args": ["--here"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

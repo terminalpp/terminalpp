@@ -187,7 +187,7 @@ namespace tpp {
             } else if (*e == SHORTCUT_SETTINGS) {
                 Application::Instance()->openLocalFile(Config::GetSettingsFile(), /* edit = */ true);
             } else if (*e == SHORTCUT_ZOOM_IN || *e == SHORTCUT_ZOOM_IN_ALT) {
-                if (window_->zoom() < 10)
+                if (window_->zoom() < 10) 
                     window_->setZoom(window_->zoom() * 1.25);
             } else if (*e == SHORTCUT_ZOOM_OUT || *e == SHORTCUT_ZOOM_OUT_ALT) {
                 if (window_->zoom() > 1)

@@ -25,7 +25,7 @@ HELPERS_NAMESPACE_BEGIN
 
 	    Supports either padding with the `=` characters, or variable length input
 	 */
-	inline std::string Base64Decode(char* start, char* end) {
+	inline std::string Base64Decode(char const * start, char const * end) {
 		std::stringstream result;
 		// do all but the last triplet
 		while (start + 4 < end) {

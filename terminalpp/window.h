@@ -227,11 +227,17 @@ namespace tpp {
                 typename IMPLEMENTATION::Font * f = IMPLEMENTATION::Font::Get(ui::Font(), static_cast<int>(baseFontSize_.height() * zoom_));
                 cellSize_ = f->cellSize();
                 // tell the renderer to resize
-                resize(Size{sizePx_.width() / cellSize_.width(), sizePx_.height() / cellSize_.height()});
+                resizePx(sizePx_);
             }
         }
 
     protected:
+
+        /** Resizes the renderer's winow based on its pixel dimensions. 
+         */
+        virtual void resizePx(Size sizePx) {
+            resize(Size{sizePx.width() / cellSize_.width(), sizePx.height() / cellSize_.height()});
+        }
 
         /** Creates new renderer window. 
          

@@ -1,6 +1,7 @@
 #include <functional>
 
 #include "helpers/memory.h"
+#include "helpers/base64.h"
 
 #include "ansi_terminal.h"
 
@@ -1687,10 +1688,12 @@ namespace ui {
                 break;
             }
             /* OSC 52 - set clipboard to given value.
+
+               The first argument is which buffer is being copied and the second argument is the value. With tpp, we only ever support the clipboard and so the argument is ignored.
              */
             case 52: {
-                if (seq.numArgs() == 2 && seq[0] == "c") {
-                    std::string text = seq[1];
+                if (seq.numArgs() == 2 /* && seq[0] == "c" */) {
+                    std::string text = Base64Decode(seq[1].c_str(), seq[1].c_str() + seq[1].size());
                     LOG(SEQ) << "Clipboard set to " << text;
                     schedule([this, contents = text]() {
                         StringEvent::Payload p{contents};
