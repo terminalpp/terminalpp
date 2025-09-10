@@ -57,6 +57,15 @@ namespace tpp {
 			*/
 		XSetStandardProperties(display_, window_, title.c_str(), nullptr, x11::None, nullptr, 0, nullptr);
 
+    /* register WM_CLASS for desktop environments so that the desktop entry works properly.
+     */
+    XClassHint *classHint = XAllocClassHint();
+    classHint->res_name = const_cast<char*>("terminalpp");   // lowercase, matches StartupWMClass
+    classHint->res_class = const_cast<char*>("Terminal++");  // capitalized, used for resource management
+
+    XSetClassHint(display_, window_, classHint);
+    XFree(classHint);
+
 		/* X11 in itself does not deal with window close requests, but this enables sending of the WM_DELETE_WINDOW message when the close button is send and the application can decide what to do instead. 
 
 		   The message is received as a client message with the wmDeleteMessage_ atom in its first long payload.

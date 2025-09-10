@@ -77,6 +77,15 @@ namespace tpp {
         cursorWait_ = XcursorLibraryLoadCursor(xDisplay_, "watch");        
         cursorForbidden_ = XcursorLibraryLoadCursor(xDisplay_, "X_cursor");        
 
+    /* register WM_CLASS for desktop environments so that the desktop entry works properly.
+     */
+    XClassHint *classHint = XAllocClassHint();
+    classHint->res_name = const_cast<char*>("terminalpp");   // lowercase, matches StartupWMClass
+    classHint->res_class = const_cast<char*>("Terminal++");  // capitalized, used for resource management
+
+    XSetClassHint(xDisplay_, broadcastWindow_, classHint);
+    XFree(classHint);
+
 		X11Window::StartBlinkerThread();
     }
 
